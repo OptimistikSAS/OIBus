@@ -20,6 +20,10 @@ describe('FileCleanupService', () => {
     fileCleanupService = new FileCleanupService('logFolder', logger, 'journal.log', 2);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly start and stop', async () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
     fileCleanupService.cleanUpLogFiles = jest.fn();

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { switchMap, finalize } from 'rxjs/operators';
+import { BehaviorSubject, Observable, shareReplay } from 'rxjs';
+import { switchMap, finalize, tap } from 'rxjs/operators';
 import { inject, Injectable } from '@angular/core';
 import {
   CustomTransformerCommandDTO,
@@ -19,11 +19,17 @@ import {
 export class TransformerService {
   private http = inject(HttpClient);
 
+  private listTrigger$ = new BehaviorSubject<void>(undefined);
+  private list$ = this.listTrigger$.pipe(
+    switchMap(() => this.http.get<Array<TransformerDTO>>(`/api/transformers/list`)),
+    shareReplay(1)
+  );
+
   /**
    * Get the transformers
    */
   list(): Observable<Array<TransformerDTO>> {
-    return this.http.get<Array<TransformerDTO>>(`/api/transformers/list`);
+    return this.list$;
   }
 
   /**
@@ -39,7 +45,7 @@ export class TransformerService {
    * @param command - the new transformer
    */
   create(command: CustomTransformerCommandDTO): Observable<TransformerDTO> {
-    return this.http.post<TransformerDTO>(`/api/transformers`, command);
+    return this.http.post<TransformerDTO>(`/api/transformers`, command).pipe(tap(() => this.listTrigger$.next()));
   }
 
   /**
@@ -48,7 +54,7 @@ export class TransformerService {
    * @param command - the new values of the selected transformer
    */
   update(transformerId: string, command: CustomTransformerCommandDTO) {
-    return this.http.put<void>(`/api/transformers/${transformerId}`, command);
+    return this.http.put<void>(`/api/transformers/${transformerId}`, command).pipe(tap(() => this.listTrigger$.next()));
   }
 
   /**
@@ -56,7 +62,7 @@ export class TransformerService {
    * @param transformerId - the ID of the transformer to delete
    */
   delete(transformerId: string) {
-    return this.http.delete<void>(`/api/transformers/${transformerId}`);
+    return this.http.delete<void>(`/api/transformers/${transformerId}`).pipe(tap(() => this.listTrigger$.next()));
   }
 
   /**

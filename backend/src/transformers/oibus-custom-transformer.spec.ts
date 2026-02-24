@@ -43,6 +43,10 @@ describe('OIBusCustomTransformer', () => {
     (sandboxService.execute as jest.Mock).mockReturnValueOnce(sandboxOutput);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should transform data from a stream and return sandbox result', async () => {
     // Arrange
     const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, testData.north.list[0], {});

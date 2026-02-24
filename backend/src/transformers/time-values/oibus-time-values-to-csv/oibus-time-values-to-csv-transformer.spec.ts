@@ -23,6 +23,10 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should transform data from a stream and return metadata', async () => {
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
