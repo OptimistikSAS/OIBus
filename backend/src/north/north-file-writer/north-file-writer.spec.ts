@@ -62,6 +62,10 @@ describe('NorthFileWriter', () => {
     north = new NorthFileWriter(configuration, logger, cacheService);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should retrieve supported types', () => {
     expect(north.supportedTypes()).toEqual(['any', 'setpoint', 'time-values']);
   });

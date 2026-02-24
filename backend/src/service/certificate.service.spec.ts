@@ -30,6 +30,10 @@ describe('Certificate Service', () => {
     service = new CertificateService(validator, certificateRepository, encryptionService, oIAnalyticsMessageService);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should list all certificated', () => {
     (certificateRepository.list as jest.Mock).mockReturnValueOnce(testData.certificates.list);
 

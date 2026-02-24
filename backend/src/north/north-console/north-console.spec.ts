@@ -62,6 +62,7 @@ describe('NorthConsole', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
