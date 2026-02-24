@@ -102,6 +102,10 @@ describe('South ADS', () => {
     south = new SouthADS(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly connect to a remote instance', async () => {
     await south.start();
     await south.connect();

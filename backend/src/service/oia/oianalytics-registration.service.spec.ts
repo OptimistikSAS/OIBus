@@ -47,6 +47,10 @@ describe('OIAnalytics Registration Service', () => {
     service = new OIAnalyticsRegistrationService(validator, oIAnalyticsClient, oIAnalyticsRegistrationRepository, engineRepository, logger);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should start with completed registration', () => {
     const setIntervalSpy = jest.spyOn(global, 'setInterval');
     (oIAnalyticsRegistrationRepository.get as jest.Mock)

@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, shareReplay, switchMap } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Injectable, inject } from '@angular/core';
 import { CertificateCommandDTO, CertificateDTO } from '../../../../backend/shared/model/certificate.model';
 
@@ -14,11 +15,17 @@ const ENDPOINT = '/api/certificates';
 export class CertificateService {
   private http = inject(HttpClient);
 
+  private listTrigger$ = new BehaviorSubject<void>(undefined);
+  private list$ = this.listTrigger$.pipe(
+    switchMap(() => this.http.get<Array<CertificateDTO>>(ENDPOINT)),
+    shareReplay(1)
+  );
+
   /**
-   * Get the scan modes
+   * Get the certificates
    */
   list(): Observable<Array<CertificateDTO>> {
-    return this.http.get<Array<CertificateDTO>>(ENDPOINT);
+    return this.list$;
   }
 
   findById(certificateId: string): Observable<CertificateDTO> {
@@ -26,14 +33,14 @@ export class CertificateService {
   }
 
   create(command: CertificateCommandDTO): Observable<CertificateDTO> {
-    return this.http.post<CertificateDTO>(`${ENDPOINT}`, command);
+    return this.http.post<CertificateDTO>(`${ENDPOINT}`, command).pipe(tap(() => this.listTrigger$.next()));
   }
 
   update(certificateId: string, command: CertificateCommandDTO) {
-    return this.http.put<void>(`${ENDPOINT}/${certificateId}`, command);
+    return this.http.put<void>(`${ENDPOINT}/${certificateId}`, command).pipe(tap(() => this.listTrigger$.next()));
   }
 
   delete(certificateId: string) {
-    return this.http.delete<void>(`${ENDPOINT}/${certificateId}`);
+    return this.http.delete<void>(`${ENDPOINT}/${certificateId}`).pipe(tap(() => this.listTrigger$.next()));
   }
 }

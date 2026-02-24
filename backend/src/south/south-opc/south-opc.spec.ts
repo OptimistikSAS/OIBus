@@ -92,6 +92,10 @@ describe('South OPC', () => {
     south = new SouthOpc(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should get throttling settings', () => {
     expect(south.getThrottlingSettings(configuration.settings)).toEqual({
       maxReadInterval: configuration.settings.throttling.maxReadInterval,

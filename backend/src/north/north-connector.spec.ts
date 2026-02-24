@@ -83,6 +83,7 @@ describe('NorthConnector', () => {
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 

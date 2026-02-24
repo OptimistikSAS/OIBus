@@ -96,6 +96,10 @@ describe('North Service', () => {
     );
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should retrieve a list of north manifest', () => {
     const list = service.listManifest();
     expect(list).toBeDefined();

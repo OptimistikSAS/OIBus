@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, shareReplay, switchMap } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { Injectable, inject } from '@angular/core';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../backend/shared/model/scan-mode.model';
 
@@ -12,11 +13,17 @@ import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../
 export class ScanModeService {
   private http = inject(HttpClient);
 
+  private listTrigger$ = new BehaviorSubject<void>(undefined);
+  private list$ = this.listTrigger$.pipe(
+    switchMap(() => this.http.get<Array<ScanModeDTO>>(`/api/scan-modes`)),
+    shareReplay(1)
+  );
+
   /**
    * Get the scan modes
    */
   list(): Observable<Array<ScanModeDTO>> {
-    return this.http.get<Array<ScanModeDTO>>(`/api/scan-modes`);
+    return this.list$;
   }
 
   /**
@@ -32,7 +39,7 @@ export class ScanModeService {
    * @param command - the new scan mode
    */
   create(command: ScanModeCommandDTO): Observable<ScanModeDTO> {
-    return this.http.post<ScanModeDTO>(`/api/scan-modes`, command);
+    return this.http.post<ScanModeDTO>(`/api/scan-modes`, command).pipe(tap(() => this.listTrigger$.next()));
   }
 
   /**
@@ -41,7 +48,7 @@ export class ScanModeService {
    * @param command - the new values of the selected scan mode
    */
   update(scanModeId: string, command: ScanModeCommandDTO) {
-    return this.http.put<void>(`/api/scan-modes/${scanModeId}`, command);
+    return this.http.put<void>(`/api/scan-modes/${scanModeId}`, command).pipe(tap(() => this.listTrigger$.next()));
   }
 
   /**
@@ -49,7 +56,7 @@ export class ScanModeService {
    * @param scanModeId - the ID of the scan mode to delete
    */
   delete(scanModeId: string) {
-    return this.http.delete<void>(`/api/scan-modes/${scanModeId}`);
+    return this.http.delete<void>(`/api/scan-modes/${scanModeId}`).pipe(tap(() => this.listTrigger$.next()));
   }
 
   /**
