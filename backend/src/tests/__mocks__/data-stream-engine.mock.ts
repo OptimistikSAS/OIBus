@@ -46,6 +46,8 @@ export default jest.fn().mockImplementation(logger => {
     updateCacheContent: jest.fn(),
     updateScanMode: jest.fn(),
     updateNorthTransformerBySouth: jest.fn(),
-    updateNorthConfiguration: jest.fn()
+    updateNorthConfiguration: jest.fn(),
+    reloadTransformer: jest.fn(),
+    removeAndReloadTransformer: jest.fn()
   };
 });

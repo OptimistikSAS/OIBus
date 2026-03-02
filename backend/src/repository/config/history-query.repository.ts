@@ -299,6 +299,18 @@ export default class HistoryQueryRepository {
     transaction();
   }
 
+  removeTransformersByTransformerId(transformerId: string): void {
+    const transaction = this.database.transaction(() => {
+      this.database
+        .prepare(
+          `DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} WHERE id IN (SELECT id FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE transformer_id = ?);`
+        )
+        .run(transformerId);
+      this.database.prepare(`DELETE FROM ${HISTORY_TRANSFORMERS_TABLE} WHERE transformer_id = ?;`).run(transformerId);
+    });
+    transaction();
+  }
+
   searchItems(historyId: string, searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
