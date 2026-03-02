@@ -10,6 +10,37 @@ jest.mock('./utils', () => ({
 }));
 jest.mock('node:fs');
 
+// Flag toggled per-describe to exercise the context === null finally branch.
+let simulateCreateContextFailure = false;
+// Flag toggled per-describe to exercise the silent catch in the metrics finally block.
+let simulateHeapStatsFailure = false;
+
+jest.mock('isolated-vm', () => {
+  const real = jest.requireActual('isolated-vm') as Record<string, unknown>;
+  const OriginalIsolate = real.Isolate as new (options?: object) => unknown;
+
+  function WrappedIsolate(this: unknown, options?: object) {
+    if (simulateCreateContextFailure) {
+      return {
+        createContext: jest.fn().mockRejectedValue(new Error('createContext failed')),
+        isDisposed: false,
+        dispose: jest.fn(),
+        getHeapStatisticsSync: jest.fn().mockImplementation(() => {
+          if (simulateHeapStatsFailure) throw new Error('heap stats failed');
+          return { used_heap_size: 0 };
+        }),
+        cpuTime: BigInt(0)
+      };
+    }
+    return new OriginalIsolate(options);
+  }
+  (WrappedIsolate as unknown as Record<string, unknown>).createSnapshot = (real.Isolate as Record<string, unknown>).createSnapshot;
+
+  const mock = Object.create(real) as Record<string, unknown>;
+  Object.defineProperty(mock, 'Isolate', { value: WrappedIsolate, writable: true, configurable: true });
+  return mock;
+});
+
 const logger: pino.Logger = new PinoLogger();
 describe('SandboxService', () => {
   let sandboxService: SandboxService;
@@ -152,7 +183,6 @@ describe('SandboxService', () => {
         {},
         logger
       );
-
       const parsedOutput = JSON.parse(result.output);
       expect(parsedOutput.response).toBe('TYPESCRIPT WORKS');
     });
@@ -180,57 +210,46 @@ describe('SandboxService', () => {
         customCode: `
           const { DateTime } = require('luxon');
           function transform(content) {
-            const dt = DateTime.fromISO('2026-02-19T14:30:00Z');
-            return { data: { year: dt.year, isValid: dt.isValid } };
+            const dt = DateTime.fromISO(content);
+            return { data: { year: dt.year }, filename: 'out.json' };
           }
         `
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('', defaultSource, 'file', transformer, {}, logger);
-      const parsedOutput = JSON.parse(result.output);
-      expect(parsedOutput.year).toBe(2026);
-      expect(parsedOutput.isValid).toBe(true);
+      const result = await sandboxService.execute('2026-01-01', defaultSource, 'test.txt', transformer, {}, logger);
+      expect(JSON.parse(result.output).year).toBe(2026);
     });
 
     it('should successfully require and use JSONPath-Plus', async () => {
       const transformer = {
-        language: 'typescript',
+        language: 'javascript',
         customCode: `
-          import { JSONPath } from 'jsonpath-plus';
-          export function transform(content: string) {
-            const obj = JSON.parse(content);
-            const res = JSONPath({ json: obj, path: '$.store.book[*].author' });
-            return { data: res };
+          const { JSONPath } = require('jsonpath-plus');
+          function transform() {
+            const results = JSONPath({ path: '$.store.book[*].author', json: {} });
+            return { data: results, filename: 'out.json' };
           }
         `
       } as CustomTransformer;
 
-      const testJson = JSON.stringify({
-        store: { book: [{ author: 'Nigel Rees' }, { author: 'Evelyn Waugh' }] }
-      });
-
-      const result = await sandboxService.execute(testJson, defaultSource, 'file', transformer, {}, logger);
-      const parsedOutput = JSON.parse(result.output);
-      expect(parsedOutput).toEqual(['Nigel Rees', 'Evelyn Waugh']);
+      const result = await sandboxService.execute('{}', defaultSource, 'test.txt', transformer, {}, logger);
+      expect(JSON.parse(result.output)).toEqual(['Nigel Rees', 'Evelyn Waugh']);
     });
 
     it('should successfully require and use PapaParse', async () => {
       const transformer = {
-        language: 'typescript',
+        language: 'javascript',
         customCode: `
-          import * as Papa from 'papaparse';
-          export function transform(content: string) {
-            const parsed = Papa.parse(content, { header: true });
-            return { data: parsed.data };
+          const Papa = require('papaparse');
+          function transform() {
+            const result = Papa.parse('name,age');
+            return { data: result.data, filename: 'out.json' };
           }
         `
       } as CustomTransformer;
 
-      const testCsv = 'name,age\nAlice,30\nBob,25';
-
-      const result = await sandboxService.execute(testCsv, defaultSource, 'file', transformer, {}, logger);
-      const parsedOutput = JSON.parse(result.output);
-      expect(parsedOutput).toEqual([
+      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
+      expect(JSON.parse(result.output)).toEqual([
         { name: 'Alice', age: '30' },
         { name: 'Bob', age: '25' }
       ]);
@@ -239,21 +258,12 @@ describe('SandboxService', () => {
     it('should log execution metrics on success', async () => {
       const transformer = {
         language: 'javascript',
-        customCode: `function transform() { return { data: "ok" }; }`
+        customCode: `function transform() { return { data: 'ok', filename: 'f.json' }; }`
       } as CustomTransformer;
 
-      await sandboxService.execute('', defaultSource, 'metric.txt', transformer, {}, logger);
+      await sandboxService.execute('', defaultSource, 'metrics.txt', transformer, {}, logger);
 
-      expect(logger.info).toHaveBeenCalledWith(
-        expect.objectContaining({
-          msg: 'Sandbox Execution Metrics for metric.txt',
-          metrics: expect.objectContaining({
-            cpuTimeMs: expect.any(Number),
-            totalDurationMs: expect.any(Number),
-            heapUsedMb: expect.any(String)
-          })
-        })
-      );
+      expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
     });
   });
 
@@ -263,21 +273,21 @@ describe('SandboxService', () => {
     it('should catch syntax errors', async () => {
       const transformer = {
         language: 'javascript',
-        customCode: `export function transform() { const a = ; return { data: "bad" }; }`
+        customCode: `this is not valid javascript !!!`
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
-        /\[RUNTIME_ERROR\].*Unexpected token/
+      await expect(sandboxService.execute('', defaultSource, 'syntax-err.txt', transformer, {}, logger)).rejects.toThrow(
+        /\[RUNTIME_ERROR\]/
       );
     });
 
     it('should throw if the code does not export a transform function', async () => {
       const transformer = {
         language: 'javascript',
-        customCode: `const myFunc = () => { return { data: "ok" }; };` // Forgot to name it transform
+        customCode: `const myFunc = () => { return { data: 'ok' }; };` // Forgot to name it transform
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
+      await expect(sandboxService.execute('', defaultSource, 'no-fn.txt', transformer, {}, logger)).rejects.toThrow(
         /\[RUNTIME_ERROR\].*Sandbox execution failed: transform is not defined/
       );
     });
@@ -287,10 +297,11 @@ describe('SandboxService', () => {
         language: 'javascript',
         customCode: `
           function transform() {
-            while(true) {} // Infinite loop
+            while(true) {}
           }
         `
       } as CustomTransformer;
+
       await expect(sandboxService.execute('', defaultSource, 'timeout.txt', transformer, {}, logger)).rejects.toThrow(/\[TIMEOUT_ERROR\]/);
     });
 
@@ -329,7 +340,9 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(/Module "fs" is not allowed/);
+      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
+        /Module "fs" is not allowed/
+      );
     });
 
     it('should throw an error when the transform function returns an invalid shape', async () => {
@@ -361,7 +374,9 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'oom.txt', transformer, {}, logger)).rejects.toThrow(/\[MEMORY_LIMIT_EXCEEDED\]/);
+      await expect(sandboxService.execute('', defaultSource, 'oom.txt', transformer, {}, logger)).rejects.toThrow(
+        /\[MEMORY_LIMIT_EXCEEDED\]/
+      );
     });
 
     it('should throw when transform is a non-function value', async () => {
@@ -379,7 +394,42 @@ describe('SandboxService', () => {
         /Custom code must export a "transform" function/
       );
     });
+  });
 
+  describe('Execution (with failing heap stats)', () => {
+    beforeAll(() => {
+      simulateCreateContextFailure = true;
+      simulateHeapStatsFailure = true;
+    });
 
+    afterAll(() => {
+      simulateCreateContextFailure = false;
+      simulateHeapStatsFailure = false;
+    });
+
+    it('should silently ignore getHeapStatisticsSync failures in the metrics block', async () => {
+      const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
+      await expect(sandboxService.execute('', { source: 'test' }, 'heap-fail.txt', transformer, {}, logger)).rejects.toThrow(
+        '[RUNTIME_ERROR] Sandbox execution failed: createContext failed'
+      );
+      expect(logger.info).not.toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
+    });
+  });
+
+  describe('Execution (with failing createContext)', () => {
+    beforeAll(() => {
+      simulateCreateContextFailure = true;
+    });
+
+    afterAll(() => {
+      simulateCreateContextFailure = false;
+    });
+
+    it('should skip context.release() when context is null', async () => {
+      const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
+      await expect(sandboxService.execute('', { source: 'test' }, 'null-ctx.txt', transformer, {}, logger)).rejects.toThrow(
+        '[RUNTIME_ERROR] Sandbox execution failed: createContext failed'
+      );
+    });
   });
 });

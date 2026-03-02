@@ -1903,6 +1903,33 @@ describe('Repository with populated database', () => {
       expect(createdConnectorWithRemovedTransformer.transformers).toEqual([]);
     });
 
+    it('should remove all transformers for a north connector by transformer id', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newIdWithoutTransformer2');
+      const newNorthConnectorWithoutTransformer2: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+      newNorthConnectorWithoutTransformer2.id = '';
+      newNorthConnectorWithoutTransformer2.name = 'new connector without transformer 2';
+      newNorthConnectorWithoutTransformer2.transformers = [];
+      repository.saveNorth(newNorthConnectorWithoutTransformer2);
+
+      expect(newNorthConnectorWithoutTransformer2.id).toEqual('newIdWithoutTransformer2');
+
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId2');
+      repository.addOrEditTransformer(newNorthConnectorWithoutTransformer2.id, {
+        id: '',
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        south: undefined,
+        items: []
+      });
+      const connectorWithTransformer = repository.findNorthById('newIdWithoutTransformer2')!;
+      expect(connectorWithTransformer.transformers.length).toEqual(1);
+
+      repository.removeTransformersByTransformerId(testData.transformers.list[0].id);
+      const connectorWithRemovedTransformers = repository.findNorthById('newIdWithoutTransformer2')!;
+      expect(connectorWithRemovedTransformers.transformers).toEqual([]);
+    });
+
     it('should update a north connector', () => {
       const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
       newNorthConnector.caching.throttling.maxSize = 999;
@@ -2193,6 +2220,35 @@ describe('Repository with populated database', () => {
       repository.removeTransformer('newId');
       const createdHistoryWithRemovedTransformer = repository.findHistoryById('newIdWithoutTransformer')!;
       expect(createdHistoryWithRemovedTransformer.northTransformers).toEqual([]);
+    });
+
+    it('should remove all transformers for a history query by transformer id', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryIdWithoutTransformer2');
+      const newHistoryWithoutTransformer2: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+        JSON.stringify(testData.historyQueries.list[1])
+      );
+      newHistoryWithoutTransformer2.id = '';
+      newHistoryWithoutTransformer2.name = 'new history without transformer 2';
+      newHistoryWithoutTransformer2.northTransformers = [];
+      newHistoryWithoutTransformer2.items = [];
+      repository.saveHistory(newHistoryWithoutTransformer2);
+
+      expect(newHistoryWithoutTransformer2.id).toEqual('newHistoryIdWithoutTransformer2');
+
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryTransformerId2');
+      repository.addOrEditTransformer(newHistoryWithoutTransformer2.id, {
+        id: '',
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        items: []
+      });
+      const historyWithTransformer = repository.findHistoryById('newHistoryIdWithoutTransformer2')!;
+      expect(historyWithTransformer.northTransformers.length).toEqual(1);
+
+      repository.removeTransformersByTransformerId(testData.transformers.list[0].id);
+      const historyWithRemovedTransformers = repository.findHistoryById('newHistoryIdWithoutTransformer2')!;
+      expect(historyWithRemovedTransformers.northTransformers).toEqual([]);
     });
 
     it('should update a history query', () => {
