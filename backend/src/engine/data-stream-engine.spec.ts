@@ -583,6 +583,73 @@ describe('DataStreamEngine', () => {
     });
   });
 
+  describe('Transformer Reload Management', () => {
+    const transformerId = testData.north.list[0].transformers[0].transformer.id;
+
+    beforeEach(() => {
+      engine['northConnectors'].set(northList[0].id, { north: mockedNorth1, metrics: northConnectorMetricsService });
+      engine['historyQueries'].set(historyList[0].id, { historyQuery: mockedHistoryQuery1, metrics: historyQueryMetricsService });
+    });
+
+    describe('reloadTransformer', () => {
+      it('should reload north connector configuration when transformer is in use', async () => {
+        jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
+        (northConnectorRepository.findNorthById as jest.Mock).mockClear();
+
+        await engine.reloadTransformer(transformerId);
+
+        expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining(testData.north.list[0].name));
+        expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+      });
+
+      it('should reload history query when transformer is in use', async () => {
+        const spyReloadHistoryQuery = jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
+
+        await engine.reloadTransformer(transformerId);
+
+        expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining(testData.historyQueries.list[0].name));
+        expect(spyReloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+      });
+
+      it('should do nothing when transformer is not used', async () => {
+        const spyReloadHistoryQuery = jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
+
+        await engine.reloadTransformer('non-existent-transformer-id');
+
+        expect(logger.warn).not.toHaveBeenCalled();
+        expect(spyReloadHistoryQuery).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('removeAndReloadTransformer', () => {
+      it('should log warning and reload affected north connectors and history queries', async () => {
+        const spyReloadHistoryQuery = jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
+        const spyUpdateNorthConfig = jest.spyOn(engine, 'updateNorthConfiguration');
+
+        await engine.removeAndReloadTransformer(transformerId);
+
+        expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining(transformerId));
+        expect(northConnectorRepository.removeTransformersByTransformerId).toHaveBeenCalledWith(transformerId);
+        expect(historyQueryRepository.removeTransformersByTransformerId).toHaveBeenCalledWith(transformerId);
+        expect(spyUpdateNorthConfig).toHaveBeenCalledWith(testData.north.list[0].id);
+        expect(spyReloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+      });
+
+      it('should not warn or reload when transformer is not used', async () => {
+        const spyReloadHistoryQuery = jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
+        const spyUpdateNorthConfig = jest.spyOn(engine, 'updateNorthConfiguration');
+
+        await engine.removeAndReloadTransformer('non-existent-transformer-id');
+
+        expect(logger.debug).not.toHaveBeenCalled();
+        expect(northConnectorRepository.removeTransformersByTransformerId).toHaveBeenCalledWith('non-existent-transformer-id');
+        expect(historyQueryRepository.removeTransformersByTransformerId).toHaveBeenCalledWith('non-existent-transformer-id');
+        expect(spyUpdateNorthConfig).not.toHaveBeenCalled();
+        expect(spyReloadHistoryQuery).not.toHaveBeenCalled();
+      });
+    });
+  });
+
   describe('Engine Wide Operations', () => {
     beforeEach(async () => {
       await engine.start(northList, southList, historyList);
