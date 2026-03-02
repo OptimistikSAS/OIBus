@@ -947,6 +947,7 @@
           "list": "Custom Transformers",
           "none": "No Custom Transformer",
           "created": "Transformer {{ name }} created",
+          "updated": "Transformer {{ name }} updated",
           "edited": "Transformer {{ name }} edited",
           "confirm-deletion": "Are you sure you want to delete the custom transformer {{ name }}?",
           "deleted": "Transformer {{ name }} deleted",
