@@ -534,4 +534,55 @@ export default class DataStreamEngine {
     const north = this.getNorth(northId);
     north.north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
   }
+
+  async reloadTransformer(transformerId: string): Promise<void> {
+    for (const north of this.northConnectors.values()) {
+      if (north.north.connectorConfiguration.transformers.some(t => t.transformer.id === transformerId)) {
+        this.logger.debug(
+          `Custom transformer "${transformerId}" code changed; reloading north connector "${north.north.connectorConfiguration.name}"`
+        );
+        north.north.connectorConfiguration = this.northConnectorRepository.findNorthById(north.north.connectorConfiguration.id)!;
+      }
+    }
+    for (const { historyQuery } of this.historyQueries.values()) {
+      if (historyQuery.historyQueryConfiguration.northTransformers.some(t => t.transformer.id === transformerId)) {
+        this.logger.debug(
+          `Custom transformer "${transformerId}" code changed; reloading history query "${historyQuery.historyQueryConfiguration.name}"`
+        );
+        await this.reloadHistoryQuery(historyQuery.historyQueryConfiguration, false);
+      }
+    }
+  }
+
+  async removeAndReloadTransformer(transformerId: string): Promise<void> {
+    const affectedNorthIds: Array<string> = [];
+    for (const north of this.northConnectors.values()) {
+      if (north.north.connectorConfiguration.transformers.some(t => t.transformer.id === transformerId)) {
+        affectedNorthIds.push(north.north.connectorConfiguration.id);
+      }
+    }
+    const affectedHistoryConfigs: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> = [];
+    for (const { historyQuery } of this.historyQueries.values()) {
+      if (historyQuery.historyQueryConfiguration.northTransformers.some(t => t.transformer.id === transformerId)) {
+        affectedHistoryConfigs.push(historyQuery.historyQueryConfiguration);
+      }
+    }
+
+    if (affectedNorthIds.length > 0 || affectedHistoryConfigs.length > 0) {
+      this.logger.debug(
+        `Custom transformer "${transformerId}" manifest changed; removing transformer from ` +
+          `${affectedNorthIds.length} north connector(s) and ${affectedHistoryConfigs.length} history query(ies)`
+      );
+    }
+
+    this.northConnectorRepository.removeTransformersByTransformerId(transformerId);
+    this.historyQueryRepository.removeTransformersByTransformerId(transformerId);
+
+    for (const northId of affectedNorthIds) {
+      this.updateNorthConfiguration(northId);
+    }
+    for (const config of affectedHistoryConfigs) {
+      await this.reloadHistoryQuery(config, false);
+    }
+  }
 }

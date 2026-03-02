@@ -11,6 +11,7 @@ export default jest.fn().mockImplementation(() => {
     stopNorth: jest.fn(),
     deleteNorth: jest.fn(),
     addOrEditTransformer: jest.fn(),
-    removeTransformer: jest.fn()
+    removeTransformer: jest.fn(),
+    removeTransformersByTransformerId: jest.fn()
   };
 });
