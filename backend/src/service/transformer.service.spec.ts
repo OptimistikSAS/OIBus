@@ -6,6 +6,7 @@ import TransformerRepository from '../repository/config/transformer.repository';
 import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import { CustomTransformer, StandardTransformer } from '../model/transformer.model';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -42,11 +43,14 @@ import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-
 jest.mock('papaparse');
 jest.mock('./utils');
 jest.mock('../web-server/controllers/validators/joi.validator');
+jest.mock('isolated-vm', () => ({ default: { Isolate: jest.fn() } }));
 jest.mock('../transformers/oibus-custom-transformer');
 
 const validator = new JoiValidator();
 const transformerRepository: TransformerRepository = new TransformerRepositoryMock();
 const oiAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const engine: any = new DataStreamEngineMock();
 
 let service: TransformerService;
 describe('Transformer Service', () => {
@@ -54,7 +58,7 @@ describe('Transformer Service', () => {
     jest.clearAllMocks();
     (transformerRepository.list as jest.Mock).mockReturnValue([]);
 
-    service = new TransformerService(validator, transformerRepository, oiAnalyticsMessageService);
+    service = new TransformerService(validator, transformerRepository, oiAnalyticsMessageService, engine);
   });
 
   it('should search transformers', () => {
@@ -200,19 +204,59 @@ describe('Transformer Service', () => {
     expect(transformerRepository.save).not.toHaveBeenCalled();
   });
 
+  it('should call reloadTransformer when custom code changes', async () => {
+    const command = JSON.parse(JSON.stringify(testData.transformers.command));
+    command.name = (testData.transformers.list[0] as CustomTransformer).name;
+    command.customCode = 'console.log("updated code");';
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(JSON.parse(JSON.stringify(testData.transformers.list[0])));
+
+    await service.update(testData.transformers.list[0].id, command);
+
+    expect(transformerRepository.save).toHaveBeenCalled();
+    expect(engine.reloadTransformer).toHaveBeenCalledWith(testData.transformers.list[0].id);
+    expect(engine.removeAndReloadTransformer).not.toHaveBeenCalled();
+  });
+
+  it('should call removeAndReloadTransformer when manifest changes', async () => {
+    const command = JSON.parse(JSON.stringify(testData.transformers.command));
+    command.name = (testData.transformers.list[0] as CustomTransformer).name;
+    command.customManifest = { ...command.customManifest, key: 'transformers.updated' };
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(JSON.parse(JSON.stringify(testData.transformers.list[0])));
+
+    await service.update(testData.transformers.list[0].id, command);
+
+    expect(transformerRepository.save).toHaveBeenCalled();
+    expect(engine.removeAndReloadTransformer).toHaveBeenCalledWith(testData.transformers.list[0].id);
+    expect(engine.reloadTransformer).not.toHaveBeenCalled();
+  });
+
+  it('should not call engine reload when only name or description changes', async () => {
+    const command = JSON.parse(JSON.stringify(testData.transformers.command));
+    command.name = (testData.transformers.list[0] as CustomTransformer).name;
+    command.description = 'Updated description only';
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(JSON.parse(JSON.stringify(testData.transformers.list[0])));
+
+    await service.update(testData.transformers.list[0].id, command);
+
+    expect(transformerRepository.save).toHaveBeenCalled();
+    expect(engine.reloadTransformer).not.toHaveBeenCalled();
+    expect(engine.removeAndReloadTransformer).not.toHaveBeenCalled();
+  });
+
   it('should delete a transformer', async () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
 
     await service.delete(testData.transformers.list[0].id);
 
     expect(transformerRepository.findById).toHaveBeenCalledWith(testData.transformers.list[0].id);
+    expect(engine.removeAndReloadTransformer).toHaveBeenCalledWith(testData.transformers.list[0].id);
     expect(transformerRepository.delete).toHaveBeenCalledWith(testData.transformers.list[0].id);
   });
 
   it('should not delete if the transformer is not found', async () => {
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
-    expect(() => service.delete(testData.transformers.list[0].id)).toThrow(
+    await expect(service.delete(testData.transformers.list[0].id)).rejects.toThrow(
       new Error(`Transformer "${testData.transformers.list[0].id}" not found`)
     );
 
@@ -227,7 +271,7 @@ describe('Transformer Service', () => {
     } as StandardTransformer;
     (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
 
-    expect(() => service.delete(standardTransformer.id)).toThrow(
+    await expect(service.delete(standardTransformer.id)).rejects.toThrow(
       new Error(`Cannot delete standard transformer "${standardTransformer.id}"`)
     );
 

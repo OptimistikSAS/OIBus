@@ -86,27 +86,18 @@ export default class SandboxService {
       const jail = context.global;
 
       // These cannot be snapshotted, so we do them at execution time.
-      await jail.set(
-        '_trace',
-        new ivm.Reference((...args: Array<unknown>) => logger.trace(['CUSTOM TRANSFORMER:', ...args].join(' ')))
-      );
-      await jail.set(
-        '_debug',
-        new ivm.Reference((...args: Array<unknown>) => logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' ')))
-      );
+      await jail.set('_trace', new ivm.Reference((...args: Array<unknown>) => logger.trace(['CUSTOM TRANSFORMER:', ...args].join(' '))));
+      await jail.set('_debug', new ivm.Reference((...args: Array<unknown>) => logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' '))));
       await jail.set('_log', new ivm.Reference((...args: Array<unknown>) => logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' '))));
       await jail.set('_info', new ivm.Reference((...args: Array<unknown>) => logger.info(['CUSTOM TRANSFORMER:', ...args].join(' '))));
       await jail.set('_warn', new ivm.Reference((...args: Array<unknown>) => logger.warn(['CUSTOM TRANSFORMER:', ...args].join(' '))));
-      await jail.set(
-        '_error',
-        new ivm.Reference((...args: Array<unknown>) => logger.error(['CUSTOM TRANSFORMER:', ...args].join(' ')))
-      );
+      await jail.set('_error', new ivm.Reference((...args: Array<unknown>) => logger.error(['CUSTOM TRANSFORMER:', ...args].join(' '))));
 
       await context.eval(`
         global.console = {
           trace: (...args) => _trace.apply(undefined, args, { arguments: { copy: true } }),
           debug: (...args) => _debug.apply(undefined, args, { arguments: { copy: true } }),
-          log: (...args) => _debug.apply(undefined, args, { arguments: { copy: true } }),
+          log: (...args) => _log.apply(undefined, args, { arguments: { copy: true } }),
           info: (...args) => _info.apply(undefined, args, { arguments: { copy: true } }),
           warn: (...args) => _warn.apply(undefined, args, { arguments: { copy: true } }),
           error: (...args) => _error.apply(undefined, args, { arguments: { copy: true } })
