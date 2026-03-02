@@ -11,6 +11,7 @@ export default jest.fn().mockImplementation(() => {
     deleteHistory: jest.fn(),
     addOrEditTransformer: jest.fn(),
     removeTransformer: jest.fn(),
+    removeTransformersByTransformerId: jest.fn(),
     searchItems: jest.fn(),
     listItems: jest.fn(),
     findAllItemsForHistory: jest.fn(),
