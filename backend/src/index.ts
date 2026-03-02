@@ -141,7 +141,12 @@ const CERT_FOLDER = 'certs';
     loggerService.logger!
   );
 
-  const transformerService = new TransformerService(new JoiValidator(), repositoryService.transformerRepository, oIAnalyticsMessageService);
+  const transformerService = new TransformerService(
+    new JoiValidator(),
+    repositoryService.transformerRepository,
+    oIAnalyticsMessageService,
+    dataStreamEngine
+  );
 
   const northService = new NorthService(
     new JoiValidator(),

@@ -17,6 +17,11 @@ import { Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import pino from 'pino';
+
+interface TransformerReloadEngine {
+  reloadTransformer(transformerId: string): Promise<void>;
+  removeAndReloadTransformer(transformerId: string): Promise<void>;
+}
 import OibusTransformer from '../transformers/oibus-transformer';
 import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
 import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
@@ -72,7 +77,8 @@ export default class TransformerService {
   constructor(
     protected readonly validator: JoiValidator,
     private transformerRepository: TransformerRepository,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService
+    private oIAnalyticsMessageService: OIAnalyticsMessageService,
+    private engine: TransformerReloadEngine
   ) {}
 
   listManifest(): Array<TransformerManifest> {
@@ -134,16 +140,26 @@ export default class TransformerService {
       }
     }
 
-    await copyTransformerCommandToTransformerEntity(transformer as CustomTransformer, command);
-    this.transformerRepository.save(transformer);
+    const manifestChanged = JSON.stringify(command.customManifest) !== JSON.stringify(customTransformer.customManifest);
+    const codeChanged = command.customCode !== customTransformer.customCode;
+
+    await copyTransformerCommandToTransformerEntity(customTransformer, command);
+    this.transformerRepository.save(customTransformer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+
+    if (manifestChanged) {
+      await this.engine.removeAndReloadTransformer(transformerId);
+    } else if (codeChanged) {
+      await this.engine.reloadTransformer(transformerId);
+    }
   }
 
-  delete(transformerId: string): void {
+  async delete(transformerId: string): Promise<void> {
     const transformer = this.findById(transformerId);
     if (transformer.type === 'standard') {
       throw new OIBusValidationError(`Cannot delete standard transformer "${transformerId}"`);
     }
+    await this.engine.removeAndReloadTransformer(transformerId);
     this.transformerRepository.delete(transformerId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
