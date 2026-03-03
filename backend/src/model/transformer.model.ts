@@ -17,6 +17,7 @@ export interface CustomTransformer extends BaseEntity, BaseTransformer {
   customCode: string;
   language: TransformerLanguage;
   customManifest: OIBusObjectAttribute;
+  timeout: number;
 }
 
 export interface StandardTransformer extends BaseTransformer {

@@ -1144,6 +1144,12 @@
 						"$ref": "#/components/schemas/TransformerLanguage",
 						"description": "The language used",
 						"example": "javascript"
+					},
+					"timeout": {
+						"type": "number",
+						"format": "double",
+						"description": "The maximum execution time for the custom code in milliseconds.",
+						"example": 2000
 					}
 				},
 				"required": [
@@ -1155,7 +1161,8 @@
 					"name",
 					"description",
 					"customCode",
-					"language"
+					"language",
+					"timeout"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1316,6 +1323,12 @@
 						"$ref": "#/components/schemas/TransformerLanguage",
 						"description": "The language of the custom code",
 						"example": "javascript"
+					},
+					"timeout": {
+						"type": "number",
+						"format": "double",
+						"description": "The maximum execution time for the custom code in milliseconds.",
+						"example": 2000
 					}
 				},
 				"required": [
@@ -1326,7 +1339,8 @@
 					"description",
 					"customCode",
 					"customManifest",
-					"language"
+					"language",
+					"timeout"
 				],
 				"type": "object",
 				"additionalProperties": false

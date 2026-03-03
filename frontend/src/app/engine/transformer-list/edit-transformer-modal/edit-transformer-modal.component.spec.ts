@@ -115,6 +115,7 @@ describe('EditTransformerModalComponent', () => {
       description: 'my description',
       customCode: 'my code',
       language: 'javascript',
+      timeout: 2000,
       customManifest: {
         type: 'object',
         key: 'options',
@@ -151,6 +152,7 @@ describe('EditTransformerModalComponent', () => {
       description: testData.transformers.customList[0].description,
       customCode: testData.transformers.customList[0].customCode,
       language: testData.transformers.customList[0].language,
+      timeout: testData.transformers.customList[0].timeout,
       customManifest: {
         type: 'object',
         key: 'options',

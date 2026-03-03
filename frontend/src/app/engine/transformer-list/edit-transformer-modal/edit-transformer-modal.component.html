@@ -26,6 +26,22 @@
         </div>
       </div>
 
+      <div class="row">
+        <!-- Timeout -->
+        <div class="form-group">
+          <label
+            class="form-label"
+            for="timeout"
+            translate="configuration.oibus.manifest.transformers.edit-transformer-modal.timeout"
+          ></label>
+          <div class="input-group">
+            <input formControlName="timeout" id="timeout" type="number" class="form-control" min="100" />
+            <span class="input-group-text">ms</span>
+          </div>
+          <val-errors controlName="timeout" />
+        </div>
+      </div>
+
       @if (mode === 'create') {
         <div class="row">
           <!-- Input type -->
