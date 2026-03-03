@@ -450,6 +450,7 @@ describe('Transformer Service', () => {
           }
         `,
         language: 'javascript',
+        timeout: 2000,
         customManifest: {
           type: 'object',
           key: 'options',
@@ -497,6 +498,7 @@ describe('Transformer Service', () => {
           }
         `,
         language: 'javascript',
+        timeout: 2000,
         customManifest: {
           type: 'object',
           key: 'options',
@@ -657,6 +659,7 @@ describe('Transformer Service', () => {
       language: customTransformer.language,
       outputType: customTransformer.outputType,
       customCode: customTransformer.customCode,
+      timeout: customTransformer.timeout,
       manifest: customTransformer.customManifest
     });
     const standardTransformer: StandardTransformer = {

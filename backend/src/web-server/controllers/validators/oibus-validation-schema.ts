@@ -150,7 +150,8 @@ const transformerSchema: Joi.ObjectSchema = Joi.object({
   outputType: Joi.string().required(),
   language: Joi.string().required(),
   customCode: Joi.string().required(),
-  customManifest: Joi.object().required()
+  customManifest: Joi.object().required(),
+  timeout: Joi.number().integer().min(100).required()
 });
 
 function cronValidator(value: string, helper: Joi.CustomHelpers) {
