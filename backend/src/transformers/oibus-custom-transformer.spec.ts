@@ -1,27 +1,22 @@
-import SandboxServiceMock from '../tests/__mocks__/service/sandbox-service.mock';
+import { sandboxService } from '../service/sandbox.service';
 import { Readable } from 'stream';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
 import OIBusCustomTransformer from './oibus-custom-transformer';
 import { CustomTransformer } from '../model/transformer.model';
-import SandboxService from '../service/sandbox.service';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
 import { flushPromises } from '../tests/utils/test-utils';
-
-const sandboxService: SandboxService = new SandboxServiceMock();
 
 jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn().mockReturnValue('randomId')
 }));
 
-jest.mock(
-  '../service/sandbox.service',
-  () =>
-    function () {
-      return sandboxService;
-    }
-);
+jest.mock('../service/sandbox.service', () => ({
+  __esModule: true,
+  default: class MockSandboxService {},
+  sandboxService: { execute: jest.fn() }
+}));
 
 const logger: pino.Logger = new PinoLogger();
 
@@ -91,7 +86,8 @@ describe('OIBusCustomTransformer', () => {
       { source: 'test' },
       'randomId.json',
       testData.transformers.list[0],
-      {}
+      {},
+      logger
     );
   });
 });
