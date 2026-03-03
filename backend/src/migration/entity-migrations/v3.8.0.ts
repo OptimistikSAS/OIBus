@@ -158,6 +158,7 @@ async function updateRegistrationSettings(knex: Knex): Promise<void> {
 async function updateTransformersTable(knex: Knex): Promise<void> {
   await knex.schema.alterTable(TRANSFORMERS_TABLE, table => {
     table.string('language');
+    table.integer('timeout');
   });
 
   await knex(TRANSFORMERS_TABLE).update({ language: 'javascript' }).where('type', 'custom');
@@ -413,7 +414,7 @@ async function migrateSubscriptionsToTransformers(knex: Knex): Promise<void> {
     table.uuid('id');
     table.string('south_id').nullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('SET NULL');
   });
-  const northRows = await knex(NORTH_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'));
+  const northRows = (await knex(NORTH_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'))) as Array<{ rid: string }>;
   // Update rows one by one (or use Promise.all for parallel batches)
   for (const row of northRows) {
     await knex(NORTH_TRANSFORMERS_TABLE)
@@ -427,7 +428,7 @@ async function migrateSubscriptionsToTransformers(knex: Knex): Promise<void> {
   await knex.schema.alterTable(HISTORY_QUERY_TRANSFORMERS_TABLE, table => {
     table.uuid('id');
   });
-  const historyRows = await knex(HISTORY_QUERY_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'));
+  const historyRows = (await knex(HISTORY_QUERY_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'))) as Array<{ rid: string }>;
   // Update rows one by one (or use Promise.all for parallel batches)
   for (const row of historyRows) {
     await knex(HISTORY_QUERY_TRANSFORMERS_TABLE)
@@ -907,6 +908,7 @@ const jpGet = (obj: any, path: string) => {
     description: 'Custom transformer for MQTT payloads with support for complex JSON, custom timestamps, and Point IDs.',
     customCode: customCode,
     language: 'typescript',
+    timeout: 2000,
     customManifest: {
       type: 'object',
       key: 'options',
