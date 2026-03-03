@@ -68,6 +68,7 @@ export class EditTransformerModalComponent implements OnInit {
   form = this.fb.group({
     name: ['', Validators.required],
     description: '',
+    timeout: this.fb.control(2000, [Validators.required, Validators.min(100)]),
     customCode: ['', Validators.required],
     attributes: this.fb.control([] as Array<OIBusAttribute>)
   });
@@ -147,6 +148,7 @@ function transform(inputData, source, filename, options) {
     this.form.patchValue({
       name: transformer.name,
       description: transformer.description,
+      timeout: transformer.timeout,
       customCode: transformer.customCode,
       attributes: transformer.manifest.attributes
     });
@@ -189,14 +191,15 @@ function transform(inputData, source, filename, options) {
         inputType: this.inputType.value!,
         outputType: this.outputType.value!,
         language: this.language.value!,
-        name: formValue.name || 'Test Transformer',
-        description: formValue.description || '',
-        customCode: formValue.customCode || '',
+        name: formValue.name!,
+        description: formValue.description!,
+        timeout: formValue.timeout!,
+        customCode: formValue.customCode!,
         customManifest: {
           type: 'object',
           key: 'options',
           translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
-          attributes: formValue.attributes || [],
+          attributes: formValue.attributes!,
           enablingConditions: [],
           validators: [],
           displayProperties: {
@@ -240,6 +243,7 @@ function transform(inputData, source, filename, options) {
       language,
       name: formValue.name!,
       description: formValue.description!,
+      timeout: formValue.timeout!,
       customCode: formValue.customCode!,
       customManifest: {
         type: 'object',
