@@ -88,6 +88,7 @@ const transformerCommandDTO: CustomTransformerCommandDTO = {
   outputType: 'any',
   customCode: 'console.log("Hello World");',
   language: 'javascript',
+  timeout: 2000,
   customManifest: {
     type: 'object',
     key: 'transformers.options',
@@ -111,6 +112,7 @@ const transformers: Array<Transformer> = [
     outputType: 'any',
     customCode: 'console.log("Hello World");',
     language: 'javascript',
+    timeout: 2000,
     customManifest: {
       type: 'object',
       key: 'transformers.options',
@@ -133,6 +135,7 @@ const transformers: Array<Transformer> = [
     outputType: 'any',
     customCode: 'console.log("Hello World");',
     language: 'javascript',
+    timeout: 2000,
     customManifest: {
       type: 'object',
       key: 'transformers.options',
@@ -155,6 +158,7 @@ const transformers: Array<Transformer> = [
     outputType: 'any',
     customCode: 'console.log("Hello World");',
     language: 'javascript',
+    timeout: 2000,
     customManifest: {
       type: 'object',
       key: 'transformers.options',
@@ -179,6 +183,7 @@ const customTransformers: Array<CustomTransformerDTO> = [
     outputType: 'any',
     customCode: 'console.log("Hello World");',
     language: 'javascript',
+    timeout: 2000,
     manifest: {
       type: 'object',
       key: 'transformers.options',
@@ -201,6 +206,7 @@ const customTransformers: Array<CustomTransformerDTO> = [
     outputType: 'any',
     customCode: 'console.log("Hello World");',
     language: 'javascript',
+    timeout: 2000,
     manifest: {
       type: 'object',
       key: 'transformers.options',

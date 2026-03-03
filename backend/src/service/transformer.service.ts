@@ -337,6 +337,7 @@ export const copyTransformerCommandToTransformerEntity = async (
   transformer.customCode = command.customCode;
   transformer.language = command.language;
   transformer.customManifest = command.customManifest;
+  transformer.timeout = command.timeout;
 };
 
 export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
@@ -360,7 +361,8 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         outputType: transformer.outputType,
         customCode: transformer.customCode,
         language: transformer.language,
-        manifest: transformer.customManifest
+        manifest: transformer.customManifest,
+        timeout: transformer.timeout
       };
   }
 };

@@ -982,6 +982,7 @@
             "custom-code": "Code",
             "language": "Language",
             "custom-manifest": "Options",
+            "timeout": "Execution timeout",
             "select-language": "Select a programming language first.",
             "test": "Test",
             "tooltips": {
