@@ -146,7 +146,8 @@ describe('SandboxService', () => {
               numberOfElement: 1
             };
           }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       const result = await sandboxService.execute('hello world', defaultSource, 'test.txt', transformer, { myVar: 42 }, logger);
@@ -172,7 +173,8 @@ describe('SandboxService', () => {
               numberOfElement: 1
             };
           }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       const result = await sandboxService.execute(
@@ -213,7 +215,8 @@ describe('SandboxService', () => {
             const dt = DateTime.fromISO(content);
             return { data: { year: dt.year }, filename: 'out.json' };
           }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       const result = await sandboxService.execute('2026-01-01', defaultSource, 'test.txt', transformer, {}, logger);
@@ -229,7 +232,8 @@ describe('SandboxService', () => {
             const results = JSONPath({ path: '$.store.book[*].author', json: {} });
             return { data: results, filename: 'out.json' };
           }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       const result = await sandboxService.execute('{}', defaultSource, 'test.txt', transformer, {}, logger);
@@ -245,7 +249,8 @@ describe('SandboxService', () => {
             const result = Papa.parse('name,age');
             return { data: result.data, filename: 'out.json' };
           }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
@@ -258,7 +263,8 @@ describe('SandboxService', () => {
     it('should log execution metrics on success', async () => {
       const transformer = {
         language: 'javascript',
-        customCode: `function transform() { return { data: 'ok', filename: 'f.json' }; }`
+        customCode: `function transform() { return { data: 'ok', filename: 'f.json' }; }`,
+        timeout: 5000
       } as CustomTransformer;
 
       await sandboxService.execute('', defaultSource, 'metrics.txt', transformer, {}, logger);
@@ -273,7 +279,8 @@ describe('SandboxService', () => {
     it('should catch syntax errors', async () => {
       const transformer = {
         language: 'javascript',
-        customCode: `this is not valid javascript !!!`
+        customCode: `this is not valid javascript !!!`,
+        timeout: 5000
       } as CustomTransformer;
 
       await expect(sandboxService.execute('', defaultSource, 'syntax-err.txt', transformer, {}, logger)).rejects.toThrow(
@@ -284,7 +291,8 @@ describe('SandboxService', () => {
     it('should throw if the code does not export a transform function', async () => {
       const transformer = {
         language: 'javascript',
-        customCode: `const myFunc = () => { return { data: 'ok' }; };` // Forgot to name it transform
+        customCode: `const myFunc = () => { return { data: 'ok' }; };`, // Forgot to name it transform
+        timeout: 5000
       } as CustomTransformer;
 
       await expect(sandboxService.execute('', defaultSource, 'no-fn.txt', transformer, {}, logger)).rejects.toThrow(
@@ -299,7 +307,8 @@ describe('SandboxService', () => {
           function transform() {
             while(true) {}
           }
-        `
+        `,
+        timeout: 100
       } as CustomTransformer;
 
       await expect(sandboxService.execute('', defaultSource, 'timeout.txt', transformer, {}, logger)).rejects.toThrow(/\[TIMEOUT_ERROR\]/);
@@ -318,7 +327,8 @@ describe('SandboxService', () => {
             console.error('This is an error from the sandbox');
             return { data: 'ok' };
           }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       await sandboxService.execute('', defaultSource, 'log.txt', transformer, {}, logger);
@@ -337,7 +347,8 @@ describe('SandboxService', () => {
         customCode: `
           const fs = require('fs'); // Unauthorized module
           function transform() { return { data: "ok" }; }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
@@ -352,7 +363,8 @@ describe('SandboxService', () => {
           function transform() {
             return { wrongKey: "missing data property" };
           }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
@@ -371,11 +383,47 @@ describe('SandboxService', () => {
               hugeArray.push(new Array(1000000).fill('memory leak'));
             }
           }
-        `
+        `,
+        timeout: 5000
       } as CustomTransformer;
 
       await expect(sandboxService.execute('', defaultSource, 'oom.txt', transformer, {}, logger)).rejects.toThrow(
         /\[MEMORY_LIMIT_EXCEEDED\]/
+      );
+    });
+
+    it('should catch TypeScript transpilation errors and map them to SYNTAX_ERROR', async () => {
+      // Since we cannot mock the TypeScript compiler directly, we can trigger the exact
+      // error-routing logic by having the sandbox throw an error containing the target string.
+      const transformer = {
+        language: 'javascript',
+        customCode: `
+          function transform() {
+            throw new Error('TypeScript compilation failed: Invalid syntax');
+          }
+        `,
+        timeout: 5000
+      } as CustomTransformer;
+
+      await expect(sandboxService.execute('', defaultSource, 'ts-err.txt', transformer, {}, logger)).rejects.toThrow(
+        /\[SYNTAX_ERROR\] Sandbox execution failed: TypeScript compilation failed/
+      );
+    });
+
+    it('should throw if the code does not export a transform function', async () => {
+      // We define 'transform' as a string instead of a function.
+      // This prevents V8 from throwing a ReferenceError during script compilation,
+      // allowing the code to safely reach the 'typeof transformFnRef !== "function"' check.
+      const transformer = {
+        language: 'javascript',
+        customCode: `
+          var transform = "I am a string, not a function!";
+        `,
+        timeout: 5000
+      } as CustomTransformer;
+
+      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
+        /Custom code must export a "transform" function/
       );
     });
 
