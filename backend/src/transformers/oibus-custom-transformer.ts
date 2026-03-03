@@ -6,15 +6,13 @@ import pino from 'pino';
 import { CustomTransformer } from '../model/transformer.model';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import SandboxService from '../service/sandbox.service';
+import { sandboxService } from '../service/sandbox.service';
 import { promisify } from 'node:util';
 import { generateRandomId } from '../service/utils';
 
 const pipelineAsync = promisify(pipeline);
 
 export default class OIBusCustomTransformer extends OIBusTransformer {
-  private sandboxService: SandboxService;
-
   constructor(
     protected logger: pino.Logger,
     protected transformer: CustomTransformer,
@@ -22,7 +20,6 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
     protected _options: object
   ) {
     super(logger, transformer, northConnector, transformer);
-    this.sandboxService = new SandboxService(logger);
   }
 
   async transform(
@@ -41,12 +38,13 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
         }
       })
     );
-    return await this.sandboxService.execute(
+    return await sandboxService.execute(
       Buffer.concat(chunks).toString('utf-8'),
       source,
       filename || `${generateRandomId(10)}.json`,
       this.transformer,
-      this._options
+      this._options,
+      this.logger
     );
   }
 }
