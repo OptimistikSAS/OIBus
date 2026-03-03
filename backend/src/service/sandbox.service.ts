@@ -1,8 +1,8 @@
 import ivm from 'isolated-vm';
+import ts from 'typescript';
 import { Logger } from 'pino';
 import { CustomTransformer } from '../model/transformer.model';
 import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
-import ts from 'typescript';
 import * as fs from 'node:fs';
 import { resolveBypassingExports } from './utils';
 
@@ -148,7 +148,7 @@ export default class SandboxService {
       `;
 
       const script = await isolate.compileScript(wrappedCode);
-      await script.run(context);
+      await script.run(context, { timeout: transformer.timeout });
 
       const transformFnRef = await jail.get('__sandbox_transform', { reference: true });
       if (typeof transformFnRef === 'undefined' || transformFnRef.typeof !== 'function') {
@@ -165,7 +165,7 @@ export default class SandboxService {
         ],
         {
           result: { copy: true, promise: true },
-          timeout: 2000
+          timeout: transformer.timeout
         }
       )) as ResultOutput;
 

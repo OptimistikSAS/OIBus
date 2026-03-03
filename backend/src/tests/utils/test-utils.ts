@@ -643,6 +643,7 @@ const createTransformer = async (database: knex.Knex, transformer: Transformer) 
           description: transformer.description,
           custom_code: transformer.customCode,
           language: transformer.language,
+          timeout: transformer.timeout,
           custom_manifest: JSON.stringify(transformer.customManifest)
         })
         .into('transformers');
