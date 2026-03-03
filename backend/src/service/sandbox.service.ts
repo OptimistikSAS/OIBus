@@ -14,8 +14,11 @@ interface ResultOutput {
 
 export default class SandboxService {
   private readonly snapshot: ivm.ExternalCopy<ArrayBuffer> | null = null;
+  private readonly initMessage: { level: 'info' | 'error'; text: string };
+  private initLogged = false;
+  private readonly tsCache = new Map<string, string>();
 
-  constructor(private readonly logger: Logger) {
+  constructor() {
     try {
       const luxonSource = fs.readFileSync(resolveBypassingExports('luxon', 'build/global/luxon.min.js'), 'utf8');
       const jsonPathSource = fs.readFileSync(resolveBypassingExports('jsonpath-plus', 'dist/index-browser-umd.cjs'), 'utf8');
@@ -49,9 +52,9 @@ export default class SandboxService {
 
       // We store the snapshot in memory to instantly clone new Isolates from it.
       this.snapshot = ivm.Isolate.createSnapshot([{ code: snapshotSetupCode }]);
-      this.logger.info('Sandbox snapshot created successfully.');
+      this.initMessage = { level: 'info', text: 'Sandbox snapshot created successfully.' };
     } catch (e) {
-      this.logger.error(`Could not load sandbox libraries or create snapshot: ${(e as Error).message}`);
+      this.initMessage = { level: 'error', text: `Could not load sandbox libraries or create snapshot: ${(e as Error).message}` };
       this.snapshot = null;
     }
   }
@@ -61,8 +64,13 @@ export default class SandboxService {
     source: CacheMetadataSource,
     filename: string,
     transformer: CustomTransformer,
-    options: object
+    options: object,
+    logger: Logger
   ): Promise<{ metadata: CacheMetadata; output: string }> {
+    if (!this.initLogged) {
+      logger[this.initMessage.level](this.initMessage.text);
+      this.initLogged = true;
+    }
     const startTime = process.hrtime.bigint();
     const memoryLimitMb = 256;
 
@@ -80,18 +88,18 @@ export default class SandboxService {
       // These cannot be snapshotted, so we do them at execution time.
       await jail.set(
         '_trace',
-        new ivm.Reference((...args: Array<unknown>) => this.logger.trace(['CUSTOM TRANSFORMER:', ...args].join(' ')))
+        new ivm.Reference((...args: Array<unknown>) => logger.trace(['CUSTOM TRANSFORMER:', ...args].join(' ')))
       );
       await jail.set(
         '_debug',
-        new ivm.Reference((...args: Array<unknown>) => this.logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' ')))
+        new ivm.Reference((...args: Array<unknown>) => logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' ')))
       );
-      await jail.set('_log', new ivm.Reference((...args: Array<unknown>) => this.logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' '))));
-      await jail.set('_info', new ivm.Reference((...args: Array<unknown>) => this.logger.info(['CUSTOM TRANSFORMER:', ...args].join(' '))));
-      await jail.set('_warn', new ivm.Reference((...args: Array<unknown>) => this.logger.warn(['CUSTOM TRANSFORMER:', ...args].join(' '))));
+      await jail.set('_log', new ivm.Reference((...args: Array<unknown>) => logger.debug(['CUSTOM TRANSFORMER:', ...args].join(' '))));
+      await jail.set('_info', new ivm.Reference((...args: Array<unknown>) => logger.info(['CUSTOM TRANSFORMER:', ...args].join(' '))));
+      await jail.set('_warn', new ivm.Reference((...args: Array<unknown>) => logger.warn(['CUSTOM TRANSFORMER:', ...args].join(' '))));
       await jail.set(
         '_error',
-        new ivm.Reference((...args: Array<unknown>) => this.logger.error(['CUSTOM TRANSFORMER:', ...args].join(' ')))
+        new ivm.Reference((...args: Array<unknown>) => logger.error(['CUSTOM TRANSFORMER:', ...args].join(' ')))
       );
 
       await context.eval(`
@@ -107,10 +115,20 @@ export default class SandboxService {
 
       let codeToExecute = transformer.customCode;
       if (transformer.language === 'typescript') {
-        const transpileResult = ts.transpileModule(transformer.customCode, {
-          compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
-        });
-        codeToExecute = transpileResult.outputText;
+        const cached = this.tsCache.get(transformer.customCode);
+        if (cached !== undefined) {
+          codeToExecute = cached;
+        } else {
+          try {
+            const transpileResult = ts.transpileModule(transformer.customCode, {
+              compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
+            });
+            codeToExecute = transpileResult.outputText;
+            this.tsCache.set(transformer.customCode, codeToExecute);
+          } catch (e) {
+            throw new Error(`TypeScript compilation failed: ${(e as Error).message}`);
+          }
+        }
       }
 
       // We wrap the user code, and because of the snapshot,
@@ -191,7 +209,7 @@ export default class SandboxService {
           const cpuTimeNs = isolate.cpuTime;
           const totalDurationMs = Number(process.hrtime.bigint() - startTime) / 1e6;
 
-          this.logger.info({
+          logger.info({
             msg: `Sandbox Execution Metrics for ${filename}`,
             metrics: {
               cpuTimeMs: Number(cpuTimeNs) / 1e6,
@@ -212,3 +230,5 @@ export default class SandboxService {
     }
   }
 }
+
+export const sandboxService = new SandboxService();
