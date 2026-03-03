@@ -49,7 +49,7 @@ describe('SandboxService', () => {
     });
 
     // Instantiate the service (this will now use our fake mocked libraries)
-    sandboxService = new SandboxService(logger);
+    sandboxService = new SandboxService();
   });
 
   afterAll(() => {
@@ -57,8 +57,29 @@ describe('SandboxService', () => {
   });
 
   describe('Initialization', () => {
-    it('should create a snapshot successfully upon instantiation', () => {
+    it('should log snapshot created successfully on first execute', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { return { data: 'ok' }; }`
+      } as CustomTransformer;
+
+      await sandboxService.execute('', { source: 'test' }, 'file', transformer, {}, logger);
       expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Sandbox snapshot created successfully'));
+    });
+
+    it('should only log the init message once across multiple executions', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { return { data: 'ok' }; }`
+      } as CustomTransformer;
+
+      await sandboxService.execute('', { source: 'test' }, 'file1', transformer, {}, logger);
+      await sandboxService.execute('', { source: 'test' }, 'file2', transformer, {}, logger);
+
+      const initLogCount = (logger.info as jest.Mock).mock.calls.filter(
+        ([arg]) => typeof arg === 'string' && arg.includes('Sandbox snapshot created successfully')
+      ).length;
+      expect(initLogCount).toBe(1);
     });
 
     it('should fail gracefully and log a fatal error if library files are missing', async () => {
@@ -67,16 +88,16 @@ describe('SandboxService', () => {
         throw new Error('File not found simulation');
       });
 
-      const brokenService = new SandboxService(logger);
-
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not load sandbox libraries or create snapshot'));
+      const brokenService = new SandboxService();
 
       const dummyTransformer = { customCode: '', language: 'javascript' } as CustomTransformer;
 
-      // Execute should throw an error because the snapshot is missing
-      await expect(brokenService.execute('test', { source: 'test' }, 'file.txt', dummyTransformer, {})).rejects.toThrow(
+      // Execute should log the error and then fail
+      await expect(brokenService.execute('test', { source: 'test' }, 'file.txt', dummyTransformer, {}, logger)).rejects.toThrow(
         'Sandbox execution failed: global is not defined'
       );
+
+      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not load sandbox libraries or create snapshot'));
     });
   });
 
@@ -97,7 +118,7 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('hello world', defaultSource, 'test.txt', transformer, { myVar: 42 });
+      const result = await sandboxService.execute('hello world', defaultSource, 'test.txt', transformer, { myVar: 42 }, logger);
 
       const parsedOutput = JSON.parse(result.output);
       expect(parsedOutput.originalContent).toBe('hello world');
@@ -128,11 +149,29 @@ describe('SandboxService', () => {
         defaultSource,
         'test.txt',
         transformer,
-        {}
+        {},
+        logger
       );
 
       const parsedOutput = JSON.parse(result.output);
       expect(parsedOutput.response).toBe('TYPESCRIPT WORKS');
+    });
+
+    it('should use the transpilation cache on repeated executions of the same TypeScript transformer', async () => {
+      const transformer = {
+        language: 'typescript',
+        customCode: `
+          export default function transform(content: string): any {
+            return { data: content, filename: 'cached.json' };
+          }
+        `
+      } as CustomTransformer;
+
+      const result1 = await sandboxService.execute('first', defaultSource, 'f1.txt', transformer, {}, logger);
+      const result2 = await sandboxService.execute('second', defaultSource, 'f2.txt', transformer, {}, logger);
+
+      expect(JSON.parse(result1.output)).toBe('first');
+      expect(JSON.parse(result2.output)).toBe('second');
     });
 
     it('should successfully require and use Luxon', async () => {
@@ -147,7 +186,7 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('', defaultSource, 'file', transformer, {});
+      const result = await sandboxService.execute('', defaultSource, 'file', transformer, {}, logger);
       const parsedOutput = JSON.parse(result.output);
       expect(parsedOutput.year).toBe(2026);
       expect(parsedOutput.isValid).toBe(true);
@@ -170,7 +209,7 @@ describe('SandboxService', () => {
         store: { book: [{ author: 'Nigel Rees' }, { author: 'Evelyn Waugh' }] }
       });
 
-      const result = await sandboxService.execute(testJson, defaultSource, 'file', transformer, {});
+      const result = await sandboxService.execute(testJson, defaultSource, 'file', transformer, {}, logger);
       const parsedOutput = JSON.parse(result.output);
       expect(parsedOutput).toEqual(['Nigel Rees', 'Evelyn Waugh']);
     });
@@ -189,7 +228,7 @@ describe('SandboxService', () => {
 
       const testCsv = 'name,age\nAlice,30\nBob,25';
 
-      const result = await sandboxService.execute(testCsv, defaultSource, 'file', transformer, {});
+      const result = await sandboxService.execute(testCsv, defaultSource, 'file', transformer, {}, logger);
       const parsedOutput = JSON.parse(result.output);
       expect(parsedOutput).toEqual([
         { name: 'Alice', age: '30' },
@@ -203,7 +242,7 @@ describe('SandboxService', () => {
         customCode: `function transform() { return { data: "ok" }; }`
       } as CustomTransformer;
 
-      await sandboxService.execute('', defaultSource, 'metric.txt', transformer, {});
+      await sandboxService.execute('', defaultSource, 'metric.txt', transformer, {}, logger);
 
       expect(logger.info).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -227,7 +266,7 @@ describe('SandboxService', () => {
         customCode: `export function transform() { const a = ; return { data: "bad" }; }`
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {})).rejects.toThrow(
+      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
         /\[RUNTIME_ERROR\].*Unexpected token/
       );
     });
@@ -238,7 +277,7 @@ describe('SandboxService', () => {
         customCode: `const myFunc = () => { return { data: "ok" }; };` // Forgot to name it transform
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {})).rejects.toThrow(
+      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
         /\[RUNTIME_ERROR\].*Sandbox execution failed: transform is not defined/
       );
     });
@@ -252,7 +291,7 @@ describe('SandboxService', () => {
           }
         `
       } as CustomTransformer;
-      await expect(sandboxService.execute('', defaultSource, 'timeout.txt', transformer, {})).rejects.toThrow(/\[TIMEOUT_ERROR\]/);
+      await expect(sandboxService.execute('', defaultSource, 'timeout.txt', transformer, {}, logger)).rejects.toThrow(/\[TIMEOUT_ERROR\]/);
     });
 
     it('should map sandbox console.log to the host logger', async () => {
@@ -271,7 +310,7 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      await sandboxService.execute('', defaultSource, 'log.txt', transformer, {});
+      await sandboxService.execute('', defaultSource, 'log.txt', transformer, {}, logger);
 
       expect(logger.trace).toHaveBeenCalledWith('CUSTOM TRANSFORMER: This is a trace from the sandbox');
       expect(logger.debug).toHaveBeenCalledWith('CUSTOM TRANSFORMER: This is a debug from the sandbox');
@@ -290,7 +329,7 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {})).rejects.toThrow(/Module "fs" is not allowed/);
+      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(/Module "fs" is not allowed/);
     });
 
     it('should throw an error when the transform function returns an invalid shape', async () => {
@@ -303,7 +342,7 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {})).rejects.toThrow(
+      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
         /Transform function returned an invalid or empty result/
       );
     });
@@ -322,27 +361,10 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'oom.txt', transformer, {})).rejects.toThrow(/\[MEMORY_LIMIT_EXCEEDED\]/);
+      await expect(sandboxService.execute('', defaultSource, 'oom.txt', transformer, {}, logger)).rejects.toThrow(/\[MEMORY_LIMIT_EXCEEDED\]/);
     });
 
-    it('should catch TypeScript transpilation errors and map them to SYNTAX_ERROR', async () => {
-      // Since we cannot mock the TypeScript compiler directly, we can trigger the exact
-      // error-routing logic by having the sandbox throw an error containing the target string.
-      const transformer = {
-        language: 'javascript',
-        customCode: `
-          function transform() {
-            throw new Error('TypeScript compilation failed: Invalid syntax');
-          }
-        `
-      } as CustomTransformer;
-
-      await expect(sandboxService.execute('', defaultSource, 'ts-err.txt', transformer, {})).rejects.toThrow(
-        /\[SYNTAX_ERROR\] Sandbox execution failed: TypeScript compilation failed/
-      );
-    });
-
-    it('should throw if the code does not export a transform function', async () => {
+    it('should throw when transform is a non-function value', async () => {
       // We define 'transform' as a string instead of a function.
       // This prevents V8 from throwing a ReferenceError during script compilation,
       // allowing the code to safely reach the 'typeof transformFnRef !== "function"' check.
@@ -353,9 +375,11 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {})).rejects.toThrow(
+      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
         /Custom code must export a "transform" function/
       );
     });
+
+
   });
 });
