@@ -113,6 +113,12 @@ export interface CustomTransformerDTO extends BaseTransformerDTO {
    * @example "javascript"
    */
   language: TransformerLanguage;
+
+  /**
+   * The maximum execution time for the custom code in milliseconds.
+   * @example 2000
+   */
+  timeout: number;
 }
 
 /**
@@ -266,6 +272,12 @@ export interface CustomTransformerCommandDTO {
    * @example "javascript"
    */
   language: TransformerLanguage;
+
+  /**
+   * The maximum execution time for the custom code in milliseconds.
+   * @example 2000
+   */
+  timeout: number;
 }
 
 /**
