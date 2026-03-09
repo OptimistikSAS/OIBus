@@ -62,7 +62,7 @@ describe('Scan Mode Service', () => {
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce([]);
     (scanModeRepository.create as jest.Mock).mockReturnValueOnce(testData.scanMode.list[0]);
 
-    const result = await service.create(testData.scanMode.command);
+    const result = await service.create(testData.scanMode.command, 'userTest');
 
     expect(validator.validate).toHaveBeenCalledWith(scanModeSchema, testData.scanMode.command);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
@@ -72,7 +72,7 @@ describe('Scan Mode Service', () => {
   it('create() should not create a scan mode with duplicate name', async () => {
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce([{ id: 'existing-id', name: testData.scanMode.command.name }]);
 
-    await expect(service.create(testData.scanMode.command)).rejects.toThrow(
+    await expect(service.create(testData.scanMode.command, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`Scan mode name "${testData.scanMode.command.name}" already exists`)
     );
   });
@@ -83,13 +83,16 @@ describe('Scan Mode Service', () => {
       .mockReturnValueOnce(testData.scanMode.list[1]);
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
 
-    await service.update(testData.scanMode.list[0].id, testData.scanMode.command);
+    await service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
 
     expect(validator.validate).toHaveBeenCalledWith(scanModeSchema, testData.scanMode.command);
     expect(scanModeRepository.findById).toHaveBeenNthCalledWith(1, testData.scanMode.list[0].id);
     expect(scanModeRepository.findById).toHaveBeenNthCalledWith(2, testData.scanMode.list[0].id);
     expect(scanModeRepository.findById).toHaveBeenCalledTimes(2);
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command);
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
+      ...testData.scanMode.command,
+      updatedBy: 'userTest'
+    });
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
@@ -102,9 +105,9 @@ describe('Scan Mode Service', () => {
       .mockReturnValueOnce(testData.scanMode.list[1]);
     (scanModeRepository.findAll as jest.Mock).mockClear();
 
-    await service.update(testData.scanMode.list[0].id, command);
+    await service.update(testData.scanMode.list[0].id, command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, command);
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, { ...command, updatedBy: 'userTest' });
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
     expect(scanModeRepository.findAll).not.toHaveBeenCalled();
   });
@@ -117,9 +120,9 @@ describe('Scan Mode Service', () => {
       .mockReturnValueOnce(testData.scanMode.list[1]);
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
 
-    await service.update(testData.scanMode.list[0].id, command);
+    await service.update(testData.scanMode.list[0].id, command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, command);
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, { ...command, updatedBy: 'userTest' });
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
   });
 
@@ -129,9 +132,12 @@ describe('Scan Mode Service', () => {
       .mockReturnValueOnce(testData.scanMode.list[0]);
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
 
-    await service.update(testData.scanMode.list[0].id, testData.scanMode.command);
+    await service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command);
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
+      ...testData.scanMode.command,
+      updatedBy: 'userTest'
+    });
     expect(dataStreamEngine.updateScanMode).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
@@ -139,7 +145,7 @@ describe('Scan Mode Service', () => {
   it('update() should not update if the scan mode is not found', async () => {
     (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.update(testData.scanMode.list[0].id, testData.scanMode.command)).rejects.toThrow(
+    await expect(service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest')).rejects.toThrow(
       new Error(`Scan mode "${testData.scanMode.list[0].id}" not found`)
     );
 
@@ -155,7 +161,7 @@ describe('Scan Mode Service', () => {
     (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(testData.scanMode.list[0]);
     (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce([{ id: 'other-id', name: 'Duplicate Name' }]);
 
-    await expect(service.update(testData.scanMode.list[0].id, command)).rejects.toThrow(
+    await expect(service.update(testData.scanMode.list[0].id, command, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`Scan mode name "Duplicate Name" already exists`)
     );
   });

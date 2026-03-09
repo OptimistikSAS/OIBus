@@ -72,7 +72,7 @@ describe('Certificate Service', () => {
       cert: 'cert'
     });
 
-    const result = await service.create(testData.certificates.command);
+    const result = await service.create(testData.certificates.command, 'userTest');
 
     expect(validator.validate).toHaveBeenCalledWith(certificateSchema, testData.certificates.command);
     expect(certificateRepository.create).toHaveBeenCalledWith({
@@ -85,7 +85,9 @@ describe('Certificate Service', () => {
       expiry: DateTime.now()
         .startOf('day')
         .plus(Duration.fromObject({ days: testData.certificates.command.options!.daysBeforeExpiry }))
-        .toISO()!
+        .toISO()!,
+      createdBy: 'userTest',
+      updatedBy: 'userTest'
     });
     expect(result).toEqual(toCertificateDTO(testData.certificates.list[0]));
   });
@@ -100,7 +102,7 @@ describe('Certificate Service', () => {
     const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));
     command.regenerateCertificate = true;
 
-    await service.update(testData.certificates.list[0].id, command);
+    await service.update(testData.certificates.list[0].id, command, 'userTest');
 
     expect(validator.validate).toHaveBeenCalledWith(certificateSchema, command);
     expect(certificateRepository.findById).toHaveBeenCalledWith(testData.certificates.list[0].id);
@@ -114,7 +116,8 @@ describe('Certificate Service', () => {
       expiry: DateTime.now()
         .startOf('day')
         .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
-        .toISO()!
+        .toISO()!,
+      updatedBy: 'userTest'
     });
   });
 
@@ -123,11 +126,12 @@ describe('Certificate Service', () => {
 
     const command: CertificateCommandDTO = JSON.parse(JSON.stringify(testData.certificates.command));
     command.regenerateCertificate = false;
-    await service.update(testData.certificates.list[0].id, command);
+    await service.update(testData.certificates.list[0].id, command, 'userTest');
     expect(certificateRepository.updateNameAndDescription).toHaveBeenCalledWith(
       testData.certificates.list[0].id,
       command.name,
-      command.description
+      command.description,
+      'userTest'
     );
   });
 

@@ -28,7 +28,7 @@ export default class TransformerRepository {
   }
 
   list(): Array<Transformer> {
-    const query = `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code, language, timeout FROM ${TRANSFORMERS_TABLE};`;
+    const query = `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code, language, timeout, created_by, updated_by FROM ${TRANSFORMERS_TABLE};`;
     const result = this.database.prepare(query).all();
     return result.map(element => toTransformer(element as Record<string, string>));
   }
@@ -38,7 +38,7 @@ export default class TransformerRepository {
       transformer.id = generateRandomId(6);
       this.database
         .prepare(
-          `INSERT INTO ${TRANSFORMERS_TABLE} (id, type, input_type, output_type, name, description, custom_manifest, custom_code, language, timeout) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO ${TRANSFORMERS_TABLE} (id, type, input_type, output_type, name, description, custom_manifest, custom_code, language, timeout, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           transformer.id,
@@ -50,12 +50,14 @@ export default class TransformerRepository {
           JSON.stringify(transformer.customManifest),
           transformer.customCode,
           transformer.language,
-          transformer.timeout
+          transformer.timeout,
+          transformer.createdBy,
+          transformer.updatedBy
         );
     } else {
       this.database
         .prepare(
-          `UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, custom_manifest = ?, custom_code = ?, language = ?, timeout = ? WHERE id = ?`
+          `UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, custom_manifest = ?, custom_code = ?, language = ?, timeout = ?, updated_by = ? WHERE id = ?`
         )
         .run(
           transformer.name,
@@ -64,6 +66,7 @@ export default class TransformerRepository {
           transformer.customCode,
           transformer.language,
           transformer.timeout,
+          transformer.updatedBy,
           transformer.id
         );
     }
@@ -74,7 +77,7 @@ export default class TransformerRepository {
   }
 
   findById(id: string): Transformer | null {
-    const query = `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code, language, timeout FROM ${TRANSFORMERS_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code, language, timeout, created_by, updated_by FROM ${TRANSFORMERS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
 
@@ -115,7 +118,7 @@ export default class TransformerRepository {
     }
 
     const query =
-      `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code, language, timeout FROM ${TRANSFORMERS_TABLE} ${whereClause}` +
+      `SELECT id, type, input_type, output_type, function_name, name, description, custom_manifest, custom_code, language, timeout, created_by, updated_by FROM ${TRANSFORMERS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
 
     const results = this.database
@@ -299,7 +302,9 @@ export const toTransformer = (result: Record<string, string>): Transformer => {
       customCode: result.custom_code as string,
       language: result.language as TransformerLanguage,
       customManifest: JSON.parse(result.custom_manifest as string) as OIBusObjectAttribute,
-      timeout: Number(result.timeout)
+      timeout: Number(result.timeout),
+      createdBy: result.created_by ?? undefined,
+      updatedBy: result.updated_by ?? undefined
     };
   }
 };
