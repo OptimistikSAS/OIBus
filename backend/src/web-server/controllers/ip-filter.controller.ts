@@ -42,7 +42,7 @@ export class IPFilterController extends Controller {
   @SuccessResponse(201, 'IP filter created successfully')
   async create(@Body() command: IPFilterCommandDTO, @Request() request: CustomExpressRequest): Promise<IPFilterDTO> {
     const ipFilterService = request.services.ipFilterService;
-    const ipFilter = await ipFilterService.create(command);
+    const ipFilter = await ipFilterService.create(command, request.user.id);
     return toIPFilterDTO(ipFilter);
   }
 
@@ -54,7 +54,7 @@ export class IPFilterController extends Controller {
   @SuccessResponse(204, 'IP filter updated successfully')
   async update(@Path() ipFilterId: string, @Body() command: IPFilterCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     const ipFilterService = request.services.ipFilterService;
-    await ipFilterService.update(ipFilterId, command);
+    await ipFilterService.update(ipFilterId, command, request.user.id);
   }
 
   /**

@@ -15,6 +15,10 @@ const SUBSCRIPTION_TABLE = 'subscription';
 const REGISTRATIONS_TABLE = 'registrations';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const HISTORY_ITEMS_TABLE = 'history_items';
+const SCAN_MODES_TABLE = 'scan_modes';
+const IP_FILTERS_TABLE = 'ip_filters';
+const CERTIFICATES_TABLE = 'certificates';
+const USERS_TABLE = 'users';
 
 interface OldNorthRESTSettings {
   host: string;
@@ -134,6 +138,33 @@ export async function up(knex: Knex): Promise<void> {
   await addTransformersItems(knex);
   await updateFileConnectorItems(knex);
   await migrateSouthMQTTItems(knex, allOldSubscriptions);
+  await addCreatedByAndUpdatedBy(knex);
+}
+
+async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
+  const user: {
+    id: string;
+    type: string;
+  } = await knex(USERS_TABLE).select('id', 'login').where('login', 'admin').first();
+  for (const table of [
+    SOUTH_CONNECTORS_TABLE,
+    SOUTH_ITEMS_TABLE,
+    NORTH_CONNECTORS_TABLE,
+    HISTORY_QUERIES_TABLE,
+    HISTORY_ITEMS_TABLE,
+    TRANSFORMERS_TABLE,
+    SCAN_MODES_TABLE,
+    IP_FILTERS_TABLE,
+    CERTIFICATES_TABLE
+  ]) {
+    await knex.schema.alterTable(table, t => {
+      t.string('created_by').nullable();
+      t.string('updated_by').nullable();
+    });
+    if (user) {
+      await knex(table).update({ created_by: user.id, updated_by: user.id });
+    }
+  }
 }
 
 async function updateRegistrationSettings(knex: Knex): Promise<void> {

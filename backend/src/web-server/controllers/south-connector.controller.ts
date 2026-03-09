@@ -138,7 +138,7 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<SouthConnectorDTO> {
     const southService = request.services.southService as SouthService;
-    return toSouthConnectorDTO(await southService.create(command, duplicate || null));
+    return toSouthConnectorDTO(await southService.create(command, duplicate || null, request.user.id));
   }
 
   /**
@@ -153,7 +153,7 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.update(southId, command);
+    await southService.update(southId, command, request.user.id);
   }
 
   /**
@@ -324,7 +324,7 @@ export class SouthConnectorController extends Controller {
   ): Promise<SouthConnectorItemDTO> {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
-    const item = await southService.createItem(southId, command);
+    const item = await southService.createItem(southId, command, request.user.id);
     return toSouthConnectorItemDTO(item, southConnector.type);
   }
 
@@ -341,7 +341,7 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.updateItem(southId, itemId, requestBody);
+    await southService.updateItem(southId, itemId, requestBody, request.user.id);
   }
 
   /**
@@ -554,7 +554,7 @@ export class SouthConnectorController extends Controller {
     try {
       const fileContent = await fs.readFile(itemsFile.path, 'utf8');
       const items: Array<SouthConnectorItemCommandDTO> = JSON.parse(fileContent);
-      await southService.importItems(southId, items);
+      await southService.importItems(southId, items, request.user.id);
     } finally {
       try {
         await fs.unlink(itemsFile.path);

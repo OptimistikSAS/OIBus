@@ -40,7 +40,7 @@ export default class HistoryQueryRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by ` +
       `FROM ${HISTORY_QUERIES_TABLE};`;
     const result = this.database.prepare(query).all();
 
@@ -54,7 +54,7 @@ export default class HistoryQueryRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by ` +
       `FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) {
@@ -73,8 +73,8 @@ export default class HistoryQueryRepository {
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-          `caching_archive_enabled, caching_archive_retention_duration) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
           history.id,
           history.name,
@@ -96,7 +96,9 @@ export default class HistoryQueryRepository {
           history.caching.error.retryCount,
           history.caching.error.retentionDuration,
           +history.caching.archive.enabled,
-          history.caching.archive.retentionDuration
+          history.caching.archive.retentionDuration,
+          history.createdBy,
+          history.updatedBy
         );
       } else {
         const query =
@@ -105,7 +107,7 @@ export default class HistoryQueryRepository {
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
           `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
-          `caching_archive_enabled = ?, caching_archive_retention_duration = ? ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, updated_by = ? ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -129,6 +131,7 @@ export default class HistoryQueryRepository {
             history.caching.error.retentionDuration,
             +history.caching.archive.enabled,
             history.caching.archive.retentionDuration,
+            history.updatedBy,
             history.id
           );
       }
@@ -161,9 +164,11 @@ export default class HistoryQueryRepository {
           );
 
         const insert = this.database.prepare(
-          `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
+          `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?);`
         );
-        const update = this.database.prepare(`UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`);
+        const update = this.database.prepare(
+          `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ? WHERE id = ?;`
+        );
         for (const item of history.items) {
           if (!item.id) {
             item.id = generateRandomId(6);
@@ -173,9 +178,9 @@ export default class HistoryQueryRepository {
                 transformer.items[transformerItemIndex].id = item.id;
               }
             }
-            insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings));
+            insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
           } else {
-            update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.id);
+            update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
           }
         }
       } else {
@@ -326,7 +331,7 @@ export default class HistoryQueryRepository {
       whereClause += ` AND enabled = ?`;
     }
 
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
+    const query = `SELECT id, name, enabled, settings, created_by, updated_by FROM ${HISTORY_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
       .all(...queryParams)
@@ -356,7 +361,7 @@ export default class HistoryQueryRepository {
       whereClause += ` AND enabled = ?`;
     }
 
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} ${whereClause};`;
+    const query = `SELECT id, name, enabled, settings, created_by, updated_by FROM ${HISTORY_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
@@ -365,7 +370,7 @@ export default class HistoryQueryRepository {
   }
 
   findAllItemsForHistory(historyId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
+    const query = `SELECT id, name, enabled, settings, created_by, updated_by FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
     return this.database
       .prepare(query)
       .all(historyId)
@@ -373,7 +378,7 @@ export default class HistoryQueryRepository {
   }
 
   findItemById(historyId: string, itemId: string): HistoryQueryItemEntity<SouthItemSettings> | null {
-    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
+    const query = `SELECT id, name, enabled, settings, created_by, updated_by FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
     const result = this.database.prepare(query).get(itemId, historyId);
     if (!result) return null;
     return this.toHistoryQueryItemEntity(result as Record<string, string>);
@@ -382,11 +387,15 @@ export default class HistoryQueryRepository {
   saveItem<I extends SouthItemSettings>(historyId: string, item: HistoryQueryItemEntity<I>): void {
     if (!item.id) {
       item.id = generateRandomId(6);
-      const insertQuery = `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
-      this.database.prepare(insertQuery).run(item.id, item.name, +item.enabled, historyId, JSON.stringify(item.settings));
+      const insertQuery =
+        `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings, created_by, updated_by) ` +
+        `VALUES (?, ?, ?, ?, ?, ?, ?);`;
+      this.database
+        .prepare(insertQuery)
+        .run(item.id, item.name, +item.enabled, historyId, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
     } else {
-      const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`;
-      this.database.prepare(query).run(item.name, +item.enabled, JSON.stringify(item.settings), item.id);
+      const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ? WHERE id = ?;`;
+      this.database.prepare(query).run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
     }
   }
 
@@ -474,7 +483,9 @@ export default class HistoryQueryRepository {
       id: result.id,
       name: result.name,
       enabled: Boolean(result.enabled),
-      settings: JSON.parse(result.settings) as SouthItemSettings
+      settings: JSON.parse(result.settings) as SouthItemSettings,
+      createdBy: result.created_by ?? undefined,
+      updatedBy: result.updated_by ?? undefined
     };
   }
 
@@ -514,7 +525,9 @@ export default class HistoryQueryRepository {
         }
       },
       items: this.findAllItemsForHistory(result.id as string),
-      northTransformers: this.findTransformersForHistory(result.id as string)
+      northTransformers: this.findTransformersForHistory(result.id as string),
+      createdBy: (result.created_by as string) ?? undefined,
+      updatedBy: (result.updated_by as string) ?? undefined
     };
   }
 }

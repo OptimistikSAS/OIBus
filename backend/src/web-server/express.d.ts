@@ -13,6 +13,7 @@ import NorthService from '../service/north.service';
 import HistoryQueryService from '../service/history-query.service';
 
 interface CustomExpressRequest extends Request {
+  user: { id: string; login: string };
   services: {
     certificateService: CertificateService;
     historyQueryService: HistoryQueryService;

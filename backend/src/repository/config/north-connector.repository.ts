@@ -35,7 +35,7 @@ export default class NorthConnectorRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by ` +
       `FROM ${NORTH_CONNECTORS_TABLE};`;
     return this.database
       .prepare(query)
@@ -49,7 +49,7 @@ export default class NorthConnectorRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration ` +
+      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by ` +
       `FROM ${NORTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
@@ -65,8 +65,8 @@ export default class NorthConnectorRepository {
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-          `caching_archive_enabled, caching_archive_retention_duration) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+          `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -86,7 +86,9 @@ export default class NorthConnectorRepository {
             north.caching.error.retryCount,
             north.caching.error.retentionDuration,
             +north.caching.archive.enabled,
-            north.caching.archive.retentionDuration
+            north.caching.archive.retentionDuration,
+            north.createdBy,
+            north.updatedBy
           );
       } else {
         const query =
@@ -94,7 +96,7 @@ export default class NorthConnectorRepository {
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
           `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
-          `caching_archive_enabled = ?, caching_archive_retention_duration = ? ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, updated_by = ? ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -114,6 +116,7 @@ export default class NorthConnectorRepository {
             north.caching.error.retentionDuration,
             +north.caching.archive.enabled,
             north.caching.archive.retentionDuration,
+            north.updatedBy,
             north.id
           );
       }
@@ -321,7 +324,9 @@ export default class NorthConnectorRepository {
           retentionDuration: result.caching_archive_retention_duration as number
         }
       },
-      transformers: this.findTransformersForNorth(result.id as string)
+      transformers: this.findTransformersForNorth(result.id as string),
+      createdBy: (result.created_by as string) ?? undefined,
+      updatedBy: (result.updated_by as string) ?? undefined
     };
   }
 }
