@@ -129,7 +129,7 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<HistoryQueryDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    return toHistoryQueryDTO(await historyQueryService.create(command, fromSouth, fromNorth, duplicate));
+    return toHistoryQueryDTO(await historyQueryService.create(command, fromSouth, fromNorth, duplicate, request.user.id));
   }
 
   /**
@@ -145,7 +145,7 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.update(historyId, command, resetCache === 'true');
+    await historyQueryService.update(historyId, command, resetCache === 'true', request.user.id);
   }
 
   /**
@@ -326,7 +326,7 @@ export class HistoryQueryController extends Controller {
   ): Promise<HistoryQueryItemDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
-    const item = await historyQueryService.createItem(historyId, command);
+    const item = await historyQueryService.createItem(historyId, command, request.user.id);
     return toHistoryQueryItemDTO(item, historyQuery.southType);
   }
 
@@ -343,7 +343,7 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.updateItem(historyId, itemId, command);
+    await historyQueryService.updateItem(historyId, itemId, command, request.user.id);
   }
 
   /**
@@ -552,7 +552,7 @@ export class HistoryQueryController extends Controller {
     try {
       const fileContent = await fs.readFile(itemsFile.path, 'utf8');
       const items: Array<HistoryQueryItemCommandDTO> = JSON.parse(fileContent);
-      await historyQueryService.importItems(historyId, items);
+      await historyQueryService.importItems(historyId, items, request.user.id);
     } finally {
       try {
         await fs.unlink(itemsFile.path);
