@@ -118,7 +118,7 @@ describe('South Service', () => {
   it('should create a south connector', async () => {
     service.retrieveSecretsFromSouth = jest.fn();
 
-    await service.create(testData.south.command, testData.south.list[0].id);
+    await service.create(testData.south.command, testData.south.list[0].id, 'userTest');
 
     expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
@@ -132,7 +132,7 @@ describe('South Service', () => {
 
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.enabled = false;
-    await service.create(command, null);
+    await service.create(command, null, 'userTest');
     expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.createSouth).toHaveBeenCalledTimes(1);
@@ -143,14 +143,14 @@ describe('South Service', () => {
     service.retrieveSecretsFromSouth = jest.fn();
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([{ id: 'existing-id', name: testData.south.command.name }]);
 
-    await expect(service.create(testData.south.command, null)).rejects.toThrow(
+    await expect(service.create(testData.south.command, null, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`South connector name "${testData.south.command.name}" already exists`)
     );
   });
 
   it('should update a south connector', async () => {
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
-    await service.update(testData.south.list[0].id, testData.south.command);
+    await service.update(testData.south.list[0].id, testData.south.command, 'userTest');
 
     expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
@@ -162,10 +162,36 @@ describe('South Service', () => {
     command.name = 'Updated South Name';
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
 
-    await service.update(testData.south.list[0].id, command);
+    await service.update(testData.south.list[0].id, command, 'userTest');
 
     expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(engine.reloadSouth).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update a south connector and set createdBy on new items', async () => {
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    command.items[0].id = '';
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+
+    await service.update(testData.south.list[0].id, command, 'user1');
+
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update a south connector and not set createdBy on existing items', async () => {
+    const command = JSON.parse(JSON.stringify(testData.south.command));
+    command.items[0].id = testData.south.list[0].items[0].id;
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+
+    await service.update(testData.south.list[0].id, command, 'user1');
+
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
+    const savedEntity = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[0][0];
+    const existingItem = savedEntity.items.find(
+      (item: { id: string; updatedBy?: string }) => item.id === testData.south.list[0].items[0].id
+    );
+    expect(existingItem).toBeDefined();
+    expect(existingItem!.updatedBy).toBe('user1');
   });
 
   it('should not update a south connector with duplicate name', async () => {
@@ -173,7 +199,7 @@ describe('South Service', () => {
     command.name = 'Duplicate Name';
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
 
-    await expect(service.update(testData.south.list[0].id, command)).rejects.toThrow(
+    await expect(service.update(testData.south.list[0].id, command, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`South connector name "Duplicate Name" already exists`)
     );
   });
@@ -282,7 +308,7 @@ describe('South Service', () => {
   });
 
   it('should create an item', async () => {
-    await service.createItem(testData.south.list[0].id, testData.south.itemCommand);
+    await service.createItem(testData.south.list[0].id, testData.south.itemCommand, 'userTest');
 
     expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
@@ -291,7 +317,7 @@ describe('South Service', () => {
   });
 
   it('should update an item', async () => {
-    await service.updateItem(testData.south.list[0].id, testData.south.list[0].items[0].id, testData.south.itemCommand);
+    await service.updateItem(testData.south.list[0].id, testData.south.list[0].items[0].id, testData.south.itemCommand, 'userTest');
 
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
@@ -580,7 +606,7 @@ describe('South Service', () => {
   });
 
   it('should import items', async () => {
-    await service.importItems(testData.south.list[0].id, [testData.south.itemCommand]);
+    await service.importItems(testData.south.list[0].id, [testData.south.itemCommand], 'userTest');
 
     expect(southConnectorRepository.saveAllItems).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);

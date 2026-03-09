@@ -35,6 +35,10 @@ describe('SouthConnectorController', () => {
       scanModeService: new ScanModeServiceMock(),
       oIBusService: new OibusServiceMock()
     },
+    user: {
+      id: 'test',
+      login: 'testUser'
+    },
     res: {
       attachment: jest.fn(),
       contentType: jest.fn(),
@@ -103,7 +107,7 @@ describe('SouthConnectorController', () => {
 
     const result = await controller.create(command, undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.southService.create).toHaveBeenCalledWith(command, null);
+    expect(mockRequest.services!.southService.create).toHaveBeenCalledWith(command, null, 'test');
     expect(result).toEqual(createdSouthConnector);
   });
 
@@ -114,7 +118,7 @@ describe('SouthConnectorController', () => {
 
     await controller.update(southId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.southService.update).toHaveBeenCalledWith(southId, command);
+    expect(mockRequest.services!.southService.update).toHaveBeenCalledWith(southId, command, 'test');
   });
 
   it('should delete a south connector', async () => {
@@ -332,7 +336,7 @@ describe('SouthConnectorController', () => {
     const result = await controller.createItem(southId, command, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.southService.findById).toHaveBeenCalledWith(southId);
-    expect(mockRequest.services!.southService.createItem).toHaveBeenCalledWith(southId, command);
+    expect(mockRequest.services!.southService.createItem).toHaveBeenCalledWith(southId, command, 'test');
     expect(result).toEqual(createdItem);
   });
 
@@ -345,7 +349,7 @@ describe('SouthConnectorController', () => {
 
     await controller.updateItem(southId, itemId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.southService.updateItem).toHaveBeenCalledWith(southId, itemId, command);
+    expect(mockRequest.services!.southService.updateItem).toHaveBeenCalledWith(southId, itemId, command, 'test');
   });
 
   it('should enable a south connector item', async () => {
@@ -545,9 +549,11 @@ describe('SouthConnectorController', () => {
 
     await controller.importItems(southId, itemsFile, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.southService.importItems).toHaveBeenCalledWith(southId, [
-      { id: '1', name: 'item1', scanModeName: 'scan1' }
-    ]);
+    expect(mockRequest.services!.southService.importItems).toHaveBeenCalledWith(
+      southId,
+      [{ id: '1', name: 'item1', scanModeName: 'scan1' }],
+      'test'
+    );
   });
 
   it('should throw an error if items file is missing in importItems', async () => {

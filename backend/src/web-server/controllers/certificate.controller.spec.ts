@@ -14,6 +14,10 @@ describe('CertificateController', () => {
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
       certificateService: new CertificateServiceMock()
+    },
+    user: {
+      id: 'test',
+      login: 'testUser'
     }
   } as CustomExpressRequest;
 
@@ -50,7 +54,7 @@ describe('CertificateController', () => {
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.certificateService.create).toHaveBeenCalledWith(command);
+    expect(mockRequest.services!.certificateService.create).toHaveBeenCalledWith(command, 'test');
     expect(result).toEqual(createdCertificate);
   });
 
@@ -61,7 +65,7 @@ describe('CertificateController', () => {
 
     await controller.update(certificateId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.certificateService.update).toHaveBeenCalledWith(certificateId, command);
+    expect(mockRequest.services!.certificateService.update).toHaveBeenCalledWith(certificateId, command, 'test');
   });
 
   it('should delete a certificate', async () => {

@@ -136,7 +136,7 @@ describe('North Service', () => {
   });
 
   it('should create a north connector', async () => {
-    await service.create(testData.north.command, null);
+    await service.create(testData.north.command, null, 'userTest');
 
     expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
@@ -147,7 +147,7 @@ describe('North Service', () => {
   it('should create a north connector and not start it if disabled', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
     command.enabled = false;
-    await service.create(command, null);
+    await service.create(command, null, 'userTest');
     expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.createNorth).toHaveBeenCalledTimes(1);
@@ -156,14 +156,14 @@ describe('North Service', () => {
 
   it('should not create a north connector if transformer is not found', async () => {
     (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
-    await expect(service.create(testData.north.command, null)).rejects.toThrow(
+    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
       `Could not find OIBus transformer "${testData.transformers.list[0].id}"`
     );
   });
 
   it('should not create a north connector if south is not found', async () => {
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([]);
-    await expect(service.create(testData.north.command, null)).rejects.toThrow(
+    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
       `Could not find South connector "${testData.south.list[0].id}"`
     );
   });
@@ -171,7 +171,7 @@ describe('North Service', () => {
   it('should not create a north connector with duplicate name', async () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'existing-id', name: testData.north.command.name }]);
 
-    await expect(service.create(testData.north.command, null)).rejects.toThrow(
+    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`North connector name "${testData.north.command.name}" already exists`)
     );
   });
@@ -179,7 +179,7 @@ describe('North Service', () => {
   it('should update a north connector', async () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
-    await service.update(testData.north.list[0].id, testData.north.command);
+    await service.update(testData.north.list[0].id, testData.north.command, 'userTest');
 
     expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
@@ -192,7 +192,7 @@ describe('North Service', () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
 
-    await service.update(testData.north.list[0].id, command);
+    await service.update(testData.north.list[0].id, command, 'userTest');
 
     expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(engine.reloadNorth).toHaveBeenCalledTimes(1);
@@ -204,7 +204,7 @@ describe('North Service', () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
 
-    await expect(service.update(testData.north.list[0].id, command)).rejects.toThrow(
+    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`North connector name "Duplicate Name" already exists`)
     );
   });
@@ -214,7 +214,7 @@ describe('North Service', () => {
     command.name = 'New Name';
     (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
 
-    await expect(service.update(testData.north.list[0].id, command)).rejects.toThrow(
+    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
       `Could not find OIBus transformer "${testData.transformers.list[0].id}"`
     );
   });
@@ -226,7 +226,7 @@ describe('North Service', () => {
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([]);
 
-    await expect(service.update(testData.north.list[0].id, command)).rejects.toThrow(
+    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
       `Could not find South connector "${testData.south.list[0].id}"`
     );
   });

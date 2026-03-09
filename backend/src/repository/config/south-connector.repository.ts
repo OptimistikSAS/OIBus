@@ -27,7 +27,7 @@ export default class SouthConnectorRepository {
 
   findSouthById(id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null {
     const query = `
-        SELECT id, name, type, description, enabled, settings
+        SELECT id, name, type, description, enabled, settings, created_by, updated_by
         FROM ${SOUTH_CONNECTORS_TABLE}
         WHERE id = ?;`;
 
@@ -42,13 +42,24 @@ export default class SouthConnectorRepository {
     const transaction = this.database.transaction(() => {
       if (!south.id) {
         south.id = generateRandomId(6);
-        const insertQuery = `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings) VALUES (?, ?, ?, ?, ?, ?);`;
+        const insertQuery = `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         this.database
           .prepare(insertQuery)
-          .run(south.id, south.name, south.type, south.description, +south.enabled, JSON.stringify(south.settings));
+          .run(
+            south.id,
+            south.name,
+            south.type,
+            south.description,
+            +south.enabled,
+            JSON.stringify(south.settings),
+            south.createdBy,
+            south.updatedBy
+          );
       } else {
-        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ? WHERE id = ?;`;
-        this.database.prepare(query).run(south.name, south.description, +south.enabled, JSON.stringify(south.settings), south.id);
+        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, updated_by = ? WHERE id = ?;`;
+        this.database
+          .prepare(query)
+          .run(south.name, south.description, +south.enabled, JSON.stringify(south.settings), south.updatedBy, south.id);
       }
 
       if (south.items.length > 0) {
@@ -79,17 +90,26 @@ export default class SouthConnectorRepository {
             south.items.filter(item => item.id).map(item => item.id)
           );
         const insert = this.database.prepare(
-          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);`
+          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`
         );
         const update = this.database.prepare(
-          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, updated_by = ? WHERE id = ?;`
         );
         for (const item of south.items) {
           if (!item.id) {
             item.id = generateRandomId(6);
-            insert.run(item.id, item.name, +item.enabled, south.id, item.scanMode.id, JSON.stringify(item.settings));
+            insert.run(
+              item.id,
+              item.name,
+              +item.enabled,
+              south.id,
+              item.scanMode.id,
+              JSON.stringify(item.settings),
+              item.createdBy,
+              item.updatedBy
+            );
           } else {
-            update.run(item.name, +item.enabled, item.scanMode.id, JSON.stringify(item.settings), item.id);
+            update.run(item.name, +item.enabled, item.scanMode.id, JSON.stringify(item.settings), item.updatedBy, item.id);
           }
         }
       } else {
@@ -153,7 +173,7 @@ export default class SouthConnectorRepository {
       queryParams.push(searchParams.name);
       whereClause += ` AND name like '%' || ? || '%'`;
     }
-    const query = `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
@@ -180,7 +200,7 @@ export default class SouthConnectorRepository {
       whereClause += ` AND name like '%' || ? || '%'`;
     }
     const query =
-      `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
+      `SELECT id, name, enabled, scan_mode_id, settings, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
@@ -201,7 +221,7 @@ export default class SouthConnectorRepository {
   }
 
   findAllItemsForSouth(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
-    const query = `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
       .all(southId)
@@ -209,7 +229,7 @@ export default class SouthConnectorRepository {
   }
 
   findItemById(southConnectorId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null {
-    const query = `SELECT id, name, enabled, scan_mode_id, settings FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
     const result = this.database.prepare(query).get(itemId, southConnectorId);
     if (!result) return null;
     return this.toSouthConnectorItemEntity(result as Record<string, string>);
@@ -219,15 +239,32 @@ export default class SouthConnectorRepository {
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
-        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?, ?);`;
+        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, created_by, updated_by) ` +
+        `VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
       this.database
         .prepare(insertQuery)
-        .run(southItem.id, southItem.name, +southItem.enabled, southConnectorId, southItem.scanMode.id, JSON.stringify(southItem.settings));
+        .run(
+          southItem.id,
+          southItem.name,
+          +southItem.enabled,
+          southConnectorId,
+          southItem.scanMode.id,
+          JSON.stringify(southItem.settings),
+          southItem.createdBy,
+          southItem.updatedBy
+        );
     } else {
-      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`;
+      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, updated_by = ? WHERE id = ?;`;
       this.database
         .prepare(query)
-        .run(southItem.name, +southItem.enabled, southItem.scanMode.id, JSON.stringify(southItem.settings), southItem.id);
+        .run(
+          southItem.name,
+          +southItem.enabled,
+          southItem.scanMode.id,
+          JSON.stringify(southItem.settings),
+          southItem.updatedBy,
+          southItem.id
+        );
     }
   }
 
@@ -299,7 +336,9 @@ export default class SouthConnectorRepository {
       name: result.name,
       enabled: Boolean(result.enabled),
       scanMode: this.findScanModeForSouth(result.scan_mode_id as string),
-      settings: JSON.parse(result.settings) as SouthItemSettings
+      settings: JSON.parse(result.settings) as SouthItemSettings,
+      createdBy: result.created_by ?? undefined,
+      updatedBy: result.updated_by ?? undefined
     };
   }
 
@@ -311,7 +350,9 @@ export default class SouthConnectorRepository {
       description: result.description as string,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as SouthSettings,
-      items: this.findAllItemsForSouth(result.id as string)
+      items: this.findAllItemsForSouth(result.id as string),
+      createdBy: (result.created_by as string) ?? undefined,
+      updatedBy: (result.updated_by as string) ?? undefined
     };
   }
 }

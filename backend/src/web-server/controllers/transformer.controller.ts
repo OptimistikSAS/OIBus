@@ -113,7 +113,7 @@ export class TransformerController extends Controller {
   @SuccessResponse(201, 'Transformer created successfully')
   async create(@Body() command: CustomTransformerCommandDTO, @Request() request: CustomExpressRequest): Promise<CustomTransformerDTO> {
     const transformerService = request.services.transformerService;
-    return toTransformerDTO(await transformerService.create(command)) as CustomTransformerDTO;
+    return toTransformerDTO(await transformerService.create(command, request.user.id)) as CustomTransformerDTO;
   }
 
   /**
@@ -129,7 +129,7 @@ export class TransformerController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const transformerService = request.services.transformerService;
-    await transformerService.update(transformerId, command);
+    await transformerService.update(transformerId, command, request.user.id);
   }
 
   /**
