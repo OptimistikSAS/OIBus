@@ -43,6 +43,10 @@ describe('HistoryQueryController', () => {
       },
       oIBusService: new OibusServiceMock()
     },
+    user: {
+      id: 'test',
+      login: 'testUser'
+    },
     res: {
       attachment: jest.fn(),
       contentType: jest.fn(),
@@ -86,7 +90,7 @@ describe('HistoryQueryController', () => {
 
     const result = await controller.create(command, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.create).toHaveBeenCalledWith(command, undefined, undefined, undefined);
+    expect(mockRequest.services!.historyQueryService.create).toHaveBeenCalledWith(command, undefined, undefined, undefined, 'test');
     expect(result).toEqual(createdHistoryQuery);
   });
 
@@ -97,7 +101,7 @@ describe('HistoryQueryController', () => {
 
     await controller.update(historyId, command, undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.update).toHaveBeenCalledWith(historyId, command, false);
+    expect(mockRequest.services!.historyQueryService.update).toHaveBeenCalledWith(historyId, command, false, 'test');
   });
 
   it('should delete a history query', async () => {
@@ -371,7 +375,7 @@ describe('HistoryQueryController', () => {
     const result = await controller.createItem(historyId, command, mockRequest as CustomExpressRequest);
 
     expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
-    expect(mockRequest.services!.historyQueryService.createItem).toHaveBeenCalledWith(historyId, command);
+    expect(mockRequest.services!.historyQueryService.createItem).toHaveBeenCalledWith(historyId, command, 'test');
     expect(result).toEqual(createdItem);
   });
 
@@ -384,7 +388,7 @@ describe('HistoryQueryController', () => {
 
     await controller.updateItem(historyId, itemId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.updateItem).toHaveBeenCalledWith(historyId, itemId, command);
+    expect(mockRequest.services!.historyQueryService.updateItem).toHaveBeenCalledWith(historyId, itemId, command, 'test');
   });
 
   it('should enable a history query item', async () => {
@@ -552,7 +556,8 @@ describe('HistoryQueryController', () => {
 
     expect(mockRequest.services!.historyQueryService.importItems).toHaveBeenCalledWith(
       historyId,
-      JSON.parse(itemsFile.buffer.toString('utf8'))
+      JSON.parse(itemsFile.buffer.toString('utf8')),
+      'test'
     );
   });
 

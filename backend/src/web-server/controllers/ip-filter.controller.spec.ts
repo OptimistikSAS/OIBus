@@ -14,6 +14,10 @@ describe('IPFilterController', () => {
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
       ipFilterService: new IPFilterServiceMock()
+    },
+    user: {
+      id: 'test',
+      login: 'testUser'
     }
   } as CustomExpressRequest;
 
@@ -50,7 +54,7 @@ describe('IPFilterController', () => {
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.ipFilterService.create).toHaveBeenCalledWith(command);
+    expect(mockRequest.services!.ipFilterService.create).toHaveBeenCalledWith(command, 'test');
     expect(result).toEqual(createdIPFilter);
   });
 
@@ -61,7 +65,7 @@ describe('IPFilterController', () => {
 
     await controller.update(ipFilterId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.ipFilterService.update).toHaveBeenCalledWith(ipFilterId, command);
+    expect(mockRequest.services!.ipFilterService.update).toHaveBeenCalledWith(ipFilterId, command, 'test');
   });
 
   it('should delete an IP filter', async () => {

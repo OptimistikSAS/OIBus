@@ -66,7 +66,8 @@ export default class HistoryQueryService {
     command: HistoryQueryCommandDTO,
     retrieveSecretsFromSouth: string | undefined,
     retrieveSecretsFromNorth: string | undefined,
-    retrieveSecretsFromHistoryQuery: string | undefined
+    retrieveSecretsFromHistoryQuery: string | undefined,
+    createdBy: string
   ): Promise<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> {
     const northManifest = this.northService.getManifest(command.northType);
     const southManifest = this.southService.getManifest(command.southType);
@@ -101,6 +102,12 @@ export default class HistoryQueryService {
       this.scanModeRepository.findAll(),
       !!retrieveSecretsFromHistoryQuery || !!retrieveSecretsFromSouth
     );
+    historyQuery.createdBy = createdBy;
+    historyQuery.updatedBy = createdBy;
+    for (const item of historyQuery.items) {
+      item.createdBy = createdBy;
+      item.updatedBy = createdBy;
+    }
     const transformers = this.transformerService.findAll();
     historyQuery.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
       const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
@@ -124,7 +131,7 @@ export default class HistoryQueryService {
     return historyQuery;
   }
 
-  async update(historyId: string, command: HistoryQueryCommandDTO, resetCache: boolean): Promise<void> {
+  async update(historyId: string, command: HistoryQueryCommandDTO, resetCache: boolean, updatedBy: string): Promise<void> {
     const previousSettings = this.findById(historyId);
     const northManifest = this.northService.getManifest(command.northType);
     const southManifest = this.southService.getManifest(command.southType);
@@ -148,6 +155,16 @@ export default class HistoryQueryService {
 
     const historyQuery = { id: previousSettings.id } as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
     await copyHistoryQueryCommandToHistoryQueryEntity(historyQuery, command, previousSettings, this.scanModeRepository.findAll());
+    historyQuery.createdBy = previousSettings.createdBy;
+    historyQuery.updatedBy = updatedBy;
+    for (const item of historyQuery.items) {
+      if (!item.id) {
+        item.createdBy = updatedBy;
+      } else {
+        item.createdBy = previousSettings.items.find(i => i.id === item.id)?.createdBy;
+      }
+      item.updatedBy = updatedBy;
+    }
     const transformers = this.transformerService.findAll();
     historyQuery.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
       const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
@@ -306,7 +323,11 @@ export default class HistoryQueryService {
     return item;
   }
 
-  async createItem(historyId: string, command: HistoryQueryItemCommandDTO): Promise<HistoryQueryItemEntity<SouthItemSettings>> {
+  async createItem(
+    historyId: string,
+    command: HistoryQueryItemCommandDTO,
+    createdBy: string
+  ): Promise<HistoryQueryItemEntity<SouthItemSettings>> {
     const historyQuery = this.findById(historyId);
     const manifest = this.southService.getManifest(historyQuery.southType);
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -316,13 +337,15 @@ export default class HistoryQueryService {
 
     const historyQueryItemEntity = {} as HistoryQueryItemEntity<SouthItemSettings>;
     await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, null, historyQuery.southType);
+    historyQueryItemEntity.createdBy = createdBy;
+    historyQueryItemEntity.updatedBy = createdBy;
     this.historyQueryRepository.saveItem(historyQuery.id, historyQueryItemEntity);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
     return historyQueryItemEntity;
   }
 
-  async updateItem(historyId: string, itemId: string, command: HistoryQueryItemCommandDTO): Promise<void> {
+  async updateItem(historyId: string, itemId: string, command: HistoryQueryItemCommandDTO, updatedBy: string): Promise<void> {
     const historyQuery = this.findById(historyId);
     const existingItem = this.findItemById(historyId, itemId);
     const manifest = this.southService.getManifest(historyQuery.southType);
@@ -333,6 +356,8 @@ export default class HistoryQueryService {
 
     const historyQueryItemEntity = { id: existingItem.id } as HistoryQueryItemEntity<SouthItemSettings>;
     await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, command, existingItem, historyQuery.southType);
+    historyQueryItemEntity.createdBy = existingItem.createdBy;
+    historyQueryItemEntity.updatedBy = updatedBy;
     this.historyQueryRepository.saveItem(historyQuery.id, historyQueryItemEntity);
     this.oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     await this.engine.reloadHistoryQuery(historyQuery, false);
@@ -474,7 +499,7 @@ export default class HistoryQueryService {
     return { items: validItems, errors };
   }
 
-  async importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO>, deleteItemsNotPresent = false) {
+  async importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO>, user: string, deleteItemsNotPresent = false) {
     const historyQuery = this.findById(historyId);
     const manifest = this.southService.getManifest(historyQuery.southType);
     const itemsToAdd: Array<HistoryQueryItemEntity<SouthItemSettings>> = [];
@@ -485,6 +510,8 @@ export default class HistoryQueryService {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const historyQueryItemEntity = {} as HistoryQueryItemEntity<SouthItemSettings>;
       await copyHistoryQueryItemCommandToHistoryQueryItemEntity(historyQueryItemEntity, itemCommand, null, historyQuery.southType);
+      historyQueryItemEntity.createdBy = user;
+      historyQueryItemEntity.updatedBy = user;
       itemsToAdd.push(historyQueryItemEntity);
     }
 
