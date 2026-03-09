@@ -90,7 +90,11 @@ export default class NorthService {
     return north;
   }
 
-  async create(command: NorthConnectorCommandDTO, retrieveSecretsFromNorth: string | null): Promise<NorthConnectorEntity<NorthSettings>> {
+  async create(
+    command: NorthConnectorCommandDTO,
+    retrieveSecretsFromNorth: string | null,
+    createdBy: string
+  ): Promise<NorthConnectorEntity<NorthSettings>> {
     const manifest = this.getManifest(command.type);
     await this.validator.validateSettings(manifest.settings, command.settings);
 
@@ -107,6 +111,8 @@ export default class NorthService {
       this.retrieveSecretsFromNorth(retrieveSecretsFromNorth, manifest),
       this.scanModeRepository.findAll()
     );
+    northEntity.createdBy = createdBy;
+    northEntity.updatedBy = createdBy;
     const transformers = this.transformerService.findAll();
     const southConnectors = this.southConnectorRepository.findAllSouth();
     northEntity.transformers = command.transformers.map(transformerIdWithOptions => {
@@ -142,7 +148,7 @@ export default class NorthService {
     return northEntity;
   }
 
-  async update(northId: string, command: NorthConnectorCommandDTO) {
+  async update(northId: string, command: NorthConnectorCommandDTO, updatedBy: string) {
     const previousSettings = this.findById(northId);
     const manifest = this.getManifest(command.type);
     await this.validator.validateSettings(manifest.settings, command.settings);
@@ -157,6 +163,8 @@ export default class NorthService {
 
     const northEntity = { id: previousSettings.id } as NorthConnectorEntity<NorthSettings>;
     await copyNorthConnectorCommandToNorthEntity(northEntity, command, previousSettings, this.scanModeRepository.findAll());
+    northEntity.createdBy = previousSettings.createdBy;
+    northEntity.updatedBy = updatedBy;
     const transformers = this.transformerService.findAll();
     const southConnectors = this.southConnectorRepository.findAllSouth();
     northEntity.transformers = command.transformers.map(transformerIdWithOptions => {

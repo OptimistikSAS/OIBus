@@ -21,6 +21,10 @@ describe('NorthConnectorController', () => {
       northService: new NorthServiceMock(),
       oIBusService: new OibusServiceMock()
     },
+    user: {
+      id: 'test',
+      login: 'testUser'
+    },
     res: {
       setHeader: jest.fn(),
       pipe: jest.fn()
@@ -87,7 +91,7 @@ describe('NorthConnectorController', () => {
 
     const result = await controller.create(command, undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.create).toHaveBeenCalledWith(command, null);
+    expect(mockRequest.services!.northService.create).toHaveBeenCalledWith(command, null, 'test');
     expect(result).toEqual(createdNorthConnector);
   });
 
@@ -98,7 +102,7 @@ describe('NorthConnectorController', () => {
 
     await controller.update(northId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.update).toHaveBeenCalledWith(northId, command);
+    expect(mockRequest.services!.northService.update).toHaveBeenCalledWith(northId, command, 'test');
   });
 
   it('should delete a north connector', async () => {

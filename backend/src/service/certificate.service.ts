@@ -29,7 +29,7 @@ export default class CertificateService {
     return certificate;
   }
 
-  async create(command: CertificateCommandDTO): Promise<Certificate> {
+  async create(command: CertificateCommandDTO, createdBy: string): Promise<Certificate> {
     await this.validator.validate(certificateSchema, command);
     const cert = await this.encryptionService.generateSelfSignedCertificate({
       commonName: command.options!.commonName,
@@ -51,13 +51,15 @@ export default class CertificateService {
       expiry: DateTime.now()
         .startOf('day')
         .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
-        .toISO()!
+        .toISO()!,
+      createdBy,
+      updatedBy: createdBy
     });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return certificate;
   }
 
-  async update(certificateId: string, command: CertificateCommandDTO): Promise<void> {
+  async update(certificateId: string, command: CertificateCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(certificateSchema, command);
     const certificate = this.findById(certificateId);
     if (command.regenerateCertificate) {
@@ -80,10 +82,11 @@ export default class CertificateService {
         expiry: DateTime.now()
           .startOf('day')
           .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
-          .toISO()!
+          .toISO()!,
+        updatedBy
       });
     } else {
-      this.certificateRepository.updateNameAndDescription(certificate.id, command.name, command.description);
+      this.certificateRepository.updateNameAndDescription(certificate.id, command.name, command.description, updatedBy);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }

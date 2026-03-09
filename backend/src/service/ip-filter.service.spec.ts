@@ -54,7 +54,7 @@ describe('IP Filter Service', () => {
     (ipFilterRepository.create as jest.Mock).mockReturnValueOnce(testData.ipFilters.list[0]);
     (ipFilterRepository.list as jest.Mock).mockReturnValueOnce(testData.ipFilters.list);
 
-    const result = await service.create(testData.ipFilters.command);
+    const result = await service.create(testData.ipFilters.command, 'userTest');
 
     expect(validator.validate).toHaveBeenCalledWith(ipFilterSchema, testData.ipFilters.command);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
@@ -65,19 +65,22 @@ describe('IP Filter Service', () => {
     (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(testData.ipFilters.list[0]);
     (ipFilterRepository.list as jest.Mock).mockReturnValueOnce(testData.ipFilters.list);
 
-    await service.update(testData.ipFilters.list[0].id, testData.ipFilters.command);
+    await service.update(testData.ipFilters.list[0].id, testData.ipFilters.command, 'userTest');
 
     expect(validator.validate).toHaveBeenCalledWith(ipFilterSchema, testData.ipFilters.command);
     expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
     expect(ipFilterRepository.list).toHaveBeenCalled();
-    expect(ipFilterRepository.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, testData.ipFilters.command);
+    expect(ipFilterRepository.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, {
+      ...testData.ipFilters.command,
+      updatedBy: 'userTest'
+    });
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 
   it('should not update if the ip filter is not found', async () => {
     (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(null);
 
-    await expect(service.update(testData.ipFilters.list[0].id, testData.ipFilters.command)).rejects.toThrow(
+    await expect(service.update(testData.ipFilters.list[0].id, testData.ipFilters.command, 'userTest')).rejects.toThrow(
       new NotFoundError(`IP filter "${testData.ipFilters.list[0].id}" not found`)
     );
 

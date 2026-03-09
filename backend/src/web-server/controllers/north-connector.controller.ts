@@ -98,7 +98,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<NorthConnectorDTO> {
     const northService = request.services.northService as NorthService;
-    return toNorthConnectorDTO(await northService.create(command, duplicate || null));
+    return toNorthConnectorDTO(await northService.create(command, duplicate || null, request.user.id));
   }
 
   /**
@@ -113,7 +113,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.update(northId, command);
+    await northService.update(northId, command, request.user.id);
   }
 
   /**
