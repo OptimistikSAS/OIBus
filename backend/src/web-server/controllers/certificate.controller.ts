@@ -41,7 +41,7 @@ export class CertificateController extends Controller {
   @SuccessResponse(201, 'Certificate created successfully')
   async create(@Body() command: CertificateCommandDTO, @Request() request: CustomExpressRequest): Promise<CertificateDTO> {
     const certificateService: CertificateService = request.services.certificateService;
-    return toCertificateDTO(await certificateService.create(command));
+    return toCertificateDTO(await certificateService.create(command, request.user.id));
   }
 
   /**
@@ -57,7 +57,7 @@ export class CertificateController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const certificateService: CertificateService = request.services.certificateService;
-    await certificateService.update(certificateId, command);
+    await certificateService.update(certificateId, command, request.user.id);
   }
 
   /**

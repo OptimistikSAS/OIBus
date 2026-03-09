@@ -338,10 +338,11 @@ describe('Repository with populated database', () => {
     });
 
     it('should update name and description certificate', () => {
-      repository.updateNameAndDescription('new id', 'new name', 'new description');
+      repository.updateNameAndDescription('new id', 'new name', 'new description', 'userTest');
       const result = repository.findById('new id')!;
       expect(result.name).toEqual('new name');
       expect(result.description).toEqual('new description');
+      expect(result.updatedBy).toEqual('userTest');
     });
 
     it('should delete certificate', () => {

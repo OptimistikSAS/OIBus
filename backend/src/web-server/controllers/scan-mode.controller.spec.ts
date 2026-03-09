@@ -14,6 +14,10 @@ describe('ScanModeController', () => {
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
       scanModeService: new ScanModeServiceMock()
+    },
+    user: {
+      id: 'test',
+      login: 'testUser'
     }
   } as CustomExpressRequest;
 
@@ -50,7 +54,7 @@ describe('ScanModeController', () => {
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.create).toHaveBeenCalledWith(command);
+    expect(mockRequest.services!.scanModeService.create).toHaveBeenCalledWith(command, 'test');
     expect(result).toEqual(createdScanMode);
   });
 
@@ -61,7 +65,7 @@ describe('ScanModeController', () => {
 
     await controller.update(scanModeId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.update).toHaveBeenCalledWith(scanModeId, command);
+    expect(mockRequest.services!.scanModeService.update).toHaveBeenCalledWith(scanModeId, command, 'test');
   });
 
   it('should delete a scan mode', async () => {

@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import argon2 from 'argon2';
 import UserService from '../../service/user.service';
 import EncryptionService from '../../service/encryption.service';
+import { CustomExpressRequest } from '../express';
 
 interface AuthConfig {
   userService: UserService;
@@ -135,6 +136,8 @@ const createAuthMiddleware = (config: AuthConfig) => {
         return res.status(200).json({ access_token: token });
       }
 
+      const currentUser = config.userService.findByLogin(headerUser.name);
+      (req as CustomExpressRequest).user = { id: currentUser.id, login: currentUser.login };
       return next();
     } catch (err) {
       console.error('Authentication error:', err);
