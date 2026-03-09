@@ -41,7 +41,7 @@ export class ScanModeController extends Controller {
   @SuccessResponse(201, 'Scan mode created successfully')
   async create(@Body() command: ScanModeCommandDTO, @Request() request: CustomExpressRequest): Promise<ScanModeDTO> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    return toScanModeDTO(await scanModeService.create(command));
+    return toScanModeDTO(await scanModeService.create(command, request.user.id));
   }
 
   /**
@@ -52,7 +52,7 @@ export class ScanModeController extends Controller {
   @SuccessResponse(204, 'Scan mode updated successfully')
   async update(@Path() scanModeId: string, @Body() command: ScanModeCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    await scanModeService.update(scanModeId, command);
+    await scanModeService.update(scanModeId, command, request.user.id);
   }
 
   /**

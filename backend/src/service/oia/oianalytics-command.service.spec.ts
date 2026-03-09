@@ -630,7 +630,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(scanModeService.update).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
-      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[3].id,
@@ -653,7 +654,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(southService.update).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).southConnectorId,
-      (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[4].id,
@@ -674,7 +676,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(northService.update).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).northConnectorId,
-      (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[5].id,
@@ -734,7 +737,8 @@ describe('OIAnalytics Command Service', () => {
     await service.executeCommand();
 
     expect(scanModeService.create).toHaveBeenCalledWith(
-      (testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[9].id,
@@ -756,7 +760,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(southService.create).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent,
-      null
+      null,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[10].id,
@@ -778,7 +783,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(northService.create).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent,
-      null
+      null,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[11].id,
@@ -936,7 +942,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(ipFilterService.create).toHaveBeenCalledWith(command.commandContent);
+    expect(ipFilterService.create).toHaveBeenCalledWith(command.commandContent, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -956,7 +962,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(ipFilterService.update).toHaveBeenCalledWith(command.ipFilterId, command.commandContent);
+    expect(ipFilterService.update).toHaveBeenCalledWith(command.ipFilterId, command.commandContent, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -994,7 +1000,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(certificateService.create).toHaveBeenCalledWith(command.commandContent);
+    expect(certificateService.create).toHaveBeenCalledWith(command.commandContent, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1014,7 +1020,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(certificateService.update).toHaveBeenCalledWith(command.certificateId, command.commandContent);
+    expect(certificateService.update).toHaveBeenCalledWith(command.certificateId, command.commandContent, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1165,7 +1171,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.create).toHaveBeenCalledWith(command.commandContent, undefined, undefined, undefined);
+    expect(historyQueryService.create).toHaveBeenCalledWith(command.commandContent, undefined, undefined, undefined, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1200,7 +1206,8 @@ describe('OIAnalytics Command Service', () => {
     expect(historyQueryService.update).toHaveBeenCalledWith(
       command.historyQueryId,
       command.commandContent.historyQuery,
-      command.commandContent.resetCache
+      command.commandContent.resetCache,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,

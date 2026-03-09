@@ -722,12 +722,12 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeCreateScanModeCommand(command: OIBusCreateScanModeCommand) {
-    await this.scanModeService.create(command.commandContent);
+    await this.scanModeService.create(command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode created successfully');
   }
 
   private async executeUpdateScanModeCommand(command: OIBusUpdateScanModeCommand) {
-    await this.scanModeService.update(command.scanModeId, command.commandContent);
+    await this.scanModeService.update(command.scanModeId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode updated successfully');
   }
 
@@ -737,12 +737,12 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeCreateIPFilterCommand(command: OIBusCreateIPFilterCommand) {
-    await this.ipFilterService.create(command.commandContent);
+    await this.ipFilterService.create(command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'IP Filter created successfully');
   }
 
   private async executeUpdateIPFilterCommand(command: OIBusUpdateIPFilterCommand) {
-    await this.ipFilterService.update(command.ipFilterId, command.commandContent);
+    await this.ipFilterService.update(command.ipFilterId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'IP Filter updated successfully');
   }
 
@@ -752,12 +752,12 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeCreateCertificateCommand(command: OIBusCreateCertificateCommand) {
-    await this.certificateService.create(command.commandContent);
+    await this.certificateService.create(command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate created successfully');
   }
 
   private async executeUpdateCertificateCommand(command: OIBusUpdateCertificateCommand) {
-    await this.certificateService.update(command.certificateId, command.commandContent);
+    await this.certificateService.update(command.certificateId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate updated successfully');
   }
 
@@ -811,13 +811,13 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.create(command.commandContent, command.southConnectorId);
+    await this.southService.create(command.commandContent, command.southConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector created successfully');
   }
 
   private async executeUpdateSouthCommand(command: OIBusUpdateSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.update(command.southConnectorId, command.commandContent);
+    await this.southService.update(command.southConnectorId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector updated successfully');
   }
 
@@ -858,6 +858,7 @@ export default class OIAnalyticsCommandService {
         scanModeId: item.scanMode.id,
         scanModeName: null
       })) as Array<SouthConnectorItemCommandDTO>,
+      'oianalytics',
       command.commandContent.deleteItemsNotPresent
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(
@@ -901,13 +902,13 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.create(command.commandContent, command.northConnectorId);
+    await this.northService.create(command.commandContent, command.northConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector created successfully');
   }
 
   private async executeUpdateNorthCommand(command: OIBusUpdateNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.update(command.northConnectorId, command.commandContent);
+    await this.northService.update(command.northConnectorId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector updated successfully');
   }
 
@@ -964,14 +965,20 @@ export default class OIAnalyticsCommandService {
       command.commandContent,
       command.southConnectorId,
       command.northConnectorId,
-      command.historyQueryId
+      command.historyQueryId,
+      'oianalytics'
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query created successfully');
   }
 
   private async executeUpdateHistoryQueryCommand(command: OIBusUpdateHistoryQueryCommand, privateKey: string) {
     await this.decryptHistoryQuerySettings(command.commandContent.historyQuery, privateKey);
-    await this.historyQueryService.update(command.historyQueryId, command.commandContent.historyQuery, command.commandContent.resetCache);
+    await this.historyQueryService.update(
+      command.historyQueryId,
+      command.commandContent.historyQuery,
+      command.commandContent.resetCache,
+      'oianalytics'
+    );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query updated successfully');
   }
 
@@ -1003,7 +1010,7 @@ export default class OIAnalyticsCommandService {
       }
       throw new Error(stringError);
     }
-    await this.historyQueryService.importItems(historyQuery.id, items, command.commandContent.deleteItemsNotPresent);
+    await this.historyQueryService.importItems(historyQuery.id, items, 'oianalytics', command.commandContent.deleteItemsNotPresent);
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
       DateTime.now().toUTC().toISO(),

@@ -1,5 +1,10 @@
 import { TransformerController } from './transformer.controller';
-import { CustomTransformerCommandDTO, TransformerManifest, TransformerSearchParam, TransformerTestRequest } from '../../../shared/model/transformer.model';
+import {
+  CustomTransformerCommandDTO,
+  TransformerManifest,
+  TransformerSearchParam,
+  TransformerTestRequest
+} from '../../../shared/model/transformer.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
@@ -16,6 +21,10 @@ describe('TransformerController', () => {
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
       transformerService: new TransformerServiceMock()
+    },
+    user: {
+      id: 'test',
+      login: 'testUser'
     }
   } as CustomExpressRequest;
 
@@ -158,7 +167,7 @@ describe('TransformerController', () => {
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.transformerService.create).toHaveBeenCalledWith(command);
+    expect(mockRequest.services!.transformerService.create).toHaveBeenCalledWith(command, 'test');
     expect(result).toEqual(createdTransformer);
   });
 
@@ -169,7 +178,7 @@ describe('TransformerController', () => {
 
     await controller.update(transformerId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.transformerService.update).toHaveBeenCalledWith(transformerId, command);
+    expect(mockRequest.services!.transformerService.update).toHaveBeenCalledWith(transformerId, command, 'test');
   });
 
   it('should delete a transformer', async () => {
