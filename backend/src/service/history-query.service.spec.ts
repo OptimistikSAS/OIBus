@@ -118,7 +118,7 @@ describe('History Query service', () => {
   it('should create a history query', async () => {
     service.retrieveSecrets = jest.fn();
 
-    await service.create(testData.historyQueries.command, testData.south.list[0].id, undefined, undefined);
+    await service.create(testData.historyQueries.command, testData.south.list[0].id, undefined, undefined, 'userTest');
     expect(service.retrieveSecrets).toHaveBeenCalledTimes(1);
     expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
@@ -129,7 +129,7 @@ describe('History Query service', () => {
     (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
     service.retrieveSecrets = jest.fn();
 
-    await expect(service.create(testData.historyQueries.command, undefined, undefined, undefined)).rejects.toThrow(
+    await expect(service.create(testData.historyQueries.command, undefined, undefined, undefined, 'userTest')).rejects.toThrow(
       `Could not find OIBus transformer "${testData.transformers.list[0].id}"`
     );
   });
@@ -140,14 +140,14 @@ describe('History Query service', () => {
       { id: 'existing-id', name: testData.historyQueries.command.name }
     ]);
 
-    await expect(service.create(testData.historyQueries.command, undefined, undefined, undefined)).rejects.toThrow(
+    await expect(service.create(testData.historyQueries.command, undefined, undefined, undefined, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`History query name "${testData.historyQueries.command.name}" already exists`)
     );
   });
 
   it('should update a history query', async () => {
     (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValue(testData.historyQueries.list);
-    await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false);
+    await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false, 'userTest');
 
     expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
@@ -159,11 +159,20 @@ describe('History Query service', () => {
     command.name = testData.historyQueries.list[0].name;
     (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockClear();
 
-    await service.update(testData.historyQueries.list[0].id, command, false);
+    await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
 
     expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
     expect(engine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
     expect(historyQueryRepository.findAllHistoriesLight).not.toHaveBeenCalled();
+  });
+
+  it('should update a history query and preserve createdBy for existing items', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = testData.historyQueries.list[0].items[0].id;
+
+    await service.update(testData.historyQueries.list[0].id, command, false, 'user1');
+
+    expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
   });
 
   it('should update a history query with a new unique name', async () => {
@@ -171,7 +180,7 @@ describe('History Query service', () => {
     command.name = 'Updated History Query Name';
     (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValue(testData.historyQueries.list);
 
-    await service.update(testData.historyQueries.list[0].id, command, false);
+    await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
 
     expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
     expect(engine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
@@ -182,7 +191,7 @@ describe('History Query service', () => {
     command.name = 'Duplicate Name';
     (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
 
-    await expect(service.update(testData.historyQueries.list[0].id, command, false)).rejects.toThrow(
+    await expect(service.update(testData.historyQueries.list[0].id, command, false, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`History query name "Duplicate Name" already exists`)
     );
   });
@@ -192,7 +201,7 @@ describe('History Query service', () => {
     command.name = 'New Name';
     command.northTransformers = [{ inputType: 'any', transformerId: 'bad-id' }];
 
-    await expect(service.update(testData.historyQueries.list[0].id, command, false)).rejects.toThrow(
+    await expect(service.update(testData.historyQueries.list[0].id, command, false, 'userTest')).rejects.toThrow(
       new NotFoundError(`Could not find OIBus transformer "bad-id"`)
     );
   });
@@ -361,7 +370,7 @@ describe('History Query service', () => {
   });
 
   it('should create an item', async () => {
-    await service.createItem(testData.historyQueries.list[0].id, testData.historyQueries.itemCommand);
+    await service.createItem(testData.historyQueries.list[0].id, testData.historyQueries.itemCommand, 'userTest');
 
     expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
     expect(historyQueryRepository.saveItem).toHaveBeenCalledTimes(1);
@@ -373,7 +382,8 @@ describe('History Query service', () => {
     await service.updateItem(
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id,
-      testData.historyQueries.itemCommand
+      testData.historyQueries.itemCommand,
+      'userTest'
     );
 
     expect(historyQueryRepository.findItemById).toHaveBeenCalledWith(
@@ -654,7 +664,7 @@ describe('History Query service', () => {
   });
 
   it('should import items', async () => {
-    await service.importItems(testData.historyQueries.list[0].id, [testData.historyQueries.itemCommand]);
+    await service.importItems(testData.historyQueries.list[0].id, [testData.historyQueries.itemCommand], 'userTest');
 
     expect(historyQueryRepository.saveAllItems).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);

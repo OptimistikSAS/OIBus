@@ -109,7 +109,7 @@ export default class TransformerService {
     return transformer;
   }
 
-  async create(command: CustomTransformerCommandDTO): Promise<CustomTransformer> {
+  async create(command: CustomTransformerCommandDTO, createdBy: string): Promise<CustomTransformer> {
     await this.validator.validate(transformerSchema, command);
 
     const existingTransformers = this.transformerRepository.list();
@@ -117,14 +117,14 @@ export default class TransformerService {
       throw new OIBusValidationError(`Transformer name "${command.name}" already exists`);
     }
 
-    const transformer = { type: 'custom' } as CustomTransformer;
+    const transformer = { type: 'custom', createdBy, updatedBy: createdBy } as CustomTransformer;
     await copyTransformerCommandToTransformerEntity(transformer, command);
     this.transformerRepository.save(transformer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return transformer;
   }
 
-  async update(transformerId: string, command: CustomTransformerCommandDTO): Promise<void> {
+  async update(transformerId: string, command: CustomTransformerCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(transformerSchema, command);
     const transformer = this.findById(transformerId);
     if (transformer.type === 'standard') {
@@ -142,7 +142,7 @@ export default class TransformerService {
 
     const manifestChanged = JSON.stringify(command.customManifest) !== JSON.stringify(customTransformer.customManifest);
     const codeChanged = command.customCode !== customTransformer.customCode;
-
+    customTransformer.updatedBy = updatedBy;
     await copyTransformerCommandToTransformerEntity(customTransformer, command);
     this.transformerRepository.save(customTransformer);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
