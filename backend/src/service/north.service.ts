@@ -31,7 +31,12 @@ import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
-import { CacheMetadataSource, NorthConnectorMetrics, OIBusSetpointContent } from '../../shared/model/engine.model';
+import {
+  CacheMetadataSource,
+  NorthConnectorMetrics,
+  OIBusConnectionTestResult,
+  OIBusSetpointContent
+} from '../../shared/model/engine.model';
 import TransformerService, { toTransformerDTO } from './transformer.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
@@ -229,7 +234,7 @@ export default class NorthService {
     return this.engine.getNorthMetrics(northId);
   }
 
-  async testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<void> {
+  async testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<OIBusConnectionTestResult> {
     let northConnector: NorthConnectorEntity<NorthSettings> | null = null;
     if (northId !== 'create' && northId !== 'history') {
       northConnector = this.findById(northId);

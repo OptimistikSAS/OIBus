@@ -162,7 +162,7 @@ describe('SouthConnectorController', () => {
     const southType = testData.south.command.type;
     const settings = testData.south.command.settings;
 
-    (mockRequest.services!.southService.testSouth as jest.Mock).mockResolvedValue(undefined);
+    (mockRequest.services!.southService.testSouth as jest.Mock).mockResolvedValue({ items: [] });
 
     await controller.testConnection(southId, southType, settings, mockRequest as CustomExpressRequest);
 

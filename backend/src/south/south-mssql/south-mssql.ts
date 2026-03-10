@@ -15,7 +15,7 @@ import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -56,7 +56,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
     return config;
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const config = await this.createConnectionOptions();
 
     let pool;
@@ -94,11 +94,28 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       await pool.close();
       throw new OIBusTestingError(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
-    await pool.close();
 
     if (table_count === 0) {
+      await pool.close();
       throw new OIBusTestingError(`Database "${this.connector.settings.database}" has no tables`);
     }
+
+    const items: Array<{ key: string; value: string }> = [{ key: 'Tables', value: String(table_count) }];
+
+    try {
+      const {
+        recordsets: [versionResult]
+      } = await request.query<Array<Record<string, string>>>(`SELECT @@VERSION AS version`);
+      const version = versionResult[0]?.version;
+      if (version) {
+        items.unshift({ key: 'Version', value: version.split('\n')[0].trim() });
+      }
+    } catch {
+      // Version info not available
+    }
+
+    await pool.close();
+    return { items };
   }
 
   override async testItem(
