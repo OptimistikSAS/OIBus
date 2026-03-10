@@ -18,8 +18,9 @@ import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DatetimePipe } from '../shared/datetime.pipe';
 
-type NorthSortField = 'name' | 'type' | null;
+type NorthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
 
 const PAGE_SIZE = 15;
@@ -36,7 +37,8 @@ const PAGE_SIZE = 15;
     LegendComponent,
     OIBusNorthTypeEnumPipe,
     NgbTooltip,
-    TranslateModule
+    TranslateModule,
+    DatetimePipe
   ],
   templateUrl: './north-list.component.html',
   styleUrl: './north-list.component.scss'
@@ -169,9 +171,16 @@ export class NorthListComponent implements OnInit {
     if (!this.sortField) return;
 
     const direction = this.sortDirection === 'asc' ? 1 : -1;
+    const field = this.sortField;
     this.filteredNorths = [...this.filteredNorths].sort((a, b) => {
-      const aValue = this.sortField === 'name' ? a.name : a.type;
-      const bValue = this.sortField === 'name' ? b.name : b.type;
+      if (field === 'createdAt') {
+        return (a.createdAt ?? '').localeCompare(b.createdAt ?? '') * direction;
+      }
+      if (field === 'updatedAt') {
+        return (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') * direction;
+      }
+      const aValue = field === 'name' ? a.name : a.type;
+      const bValue = field === 'name' ? b.name : b.type;
       return aValue.localeCompare(bValue) * direction;
     });
   }

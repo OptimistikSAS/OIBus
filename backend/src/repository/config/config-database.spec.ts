@@ -92,6 +92,21 @@ import { CacheSearchParam } from '../../../shared/model/engine.model';
 jest.mock('../../service/utils');
 jest.mock('argon2');
 
+function stripAuditFields<T>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map(stripAuditFields) as T;
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      if (['createdBy', 'updatedBy', 'createdAt', 'updatedAt'].includes(key)) continue;
+      result[key] = stripAuditFields(value);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
 let database: Database;
 describe('Repository with populated database', () => {
   beforeAll(async () => {
@@ -245,11 +260,11 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly find all transformers', () => {
-      expect(repository.list()).toEqual([...testData.transformers.list, ...standardTransformers]);
+      expect(repository.list()).toEqual([...testData.transformers.list, ...standardTransformers].map(t => expect.objectContaining(t)));
     });
 
     it('should properly find a transformer by its ID', () => {
-      expect(repository.findById(testData.transformers.list[0].id)).toEqual(testData.transformers.list[0]);
+      expect(repository.findById(testData.transformers.list[0].id)).toEqual(expect.objectContaining(testData.transformers.list[0]));
       expect(repository.findById('bad id')).toEqual(null);
     });
 
@@ -264,7 +279,7 @@ describe('Repository with populated database', () => {
       createTransformer.id = '';
       createTransformer.name = 'new name';
       repository.save(createTransformer);
-      expect(repository.findById('newId')).toEqual(createTransformer);
+      expect(repository.findById('newId')).toEqual(expect.objectContaining(createTransformer));
     });
 
     it('should update a transformer', () => {
@@ -298,25 +313,22 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly search transformers with search params and page them', () => {
-      expect(
-        repository.search({
-          type: testData.transformers.list[0].type,
-          inputType: testData.transformers.list[0].inputType,
-          outputType: testData.transformers.list[0].outputType,
-          page: 0
-        })
-      ).toEqual(createPageFromArray([testData.transformers.list[0]], 10, 0));
+      const result = repository.search({
+        type: testData.transformers.list[0].type,
+        inputType: testData.transformers.list[0].inputType,
+        outputType: testData.transformers.list[0].outputType,
+        page: 0
+      });
+      const expected = createPageFromArray([testData.transformers.list[0]], 10, 0);
+      expect(result.totalElements).toEqual(expected.totalElements);
+      expect(result.content).toEqual(expected.content.map(t => expect.objectContaining(t)));
     });
 
     it('should properly search transformers and page them', () => {
-      expect(
-        repository.search({
-          type: undefined,
-          inputType: undefined,
-          outputType: undefined,
-          page: 0
-        })
-      ).toEqual(createPageFromArray([...testData.transformers.list, ...standardTransformers], 10, 0));
+      const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
+      const expected = createPageFromArray([...testData.transformers.list, ...standardTransformers], 10, 0);
+      expect(result.totalElements).toEqual(expected.totalElements);
+      expect(result.content).toEqual(expected.content.map(t => expect.objectContaining(t)));
     });
   });
 
@@ -328,11 +340,11 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly find all certificates', () => {
-      expect(repository.list()).toEqual(testData.certificates.list);
+      expect(repository.list()).toEqual(testData.certificates.list.map(c => expect.objectContaining(c)));
     });
 
     it('should properly find a certificate by its ID', () => {
-      expect(repository.findById(testData.certificates.list[0].id)).toEqual(testData.certificates.list[0]);
+      expect(repository.findById(testData.certificates.list[0].id)).toEqual(expect.objectContaining(testData.certificates.list[0]));
       expect(repository.findById('bad id')).toEqual(null);
     });
 
@@ -340,7 +352,7 @@ describe('Repository with populated database', () => {
       const createCertificate = JSON.parse(JSON.stringify(testData.certificates.list[0]));
       createCertificate.id = 'new id';
       repository.create(createCertificate);
-      expect(repository.findById('new id')).toEqual(createCertificate);
+      expect(repository.findById('new id')).toEqual(expect.objectContaining(createCertificate));
     });
 
     it('should update a certificate', () => {
@@ -1796,18 +1808,18 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly get a scan mode', () => {
-      expect(repository.findById(testData.scanMode.list[0].id)).toEqual(testData.scanMode.list[0]);
+      expect(repository.findById(testData.scanMode.list[0].id)).toEqual(expect.objectContaining(testData.scanMode.list[0]));
       expect(repository.findById('badId')).toEqual(null);
     });
 
     it('should create a scan mode', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
-      expect(repository.create(testData.scanMode.command)).toEqual({ ...testData.scanMode.command, id: 'newId' });
+      expect(repository.create(testData.scanMode.command)).toEqual(expect.objectContaining({ ...testData.scanMode.command, id: 'newId' }));
     });
 
     it('should update a scan mode', () => {
       repository.update('newId', testData.scanMode.command);
-      expect(repository.findById('newId')).toEqual({ ...testData.scanMode.command, id: 'newId' });
+      expect(repository.findById('newId')).toEqual(expect.objectContaining({ ...testData.scanMode.command, id: 'newId' }));
     });
 
     it('should delete a scan mode', () => {
@@ -1826,22 +1838,24 @@ describe('Repository with populated database', () => {
     });
 
     it('findAll() should properly get all IP filters', () => {
-      expect(repository.list()).toEqual(testData.ipFilters.list);
+      expect(repository.list()).toEqual(testData.ipFilters.list.map(f => expect.objectContaining(f)));
     });
 
     it('findById() should properly get an IP filter', () => {
-      expect(repository.findById(testData.ipFilters.list[0].id)).toEqual(testData.ipFilters.list[0]);
+      expect(repository.findById(testData.ipFilters.list[0].id)).toEqual(expect.objectContaining(testData.ipFilters.list[0]));
       expect(repository.findById('badId')).toEqual(null);
     });
 
     it('create() should create an IP filter', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
-      expect(repository.create(testData.ipFilters.command)).toEqual({ ...testData.ipFilters.command, id: 'newId' });
+      expect(repository.create(testData.ipFilters.command)).toEqual(
+        expect.objectContaining({ ...testData.ipFilters.command, id: 'newId' })
+      );
     });
 
     it('update() should update an IP filter', () => {
       repository.update('newId', testData.ipFilters.command);
-      expect(repository.findById('newId')).toEqual({ ...testData.ipFilters.command, id: 'newId' });
+      expect(repository.findById('newId')).toEqual(expect.objectContaining({ ...testData.ipFilters.command, id: 'newId' }));
     });
 
     it('delete() should delete an IP filter', () => {
@@ -1861,23 +1875,25 @@ describe('Repository with populated database', () => {
 
     it('should properly get north connectors', () => {
       expect(repository.findAllNorth()).toEqual(
-        testData.north.list.map(element => ({
-          id: element.id,
-          name: element.name,
-          type: element.type,
-          description: element.description,
-          enabled: element.enabled
-        }))
+        testData.north.list.map(element =>
+          expect.objectContaining({
+            id: element.id,
+            name: element.name,
+            type: element.type,
+            description: element.description,
+            enabled: element.enabled
+          })
+        )
       );
     });
 
     it('should properly get full north connectors', () => {
-      expect(repository.findAllNorthFull()).toEqual(testData.north.list);
+      expect(repository.findAllNorthFull()).toEqual(testData.north.list.map(n => expect.objectContaining(n)));
     });
 
     it('should properly get a north connector', () => {
       const result = repository.findNorthById(testData.north.list[0].id);
-      expect(result).toEqual(testData.north.list[0]);
+      expect(result).toEqual(expect.objectContaining(testData.north.list[0]));
       expect(repository.findNorthById('badId')).toEqual(null);
     });
 
@@ -2032,18 +2048,20 @@ describe('Repository with populated database', () => {
 
     it('should properly get south connectors', () => {
       expect(repository.findAllSouth()).toEqual(
-        testData.south.list.map(element => ({
-          id: element.id,
-          name: element.name,
-          type: element.type,
-          description: element.description,
-          enabled: element.enabled
-        }))
+        testData.south.list.map(element =>
+          expect.objectContaining({
+            id: element.id,
+            name: element.name,
+            type: element.type,
+            description: element.description,
+            enabled: element.enabled
+          })
+        )
       );
     });
 
     it('should properly get a south connector', () => {
-      expect(repository.findSouthById(testData.south.list[0].id)).toEqual(testData.south.list[0]);
+      expect(stripAuditFields(repository.findSouthById(testData.south.list[0].id))).toEqual(testData.south.list[0]);
       expect(repository.findSouthById('badId')).toEqual(null);
     });
 
@@ -2142,7 +2160,7 @@ describe('Repository with populated database', () => {
 
     it('should find item', () => {
       const result = repository.findItemById(testData.south.list[1].id, testData.south.list[1].items[0].id);
-      expect(result).toEqual(testData.south.list[1].items[0]);
+      expect(result).toEqual(expect.objectContaining(testData.south.list[1].items[0]));
       expect(repository.findItemById(testData.south.list[0].id, testData.south.list[1].items[0].id)).toEqual(null);
     });
 
@@ -2432,25 +2450,27 @@ describe('Repository with populated database', () => {
 
     it('should properly get history queries (light)', () => {
       expect(repository.findAllHistoriesLight()).toEqual(
-        testData.historyQueries.list.map(element => ({
-          id: element.id,
-          name: element.name,
-          description: element.description,
-          status: element.status,
-          startTime: element.queryTimeRange.startTime,
-          endTime: element.queryTimeRange.endTime,
-          southType: element.southType,
-          northType: element.northType
-        }))
+        testData.historyQueries.list.map(element =>
+          expect.objectContaining({
+            id: element.id,
+            name: element.name,
+            description: element.description,
+            status: element.status,
+            startTime: element.queryTimeRange.startTime,
+            endTime: element.queryTimeRange.endTime,
+            southType: element.southType,
+            northType: element.northType
+          })
+        )
       );
     });
 
     it('should properly get history queries (full)', () => {
-      expect(repository.findAllHistoriesFull()).toEqual(testData.historyQueries.list);
+      expect(stripAuditFields(repository.findAllHistoriesFull())).toEqual(testData.historyQueries.list);
     });
 
     it('should properly get a history query', () => {
-      expect(repository.findHistoryById(testData.historyQueries.list[0].id)).toEqual(testData.historyQueries.list[0]);
+      expect(stripAuditFields(repository.findHistoryById(testData.historyQueries.list[0].id))).toEqual(testData.historyQueries.list[0]);
       expect(repository.findHistoryById('badId')).toEqual(null);
     });
 
@@ -2639,7 +2659,7 @@ describe('Repository with populated database', () => {
 
     it('should find item', () => {
       const result = repository.findItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id);
-      expect(result).toEqual(testData.historyQueries.list[1].items[0]);
+      expect(result).toEqual(expect.objectContaining(testData.historyQueries.list[1].items[0]));
       expect(repository.findItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[1].items[0].id)).toEqual(null);
     });
 

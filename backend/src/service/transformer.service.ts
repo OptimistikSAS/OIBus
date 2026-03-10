@@ -362,7 +362,11 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         customCode: transformer.customCode,
         language: transformer.language,
         manifest: transformer.customManifest,
-        timeout: transformer.timeout
+        timeout: transformer.timeout,
+        createdBy: transformer.createdBy,
+        updatedBy: transformer.updatedBy,
+        createdAt: transformer.createdAt,
+        updatedAt: transformer.updatedAt
       };
   }
 };

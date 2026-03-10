@@ -91,49 +91,39 @@ describe('ScanModeListComponent', () => {
     it('should display a list of scan modes', () => {
       expect(tester.title).toContainText('Scan mode');
       expect(tester.scanModes.length).toEqual(2);
-      expect(tester.scanModes[0].elements('td').length).toEqual(4);
+      expect(tester.scanModes[0].elements('td').length).toEqual(7);
       expect(tester.scanModes[1].elements('td')[0]).toContainText('scanMode2');
       expect(tester.scanModes[1].elements('td')[1]).toContainText('My Scan Mode 2');
       expect(tester.scanModes[1].elements('td')[2]).toContainText('* * * * * *');
     });
 
     it('should add a scan mode', () => {
-      scanModeService.list.calls.reset();
-
       const modalService: MockModalService<EditScanModeModalComponent> = TestBed.inject(MockModalService);
       const fakeEditComponent = createMock(EditScanModeModalComponent);
       modalService.mockClosedModal(fakeEditComponent, { name: 'new-name' });
 
       tester.addScanMode.click();
       expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
-      expect(scanModeService.list).toHaveBeenCalledTimes(1);
       expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.created', { name: 'new-name' });
     });
 
     it('should edit a scan mode', () => {
-      scanModeService.list.calls.reset();
-
       const modalService: MockModalService<EditScanModeModalComponent> = TestBed.inject(MockModalService);
       const fakeEditComponent = createMock(EditScanModeModalComponent);
       modalService.mockClosedModal(fakeEditComponent, { name: 'new-name' });
 
       tester.editButtons[1].click();
       expect(fakeEditComponent.prepareForEdition).toHaveBeenCalledWith(scanModes[1]);
-      expect(scanModeService.list).toHaveBeenCalledTimes(1);
       expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.updated', { name: 'new-name' });
     });
 
     it('should delete a scan mode', () => {
-      scanModeService.list.calls.reset();
-
       confirmationService.confirm.and.returnValue(of(undefined));
       scanModeService.delete.and.returnValue(of(undefined));
       tester.deleteButtons[0].click();
 
-      // confirm, delete, notify and refresh
       expect(confirmationService.confirm).toHaveBeenCalled();
       expect(scanModeService.delete).toHaveBeenCalledWith('id1');
-      expect(scanModeService.list).toHaveBeenCalledTimes(1);
       expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.deleted', { name: 'scanMode1' });
     });
 

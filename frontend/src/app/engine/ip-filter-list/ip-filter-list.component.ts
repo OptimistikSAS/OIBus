@@ -4,18 +4,35 @@ import { firstValueFrom, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { EditIpFilterModalComponent } from './edit-ip-filter-modal/edit-ip-filter-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
+import { emptyPage } from '../../shared/test-utils';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { DatetimePipe } from '../../shared/datetime.pipe';
+
+type IpFilterSortField = 'address' | 'createdAt' | 'updatedAt' | null;
+type SortDirection = 'asc' | 'desc';
+
+const PAGE_SIZE = 20;
 
 @Component({
   selector: 'oib-ip-filter-list',
-  imports: [TranslateDirective, BoxComponent, BoxTitleDirective, OibHelpComponent, NgbTooltip, TranslateModule],
+  imports: [
+    TranslateDirective,
+    BoxComponent,
+    BoxTitleDirective,
+    OibHelpComponent,
+    NgbTooltip,
+    TranslateModule,
+    PaginationComponent,
+    DatetimePipe
+  ],
   templateUrl: './ip-filter-list.component.html',
   styleUrl: './ip-filter-list.component.scss'
 })
@@ -25,11 +42,16 @@ export class IpFilterListComponent implements OnInit {
   private notificationService = inject(NotificationService);
   private ipFilterService = inject(IpFilterService);
 
-  ipFilters: Array<IPFilterDTO> = [];
+  allIpFilters: Array<IPFilterDTO> = [];
+  private filteredIpFilters: Array<IPFilterDTO> = [];
+  displayedIpFilters: Page<IPFilterDTO> = emptyPage();
+  sortField: IpFilterSortField = null;
+  sortDirection: SortDirection = 'asc';
 
   ngOnInit() {
     this.ipFilterService.list().subscribe(ipFilterList => {
-      this.ipFilters = ipFilterList;
+      this.allIpFilters = ipFilterList;
+      this.updateList(0);
     });
   }
 
@@ -65,13 +87,11 @@ export class IpFilterListComponent implements OnInit {
     this.refreshAfterEditIpFilterModalClosed(modalRef, 'created');
   }
 
-  /**
-   * Refresh the IP filter list when the IP filter is edited
-   */
   private refreshAfterEditIpFilterModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
     modalRef.result.subscribe((ipFilter: IPFilterDTO) => {
       this.ipFilterService.list().subscribe(ipFilters => {
-        this.ipFilters = ipFilters;
+        this.allIpFilters = ipFilters;
+        this.updateList(0);
       });
       this.notificationService.success(`engine.ip-filter.${mode}`, {
         address: ipFilter.address
@@ -95,11 +115,51 @@ export class IpFilterListComponent implements OnInit {
       )
       .subscribe(() => {
         this.ipFilterService.list().subscribe(ipFilters => {
-          this.ipFilters = ipFilters;
+          this.allIpFilters = ipFilters;
+          this.updateList(0);
         });
         this.notificationService.success('engine.ip-filter.deleted', {
           address: ipFilter.address
         });
       });
+  }
+
+  toggleSort(field: IpFilterSortField) {
+    if (!field) return;
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    this.updateList(0);
+  }
+
+  getSortIcon(field: IpFilterSortField): string {
+    if (this.sortField !== field) return 'fa-sort';
+    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+  }
+
+  changePage(pageNumber: number) {
+    this.displayedIpFilters = createPageFromArray(this.filteredIpFilters, PAGE_SIZE, pageNumber);
+  }
+
+  private updateList(pageNumber: number) {
+    this.filteredIpFilters = [...this.allIpFilters];
+    this.sortList();
+    this.changePage(pageNumber);
+  }
+
+  private sortList() {
+    if (!this.sortField) return;
+    const direction = this.sortDirection === 'asc' ? 1 : -1;
+    this.filteredIpFilters = [...this.filteredIpFilters].sort((a, b) => {
+      if (this.sortField === 'address') {
+        return a.address.localeCompare(b.address) * direction;
+      }
+      const aVal = this.sortField === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
+      const bVal = this.sortField === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
+      return aVal.localeCompare(bVal) * direction;
+    });
   }
 }

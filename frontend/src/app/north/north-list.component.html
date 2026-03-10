@@ -70,6 +70,27 @@
                 </button>
               </th>
               <th translate="north.description"></th>
+              <th translate="north.created-by"></th>
+              <th>
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('createdAt')"
+                >
+                  <span translate="north.created-at" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('createdAt') }}"></span>
+                </button>
+              </th>
+              <th>
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('updatedAt')"
+                >
+                  <span translate="north.updated-at" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+                </button>
+              </th>
               <th></th>
             </tr>
           </thead>
@@ -88,6 +109,9 @@
                 <td>{{ north.name }}</td>
                 <td>{{ north.type | oIBusNorthTypeEnum }}</td>
                 <td>{{ north.description }}</td>
+                <td>{{ north.createdBy }}</td>
+                <td>{{ north.createdAt | datetime }}</td>
+                <td>{{ north.updatedAt | datetime }}</td>
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     <button
