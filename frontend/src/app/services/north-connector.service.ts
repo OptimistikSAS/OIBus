@@ -15,7 +15,8 @@ import {
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
-  FileCacheContent
+  FileCacheContent,
+  OIBusConnectionTestResult
 } from '../../../../backend/shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
@@ -103,8 +104,8 @@ export class NorthConnectorService {
     return this.http.post<void>(`/api/north/${northId}/metrics/reset`, null);
   }
 
-  testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<void> {
-    return this.http.post<void>(`/api/north/${northId}/test/connection`, settings, {
+  testConnection(northId: string, settings: NorthSettings, northType: OIBusNorthType): Observable<OIBusConnectionTestResult> {
+    return this.http.post<OIBusConnectionTestResult>(`/api/north/${northId}/test/connection`, settings, {
       params: { northType }
     });
   }

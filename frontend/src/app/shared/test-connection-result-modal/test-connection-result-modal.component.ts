@@ -8,6 +8,7 @@ import { SouthSettings } from '../../../../../backend/shared/model/south-setting
 import { NorthSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
 import { OIBusNorthType } from '../../../../../backend/shared/model/north-connector.model';
+import { OIBusConnectionTestResult } from '../../../../../backend/shared/model/engine.model';
 
 @Component({
   selector: 'oib-test-connection-result-modal',
@@ -25,6 +26,7 @@ export class TestConnectionResultModalComponent {
   loading = false;
   success = false;
   error: string | null = null;
+  testResult: OIBusConnectionTestResult | null = null;
 
   /**
    * Prepares the component for connector testing.
@@ -56,7 +58,8 @@ export class TestConnectionResultModalComponent {
         this.error = httpError.error.message;
         this.loading = false;
       },
-      next: () => {
+      next: (result: OIBusConnectionTestResult) => {
+        this.testResult = result;
         this.success = true;
         this.loading = false;
       }
@@ -96,7 +99,8 @@ export class TestConnectionResultModalComponent {
         this.error = httpError.error.message;
         this.loading = false;
       },
-      next: () => {
+      next: (result: OIBusConnectionTestResult) => {
+        this.testResult = result;
         this.success = true;
         this.loading = false;
       }

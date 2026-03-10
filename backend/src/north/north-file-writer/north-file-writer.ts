@@ -5,7 +5,7 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { createWriteStream, ReadStream } from 'node:fs';
@@ -23,7 +23,7 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     return ['any', 'setpoint', 'time-values'];
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     const outputFolder = path.resolve(this.connector.settings.outputFolder);
 
     try {
@@ -37,6 +37,17 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     } catch (error: unknown) {
       throw new Error(`Access error on "${outputFolder}": ${(error as Error).message}`);
     }
+
+    const items: Array<{ key: string; value: string }> = [{ key: 'Output Folder', value: outputFolder }];
+
+    try {
+      const files = await fs.readdir(outputFolder);
+      items.push({ key: 'Files', value: String(files.length) });
+    } catch {
+      // File count not critical
+    }
+
+    return { items };
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

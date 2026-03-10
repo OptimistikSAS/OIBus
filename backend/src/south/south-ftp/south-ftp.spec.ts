@@ -167,7 +167,7 @@ describe('SouthFTP', () => {
       mockFtpClient.access.mockResolvedValue(undefined);
       mockFtpClient.close.mockResolvedValue(undefined);
 
-      await south.testConnection();
+      const testResult = await south.testConnection();
 
       expect(mockFtpClient.access).toHaveBeenCalledWith({
         host: '127.0.0.1',
@@ -177,6 +177,12 @@ describe('SouthFTP', () => {
         secure: false
       });
       expect(mockFtpClient.close).toHaveBeenCalled();
+      expect(testResult).toEqual({
+        items: [
+          { key: 'Host', value: `${configuration.settings.host}:${configuration.settings.port}` },
+          { key: 'Username', value: configuration.settings.username }
+        ]
+      });
     });
 
     it('should test connection with error', async () => {

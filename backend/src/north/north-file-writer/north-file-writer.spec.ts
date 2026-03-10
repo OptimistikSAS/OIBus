@@ -162,12 +162,18 @@ describe('NorthFileWriter', () => {
 
   it('should have access to output folder (Test Connection)', async () => {
     (fs.access as jest.Mock).mockResolvedValue(undefined);
+    (fs.readdir as jest.Mock).mockResolvedValue(['file1.txt', 'file2.csv', 'file3.json']);
 
-    await expect(north.testConnection()).resolves.not.toThrow();
+    const testResult = await north.testConnection();
 
     const outputFolder = path.resolve(configuration.settings.outputFolder);
-    // constants.F_OK is default if not specified, but implementation might pass it
     expect(fs.access).toHaveBeenCalledWith(outputFolder, expect.anything());
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Output Folder', value: outputFolder },
+        { key: 'Files', value: '3' }
+      ]
+    });
   });
 
   it('should handle folder not existing (Test Connection)', async () => {

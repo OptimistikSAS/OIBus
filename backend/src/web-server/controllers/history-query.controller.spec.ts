@@ -137,7 +137,7 @@ describe('HistoryQueryController', () => {
     const fromNorth = testData.north.list[0].id;
     const settings = testData.north.command.settings;
 
-    (mockRequest.services!.historyQueryService.testNorth as jest.Mock).mockResolvedValue(undefined);
+    (mockRequest.services!.historyQueryService.testNorth as jest.Mock).mockResolvedValue({ items: [] });
 
     await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
 
@@ -181,7 +181,7 @@ describe('HistoryQueryController', () => {
     const fromSouth = testData.south.list[0].id;
     const settings = testData.south.command.settings;
 
-    (mockRequest.services!.historyQueryService.testSouth as jest.Mock).mockResolvedValue(undefined);
+    (mockRequest.services!.historyQueryService.testSouth as jest.Mock).mockResolvedValue({ items: [] });
 
     await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
 
