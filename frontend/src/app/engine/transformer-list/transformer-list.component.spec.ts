@@ -88,7 +88,7 @@ describe('TransformerListComponent', () => {
     it('should display a list of transformers', () => {
       expect(tester.title).toContainText('Custom Transformers');
       expect(tester.transformers.length).toEqual(2);
-      expect(tester.transformers[0].elements('td').length).toEqual(5);
+      expect(tester.transformers[0].elements('td').length).toEqual(8);
       expect(tester.transformers[1].elements('td')[0]).toContainText('my transformer 2');
       expect(tester.transformers[1].elements('td')[1]).toContainText('description');
       expect(tester.transformers[1].elements('td')[2]).toContainText('any');
