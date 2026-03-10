@@ -24,10 +24,6 @@
   </ng-template>
 </oib-box>
 
-@if (displayedIpFilters.totalPages > 1) {
-  <oib-pagination class="d-flex justify-content-end mb-2" [page]="displayedIpFilters" (pageChanged)="changePage($event)" />
-}
-
 <!-- the IP filter list -->
 @if (displayedIpFilters.content.length !== 0) {
   <div>
@@ -99,6 +95,9 @@
         }
       </tbody>
     </table>
+    @if (displayedIpFilters.totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedIpFilters" (pageChanged)="changePage($event)" />
+    }
   </div>
 } @else {
   <div class="oib-grey-container" id="no-ip-filter" translate="engine.ip-filter.none"></div>
