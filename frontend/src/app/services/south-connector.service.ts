@@ -15,7 +15,7 @@ import {
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
-import { OIBusContent } from '../../../../backend/shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 
 /**
@@ -103,8 +103,8 @@ export class SouthConnectorService {
     return this.http.put<void>(`/api/south/${southId}/metrics/reset`, null);
   }
 
-  testConnection(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<void> {
-    return this.http.post<void>(`/api/south/${southId}/test/connection`, settings, {
+  testConnection(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<OIBusConnectionTestResult> {
+    return this.http.post<OIBusConnectionTestResult>(`/api/south/${southId}/test/connection`, settings, {
       params: { southType }
     });
   }

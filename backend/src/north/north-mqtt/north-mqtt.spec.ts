@@ -180,8 +180,9 @@ describe('NorthMQTT', () => {
   });
 
   it('should properly test connection', async () => {
-    await expect(north.testConnection()).resolves.not.toThrow();
+    const testResult = await north.testConnection();
     expect(mockMqttClient.end).toHaveBeenCalled();
+    expect(testResult).toEqual({ items: [{ key: 'Broker URL', value: configuration.settings.url }] });
   });
 
   it('should throw error if connector is in reconnecting state', async () => {

@@ -1,7 +1,7 @@
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import path from 'node:path';
 import fs from 'node:fs/promises';
@@ -31,7 +31,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     return ['opcua'];
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     const tempCertFolder = `opcua-test-${randomUUID()}`;
     await initOPCUACertificateFolders(tempCertFolder);
     const clientCertificateManager = new OPCUACertificateManager({
@@ -50,6 +50,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         session = null;
       }
     }
+    return { items: [] };
   }
 
   override async start(): Promise<void> {

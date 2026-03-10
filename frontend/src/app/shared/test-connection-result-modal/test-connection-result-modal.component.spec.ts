@@ -32,6 +32,10 @@ class TestConnectionResultModalComponentTester extends ComponentTester<TestConne
   get cancel() {
     return this.button('#cancel-button')!;
   }
+
+  get table() {
+    return this.element('table');
+  }
 }
 
 describe('TestConnectionResultModalComponent', () => {
@@ -64,7 +68,7 @@ describe('TestConnectionResultModalComponent', () => {
     const southConnector = testData.south.list[0];
 
     beforeEach(() => {
-      southConnectorService.testConnection.and.returnValue(of(undefined));
+      southConnectorService.testConnection.and.returnValue(of({ items: [] }));
     });
 
     it('should be loading', async () => {
@@ -81,6 +85,18 @@ describe('TestConnectionResultModalComponent', () => {
       expect(tester.success).toContainText('Connection successfully tested');
       expect(tester.spinner).toBeNull();
       expect(tester.error).toBeNull();
+      expect(tester.componentInstance.testResult).toEqual({ items: [] });
+      expect(tester.table).toBeNull();
+    });
+
+    it('should display success with result items', async () => {
+      southConnectorService.testConnection.and.returnValue(of({ items: [{ key: 'Version', value: '1.2.3' }] }));
+      tester.componentInstance.runTest('south', southConnector.id, southConnector.settings, southConnector.type);
+      await tester.change();
+
+      expect(tester.success).toContainText('Connection successfully tested');
+      expect(tester.componentInstance.testResult).toEqual({ items: [{ key: 'Version', value: '1.2.3' }] });
+      expect(tester.table).not.toBeNull();
     });
 
     it('should display success without south', async () => {
@@ -122,7 +138,7 @@ describe('TestConnectionResultModalComponent', () => {
     } as NorthConnectorDTO;
 
     beforeEach(() => {
-      northConnectorService.testConnection.and.returnValue(of(undefined));
+      northConnectorService.testConnection.and.returnValue(of({ items: [] }));
     });
 
     it('should be loading', async () => {
@@ -176,7 +192,7 @@ describe('TestConnectionResultModalComponent', () => {
     } as NorthConnectorCommandDTO;
 
     beforeEach(() => {
-      historyQueryService.testNorthConnection.and.returnValue(of(undefined));
+      historyQueryService.testNorthConnection.and.returnValue(of({ items: [] }));
     });
 
     it('should be loading', async () => {
@@ -260,7 +276,7 @@ describe('TestConnectionResultModalComponent', () => {
     } as SouthConnectorCommandDTO;
 
     beforeEach(() => {
-      historyQueryService.testSouthConnection.and.returnValue(of(undefined));
+      historyQueryService.testSouthConnection.and.returnValue(of({ items: [] }));
     });
 
     it('should be loading', async () => {

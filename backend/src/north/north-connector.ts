@@ -10,6 +10,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
+  OIBusConnectionTestResult,
   OIBusContent
 } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
@@ -558,7 +559,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   abstract supportedTypes(): Array<string>;
 
-  abstract testConnection(): Promise<void>;
+  abstract testConnection(): Promise<OIBusConnectionTestResult>;
 
   abstract handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void>;
 
