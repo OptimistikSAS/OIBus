@@ -607,6 +607,9 @@
       "name": "Name",
       "description": "Description",
       "cron": "Cron",
+      "created-by": "Created by",
+      "created-at": "Created on",
+      "updated-at": "Updated on",
       "cron-meaning": "Cron meaning:",
       "cron-next-occurrences": "Next occurrences:",
       "tooltips": {
@@ -629,6 +632,9 @@
       "expiry": "Expires",
       "public-key": "Public key",
       "certificate": "Certificate",
+      "created-by": "Created by",
+      "created-at": "Created on",
+      "updated-at": "Updated on",
       "regenerate-certificate": "Regenerate certificate",
       "common-name": "Common name",
       "country-name": "Country name",
@@ -658,11 +664,19 @@
       "name": "Name",
       "description": "Description",
       "address": "Address",
+      "created-by": "Created by",
+      "created-at": "Created on",
+      "updated-at": "Updated on",
       "tooltips": {
         "add": "Add a new IP filter",
         "edit": "Edit IP filter",
         "delete": "Delete IP filter"
       }
+    },
+    "transformer": {
+      "created-by": "Created by",
+      "created-at": "Created on",
+      "updated-at": "Updated on"
     },
     "tooltips": {
       "edit": "Edit engine settings"
@@ -2260,6 +2274,9 @@
       }
     },
     "type": "Type",
+    "created-by": "Created by",
+    "created-at": "Created on",
+    "updated-at": "Updated on",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",
     "edit-item-modal": {
@@ -2441,6 +2458,9 @@
       "error": "Error when testing settings"
     },
     "type": "Type",
+    "created-by": "Created by",
+    "created-at": "Created on",
+    "updated-at": "Updated on",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",
     "caching": {
@@ -2568,6 +2588,9 @@
       "max-read-interval": "Max read interval",
       "read-delay": "Read delay"
     },
+    "created-by": "Created by",
+    "created-at": "Created on",
+    "updated-at": "Updated on",
     "started": "History query {{ name }} started",
     "paused": "History query {{ name }} paused",
     "cache-path-copy": {

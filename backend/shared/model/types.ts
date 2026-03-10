@@ -51,16 +51,28 @@ export interface BaseEntity {
   id: string;
 
   /**
+   * The login of the user who created the entity.
+   * @example "admin"
+   */
+  createdBy?: string;
+
+  /**
+   * The login of the user who last updated the entity.
+   * @example "admin"
+   */
+  updatedBy?: string;
+
+  /**
    * The date and time when the entity was created.
    * @example "2023-10-31T12:34:56.789Z"
    */
-  creationDate?: Instant;
+  createdAt?: Instant;
 
   /**
-   * The date and time when the entity was last edited.
+   * The date and time when the entity was last updated.
    * @example "2023-10-31T13:45:00.123Z"
    */
-  lastEditInstant?: Instant;
+  updatedAt?: Instant;
 }
 
 /**
