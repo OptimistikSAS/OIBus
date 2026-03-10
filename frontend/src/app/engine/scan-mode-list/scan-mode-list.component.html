@@ -23,10 +23,6 @@
   </ng-template>
 </oib-box>
 
-@if (displayedScanModes.totalPages > 1) {
-  <oib-pagination class="d-flex justify-content-end mb-2" [page]="displayedScanModes" (pageChanged)="changePage($event)" />
-}
-
 <!-- the scan mode list -->
 @if (displayedScanModes.content.length !== 0) {
   <div>
@@ -100,6 +96,9 @@
         }
       </tbody>
     </table>
+    @if (displayedScanModes.totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedScanModes" (pageChanged)="changePage($event)" />
+    }
   </div>
 } @else {
   <div class="oib-grey-container" id="no-scan-mode" translate="engine.scan-mode.none"></div>
