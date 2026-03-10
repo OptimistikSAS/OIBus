@@ -100,11 +100,17 @@ describe('NorthREST', () => {
   });
 
   it('should test connection successfully', async () => {
-    await expect(north.testConnection()).resolves.not.toThrow();
+    const testResult = await north.testConnection();
 
     const [url, options] = httpRequestMock.mock.calls[0];
     expect(url.toString()).toBe('https://api.example.com/health');
     expect(options!.method).toBe('GET');
+    expect(testResult).toEqual({
+      items: [
+        { key: 'URL', value: 'https://api.example.com/health' },
+        { key: 'Status Code', value: '200' }
+      ]
+    });
   });
 
   it('should fail test connection if status code does not match', async () => {

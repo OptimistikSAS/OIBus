@@ -7,7 +7,7 @@ import { DateTime } from 'luxon';
 import { Instant } from '../../../shared/model/types';
 import { QueriesSubscription } from '../south-interface';
 import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -144,10 +144,11 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     this.disconnecting = false;
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
     const client = await mqtt.connectAsync(this.connector.settings.url, options);
     client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
+    return { items: [{ key: 'Broker URL', value: this.connector.settings.url }] };
   }
 
   override async testItem(

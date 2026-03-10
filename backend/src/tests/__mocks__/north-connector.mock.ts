@@ -29,7 +29,7 @@ export default class NorthConnectorMock {
   searchCacheContent = jest.fn();
   getFileFromCache = jest.fn();
   updateCacheContent = jest.fn();
-  testConnection = jest.fn();
+  testConnection = jest.fn().mockResolvedValue({ items: [] });
   metricsEvent = new EventEmitter();
 
   set connectorConfiguration(connectorConfiguration: NorthConnectorEntity<NorthSettings>) {
