@@ -35,6 +35,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
+  OIBusConnectionTestResult,
   OIBusContent
 } from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
@@ -186,17 +187,16 @@ export class HistoryQueryController extends Controller {
    * @summary Test north connection
    */
   @Post('/{historyId}/test/north')
-  @SuccessResponse(204, 'No Content')
   async testNorth(
     @Path() historyId: string,
     @Query() northType: OIBusNorthType,
     @Query() fromNorth: string | undefined,
     @Body() command: NorthSettings,
     @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  ): Promise<OIBusConnectionTestResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
-      await historyQueryService.testNorth(historyId, northType, fromNorth, command);
+      return await historyQueryService.testNorth(historyId, northType, fromNorth, command);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
@@ -207,17 +207,16 @@ export class HistoryQueryController extends Controller {
    * @summary Test south connection
    */
   @Post('/{historyId}/test/south')
-  @SuccessResponse(204, 'No Content')
   async testSouth(
     @Path() historyId: string,
     @Query() southType: OIBusSouthType,
     @Query() fromSouth: string | undefined,
     @Body() command: SouthSettings,
     @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  ): Promise<OIBusConnectionTestResult> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     try {
-      await historyQueryService.testSouth(historyId, southType, fromSouth, command);
+      return await historyQueryService.testSouth(historyId, southType, fromSouth, command);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

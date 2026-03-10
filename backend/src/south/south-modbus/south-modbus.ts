@@ -8,7 +8,7 @@ import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { QueriesLastPoint } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthModbusItemSettings, SouthModbusSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -71,7 +71,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     this.disconnecting = false;
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     try {
       const socket = new net.Socket();
       await connectSocket(socket, this.connector.settings);
@@ -85,6 +85,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
           throw new Error(`Unable to connect to socket: ${(error as Error).message}`);
       }
     }
+    return { items: [] };
   }
 
   override async testItem(

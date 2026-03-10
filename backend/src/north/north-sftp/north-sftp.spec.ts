@@ -209,11 +209,17 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
   it('should have access to output folder', async () => {
     mockSftpClient.exists = jest.fn().mockReturnValueOnce('d'); // 'd' = directory
 
-    await expect(north.testConnection()).resolves.not.toThrow();
+    const testResult = await north.testConnection();
 
     expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.exists).toHaveBeenCalledWith('remoteFolder');
     expect(mockSftpClient.end).toHaveBeenCalledTimes(1);
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Host', value: `${configuration.settings.host}:${configuration.settings.port}` },
+        { key: 'Remote Folder', value: configuration.settings.remoteFolder }
+      ]
+    });
   });
 
   it('should throw an error if no access', async () => {

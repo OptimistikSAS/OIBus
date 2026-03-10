@@ -725,7 +725,13 @@ describe('SouthSFTP test connection with private key', () => {
     (fs.stat as jest.Mock).mockReturnValue({
       isDirectory: () => true
     });
-    await south.testConnection();
+    const testResult = await south.testConnection();
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Host', value: `${configuration.settings.host}:${configuration.settings.port}` },
+        { key: 'Username', value: configuration.settings.username }
+      ]
+    });
     expect(logger.error).not.toHaveBeenCalled();
     expect(encryptionService.decryptText).toHaveBeenCalledWith('myPassphrase');
     expect(fs.readFile).toHaveBeenCalledTimes(1);
