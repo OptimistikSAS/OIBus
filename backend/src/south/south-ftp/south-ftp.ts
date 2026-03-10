@@ -8,7 +8,7 @@ import pino from 'pino';
 import { encryptionService } from '../../service/encryption.service';
 import { QueriesFile } from '../south-interface';
 import { SouthFTPItemSettings, SouthFTPSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { AccessOptions, Client as FTPClient, FileInfo } from 'basic-ftp';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -30,7 +30,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     try {
       const client = new FTPClient();
       await client.access(await this.createConnectionOptions());
@@ -38,6 +38,12 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     } catch (error: unknown) {
       throw new Error(`Access error on "${this.connector.settings.host}:${this.connector.settings.port}": ${(error as Error).message}`);
     }
+    return {
+      items: [
+        { key: 'Host', value: `${this.connector.settings.host}:${this.connector.settings.port}` },
+        { key: 'Username', value: this.connector.settings.username || '' }
+      ]
+    };
   }
 
   override async testItem(

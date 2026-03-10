@@ -291,13 +291,78 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly test connection', async () => {
-    const mockedClient = { close: jest.fn() };
+    const mockedClient = {
+      close: jest.fn(),
+      read: jest.fn().mockResolvedValue([
+        { statusCode: { value: 0 }, value: { value: 0 } }, // State = Running
+        { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } }, // ManufacturerName
+        { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } }, // ProductName
+        { statusCode: { value: 0 }, value: { value: '1.2.3' } }, // SoftwareVersion
+        { statusCode: { value: 0 }, value: { value: '1234' } }, // BuildNumber
+        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } } // BuildDate
+      ])
+    };
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
-    await south.testConnection();
+    const testResult = await south.testConnection();
     expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
     expect(south.createSession).toHaveBeenCalledTimes(1);
+    expect(mockedClient.read).toHaveBeenCalledTimes(1);
     expect(mockedClient.close).toHaveBeenCalledTimes(1);
     expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
+    expect(testResult.items).toHaveLength(6);
+    expect(testResult.items[0]).toEqual({ key: 'State', value: 'Running' }); // known state label
+  });
+
+  it('should properly test connection with graceful degradation when session.read throws', async () => {
+    const mockedClient = {
+      close: jest.fn(),
+      read: jest.fn().mockRejectedValue(new Error('Read not supported'))
+    };
+    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    const testResult = await south.testConnection();
+    expect(south.createSession).toHaveBeenCalledTimes(1);
+    expect(mockedClient.read).toHaveBeenCalledTimes(1);
+    expect(mockedClient.close).toHaveBeenCalledTimes(1);
+    expect(testResult).toEqual({ items: [] });
+  });
+
+  it('should skip data values with bad status codes or null values', async () => {
+    const mockedClient = {
+      close: jest.fn(),
+      read: jest.fn().mockResolvedValue([
+        { statusCode: { value: 0 }, value: { value: 0 } }, // State Good — included (Running)
+        { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } }, // ManufacturerName Good — included
+        { statusCode: { value: 0x80350000 }, value: { value: 'bad' } }, // ProductName Bad status — skipped
+        { statusCode: { value: 0 }, value: { value: null } }, // SoftwareVersion null value — skipped
+        { statusCode: { value: 0 }, value: { value: '1234' } }, // BuildNumber Good — included
+        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } } // BuildDate Good Date — included
+      ])
+    };
+    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    const testResult = await south.testConnection();
+    expect(testResult.items).toHaveLength(4);
+    expect(testResult.items[0]).toEqual({ key: 'State', value: 'Running' });
+    expect(testResult.items[1]).toEqual({ key: 'ManufacturerName', value: 'Prosys OPC' });
+    expect(testResult.items[2]).toEqual({ key: 'BuildNumber', value: '1234' });
+    expect(testResult.items[3].key).toBe('BuildDate');
+    expect(testResult.items[3].value).toMatch(/^\d{4}-\d{2}-\d{2}T/); // ISO date format
+  });
+
+  it('should fall back to numeric string for unknown state values', async () => {
+    const mockedClient = {
+      close: jest.fn(),
+      read: jest.fn().mockResolvedValue([
+        { statusCode: { value: 0 }, value: { value: 99 } }, // State = unknown value not in labels
+        { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } },
+        { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } },
+        { statusCode: { value: 0 }, value: { value: '1.2.3' } },
+        { statusCode: { value: 0 }, value: { value: '1234' } },
+        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } }
+      ])
+    };
+    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    const testResult = await south.testConnection();
+    expect(testResult.items[0]).toEqual({ key: 'State', value: '99' }); // ?? String(raw) fallback
   });
 
   it('should properly throw error if test fails', async () => {

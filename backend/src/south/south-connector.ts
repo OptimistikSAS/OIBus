@@ -10,7 +10,13 @@ import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { OIBusAnyContent, OIBusContent, OIBusFileContent, OIBusTimeValueContent } from '../../shared/model/engine.model';
+import {
+  OIBusAnyContent,
+  OIBusConnectionTestResult,
+  OIBusContent,
+  OIBusFileContent,
+  OIBusTimeValueContent
+} from '../../shared/model/engine.model';
 import path from 'node:path';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -562,7 +568,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return this.connector;
   }
 
-  abstract testConnection(): Promise<void>;
+  abstract testConnection(): Promise<OIBusConnectionTestResult>;
 
   abstract testItem(item: SouthConnectorItemEntity<I>, testingSettings: SouthConnectorItemTestingSettings): Promise<OIBusContent>;
 
