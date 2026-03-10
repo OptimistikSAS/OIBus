@@ -6,7 +6,7 @@ import FormData from 'form-data';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 import { streamToString } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -33,7 +33,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     return ['any', 'time-values', 'oianalytics'];
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     await testOIAnalyticsConnection(
       this.connector.settings.useOiaModule,
@@ -43,6 +43,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       this.certificateRepository,
       false
     );
+    return { items: [] };
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

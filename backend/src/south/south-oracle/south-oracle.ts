@@ -16,7 +16,7 @@ import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthOracleItemSettings, SouthOracleSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 
 import oracledb, { ConnectionAttributes } from 'oracledb';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
@@ -49,12 +49,11 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     }
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
     if (this.connector.settings.connectionTimeout) {
       connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
     }
-
     const config: ConnectionAttributes = {
       user: this.connector.settings.username || undefined,
       password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
@@ -110,6 +109,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     if (table_count === 0) {
       throw new Error(`No tables in the "${this.connector.settings.username}" schema`);
     }
+    return { items: [] };
   }
 
   override async testItem(

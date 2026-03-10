@@ -392,8 +392,9 @@ describe('SouthMQTT', () => {
 
   it('should properly test connection', async () => {
     south.disconnect = jest.fn();
-    await south.testConnection();
+    const testResult = await south.testConnection();
     expect(mqttStream.end).toHaveBeenCalledTimes(1);
+    expect(testResult).toEqual({ items: [{ key: 'Broker URL', value: configuration.settings.url }] });
   });
 
   it('should properly test item', async () => {

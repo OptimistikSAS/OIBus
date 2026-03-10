@@ -1,7 +1,7 @@
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
@@ -30,7 +30,7 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
     return ['modbus'];
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     try {
       const socket = new net.Socket();
       await connectSocket(socket, this.connector.settings);
@@ -44,6 +44,7 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
           throw new Error(`Unable to connect to socket: ${(error as Error).message}`);
       }
     }
+    return { items: [] };
   }
 
   override async connect(): Promise<void> {
