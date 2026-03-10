@@ -19,8 +19,9 @@ import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form/form-control-validation.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DatetimePipe } from '../shared/datetime.pipe';
 
-type SouthSortField = 'name' | 'type' | null;
+type SouthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
 const PAGE_SIZE = 15;
 
@@ -38,7 +39,8 @@ const PAGE_SIZE = 15;
     LegendComponent,
     OIBusSouthTypeEnumPipe,
     NgbTooltip,
-    TranslateModule
+    TranslateModule,
+    DatetimePipe
   ],
   templateUrl: './south-list.component.html',
   styleUrl: './south-list.component.scss'
@@ -107,7 +109,6 @@ export class SouthListComponent implements OnInit {
               this.states.set(south.id, new ObservableState());
             });
             this.updateList(0);
-            this.updateList(0);
           });
         this.notificationService.success('south.deleted', {
           name: south.name
@@ -172,9 +173,16 @@ export class SouthListComponent implements OnInit {
     if (!this.sortField) return;
 
     const direction = this.sortDirection === 'asc' ? 1 : -1;
+    const field = this.sortField;
     this.filteredSouths = [...this.filteredSouths].sort((a, b) => {
-      const aValue = this.sortField === 'name' ? a.name : a.type;
-      const bValue = this.sortField === 'name' ? b.name : b.type;
+      if (field === 'createdAt') {
+        return (a.createdAt ?? '').localeCompare(b.createdAt ?? '') * direction;
+      }
+      if (field === 'updatedAt') {
+        return (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') * direction;
+      }
+      const aValue = field === 'name' ? a.name : a.type;
+      const bValue = field === 'name' ? b.name : b.type;
       return aValue.localeCompare(bValue) * direction;
     });
   }

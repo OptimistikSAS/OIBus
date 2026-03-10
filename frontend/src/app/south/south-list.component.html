@@ -70,6 +70,27 @@
                 </button>
               </th>
               <th translate="south.description"></th>
+              <th translate="south.created-by"></th>
+              <th>
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('createdAt')"
+                >
+                  <span translate="south.created-at" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('createdAt') }}"></span>
+                </button>
+              </th>
+              <th>
+                <button
+                  type="button"
+                  style="background: none; border: none; font-weight: bold; color: inherit"
+                  (click)="toggleSort('updatedAt')"
+                >
+                  <span translate="south.updated-at" class="me-2"></span>
+                  <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+                </button>
+              </th>
               <th></th>
             </tr>
           </thead>
@@ -88,6 +109,9 @@
                 <td>{{ south.name }}</td>
                 <td>{{ south.type | oIBusSouthTypeEnum }}</td>
                 <td>{{ south.description }}</td>
+                <td>{{ south.createdBy }}</td>
+                <td>{{ south.createdAt | datetime }}</td>
+                <td>{{ south.updatedAt | datetime }}</td>
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     <button

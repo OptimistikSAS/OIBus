@@ -106,6 +106,10 @@ export const toCertificateDTO = (certificate: Certificate): Certificate => {
     publicKey: certificate.publicKey,
     privateKey: certificate.privateKey,
     certificate: certificate.certificate,
-    expiry: certificate.expiry
+    expiry: certificate.expiry,
+    createdBy: certificate.createdBy,
+    updatedBy: certificate.updatedBy,
+    createdAt: certificate.createdAt,
+    updatedAt: certificate.updatedAt
   };
 };

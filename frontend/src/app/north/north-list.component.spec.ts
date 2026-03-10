@@ -73,22 +73,22 @@ describe('NorthListComponent', () => {
     expect(tester.northList[0].elements('td')[1]).toContainText(northConnectors[0].name);
     expect(tester.northList[0].elements('td')[2]).toContainText('File writer');
     expect(tester.northList[0].elements('td')[3]).toContainText(northConnectors[0].description);
-    expect(tester.northList[0].elements('td')[4].elements('a').length).toBe(3);
-    expect(tester.northList[0].elements('td')[4].elements('button').length).toBe(2);
+    expect(tester.northList[0].elements('td')[7].elements('a').length).toBe(3);
+    expect(tester.northList[0].elements('td')[7].elements('button').length).toBe(2);
     expect(tester.northList[1].elements('td')[1]).toContainText(northConnectors[1].name);
     expect(tester.northList[1].elements('td')[2]).toContainText('File writer');
     expect(tester.northList[1].elements('td')[3]).toContainText(northConnectors[1].description);
-    expect(tester.northList[1].elements('td')[4].elements('a').length).toBe(3);
-    expect(tester.northList[1].elements('td')[4].elements('button').length).toBe(2);
+    expect(tester.northList[1].elements('td')[7].elements('a').length).toBe(3);
+    expect(tester.northList[1].elements('td')[7].elements('button').length).toBe(2);
   });
 
   it('should toggle north connector', () => {
-    const toggle1 = tester.northList[0].elements('td')[4].elements('button')[0] as TestButton;
+    const toggle1 = tester.northList[0].elements('td')[7].elements('button')[0] as TestButton;
     toggle1.click();
     expect(northConnectorService.stop).toHaveBeenCalledWith('id1');
     expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: northConnectors[0].name });
 
-    const toggle2 = tester.northList[1].elements('td')[4].elements('button')[0] as TestButton;
+    const toggle2 = tester.northList[1].elements('td')[7].elements('button')[0] as TestButton;
     toggle2.click();
     expect(northConnectorService.start).toHaveBeenCalledWith('id2');
     expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: northConnectors[1].name });

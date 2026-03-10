@@ -88,7 +88,7 @@ describe('IpFilterListComponent', () => {
     it('should display a list of ip filters', () => {
       expect(tester.title).toContainText('IP filters');
       expect(tester.ipFilters.length).toEqual(2);
-      expect(tester.ipFilters[0].elements('td').length).toEqual(3);
+      expect(tester.ipFilters[0].elements('td').length).toEqual(6);
       expect(tester.ipFilters[1].elements('td')[0]).toContainText('*');
       expect(tester.ipFilters[1].elements('td')[1]).toContainText('All ips');
     });
