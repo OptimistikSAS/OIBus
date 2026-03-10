@@ -23,7 +23,7 @@ export default class SouthConnectorRepository {
   }
 
   findAllSouth(): Array<SouthConnectorEntityLight> {
-    const query = `SELECT id, name, type, description, enabled FROM ${SOUTH_CONNECTORS_TABLE};`;
+    const query = `SELECT id, name, type, description, enabled, created_by, updated_by, created_at, updated_at FROM ${SOUTH_CONNECTORS_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -32,7 +32,7 @@ export default class SouthConnectorRepository {
 
   findSouthById(id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null {
     const query = `
-        SELECT id, name, type, description, enabled, settings, created_by, updated_by
+        SELECT id, name, type, description, enabled, settings, created_by, updated_by, created_at, updated_at
         FROM ${SOUTH_CONNECTORS_TABLE}
         WHERE id = ?;`;
 
@@ -61,7 +61,7 @@ export default class SouthConnectorRepository {
             south.updatedBy
           );
       } else {
-        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, updated_by = ? WHERE id = ?;`;
+        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
         this.database
           .prepare(query)
           .run(south.name, south.description, +south.enabled, JSON.stringify(south.settings), south.updatedBy, south.id);
@@ -98,7 +98,7 @@ export default class SouthConnectorRepository {
           `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
         );
         const update = this.database.prepare(
-          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ? WHERE id = ?;`
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`
         );
         const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);
         const deleteGroups = this.database.prepare(`DELETE FROM group_items WHERE item_id = ?;`);
@@ -201,7 +201,7 @@ export default class SouthConnectorRepository {
       queryParams.push(searchParams.name);
       whereClause += ` AND name like '%' || ? || '%'`;
     }
-    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by, created_at, updated_at FROM ${SOUTH_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
@@ -228,7 +228,7 @@ export default class SouthConnectorRepository {
       whereClause += ` AND name like '%' || ? || '%'`;
     }
     const query =
-      `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
+      `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by, created_at, updated_at FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
@@ -249,7 +249,7 @@ export default class SouthConnectorRepository {
   }
 
   findAllItemsForSouth(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
-    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by, created_at, updated_at FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
       .all(southId)
@@ -257,7 +257,7 @@ export default class SouthConnectorRepository {
   }
 
   findItemById(southConnectorId: string, itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null {
-    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
+    const query = `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by, created_at, updated_at FROM ${SOUTH_ITEMS_TABLE} WHERE id = ? AND connector_id = ?;`;
     const result = this.database.prepare(query).get(itemId, southConnectorId);
     if (!result) return null;
     return this.toSouthConnectorItemEntity(result as Record<string, string>);
@@ -286,7 +286,7 @@ export default class SouthConnectorRepository {
           southItem.updatedBy
         );
     } else {
-      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ? WHERE id = ?;`;
+      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
@@ -414,7 +414,9 @@ export default class SouthConnectorRepository {
       readDelay: result.read_delay !== null && result.read_delay !== undefined ? Number(result.read_delay) : null,
       overlap: result.overlap !== null && result.overlap !== undefined ? Number(result.overlap) : null,
       createdBy: result.created_by ?? undefined,
-      updatedBy: result.updated_by ?? undefined
+      updatedBy: result.updated_by ?? undefined,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at
     };
   }
 
@@ -428,7 +430,9 @@ export default class SouthConnectorRepository {
       settings: JSON.parse(result.settings as string) as SouthSettings,
       items: this.findAllItemsForSouth(result.id as string),
       createdBy: (result.created_by as string) ?? undefined,
-      updatedBy: (result.updated_by as string) ?? undefined
+      updatedBy: (result.updated_by as string) ?? undefined,
+      createdAt: result.created_at as string,
+      updatedAt: result.updated_at as string
     };
   }
 }
@@ -439,6 +443,10 @@ export const toSouthConnectorLight = (result: Record<string, string>): SouthConn
     name: result.name,
     type: result.type as OIBusSouthType,
     description: result.description,
-    enabled: Boolean(result.enabled)
+    enabled: Boolean(result.enabled),
+    createdBy: result.created_by ?? undefined,
+    updatedBy: result.updated_by ?? undefined,
+    createdAt: result.created_at,
+    updatedAt: result.updated_at
   };
 };

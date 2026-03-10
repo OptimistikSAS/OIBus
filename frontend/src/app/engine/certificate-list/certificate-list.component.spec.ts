@@ -89,7 +89,7 @@ describe('CertificateListComponent', () => {
     it('should display a list of certificates', () => {
       expect(tester.title).toContainText('Certificates');
       expect(tester.certificates.length).toEqual(2);
-      expect(tester.certificates[0].elements('td').length).toEqual(8);
+      expect(tester.certificates[0].elements('td').length).toEqual(11);
       expect(tester.certificates[1].elements('td')[0]).toContainText('Certificate 2');
       expect(tester.certificates[1].elements('td')[1]).toHaveText('');
       expect(tester.certificates[1].elements('td')[2]).toContainText('public key');
