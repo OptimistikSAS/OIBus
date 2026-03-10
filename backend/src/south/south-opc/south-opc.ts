@@ -4,7 +4,7 @@ import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -61,7 +61,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     }
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     const fetchOptions: ReqOptions = {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -93,6 +93,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     } else {
       throw new Error(`Error occurred when sending connect command to remote agent with status ${connectResponse.statusCode}`);
     }
+    return { items: [] };
   }
 
   override async testItem(

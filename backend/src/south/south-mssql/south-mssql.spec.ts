@@ -613,10 +613,27 @@ describe('SouthMSSQL test connection', () => {
 
   it('Database is reachable and has tables', async () => {
     const result = [{ table_count: 21 }];
-    query.mockReturnValue({ recordsets: [result] });
+    query
+      .mockReturnValueOnce({ recordsets: [result] })
+      .mockReturnValueOnce({ recordsets: [[{ version: 'Microsoft SQL Server 2019\n(RTM)' }]] });
 
-    await expect(south.testConnection()).resolves.not.toThrow();
+    const testResult = await south.testConnection();
 
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Version', value: 'Microsoft SQL Server 2019' },
+        { key: 'Tables', value: '21' }
+      ]
+    });
+    expect(close).toHaveBeenCalled();
+  });
+
+  it('Database is reachable but version is unavailable', async () => {
+    query.mockReturnValueOnce({ recordsets: [[{ table_count: 5 }]] }).mockReturnValueOnce({ recordsets: [[{}]] }); // no version key
+
+    const testResult = await south.testConnection();
+
+    expect(testResult).toEqual({ items: [{ key: 'Tables', value: '5' }] });
     expect(close).toHaveBeenCalled();
   });
 

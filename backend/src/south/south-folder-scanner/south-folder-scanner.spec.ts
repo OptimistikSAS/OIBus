@@ -385,12 +385,21 @@ describe('SouthFolderScanner with compression', () => {
     (fs.stat as jest.Mock).mockReturnValue({
       isDirectory: () => true
     });
-    await south.testConnection();
+    (fs.readdir as jest.Mock).mockResolvedValue(['file1.txt', 'file2.csv']);
+
+    const testResult = await south.testConnection();
+
     expect(logger.error).not.toHaveBeenCalled();
+    expect(testResult.items).toEqual(
+      expect.arrayContaining([
+        { key: 'Folder', value: path.resolve(configuration.settings.inputFolder) },
+        { key: 'Files', value: '2' }
+      ])
+    );
   });
 
   it('should test item', async () => {
-    south.testConnection = jest.fn();
+    south.testConnection = jest.fn().mockResolvedValue({ items: [] });
     south.checkAge = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
     fs.stat = jest.fn().mockReturnValueOnce({ mtimeMs: DateTime.now().toMillis() });
     fs.readdir = jest.fn().mockReturnValue(['file1.txt', 'file2.csv', 'file3.csv']);
@@ -411,7 +420,7 @@ describe('SouthFolderScanner with compression', () => {
   });
 
   it('should test item and throw an error', async () => {
-    south.testConnection = jest.fn();
+    south.testConnection = jest.fn().mockResolvedValue({ items: [] });
     south.checkAge = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
     fs.stat = jest.fn();
     const error = new Error('Cannot read directory');

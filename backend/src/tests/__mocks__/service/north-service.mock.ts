@@ -13,7 +13,7 @@ export default jest.fn().mockImplementation(() => ({
   stop: jest.fn(),
   getNorthDataStream: jest.fn(),
   getNorthMetric: jest.fn(),
-  testNorth: jest.fn(),
+  testNorth: jest.fn().mockResolvedValue({ items: [] }),
   addOrEditTransformer: jest.fn(),
   removeTransformer: jest.fn(),
   checkSubscription: jest.fn(),

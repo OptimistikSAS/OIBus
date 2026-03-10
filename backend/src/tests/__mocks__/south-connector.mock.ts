@@ -28,7 +28,7 @@ export default class SouthConnectorMock {
   stop = jest.fn();
   setLogger = jest.fn();
   resetCache = jest.fn();
-  testConnection = jest.fn();
+  testConnection = jest.fn().mockResolvedValue({ items: [] });
   testItem = jest.fn();
   resetMetrics = jest.fn();
   connectedEvent = new EventEmitter();

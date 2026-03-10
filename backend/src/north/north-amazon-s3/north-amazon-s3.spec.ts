@@ -97,7 +97,7 @@ describe('NorthAmazonS3', () => {
     north.prepareConnection = jest.fn();
     north['s3'] = { send: mockSend } as unknown as S3Client;
 
-    await north.testConnection();
+    const testResult = await north.testConnection();
 
     expect(north.prepareConnection).toHaveBeenCalledWith(configuration.settings);
     expect(mockSend).toHaveBeenCalledTimes(1);
@@ -105,6 +105,12 @@ describe('NorthAmazonS3', () => {
       Bucket: 'oibus'
     });
     expect(logger.info).toHaveBeenCalledWith(`Access to bucket "${configuration.settings.bucket}" allowed`);
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Bucket', value: configuration.settings.bucket },
+        { key: 'Region', value: configuration.settings.region }
+      ]
+    });
   });
 
   it('should properly manage error on test connection', async () => {

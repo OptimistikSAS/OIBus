@@ -90,13 +90,20 @@ describe('NorthAzureBlob', () => {
       getContainerClient: jest.fn().mockImplementation(() => ({ getBlockBlobClient: jest.fn().mockImplementation(() => fileClient) }))
     } as unknown as BlobServiceClient;
     north['blobClient'] = blobServiceClient;
-    await north.testConnection();
+    const testResult = await north.testConnection();
     expect(north.prepareConnection).toHaveBeenCalledWith(configuration.settings);
     expect(blobServiceClient.getContainerClient).toHaveBeenCalledWith(configuration.settings.container);
     expect(fileClient.upload).toHaveBeenCalledTimes(1);
     expect(fileClient.exists).toHaveBeenCalledTimes(1);
     expect(fileClient.deleteIfExists).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith('Could not delete file "oibus-azure-test.txt": delete error');
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Account', value: configuration.settings.account },
+        { key: 'Container', value: configuration.settings.container },
+        { key: 'Storage Type', value: 'Azure Blob Storage' }
+      ]
+    });
   });
 
   it('should properly test connection with Azure Data Lake Storage', async () => {
@@ -136,6 +143,45 @@ describe('NorthAzureBlob', () => {
     expect(fileClient.exists).toHaveBeenCalledTimes(1);
     expect(fileClient.delete).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith('Could not delete file "oibus/oibus-azure-test.txt": delete error');
+  });
+
+  it('should properly test connection with Azure Data Lake Storage success and undefined account', async () => {
+    north.prepareConnection = jest.fn();
+    const settings: NorthAzureBlobSettings = {
+      useCustomUrl: false,
+      useADLS: true,
+      account: undefined,
+      container: 'mycontainer',
+      path: '',
+      authentication: 'external',
+      sasToken: '',
+      accessKey: '',
+      tenantId: '',
+      clientId: '',
+      clientSecret: '',
+      useProxy: false
+    };
+    north.connectorConfiguration = buildNorthConfiguration<NorthAzureBlobSettings>('azure-blob', settings);
+    const fileClient = {
+      createIfNotExists: jest.fn(),
+      exists: jest.fn().mockReturnValue(true),
+      delete: jest.fn()
+    };
+    const fileSystemClient = { getFileClient: jest.fn().mockImplementation(() => fileClient) };
+    const dataLakeClient = {
+      getFileSystemClient: jest.fn().mockImplementation(() => fileSystemClient)
+    } as unknown as DataLakeServiceClient;
+    north['dataLakeClient'] = dataLakeClient;
+
+    const testResult = await north.testConnection();
+
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Account', value: '' },
+        { key: 'Container', value: 'mycontainer' },
+        { key: 'Storage Type', value: 'Azure Data Lake Storage' }
+      ]
+    });
   });
 
   it('should properly parse proxy url', async () => {

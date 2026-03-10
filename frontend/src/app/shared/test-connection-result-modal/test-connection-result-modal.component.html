@@ -12,6 +12,18 @@
     } @else {
       @if (success) {
         <div class="alert alert-info" id="success" [translate]="type + '.test-connection.success'"></div>
+        @if (testResult && testResult.items.length > 0) {
+          <table class="table table-sm mt-2">
+            <tbody>
+              @for (item of testResult.items; track item.key) {
+                <tr>
+                  <th scope="row" class="w-25">{{ item.key }}</th>
+                  <td>{{ item.value }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       }
     }
   } @else {
