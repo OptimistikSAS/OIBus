@@ -65,6 +65,10 @@ export const toIPFilterDTO = (ipFilter: IPFilter): IPFilterDTO => {
   return {
     id: ipFilter.id,
     address: ipFilter.address,
-    description: ipFilter.description
+    description: ipFilter.description,
+    createdBy: ipFilter.createdBy,
+    updatedBy: ipFilter.updatedBy,
+    createdAt: ipFilter.createdAt,
+    updatedAt: ipFilter.updatedAt
   };
 };

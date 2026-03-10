@@ -66,7 +66,11 @@ export default class ScanModeService {
 
   async delete(scanModeId: string): Promise<void> {
     const scanMode = this.findById(scanModeId);
-    this.southCacheRepository.deleteAllByScanMode(scanMode.id);
+    try {
+      this.southCacheRepository.deleteAllByScanMode(scanMode.id);
+    } catch {
+      // Cache table may not exist yet if no south connectors have run
+    }
     this.scanModeRepository.delete(scanMode.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
@@ -85,6 +89,10 @@ export const toScanModeDTO = (scanMode: ScanMode): ScanModeDTO => {
     id: scanMode.id,
     name: scanMode.name,
     description: scanMode.description,
-    cron: scanMode.cron
+    cron: scanMode.cron,
+    createdBy: scanMode.createdBy,
+    updatedBy: scanMode.updatedBy,
+    createdAt: scanMode.createdAt,
+    updatedAt: scanMode.updatedAt
   };
 };

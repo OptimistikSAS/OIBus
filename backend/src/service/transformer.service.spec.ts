@@ -663,7 +663,11 @@ describe('Transformer Service', () => {
       outputType: customTransformer.outputType,
       customCode: customTransformer.customCode,
       timeout: customTransformer.timeout,
-      manifest: customTransformer.customManifest
+      manifest: customTransformer.customManifest,
+      createdBy: customTransformer.createdBy,
+      updatedBy: customTransformer.updatedBy,
+      createdAt: customTransformer.createdAt,
+      updatedAt: customTransformer.updatedAt
     });
     const standardTransformer: StandardTransformer = {
       id: 'standardId',
