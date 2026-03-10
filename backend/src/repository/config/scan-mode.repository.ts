@@ -21,7 +21,7 @@ export default class ScanModeRepository {
   }
 
   findAll(): Array<ScanMode> {
-    const query = `SELECT id, name, description, cron, created_by, updated_by FROM ${SCAN_MODES_TABLE};`;
+    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODES_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -29,22 +29,22 @@ export default class ScanModeRepository {
   }
 
   findById(id: string): ScanMode | null {
-    const query = `SELECT id, name, description, cron, created_by, updated_by FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     return result ? toScanMode(result as Record<string, string>) : null;
   }
 
   create(command: Omit<ScanMode, 'id'>, id = generateRandomId(6)): ScanMode {
-    const insertQuery = `INSERT INTO ${SCAN_MODES_TABLE} (id, name, description, cron, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?);`;
+    const insertQuery = `INSERT INTO ${SCAN_MODES_TABLE} (id, name, description, cron, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'));`;
     const result = this.database
       .prepare(insertQuery)
       .run(id, command.name, command.description, command.cron, command.createdBy, command.updatedBy);
-    const query = `SELECT id, name, description, cron, created_by, updated_by FROM ${SCAN_MODES_TABLE} WHERE ROWID = ?;`;
+    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODES_TABLE} WHERE ROWID = ?;`;
     return toScanMode(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
   }
 
   update(id: string, command: Omit<ScanMode, 'id'>): void {
-    const query = `UPDATE ${SCAN_MODES_TABLE} SET name = ?, description = ?, cron = ?, updated_by = ? WHERE id = ?;`;
+    const query = `UPDATE ${SCAN_MODES_TABLE} SET name = ?, description = ?, cron = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
     this.database.prepare(query).run(command.name, command.description, command.cron, command.updatedBy, id);
   }
 
@@ -61,6 +61,8 @@ export const toScanMode = (result: Record<string, string>): ScanMode => {
     description: result.description,
     cron: result.cron,
     createdBy: result.created_by ?? undefined,
-    updatedBy: result.updated_by ?? undefined
+    updatedBy: result.updated_by ?? undefined,
+    createdAt: result.created_at ?? undefined,
+    updatedAt: result.updated_at ?? undefined
   };
 };

@@ -684,7 +684,11 @@ export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight): H
     startTime: historyQuery.startTime,
     endTime: historyQuery.endTime,
     southType: historyQuery.southType,
-    northType: historyQuery.northType
+    northType: historyQuery.northType,
+    createdBy: historyQuery.createdBy,
+    updatedBy: historyQuery.updatedBy,
+    createdAt: historyQuery.createdAt,
+    updatedAt: historyQuery.updatedAt
   };
 };
 
@@ -735,7 +739,11 @@ export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType,
       items: transformerWithOptions.items
-    }))
+    })),
+    createdBy: historyQuery.createdBy,
+    updatedBy: historyQuery.updatedBy,
+    createdAt: historyQuery.createdAt,
+    updatedAt: historyQuery.updatedAt
   };
   // Type assertion is safe because we know the southType and northType fields match the settings and items at runtime
   return baseDTO as HistoryQueryDTO;

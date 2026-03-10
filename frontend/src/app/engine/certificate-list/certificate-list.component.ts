@@ -1,9 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { firstValueFrom, startWith, Subject, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
@@ -14,7 +14,14 @@ import { DownloadService } from '../../services/download.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
+import { emptyPage } from '../../shared/test-utils';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+
+type CertificateSortField = 'createdAt' | 'updatedAt' | null;
+type SortDirection = 'asc' | 'desc';
+
+const PAGE_SIZE = 20;
 
 @Component({
   selector: 'oib-certificate-list',
@@ -26,7 +33,8 @@ import { TranslateModule } from '@ngx-translate/core';
     ClipboardCopyDirective,
     OibHelpComponent,
     NgbTooltip,
-    TranslateModule
+    TranslateModule,
+    PaginationComponent
   ],
   templateUrl: './certificate-list.component.html',
   styleUrl: './certificate-list.component.scss'
@@ -45,6 +53,19 @@ export class CertificateListComponent {
       switchMap(() => this.certificateService.list())
     )
   );
+
+  sortField: CertificateSortField = null;
+  sortDirection: SortDirection = 'asc';
+  displayedCertificates: Page<CertificateDTO> = emptyPage();
+
+  constructor() {
+    effect(() => {
+      const certs = this.certificates();
+      if (certs) {
+        this.updateList(certs, 0);
+      }
+    });
+  }
 
   /**
    * Open a modal to edit a certificate
@@ -106,5 +127,45 @@ export class CertificateListComponent {
 
   downloadCertificate(certificate: CertificateDTO) {
     this.downloadService.downloadFile({ blob: new Blob([certificate.certificate]), name: certificate.name + '.pem' });
+  }
+
+  toggleSort(field: CertificateSortField) {
+    if (!field) return;
+    if (this.sortField === field) {
+      this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortField = field;
+      this.sortDirection = 'asc';
+    }
+    const certs = this.certificates();
+    if (certs) {
+      this.updateList(certs, 0);
+    }
+  }
+
+  getSortIcon(field: CertificateSortField): string {
+    if (this.sortField !== field) return 'fa-sort';
+    return this.sortDirection === 'asc' ? 'fa-sort-asc' : 'fa-sort-desc';
+  }
+
+  changePage(pageNumber: number) {
+    const certs = this.certificates();
+    if (certs) {
+      this.updateList(certs, pageNumber);
+    }
+  }
+
+  private updateList(allCerts: Array<CertificateDTO>, pageNumber: number) {
+    let sorted = [...allCerts];
+    if (this.sortField) {
+      const direction = this.sortDirection === 'asc' ? 1 : -1;
+      const field = this.sortField;
+      sorted = sorted.sort((a, b) => {
+        const aVal = field === 'createdAt' ? (a.createdAt ?? '') : (a.updatedAt ?? '');
+        const bVal = field === 'createdAt' ? (b.createdAt ?? '') : (b.updatedAt ?? '');
+        return aVal.localeCompare(bVal) * direction;
+      });
+    }
+    this.displayedCertificates = createPageFromArray(sorted, PAGE_SIZE, pageNumber);
   }
 }

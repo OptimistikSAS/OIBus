@@ -26,7 +26,7 @@ export default class HistoryQueryRepository {
   constructor(private readonly database: Database) {}
 
   findAllHistoriesLight(): Array<HistoryQueryEntityLight> {
-    const query = `SELECT id, name, description, status, start_time, end_time, south_type, north_type FROM ${HISTORY_QUERIES_TABLE};`;
+    const query = `SELECT id, name, description, status, start_time, end_time, south_type, north_type, created_by, updated_by, created_at, updated_at FROM ${HISTORY_QUERIES_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -41,7 +41,7 @@ export default class HistoryQueryRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by ` +
+      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at ` +
       `FROM ${HISTORY_QUERIES_TABLE};`;
     const result = this.database.prepare(query).all();
 
@@ -56,7 +56,7 @@ export default class HistoryQueryRepository {
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by ` +
+      `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at ` +
       `FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) {
@@ -113,7 +113,7 @@ export default class HistoryQueryRepository {
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
           `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
-          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, updated_by = ? ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, updated_by = ?, updated_at = datetime('now') ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -175,7 +175,7 @@ export default class HistoryQueryRepository {
           `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?);`
         );
         const update = this.database.prepare(
-          `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ? WHERE id = ?;`
+          `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`
         );
         for (const item of history.items) {
           if (!item.id) {
@@ -339,7 +339,7 @@ export default class HistoryQueryRepository {
       whereClause += ` AND enabled = ?`;
     }
 
-    const query = `SELECT id, name, enabled, settings, created_by, updated_by FROM ${HISTORY_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
+    const query = `SELECT id, name, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} ${whereClause} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * page};`;
     const results = this.database
       .prepare(query)
       .all(...queryParams)
@@ -369,7 +369,7 @@ export default class HistoryQueryRepository {
       whereClause += ` AND enabled = ?`;
     }
 
-    const query = `SELECT id, name, enabled, settings, created_by, updated_by FROM ${HISTORY_ITEMS_TABLE} ${whereClause};`;
+    const query = `SELECT id, name, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} ${whereClause};`;
 
     return this.database
       .prepare(query)
@@ -378,7 +378,7 @@ export default class HistoryQueryRepository {
   }
 
   findAllItemsForHistory(historyId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> {
-    const query = `SELECT id, name, enabled, settings, created_by, updated_by FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
+    const query = `SELECT id, name, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
     return this.database
       .prepare(query)
       .all(historyId)
@@ -386,7 +386,7 @@ export default class HistoryQueryRepository {
   }
 
   findItemById(historyId: string, itemId: string): HistoryQueryItemEntity<SouthItemSettings> | null {
-    const query = `SELECT id, name, enabled, settings, created_by, updated_by FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
+    const query = `SELECT id, name, enabled, settings, created_by, updated_by, created_at, updated_at FROM ${HISTORY_ITEMS_TABLE} WHERE id = ? AND history_id = ?;`;
     const result = this.database.prepare(query).get(itemId, historyId);
     if (!result) return null;
     return this.toHistoryQueryItemEntity(result as Record<string, string>);
@@ -402,7 +402,7 @@ export default class HistoryQueryRepository {
         .prepare(insertQuery)
         .run(item.id, item.name, +item.enabled, historyId, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
     } else {
-      const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ? WHERE id = ?;`;
+      const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
       this.database.prepare(query).run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
     }
   }
@@ -493,7 +493,9 @@ export default class HistoryQueryRepository {
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings) as SouthItemSettings,
       createdBy: result.created_by ?? undefined,
-      updatedBy: result.updated_by ?? undefined
+      updatedBy: result.updated_by ?? undefined,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at
     };
   }
 
@@ -539,7 +541,9 @@ export default class HistoryQueryRepository {
       items: this.findAllItemsForHistory(result.id as string),
       northTransformers: this.findTransformersForHistory(result.id as string),
       createdBy: (result.created_by as string) ?? undefined,
-      updatedBy: (result.updated_by as string) ?? undefined
+      updatedBy: (result.updated_by as string) ?? undefined,
+      createdAt: result.created_at as string,
+      updatedAt: result.updated_at as string
     };
   }
 }
@@ -553,6 +557,10 @@ export const toHistoryQueryLight = (result: Record<string, string>): HistoryQuer
     startTime: result.start_time,
     endTime: result.end_time,
     southType: result.south_type as OIBusSouthType,
-    northType: result.north_type as OIBusNorthType
+    northType: result.north_type as OIBusNorthType,
+    createdBy: result.created_by ?? undefined,
+    updatedBy: result.updated_by ?? undefined,
+    createdAt: result.created_at,
+    updatedAt: result.updated_at
   };
 };

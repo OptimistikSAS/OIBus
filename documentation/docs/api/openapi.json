@@ -34,14 +34,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"login": {
@@ -1125,6 +1135,26 @@
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The manifest describing the transformer's input/output structure and attributes."
 					},
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the transformer.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the transformer.",
+						"example": "admin"
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the transformer was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the transformer was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
 					"name": {
 						"type": "string",
 						"description": "The name of the custom transformer.",
@@ -1196,6 +1226,26 @@
 					"manifest": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The manifest describing the transformer's input/output structure and attributes."
+					},
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the transformer.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the transformer.",
+						"example": "admin"
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the transformer was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the transformer was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"functionName": {
 						"type": "string",
@@ -1541,14 +1591,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -1697,14 +1757,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -1799,14 +1869,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -1885,14 +1965,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -2004,14 +2094,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -2090,14 +2190,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -2237,14 +2347,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -2323,14 +2443,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -2518,14 +2648,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -2604,14 +2744,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -2772,14 +2922,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -2858,14 +3018,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -3096,14 +3266,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -3182,14 +3362,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -3403,14 +3593,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -3489,14 +3689,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -3706,14 +3916,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -3792,14 +4012,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -4038,14 +4268,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -4124,14 +4364,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -4339,14 +4589,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -4425,14 +4685,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -4587,14 +4857,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -4673,14 +4953,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -4916,14 +5206,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -5002,14 +5302,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -5230,14 +5540,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -5316,14 +5636,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -5423,14 +5753,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -5509,14 +5849,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -5735,14 +6085,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -5821,14 +6181,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -6327,14 +6697,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -6413,14 +6793,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -6567,14 +6957,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -6653,14 +7053,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -6844,14 +7254,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -6930,14 +7350,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -10419,14 +10849,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"host": {
@@ -12974,14 +13414,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -19181,14 +19631,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -19310,14 +19770,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -19494,14 +19964,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -19678,14 +20158,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -19862,14 +20352,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -20046,14 +20546,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -20230,14 +20740,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -20414,14 +20934,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -20598,14 +21128,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -20782,14 +21322,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -20966,14 +21516,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -21548,14 +22108,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"address": {
@@ -21585,14 +22155,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -21652,14 +22232,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					}
 				},
@@ -21913,14 +22503,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -21976,14 +22576,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22039,14 +22649,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22102,14 +22722,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22165,14 +22795,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22228,14 +22868,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22291,14 +22941,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22354,14 +23014,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22417,14 +23087,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22480,14 +23160,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22543,14 +23233,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22606,14 +23306,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22669,14 +23379,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22732,14 +23452,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22795,14 +23525,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22858,14 +23598,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22921,14 +23671,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -22984,14 +23744,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -23548,14 +24318,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -23842,14 +24622,24 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"type": "string",
+						"description": "The login of the user who created the entity.",
+						"example": "admin"
+					},
+					"updatedBy": {
+						"type": "string",
+						"description": "The login of the user who last updated the entity.",
+						"example": "admin"
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
