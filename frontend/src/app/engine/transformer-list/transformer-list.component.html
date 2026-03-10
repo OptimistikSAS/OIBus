@@ -24,10 +24,6 @@
   </ng-template>
 </oib-box>
 
-@if (displayedTransformers.totalPages > 1) {
-  <oib-pagination class="d-flex justify-content-end mb-2" [page]="displayedTransformers" (pageChanged)="changePage($event)" />
-}
-
 <!-- the Custom Transformers list -->
 @if (displayedTransformers.content.length !== 0) {
   <div>
@@ -103,6 +99,9 @@
         }
       </tbody>
     </table>
+    @if (displayedTransformers.totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedTransformers" (pageChanged)="changePage($event)" />
+    }
   </div>
 } @else {
   <div class="oib-grey-container" id="no-transformer" translate="configuration.oibus.manifest.transformers.none"></div>
