@@ -986,7 +986,11 @@ export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight): Sou
     name: entity.name,
     type: entity.type,
     description: entity.description,
-    enabled: entity.enabled
+    enabled: entity.enabled,
+    createdBy: entity.createdBy,
+    updatedBy: entity.updatedBy,
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt
   };
 };
 
@@ -1000,7 +1004,11 @@ export const toSouthConnectorDTO = (southEntity: SouthConnectorEntity<SouthSetti
     description: southEntity.description,
     enabled: southEntity.enabled,
     settings: encryptionService.filterSecrets(southEntity.settings, manifest.settings),
-    items
+    items,
+    createdBy: southEntity.createdBy,
+    updatedBy: southEntity.updatedBy,
+    createdAt: southEntity.createdAt,
+    updatedAt: southEntity.updatedAt
   };
   // Type assertion is safe because we know the type field matches the settings and items at runtime
   return baseDTO as SouthConnectorDTO;

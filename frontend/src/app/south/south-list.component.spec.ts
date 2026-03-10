@@ -56,22 +56,22 @@ describe('SouthListComponent', () => {
     expect(tester.southList[0].elements('td')[1]).toContainText(southConnectors[0].name);
     expect(tester.southList[0].elements('td')[2]).toContainText('Folder scanner');
     expect(tester.southList[0].elements('td')[3]).toContainText(southConnectors[0].description);
-    expect(tester.southList[0].elements('td')[4].elements('button').length).toBe(2);
-    expect(tester.southList[0].elements('td')[4].elements('a').length).toBe(3);
+    expect(tester.southList[0].elements('td')[7].elements('button').length).toBe(2);
+    expect(tester.southList[0].elements('td')[7].elements('a').length).toBe(3);
     expect(tester.southList[1].elements('td')[1]).toContainText(southConnectors[1].name);
     expect(tester.southList[1].elements('td')[2]).toContainText('Microsoft SQL Server™');
     expect(tester.southList[1].elements('td')[3]).toContainText(southConnectors[1].description);
-    expect(tester.southList[1].elements('td')[4].elements('button').length).toBe(2);
-    expect(tester.southList[1].elements('td')[4].elements('a').length).toBe(3);
+    expect(tester.southList[1].elements('td')[7].elements('button').length).toBe(2);
+    expect(tester.southList[1].elements('td')[7].elements('a').length).toBe(3);
   });
 
   it('should toggle south connector', () => {
-    const toggle1 = tester.southList[0].elements('td')[4].elements('button')[0] as TestButton;
+    const toggle1 = tester.southList[0].elements('td')[7].elements('button')[0] as TestButton;
     toggle1.click();
     expect(southConnectorService.stop).toHaveBeenCalledWith('southId1');
     expect(notificationService.success).toHaveBeenCalledWith('south.stopped', { name: southConnectors[0].name });
 
-    const toggle2 = tester.southList[1].elements('td')[4].elements('button')[0] as TestButton;
+    const toggle2 = tester.southList[1].elements('td')[7].elements('button')[0] as TestButton;
     toggle2.click();
     expect(southConnectorService.start).toHaveBeenCalledWith('southId2');
     expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnectors[1].name });

@@ -357,7 +357,11 @@ export const toNorthConnectorLightDTO = (northEntity: NorthConnectorEntityLight)
     name: northEntity.name,
     type: northEntity.type,
     description: northEntity.description,
-    enabled: northEntity.enabled
+    enabled: northEntity.enabled,
+    createdBy: northEntity.createdBy,
+    updatedBy: northEntity.updatedBy,
+    createdAt: northEntity.createdAt,
+    updatedAt: northEntity.updatedAt
   };
 };
 
@@ -401,7 +405,11 @@ export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSetti
       south: transformerWithOptions.south,
       group: transformerWithOptions.group,
       items: transformerWithOptions.items
-    }))
+    })),
+    createdBy: northEntity.createdBy,
+    updatedBy: northEntity.updatedBy,
+    createdAt: northEntity.createdAt,
+    updatedAt: northEntity.updatedAt
   } as NorthConnectorDTO;
 };
 

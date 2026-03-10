@@ -20,7 +20,7 @@ import { LegendComponent } from '../shared/legend/legend.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
-type HistorySortField = 'name' | 'interval' | null;
+type HistorySortField = 'name' | 'interval' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
 
 const PAGE_SIZE = 15;
@@ -173,11 +173,17 @@ export class HistoryQueryListComponent implements OnInit {
     if (!this.sortField) return;
 
     const direction = this.sortDirection === 'asc' ? 1 : -1;
+    const field = this.sortField;
     this.filteredHistoryQueries = [...this.filteredHistoryQueries].sort((a, b) => {
-      if (this.sortField === 'name') {
+      if (field === 'name') {
         return a.name.localeCompare(b.name) * direction;
       }
-
+      if (field === 'createdAt') {
+        return (a.createdAt ?? '').localeCompare(b.createdAt ?? '') * direction;
+      }
+      if (field === 'updatedAt') {
+        return (a.updatedAt ?? '').localeCompare(b.updatedAt ?? '') * direction;
+      }
       const aStart = a.startTime ?? '';
       const bStart = b.startTime ?? '';
       return aStart.localeCompare(bStart) * direction;
