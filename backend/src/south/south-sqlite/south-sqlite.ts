@@ -16,7 +16,7 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -35,7 +35,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const dbPath = path.resolve(this.connector.settings.databasePath);
 
     try {
@@ -57,13 +57,36 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
         .all() as Array<{ table_count: number }>;
       table_count = result[0]?.table_count ?? 0;
     } catch (error: unknown) {
+      database.close();
       throw new Error(`Unable to query system table. ${(error as Error).message}`);
     }
-    database.close();
 
     if (table_count === 0) {
+      database.close();
       throw new Error(`Database "${dbPath}" has no tables`);
     }
+
+    const items: Array<{ key: string; value: string }> = [{ key: 'Tables', value: String(table_count) }];
+
+    try {
+      const versionResult = database.prepare(`SELECT sqlite_version() AS version`).all() as Array<{ version: string }>;
+      if (versionResult[0]?.version) {
+        items.unshift({ key: 'SQLite Version', value: versionResult[0].version });
+      }
+    } catch {
+      // Version info not available
+    }
+
+    database.close();
+
+    try {
+      const stat = await fs.stat(dbPath);
+      items.push({ key: 'File Size', value: `${(stat.size / 1024).toFixed(1)} KB` });
+    } catch {
+      // File stat not critical
+    }
+
+    return { items };
   }
 
   override async testItem(

@@ -7,7 +7,7 @@ import path from 'node:path';
 import { QueriesHistory, QueriesLastPoint, QueriesSubscription } from '../south-interface';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -129,7 +129,7 @@ export default class SouthOPCUA
     this.disconnecting = false;
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const tempCertFolder = `opcua-test-${randomUUID()}`;
     await initOPCUACertificateFolders(tempCertFolder);
     const clientCertificateManager = new OPCUACertificateManager({
@@ -141,16 +141,39 @@ export default class SouthOPCUA
     clientCertificateManager.state = 2;
     this.clientCertificateManager = clientCertificateManager;
 
-    let session;
+    const items: Array<{ key: string; value: string }> = [];
+    let session: ClientSession | undefined;
     try {
       session = await this.createSession();
+
+      // Attempt to read server BuildInfo — gracefully degraded if unavailable
+      try {
+        const nodeIds = [
+          resolveNodeId('ns=0;i=2265'), // ManufacturerName
+          resolveNodeId('ns=0;i=2266'), // ProductName
+          resolveNodeId('ns=0;i=2267'), // SoftwareVersion
+          resolveNodeId('ns=0;i=2268'), // BuildNumber
+          resolveNodeId('ns=0;i=2269') // BuildDate
+        ];
+        const dataValues = await session.read(nodeIds.map(nodeId => ({ nodeId, attributeId: AttributeIds.Value })));
+        const keys = ['ManufacturerName', 'ProductName', 'SoftwareVersion', 'BuildNumber', 'BuildDate'];
+        for (let i = 0; i < keys.length; i++) {
+          const dv = dataValues[i];
+          if (dv && dv.statusCode.value === StatusCodes.Good.value && dv.value?.value != null) {
+            items.push({ key: keys[i], value: String(dv.value.value) });
+          }
+        }
+      } catch {
+        // Server does not expose BuildInfo — not an error, no diagnostic data added
+      }
     } finally {
       await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
       if (session) {
         await session.close();
-        session = null;
       }
     }
+
+    return { items };
   }
 
   override async testItem(

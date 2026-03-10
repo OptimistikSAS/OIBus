@@ -10,7 +10,13 @@ import {
 import { CustomExpressRequest } from '../express';
 import NorthService, { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType, FileCacheContent } from '../../../shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent,
+  OIBusConnectionTestResult
+} from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import OIBusService from '../../service/oibus.service';
 import { OIBusTestingError } from '../../model/types';
@@ -165,16 +171,15 @@ export class NorthConnectorController extends Controller {
    * @summary Test north connection
    */
   @Post('/{northId}/test/connection')
-  @SuccessResponse(204, 'No Content')
   async testNorth(
     @Path() northId: string,
     @Query() northType: OIBusNorthType,
     @Body() command: NorthSettings,
     @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  ): Promise<OIBusConnectionTestResult> {
     const northService = request.services.northService as NorthService;
     try {
-      await northService.testNorth(northId, northType, command);
+      return await northService.testNorth(northId, northType, command);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

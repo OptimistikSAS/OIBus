@@ -6,7 +6,7 @@ import { compress } from '../../service/utils';
 import pino from 'pino';
 import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -30,7 +30,7 @@ export default class SouthFolderScanner
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     try {
@@ -49,6 +49,17 @@ export default class SouthFolderScanner
     if (!stat.isDirectory()) {
       throw new OIBusTestingError(`${inputFolder} is not a directory`);
     }
+
+    const items: Array<{ key: string; value: string }> = [{ key: 'Folder', value: inputFolder }];
+
+    try {
+      const files = await fs.readdir(inputFolder);
+      items.push({ key: 'Files', value: String(files.length) });
+    } catch {
+      // File count not critical
+    }
+
+    return { items };
   }
 
   override async testItem(

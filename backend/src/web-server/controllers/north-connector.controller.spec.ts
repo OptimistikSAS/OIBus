@@ -142,7 +142,7 @@ describe('NorthConnectorController', () => {
     const northType: OIBusNorthType = testData.north.command.type;
     const settings = testData.north.command.settings;
 
-    (mockRequest.services!.northService.testNorth as jest.Mock).mockResolvedValue(undefined);
+    (mockRequest.services!.northService.testNorth as jest.Mock).mockResolvedValue({ items: [] });
 
     await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
 

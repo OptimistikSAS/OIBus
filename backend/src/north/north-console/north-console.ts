@@ -1,7 +1,7 @@
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
@@ -19,7 +19,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
     return ['any', 'time-values', 'setpoint'];
   }
 
-  testConnection(): Promise<void> {
+  testConnection(): Promise<OIBusConnectionTestResult> {
     if (!process.stdout.writable) {
       return Promise.reject(Error('The process.stdout stream has been destroyed, errored or ended'));
     }
@@ -30,7 +30,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
       return Promise.reject(new Error(`Node process is unable to write to STDOUT. ${error}`));
     }
 
-    return Promise.resolve();
+    return Promise.resolve({ items: [] });
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

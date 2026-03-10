@@ -5,7 +5,7 @@ import { encryptionService } from '../../service/encryption.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 
 import sftpClient, { ConnectOptions } from 'ssh2-sftp-client';
 import fs from 'node:fs/promises';
@@ -25,7 +25,7 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
     return ['any'];
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     let folderExists: false | 'd' | '-' | 'l' = false;
     const connectionOptions = await this.createConnectionOptions();
     try {
@@ -46,6 +46,13 @@ export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
     } else if (folderExists !== 'd') {
       throw new Error(`Remote target "${this.connector.settings.remoteFolder}" is not a folder`);
     }
+
+    return {
+      items: [
+        { key: 'Host', value: `${this.connector.settings.host}:${this.connector.settings.port}` },
+        { key: 'Remote Folder', value: this.connector.settings.remoteFolder }
+      ]
+    };
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

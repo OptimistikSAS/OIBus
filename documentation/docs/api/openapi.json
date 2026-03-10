@@ -8340,6 +8340,33 @@
 				],
 				"description": "Command Data Transfer Object for creating or updating a South connector.\nUsed as the request body for South connector creation/update endpoints."
 			},
+			"OIBusConnectionTestResult": {
+				"properties": {
+					"items": {
+						"items": {
+							"properties": {
+								"value": {
+									"type": "string"
+								},
+								"key": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"value",
+								"key"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthSettings": {
 				"anyOf": [
 					{
@@ -23276,8 +23303,15 @@
 			"post": {
 				"operationId": "TestConnection",
 				"responses": {
-					"204": {
-						"description": "No Content"
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OIBusConnectionTestResult"
+								}
+							}
+						}
 					}
 				},
 				"description": "Tests the connection for a south connector",
@@ -24774,8 +24808,15 @@
 			"post": {
 				"operationId": "TestNorth",
 				"responses": {
-					"204": {
-						"description": "No Content"
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OIBusConnectionTestResult"
+								}
+							}
+						}
 					}
 				},
 				"description": "Tests the connection for a north connector",
@@ -25577,8 +25618,15 @@
 			"post": {
 				"operationId": "TestNorth",
 				"responses": {
-					"204": {
-						"description": "No Content"
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OIBusConnectionTestResult"
+								}
+							}
+						}
 					}
 				},
 				"description": "Test north connection for a history query",
@@ -25629,8 +25677,15 @@
 			"post": {
 				"operationId": "TestSouth",
 				"responses": {
-					"204": {
-						"description": "No Content"
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/OIBusConnectionTestResult"
+								}
+							}
+						}
 					}
 				},
 				"description": "Test south connection for a history query",

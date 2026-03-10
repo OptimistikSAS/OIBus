@@ -10,7 +10,7 @@ import {
   SouthRestItemSettingsTrackingInstantDateTimeInput,
   SouthRestSettings
 } from '../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -30,7 +30,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const host = this.connector.settings.host;
     const testEndpoint = this.connector.settings.test.endpoint;
     const testMethod = this.connector.settings.test.method;
@@ -62,6 +62,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
         `HTTP request failed with status code ${response.statusCode}, expected ${successCode}. Message: ${await response.body.text()}`
       );
     }
+    return { items: [] };
   }
 
   override async testItem(

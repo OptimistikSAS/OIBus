@@ -1,7 +1,7 @@
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthMQTTSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import mqtt from 'mqtt';
 import { QoS } from 'mqtt-packet';
@@ -28,10 +28,11 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
     return ['mqtt'];
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
     const client = await mqtt.connectAsync(this.connector.settings.url, options);
     client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
+    return { items: [] };
   }
 
   override async connect(): Promise<void> {

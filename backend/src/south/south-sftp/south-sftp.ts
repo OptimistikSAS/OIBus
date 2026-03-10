@@ -7,7 +7,7 @@ import { compress } from '../../service/utils';
 import pino from 'pino';
 import { QueriesFile } from '../south-interface';
 import { SouthSFTPItemSettings, SouthSFTPSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import sftpClient, { ConnectOptions, FileInfo } from 'ssh2-sftp-client';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -30,7 +30,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     try {
       const connectionOptions = await this.createConnectionOptions();
 
@@ -40,6 +40,7 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     } catch (error: unknown) {
       throw new Error(`Access error on "${this.connector.settings.host}:${this.connector.settings.port}": ${(error as Error).message}`);
     }
+    return { items: [] };
   }
 
   override async testItem(

@@ -659,14 +659,23 @@ describe('SouthMySQL test connection', () => {
   it('Database is reachable and has tables', async () => {
     const result = [{ table_count: 21 }];
     const mysqlConnection = {
-      execute: jest.fn().mockReturnValueOnce([result]),
+      execute: jest
+        .fn()
+        .mockReturnValueOnce([result])
+        .mockReturnValueOnce([[{ version: '8.0.32' }]]),
       ping: jest.fn(),
       end: jest.fn()
     };
     (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
-    await expect(south.testConnection()).resolves.not.toThrow();
+    const testResult = await south.testConnection();
 
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Version', value: '8.0.32' },
+        { key: 'Tables', value: '21' }
+      ]
+    });
     expect(mysqlConnection.end).toHaveBeenCalled();
   });
 

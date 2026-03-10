@@ -647,13 +647,22 @@ describe('SouthPostgreSQL test connection', () => {
     const result = [{ table_count: 21 }];
     const client = {
       connect: jest.fn(),
-      query: jest.fn(() => ({ rows: result })),
+      query: jest
+        .fn()
+        .mockReturnValueOnce({ rows: result })
+        .mockReturnValueOnce({ rows: [{ version: 'PostgreSQL 14.5 on x86_64-pc-linux-gnu' }] }),
       end: jest.fn()
     };
     (pg.Client as unknown as jest.Mock).mockReturnValue(client);
 
-    await expect(south.testConnection()).resolves.not.toThrow();
+    const testResult = await south.testConnection();
 
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Version', value: 'PostgreSQL 14.5 on x86_64-pc-linux-gnu' },
+        { key: 'Tables', value: '21' }
+      ]
+    });
     expect(client.end).toHaveBeenCalled();
   });
 

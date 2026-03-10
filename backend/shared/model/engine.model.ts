@@ -1786,3 +1786,7 @@ export interface FileCacheContent {
   truncated: boolean;
   totalSize: number;
 }
+
+export interface OIBusConnectionTestResult {
+  items: Array<{ key: string; value: string }>;
+}

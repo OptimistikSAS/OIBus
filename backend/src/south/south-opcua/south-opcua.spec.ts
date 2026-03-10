@@ -291,13 +291,37 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly test connection', async () => {
-    const mockedClient = { close: jest.fn() };
+    const mockedClient = {
+      close: jest.fn(),
+      read: jest.fn().mockResolvedValue([
+        { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } },
+        { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } },
+        { statusCode: { value: 0 }, value: { value: '1.2.3' } },
+        { statusCode: { value: 0 }, value: { value: '1234' } },
+        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } }
+      ])
+    };
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
-    await south.testConnection();
+    const testResult = await south.testConnection();
     expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
     expect(south.createSession).toHaveBeenCalledTimes(1);
+    expect(mockedClient.read).toHaveBeenCalledTimes(1);
     expect(mockedClient.close).toHaveBeenCalledTimes(1);
     expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
+    expect(testResult.items).toHaveLength(5);
+  });
+
+  it('should properly test connection with graceful degradation when session.read throws', async () => {
+    const mockedClient = {
+      close: jest.fn(),
+      read: jest.fn().mockRejectedValue(new Error('Read not supported'))
+    };
+    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    const testResult = await south.testConnection();
+    expect(south.createSession).toHaveBeenCalledTimes(1);
+    expect(mockedClient.read).toHaveBeenCalledTimes(1);
+    expect(mockedClient.close).toHaveBeenCalledTimes(1);
+    expect(testResult).toEqual({ items: [] });
   });
 
   it('should properly throw error if test fails', async () => {

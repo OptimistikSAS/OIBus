@@ -20,7 +20,7 @@ import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
 import { Page } from '../../shared/model/types';
-import { HistoryQueryMetrics, OIBusContent } from '../../shared/model/engine.model';
+import { HistoryQueryMetrics, OIBusConnectionTestResult, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import csv from 'papaparse';
@@ -207,7 +207,7 @@ export default class HistoryQueryService {
     northType: OIBusNorthType,
     retrieveSecretsFromNorth: string | undefined,
     settingsToTest: NorthSettings
-  ): Promise<void> {
+  ): Promise<OIBusConnectionTestResult> {
     let northSettings: NorthSettings | null = null;
     if (historyId !== 'create') {
       const historyQuery = this.findById(historyId);
@@ -233,7 +233,7 @@ export default class HistoryQueryService {
     southType: OIBusSouthType,
     retrieveSecretsFromSouth: string | undefined,
     settingsToTest: SouthSettings
-  ): Promise<void> {
+  ): Promise<OIBusConnectionTestResult> {
     let southSettings: SouthSettings | null = null;
     if (historyId !== 'create') {
       const historyQuery = this.findById(historyId);

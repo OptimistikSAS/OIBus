@@ -5,7 +5,7 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -33,7 +33,7 @@ export default class SouthOIAnalytics
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     await testOIAnalyticsConnection(
       this.connector.settings.useOiaModule,
@@ -43,6 +43,7 @@ export default class SouthOIAnalytics
       this.certificateRepository,
       false
     );
+    return { items: [] };
   }
 
   override async testItem(

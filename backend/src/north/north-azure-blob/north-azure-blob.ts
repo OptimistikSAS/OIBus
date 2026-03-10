@@ -5,7 +5,7 @@ import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSha
 import NorthConnector from '../north-connector';
 import { encryptionService } from '../../service/encryption.service';
 import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
 import CacheService from '../../service/cache/cache.service';
@@ -30,7 +30,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     await this.prepareConnection(this.connector.settings);
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     await this.prepareConnection(this.connector.settings);
     const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/${TEST_FILE}` : TEST_FILE;
 
@@ -58,6 +58,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     if (!testSuccess) {
       throw new Error(`Container ${this.connector.settings.container} and path "${blobPath}" does not exist`);
     }
+    return { items: [] };
   }
 
   parseProxyUrl(url: string): { proxyHost: string; proxyPort: number } {
