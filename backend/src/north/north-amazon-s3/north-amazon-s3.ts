@@ -42,7 +42,12 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     } catch (error: unknown) {
       throw new Error(`Error testing Amazon S3 connection: ${(error as Error).message}`);
     }
-    return { items: [] };
+    return {
+      items: [
+        { key: 'Bucket', value: this.connector.settings.bucket },
+        { key: 'Region', value: this.connector.settings.region }
+      ]
+    };
   }
 
   override async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

@@ -64,7 +64,12 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         `HTTP request failed with status code ${response.statusCode}, expected ${successCode}. Message: ${await response.body.text()}`
       );
     }
-    return { items: [] };
+    return {
+      items: [
+        { key: 'URL', value: requestUrl.toString() },
+        { key: 'Status Code', value: String(response.statusCode) }
+      ]
+    };
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

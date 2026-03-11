@@ -146,21 +146,45 @@ export default class SouthOPCUA
     try {
       session = await this.createSession();
 
-      // Attempt to read server BuildInfo — gracefully degraded if unavailable
+      // Attempt to read server state and BuildInfo — gracefully degraded if unavailable
+      // Standard OPC UA node IDs per node-opcua-constants (VariableIds enum):
+      //   2259 = Server_ServerStatus_State
+      //   2261 = Server_ServerStatus_BuildInfo_ProductName
+      //   2263 = Server_ServerStatus_BuildInfo_ManufacturerName
+      //   2264 = Server_ServerStatus_BuildInfo_SoftwareVersion
+      //   2265 = Server_ServerStatus_BuildInfo_BuildNumber
+      //   2266 = Server_ServerStatus_BuildInfo_BuildDate
       try {
-        const nodeIds = [
-          resolveNodeId('ns=0;i=2265'), // ManufacturerName
-          resolveNodeId('ns=0;i=2266'), // ProductName
-          resolveNodeId('ns=0;i=2267'), // SoftwareVersion
-          resolveNodeId('ns=0;i=2268'), // BuildNumber
-          resolveNodeId('ns=0;i=2269') // BuildDate
+        const SERVER_STATE_LABELS: Record<number, string> = {
+          0: 'Running',
+          1: 'Failed',
+          2: 'No Configuration',
+          3: 'Suspended',
+          4: 'Shutdown',
+          5: 'Test',
+          6: 'Communication Fault',
+          7: 'Unknown'
+        };
+        const nodesToRead = [
+          { nodeId: resolveNodeId('ns=0;i=2259'), key: 'State' },
+          { nodeId: resolveNodeId('ns=0;i=2263'), key: 'ManufacturerName' },
+          { nodeId: resolveNodeId('ns=0;i=2261'), key: 'ProductName' },
+          { nodeId: resolveNodeId('ns=0;i=2264'), key: 'SoftwareVersion' },
+          { nodeId: resolveNodeId('ns=0;i=2265'), key: 'BuildNumber' },
+          { nodeId: resolveNodeId('ns=0;i=2266'), key: 'BuildDate' }
         ];
-        const dataValues = await session.read(nodeIds.map(nodeId => ({ nodeId, attributeId: AttributeIds.Value })));
-        const keys = ['ManufacturerName', 'ProductName', 'SoftwareVersion', 'BuildNumber', 'BuildDate'];
-        for (let i = 0; i < keys.length; i++) {
+        const dataValues = await session.read(nodesToRead.map(n => ({ nodeId: n.nodeId, attributeId: AttributeIds.Value })));
+        for (let i = 0; i < nodesToRead.length; i++) {
           const dv = dataValues[i];
           if (dv && dv.statusCode.value === StatusCodes.Good.value && dv.value?.value != null) {
-            items.push({ key: keys[i], value: String(dv.value.value) });
+            const raw = dv.value.value;
+            let value: string;
+            if (nodesToRead[i].key === 'State') {
+              value = SERVER_STATE_LABELS[raw as number] ?? String(raw);
+            } else {
+              value = raw instanceof Date ? raw.toISOString() : String(raw);
+            }
+            items.push({ key: nodesToRead[i].key, value });
           }
         }
       } catch {

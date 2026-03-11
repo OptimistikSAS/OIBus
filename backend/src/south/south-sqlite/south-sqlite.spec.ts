@@ -417,9 +417,7 @@ describe('SouthSQLite test connection', () => {
   it('Database is reachable and has tables', async () => {
     const tableCountAll = jest.fn().mockReturnValue([{ table_count: 21 }]);
     const versionAll = jest.fn().mockReturnValue([{ version: '3.39.5' }]);
-    (mockDatabase.prepare as jest.Mock)
-      .mockReturnValueOnce({ all: tableCountAll })
-      .mockReturnValueOnce({ all: versionAll });
+    (mockDatabase.prepare as jest.Mock).mockReturnValueOnce({ all: tableCountAll }).mockReturnValueOnce({ all: versionAll });
     (fs.stat as jest.Mock).mockResolvedValue({ size: 10240 });
 
     const testResult = await south.testConnection();
@@ -429,6 +427,22 @@ describe('SouthSQLite test connection', () => {
         { key: 'SQLite Version', value: '3.39.5' },
         { key: 'Tables', value: '21' },
         { key: 'File Size', value: '10.0 KB' }
+      ]
+    });
+  });
+
+  it('Database is reachable but version is unavailable', async () => {
+    const tableCountAll = jest.fn().mockReturnValue([{ table_count: 5 }]);
+    const versionAll = jest.fn().mockReturnValue([{}]); // no version key
+    (mockDatabase.prepare as jest.Mock).mockReturnValueOnce({ all: tableCountAll }).mockReturnValueOnce({ all: versionAll });
+    (fs.stat as jest.Mock).mockResolvedValue({ size: 2048 });
+
+    const testResult = await south.testConnection();
+
+    expect(testResult).toEqual({
+      items: [
+        { key: 'Tables', value: '5' },
+        { key: 'File Size', value: '2.0 KB' }
       ]
     });
   });

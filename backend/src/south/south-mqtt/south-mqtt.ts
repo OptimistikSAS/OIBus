@@ -148,7 +148,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
     const client = await mqtt.connectAsync(this.connector.settings.url, options);
     client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
-    return { items: [] };
+    return { items: [{ key: 'Broker URL', value: this.connector.settings.url }] };
   }
 
   override async testItem(

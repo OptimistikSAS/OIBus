@@ -58,7 +58,13 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     if (!testSuccess) {
       throw new Error(`Container ${this.connector.settings.container} and path "${blobPath}" does not exist`);
     }
-    return { items: [] };
+    return {
+      items: [
+        { key: 'Account', value: this.connector.settings.account ?? '' },
+        { key: 'Container', value: this.connector.settings.container },
+        { key: 'Storage Type', value: this.connector.settings.useADLS ? 'Azure Data Lake Storage' : 'Azure Blob Storage' }
+      ]
+    };
   }
 
   parseProxyUrl(url: string): { proxyHost: string; proxyPort: number } {

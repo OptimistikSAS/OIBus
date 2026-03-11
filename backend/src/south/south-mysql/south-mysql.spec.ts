@@ -679,6 +679,23 @@ describe('SouthMySQL test connection', () => {
     expect(mysqlConnection.end).toHaveBeenCalled();
   });
 
+  it('Database is reachable but version is unavailable', async () => {
+    const mysqlConnection = {
+      execute: jest
+        .fn()
+        .mockReturnValueOnce([[{ table_count: 5 }]])
+        .mockReturnValueOnce([[{}]]), // no version key
+      ping: jest.fn(),
+      end: jest.fn()
+    };
+    (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
+
+    const testResult = await south.testConnection();
+
+    expect(testResult).toEqual({ items: [{ key: 'Tables', value: '5' }] });
+    expect(mysqlConnection.end).toHaveBeenCalled();
+  });
+
   it('Unable to create connection', async () => {
     let code: ErrorCodes;
     const errorMessage = 'Error creating connection';

@@ -666,6 +666,23 @@ describe('SouthPostgreSQL test connection', () => {
     expect(client.end).toHaveBeenCalled();
   });
 
+  it('Database is reachable but version is unavailable', async () => {
+    const client = {
+      connect: jest.fn(),
+      query: jest
+        .fn()
+        .mockReturnValueOnce({ rows: [{ table_count: 5 }] })
+        .mockReturnValueOnce({ rows: [{}] }), // no version key
+      end: jest.fn()
+    };
+    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
+
+    const testResult = await south.testConnection();
+
+    expect(testResult).toEqual({ items: [{ key: 'Tables', value: '5' }] });
+    expect(client.end).toHaveBeenCalled();
+  });
+
   it('Unable to create connection', async () => {
     let errorMessage: ErrorMessages;
 

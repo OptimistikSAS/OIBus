@@ -40,7 +40,12 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     } catch (error: unknown) {
       throw new Error(`Access error on "${this.connector.settings.host}:${this.connector.settings.port}": ${(error as Error).message}`);
     }
-    return { items: [] };
+    return {
+      items: [
+        { key: 'Host', value: `${this.connector.settings.host}:${this.connector.settings.port}` },
+        { key: 'Username', value: this.connector.settings.username || '' }
+      ]
+    };
   }
 
   override async testItem(

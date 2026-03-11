@@ -628,6 +628,15 @@ describe('SouthMSSQL test connection', () => {
     expect(close).toHaveBeenCalled();
   });
 
+  it('Database is reachable but version is unavailable', async () => {
+    query.mockReturnValueOnce({ recordsets: [[{ table_count: 5 }]] }).mockReturnValueOnce({ recordsets: [[{}]] }); // no version key
+
+    const testResult = await south.testConnection();
+
+    expect(testResult).toEqual({ items: [{ key: 'Tables', value: '5' }] });
+    expect(close).toHaveBeenCalled();
+  });
+
   it('Unable to create connection pool', async () => {
     let code: ErrorCodes;
     const errorMessage = 'Error creating connection pool';
