@@ -70,7 +70,7 @@ export const generateIntervals = (
   const originalInterval = endTime.toMillis() - startTime.toMillis();
   let numberOfIntervalsDone = 0;
 
-  if (maxNumberOfSecondsInInterval <= 0 || originalInterval <= 1000 * maxNumberOfSecondsInInterval) {
+  if (maxNumberOfSecondsInInterval <= 0) {
     return {
       intervals: [{ start: startInstantFromCache, end: endInstant }],
       numberOfIntervalsDone: 0
