@@ -32,7 +32,7 @@ import SouthService, { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConn
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import ScanModeService from '../../service/scan-mode.service';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 
 /**
@@ -204,16 +204,15 @@ export class SouthConnectorController extends Controller {
    * @summary Test south connection
    */
   @Post('/{southId}/test/connection')
-  @SuccessResponse(204, 'No Content')
   async testConnection(
     @Path() southId: string,
     @Query() southType: OIBusSouthType,
     @Body() command: SouthSettings,
     @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  ): Promise<OIBusConnectionTestResult> {
     const southService = request.services.southService as SouthService;
     try {
-      await southService.testSouth(southId, southType, command);
+      return await southService.testSouth(southId, southType, command);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

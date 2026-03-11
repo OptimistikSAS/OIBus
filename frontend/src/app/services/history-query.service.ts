@@ -18,6 +18,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
+  OIBusConnectionTestResult,
   OIBusContent
 } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
@@ -111,8 +112,8 @@ export class HistoryQueryService {
     settings: NorthSettings,
     northType: OIBusNorthType,
     fromNorth: string | null = null
-  ): Observable<void> {
-    return this.http.post<void>(`/api/history/${historyId}/test/north`, settings, {
+  ): Observable<OIBusConnectionTestResult> {
+    return this.http.post<OIBusConnectionTestResult>(`/api/history/${historyId}/test/north`, settings, {
       params: fromNorth ? { fromNorth, northType } : { northType }
     });
   }
@@ -122,8 +123,8 @@ export class HistoryQueryService {
     settings: SouthSettings,
     southType: OIBusSouthType,
     fromSouth: string | null = null
-  ): Observable<void> {
-    return this.http.post<void>(`/api/history/${historyId}/test/south`, settings, {
+  ): Observable<OIBusConnectionTestResult> {
+    return this.http.post<OIBusConnectionTestResult>(`/api/history/${historyId}/test/south`, settings, {
       params: fromSouth ? { fromSouth, southType } : { southType }
     });
   }

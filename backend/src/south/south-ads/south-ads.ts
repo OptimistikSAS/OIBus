@@ -5,7 +5,7 @@ import { Instant } from '../../../shared/model/types';
 import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -267,11 +267,12 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     }
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const options = this.createConnectionOptions();
     this.client = new Client(options);
     await this.client.connect();
     await this.disconnect();
+    return { items: [] };
   }
 
   /**

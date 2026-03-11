@@ -5,7 +5,7 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -73,7 +73,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     await super.disconnect();
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const { connectionString, logValue } = await this.buildConnectionString(this.connector.settings);
     this.logger.info(`Testing OLE OIBus Agent connection on ${this.connector.settings.agentUrl} with "${logValue}"`);
 
@@ -101,6 +101,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
       throw new Error(`Error occurred when sending connect command to remote agent with status ${response.statusCode}`);
     }
+    return { items: [] };
   }
 
   override async testItem(

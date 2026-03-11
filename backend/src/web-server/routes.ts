@@ -2744,6 +2744,14 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"ref":"SouthConnectorCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_folder-scanner.SouthFolderScannerSettings.SouthFolderScannerItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_ftp.SouthFTPSettings.SouthFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_modbus.SouthModbusSettings.SouthModbusItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mqtt.SouthMQTTSettings.SouthMQTTItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mssql.SouthMSSQLSettings.SouthMSSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_mysql.SouthMySQLSettings.SouthMySQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_odbc.SouthODBCSettings.SouthODBCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oianalytics.SouthOIAnalyticsSettings.SouthOIAnalyticsItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oledb.SouthOLEDBSettings.SouthOLEDBItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opc.SouthOPCSettings.SouthOPCItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_opcua.SouthOPCUASettings.SouthOPCUAItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_oracle.SouthOracleSettings.SouthOracleItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_osisoft-pi.SouthPISettings.SouthPIItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_postgresql.SouthPostgreSQLSettings.SouthPostgreSQLItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_rest.SouthRestSettings.SouthRestItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sftp.SouthSFTPSettings.SouthSFTPItemSettings_"},{"ref":"SouthConnectorCommandTypedDTO_sqlite.SouthSQLiteSettings.SouthSQLiteItemSettings_"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusConnectionTestResult": {
+        "dataType": "refObject",
+        "properties": {
+            "items": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"string","required":true},"key":{"dataType":"string","required":true}}},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthSettings": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSSettings"},{"ref":"SouthFolderScannerSettings"},{"ref":"SouthFTPSettings"},{"ref":"SouthModbusSettings"},{"ref":"SouthMQTTSettings"},{"ref":"SouthMSSQLSettings"},{"ref":"SouthMySQLSettings"},{"ref":"SouthODBCSettings"},{"ref":"SouthOIAnalyticsSettings"},{"ref":"SouthOLEDBSettings"},{"ref":"SouthOPCSettings"},{"ref":"SouthOPCUASettings"},{"ref":"SouthOracleSettings"},{"ref":"SouthPISettings"},{"ref":"SouthPostgreSQLSettings"},{"ref":"SouthRestSettings"},{"ref":"SouthSFTPSettings"},{"ref":"SouthSQLiteSettings"}],"validators":{}},
@@ -6540,7 +6548,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 response,
                 next,
                 validatedArgs,
-                successStatus: 204,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);
@@ -7862,7 +7870,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 response,
                 next,
                 validatedArgs,
-                successStatus: 204,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);
@@ -8535,7 +8543,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 response,
                 next,
                 validatedArgs,
-                successStatus: 204,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);
@@ -8569,7 +8577,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 response,
                 next,
                 validatedArgs,
-                successStatus: 204,
+                successStatus: undefined,
               });
             } catch (err) {
                 return next(err);

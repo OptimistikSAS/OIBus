@@ -6,7 +6,7 @@ import pino from 'pino';
 import NorthConnector from '../north-connector';
 import { encryptionService } from '../../service/encryption.service';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 
@@ -29,7 +29,7 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     await this.prepareConnection(this.connector.settings);
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     await this.prepareConnection(this.connector.settings);
 
     try {
@@ -42,6 +42,12 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     } catch (error: unknown) {
       throw new Error(`Error testing Amazon S3 connection: ${(error as Error).message}`);
     }
+    return {
+      items: [
+        { key: 'Bucket', value: this.connector.settings.bucket },
+        { key: 'Region', value: this.connector.settings.region }
+      ]
+    };
   }
 
   override async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

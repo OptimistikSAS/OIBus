@@ -12,7 +12,7 @@ export default jest.fn().mockImplementation(() => ({
   start: jest.fn(),
   stop: jest.fn(),
   getSouthDataStream: jest.fn(),
-  testSouth: jest.fn(),
+  testSouth: jest.fn().mockResolvedValue({ items: [] }),
   testItem: jest.fn(),
   listItems: jest.fn(),
   searchItems: jest.fn(),

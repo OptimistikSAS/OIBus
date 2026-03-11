@@ -4,7 +4,7 @@ import { ReadStream } from 'node:fs';
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import FormData from 'form-data';
 import { URL } from 'node:url';
@@ -33,7 +33,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     return ['any'];
   }
 
-  async testConnection(): Promise<void> {
+  async testConnection(): Promise<OIBusConnectionTestResult> {
     const testEndpoint = this.connector.settings.test.testEndpoint;
     const testMethod = this.connector.settings.test.testMethod;
     const successCode = this.connector.settings.test.testSuccessCode;
@@ -64,6 +64,12 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
         `HTTP request failed with status code ${response.statusCode}, expected ${successCode}. Message: ${await response.body.text()}`
       );
     }
+    return {
+      items: [
+        { key: 'URL', value: requestUrl.toString() },
+        { key: 'Status Code', value: String(response.statusCode) }
+      ]
+    };
   }
 
   async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {

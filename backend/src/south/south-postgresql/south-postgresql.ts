@@ -17,7 +17,7 @@ import { Instant } from '../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../shared/model/south-settings.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
@@ -52,7 +52,7 @@ export default class SouthPostgreSQL
     };
   }
 
-  override async testConnection(): Promise<void> {
+  override async testConnection(): Promise<OIBusConnectionTestResult> {
     const config = await this.createConnectionOptions();
 
     let connection;
@@ -94,11 +94,25 @@ export default class SouthPostgreSQL
       throw new Error(`Unable to read tables in database "${this.connector.settings.database}". ${(error as Error).message}`);
     }
 
-    await connection.end();
-
     if (table_count === 0) {
+      await connection.end();
       throw new Error(`Database "${this.connector.settings.database}" has no tables`);
     }
+
+    const items: Array<{ key: string; value: string }> = [{ key: 'Tables', value: String(table_count) }];
+
+    try {
+      const { rows: versionRows } = await connection.query(`SELECT version() AS version`);
+      const version = versionRows[0]?.version;
+      if (version) {
+        items.unshift({ key: 'Version', value: String(version) });
+      }
+    } catch {
+      // Version info not available
+    }
+
+    await connection.end();
+    return { items };
   }
 
   override async testItem(
