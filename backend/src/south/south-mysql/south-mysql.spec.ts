@@ -227,16 +227,14 @@ describe('SouthMySQL with authentication', () => {
       timezone: 'Z'
     });
     expect(generateReplacementParameters).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime);
-    expect(mysqlConnection.execute).toHaveBeenCalledWith(
-      {
-        sql: configuration.items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
-        timeout: configuration.items[0].settings.requestTimeout
-      },
-      {
+    expect(mysqlConnection.execute).toHaveBeenCalledWith({
+      sql: configuration.items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
+      values: {
         startTime,
         endTime
-      }
-    );
+      },
+      timeout: configuration.items[0].settings.requestTimeout
+    });
     expect(mysqlConnection.end).toHaveBeenCalledTimes(1);
 
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
@@ -278,16 +276,14 @@ describe('SouthMySQL with authentication', () => {
       error = err;
     }
 
-    expect(mysqlConnection.execute).toHaveBeenCalledWith(
-      {
-        sql: configuration.items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
-        timeout: configuration.items[0].settings.requestTimeout
-      },
-      {
+    expect(mysqlConnection.execute).toHaveBeenCalledWith({
+      sql: configuration.items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
+      values: {
         startTime,
         endTime
-      }
-    );
+      },
+      timeout: configuration.items[0].settings.requestTimeout
+    });
     expect(error).toEqual(new Error('query error'));
     expect(mysqlConnection.end).toHaveBeenCalledTimes(1);
   });
