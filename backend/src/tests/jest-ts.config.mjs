@@ -2,6 +2,7 @@ export default {
   rootDir: '../',
   coverageDirectory: './tests/coverage',
   transform: { '^.+\\.(ts|js)?$': 'ts-jest' },
+  transformIgnorePatterns: ['/node_modules/(?!hexy)/'],
   testEnvironment: 'node',
   testRegex: '.*\\.(test|spec)?\\.(ts|tsx)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'json', 'node'],
