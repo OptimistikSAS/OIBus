@@ -2,22 +2,24 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import fsSync, { Dirent, Stats } from 'node:fs';
 import zlib from 'node:zlib';
-
 import minimist from 'minimist';
-
 import { DateTime } from 'luxon';
 import {
   checkScanMode,
   compress,
+  convertDateTime,
   convertDateTimeToInstant,
   convertDelimiter,
-  createBaseFolders,
   createFolder,
+  createOIBusError,
   delay,
+  determineContentTypeFromFilename,
   dirSize,
   filesExists,
   formatInstant,
   formatQueryParams,
+  generateCsvContent,
+  generateFilenameForSerialization,
   generateIntervals,
   generateRandomId,
   generateReplacementParameters,
@@ -25,9 +27,14 @@ import {
   getFilenameWithoutRandomId,
   getOIBusInfo,
   getPlatformFromOsType,
+  injectIndices,
   itemToFlattenedCSV,
   logQuery,
   persistResults,
+  processCacheFileContent,
+  resolveBypassingExports,
+  sanitizeFilename,
+  streamToString,
   stringToBoolean,
   testIPOnFilter,
   unzip,
@@ -42,7 +49,10 @@ import os from 'node:os';
 import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
-import { mockBaseFolders } from '../tests/utils/test-utils';
+import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
+import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
+import { Readable } from 'node:stream';
+import { OIBusError } from '../model/engine.model';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -55,13 +65,25 @@ jest.mock('node:https', () => ({ request: jest.fn() }));
 
 describe('Service utils', () => {
   describe('getCommandLineArguments', () => {
+    let consoleSpy: jest.SpyInstance;
+
     beforeEach(() => {
       jest.clearAllMocks();
+
+      consoleSpy = jest.spyOn(console, 'info').mockImplementation(() => {
+        // do nothing
+      });
+    });
+
+    afterEach(() => {
+      consoleSpy.mockRestore();
     });
 
     it('should parse command line arguments without args', () => {
       (minimist as unknown as jest.Mock).mockReturnValue({});
       const result = getCommandLineArguments();
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('OIBus starting with the following arguments:'));
       expect(result).toEqual({
         version: false,
         configFile: path.resolve('./'),
@@ -82,6 +104,8 @@ describe('Service utils', () => {
         launcherVersion: '3.5.0'
       });
       const result = getCommandLineArguments();
+
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('OIBus starting with the following arguments:'));
       expect(result).toEqual({
         version: true,
         configFile: path.resolve('myConfig.json'),
@@ -97,6 +121,10 @@ describe('Service utils', () => {
     beforeEach(() => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
       jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should delay', async () => {
@@ -175,36 +203,6 @@ describe('Service utils', () => {
 
       expect(fs.mkdir).toHaveBeenCalledTimes(1);
       expect(fs.mkdir).toHaveBeenCalledWith(path.resolve(folderToCreate), { recursive: true });
-    });
-  });
-
-  describe('createBaseFolders', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should properly create base folders for north', async () => {
-      (fs.stat as jest.Mock).mockImplementation(() => null);
-
-      await createBaseFolders(mockBaseFolders(testData.north.list[0].id), 'north');
-      expect(fs.mkdir).not.toHaveBeenCalled();
-      expect(fs.stat).toHaveBeenCalledTimes(3);
-    });
-
-    it('should properly create base folders for south', async () => {
-      (fs.stat as jest.Mock).mockImplementation(() => null);
-
-      await createBaseFolders(mockBaseFolders(testData.south.list[0].id), 'south');
-      expect(fs.mkdir).not.toHaveBeenCalled();
-      expect(fs.stat).toHaveBeenCalledTimes(3);
-    });
-
-    it('should properly create base folders for history query', async () => {
-      (fs.stat as jest.Mock).mockImplementation(() => null);
-
-      await createBaseFolders(mockBaseFolders(testData.historyQueries.list[0].id), 'history');
-      expect(fs.mkdir).not.toHaveBeenCalled();
-      expect(fs.stat).toHaveBeenCalledTimes(9);
     });
   });
 
@@ -443,12 +441,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -466,12 +466,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -492,12 +494,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(
@@ -518,12 +522,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
@@ -569,12 +575,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -590,12 +598,14 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -617,6 +627,8 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
@@ -627,7 +639,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -646,6 +658,8 @@ describe('Service utils', () => {
           },
           'connectorName',
           'itemName',
+          'itemId',
+          testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
@@ -656,7 +670,7 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` });
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -991,6 +1005,17 @@ describe('Service utils', () => {
     });
   });
 
+  describe('convertDateTime', () => {
+    afterAll(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('should convert a valid ISO string to ISO string', () => {
+      const result = convertDateTime('2023-01-01T12:00:00+02:00', { type: 'iso-string' }, { type: 'iso-string' });
+      expect(result).toBe('2023-01-01T10:00:00.000Z');
+    });
+  });
+
   describe('formatQueryParams', () => {
     it('should correctly return void string when there is no query params', () => {
       const result = formatQueryParams('2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z', []);
@@ -1040,6 +1065,10 @@ describe('Service utils', () => {
     beforeEach(() => {
       jest.resetAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should properly validate a cron expression (every second)', () => {
@@ -1165,6 +1194,10 @@ describe('Service utils', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should properly check scan mode', () => {
       expect(checkScanMode(testData.scanMode.list, 'scanModeId1', null)).toEqual(testData.scanMode.list[0]);
       expect(() => checkScanMode(testData.scanMode.list, null, null)).toThrow('Scan mode not specified');
@@ -1179,6 +1212,10 @@ describe('Service utils', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     });
 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should properly convert items into csv', () => {
       (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
@@ -1189,7 +1226,7 @@ describe('Service utils', () => {
             {
               ...testData.south.list[2].items[0]
             }
-          ] as any,
+          ] as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ',',
           testData.scanMode.list
         )
@@ -1206,7 +1243,7 @@ describe('Service utils', () => {
             {
               ...testData.south.list[2].items[0]
             }
-          ] as any,
+          ] as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ','
         )
       ).toEqual('csv content');
@@ -1217,6 +1254,10 @@ describe('Service utils', () => {
     beforeEach(() => {
       jest.resetAllMocks();
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should properly convert string to boolean', () => {
@@ -1296,6 +1337,311 @@ describe('Service utils', () => {
       expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(true);
       expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
       expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toEqual(true);
+    });
+  });
+
+  describe('sanitizeFilename', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should remove surrounding quotes', () => {
+      expect(sanitizeFilename('"file.csv"')).toEqual('file.csv');
+      expect(sanitizeFilename("'file.csv'")).toEqual('file.csv');
+      expect(sanitizeFilename('"file.name.csv"')).toEqual('file.name.csv');
+    });
+
+    it('should replace special characters and spaces with hyphens in the name', () => {
+      expect(sanitizeFilename('my file.csv')).toEqual('my-file.csv');
+      expect(sanitizeFilename('file@name#1.json')).toEqual('file-name-1.json');
+      expect(sanitizeFilename('my/bad/path.txt')).toEqual('my-bad-path.txt');
+    });
+
+    it('should allow valid characters (alphanumeric, -, _) to remain', () => {
+      expect(sanitizeFilename('valid-file_name123.csv')).toEqual('valid-file_name123.csv');
+      expect(sanitizeFilename('UPPER_case.TXT')).toEqual('UPPER_case.TXT');
+    });
+
+    it('should handle files without extensions', () => {
+      expect(sanitizeFilename('makefile')).toEqual('makefile');
+      expect(sanitizeFilename('read me')).toEqual('read-me');
+      expect(sanitizeFilename('weird@file')).toEqual('weird-file');
+    });
+
+    it('should handle complex extensions correctly', () => {
+      expect(sanitizeFilename('archive.tar.gz')).toEqual('archive.tar.gz');
+      expect(sanitizeFilename('complex.name.structure.json')).toEqual('complex.name.structure.json');
+    });
+
+    it('should handle edge cases', () => {
+      // Dotfiles (e.g. .gitignore): name part is empty, extension is full string
+      expect(sanitizeFilename('.env')).toEqual('.env');
+
+      // File ending with dot
+      expect(sanitizeFilename('folder.')).toEqual('folder.');
+
+      // Empty string
+      expect(sanitizeFilename('')).toEqual('');
+    });
+  });
+
+  describe('injectIndices', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should replace single wildcard with corresponding index', () => {
+      expect(injectIndices('$.users[*].name', [0])).toBe('$.users[0].name');
+      expect(injectIndices('$[*]', [99])).toBe('$[99]');
+    });
+
+    it('should replace multiple wildcards sequentially', () => {
+      expect(injectIndices('$.users[*].items[*].id', [0, 5])).toBe('$.users[0].items[5].id');
+
+      expect(injectIndices('$[*].nested[*].deep[*]', [1, 2, 3])).toBe('$[1].nested[2].deep[3]');
+    });
+
+    it('should keep the wildcard if there are not enough indices provided', () => {
+      // The code logic: indices[indexPointer] !== undefined ? ... : '*'
+      // So if we provide 1 index for 2 wildcards, the second remains [*]
+      expect(injectIndices('$.users[*].items[*].id', [0])).toBe('$.users[0].items[*].id');
+
+      expect(injectIndices('$.users[*].items[*]', [])).toBe('$.users[*].items[*]');
+    });
+
+    it('should ignore extra indices if there are fewer wildcards', () => {
+      // Should use the first index and ignore the 5
+      expect(injectIndices('$.users[*].name', [0, 5])).toBe('$.users[0].name');
+    });
+
+    it('should return the path unchanged if there are no wildcards', () => {
+      expect(injectIndices('$.users.fixed.path', [0, 1])).toBe('$.users.fixed.path');
+    });
+
+    it('should correctly handle other bracket notation that is not [*]', () => {
+      // Ensure it doesn't accidentally replace [0] or ['key']
+      expect(injectIndices('$.users[0].items[*]', [2])).toBe('$.users[0].items[2]');
+
+      expect(injectIndices('$.users["key"].items[*]', [3])).toBe('$.users["key"].items[3]');
+    });
+  });
+
+  describe('processCacheFileContent', () => {
+    it('should read full content if smaller than limit', async () => {
+      const content = 'Hello World';
+      const stream = Readable.from(Buffer.from(content));
+
+      const result = await processCacheFileContent(stream);
+
+      expect(result.content).toEqual(content);
+      expect(result.truncated).toBe(false);
+    });
+
+    it('should truncate content if larger than limit', async () => {
+      const content = 'Hello World';
+      const limit = 5;
+
+      // Use a generator to yield 1-byte chunks to force the loop to iterate multiple times
+      function* charGenerator() {
+        for (const char of content) {
+          yield Buffer.from(char);
+        }
+      }
+      const stream = Readable.from(charGenerator());
+
+      const result = await processCacheFileContent(stream, limit);
+
+      expect(result.content).toEqual('Hello');
+      expect(result.truncated).toBe(true);
+    });
+
+    it('should handle multi-chunk streams correctly', async () => {
+      // Simulate stream with multiple small chunks
+      function* generateChunks() {
+        yield Buffer.from('Chunk1');
+        yield Buffer.from('Chunk2');
+        yield Buffer.from('Chunk3');
+      }
+      const stream = Readable.from(generateChunks());
+
+      // Limit cuts off in the middle of Chunk2 (Limit 9: "Chunk1" (6) + "Chu" (3))
+      const result = await processCacheFileContent(stream, 9);
+
+      expect(result.content).toEqual('Chunk1Chu');
+      expect(result.truncated).toBe(true);
+    });
+  });
+
+  describe('determineContentTypeFromFilename', () => {
+    it('should identify json', () => {
+      expect(determineContentTypeFromFilename('data.json')).toBe('json');
+      expect(determineContentTypeFromFilename('/path/to/file.json')).toBe('json');
+    });
+
+    it('should identify csv', () => {
+      expect(determineContentTypeFromFilename('data.csv')).toBe('csv');
+    });
+
+    it('should identify xml', () => {
+      expect(determineContentTypeFromFilename('data.xml')).toBe('xml');
+    });
+
+    it('should default to raw for others', () => {
+      expect(determineContentTypeFromFilename('data.txt')).toBe('raw');
+      expect(determineContentTypeFromFilename('data')).toBe('raw');
+      expect(determineContentTypeFromFilename('data.bin')).toBe('raw');
+    });
+  });
+
+  describe('streamToString', () => {
+    it('should convert stream to string', async () => {
+      const expected = 'stream content';
+      const stream = Readable.from(Buffer.from(expected));
+
+      const result = await streamToString(stream);
+      expect(result).toEqual(expected);
+    });
+
+    it('should reject on stream error', async () => {
+      const stream = new Readable({
+        read() {
+          this.emit('error', new Error('Stream Error'));
+        }
+      });
+
+      await expect(streamToString(stream)).rejects.toThrow('Stream Error');
+    });
+  });
+
+  describe('createOIBusError', () => {
+    it('should return OIBusError as is', () => {
+      const originalError = new OIBusError('test', true);
+      const result = createOIBusError(originalError);
+      expect(result).toBe(originalError);
+      expect(result.forceRetry).toBe(true);
+    });
+
+    it('should wrap Error object', () => {
+      const error = new Error('Standard error');
+      const result = createOIBusError(error);
+      expect(result).toBeInstanceOf(OIBusError);
+      expect(result.message).toBe('Standard error');
+      expect(result.forceRetry).toBe(false);
+    });
+
+    it('should wrap string error', () => {
+      const result = createOIBusError('String error');
+      expect(result).toBeInstanceOf(OIBusError);
+      expect(result.message).toBe('String error');
+    });
+
+    it('should stringify unknown object', () => {
+      const obj = { custom: 'value' };
+      const result = createOIBusError(obj);
+      expect(result).toBeInstanceOf(OIBusError);
+      expect(result.message).toBe('{"custom":"value"}');
+    });
+  });
+
+  describe('generateFilenameForSerialization', () => {
+    beforeEach(() => {
+      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should replace placeholders correctly', () => {
+      const base = '/base/folder';
+      const filenameTemplate = 'export_@ConnectorName_@ItemName_@CurrentDate.csv';
+      const connectorName = 'MyConnector';
+      const itemName = 'MyItem';
+
+      const result = generateFilenameForSerialization(base, filenameTemplate, connectorName, itemName);
+
+      const expectedDate = '2021_01_02_00_00_00_000';
+      const expectedFilename = `export_${connectorName}_${itemName}_${expectedDate}.csv`;
+
+      expect(result).toEqual(path.join(base, expectedFilename));
+    });
+  });
+
+  describe('generateCsvContent', () => {
+    it('should generate CSV string with correct delimiter', () => {
+      const data = [
+        { col1: 'val1', col2: 123 },
+        { col1: 'val2', col2: 456 }
+      ];
+
+      (csv.unparse as jest.Mock).mockReturnValue('mocked,csv,output');
+
+      const result = generateCsvContent(data, 'COMMA');
+
+      expect(csv.unparse).toHaveBeenCalledWith(data, {
+        header: true,
+        delimiter: ','
+      });
+      expect(result).toBe('mocked,csv,output');
+    });
+
+    it('should handle different delimiters', () => {
+      const data = [{ a: 1 }];
+      generateCsvContent(data, 'SEMI_COLON');
+      expect(csv.unparse).toHaveBeenCalledWith(data, expect.objectContaining({ delimiter: ';' }));
+    });
+  });
+
+  describe('resolveBypassingExports', () => {
+    it('should resolve a standard allowed export normally', () => {
+      // 'typescript' or 'papaparse' package.json are typically allowed exports.
+      // This tests the standard `require.resolve` try block.
+      const result = resolveBypassingExports('typescript', 'package.json');
+
+      // It should successfully find the path inside the node_modules folder
+      expect(result).toContain(path.normalize('node_modules/typescript/package.json'));
+    });
+
+    it('should bypass exports restrictions for blocked subpaths (e.g., luxon)', () => {
+      // We know natively that Luxon blocks this deep import, which will trigger
+      // the catch block and ERR_PACKAGE_PATH_NOT_EXPORTED logic in our function.
+      const pkgName = 'luxon';
+      const subPath = 'build/global/luxon.min.js';
+
+      const result = resolveBypassingExports(pkgName, subPath);
+
+      // Our fallback logic should successfully locate it
+      expect(result).toContain(path.normalize(`node_modules/${pkgName}/${subPath}`));
+    });
+
+    it('should throw standard MODULE_NOT_FOUND for non-existent packages', () => {
+      // If a package truly doesn't exist, it should not be swallowed by our fallback
+      expect(() => {
+        resolveBypassingExports('some-fake-package-that-does-not-exist', 'file.js');
+      }).toThrow(/Cannot find module 'some-fake-package-that-does-not-exist\/file\.js'/);
+    });
+
+    it('should re-throw generic errors that are not related to module resolution', () => {
+      // Passing a Symbol causes the template literal `${pkgName}/${subPath}` to throw a native
+      // TypeError BEFORE require.resolve is even called. This safely tests the default fallback.
+      expect(() => {
+        resolveBypassingExports(Symbol('bad-input') as unknown as string, 'file.js');
+      }).toThrow(TypeError);
+
+      expect(() => {
+        resolveBypassingExports(Symbol('bad-input') as unknown as string, 'file.js');
+      }).toThrow('Cannot convert a Symbol value to a string');
+    });
+
+    it('should throw the original error if the package resolves but is not in a node_modules folder (rootIdx === -1)', () => {
+      // 'fs' is a Node.js built-in module.
+      // require.resolve('fs/fake-subpath.js') natively throws MODULE_NOT_FOUND.
+      // The fallback runs require.resolve('fs'), which returns the literal string 'fs'.
+      // Because 'fs' does not contain 'node_modules/fs', rootIdx becomes -1.
+
+      expect(() => {
+        resolveBypassingExports('fs', 'fake-subpath.js');
+      }).toThrow(/Cannot find module 'fs\/fake-subpath\.js'/);
     });
   });
 });

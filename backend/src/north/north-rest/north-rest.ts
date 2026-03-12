@@ -1,83 +1,134 @@
 import path from 'node:path';
-import { createReadStream } from 'node:fs';
+import { ReadStream } from 'node:fs';
 
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { filesExists } from '../../service/utils';
 import FormData from 'form-data';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
-import { HTTPRequest, ReqAuthOptions, ReqProxyOptions, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
+import {
+  HTTPRequest,
+  ReqAuthOptions,
+  ReqOptions,
+  ReqProxyOptions,
+  ReqResponse,
+  retryableHttpStatusCodes
+} from '../../service/http-request.utils';
 import CacheService from '../../service/cache/cache.service';
+import { encryptionService } from '../../service/encryption.service';
+import { UndiciHeaders } from 'undici/types/dispatcher';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
-  constructor(
-    configuration: NorthConnectorEntity<NorthRESTSettings>,
-    logger: pino.Logger,
-    cacheFolderPath: string,
-    cacheService: CacheService
-  ) {
-    super(configuration, logger, cacheFolderPath, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, logger: pino.Logger, cacheService: CacheService) {
+    super(configuration, logger, cacheService);
   }
 
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
-      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
-    }
-
-    switch (cacheMetadata.contentType) {
-      case 'any':
-        return this.handleFile(cacheMetadata.contentFile);
-    }
+  supportedTypes(): Array<string> {
+    return ['any'];
   }
 
-  /**
-   * Handle the file by sending it over to the specified endpoint
-   */
-  async handleFile(filePath: string): Promise<void> {
-    filePath = path.resolve(filePath);
+  async testConnection(): Promise<void> {
+    const testEndpoint = this.connector.settings.test.testEndpoint;
+    const testMethod = this.connector.settings.test.testMethod;
+    const successCode = this.connector.settings.test.testSuccessCode;
 
-    if (!(await filesExists(filePath))) {
-      throw new OIBusError(`File ${filePath} does not exist`, false);
-    }
-
-    const endpoint = new URL(this.connector.settings.endpoint, this.connector.settings.host);
-
-    // Get query params
-    const queryParams = this.getQueryParams();
-
-    // Create FormData with file
-    const { base } = path.parse(filePath);
-    const form = new FormData();
-    const fileStream = createReadStream(filePath);
-    form.append('file', fileStream, { filename: base });
+    const requestUrl = new URL(testEndpoint, this.connector.settings.host);
 
     let response: ReqResponse;
     try {
-      response = await HTTPRequest(endpoint, {
-        method: 'POST',
-        headers: form.getHeaders(),
-        query: queryParams,
-        body: form,
-        auth: this.getAuthorizationOptions(),
-        proxy: this.getProxyOptions(),
-        timeout: this.connector.settings.timeout * 1000
-      });
-      if (!fileStream.closed) {
-        fileStream.close();
+      const { proxy, acceptUnauthorized } = this.getProxyOptions();
+      const fetchOptions: ReqOptions = {
+        method: testMethod,
+        auth: await this.getAuthorizationOptions(),
+        proxy,
+        timeout: this.connector.settings.timeout * 1000,
+        acceptUnauthorized,
+        body: this.connector.settings.test.body && ['POST', 'PUT'].includes(testMethod) ? this.connector.settings.test.body : undefined
+      };
+
+      await this.handleApiKeyAuth(fetchOptions, requestUrl);
+
+      response = await HTTPRequest(requestUrl, fetchOptions);
+    } catch (error: unknown) {
+      throw new Error(`Fetch error: ${(error as Error).message}`);
+    }
+
+    if (response.statusCode !== successCode) {
+      throw new Error(
+        `HTTP request failed with status code ${response.statusCode}, expected ${successCode}. Message: ${await response.body.text()}`
+      );
+    }
+  }
+
+  async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
+    const requestUrl = new URL(this.connector.settings.endpoint, this.connector.settings.host);
+
+    const query: Record<string, string | number> = {};
+    for (const queryParam of this.connector.settings.queryParams) {
+      query[queryParam.key] = queryParam.value;
+    }
+
+    let headers: UndiciHeaders = {};
+    let body: FormData | ReadStream;
+
+    if (this.connector.settings.sendAs === 'file') {
+      // Create FormData with file
+      const form = new FormData();
+      form.append('file', fileStream, { filename: cacheMetadata.contentFile });
+      headers = form.getHeaders();
+      body = form;
+    } else {
+      // Send raw body
+      body = fileStream;
+      const ext = path.extname(cacheMetadata.contentFile).toLowerCase();
+      switch (ext) {
+        case '.json':
+          headers['content-type'] = 'application/json';
+          break;
+        case '.xml':
+          headers['content-type'] = 'application/xml';
+          break;
+        case '.txt':
+          headers['content-type'] = 'text/plain';
+          break;
+        case '.csv':
+          headers['content-type'] = 'text/csv';
+          break;
       }
+    }
+
+    // Append Custom Headers
+    for (const header of this.connector.settings.headers) {
+      headers[header.key] = header.value;
+    }
+
+    const { proxy, acceptUnauthorized } = this.getProxyOptions();
+
+    const fetchOptions: ReqOptions = {
+      method: this.connector.settings.method,
+      query,
+      body,
+      headers: headers,
+      auth: await this.getAuthorizationOptions(),
+      proxy,
+      timeout: this.connector.settings.timeout * 1000,
+      acceptUnauthorized
+    };
+
+    await this.handleApiKeyAuth(fetchOptions, requestUrl);
+
+    let response: ReqResponse;
+    try {
+      response = await HTTPRequest(requestUrl, fetchOptions);
     } catch (error) {
       const message = this.getMessageFromError(error);
-      if (!fileStream.closed) {
-        fileStream.close();
-      }
-      throw new OIBusError(`Failed to reach file endpoint ${endpoint}; ${message}`, true);
+      throw new OIBusError(`Failed to reach file endpoint "${requestUrl.toString()}": ${message}`, true);
     }
 
     if (!response.ok) {
@@ -88,90 +139,77 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     }
   }
 
-  override async testConnection(): Promise<void> {
-    // the URL class handles the correct use of slashes
-    const testEndpoint = new URL(this.connector.settings.testPath, this.connector.settings.host);
-    let response: ReqResponse;
-    try {
-      response = await HTTPRequest(testEndpoint, {
-        method: 'GET',
-        auth: this.getAuthorizationOptions(),
-        proxy: this.getProxyOptions(),
-        timeout: this.connector.settings.timeout * 1000
-      });
-    } catch (error) {
-      const message = this.getMessageFromError(error);
-      throw new OIBusError(`Failed to reach file endpoint ${testEndpoint}; ${message}`, false);
+  private getProxyOptions(): { proxy: ReqProxyOptions | undefined; acceptUnauthorized: boolean } {
+    const settings = this.connector.settings;
+
+    if (!settings.proxy.useProxy) {
+      return { proxy: undefined, acceptUnauthorized: settings.acceptUnauthorized };
     }
-
-    if (!response.ok) {
-      throw new OIBusError(`HTTP request failed with status code ${response.statusCode} and message: ${await response.body.text()}`, false);
-    }
-  }
-
-  /**
-   * Get query parameters as an object
-   */
-  private getQueryParams(): Record<string, string> {
-    if (!this.connector.settings.queryParams) return {};
-
-    const queryParams: Record<string, string> = {};
-
-    for (const param of this.connector.settings.queryParams) {
-      queryParams[param.key] = param.value;
-    }
-
-    return queryParams;
-  }
-
-  /**
-   * Get proxy options if proxy is enabled
-   * @throws Error if no proxy url is specified in settings
-   */
-  private getProxyOptions(): ReqProxyOptions | undefined {
-    if (!this.connector.settings.useProxy) {
-      return;
-    }
-    if (!this.connector.settings.proxyUrl) {
+    if (!settings.proxy.proxyUrl) {
       throw new Error('Proxy URL not specified');
     }
 
     const options: ReqProxyOptions = {
-      url: this.connector.settings.proxyUrl
+      url: settings.proxy.proxyUrl
     };
 
-    if (this.connector.settings.proxyUsername) {
+    if (settings.proxy.proxyUsername) {
       options.auth = {
-        type: 'basic',
-        username: this.connector.settings.proxyUsername,
-        password: this.connector.settings.proxyPassword
+        type: 'url',
+        username: settings.proxy.proxyUsername,
+        password: settings.proxy.proxyPassword
       };
     }
 
-    return options;
+    return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
   }
 
-  /**
-   * Get authorization options from settings
-   */
-  private getAuthorizationOptions(): ReqAuthOptions | undefined {
-    switch (this.connector.settings.authType) {
-      case 'basic':
-        if (!this.connector.settings.basicAuthUsername) return;
+  private async getAuthorizationOptions(): Promise<ReqAuthOptions | undefined> {
+    const settings = this.connector.settings;
+
+    switch (settings.authentication.type) {
+      case 'basic': {
+        if (!settings.authentication.username) return;
 
         return {
           type: 'basic',
-          username: this.connector.settings.basicAuthUsername,
-          password: this.connector.settings.basicAuthPassword
+          username: settings.authentication.username,
+          password: settings.authentication.password
         };
+      }
 
-      case 'bearer':
-        if (!this.connector.settings.bearerAuthToken) return;
+      case 'bearer': {
+        if (!settings.authentication.token) return;
 
         return {
           type: 'bearer',
-          token: this.connector.settings.bearerAuthToken
+          token: settings.authentication.token
         };
+      }
+
+      case 'api-key': {
+        // API Key auth is handled separately in handleApiKeyAuth()
+        return undefined;
+      }
+
+      case 'none':
+      default:
+        return undefined;
+    }
+  }
+
+  private async handleApiKeyAuth(options: ReqOptions, url: URL): Promise<void> {
+    const settings = this.connector.settings;
+
+    if (settings.authentication.type === 'api-key' && settings.authentication.apiKey && settings.authentication.apiValue) {
+      const apiValue = await encryptionService.decryptText(settings.authentication.apiValue);
+
+      if (settings.authentication.addTo === 'header') {
+        if (!options.headers) options.headers = {};
+        (options.headers as Record<string, string>)[settings.authentication.apiKey] = apiValue;
+      } else {
+        url.searchParams.append(settings.authentication.apiKey, apiValue);
+      }
     }
   }
 
@@ -179,39 +217,37 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
    * Convert an unknown request error to a readable message
    */
   private getMessageFromError(error: unknown) {
-    if (!(error instanceof Error)) {
-      return String(JSON.stringify(error));
-    }
-
-    const errors: Array<Error> = [error];
-
     if (error instanceof AggregateError) {
+      const errors: Array<Error> = [error];
+
       errors.push(...error.errors);
+
+      const messages: Array<string> = [];
+
+      for (const error of errors) {
+        let code: string | number | undefined = undefined;
+        let message: string | undefined = undefined;
+
+        if (error.message) {
+          message = `message: ${error.message}`;
+        }
+
+        if ('code' in error && error.code && (typeof error.code === 'string' || typeof error.code === 'number')) {
+          code = `code: ${error.code}`;
+        }
+
+        if ([message, code].filter(Boolean).length) {
+          messages.push([message, code].filter(Boolean).join(', '));
+        }
+      }
+
+      return messages.join('; ');
     }
 
-    const messages: Array<string> = [];
-
-    for (const error of errors) {
-      let code: string | number | undefined = undefined;
-      let message: string | undefined = undefined;
-
-      if (error.message) {
-        message = `message: ${error.message}`;
-      }
-
-      if ('code' in error && error.code && (typeof error.code === 'string' || typeof error.code === 'number')) {
-        code = `code: ${error.code}`;
-      }
-
-      if ([message, code].filter(Boolean).length) {
-        messages.push([message, code].filter(Boolean).join(', '));
-      }
+    if (error instanceof Error) {
+      return error.message;
     }
 
-    return messages.join('; ');
-  }
-
-  supportedTypes(): Array<string> {
-    return ['any'];
+    return error;
   }
 }

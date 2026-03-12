@@ -36,6 +36,8 @@ import {
   SouthPISettings,
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLSettings,
+  SouthRestItemSettings,
+  SouthRestSettings,
   SouthSettings,
   SouthSFTPItemSettings,
   SouthSFTPSettings,
@@ -56,14 +58,20 @@ import SouthOPCUA from '../south/south-opcua/south-opcua';
 import SouthOracle from '../south/south-oracle/south-oracle';
 import SouthPI from '../south/south-pi/south-pi';
 import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
+import SouthRest from '../south/south-rest/south-rest';
 import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthFTP from '../south/south-ftp/south-ftp';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthConnector from './south-connector';
+import { Instant } from '../model/types';
+import { createFolder } from '../service/utils';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import { OIBusSouthType } from '../../shared/model/south-connector.model';
 
 export const buildSouth = (
   settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
-  addContent: (southId: string, data: OIBusContent) => Promise<void>,
+  addContent: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
   logger: pino.Logger,
   southCacheFolder: string,
   southCacheRepository: SouthCacheRepository,
@@ -185,6 +193,14 @@ export const buildSouth = (
         logger,
         southCacheFolder
       );
+    case 'rest':
+      return new SouthRest(
+        settings as SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
+        addContent,
+        southCacheRepository,
+        logger,
+        southCacheFolder
+      );
     case 'sftp':
       return new SouthSFTP(
         settings as SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
@@ -212,4 +228,16 @@ export const buildSouth = (
     default:
       throw Error(`South connector of type "${settings.type}" not installed`);
   }
+};
+
+export const initSouthCache = async (id: string, type: OIBusSouthType, baseFolder: string) => {
+  await createFolder(path.join(baseFolder, 'cache', `south-${id}`));
+  await createFolder(path.join(baseFolder, 'cache', `south-${id}`, 'tmp'));
+  if (type === 'opcua') {
+    await createFolder(path.join(baseFolder, 'cache', `south-${id}`, 'opcua'));
+  }
+};
+
+export const deleteSouthCache = async (id: string, baseFolder: string) => {
+  await fs.rm(path.join(baseFolder, 'cache', `south-${id}`), { recursive: true, force: true });
 };

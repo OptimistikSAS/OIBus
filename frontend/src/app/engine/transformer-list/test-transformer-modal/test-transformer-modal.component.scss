@@ -1,0 +1,28 @@
+.modal-body {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+.alert {
+  margin-top: 1rem;
+}
+
+:host ::ng-deep .test-transformer-modal .modal-dialog {
+  max-width: 90vw;
+  width: 90vw;
+}
+
+:host ::ng-deep .test-transformer-modal .modal-lg {
+  max-width: 90vw;
+}
+
+.output-container {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}

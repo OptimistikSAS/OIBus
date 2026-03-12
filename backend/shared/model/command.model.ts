@@ -1,4 +1,4 @@
-import { EngineSettingsCommandDTO } from './engine.model';
+import { CacheContentUpdateCommand, CacheSearchParam, DataFolderType, EngineSettingsCommandDTO } from './engine.model';
 import { Instant } from './types';
 import { ScanModeCommandDTO } from './scan-mode.model';
 import { SouthConnectorCommandDTO, SouthConnectorItemTestingSettings } from './south-connector.model';
@@ -43,7 +43,13 @@ export const OIBUS_COMMAND_TYPES = [
   'test-history-query-south-item',
   'create-or-update-history-query-south-items-from-csv',
   'update-history-query-status',
-  'setpoint'
+  'setpoint',
+  'search-north-cache-content',
+  'search-history-cache-content',
+  'get-north-cache-file-content',
+  'get-history-cache-file-content',
+  'update-north-cache-content',
+  'update-history-cache-content'
 ] as const;
 
 /**
@@ -1025,6 +1031,48 @@ export interface OIBusSetpointCommandDTO extends BaseOIBusCommandDTO {
   }>;
 }
 
+export interface OIBusSearchNorthCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'search-north-cache-content';
+  northConnectorId: string;
+  commandContent: CacheSearchParam;
+}
+
+export interface OIBusSearchHistoryCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'search-history-cache-content';
+  historyQueryId: string;
+  commandContent: CacheSearchParam;
+}
+
+export interface OIBusGetNorthCacheFileContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'get-north-cache-file-content';
+  northConnectorId: string;
+  commandContent: {
+    folder: DataFolderType;
+    filename: string;
+  };
+}
+
+export interface OIBusGetHistoryCacheFileContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'get-history-cache-file-content';
+  historyQueryId: string;
+  commandContent: {
+    folder: DataFolderType;
+    filename: string;
+  };
+}
+
+export interface OIBusUpdateNorthCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'update-north-cache-content';
+  northConnectorId: string;
+  commandContent: CacheContentUpdateCommand;
+}
+
+export interface OIBusUpdateHistoryCacheContentCommandDTO extends BaseOIBusCommandDTO {
+  type: 'update-history-cache-content';
+  historyQueryId: string;
+  commandContent: CacheContentUpdateCommand;
+}
+
 /**
  * Union type representing all possible OIBus command DTOs.
  */
@@ -1061,7 +1109,13 @@ export type OIBusCommandDTO =
   | OIBusTestHistoryQuerySouthItemCommandDTO
   | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommandDTO
   | OIBusUpdateHistoryQueryStatusCommandDTO
-  | OIBusSetpointCommandDTO;
+  | OIBusSetpointCommandDTO
+  | OIBusSearchNorthCacheContentCommandDTO
+  | OIBusSearchHistoryCacheContentCommandDTO
+  | OIBusGetNorthCacheFileContentCommandDTO
+  | OIBusGetHistoryCacheFileContentCommandDTO
+  | OIBusUpdateNorthCacheContentCommandDTO
+  | OIBusUpdateHistoryCacheContentCommandDTO;
 
 /**
  * Parameters for searching commands.

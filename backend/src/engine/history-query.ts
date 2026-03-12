@@ -4,12 +4,19 @@ import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { CacheMetadata, CacheSearchParam, OIBusTimeValue } from '../../shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheMetadata,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent,
+  OIBusTimeValue
+} from '../../shared/model/engine.model';
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { EventEmitter } from 'node:events';
 import { Instant } from '../model/types';
 import { QueriesHistory } from '../south/south-interface';
-import { ReadStream } from 'node:fs';
 
 const FINISH_INTERVAL = 5000;
 
@@ -28,11 +35,6 @@ export default class HistoryQuery {
   ) {}
 
   async start(): Promise<void> {
-    if (this.historyConfiguration.status !== 'RUNNING') {
-      this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
-      return;
-    }
-
     this.north.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {
       this.metricsEvent.emit('north-connect', data);
     });
@@ -45,8 +47,8 @@ export default class HistoryQuery {
         this.metricsEvent.emit('north-run-end', data);
       }
     );
-    this.north.metricsEvent.on('cache-size', (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
-      this.metricsEvent.emit('north-cache-size', data);
+    this.north.metricsEvent.on('cache-size', (cacheSize: { cache: number; error: number; archive: number }) => {
+      this.metricsEvent.emit('north-cache-size', cacheSize);
     });
     this.north.metricsEvent.on('cache-content-size', (cachedSize: number) => {
       this.metricsEvent.emit('north-cache-content-size', cachedSize);
@@ -174,7 +176,7 @@ export default class HistoryQuery {
       id: historyQueryConfiguration.id,
       name: historyQueryConfiguration.name,
       description: historyQueryConfiguration.description,
-      enabled: true,
+      enabled: historyQueryConfiguration.status === 'RUNNING',
       type: historyQueryConfiguration.southType,
       settings: historyQueryConfiguration.southSettings,
       items: []
@@ -183,47 +185,30 @@ export default class HistoryQuery {
       id: historyQueryConfiguration.id,
       name: historyQueryConfiguration.name,
       description: historyQueryConfiguration.description,
-      enabled: true,
+      enabled: historyQueryConfiguration.status === 'RUNNING',
       type: historyQueryConfiguration.northType,
       settings: historyQueryConfiguration.northSettings,
       caching: historyQueryConfiguration.caching,
-      subscriptions: [],
-      transformers: historyQueryConfiguration.northTransformers
+      transformers: historyQueryConfiguration.northTransformers.map(element => ({
+        id: element.id,
+        transformer: element.transformer,
+        options: element.options,
+        inputType: element.inputType,
+        south: undefined,
+        items: element.items
+      }))
     };
   }
 
-  async searchCacheContent(
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return (await this.north.searchCacheContent(searchParams, folder)) || [];
+  async searchCacheContent(searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> {
+    return await this.north.searchCacheContent(searchParams);
   }
 
-  async getCacheContentFileStream(folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream | null> {
-    return (await this.north.getCacheContentFileStream(folder, filename)) || null;
+  async getFileFromCache(folder: DataFolderType, filename: string): Promise<FileCacheContent> {
+    return await this.north.getFileFromCache(folder, filename);
   }
 
-  async removeCacheContent(folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>): Promise<void> {
-    await this.north.removeCacheContent(folder, await this.north.metadataFileListToCacheContentList(folder, metadataFilenameList));
-  }
-
-  async removeAllCacheContent(folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    await this.north.removeAllCacheContent(folder);
-  }
-
-  async moveCacheContent(
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    cacheContentList: Array<string>
-  ): Promise<void> {
-    await this.north.moveCacheContent(
-      originFolder,
-      destinationFolder,
-      await this.north.metadataFileListToCacheContentList(originFolder, cacheContentList)
-    );
-  }
-
-  async moveAllCacheContent(originFolder: 'cache' | 'archive' | 'error', destinationFolder: 'cache' | 'archive' | 'error'): Promise<void> {
-    await this.north.moveAllCacheContent(originFolder, destinationFolder);
+  async updateCacheContent(updateCommand: CacheContentUpdateCommand): Promise<void> {
+    await this.north.updateCacheContent(updateCommand);
   }
 }

@@ -1,41 +1,48 @@
-import fs from 'node:fs/promises';
-
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
+import { ReadStream } from 'node:fs';
+import { streamToString } from '../../service/utils';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
-  constructor(
-    configuration: NorthConnectorEntity<NorthConsoleSettings>,
-    logger: pino.Logger,
-    cacheFolderPath: string,
-    cacheService: CacheService
-  ) {
-    super(configuration, logger, cacheFolderPath, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, logger: pino.Logger, cacheService: CacheService) {
+    super(configuration, logger, cacheService);
   }
 
-  async handleContent(cacheMetadata: CacheMetadata): Promise<void> {
-    if (!this.supportedTypes().includes(cacheMetadata.contentType)) {
-      throw new Error(`Unsupported data type: ${cacheMetadata.contentType} (file ${cacheMetadata.contentFile})`);
+  supportedTypes(): Array<string> {
+    return ['any', 'time-values', 'setpoint'];
+  }
+
+  testConnection(): Promise<void> {
+    if (!process.stdout.writable) {
+      return Promise.reject(Error('The process.stdout stream has been destroyed, errored or ended'));
+    }
+    try {
+      process.stdout.write('North Console output test.\r\n');
+      console.table([{ data: 'foo' }, { data: 'bar' }]);
+    } catch (error) {
+      return Promise.reject(new Error(`Node process is unable to write to STDOUT. ${error}`));
     }
 
+    return Promise.resolve();
+  }
+
+  async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     switch (cacheMetadata.contentType) {
       case 'any':
-        return this.handleFile(cacheMetadata.contentFile);
+        return this.handleFile(cacheMetadata);
 
       case 'time-values':
-        return this.handleValues(JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusTimeValue>);
+        return this.handleValues(JSON.parse(await streamToString(fileStream)) as Array<OIBusTimeValue>);
 
       case 'setpoint':
-        return this.handleSetpoints(
-          JSON.parse(await fs.readFile(cacheMetadata.contentFile, { encoding: 'utf-8' })) as Array<OIBusSetpoint>
-        );
+        return this.handleSetpoints(JSON.parse(await streamToString(fileStream)) as Array<OIBusSetpoint>);
     }
   }
 
@@ -64,37 +71,17 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   /**
    * Handle the file by displaying its name in the console
    */
-  async handleFile(filePath: string): Promise<void> {
+  async handleFile(metadata: CacheMetadata): Promise<void> {
     if (this.connector.settings.verbose) {
-      const stats = await fs.stat(filePath);
-      const fileSize = stats.size;
       const data = [
         {
-          filePath,
-          fileSize
+          filename: metadata.contentFile,
+          fileSize: metadata.contentSize
         }
       ];
       console.table(data);
     } else {
       process.stdout.write('North Console sent 1 file.\r\n');
     }
-  }
-
-  override testConnection(): Promise<void> {
-    if (!process.stdout.writable) {
-      return Promise.reject(Error('The process.stdout stream has been destroyed, errored or ended'));
-    }
-    try {
-      process.stdout.write('North Console output test.\r\n');
-      console.table([{ data: 'foo' }, { data: 'bar' }]);
-    } catch (error) {
-      return Promise.reject(new Error(`Node process is unable to write to STDOUT. ${error}`));
-    }
-
-    return Promise.resolve();
-  }
-
-  supportedTypes(): Array<string> {
-    return ['any', 'time-values', 'setpoint'];
   }
 }

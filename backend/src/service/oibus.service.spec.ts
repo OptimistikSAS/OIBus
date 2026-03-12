@@ -16,7 +16,7 @@ import EngineMetricsRepository from '../repository/metrics/engine-metrics.reposi
 import os from 'node:os';
 import testData from '../tests/utils/test-data';
 import { EngineSettings } from '../model/engine.model';
-import { EngineSettingsCommandDTO } from '../../shared/model/engine.model';
+import { CacheContentUpdateCommand, EngineSettingsCommandDTO } from '../../shared/model/engine.model';
 import { getOIBusInfo } from './utils';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthService from './south.service';
@@ -139,8 +139,8 @@ describe('OIBus Service', () => {
   });
 
   it('should add content', async () => {
-    await service.addExternalContent('northId', { type: 'time-values', content: [] }, 'api');
-    expect(engine.addExternalContent).toHaveBeenCalledWith('northId', { type: 'time-values', content: [] }, 'api');
+    await service.addExternalContent('northId', { type: 'time-values', content: [] });
+    expect(engine.addExternalContent).toHaveBeenCalledWith('northId', { type: 'time-values', content: [] });
   });
 
   it('should set logger', () => {
@@ -153,13 +153,24 @@ describe('OIBus Service', () => {
     const newEngineSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     newEngineSettings.name = 'updated oibus';
     newEngineSettings.proxyEnabled = true;
+    newEngineSettings.port = 999;
     const specificCommand: EngineSettingsCommandDTO = JSON.parse(JSON.stringify(testData.engine.command));
     specificCommand.logParameters.loki.password = 'updated password';
     specificCommand.port = 999;
     (engineRepository.get as jest.Mock).mockReturnValueOnce(testData.engine.settings).mockReturnValueOnce(newEngineSettings);
 
-    await service.updateEngineSettings(specificCommand);
+    // Spy on the portChangeEvent
+    const portChangeEmitSpy = jest.spyOn(service.portChangeEvent, 'emit');
 
+    // Temporarily use real timers for setImmediate
+    jest.useRealTimers();
+
+    const result = await service.updateEngineSettings(specificCommand);
+
+    expect(result).toEqual({
+      needsRedirect: true,
+      newPort: 999
+    });
     expect(engineRepository.get).toHaveBeenCalledTimes(3);
     expect(encryptionService.encryptText).toHaveBeenCalledTimes(1);
     expect(engineRepository.update).toHaveBeenCalled();
@@ -167,6 +178,15 @@ describe('OIBus Service', () => {
     expect(loggerService.start).toHaveBeenCalled();
     expect(loggerService.createChildLogger).toHaveBeenCalledTimes(3); // in constructor and 2x at update
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+
+    // Wait for setImmediate callback to execute
+    await new Promise(resolve => setImmediate(resolve));
+
+    // Verify port change event was emitted
+    expect(portChangeEmitSpy).toHaveBeenCalledWith('updated', 999);
+
+    // Restore fake timers
+    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
   });
 
   it('should throw error if bad port configuration', async () => {
@@ -183,8 +203,12 @@ describe('OIBus Service', () => {
     specificTestCommand.proxyEnabled = false;
 
     (engineRepository.get as jest.Mock).mockReturnValueOnce(testData.engine.settings).mockReturnValueOnce(specificTestCommand);
-    await service.updateEngineSettings(specificTestCommand);
+    const result = await service.updateEngineSettings(specificTestCommand);
 
+    expect(result).toEqual({
+      needsRedirect: false,
+      newPort: null
+    });
     expect(engineRepository.get).toHaveBeenCalledTimes(3);
     expect(encryptionService.encryptText).not.toHaveBeenCalled();
     expect(engineRepository.update).toHaveBeenCalled();
@@ -194,8 +218,12 @@ describe('OIBus Service', () => {
     const specificTestCommand: Omit<EngineSettings, 'id' | 'version'> = JSON.parse(JSON.stringify(testData.engine.command));
     specificTestCommand.logParameters = JSON.parse(JSON.stringify(testData.engine.settings.logParameters));
 
-    await service.updateEngineSettings(specificTestCommand);
+    const result = await service.updateEngineSettings(specificTestCommand);
 
+    expect(result).toEqual({
+      needsRedirect: false,
+      newPort: null
+    });
     expect(loggerService.stop).not.toHaveBeenCalled();
     expect(loggerService.start).not.toHaveBeenCalled();
     expect(loggerService.createChildLogger).toHaveBeenCalledTimes(1); // in constructor
@@ -327,6 +355,26 @@ describe('OIBus Service', () => {
   it('should reset South Connector Metrics', () => {
     service.resetSouthMetrics('id');
     expect(engine.resetSouthMetrics).toHaveBeenCalledWith('id');
+  });
+
+  it('should search cache content', async () => {
+    await service.searchCacheContent('north', 'northId', { start: '', end: '', nameContains: '', maxNumberOfFilesReturned: 1000 });
+    expect(engine.searchCacheContent).toHaveBeenCalledWith('north', 'northId', {
+      start: '',
+      end: '',
+      nameContains: '',
+      maxNumberOfFilesReturned: 1000
+    });
+  });
+
+  it('should get file from cache', async () => {
+    await service.getFileFromCache('north', 'northId', 'cache', 'file');
+    expect(engine.getFileFromCache).toHaveBeenCalledWith('north', 'northId', 'cache', 'file');
+  });
+
+  it('should update cache content', async () => {
+    await service.updateCacheContent('north', 'northId', {} as CacheContentUpdateCommand);
+    expect(engine.updateCacheContent).toHaveBeenCalledWith('north', 'northId', {} as CacheContentUpdateCommand);
   });
 
   it('should properly convert to DTO', () => {

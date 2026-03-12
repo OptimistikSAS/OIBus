@@ -248,7 +248,6 @@ describe('EditHistoryQueryComponent', () => {
         error: historyQuery.caching.error,
         archive: historyQuery.caching.archive
       },
-      subscriptions: [],
       transformers: []
     };
     spyOnProperty(tester.componentInstance, 'northConnectorCommand', 'get').and.returnValue(northCommand as NorthConnectorCommandDTO);

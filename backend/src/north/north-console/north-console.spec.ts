@@ -1,21 +1,24 @@
-import fs from 'node:fs/promises';
-
+import { ReadStream } from 'node:fs';
 import NorthConsole from './north-console';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import { streamToString } from '../../service/utils';
+import { buildNorthConfiguration } from '../../tests/utils/test-utils';
 
-jest.mock('node:fs/promises');
+// Mock dependencies
 jest.mock('../../service/transformer.service');
-// Spy on console table and info
+jest.mock('../../service/utils');
+
+// Spy on console table and process.stdout
 jest.spyOn(global.console, 'table').mockImplementation(() => ({}));
 jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
 
@@ -31,6 +34,7 @@ jest.mock(
     }
 );
 
+// Test Data
 const timeValues: Array<OIBusTimeValue> = [
   {
     pointId: 'pointId',
@@ -39,144 +43,139 @@ const timeValues: Array<OIBusTimeValue> = [
   }
 ];
 
+const setpoints: Array<OIBusSetpoint> = [{ reference: 'reference', value: '123456' }];
+
 let configuration: NorthConnectorEntity<NorthConsoleSettings>;
 let north: NorthConsole;
 
-describe('NorthConsole with verbose mode', () => {
+describe('NorthConsole', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
+
+    configuration = buildNorthConfiguration<NorthConsoleSettings>('console', {
       verbose: true
-    };
+    });
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthConsole(configuration, logger, 'cacheFolder', cacheService);
+    north = new NorthConsole(configuration, logger, cacheService);
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
+  it('should retrieve supported types', () => {
+    expect(north.supportedTypes()).toEqual(['any', 'time-values', 'setpoint']);
+  });
+
   it('should properly handle values in verbose mode', async () => {
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(timeValues));
+    const readStream = {} as ReadStream;
+
+    await north.handleContent(readStream, {
       contentFile: '/path/to/file/example-123.json',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     });
-    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
+    expect(streamToString).toHaveBeenCalledWith(readStream);
     expect(console.table).toHaveBeenCalledWith(timeValues, ['pointId', 'timestamp', 'data']);
     expect(process.stdout.write).not.toHaveBeenCalled();
   });
 
   it('should properly handle setpoints in verbose mode', async () => {
-    const setpoints = [{ reference: 'reference', value: '123456' }];
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(setpoints));
-    await north.handleContent({
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(setpoints));
+    const readStream = {} as ReadStream;
+
+    await north.handleContent(readStream, {
       contentFile: '/path/to/file/example-123.json',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'setpoint',
-      source: 'south',
-      options: {}
+      contentType: 'setpoint'
     });
-    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
+    expect(streamToString).toHaveBeenCalledWith(readStream);
     expect(console.table).toHaveBeenCalledWith(setpoints, ['reference', 'value']);
     expect(process.stdout.write).not.toHaveBeenCalled();
   });
 
   it('should properly handle files in verbose mode', async () => {
-    (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
-    await north.handleContent({
+    const readStream = {} as ReadStream;
+
+    await north.handleContent(readStream, {
       contentFile: 'path/to/file/example.file',
-      contentSize: 1234,
+      contentSize: 666,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
-    expect(fs.stat).toHaveBeenCalledWith('path/to/file/example.file');
-    expect(console.table).toHaveBeenCalledWith([{ filePath: 'path/to/file/example.file', fileSize: 666 }]);
+
+    // Handle File does not read the stream in NorthConsole, it just logs metadata
+    expect(streamToString).not.toHaveBeenCalled();
+    expect(console.table).toHaveBeenCalledWith([{ filename: 'path/to/file/example.file', fileSize: 666 }]);
     expect(process.stdout.write).not.toHaveBeenCalled();
-  });
-});
-
-describe('NorthConsole without verbose mode', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
-      verbose: false
-    };
-    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
-
-    north = new NorthConsole(configuration, logger, 'cacheFolder', cacheService);
-  });
-
-  afterEach(() => {
-    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should properly handle values in non verbose mode', async () => {
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(timeValues));
-    await north.handleContent({
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(timeValues));
+    const readStream = {} as ReadStream;
+    north.connectorConfiguration = buildNorthConfiguration<NorthConsoleSettings>('console', {
+      verbose: false
+    });
+
+    await north.handleContent(readStream, {
       contentFile: '/path/to/file/example-123.json',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      contentType: 'time-values'
     });
-    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
+    expect(streamToString).toHaveBeenCalledWith(readStream);
     expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 values.\r\n');
     expect(console.table).not.toHaveBeenCalled();
   });
 
   it('should properly handle setpoints in non verbose mode', async () => {
-    const setpoints = [{ reference: 'reference', value: '123456' }];
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(setpoints));
-    await north.handleContent({
+    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(setpoints));
+    const readStream = {} as ReadStream;
+    north.connectorConfiguration = buildNorthConfiguration<NorthConsoleSettings>('console', {
+      verbose: false
+    });
+
+    await north.handleContent(readStream, {
       contentFile: '/path/to/file/example-123.json',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'setpoint',
-      source: 'south',
-      options: {}
+      contentType: 'setpoint'
     });
-    expect(fs.readFile).toHaveBeenCalledWith('/path/to/file/example-123.json', { encoding: 'utf-8' });
 
+    expect(streamToString).toHaveBeenCalledWith(readStream);
     expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 setpoint.\r\n');
     expect(console.table).not.toHaveBeenCalled();
   });
 
   it('should properly handle file in non verbose mode', async () => {
-    (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
-    await north.handleContent({
+    const readStream = {} as ReadStream;
+    north.connectorConfiguration = buildNorthConfiguration<NorthConsoleSettings>('console', {
+      verbose: false
+    });
+
+    await north.handleContent(readStream, {
       contentFile: 'path/to/file/example.file',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     });
 
-    expect(fs.stat).not.toHaveBeenCalled();
+    expect(streamToString).not.toHaveBeenCalled();
     expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 file.\r\n');
     expect(console.table).not.toHaveBeenCalled();
   });
@@ -189,16 +188,20 @@ describe('NorthConsole without verbose mode', () => {
   });
 
   it('should not be able to write to output when stdout is not writable', async () => {
-    // Override the process.stdout.writable property
+    // Temporarily override writable property
+    const originalWritable = process.stdout.writable;
     Object.defineProperty(process.stdout, 'writable', { value: false, configurable: true });
 
-    const error = new Error('The process.stdout stream has been destroyed, errored or ended');
-    await expect(north.testConnection()).rejects.toThrow(error);
+    try {
+      const error = new Error('The process.stdout stream has been destroyed, errored or ended');
+      await expect(north.testConnection()).rejects.toThrow(error);
 
-    expect(process.stdout.write).not.toHaveBeenCalled();
-    expect(console.table).not.toHaveBeenCalled();
-
-    Object.defineProperty(process.stdout, 'writable', { value: true, configurable: true });
+      expect(process.stdout.write).not.toHaveBeenCalled();
+      expect(console.table).not.toHaveBeenCalled();
+    } finally {
+      // Restore writable property
+      Object.defineProperty(process.stdout, 'writable', { value: originalWritable, configurable: true });
+    }
   });
 
   it('should not be able to write to output when stdout.write throws error', async () => {
@@ -210,19 +213,5 @@ describe('NorthConsole without verbose mode', () => {
     await expect(north.testConnection()).rejects.toThrow(new Error(`Node process is unable to write to STDOUT. ${error}`));
     expect(process.stdout.write).toHaveBeenCalled();
     expect(console.table).not.toHaveBeenCalled();
-  });
-
-  it('should ignore data if bad content type', async () => {
-    await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.file',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'bad-type',
-        source: 'south',
-        options: {}
-      })
-    ).rejects.toThrow(`Unsupported data type: bad-type (file path/to/file/example-123456789.file)`);
   });
 });

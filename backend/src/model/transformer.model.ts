@@ -1,5 +1,7 @@
 import { BaseEntity } from './types';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import { TransformerLanguage } from '../../shared/model/transformer.model';
+import { SouthConnectorEntityLight, SouthConnectorItemEntityLight } from './south-connector.model';
 
 export interface BaseTransformer {
   id: string;
@@ -13,7 +15,9 @@ export interface CustomTransformer extends BaseEntity, BaseTransformer {
   name: string;
   description: string;
   customCode: string;
+  language: TransformerLanguage;
   customManifest: OIBusObjectAttribute;
+  timeout: number;
 }
 
 export interface StandardTransformer extends BaseTransformer {
@@ -23,8 +27,19 @@ export interface StandardTransformer extends BaseTransformer {
 
 export type Transformer = CustomTransformer | StandardTransformer;
 
-export interface TransformerWithOptions {
+export interface NorthTransformerWithOptions {
+  id: string;
+  transformer: Transformer;
+  south: SouthConnectorEntityLight | undefined;
+  items: Array<SouthConnectorItemEntityLight>;
+  options: Record<string, unknown>;
+  inputType: string;
+}
+
+export interface HistoryTransformerWithOptions {
+  id: string;
   transformer: Transformer;
   options: Record<string, unknown>;
+  items: Array<SouthConnectorItemEntityLight>;
   inputType: string;
 }

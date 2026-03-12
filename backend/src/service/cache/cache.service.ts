@@ -2,28 +2,47 @@ import fs from 'node:fs/promises';
 import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 
-import { createFolder } from '../utils';
+import { determineContentTypeFromFilename, generateRandomId, processCacheFileContent } from '../utils';
 import pino from 'pino';
 import { EventEmitter } from 'node:events';
-import { CacheMetadata, CacheSearchParam } from '../../../shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheMetadata,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent
+} from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import DeferredPromise from '../deferred-promise';
+import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
+import { Readable } from 'node:stream';
+
+const DEBOUNCED_LOG_S = 10_000;
+const DEBOUNCED_SIZE_WARNING_S = 60_000;
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
 export default class CacheService {
-  public readonly CONTENT_FOLDER = 'content';
-  public readonly METADATA_FOLDER = 'metadata';
-
   private logger: pino.Logger;
   private readonly _cacheFolder: string;
   private readonly _errorFolder: string;
   private readonly _archiveFolder: string;
 
-  private compactQueue$: DeferredPromise | null = null;
-  private queue: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
+  private updateCache$: DeferredPromise | null = null;
+  private queue: Array<{ filename: string; metadata: CacheMetadata }> = [];
   private _cacheSizeEventEmitter: EventEmitter = new EventEmitter();
+  private cacheSize: CacheSize = {
+    cache: 0,
+    error: 0,
+    archive: 0
+  };
+
+  private cacheSizeWarningDebounceFlag = false;
+  private cacheSizeWarningDebounceTimeout: NodeJS.Timeout | null = null;
+  private cacheLogDebounceFlag = false;
+  private cacheLogDebounceTimeout: NodeJS.Timeout | null = null;
 
   constructor(logger: pino.Logger, baseCacheFolder: string, baseErrorFolder: string, baseArchiveFolder: string) {
     this.logger = logger;
@@ -49,22 +68,15 @@ export default class CacheService {
   }
 
   async start(): Promise<void> {
-    await createFolder(path.join(this.cacheFolder, this.METADATA_FOLDER));
-    await createFolder(path.join(this.cacheFolder, this.CONTENT_FOLDER));
-    await createFolder(path.join(this.errorFolder, this.METADATA_FOLDER));
-    await createFolder(path.join(this.errorFolder, this.CONTENT_FOLDER));
-    await createFolder(path.join(this.archiveFolder, this.METADATA_FOLDER));
-    await createFolder(path.join(this.archiveFolder, this.CONTENT_FOLDER));
-
-    const contentList = await fs.readdir(path.join(this.cacheFolder, this.METADATA_FOLDER));
-    const filesWithCreationDate: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
+    const contentList = await fs.readdir(path.join(this.cacheFolder, METADATA_FOLDER));
+    const filesWithCreationDate: Array<{ filename: string; metadata: CacheMetadata }> = [];
     let cacheSize = 0;
     for (const filename of contentList) {
-      const filePath = path.join(this.cacheFolder, this.METADATA_FOLDER, filename);
+      const filePath = path.join(this.cacheFolder, METADATA_FOLDER, filename);
       try {
         const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
         cacheSize += metadata.contentSize;
-        filesWithCreationDate.push({ metadataFilename: filename, metadata });
+        filesWithCreationDate.push({ filename, metadata });
       } catch (error: unknown) {
         this.logger.error(`Error while reading cache file "${filePath}": ${(error as Error).message}`);
       }
@@ -79,12 +91,12 @@ export default class CacheService {
       this.logger.debug('No content in cache');
     }
 
-    const errorFiles = await fs.readdir(path.join(this.errorFolder, this.METADATA_FOLDER));
+    const errorFiles = await fs.readdir(path.join(this.errorFolder, METADATA_FOLDER));
     let errorSize = 0;
     if (errorFiles.length > 0) {
       this.logger.warn(`${errorFiles.length} content errored`);
       for (const filename of errorFiles) {
-        const filePath = path.join(this.errorFolder, this.METADATA_FOLDER, filename);
+        const filePath = path.join(this.errorFolder, METADATA_FOLDER, filename);
         try {
           const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
           errorSize += metadata.contentSize;
@@ -96,12 +108,12 @@ export default class CacheService {
       this.logger.debug('No content errored');
     }
 
-    const archiveFiles = await fs.readdir(path.join(this.archiveFolder, this.METADATA_FOLDER));
+    const archiveFiles = await fs.readdir(path.join(this.archiveFolder, METADATA_FOLDER));
     let archiveSize = 0;
     if (archiveFiles.length > 0) {
       this.logger.debug(`${archiveFiles.length} content archived`);
       for (const filename of archiveFiles) {
-        const filePath = path.join(this.archiveFolder, this.METADATA_FOLDER, filename);
+        const filePath = path.join(this.archiveFolder, METADATA_FOLDER, filename);
         try {
           const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
           archiveSize += metadata.contentSize;
@@ -113,17 +125,36 @@ export default class CacheService {
       this.logger.debug('No content archived');
     }
 
-    this.cacheSizeEventEmitter.emit('init-cache-size', {
-      cacheSizeToAdd: cacheSize,
-      errorSizeToAdd: errorSize,
-      archiveSizeToAdd: archiveSize
-    });
+    this.cacheSize = {
+      cache: cacheSize,
+      error: errorSize,
+      archive: archiveSize
+    };
   }
 
-  async getCacheContentToSend(maxGroupCount: number): Promise<{ metadataFilename: string; metadata: CacheMetadata } | null> {
-    if (this.compactQueue$) {
-      await this.compactQueue$.promise;
+  stop(): void {
+    this.cacheSizeWarningDebounceFlag = false;
+    if (this.cacheSizeWarningDebounceTimeout) {
+      clearTimeout(this.cacheSizeWarningDebounceTimeout);
+      this.cacheSizeWarningDebounceTimeout = null;
     }
+    this.cacheLogDebounceFlag = false;
+    if (this.cacheLogDebounceTimeout) {
+      clearTimeout(this.cacheLogDebounceTimeout);
+      this.cacheLogDebounceTimeout = null;
+    }
+    this.cacheSizeEventEmitter.removeAllListeners();
+  }
+
+  private async waitCacheUpdateTasks(): Promise<void> {
+    if (this.updateCache$) {
+      await this.updateCache$.promise;
+    }
+  }
+
+  async getCacheContentToSend(maxGroupCount: number): Promise<{ filename: string; metadata: CacheMetadata } | null> {
+    await this.waitCacheUpdateTasks();
+
     // If there is no file in the queue, return null
     if (this.queue.length === 0) {
       return null;
@@ -137,134 +168,57 @@ export default class CacheService {
     return this.queue[0];
   }
 
-  removeCacheContentFromQueue(contentToRemove: { metadataFilename: string; metadata: CacheMetadata }): void {
-    const idx = this.queue.findIndex(file => file.metadataFilename === contentToRemove.metadataFilename);
+  removeCacheContentFromQueue(filename: string): void {
+    const idx = this.queue.findIndex(file => file.filename === filename);
     if (idx === -1) return;
     this.queue.splice(idx, 1);
   }
 
-  addCacheContentToQueue(cacheContent: { metadataFilename: string; metadata: CacheMetadata }): void {
-    this.queue.push(cacheContent);
-    this.updateCacheSize(cacheContent.metadata.contentSize, null, 'cache');
-  }
-
   async compactQueue(maxGroupCount: number, contentType: string): Promise<void> {
-    if (!this.compactQueue$) {
-      this.compactQueue$ = new DeferredPromise();
+    if (this.updateCache$) {
+      // Return existing promise if running
+      return this.updateCache$.promise;
+    }
 
-      // List of queue elements of type contentType
-      const copiedQueue: Array<{ metadataFilename: string; metadata: CacheMetadata }> = this.queue.filter(
-        element => element.metadata.contentType === contentType
-      );
-      if (copiedQueue.length === 1) {
-        this.compactQueue$.resolve();
-        this.compactQueue$ = null;
-        return;
-      }
-      const newListOfContent: Array<object> = [];
-      const remainder: Array<object> = [];
-      const compactedFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-
-      for (const data of copiedQueue) {
-        try {
-          const content: Array<object> = JSON.parse(
-            await fs.readFile(path.join(this.cacheFolder, this.CONTENT_FOLDER, data.metadata.contentFile), { encoding: 'utf-8' })
-          );
-          compactedFiles.push(data);
-          if (maxGroupCount === 0) {
-            for (const element of content) {
-              newListOfContent.push(element);
-            }
-          } else {
-            for (const element of content) {
-              if (newListOfContent.length < maxGroupCount) {
-                newListOfContent.push(element);
-              } else {
-                remainder.push(element);
-              }
-            }
-            if (newListOfContent.length >= maxGroupCount) break;
-          }
-        } catch (error: unknown) {
-          this.logger.error(`Error while reading file "${data.metadata.contentFile}": ${(error as Error).message}`);
-          this.queue = this.queue.filter(element => data.metadataFilename !== element.metadataFilename);
-          await fs.rm(path.join(this.cacheFolder, this.METADATA_FOLDER, data.metadataFilename), { recursive: true, force: true });
-          await fs.rm(path.join(this.cacheFolder, this.CONTENT_FOLDER, data.metadata.contentFile), { recursive: true, force: true });
-        }
+    this.updateCache$ = new DeferredPromise();
+    try {
+      // 1. Filter Queue
+      const copiedQueue = this.queue.filter(el => el.metadata.contentType === contentType);
+      if (copiedQueue.length <= 1) {
+        return; // Nothing to compact
       }
 
+      // 2. Accumulate Data (Read)
+      const { newListOfContent, remainder, compactedFiles } = await this.accumulateContent(copiedQueue, maxGroupCount);
+
+      // 3. Write Main Batch
       if (compactedFiles.length > 0) {
-        // It is possible to have an empty compacted files list if the files were corrupted or malformed
+        // Reuse the first filename for the main batch
+        // shift() removes it from the array so it doesn't get deleted later
         const firstElement = compactedFiles.shift()!;
-        const cacheContentFilePath = path.join(this.cacheFolder, this.CONTENT_FOLDER, firstElement.metadata.contentFile);
-        await fs.writeFile(cacheContentFilePath, JSON.stringify(newListOfContent), {
-          encoding: 'utf-8',
-          flag: 'w'
-        });
-
-        const fileStat = await fs.stat(cacheContentFilePath);
-        await fs.writeFile(
-          path.join(this.cacheFolder, this.METADATA_FOLDER, firstElement.metadataFilename),
-          JSON.stringify({
-            contentFile: firstElement.metadata.contentFile,
-            contentSize: fileStat.size,
-            numberOfElement: newListOfContent.length,
-            createdAt: firstElement.metadata.createdAt,
-            contentType: firstElement.metadata.contentType,
-            source: firstElement.metadata.source,
-            options: firstElement.metadata.options
-          }),
-          {
-            encoding: 'utf-8',
-            flag: 'w'
-          }
-        );
-
-        // Update the metadata of the first element
-        const queueElement = this.queue.find(element => element.metadataFilename === firstElement.metadataFilename)!;
-        queueElement.metadata.contentSize = fileStat.size;
-        queueElement.metadata.numberOfElement = newListOfContent.length;
+        await this.overwriteCacheFile(firstElement, newListOfContent);
       }
 
+      // 4. Write Remainder (if any)
       if (compactedFiles.length > 0 && remainder.length > 0) {
+        // Reuse the last filename for the remainder
+        // pop() removes it from the array so it doesn't get deleted later
         const lastElement = compactedFiles.pop()!;
-        const cacheContentFilePath = path.join(this.cacheFolder, this.CONTENT_FOLDER, lastElement.metadata.contentFile);
-        await fs.writeFile(cacheContentFilePath, JSON.stringify(remainder), {
-          encoding: 'utf-8',
-          flag: 'w'
-        });
-
-        const fileStat = await fs.stat(cacheContentFilePath);
-        const metadata: CacheMetadata = {
-          contentFile: lastElement.metadata.contentFile,
-          contentSize: fileStat.size,
-          numberOfElement: remainder.length,
-          createdAt: lastElement.metadata.createdAt,
-          contentType: lastElement.metadata.contentType,
-          source: lastElement.metadata.source,
-          options: lastElement.metadata.options
-        };
-        await fs.writeFile(path.join(this.cacheFolder, this.METADATA_FOLDER, lastElement.metadataFilename), JSON.stringify(metadata), {
-          encoding: 'utf-8',
-          flag: 'w'
-        });
-
-        // Update the metadata of the remainder element
-        const queueElement = this.queue.find(element => element.metadataFilename === lastElement.metadataFilename)!;
-        queueElement.metadata.contentSize = fileStat.size;
-        queueElement.metadata.numberOfElement = remainder.length;
+        await this.overwriteCacheFile(lastElement, remainder);
       }
 
+      // 5. Cleanup Intermediate Files
+      // These are the files in the "middle" that were fully merged
       for (const element of compactedFiles) {
-        const cacheMetadataFilePath = path.join(this.cacheFolder, this.METADATA_FOLDER, element.metadataFilename);
-        const cacheContentFilePath = path.join(this.cacheFolder, this.CONTENT_FOLDER, element.metadata.contentFile);
-        await fs.unlink(cacheMetadataFilePath);
-        await fs.unlink(cacheContentFilePath);
+        await this.deleteCacheEntry('cache', element.filename);
       }
 
-      this.queue = this.queue.filter(element => !compactedFiles.includes(element));
-      this.compactQueue$.resolve();
-      this.compactQueue$ = null;
+      // 6. Update Queue Reference
+      // Remove the deleted files from the main queue
+      this.queue = this.queue.filter(el => !compactedFiles.includes(el));
+    } finally {
+      this.updateCache$.resolve();
+      this.updateCache$ = null;
     }
   }
 
@@ -280,190 +234,247 @@ export default class CacheService {
     return this.queue.length === 0;
   }
 
-  async searchCacheContent(
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    if (folder === 'cache' && this.compactQueue$) {
-      await this.compactQueue$.promise;
+  cacheIsFull(maxSize: number): boolean {
+    if (maxSize === 0) {
+      return false;
     }
-    const cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles(folder);
-    return cacheContentList.filter(
-      element =>
-        (searchParams.nameContains ? element.metadata.contentFile.toUpperCase().includes(searchParams.nameContains.toUpperCase()) : true) &&
-        (searchParams.start ? element.metadata.createdAt >= searchParams.start : true) &&
-        (searchParams.end ? element.metadata.createdAt <= searchParams.end : true)
-    );
-  }
-
-  async metadataFileListToCacheContentList(
-    folder: 'cache' | 'archive' | 'error',
-    metadataFilenameList: Array<string>
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    const cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles(folder);
-    return cacheContentList.filter(element => metadataFilenameList.includes(element.metadataFilename));
-  }
-
-  async getCacheContentFileStream(folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream | null> {
-    const resolvedPath = path.resolve(this.getFolder(folder), this.CONTENT_FOLDER, filename);
-    // Prevent parent paths injected into the JSON file in cache by checking the start of the path
-    if (!resolvedPath.startsWith(path.resolve(this.getFolder(folder), this.CONTENT_FOLDER))) {
-      this.logger.error(`Invalid file path "${resolvedPath}" when retrieving cache content file stream`);
-      return null;
-    }
-    try {
-      await fs.stat(resolvedPath);
-    } catch (error: unknown) {
-      this.logger.error(`Error while reading file "${resolvedPath}": ${(error as Error).message}`);
-      return null;
-    }
-    return createReadStream(resolvedPath);
-  }
-
-  async removeCacheContent(
-    folder: 'cache' | 'archive' | 'error',
-    cacheContent: { metadataFilename: string; metadata: CacheMetadata }
-  ): Promise<void> {
-    const folderPath = this.getFolder(folder);
-
-    if (folder === 'cache') {
-      if (this.compactQueue$) {
-        await this.compactQueue$.promise;
-      }
-      this.removeCacheContentFromQueue(cacheContent);
-    }
-    const metadataFilePath = path.join(folderPath, this.METADATA_FOLDER, cacheContent.metadataFilename);
-    const contentFilePath = path.join(folderPath, this.CONTENT_FOLDER, cacheContent.metadata.contentFile);
-    try {
-      await fs.unlink(contentFilePath);
-      await fs.unlink(metadataFilePath);
-      this.updateCacheSize(cacheContent.metadata.contentSize, folder, null);
-      this.logger.trace(`Files "${cacheContent.metadataFilename}" and "${cacheContent.metadata.contentFile}" removed from ${folder}`);
-    } catch (error: unknown) {
-      this.logger.error(
-        `Error while removing files "${cacheContent.metadataFilename}" and "${cacheContent.metadata.contentFile}" from ${folder}: ${(error as Error).message}`
+    const totalSize = this.getCacheSize();
+    const full = totalSize >= maxSize * 1024 * 1024;
+    if (full && !this.cacheSizeWarningDebounceFlag) {
+      const sizeMB = Math.floor((totalSize / 1024 / 1024) * 100) / 100;
+      this.logger.warn(
+        `North cache is exceeding the maximum allowed size (${sizeMB} MB >= ${maxSize} MB). Values will be discarded until cache is emptied.`
       );
-    }
-  }
-
-  async removeAllCacheContent(folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    const cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles(folder);
-    for (const cacheContent of cacheContentList) {
-      await this.removeCacheContent(folder, cacheContent);
-    }
-  }
-
-  async moveCacheContent(
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    cacheContent: { metadataFilename: string; metadata: CacheMetadata }
-  ): Promise<void> {
-    const originFolderPath = this.getFolder(originFolder);
-    const destinationFolderPath = this.getFolder(destinationFolder);
-
-    const metadataOriginPath = path.join(originFolderPath, this.METADATA_FOLDER, cacheContent.metadataFilename);
-    const metadataDestinationPath = path.join(destinationFolderPath, this.METADATA_FOLDER, cacheContent.metadataFilename);
-    const contentOriginPath = path.join(originFolderPath, this.CONTENT_FOLDER, cacheContent.metadata.contentFile);
-    const contentDestinationPath = path.join(destinationFolderPath, this.CONTENT_FOLDER, cacheContent.metadata.contentFile);
-    try {
-      if (originFolder === 'cache') {
-        if (this.compactQueue$) {
-          await this.compactQueue$.promise;
-        }
-        this.removeCacheContentFromQueue(cacheContent);
+      this.cacheSizeWarningDebounceFlag = true;
+      if (this.cacheSizeWarningDebounceTimeout) {
+        clearTimeout(this.cacheSizeWarningDebounceTimeout);
+        this.cacheSizeWarningDebounceTimeout = null;
       }
+      this.cacheSizeWarningDebounceTimeout = setTimeout(() => {
+        this.cacheSizeWarningDebounceFlag = false;
+      }, DEBOUNCED_SIZE_WARNING_S);
+    }
+    return full;
+  }
+
+  getCacheSize(): number {
+    return this.cacheSize.cache + this.cacheSize.error + this.cacheSize.archive;
+  }
+
+  async searchCacheContent(searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> {
+    await this.waitCacheUpdateTasks();
+    const cacheList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('cache');
+    const errorList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('error');
+    const archiveList: Array<{ filename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles('archive');
+    return {
+      searchDate: DateTime.now().toUTC().toISO(),
+      cache: this.filterFile(cacheList, searchParams),
+      error: this.filterFile(errorList, searchParams),
+      archive: this.filterFile(archiveList, searchParams)
+    };
+  }
+
+  async getFileFromCache(folder: DataFolderType, filename: string): Promise<FileCacheContent> {
+    const contentPath = path.resolve(this.getFolder(folder), CONTENT_FOLDER, filename);
+    const metadataPath = path.resolve(this.getFolder(folder), METADATA_FOLDER, filename);
+    try {
+      const metadata: CacheMetadata = JSON.parse(await fs.readFile(metadataPath, { encoding: 'utf8' }));
+      const contentType = determineContentTypeFromFilename(metadata.contentFile);
+      const result = await processCacheFileContent(createReadStream(contentPath));
+      return {
+        content: result.content,
+        contentFilename: metadata.contentFile,
+        totalSize: metadata.contentSize,
+        truncated: result.truncated,
+        contentType
+      };
+    } catch (error: unknown) {
+      throw new Error(`Error while reading file "${contentPath}": ${(error as Error).message}`);
+    }
+  }
+
+  async updateCacheContent(updateCommand: CacheContentUpdateCommand): Promise<void> {
+    await this.waitCacheUpdateTasks();
+    this.updateCache$ = new DeferredPromise();
+
+    // REMOVE
+    for (const filename of updateCommand.cache.remove) {
+      await this.removeContent('cache', filename);
+    }
+    for (const filename of updateCommand.error.remove) {
+      await this.removeContent('error', filename);
+    }
+    for (const filename of updateCommand.archive.remove) {
+      await this.removeContent('archive', filename);
+    }
+
+    // MOVE
+    for (const operation of updateCommand.cache.move) {
+      await this.moveContent('cache', operation.to, operation.filename);
+    }
+    for (const operation of updateCommand.error.move) {
+      await this.moveContent('error', operation.to, operation.filename);
+    }
+    for (const operation of updateCommand.archive.move) {
+      await this.moveContent('archive', operation.to, operation.filename);
+    }
+
+    this.updateCache$.resolve();
+    this.updateCache$ = null;
+    this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+  }
+
+  async addCacheContent(
+    output: string | ReadStream | Readable,
+    details: {
+      contentFilename?: string;
+      numberOfElement?: number;
+      contentType: string;
+    }
+  ): Promise<void> {
+    const filename = generateRandomId(12);
+    await fs.writeFile(path.join(this.cacheFolder, CONTENT_FOLDER, filename), output, {
+      encoding: 'utf-8',
+      flag: 'w'
+    });
+    const fileStat = await fs.stat(path.join(this.cacheFolder, CONTENT_FOLDER, filename));
+    const metadata = {
+      contentFile: details.contentFilename || `${filename}.json`,
+      contentSize: fileStat.size,
+      createdAt: DateTime.fromMillis(fileStat.ctimeMs).toUTC().toISO()!,
+      numberOfElement: details.numberOfElement || 0,
+      contentType: details.contentType
+    };
+    await fs.writeFile(path.join(this.cacheFolder, METADATA_FOLDER, filename), JSON.stringify(metadata), {
+      encoding: 'utf-8',
+      flag: 'w'
+    });
+    this.queue.push({
+      filename,
+      metadata
+    });
+    this.cacheSize.cache += fileStat.size;
+    this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+    this.logger.trace(`File "${filename}" added to cache`);
+    this.logCacheState(metadata);
+  }
+
+  private async moveContent(from: DataFolderType, to: DataFolderType, filename: string): Promise<void> {
+    const originFolderPath = this.getFolder(from);
+    const destinationFolderPath = this.getFolder(to);
+
+    const metadataOriginPath = path.join(originFolderPath, METADATA_FOLDER, filename);
+    const metadataDestinationPath = path.join(destinationFolderPath, METADATA_FOLDER, filename);
+    const contentOriginPath = path.join(originFolderPath, CONTENT_FOLDER, filename);
+    const contentDestinationPath = path.join(destinationFolderPath, CONTENT_FOLDER, filename);
+
+    if (from === 'cache') {
+      this.removeCacheContentFromQueue(filename);
+    }
+    const metadata = await this.readCacheMetadataFile(from, filename);
+    if (!metadata) {
+      return;
+    }
+    try {
       await fs.rename(contentOriginPath, contentDestinationPath);
       await fs.rename(metadataOriginPath, metadataDestinationPath);
-
-      if (destinationFolder === 'cache') {
-        if (this.compactQueue$) {
-          await this.compactQueue$.promise;
-        }
-        this.addCacheContentToQueue(cacheContent);
+      if (to === 'cache') {
+        this.queue.push({
+          filename,
+          metadata
+        });
       }
-
-      this.updateCacheSize(cacheContent.metadata.contentSize, originFolder, destinationFolder);
-
-      this.logger.trace(
-        `Files "${cacheContent.metadataFilename}" and "${cacheContent.metadata.contentFile}" moved from ${originFolder} to ${destinationFolder}`
-      );
+      this.cacheSize[from] -= metadata.contentSize;
+      this.cacheSize[to] += metadata.contentSize;
+      this.logger.trace(`File "${filename}" moved from ${from} to ${to}`);
     } catch (error: unknown) {
-      this.logger.error(
-        `Error while moving files "${cacheContent.metadataFilename}" and "${cacheContent.metadata.contentFile}" from ${originFolder} to ${destinationFolder}: ${(error as Error).message}`
-      );
+      this.logger.error(`Error while moving files "${filename}" from ${from} to ${to}: ${(error as Error).message}`);
     }
   }
 
-  async moveAllCacheContent(originFolder: 'cache' | 'archive' | 'error', destinationFolder: 'cache' | 'archive' | 'error'): Promise<void> {
-    const cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }> = await this.readCacheMetadataFiles(originFolder);
-    for (const cacheContent of cacheContentList) {
-      await this.moveCacheContent(originFolder, destinationFolder, cacheContent);
+  private async removeContent(from: DataFolderType, filename: string): Promise<void> {
+    if (from === 'cache') {
+      this.removeCacheContentFromQueue(filename);
     }
+    const metadata = await this.readCacheMetadataFile(from, filename);
+    if (!metadata) {
+      return;
+    }
+    try {
+      await this.deleteCacheEntry(from, filename);
+      this.cacheSize[from] -= metadata.contentSize;
+      this.logger.trace(`File "${filename}" removed from ${from}`);
+    } catch (error: unknown) {
+      this.logger.error(`Error while removing file "${filename}" from ${from}: ${(error as Error).message}`);
+    }
+  }
+
+  async removeAllCacheContent(): Promise<void> {
+    await this.waitCacheUpdateTasks();
+    this.updateCache$ = new DeferredPromise();
+
+    const folderList: Array<DataFolderType> = ['cache', 'error', 'archive'];
+    for (const folder of folderList) {
+      const metadataFolder = path.join(this.getFolder(folder), METADATA_FOLDER);
+      const metadataFiles = await fs.readdir(metadataFolder);
+      for (const file of metadataFiles) {
+        await fs
+          .rm(path.join(metadataFolder, file), { force: true, recursive: true })
+          .catch(err =>
+            this.logger.error(`Could not remove file "${file}" from ${path.join(this.getFolder(folder), METADATA_FOLDER)}: ${err.message}`)
+          );
+      }
+
+      const contentFolder = path.join(this.getFolder(folder), CONTENT_FOLDER);
+      const contentFiles = await fs.readdir(contentFolder);
+      for (const file of contentFiles) {
+        await fs
+          .rm(path.join(contentFolder, file), { force: true, recursive: true })
+          .catch(err =>
+            this.logger.error(`Could not remove file "${file}" from ${path.join(this.getFolder(folder), CONTENT_FOLDER)}: ${err.message}`)
+          );
+      }
+    }
+    this.queue = [];
+    this.cacheSize = {
+      cache: 0,
+      error: 0,
+      archive: 0
+    };
+    this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+    this.updateCache$.resolve();
+    this.updateCache$ = null;
   }
 
   get cacheSizeEventEmitter(): EventEmitter {
     return this._cacheSizeEventEmitter;
   }
 
-  private updateCacheSize(
-    size: number,
-    originFolder: 'cache' | 'archive' | 'error' | null,
-    destinationFolder: 'cache' | 'archive' | 'error' | null
-  ) {
-    const cacheSize = {
-      cacheSizeToAdd: 0,
-      errorSizeToAdd: 0,
-      archiveSizeToAdd: 0
-    };
-    switch (originFolder) {
-      case 'cache':
-        cacheSize.cacheSizeToAdd = -size;
-        break;
-      case 'error':
-        cacheSize.errorSizeToAdd = -size;
-        break;
-      case 'archive':
-        cacheSize.archiveSizeToAdd = -size;
-        break;
-    }
-    switch (destinationFolder) {
-      case 'cache':
-        cacheSize.cacheSizeToAdd = size;
-        break;
-      case 'error':
-        cacheSize.errorSizeToAdd = size;
-        break;
-      case 'archive':
-        cacheSize.archiveSizeToAdd = size;
-        break;
-    }
-    this.cacheSizeEventEmitter.emit('cache-size', cacheSize);
-  }
+  private async readCacheMetadataFiles(folder: DataFolderType): Promise<Array<{ filename: string; metadata: CacheMetadata }>> {
+    const filenames = await fs.readdir(path.join(this.getFolder(folder), METADATA_FOLDER));
 
-  private async readCacheMetadataFiles(
-    folder: 'cache' | 'archive' | 'error'
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    const filenames = await fs.readdir(path.join(this.getFolder(folder), this.METADATA_FOLDER));
-
-    const cacheMetadataFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
+    const cacheMetadataFiles: Array<{ filename: string; metadata: CacheMetadata }> = [];
     for (const filename of filenames) {
-      const filePath = path.join(this.getFolder(folder), this.METADATA_FOLDER, filename);
-      try {
-        const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
-        cacheMetadataFiles.push({ metadataFilename: filename, metadata });
-      } catch (error: unknown) {
-        this.logger.error(`Error while reading file "${filePath}": ${(error as Error).message}`);
-        try {
-          await fs.unlink(filename);
-        } catch (unlinkError: unknown) {
-          this.logger.error(`Error while removing file "${filePath}": ${(unlinkError as Error).message}`);
-        }
+      const metadata = await this.readCacheMetadataFile(folder, filename);
+      if (metadata) {
+        cacheMetadataFiles.push({ filename, metadata });
       }
     }
     return cacheMetadataFiles;
   }
 
-  private getFolder(folder: 'cache' | 'archive' | 'error') {
+  private async readCacheMetadataFile(folder: DataFolderType, filename: string): Promise<CacheMetadata | null> {
+    const filePath = path.join(this.getFolder(folder), METADATA_FOLDER, filename);
+    try {
+      return JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' })) as CacheMetadata;
+    } catch (error: unknown) {
+      this.logger.error(`Error while reading file "${filePath}": ${(error as Error).message}`);
+      await this.deleteCacheEntry(folder, filename);
+      return null;
+    }
+  }
+
+  private getFolder(folder: DataFolderType) {
     switch (folder) {
       case 'cache':
         return this.cacheFolder;
@@ -471,6 +482,151 @@ export default class CacheService {
         return this.archiveFolder;
       case 'error':
         return this.errorFolder;
+    }
+  }
+
+  private filterFile(
+    list: Array<{ filename: string; metadata: CacheMetadata }>,
+    searchParams: CacheSearchParam
+  ): Array<{ filename: string; metadata: CacheMetadata }> {
+    return list
+      .filter(
+        element =>
+          (searchParams.nameContains ? element.filename.toUpperCase().includes(searchParams.nameContains.toUpperCase()) : true) &&
+          (searchParams.start ? element.metadata.createdAt >= searchParams.start : true) &&
+          (searchParams.end ? element.metadata.createdAt <= searchParams.end : true)
+      )
+      .slice(0, searchParams.maxNumberOfFilesReturned || undefined);
+  }
+
+  private logCacheState(metadata: CacheMetadata): void {
+    // Debounce logging to prevent verbose output during heavy data loads
+    if (this.cacheLogDebounceFlag) {
+      return;
+    }
+
+    const cacheSnapshot = {
+      cacheSizeBytes: this.cacheSize.cache,
+      errorSizeBytes: this.cacheSize.error,
+      archiveSizeBytes: this.cacheSize.archive,
+      queuedElements: this.getNumberOfElementsInQueue(),
+      queuedRawFiles: this.getNumberOfRawFilesInQueue()
+    };
+
+    const cacheSizeMB = Math.floor((cacheSnapshot.cacheSizeBytes / 1024 / 1024) * 100) / 100;
+    const errorSizeMB = Math.floor((cacheSnapshot.errorSizeBytes / 1024 / 1024) * 100) / 100;
+    const archiveSizeMB = Math.floor((cacheSnapshot.archiveSizeBytes / 1024 / 1024) * 100) / 100;
+
+    this.logger.debug(
+      {
+        cacheState: {
+          ...cacheSnapshot,
+          cacheSizeMB,
+          errorSizeMB,
+          archiveSizeMB
+        },
+        lastAddedContent: {
+          contentType: metadata.contentType,
+          numberOfElement: metadata.numberOfElement,
+          contentSize: metadata.contentSize
+        }
+      },
+      `Cache updated: ${cacheSnapshot.queuedElements} time-values and ${cacheSnapshot.queuedRawFiles} raw file(s) in queue. ` +
+        `Cache: ${cacheSizeMB} MB, Error: ${errorSizeMB} MB, Archive: ${archiveSizeMB} MB`
+    );
+
+    // Set debounce flag and reset after 10 seconds
+    this.cacheLogDebounceFlag = true;
+    if (this.cacheLogDebounceTimeout) {
+      clearTimeout(this.cacheLogDebounceTimeout);
+    }
+    this.cacheLogDebounceTimeout = setTimeout(() => {
+      this.cacheLogDebounceFlag = false;
+    }, DEBOUNCED_LOG_S);
+  }
+
+  private async accumulateContent(
+    queueItems: Array<{ filename: string; metadata: CacheMetadata }>,
+    maxGroupCount: number
+  ): Promise<{
+    newListOfContent: Array<object>;
+    remainder: Array<object>;
+    compactedFiles: Array<{ filename: string; metadata: CacheMetadata }>;
+  }> {
+    const newListOfContent: Array<object> = [];
+    const remainder: Array<object> = [];
+    const compactedFiles: Array<{ filename: string; metadata: CacheMetadata }> = [];
+
+    for (const data of queueItems) {
+      try {
+        const filePath = path.join(this.cacheFolder, CONTENT_FOLDER, data.filename);
+        const fileContent = await fs.readFile(filePath, { encoding: 'utf-8' });
+        const content: Array<object> = JSON.parse(fileContent);
+
+        compactedFiles.push(data);
+
+        // Grouping Logic
+        if (maxGroupCount === 0) {
+          for (const element of content) {
+            newListOfContent.push(element);
+          }
+        } else {
+          for (const element of content) {
+            if (newListOfContent.length < maxGroupCount) {
+              newListOfContent.push(element);
+            } else {
+              remainder.push(element);
+            }
+          }
+          // Stop reading files if we have reached the limit
+          if (newListOfContent.length >= maxGroupCount) {
+            break;
+          }
+        }
+      } catch (error) {
+        this.logger.error(`Error while reading file "${data.filename}": ${(error as Error).message}`);
+        await this.deleteCacheEntry('cache', data.filename); // Helper to delete metadata/content
+        this.removeCacheContentFromQueue(data.filename);
+      }
+    }
+
+    return { newListOfContent, remainder, compactedFiles };
+  }
+
+  private async overwriteCacheFile(fileData: { filename: string; metadata: CacheMetadata }, newContent: Array<object>): Promise<void> {
+    const contentPath = path.join(this.cacheFolder, CONTENT_FOLDER, fileData.filename);
+    const metadataPath = path.join(this.cacheFolder, METADATA_FOLDER, fileData.filename);
+
+    // 1. Write Content
+    await fs.writeFile(contentPath, JSON.stringify(newContent), { encoding: 'utf-8', flag: 'w' });
+
+    // 2. Get new size
+    const fileStat = await fs.stat(contentPath);
+
+    // 3. Update Metadata
+    const newMetadata: CacheMetadata = {
+      ...fileData.metadata,
+      contentSize: fileStat.size,
+      numberOfElement: newContent.length
+      // Keep original createdAt and contentType
+    };
+
+    await fs.writeFile(metadataPath, JSON.stringify(newMetadata), { encoding: 'utf-8', flag: 'w' });
+
+    // 4. Update in-memory queue
+    const queueElement = this.queue.find(el => el.filename === fileData.filename);
+    if (queueElement) {
+      queueElement.metadata = newMetadata;
+    }
+  }
+
+  private async deleteCacheEntry(folder: DataFolderType, filename: string): Promise<void> {
+    try {
+      await fs.rm(path.join(this.getFolder(folder), METADATA_FOLDER, filename), { recursive: true, force: true });
+      await fs.rm(path.join(this.getFolder(folder), CONTENT_FOLDER, filename), { recursive: true, force: true });
+    } catch (error: unknown) {
+      // Ignore delete errors
+      this.logger.trace(`Error deleting cache entry "${filename}": ${(error as Error).message}`);
     }
   }
 }

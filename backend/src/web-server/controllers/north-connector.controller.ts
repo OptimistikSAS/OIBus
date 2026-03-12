@@ -10,10 +10,11 @@ import {
 import { CustomExpressRequest } from '../express';
 import NorthService, { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/north.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheSearchResult, DataFolderType, FileCacheContent } from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import OIBusService from '../../service/oibus.service';
 import { OIBusTestingError } from '../../model/types';
+import { NorthTransformerWithOptions } from '../../model/transformer.model';
 
 /**
  * @interface NorthConnectorType
@@ -28,22 +29,11 @@ interface NorthConnectorType {
   types: Array<string>;
 }
 
-/**
- * @interface NorthCacheMetadata
- * @description Metadata for north connector cache files
- */
-interface NorthCacheMetadata {
-  /** Filename of the metadata */
-  metadataFilename: string;
-  /** Metadata content */
-  metadata: CacheMetadata;
-}
-
 @Route('/api/north')
 @Tags('North Connectors')
 /**
  * @class NorthConnectorController
- * @description Endpoints for managing north connectors, subscriptions, and cache operations
+ * @description Endpoints for managing north connectors, transformers, and cache operations
  */
 export class NorthConnectorController extends Controller {
   /**
@@ -108,7 +98,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<NorthConnectorDTO> {
     const northService = request.services.northService as NorthService;
-    return toNorthConnectorDTO(await northService.create(command, duplicate || null));
+    return toNorthConnectorDTO(await northService.create(command, duplicate || null, request.user.id));
   }
 
   /**
@@ -123,7 +113,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.update(northId, command);
+    await northService.update(northId, command, request.user.id);
   }
 
   /**
@@ -202,7 +192,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.addOrEditTransformer(northId, command);
+    northService.addOrEditTransformer(northId, command as NorthTransformerWithOptions);
   }
 
   /**
@@ -213,35 +203,13 @@ export class NorthConnectorController extends Controller {
   @SuccessResponse(204, 'No Content')
   async removeTransformer(@Path() northId: string, @Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const northService = request.services.northService as NorthService;
-    await northService.removeTransformer(northId, transformerId);
-  }
-
-  /**
-   * Subscribe to a south connector from a north connector
-   * @summary Subscribe to a south connector
-   */
-  @Post('/{northId}/subscriptions/{southId}')
-  @SuccessResponse(204, 'No Content')
-  async subscribeToSouth(@Path() northId: string, @Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    await northService.subscribeToSouth(northId, southId);
-  }
-
-  /**
-   * Remove a subscription to a south connector from a north connector
-   * @summary Unsubscribe from a south connector
-   */
-  @Delete('/{northId}/subscriptions/{southId}')
-  @SuccessResponse(204, 'No Content')
-  async unsubscribeFromSouth(@Path() northId: string, @Path() southId: string, @Request() request: CustomExpressRequest): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    await northService.unsubscribeFromSouth(northId, southId);
+    northService.removeTransformer(northId, transformerId);
   }
 
   /**
    * Searches for files in the north connector cache
-   * @summary Search cache files
-   * @returns {Promise<Array<NorthCacheMetadata>>} Array of cache file metadata
+   * @summary Search files in cache, error and archive folders
+   * @returns {Promise<CacheSearchResult>} The cache search result
    */
   @Get('/{northId}/cache/search')
   async searchCacheContent(
@@ -249,92 +217,46 @@ export class NorthConnectorController extends Controller {
     @Query() nameContains: string | undefined,
     @Query() start: string | undefined,
     @Query() end: string | undefined,
-    @Query() folder: 'cache' | 'archive' | 'error',
+    @Query() maxNumberOfFilesReturned: number | undefined,
     @Request() request: CustomExpressRequest
-  ): Promise<Array<NorthCacheMetadata>> {
-    const northService = request.services.northService as NorthService;
-    return await northService.searchCacheContent(northId, { start, end, nameContains }, folder);
+  ): Promise<CacheSearchResult> {
+    const engineService = request.services.oIBusService as OIBusService;
+    return await engineService.searchCacheContent('north', northId, {
+      start,
+      end,
+      nameContains,
+      maxNumberOfFilesReturned: maxNumberOfFilesReturned || 0
+    });
   }
 
   /**
-   * Download a cache file from a north connector cache
-   * @summary Download cache file
-   * @responseHeader Content-Disposition attachment; filename="{filename}"
+   * Retrieve a file from a north connector cache
+   * @summary Retrieve cache file content
+   * @returns {Promise<FileCacheContent>} The content of the file - may be truncated
    */
   @Get('/{northId}/cache/content/{filename}')
   async getCacheFileContent(
     @Path() northId: string,
     @Path() filename: string,
-    @Query() folder: 'cache' | 'archive' | 'error',
+    @Query() folder: DataFolderType,
     @Request() request: CustomExpressRequest
-  ): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    const fileStream = await northService.getCacheFileContent(northId, folder, filename);
-    request.res!.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    fileStream.pipe(request.res!);
+  ): Promise<FileCacheContent> {
+    const engineService = request.services.oIBusService as OIBusService;
+    return await engineService.getFileFromCache('north', northId, folder, filename);
   }
 
   /**
-   * Removes specific files from the north connector cache
-   * @summary Remove cache files
+   * Update cache content by moving or removing files from cache, archive and error folders
+   * @summary Move or remove files from cache, error and archive folders
    */
-  @Delete('/{northId}/cache/remove')
+  @Post('/{northId}/cache/update')
   @SuccessResponse(204, 'No Content')
-  async removeCacheContent(
+  async updateCacheContent(
     @Path() northId: string,
-    @Query() folder: 'cache' | 'archive' | 'error',
-    @Body() filenames: Array<string>,
+    @Body() updateCommand: CacheContentUpdateCommand,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    await northService.removeCacheContent(northId, folder, filenames);
-  }
-
-  /**
-   * Removes all files from a north connector cache folder
-   * @summary Remove all cache files
-   */
-  @Delete('/{northId}/cache/remove-all')
-  @SuccessResponse(204, 'No Content')
-  async removeAllCacheContent(
-    @Path() northId: string,
-    @Query() folder: 'cache' | 'archive' | 'error',
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    await northService.removeAllCacheContent(northId, folder);
-  }
-
-  /**
-   * Moves specific files between folders in the north connector cache
-   * @summary Move cache files
-   */
-  @Post('/{northId}/cache/move')
-  @SuccessResponse(204, 'No Content')
-  async moveCacheContent(
-    @Path() northId: string,
-    @Query() originFolder: 'cache' | 'archive' | 'error',
-    @Query() destinationFolder: 'cache' | 'archive' | 'error',
-    @Body() filenames: Array<string>,
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    await northService.moveCacheContent(northId, originFolder, destinationFolder, filenames);
-  }
-
-  /**
-   * Moves all files between folders in the north connector cache
-   * @summary Move all cache files
-   */
-  @Post('/{northId}/cache/move-all')
-  @SuccessResponse(204, 'No Content')
-  async moveAllCacheContent(
-    @Path() northId: string,
-    @Query() originFolder: 'cache' | 'archive' | 'error',
-    @Query() destinationFolder: 'cache' | 'archive' | 'error',
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
-    const northService = request.services.northService as NorthService;
-    await northService.moveAllCacheContent(northId, originFolder, destinationFolder);
+    const engineService = request.services.oIBusService as OIBusService;
+    await engineService.updateCacheContent('north', northId, updateCommand);
   }
 }

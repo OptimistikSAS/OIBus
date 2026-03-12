@@ -2,10 +2,14 @@ import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import path from 'node:path';
-import { BaseFolders } from '../model/types';
+import { Instant, NotFoundError } from '../model/types';
 import {
-  CacheMetadata,
+  CacheContentUpdateCommand,
   CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent,
+  HistoryQueryMetrics,
   NorthConnectorMetrics,
   OIBusContent,
   SouthConnectorMetrics
@@ -20,13 +24,10 @@ import SouthConnectorMetricsRepository from '../repository/metrics/south-connect
 import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import { PassThrough } from 'node:stream';
-import { ReadStream } from 'node:fs';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import { createBaseFolders, createFolder, filesExists } from '../service/utils';
-import fs from 'node:fs/promises';
-import { buildSouth } from '../south/south-connector-factory';
-import { buildNorth } from '../north/north-connector-factory';
+import { buildSouth, deleteSouthCache, initSouthCache } from '../south/south-connector-factory';
+import { buildNorth, createNorthOrchestrator, deleteNorthCache, initNorthCache } from '../north/north-connector-factory';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
@@ -36,20 +37,17 @@ import HistoryQueryRepository from '../repository/config/history-query.repositor
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
-
-const CACHE_FOLDER = './cache';
-const ARCHIVE_FOLDER = './archive';
-const ERROR_FOLDER = './error';
+import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
 
 export default class DataStreamEngine {
-  private northConnectors = new Map<string, NorthConnector<NorthSettings>>();
-  private northConnectorMetrics = new Map<string, NorthConnectorMetricsService>();
-  private southConnectors = new Map<string, SouthConnector<SouthSettings, SouthItemSettings>>();
-  private southConnectorMetrics = new Map<string, SouthConnectorMetricsService>();
-  private historyQueries = new Map<string, HistoryQuery>();
-  private historyQueryMetrics = new Map<string, HistoryQueryMetricsService>();
+  private northConnectors = new Map<string, { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService }>();
+  private southConnectors = new Map<
+    string,
+    { south: SouthConnector<SouthSettings, SouthItemSettings>; metrics: SouthConnectorMetricsService }
+  >();
+  private historyQueries = new Map<string, { historyQuery: HistoryQuery; metrics: HistoryQueryMetricsService }>();
 
-  private readonly cacheFolders: BaseFolders;
+  readonly baseFolder: string;
 
   constructor(
     private northConnectorRepository: NorthConnectorRepository,
@@ -64,11 +62,7 @@ export default class DataStreamEngine {
     private oianalyticsMessageService: OIAnalyticsMessageService,
     private _logger: pino.Logger
   ) {
-    this.cacheFolders = {
-      cache: path.resolve(CACHE_FOLDER),
-      archive: path.resolve(ARCHIVE_FOLDER),
-      error: path.resolve(ERROR_FOLDER)
-    };
+    this.baseFolder = path.resolve('./');
   }
 
   async start(
@@ -79,9 +73,7 @@ export default class DataStreamEngine {
     for (const northLight of northConnectorList) {
       try {
         const north = await this.createNorth(northLight.id);
-        if (north.connectorConfiguration.enabled) {
-          await this.startNorth(north.connectorConfiguration.id);
-        }
+        await this.startNorth(north.connectorConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating North connector "${northLight.name}" of type "${northLight.type}" (${northLight.id}): ${(error as Error).message}`
@@ -92,9 +84,7 @@ export default class DataStreamEngine {
     for (const southLight of southConnectorList) {
       try {
         const south = await this.createSouth(southLight.id);
-        if (south.connectorConfiguration.enabled) {
-          await this.startSouth(south.connectorConfiguration.id);
-        }
+        await this.startSouth(south.connectorConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating South connector "${southLight.name}" of type "${southLight.type}" (${southLight.id}): ${(error as Error).message}`
@@ -105,9 +95,7 @@ export default class DataStreamEngine {
     for (const historyLight of historyQueryList) {
       try {
         const historyQuery = await this.createHistoryQuery(historyLight.id);
-        if (historyQuery.historyQueryConfiguration.status === 'RUNNING') {
-          await this.startHistoryQuery(historyQuery.historyQueryConfiguration.id);
-        }
+        await this.startHistoryQuery(historyQuery.historyQueryConfiguration.id);
       } catch (error: unknown) {
         this._logger.error(
           `Error while creating History query "${historyLight.name}" of South type "${historyLight.southType}" and North type "${historyLight.northType}" (${historyLight.id}): ${(error as Error).message}`
@@ -119,51 +107,53 @@ export default class DataStreamEngine {
 
   async stop(): Promise<void> {
     for (const id of this.southConnectors.keys()) {
-      await this.stopSouth(id);
+      try {
+        await this.stopSouth(id);
+      } catch (error: unknown) {
+        this._logger.error(`Error while stopping South "${id}": ${(error as Error).message}`);
+      }
     }
 
     for (const id of this.northConnectors.keys()) {
-      await this.stopNorth(id);
+      try {
+        await this.stopNorth(id);
+      } catch (error: unknown) {
+        this._logger.error(`Error while stopping North "${id}": ${(error as Error).message}`);
+      }
     }
 
     for (const id of this.historyQueries.keys()) {
-      await this.stopHistoryQuery(id);
+      try {
+        await this.stopHistoryQuery(id);
+      } catch (error: unknown) {
+        this._logger.error(`Error while stopping History query "${id}": ${(error as Error).message}`);
+      }
     }
   }
 
   async createNorth(northId: string): Promise<NorthConnector<NorthSettings>> {
     const configuration = this.northConnectorRepository.findNorthById(northId)!;
-    await createBaseFolders(this.getBaseFolderStructure('north', configuration.id), 'north');
-    await createFolder(path.resolve(this.cacheFolders.cache, `north-${configuration.id}`, 'tmp'));
-    if (configuration.type === 'opcua') {
-      await createFolder(path.resolve(this.cacheFolders.cache, `north-${configuration.id}`, 'opcua'));
-    }
-
+    const logger = this.logger.child({ scopeType: 'north', scopeId: configuration.id, scopeName: configuration.name });
     const north = buildNorth(
       configuration,
-      this.logger.child({ scopeType: 'north', scopeId: configuration.id, scopeName: configuration.name }),
-      path.resolve(this.cacheFolders.cache, `north-${configuration.id}`),
-      path.resolve(this.cacheFolders.error, `north-${configuration.id}`),
-      path.resolve(this.cacheFolders.archive, `north-${configuration.id}`),
+      logger,
       this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository
+      this.oIAnalyticsRegistrationRepository,
+      createNorthOrchestrator(this.baseFolder, northId, logger)
     );
-
-    this.northConnectors.set(configuration.id, north);
-    if (this.northConnectorMetrics.has(configuration.id)) {
-      this.northConnectorMetrics.get(configuration.id)?.destroy();
+    await initNorthCache(configuration.id, configuration.type, this.baseFolder);
+    if (this.northConnectors.has(configuration.id)) {
+      this.northConnectors.get(configuration.id)!.metrics.destroy();
     }
-    this.northConnectorMetrics.set(configuration.id, new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository));
+    this.northConnectors.set(configuration.id, {
+      north,
+      metrics: new NorthConnectorMetricsService(north, this.northConnectorMetricsRepository)
+    });
     return north;
   }
 
   async startNorth(northId: string): Promise<void> {
-    const north = this.northConnectors.get(northId);
-    if (!north) {
-      this._logger.trace(`North connector "${northId}" not set`);
-      return;
-    }
-
+    const north = this.getNorth(northId).north;
     north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
     north // Do not await here, so it can start all connectors without blocking the thread
       .start()
@@ -174,84 +164,79 @@ export default class DataStreamEngine {
       });
   }
 
-  getNorth(northId: string): NorthConnector<NorthSettings> | undefined {
-    return this.northConnectors.get(northId);
+  getNorth(northId: string): { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService } {
+    const north = this.northConnectors.get(northId);
+    if (!north) {
+      throw new NotFoundError(`Could not find North "${northId}" in engine`);
+    }
+    return north;
   }
 
-  getNorthDataStream(northConnectorId: string): PassThrough | null {
-    return this.northConnectorMetrics.get(northConnectorId)?.stream || null;
+  getNorthSSE(northId: string): PassThrough {
+    return this.getNorth(northId).metrics.stream;
   }
 
-  getNorthMetrics(): Record<string, NorthConnectorMetrics> {
+  getNorthMetrics(northId: string): NorthConnectorMetrics {
+    return this.getNorth(northId).metrics.metrics;
+  }
+
+  getAllNorthMetrics(): Record<string, NorthConnectorMetrics> {
     const metricsList: Record<string, NorthConnectorMetrics> = {};
-    for (const [id, value] of this.northConnectorMetrics.entries()) {
-      metricsList[id] = value.metrics;
+    for (const [id, value] of this.northConnectors.entries()) {
+      metricsList[id] = value.metrics.metrics;
     }
     return metricsList;
   }
 
-  resetNorthMetrics(northConnectorId: string): PassThrough | null {
-    return this.northConnectorMetrics.get(northConnectorId)?.resetMetrics() || null;
+  resetNorthMetrics(northId: string): void {
+    return this.getNorth(northId).metrics.resetMetrics();
   }
 
-  async reloadNorth(northConnector: NorthConnectorEntity<NorthSettings>) {
-    await this.stopNorth(northConnector.id);
-    const north = this.northConnectors.get(northConnector.id);
-    if (north) {
-      north.setLogger(this.logger.child({ scopeType: 'north', scopeId: northConnector.id, scopeName: northConnector.name }));
-      if (northConnector.enabled) {
-        await this.startNorth(northConnector.id);
-      }
-    }
+  async reloadNorth(northEntity: NorthConnectorEntity<NorthSettings>) {
+    await this.stopNorth(northEntity.id);
+    const north = this.getNorth(northEntity.id).north;
+    north.setLogger(this.logger.child({ scopeType: 'north', scopeId: northEntity.id, scopeName: northEntity.name }));
+    await this.startNorth(northEntity.id);
   }
 
   async stopNorth(northId: string): Promise<void> {
-    const north = this.northConnectors.get(northId);
-    if (north) {
-      north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
-      await north.stop();
-    }
+    const north = this.getNorth(northId).north;
+    north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
+    await north.stop();
   }
 
-  async deleteNorth(north: NorthConnectorEntity<NorthSettings>): Promise<void> {
-    await this.stopNorth(north.id);
-    await this.deleteCacheFolder('north', north.id, north.name);
-    this.northConnectors.delete(north.id);
-    this.northConnectorMetrics.get(north.id)?.destroy();
-    this.northConnectorMetrics.delete(north.id);
+  async deleteNorth(northEntity: NorthConnectorEntity<NorthSettings>): Promise<void> {
+    const northConnector = this.getNorth(northEntity.id);
+    await this.stopNorth(northEntity.id);
+    await deleteNorthCache(northEntity.id, this.baseFolder);
+    northConnector.metrics.destroy();
+    this.northConnectors.delete(northEntity.id);
   }
 
   async createSouth(southId: string): Promise<SouthConnector<SouthSettings, SouthItemSettings>> {
     const configuration = this.southConnectorRepository.findSouthById(southId)!;
-    await createBaseFolders(this.getBaseFolderStructure('south', configuration.id), 'south');
-    await createFolder(path.resolve(this.cacheFolders.cache, `south-${configuration.id}`, 'tmp'));
-    if (configuration.type === 'opcua') {
-      await createFolder(path.resolve(this.cacheFolders.cache, `south-${configuration.id}`, 'opcua'));
-    }
     const south = buildSouth(
       configuration,
       this.addContent.bind(this),
       this.logger.child({ scopeType: 'south', scopeId: configuration.id, scopeName: configuration.name }),
-      path.resolve(this.cacheFolders.cache, `south-${configuration.id}`),
+      path.join(this.baseFolder, 'cache', `south-${configuration.id}`),
       this.southCacheRepository,
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository
     );
-    this.southConnectors.set(configuration.id, south);
-    if (this.southConnectorMetrics.has(configuration.id)) {
-      this.southConnectorMetrics.get(configuration.id)?.destroy();
+    await initSouthCache(configuration.id, configuration.type, this.baseFolder);
+    if (this.southConnectors.has(configuration.id)) {
+      this.southConnectors.get(configuration.id)!.metrics.destroy();
     }
-    this.southConnectorMetrics.set(configuration.id, new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository));
+    this.southConnectors.set(configuration.id, {
+      south,
+      metrics: new SouthConnectorMetricsService(south, this.southConnectorMetricsRepository)
+    });
     return south;
   }
 
   async startSouth(southId: string): Promise<void> {
-    const south = this.southConnectors.get(southId);
-    if (!south) {
-      this._logger.trace(`South connector "${southId}" not set`);
-      return;
-    }
-
+    const south = this.getSouth(southId).south;
     south.connectorConfiguration = this.southConnectorRepository.findSouthById(southId)!;
     south.connectedEvent.removeAllListeners();
     south.connectedEvent.on('connected', async () => {
@@ -270,45 +255,46 @@ export default class DataStreamEngine {
     });
   }
 
-  getSouthDataStream(southConnectorId: string): PassThrough | null {
-    return this.southConnectorMetrics.get(southConnectorId)?.stream || null;
+  getSouth(southId: string): { south: SouthConnector<SouthSettings, SouthItemSettings>; metrics: SouthConnectorMetricsService } {
+    const south = this.southConnectors.get(southId);
+    if (!south) {
+      throw new Error(`Could not find South "${southId}" in engine`);
+    }
+    return south;
   }
 
-  getSouthMetrics(): Record<string, SouthConnectorMetrics> {
+  getSouthSSE(southId: string): PassThrough {
+    return this.getSouth(southId).metrics.stream;
+  }
+
+  getAllSouthMetrics(): Record<string, SouthConnectorMetrics> {
     const metricsList: Record<string, SouthConnectorMetrics> = {};
-    for (const [id, value] of this.southConnectorMetrics.entries()) {
-      metricsList[id] = value.metrics;
+    for (const [id, value] of this.southConnectors.entries()) {
+      metricsList[id] = value.metrics.metrics;
     }
     return metricsList;
   }
 
-  resetSouthMetrics(southConnectorId: string): PassThrough | null {
-    return this.southConnectorMetrics.get(southConnectorId)?.resetMetrics() || null;
+  resetSouthMetrics(southId: string): void {
+    return this.getSouth(southId).metrics.resetMetrics();
   }
 
   async reloadSouth(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
     await this.stopSouth(southConnector.id);
-    const south = this.southConnectors.get(southConnector.id);
-    if (south) {
-      if (south.queriesHistory()) {
-        await south.updateSouthCacheOnScanModeAndMaxInstantChanges(
-          south.connectorConfiguration,
-          southConnector,
-          south.getMaxInstantPerItem(south.connectorConfiguration.settings)
-        );
-      }
-      south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
-      if (southConnector.enabled) {
-        await this.startSouth(southConnector.id);
-      }
+    const south = this.getSouth(southConnector.id).south;
+    if (south.queriesHistory()) {
+      south.updateSouthCacheOnScanModeAndMaxInstantChanges(
+        south.connectorConfiguration,
+        southConnector,
+        south.getMaxInstantPerItem(south.connectorConfiguration.settings)
+      );
     }
+    south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
+    await this.startSouth(southConnector.id);
   }
 
   async reloadSouthItems(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
-    const south = this.southConnectors.get(southConnector.id);
-    if (!south) {
-      return;
-    }
+    const south = this.getSouth(southConnector.id).south;
     south.connectorConfiguration = this.southConnectorRepository.findSouthById(southConnector.id)!;
     if (south.isEnabled()) {
       if (south.queriesHistory()) {
@@ -321,7 +307,6 @@ export default class DataStreamEngine {
       if (south.queriesLastPoint() || south.queriesHistory() || south.queriesFile()) {
         south.updateCronJobs();
       }
-
       if (south.queriesSubscription()) {
         await south.updateSubscriptions();
       }
@@ -329,94 +314,61 @@ export default class DataStreamEngine {
   }
 
   async stopSouth(southId: string): Promise<void> {
-    const south = this.southConnectors.get(southId);
-    if (south) {
-      south.connectorConfiguration = this.southConnectorRepository.findSouthById(southId)!;
-      await south.stop();
-      south.connectedEvent.removeAllListeners();
-    }
+    const south = this.getSouth(southId).south;
+    south.connectorConfiguration = this.southConnectorRepository.findSouthById(southId)!;
+    await south.stop();
+    south.connectedEvent.removeAllListeners();
   }
 
-  async deleteSouth(south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
-    await this.stopSouth(south.id);
-    await this.deleteCacheFolder('south', south.id, south.name);
-    this.updateNorthSubscriptions(south.id);
-    this.southConnectors.delete(south.id);
-    this.southConnectorMetrics.get(south.id)?.destroy();
-    this.southConnectorMetrics.delete(south.id);
+  async deleteSouth(southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
+    const southConnector = this.getSouth(southEntity.id);
+    await this.stopSouth(southEntity.id);
+    this.updateNorthTransformerBySouth(southEntity.id);
+    await deleteSouthCache(southEntity.id, this.baseFolder);
+    southConnector.metrics.destroy();
+    this.southConnectors.delete(southEntity.id);
   }
 
   async createHistoryQuery(historyId: string): Promise<HistoryQuery> {
-    const configuration = this.historyQueryRepository.findHistoryQueryById(historyId)!;
-    await createBaseFolders(this.getBaseFolderStructure('history', configuration.id), 'history');
-    await createFolder(path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'south', 'tmp'));
-    if (configuration.northType === 'opcua') {
-      await createFolder(path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'north', 'opcua'));
-    }
-    if (configuration.southType === 'opcua') {
-      await createFolder(path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'south', 'opcua'));
-    }
-
+    const configuration = this.historyQueryRepository.findHistoryById(historyId)!;
     const logger = this.logger.child({ scopeType: 'history-query', scopeId: configuration.id, scopeName: configuration.name });
-    const north = buildNorth(
-      {
-        id: configuration.id,
-        name: configuration.name,
-        description: configuration.description,
-        enabled: true,
-        type: configuration.northType,
-        settings: configuration.northSettings,
-        caching: configuration.caching,
-        subscriptions: [],
-        transformers: configuration.northTransformers
-      },
+    const historyQuery = buildHistoryQuery(
+      configuration,
+      this.addContent.bind(this),
       logger,
-      path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'north'),
-      path.resolve(this.cacheFolders.error, `history-${configuration.id}`, 'north'),
-      path.resolve(this.cacheFolders.archive, `history-${configuration.id}`, 'north'),
-      this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository
-    );
-    const south = buildSouth(
-      {
-        id: configuration.id,
-        name: configuration.name,
-        description: configuration.description,
-        enabled: true,
-        type: configuration.southType,
-        settings: configuration.southSettings,
-        items: []
-      },
-      async (historyId: string, data: OIBusContent) => await north.cacheContent(data, historyId),
-      logger,
-      path.resolve(this.cacheFolders.cache, `history-${configuration.id}`, 'south'),
+      this.baseFolder,
       this.southCacheRepository,
       this.certificateRepository,
-      this.oIAnalyticsRegistrationRepository
+      this.oIAnalyticsRegistrationRepository,
+      createHistoryQueryOrchestrator(this.baseFolder, configuration.id, logger)
     );
+    await initHistoryQueryCache(configuration.id, configuration.northType, configuration.southType, this.baseFolder);
 
-    const historyQuery = new HistoryQuery(configuration, north, south, logger);
-    this.historyQueries.set(configuration.id, historyQuery);
-    if (this.historyQueryMetrics.has(configuration.id)) {
-      this.historyQueryMetrics.get(configuration.id)?.destroy();
+    if (this.historyQueries.has(configuration.id)) {
+      this.historyQueries.get(configuration.id)!.metrics.destroy();
     }
-    const metricsService = new HistoryQueryMetricsService(historyQuery, this.historyQueryMetricsRepository);
-    this.historyQueryMetrics.set(configuration.id, metricsService);
+    this.historyQueries.set(configuration.id, {
+      historyQuery,
+      metrics: new HistoryQueryMetricsService(historyQuery, this.historyQueryMetricsRepository)
+    });
+    return historyQuery;
+  }
+
+  getHistoryQuery(historyId: string): { historyQuery: HistoryQuery; metrics: HistoryQueryMetricsService } {
+    const historyQuery = this.historyQueries.get(historyId);
+    if (!historyQuery) {
+      throw new Error(`Could not find History "${historyId}" in engine`);
+    }
     return historyQuery;
   }
 
   async startHistoryQuery(historyId: string): Promise<void> {
-    const historyQuery = this.historyQueries.get(historyId);
-    if (!historyQuery) {
-      this._logger.trace(`History query "${historyId}" not set`);
-      return;
-    }
-
-    historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryQueryById(historyId)!;
+    const historyQuery = this.getHistoryQuery(historyId).historyQuery;
+    historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
     historyQuery.finishEvent.removeAllListeners();
     historyQuery.finishEvent.on('finished', async () => {
-      this.historyQueryRepository.updateHistoryQueryStatus(historyId, 'FINISHED');
-      historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryQueryById(historyId)!;
+      this.historyQueryRepository.updateHistoryStatus(historyId, 'FINISHED');
+      historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
       this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();
     });
     // Do not await here, so it can start all connectors without blocking the thread
@@ -427,40 +379,45 @@ export default class DataStreamEngine {
     });
   }
 
-  getHistoryQueryDataStream(historyQueryId: string): PassThrough | null {
-    return this.historyQueryMetrics.get(historyQueryId)?.stream || null;
+  getHistoryQuerySSE(historyId: string): PassThrough {
+    return this.getHistoryQuery(historyId).metrics.stream;
   }
 
-  async reloadHistoryQuery(historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
-    await this.stopHistoryQuery(historyQuery.id);
-    this.historyQueries
-      .get(historyQuery.id)
-      ?.setLogger(this.logger.child({ scopeType: 'history-query', scopeId: historyQuery.id, scopeName: historyQuery.name }));
+  getHistoryMetrics(historyId: string): HistoryQueryMetrics {
+    return this.getHistoryQuery(historyId).metrics.metrics;
+  }
+
+  async reloadHistoryQuery(historyQueryConfig: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
+    const historyQuery = this.getHistoryQuery(historyQueryConfig.id).historyQuery;
+    await this.stopHistoryQuery(historyQueryConfig.id);
+    historyQuery.setLogger(
+      this.logger.child({ scopeType: 'history-query', scopeId: historyQueryConfig.id, scopeName: historyQueryConfig.name })
+    );
     if (resetCache) {
-      await this.resetHistoryQueryCache(historyQuery.id);
+      await this.resetHistoryQueryCache(historyQueryConfig.id);
     }
-    await this.startHistoryQuery(historyQuery.id);
-  }
-  async stopHistoryQuery(historyId: string): Promise<void> {
-    const historyQuery = this.historyQueries.get(historyId);
-    if (historyQuery) {
-      historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryQueryById(historyId)!;
-      await historyQuery.stop();
-      historyQuery.finishEvent.removeAllListeners();
-    }
+    await this.startHistoryQuery(historyQueryConfig.id);
   }
 
-  async deleteHistoryQuery(history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void> {
-    await this.stopHistoryQuery(history.id);
-    await this.deleteCacheFolder('history', history.id, history.name);
-    this.historyQueries.delete(history.id);
-    this.historyQueryMetrics.get(history.id)?.destroy();
-    this.historyQueryMetrics.delete(history.id);
+  async stopHistoryQuery(historyId: string): Promise<void> {
+    const historyQuery = this.getHistoryQuery(historyId).historyQuery;
+    historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
+    await historyQuery.stop();
+    historyQuery.finishEvent.removeAllListeners();
+  }
+
+  async deleteHistoryQuery(historyEntity: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void> {
+    const historyQuery = this.getHistoryQuery(historyEntity.id);
+    await this.stopHistoryQuery(historyEntity.id);
+    await deleteHistoryQueryCache(historyEntity.id, this.baseFolder);
+    historyQuery.metrics.destroy();
+    this.historyQueries.delete(historyEntity.id);
   }
 
   async resetHistoryQueryCache(historyId: string) {
-    await this.historyQueries.get(historyId)?.resetCache();
-    this.historyQueryMetrics.get(historyId)?.resetMetrics();
+    const history = this.getHistoryQuery(historyId);
+    await history.historyQuery.resetCache();
+    history.metrics.resetMetrics();
   }
 
   get logger() {
@@ -471,23 +428,31 @@ export default class DataStreamEngine {
     this._logger = value;
 
     for (const south of this.southConnectors.values()) {
-      south.setLogger(
-        this._logger.child({ scopeType: 'south', scopeId: south.connectorConfiguration.id, scopeName: south.connectorConfiguration.name })
+      south.south.setLogger(
+        this._logger.child({
+          scopeType: 'south',
+          scopeId: south.south.connectorConfiguration.id,
+          scopeName: south.south.connectorConfiguration.name
+        })
       );
     }
 
     for (const north of this.northConnectors.values()) {
-      north.setLogger(
-        this._logger.child({ scopeType: 'north', scopeId: north.connectorConfiguration.id, scopeName: north.connectorConfiguration.name })
+      north.north.setLogger(
+        this._logger.child({
+          scopeType: 'north',
+          scopeId: north.north.connectorConfiguration.id,
+          scopeName: north.north.connectorConfiguration.name
+        })
       );
     }
 
     for (const historyQuery of this.historyQueries.values()) {
-      historyQuery.setLogger(
+      historyQuery.historyQuery.setLogger(
         this._logger.child({
           scopeType: 'history-query',
-          scopeId: historyQuery.historyQueryConfiguration.id,
-          scopeName: historyQuery.historyQueryConfiguration.name
+          scopeId: historyQuery.historyQuery.historyQueryConfiguration.id,
+          scopeName: historyQuery.historyQuery.historyQueryConfiguration.name
         })
       );
     }
@@ -496,10 +461,10 @@ export default class DataStreamEngine {
   /**
    * Method called by South connectors to add content to the appropriate Norths
    */
-  async addContent(southId: string, data: OIBusContent) {
+  async addContent(southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) {
     for (const north of this.northConnectors.values()) {
-      if (north.isEnabled() && north.isSubscribed(southId)) {
-        await north.cacheContent(data, southId);
+      if (north.north.isEnabled()) {
+        await north.north.cacheContent(data, { source: 'south', southId, queryTime, itemIds });
       }
     }
   }
@@ -507,100 +472,49 @@ export default class DataStreamEngine {
   /**
    * Add content to a north connector from the OIBus API endpoints
    */
-  async addExternalContent(northId: string, data: OIBusContent, source: string): Promise<void> {
+  async addExternalContent(northId: string, data: OIBusContent): Promise<void> {
     const north = this.northConnectors.get(northId);
-    if (north && north.isEnabled()) {
-      await north.cacheContent(data, source);
+    if (north && north.north.isEnabled()) {
+      await north.north.cacheContent(data, { source: 'api' });
     }
   }
 
-  async searchCacheContent(
-    type: 'north' | 'history',
-    id: string,
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
+  async searchCacheContent(type: 'north' | 'history', id: string, searchParams: CacheSearchParam): Promise<CacheSearchResult> {
     if (type === 'north') {
-      return (await this.northConnectors.get(id)?.searchCacheContent(searchParams, folder)) || [];
+      const result = await this.getNorth(id).north.searchCacheContent(searchParams);
+      return {
+        metrics: this.getNorthMetrics(id)!,
+        ...result
+      };
     }
-    return (await this.historyQueries.get(id)?.searchCacheContent(searchParams, folder)) || [];
+    const result = await this.getHistoryQuery(id).historyQuery.searchCacheContent(searchParams);
+    return {
+      metrics: this.getHistoryMetrics(id)!.north,
+      ...result
+    };
   }
 
-  async getCacheContentFileStream(
-    type: 'north' | 'history',
-    id: string,
-    folder: 'cache' | 'archive' | 'error',
-    filename: string
-  ): Promise<ReadStream | null> {
+  async getFileFromCache(type: 'north' | 'history', id: string, folder: DataFolderType, filename: string): Promise<FileCacheContent> {
     if (type === 'north') {
-      return (await this.northConnectors.get(id)?.getCacheContentFileStream(folder, filename)) || null;
+      return await this.getNorth(id).north.getFileFromCache(folder, filename);
     }
-    return (await this.historyQueries.get(id)?.getCacheContentFileStream(folder, filename)) || null;
+    return await this.getHistoryQuery(id).historyQuery.getFileFromCache(folder, filename);
   }
 
-  async removeCacheContent(
-    type: 'north' | 'history',
-    id: string,
-    folder: 'cache' | 'archive' | 'error',
-    metadataFilenameList: Array<string>
-  ): Promise<void> {
+  async updateCacheContent(type: 'north' | 'history', id: string, updateCommand: CacheContentUpdateCommand): Promise<void> {
     if (type === 'north') {
-      await this.northConnectors
-        .get(id)
-        ?.removeCacheContent(folder, await this.northConnectors.get(id)!.metadataFileListToCacheContentList(folder, metadataFilenameList));
-      return;
+      return await this.getNorth(id).north.updateCacheContent(updateCommand);
     }
-    await this.historyQueries.get(id)?.removeCacheContent(folder, metadataFilenameList);
-  }
-
-  async removeAllCacheContent(type: 'north' | 'history', id: string, folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    if (type === 'north') {
-      await this.northConnectors.get(id)?.removeAllCacheContent(folder);
-      return;
-    }
-    await this.historyQueries.get(id)?.removeAllCacheContent(folder);
-  }
-
-  async moveCacheContent(
-    type: 'north' | 'history',
-    id: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    cacheContentList: Array<string>
-  ): Promise<void> {
-    if (type === 'north') {
-      await this.northConnectors
-        .get(id)
-        ?.moveCacheContent(
-          originFolder,
-          destinationFolder,
-          await this.northConnectors.get(id)!.metadataFileListToCacheContentList(originFolder, cacheContentList)
-        );
-      return;
-    }
-    await this.historyQueries.get(id)?.moveCacheContent(originFolder, destinationFolder, cacheContentList);
-  }
-
-  async moveAllCacheContent(
-    type: 'north' | 'history',
-    id: string,
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error'
-  ): Promise<void> {
-    if (type === 'north') {
-      await this.northConnectors.get(id)?.moveAllCacheContent(originFolder, destinationFolder);
-      return;
-    }
-    await this.historyQueries.get(id)?.moveAllCacheContent(originFolder, destinationFolder);
+    await this.getHistoryQuery(id).historyQuery.updateCacheContent(updateCommand);
   }
 
   async updateScanMode(scanMode: ScanMode): Promise<void> {
     for (const south of this.southConnectors.values()) {
-      await south.updateScanModeIfUsed(scanMode);
+      south.south.updateScanModeIfUsed(scanMode);
     }
 
     for (const north of this.northConnectors.values()) {
-      await north.updateScanMode(scanMode);
+      await north.north.updateScanMode(scanMode);
     }
   }
 
@@ -608,49 +522,67 @@ export default class DataStreamEngine {
    * When a South connector is removed, it has also been removed from the subscription list.
    * The North configuration must thus be reloaded
    */
-  updateNorthSubscriptions(southId: string) {
+  updateNorthTransformerBySouth(southId: string) {
     for (const north of this.northConnectors.values()) {
-      if (north.connectorConfiguration.subscriptions.find(element => element.id === southId)) {
-        north.connectorConfiguration = this.northConnectorRepository.findNorthById(north.connectorConfiguration.id)!;
+      if (north.north.connectorConfiguration.transformers.find(element => element.south?.id === southId)) {
+        north.north.connectorConfiguration = this.northConnectorRepository.findNorthById(north.north.connectorConfiguration.id)!;
       }
     }
   }
 
   updateNorthConfiguration(northId: string) {
-    const north = this.northConnectors.get(northId);
-    if (north) {
-      north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
-    }
+    const north = this.getNorth(northId);
+    north.north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
   }
 
-  private async deleteCacheFolder(connectorType: 'south' | 'north' | 'history', connectorId: string, connectorName: string) {
-    const folders = structuredClone(this.cacheFolders);
-
-    // Resolve all folder paths and attempt to delete them
-    for (const [type, folder] of Object.entries(folders) as Array<[keyof BaseFolders, string]>) {
-      folders[type as keyof BaseFolders] = path.resolve(folder, `${connectorType}-${connectorId}`);
-      try {
-        this.logger.trace(
-          `Deleting folder "${folders[type as keyof BaseFolders]}" for connector "${connectorName}" (${connectorType} - ${connectorId})`
+  async reloadTransformer(transformerId: string): Promise<void> {
+    for (const north of this.northConnectors.values()) {
+      if (north.north.connectorConfiguration.transformers.some(t => t.transformer.id === transformerId)) {
+        this.logger.debug(
+          `Custom transformer "${transformerId}" code changed; reloading north connector "${north.north.connectorConfiguration.name}"`
         );
-        if (await filesExists(folders[type])) {
-          await fs.rm(folders[type], { recursive: true });
-        }
-      } catch (error: unknown) {
-        this.logger.error(
-          `Unable to delete cache folder "${folders[type as keyof BaseFolders]}" for connector "${connectorName}" (${connectorType} - ${connectorId}): ${(error as Error).message}`
+        north.north.connectorConfiguration = this.northConnectorRepository.findNorthById(north.north.connectorConfiguration.id)!;
+      }
+    }
+    for (const { historyQuery } of this.historyQueries.values()) {
+      if (historyQuery.historyQueryConfiguration.northTransformers.some(t => t.transformer.id === transformerId)) {
+        this.logger.debug(
+          `Custom transformer "${transformerId}" code changed; reloading history query "${historyQuery.historyQueryConfiguration.name}"`
         );
+        await this.reloadHistoryQuery(historyQuery.historyQueryConfiguration, false);
       }
     }
   }
 
-  private getBaseFolderStructure(connectorType: 'south' | 'north' | 'history', connectorId: string) {
-    const folders = structuredClone(this.cacheFolders);
-
-    for (const type of Object.keys(this.cacheFolders) as Array<keyof BaseFolders>) {
-      folders[type] = path.resolve(folders[type], `${connectorType}-${connectorId}`);
+  async removeAndReloadTransformer(transformerId: string): Promise<void> {
+    const affectedNorthIds: Array<string> = [];
+    for (const north of this.northConnectors.values()) {
+      if (north.north.connectorConfiguration.transformers.some(t => t.transformer.id === transformerId)) {
+        affectedNorthIds.push(north.north.connectorConfiguration.id);
+      }
+    }
+    const affectedHistoryConfigs: Array<HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>> = [];
+    for (const { historyQuery } of this.historyQueries.values()) {
+      if (historyQuery.historyQueryConfiguration.northTransformers.some(t => t.transformer.id === transformerId)) {
+        affectedHistoryConfigs.push(historyQuery.historyQueryConfiguration);
+      }
     }
 
-    return folders;
+    if (affectedNorthIds.length > 0 || affectedHistoryConfigs.length > 0) {
+      this.logger.debug(
+        `Custom transformer "${transformerId}" manifest changed; removing transformer from ` +
+          `${affectedNorthIds.length} north connector(s) and ${affectedHistoryConfigs.length} history query(ies)`
+      );
+    }
+
+    this.northConnectorRepository.removeTransformersByTransformerId(transformerId);
+    this.historyQueryRepository.removeTransformersByTransformerId(transformerId);
+
+    for (const northId of affectedNorthIds) {
+      this.updateNorthConfiguration(northId);
+    }
+    for (const config of affectedHistoryConfigs) {
+      await this.reloadHistoryQuery(config, false);
+    }
   }
 }

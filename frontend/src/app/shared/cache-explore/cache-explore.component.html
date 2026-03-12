@@ -1,0 +1,61 @@
+<div class="alert alert-info d-flex align-items-center mb-3">
+  <i class="fa fa-info-circle me-2"></i>
+  <span
+    translate="explore-cache.snapshot-warning"
+    [translateParams]="{ snapshotDate: this.cacheContent().searchDate | datetime: 'FF' }"
+  ></span>
+</div>
+
+@if (isDirty()) {
+  <div class="alert alert-warning d-flex justify-content-between align-items-center mb-3">
+    <span>
+      <i class="fa fa-info-circle me-2"></i>
+      <span translate="explore-cache.unsaved-changes"> </span>
+    </span>
+    <button class="btn btn-primary" (click)="saveModifications()" [disabled]="state().isPending | async">
+      @if (state().isPending | async) {
+        <span aria-hidden="true" class="fa fa-spinner fa-spin me-1" role="status"></span>
+      }
+      @if ((state().isPending | async) === false) {
+        <span aria-hidden="true" class="fa fa-save me-1" role="status"></span>
+      }
+      <span translate="explore-cache.save-changes"> </span>
+    </button>
+  </div>
+}
+
+<div class="oi-padded-container">
+  <div class="mb-3">
+    <oib-cache-content
+      id="cache"
+      #cache
+      cacheType="cache"
+      [cacheContentFiles]="localResult().cache"
+      [size]="localResult().metrics.currentCacheSize"
+      (operation)="handleOperation($event)"
+      [state]="state()"
+    />
+  </div>
+  <div class="mb-3">
+    <oib-cache-content
+      id="error"
+      #error
+      cacheType="error"
+      [cacheContentFiles]="localResult().error"
+      [size]="localResult().metrics.currentErrorSize"
+      (operation)="handleOperation($event)"
+      [state]="state()"
+    />
+  </div>
+  <div class="mb-3">
+    <oib-cache-content
+      id="archive"
+      #archive
+      cacheType="archive"
+      [cacheContentFiles]="localResult().archive"
+      [size]="localResult().metrics.currentArchiveSize"
+      (operation)="handleOperation($event)"
+      [state]="state()"
+    />
+  </div>
+</div>

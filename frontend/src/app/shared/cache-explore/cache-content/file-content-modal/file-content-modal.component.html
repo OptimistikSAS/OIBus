@@ -1,0 +1,47 @@
+<div class="modal-header">
+  <h4 class="modal-title">
+    <span
+      translate="explore-cache.view-content.title"
+      [translateParams]="{ filename: filename, contentFilename: fileCacheContent?.contentFilename }"
+    ></span>
+  </h4>
+</div>
+<div class="modal-body">
+  @if (fileCacheContent) {
+    <div class="mb-2">
+      @if (fileCacheContent.truncated) {
+        <div>
+          <span
+            translate="explore-cache.view-content.truncated"
+            [translateParams]="{ realSize: fileCacheContent.totalSize | fileSize, currentSize: fileCacheContent.content.length | fileSize }"
+          ></span>
+        </div>
+        <div>
+          <span
+            translate="explore-cache.view-content.content-type-truncated"
+            [translateParams]="{ contentType: fileCacheContent.contentType }"
+          ></span>
+        </div>
+      } @else {
+        <div>
+          <span
+            translate="explore-cache.view-content.file-size"
+            [translateParams]="{ contentSize: fileCacheContent.content.length | fileSize }"
+          ></span>
+        </div>
+        <div>
+          <span
+            translate="explore-cache.view-content.content-type"
+            [translateParams]="{ contentType: fileCacheContent.contentType }"
+          ></span>
+        </div>
+      }
+    </div>
+  }
+  <oib-code-block style="max-height: 80vh" #codeBlock />
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-cancel" (click)="dismiss()" translate="common.close" id="cancel-button"></button>
+  </div>
+</div>

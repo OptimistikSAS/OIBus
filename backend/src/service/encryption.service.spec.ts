@@ -129,6 +129,10 @@ describe('Encryption Service', () => {
     // (os.hostname as jest.Mock).mockReturnValue('TEST_HOST');
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should not create certificate if it already exists', async () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
     encryptionService.generateSelfSignedCertificate = jest.fn();

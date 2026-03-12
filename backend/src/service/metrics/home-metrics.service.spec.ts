@@ -21,9 +21,13 @@ describe('HomeMetricsService', () => {
     service = new HomeMetricsService(oIBusService, dataStreamEngine);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should send metrics', () => {
-    (dataStreamEngine.getSouthMetrics as jest.Mock).mockReturnValue({});
-    (dataStreamEngine.getNorthMetrics as jest.Mock).mockReturnValue({});
+    (dataStreamEngine.getAllSouthMetrics as jest.Mock).mockReturnValue({});
+    (dataStreamEngine.getAllNorthMetrics as jest.Mock).mockReturnValue({});
     oIBusService.stream.emit('data', `data: ${JSON.stringify(testData.engine.metrics)}`);
     const stream = service.stream;
     stream.write = jest.fn();

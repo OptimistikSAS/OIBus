@@ -14,6 +14,7 @@ import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import { flushPromises } from '../tests/utils/test-utils';
 import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import { CacheContentUpdateCommand } from '../../shared/model/engine.model';
 
 jest.mock('../service/utils');
 
@@ -32,12 +33,13 @@ describe('HistoryQuery enabled', () => {
     jest.clearAllMocks();
     jest.useFakeTimers({ doNotFake: ['performance'] }).setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    (historyQueryRepository.findHistoryQueryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
 
     historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, logger);
   });
 
   afterEach(() => {
+    jest.useRealTimers();
     mockedSouth1.connectedEvent.removeAllListeners();
   });
 
@@ -47,13 +49,6 @@ describe('HistoryQuery enabled', () => {
     expect(mockedNorth1.start).toHaveBeenCalledTimes(1);
     expect(mockedSouth1.start).toHaveBeenCalledTimes(1);
     expect(historyQuery.historyQueryConfiguration).toEqual(testData.historyQueries.list[0]);
-  });
-
-  it('should not start if not running', async () => {
-    historyQuery['historyConfiguration'].status = 'FINISHED';
-    await historyQuery.start();
-    expect(logger.trace).toHaveBeenCalledWith(`History Query "${testData.historyQueries.list[0].name}" not enabled`);
-    historyQuery['historyConfiguration'].status = 'RUNNING';
   });
 
   it('should start south connector', async () => {
@@ -269,26 +264,38 @@ describe('HistoryQuery enabled', () => {
     expect(emitSpy).toHaveBeenCalledWith('south-add-file', {});
   });
 
-  it('should manage cache', async () => {
-    await historyQuery.searchCacheContent(
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
-    expect(mockedNorth1.searchCacheContent).toHaveBeenCalledWith(
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
-    await historyQuery.getCacheContentFileStream('cache', 'file');
-    expect(mockedNorth1.getCacheContentFileStream).toHaveBeenCalledWith('cache', 'file');
-    (mockedNorth1.metadataFileListToCacheContentList as jest.Mock).mockReturnValue([]);
-    await historyQuery.removeCacheContent('cache', ['file']);
-    expect(mockedNorth1.metadataFileListToCacheContentList).toHaveBeenCalledWith('cache', ['file']);
-    expect(mockedNorth1.removeCacheContent).toHaveBeenCalledWith('cache', []);
-    await historyQuery.removeAllCacheContent('cache');
-    expect(mockedNorth1.removeAllCacheContent).toHaveBeenCalled();
-    await historyQuery.moveCacheContent('cache', 'error', ['file']);
-    expect(mockedNorth1.moveCacheContent).toHaveBeenCalledWith('cache', 'error', []);
-    await historyQuery.moveAllCacheContent('cache', 'error');
-    expect(mockedNorth1.moveAllCacheContent).toHaveBeenCalledWith('cache', 'error');
+  it('should search cache', async () => {
+    const searchParams = {
+      start: testData.constants.dates.DATE_1,
+      end: testData.constants.dates.DATE_2,
+      nameContains: 'file',
+      maxNumberOfFilesReturned: 1000
+    };
+    await historyQuery.searchCacheContent(searchParams);
+    expect(mockedNorth1.searchCacheContent).toHaveBeenCalledWith(searchParams);
+  });
+
+  it('should get file from cache', async () => {
+    await historyQuery.getFileFromCache('cache', 'file');
+    expect(mockedNorth1.getFileFromCache).toHaveBeenCalledWith('cache', 'file');
+  });
+
+  it('should update cache', async () => {
+    const updateCommand: CacheContentUpdateCommand = {
+      cache: {
+        remove: [],
+        move: []
+      },
+      archive: {
+        remove: [],
+        move: []
+      },
+      error: {
+        remove: [],
+        move: []
+      }
+    };
+    await historyQuery.updateCacheContent(updateCommand);
+    expect(mockedNorth1.updateCacheContent).toHaveBeenCalledWith(updateCommand);
   });
 });

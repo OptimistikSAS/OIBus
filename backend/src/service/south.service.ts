@@ -30,6 +30,7 @@ import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
 import ftpManifest from '../south/south-ftp/manifest';
+import restManifest from '../south/south-rest/manifest';
 import { OIBusContent } from '../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -70,6 +71,7 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   modbusManifest,
   oianalyticsManifest,
   piManifest,
+  restManifest,
   sftpManifest,
   ftpManifest
 ];
@@ -114,7 +116,8 @@ export default class SouthService {
 
   async create(
     command: SouthConnectorCommandDTO,
-    retrieveSecretsFromSouth: string | null
+    retrieveSecretsFromSouth: string | null,
+    createdBy: string
   ): Promise<SouthConnectorEntity<SouthSettings, SouthItemSettings>> {
     const manifest = this.getManifest(command.type);
     await this.validator.validateSettings(manifest.settings, command.settings);
@@ -142,7 +145,13 @@ export default class SouthService {
       this.scanModeRepository.findAll(),
       !!retrieveSecretsFromSouth
     );
-    this.southConnectorRepository.saveSouthConnector(southEntity);
+    southEntity.createdBy = createdBy;
+    southEntity.updatedBy = createdBy;
+    for (const item of southEntity.items) {
+      item.createdBy = createdBy;
+      item.updatedBy = createdBy;
+    }
+    this.southConnectorRepository.saveSouth(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.createSouth(southEntity.id);
     if (southEntity.enabled) {
@@ -151,7 +160,7 @@ export default class SouthService {
     return southEntity;
   }
 
-  async update(southId: string, command: SouthConnectorCommandDTO) {
+  async update(southId: string, command: SouthConnectorCommandDTO, updatedBy: string) {
     const previousSettings = this.findById(southId);
     const manifest = this.getManifest(command.type);
     await this.validator.validateSettings(manifest.settings, command.settings);
@@ -174,7 +183,15 @@ export default class SouthService {
 
     const southEntity = { id: previousSettings.id } as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
     await copySouthConnectorCommandToSouthEntity(southEntity, command, previousSettings, this.scanModeRepository.findAll());
-    this.southConnectorRepository.saveSouthConnector(southEntity);
+    southEntity.createdBy = previousSettings.createdBy;
+    southEntity.updatedBy = updatedBy;
+    for (const item of southEntity.items) {
+      if (!item.id) {
+        item.createdBy = updatedBy;
+      }
+      item.updatedBy = updatedBy;
+    }
+    this.southConnectorRepository.saveSouth(southEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouth(southEntity);
   }
@@ -186,7 +203,7 @@ export default class SouthService {
     this.logRepository.deleteLogsByScopeId('south', southConnector.id);
     this.southMetricsRepository.removeMetrics(southConnector.id);
     this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
-    this.engine.updateNorthSubscriptions(southConnector.id); // Do this once it has been removed from the database to properly reload the subscription list
+    this.engine.updateNorthTransformerBySouth(southConnector.id); // Do this once it has been removed from the database to properly reload the subscription list
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
     this.engine.logger.info(`Deleted South connector "${southConnector.name}" (${southConnector.id})`);
@@ -207,7 +224,7 @@ export default class SouthService {
   }
 
   getSouthDataStream(southId: string): PassThrough | null {
-    return this.engine.getSouthDataStream(southId);
+    return this.engine.getSouthSSE(southId);
   }
 
   async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<void> {
@@ -219,12 +236,12 @@ export default class SouthService {
     await this.validator.validateSettings(manifest.settings, settingsToTest);
 
     const testToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
-      id: southConnector?.id || 'test',
+      id: 'test',
       type: southType,
       description: '',
       enabled: false,
       settings: await encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings),
-      name: southConnector ? southConnector.name : `${southType}:test-connection`,
+      name: `${southType}:test-connection`,
       items: []
     };
 
@@ -237,7 +254,7 @@ export default class SouthService {
         {
           scopeType: 'south',
           scopeId: 'test',
-          scopeName: 'test'
+          scopeName: `${southType}:test-connection`
         },
         { level: 'silent' }
       ),
@@ -281,12 +298,12 @@ export default class SouthService {
       settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest)
     };
     const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
-      id: southConnector?.id || 'test',
+      id: 'test',
       type: southType,
       enabled: false,
       description: '',
       settings: await encryptionService.encryptConnectorSecrets(southSettings, southConnector?.settings || null, manifest.settings),
-      name: southConnector ? southConnector.name : `${southType}:test-connection`,
+      name: `${southType}:test-connection`,
       items: [testItemToRun]
     };
 
@@ -299,7 +316,7 @@ export default class SouthService {
         {
           scopeType: 'south',
           scopeId: 'test',
-          scopeName: 'test'
+          scopeName: `${southType}:test-connection`
         },
         { level: 'silent' }
       ),
@@ -327,7 +344,11 @@ export default class SouthService {
     return item;
   }
 
-  async createItem(southId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemEntity<SouthItemSettings>> {
+  async createItem(
+    southId: string,
+    command: SouthConnectorItemCommandDTO,
+    createdBy: string
+  ): Promise<SouthConnectorItemEntity<SouthItemSettings>> {
     const southConnector = this.findById(southId);
     const manifest = this.getManifest(southConnector.type);
     const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -337,13 +358,15 @@ export default class SouthService {
 
     const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
     await copySouthItemCommandToSouthItemEntity(southItemEntity, command, null, southConnector.type, this.scanModeRepository.findAll());
+    southItemEntity.createdBy = createdBy;
+    southItemEntity.updatedBy = createdBy;
     this.southConnectorRepository.saveItem(southConnector.id, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
     return southItemEntity;
   }
 
-  async updateItem(southId: string, itemId: string, command: SouthConnectorItemCommandDTO): Promise<void> {
+  async updateItem(southId: string, itemId: string, command: SouthConnectorItemCommandDTO, updatedBy: string): Promise<void> {
     const southConnector = this.findById(southId)!;
     const existingItem = this.findItemById(southId, itemId);
     const manifest = this.getManifest(southConnector.type);
@@ -360,6 +383,8 @@ export default class SouthService {
       southConnector.type,
       this.scanModeRepository.findAll()
     );
+    southItemEntity.createdBy = existingItem.createdBy;
+    southItemEntity.updatedBy = updatedBy;
     this.southConnectorRepository.saveItem(southId, southItemEntity);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
@@ -394,7 +419,7 @@ export default class SouthService {
   async deleteItem(southId: string, itemId: string): Promise<void> {
     const southConnector = this.findById(southId)!;
     const southItem = this.findItemById(southId, itemId);
-    this.southConnectorRepository.deleteItem(southItem.id);
+    this.southConnectorRepository.deleteItem(southConnector.id, southItem.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
@@ -414,7 +439,7 @@ export default class SouthService {
     const southConnector = this.findById(southId);
     for (const itemId of itemIds) {
       const southItem = this.findItemById(southId, itemId);
-      this.southConnectorRepository.deleteItem(southItem.id);
+      this.southConnectorRepository.deleteItem(southConnector.id, southItem.id);
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
@@ -511,7 +536,7 @@ export default class SouthService {
     return { items: validItems, errors };
   }
 
-  async importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>, deleteItemsNotPresent = false) {
+  async importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>, user: string, deleteItemsNotPresent = false) {
     const southConnector = this.findById(southId);
     const manifest = this.getManifest(southConnector.type);
     const itemsToAdd: Array<SouthConnectorItemEntity<SouthItemSettings>> = [];
@@ -523,6 +548,8 @@ export default class SouthService {
       await this.validator.validateSettings(itemSettingsManifest, itemCommand.settings);
       const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
       await copySouthItemCommandToSouthItemEntity(southItemEntity, itemCommand, null, southConnector.type, scanModes);
+      southItemEntity.createdBy = user;
+      southItemEntity.updatedBy = user;
       itemsToAdd.push(southItemEntity);
     }
 

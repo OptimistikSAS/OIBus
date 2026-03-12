@@ -30,6 +30,12 @@ import {
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusGetHistoryCacheFileContentCommand,
+  OIBusGetNorthCacheFileContentCommand,
+  OIBusUpdateHistoryCacheContentCommand,
+  OIBusUpdateNorthCacheContentCommand,
+  OIBusSearchHistoryCacheContentCommand,
+  OIBusSearchNorthCacheContentCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
   OIBusTestHistoryQuerySouthItemCommand,
@@ -72,7 +78,7 @@ import HistoryQueryService from '../history-query.service';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { OIAnalyticsFetchSetpointCommandDTO } from './oianalytics.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { CacheSearchResult, FileCacheContent, OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
 
 jest.mock('node:crypto');
@@ -131,6 +137,10 @@ describe('OIAnalytics Command Service', () => {
       false,
       testData.engine.settings.launcherVersion
     );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should get a north connector', () => {
@@ -556,7 +566,13 @@ describe('OIAnalytics Command Service', () => {
         updateNorth: false,
         deleteNorth: false,
         testNorthConnection: false,
-        setpoint: false
+        setpoint: false,
+        searchHistoryCacheContent: false,
+        getHistoryCacheFileContent: false,
+        updateHistoryCacheContent: false,
+        searchNorthCacheContent: false,
+        getNorthCacheFileContent: false,
+        updateNorthCacheContent: false
       }
     };
 
@@ -614,7 +630,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(scanModeService.update).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
-      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[3].id,
@@ -637,7 +654,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(southService.update).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).southConnectorId,
-      (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[4].id,
@@ -658,7 +676,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(northService.update).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).northConnectorId,
-      (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[5].id,
@@ -718,7 +737,8 @@ describe('OIAnalytics Command Service', () => {
     await service.executeCommand();
 
     expect(scanModeService.create).toHaveBeenCalledWith(
-      (testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[9].id,
@@ -740,7 +760,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(southService.create).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent,
-      null
+      null,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[10].id,
@@ -762,7 +783,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(northService.create).toHaveBeenCalledWith(
       (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent,
-      null
+      null,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[11].id,
@@ -920,7 +942,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(ipFilterService.create).toHaveBeenCalledWith(command.commandContent);
+    expect(ipFilterService.create).toHaveBeenCalledWith(command.commandContent, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -940,7 +962,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(ipFilterService.update).toHaveBeenCalledWith(command.ipFilterId, command.commandContent);
+    expect(ipFilterService.update).toHaveBeenCalledWith(command.ipFilterId, command.commandContent, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -978,7 +1000,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(certificateService.create).toHaveBeenCalledWith(command.commandContent);
+    expect(certificateService.create).toHaveBeenCalledWith(command.commandContent, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -998,7 +1020,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(certificateService.update).toHaveBeenCalledWith(command.certificateId, command.commandContent);
+    expect(certificateService.update).toHaveBeenCalledWith(command.certificateId, command.commandContent, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1149,7 +1171,7 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.create).toHaveBeenCalledWith(command.commandContent, undefined, undefined, undefined);
+    expect(historyQueryService.create).toHaveBeenCalledWith(command.commandContent, undefined, undefined, undefined, 'oianalytics');
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
@@ -1184,7 +1206,8 @@ describe('OIAnalytics Command Service', () => {
     expect(historyQueryService.update).toHaveBeenCalledWith(
       command.historyQueryId,
       command.commandContent.historyQuery,
-      command.commandContent.resetCache
+      command.commandContent.resetCache,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
@@ -1487,6 +1510,510 @@ describe('OIAnalytics Command Service', () => {
 
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, 'ok');
   });
+
+  it('should execute search-north-cache-content command', async () => {
+    const command: OIBusSearchNorthCacheContentCommand = {
+      id: 'searchNorthCacheContentId',
+      type: 'search-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
+    } as OIBusSearchNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    const searchResult: CacheSearchResult = {
+      searchDate: testData.constants.dates.FAKE_NOW,
+      metrics: testData.north.metrics,
+      error: [],
+      archive: [],
+      cache: []
+    };
+    (oIBusService.searchCacheContent as jest.Mock).mockReturnValueOnce(searchResult);
+
+    await service.executeCommand();
+
+    expect(oIBusService.searchCacheContent).toHaveBeenCalledTimes(1);
+    expect(oIBusService.searchCacheContent).toHaveBeenCalledWith('north', command.northConnectorId, command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify(searchResult)
+    );
+  });
+
+  it('should execute search-history-cache-content command', async () => {
+    const command: OIBusSearchHistoryCacheContentCommand = {
+      id: 'searchHistoryCacheContentId',
+      type: 'search-history-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
+    } as OIBusSearchHistoryCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    const searchResult: CacheSearchResult = {
+      searchDate: testData.constants.dates.FAKE_NOW,
+      metrics: testData.north.metrics,
+      error: [],
+      archive: [],
+      cache: []
+    };
+    (oIBusService.searchCacheContent as jest.Mock).mockReturnValueOnce(searchResult);
+
+    await service.executeCommand();
+
+    expect(oIBusService.searchCacheContent).toHaveBeenCalledTimes(1);
+    expect(oIBusService.searchCacheContent).toHaveBeenCalledWith('history', command.historyQueryId, command.commandContent);
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify(searchResult)
+    );
+  });
+
+  it('should execute get-north-cache-file-content command', async () => {
+    const command: OIBusGetNorthCacheFileContentCommand = {
+      id: 'getNorthCacheFileContentId',
+      type: 'get-north-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'cache',
+        filename: 'file.txt'
+      }
+    } as OIBusGetNorthCacheFileContentCommand;
+
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    const fileContent: FileCacheContent = {
+      content: 'content',
+      contentFilename: 'my_file.txt',
+      contentType: 'raw',
+      truncated: false,
+      totalSize: 7
+    };
+    (oIBusService.getFileFromCache as jest.Mock).mockReturnValueOnce(fileContent);
+
+    await service.executeCommand();
+
+    expect(oIBusService.getFileFromCache).toHaveBeenCalledWith(
+      'north',
+      command.northConnectorId,
+      command.commandContent.folder,
+      command.commandContent.filename
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify(fileContent)
+    );
+  });
+
+  it('should execute get-history-cache-file-content command', async () => {
+    const command: OIBusGetHistoryCacheFileContentCommand = {
+      id: 'getHistoryCacheFileContentId',
+      type: 'get-history-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        folder: 'error',
+        filename: 'file.txt'
+      }
+    } as OIBusGetHistoryCacheFileContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    const fileContent: FileCacheContent = {
+      content: 'content',
+      contentFilename: 'my_file.txt',
+      contentType: 'raw',
+      truncated: false,
+      totalSize: 7
+    };
+    (oIBusService.getFileFromCache as jest.Mock).mockReturnValueOnce(fileContent);
+
+    await service.executeCommand();
+
+    expect(oIBusService.getFileFromCache).toHaveBeenCalledWith(
+      'history',
+      command.historyQueryId,
+      command.commandContent.folder,
+      command.commandContent.filename
+    );
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      JSON.stringify(fileContent)
+    );
+  });
+
+  it('should execute update-north-cache-content command', async () => {
+    const command: OIBusUpdateNorthCacheContentCommand = {
+      id: 'updateNorthCacheContentId',
+      type: 'update-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        cache: {
+          remove: ['file1.txt', 'file2.txt'],
+          move: [
+            { filename: 'file3.txt', to: 'error' },
+            { filename: 'file4.txt', to: 'archive' }
+          ]
+        },
+        error: {
+          remove: ['file5.txt', 'file6.txt'],
+          move: [
+            { filename: 'file7.txt', to: 'cache' },
+            { filename: 'file8.txt', to: 'archive' }
+          ]
+        },
+        archive: {
+          remove: ['file9.txt', 'file10.txt'],
+          move: [
+            { filename: 'file11.txt', to: 'cache' },
+            { filename: 'file12.txt', to: 'error' }
+          ]
+        }
+      }
+    } as OIBusUpdateNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
+
+    await service.executeCommand();
+
+    expect(oIBusService.updateCacheContent).toHaveBeenCalledTimes(1);
+    expect(oIBusService.updateCacheContent).toHaveBeenCalledWith('north', command.northConnectorId, command.commandContent);
+
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Cache updated successfully'
+    );
+  });
+
+  it('should execute update-history-cache-content command', async () => {
+    const command: OIBusUpdateHistoryCacheContentCommand = {
+      id: 'updateHistoryCacheContentId',
+      type: 'update-history-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        cache: {
+          remove: ['file1.txt', 'file2.txt'],
+          move: [
+            { filename: 'file3.txt', to: 'error' },
+            { filename: 'file4.txt', to: 'archive' }
+          ]
+        },
+        error: {
+          remove: ['file5.txt', 'file6.txt'],
+          move: [
+            { filename: 'file7.txt', to: 'cache' },
+            { filename: 'file8.txt', to: 'archive' }
+          ]
+        },
+        archive: {
+          remove: ['file9.txt', 'file10.txt'],
+          move: [
+            { filename: 'file11.txt', to: 'cache' },
+            { filename: 'file12.txt', to: 'error' }
+          ]
+        }
+      }
+    } as OIBusUpdateHistoryCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
+
+    await service.executeCommand();
+
+    expect(oIBusService.updateCacheContent).toHaveBeenCalledTimes(1);
+    expect(oIBusService.updateCacheContent).toHaveBeenCalledWith('history', command.historyQueryId, command.commandContent);
+
+    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'Cache updated successfully'
+    );
+  });
+
+  it('should not execute cache command if permission is not right', async () => {
+    const command: OIBusSearchNorthCacheContentCommand = {
+      id: 'searchNorthCacheContentId',
+      type: 'search-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
+    } as OIBusSearchNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        ...testData.oIAnalytics.registration.completed.commandPermissions,
+        searchNorthCacheContent: false
+      }
+    });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Command ${command.id} of type ${command.type} is not authorized`
+    );
+  });
+
+  it('should not execute get-cache-file-content command if permission is not right', async () => {
+    const command: OIBusGetNorthCacheFileContentCommand = {
+      id: 'getNorthCacheFileContentId',
+      type: 'get-north-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'cache',
+        filename: 'file.txt'
+      }
+    } as OIBusGetNorthCacheFileContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        ...testData.oIAnalytics.registration.completed.commandPermissions,
+        getNorthCacheFileContent: false
+      }
+    });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Command ${command.id} of type ${command.type} is not authorized`
+    );
+  });
+
+  it('should not execute update-cache-content command if permission is not right', async () => {
+    const command: OIBusUpdateNorthCacheContentCommand = {
+      id: 'updateNorthCacheContentId',
+      type: 'update-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        cache: {
+          remove: [],
+          move: []
+        },
+        error: {
+          remove: [],
+          move: []
+        },
+        archive: { remove: [], move: [] }
+      }
+    } as OIBusUpdateNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+      ...testData.oIAnalytics.registration.completed,
+      commandPermissions: {
+        ...testData.oIAnalytics.registration.completed.commandPermissions,
+        updateNorthCacheContent: false
+      }
+    });
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+      command.id,
+      `Command ${command.id} of type ${command.type} is not authorized`
+    );
+  });
+
+  it('should fail to execute search-north-cache-content if north not found', async () => {
+    const command: OIBusSearchNorthCacheContentCommand = {
+      id: 'searchNorthCacheContentId',
+      type: 'search-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
+    } as OIBusSearchNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIBusService.searchCacheContent as jest.Mock).mockRejectedValueOnce(new Error('North northId1 not found'));
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'North northId1 not found');
+  });
+
+  it('should handle error in executeGetNorthCacheFileContentCommand', async () => {
+    const command: OIBusGetNorthCacheFileContentCommand = {
+      id: 'getNorthCacheFileContentId',
+      type: 'get-north-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        folder: 'error',
+        filename: 'file.txt'
+      }
+    } as OIBusGetNorthCacheFileContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIBusService.getFileFromCache as jest.Mock).mockRejectedValueOnce(new Error('File not found'));
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'File not found');
+  });
+
+  it('should fail to execute update-north-cache-content command when action return an error', async () => {
+    const command: OIBusUpdateNorthCacheContentCommand = {
+      id: 'updateNorthCacheContentId',
+      type: 'update-north-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      northConnectorId: 'northId1',
+      commandContent: {
+        cache: {
+          remove: [],
+          move: []
+        },
+        error: {
+          remove: [],
+          move: []
+        },
+        archive: { remove: [], move: [] }
+      }
+    } as OIBusUpdateNorthCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIBusService.updateCacheContent as jest.Mock).mockRejectedValueOnce(new Error('error while removing file'));
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'error while removing file');
+  });
+
+  it('should handle error in executeSearchHistoryCacheContentCommand if history not found', async () => {
+    const command: OIBusSearchHistoryCacheContentCommand = {
+      id: 'searchHistoryCacheContentId',
+      type: 'search-history-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
+    } as OIBusSearchHistoryCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIBusService.searchCacheContent as jest.Mock).mockRejectedValueOnce(new Error('History historyId1 not found'));
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'History historyId1 not found');
+  });
+
+  it('should handle error in executeGetHistoryCacheFileContentCommand', async () => {
+    const command: OIBusGetHistoryCacheFileContentCommand = {
+      id: 'getHistoryCacheFileContentId',
+      type: 'get-history-cache-file-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        folder: 'error',
+        filename: 'file.txt'
+      }
+    } as OIBusGetHistoryCacheFileContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIBusService.getFileFromCache as jest.Mock).mockRejectedValueOnce(new Error('File not found'));
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'File not found');
+  });
+
+  it('should handle error in executeUpdateHistoryCacheContentCommand', async () => {
+    const command: OIBusUpdateHistoryCacheContentCommand = {
+      id: 'updateHistoryCacheContentId',
+      type: 'update-history-cache-content',
+      targetVersion: testData.engine.settings.version,
+      status: 'RETRIEVED',
+      ack: false,
+      retrievedDate: testData.constants.dates.FAKE_NOW,
+      completedDate: null,
+      result: null,
+      historyQueryId: 'historyId1',
+      commandContent: {
+        cache: {
+          remove: [],
+          move: []
+        },
+        error: {
+          remove: [],
+          move: []
+        },
+        archive: { remove: [], move: [] }
+      }
+    } as OIBusUpdateHistoryCacheContentCommand;
+    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    (oIBusService.updateCacheContent as jest.Mock).mockRejectedValueOnce(new Error('Update failed'));
+
+    await service.executeCommand();
+
+    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'Update failed');
+  });
 });
 
 describe('OIAnalytics Command service with update error', () => {
@@ -1527,6 +2054,10 @@ describe('OIAnalytics Command service with update error', () => {
     );
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly start and stop service', async () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
     expect(oIBusService.updateOIBusVersion).not.toHaveBeenCalled();
@@ -1563,6 +2094,10 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
       true,
       '3.4.0'
     );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should change logger', async () => {
@@ -1612,6 +2147,10 @@ describe('OIAnalytics Command service with no commands', () => {
     );
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly start when not registered', () => {
     expect(oIBusService.getEngineSettings).toHaveBeenCalled();
     expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
@@ -1646,6 +2185,10 @@ describe('OIAnalytics Command service with no commands and without update', () =
       true,
       engineSettings.launcherVersion
     );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should properly start when not registered', () => {

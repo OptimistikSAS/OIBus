@@ -1,6 +1,6 @@
 import { BaseEntity, Instant } from './types';
 import { OIBusCommandStatus, OIBusCommandType } from '../../shared/model/command.model';
-import { EngineSettingsCommandDTO } from '../../shared/model/engine.model';
+import { CacheContentUpdateCommand, DataFolderType, EngineSettingsCommandDTO } from '../../shared/model/engine.model';
 import { ScanModeCommandDTO } from '../../shared/model/scan-mode.model';
 import {
   SouthConnectorCommandDTO,
@@ -11,6 +11,7 @@ import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.mod
 import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/history-query.model';
+import { CacheSearchParam } from '../../shared/model/engine.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -84,6 +85,12 @@ export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand
       deleteNorth: boolean;
       testNorthConnection: boolean;
       setpoint: boolean;
+      searchNorthCacheContent: boolean;
+      getNorthCacheFileContent: boolean;
+      updateNorthCacheContent: boolean;
+      searchHistoryCacheContent: boolean;
+      getHistoryCacheFileContent: boolean;
+      updateHistoryCacheContent: boolean;
     };
   };
 }
@@ -281,6 +288,48 @@ export interface OIBusSetpointCommand extends BaseOIBusCommand {
   }>;
 }
 
+export interface OIBusSearchNorthCacheContentCommand extends BaseOIBusCommand {
+  type: 'search-north-cache-content';
+  northConnectorId: string;
+  commandContent: CacheSearchParam;
+}
+
+export interface OIBusSearchHistoryCacheContentCommand extends BaseOIBusCommand {
+  type: 'search-history-cache-content';
+  historyQueryId: string;
+  commandContent: CacheSearchParam;
+}
+
+export interface OIBusGetNorthCacheFileContentCommand extends BaseOIBusCommand {
+  type: 'get-north-cache-file-content';
+  northConnectorId: string;
+  commandContent: {
+    folder: DataFolderType;
+    filename: string;
+  };
+}
+
+export interface OIBusGetHistoryCacheFileContentCommand extends BaseOIBusCommand {
+  type: 'get-history-cache-file-content';
+  historyQueryId: string;
+  commandContent: {
+    folder: DataFolderType;
+    filename: string;
+  };
+}
+
+export interface OIBusUpdateNorthCacheContentCommand extends BaseOIBusCommand {
+  type: 'update-north-cache-content';
+  northConnectorId: string;
+  commandContent: CacheContentUpdateCommand;
+}
+
+export interface OIBusUpdateHistoryCacheContentCommand extends BaseOIBusCommand {
+  type: 'update-history-cache-content';
+  historyQueryId: string;
+  commandContent: CacheContentUpdateCommand;
+}
+
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
@@ -314,4 +363,10 @@ export type OIBusCommand =
   | OIBusTestHistoryQuerySouthItemCommand
   | OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand
   | OIBusUpdateHistoryQueryStatusCommand
-  | OIBusSetpointCommand;
+  | OIBusSetpointCommand
+  | OIBusSearchNorthCacheContentCommand
+  | OIBusSearchHistoryCacheContentCommand
+  | OIBusGetNorthCacheFileContentCommand
+  | OIBusGetHistoryCacheFileContentCommand
+  | OIBusUpdateNorthCacheContentCommand
+  | OIBusUpdateHistoryCacheContentCommand;

@@ -1,0 +1,19 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="engine.port-changed.title"></h4>
+</div>
+<div class="modal-body">
+  <p>{{ message }}</p>
+  <div class="progress-container">
+    <span>{{ secondsRemaining() }}s</span>
+    <ngb-progressbar [value]="progress()" [max]="1" [striped]="false" [animated]="false" type="secondary" />
+  </div>
+</div>
+<div class="modal-footer">
+  <button
+    type="button"
+    class="btn btn-primary"
+    (click)="redirect()"
+    id="redirect-now-button"
+    translate="engine.port-changed.redirect-now"
+  ></button>
+</div>

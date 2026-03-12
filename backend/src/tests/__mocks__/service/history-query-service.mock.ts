@@ -10,6 +10,8 @@ export default jest.fn().mockImplementation(() => ({
   start: jest.fn(),
   pause: jest.fn(),
   getHistoryDataStream: jest.fn(),
+  getHistoryMetrics: jest.fn(),
+  getAllHistoryMetrics: jest.fn(),
   testNorth: jest.fn(),
   testSouth: jest.fn(),
   testItem: jest.fn(),
@@ -29,11 +31,5 @@ export default jest.fn().mockImplementation(() => ({
   importItems: jest.fn(),
   addOrEditTransformer: jest.fn(),
   removeTransformer: jest.fn(),
-  searchCacheContent: jest.fn(),
-  getCacheFileContent: jest.fn(),
-  removeCacheContent: jest.fn(),
-  removeAllCacheContent: jest.fn(),
-  moveCacheContent: jest.fn(),
-  moveAllCacheContent: jest.fn(),
   retrieveSecrets: jest.fn()
 }));

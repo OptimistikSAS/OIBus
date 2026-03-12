@@ -118,7 +118,13 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     updateNorth: Joi.boolean().required(),
     deleteNorth: Joi.boolean().required(),
     testNorthConnection: Joi.boolean().required(),
-    setpoint: Joi.boolean().required()
+    setpoint: Joi.boolean().required(),
+    searchNorthCacheContent: Joi.boolean().required(),
+    getNorthCacheFileContent: Joi.boolean().required(),
+    updateNorthCacheContent: Joi.boolean().required(),
+    searchHistoryCacheContent: Joi.boolean().required(),
+    getHistoryCacheFileContent: Joi.boolean().required(),
+    updateHistoryCacheContent: Joi.boolean().required()
   }).required()
 });
 
@@ -137,11 +143,15 @@ const userSchema: Joi.ObjectSchema = Joi.object({
 });
 
 const transformerSchema: Joi.ObjectSchema = Joi.object({
+  type: Joi.string().required().allow('custom'),
   name: Joi.string().required(),
   description: Joi.string().required().allow(null, ''),
   inputType: Joi.string().required(),
   outputType: Joi.string().required(),
-  code: Joi.string().required()
+  language: Joi.string().required(),
+  customCode: Joi.string().required(),
+  customManifest: Joi.object().required(),
+  timeout: Joi.number().integer().min(100).required()
 });
 
 function cronValidator(value: string, helper: Joi.CustomHelpers) {

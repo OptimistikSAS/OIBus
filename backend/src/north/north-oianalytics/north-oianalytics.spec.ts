@@ -3,37 +3,23 @@ import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
-import fs from 'node:fs/promises';
-import fsSync from 'node:fs';
-import path from 'node:path';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import { HTTPRequest } from '../../service/http-request.utils';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import FormData from 'form-data';
-import { OIBusError } from '../../model/engine.model';
-import { buildHttpOptions, getHost, getUrl } from '../../service/utils-oianalytics';
-import { compress, filesExists } from '../../service/utils';
+import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
+import { streamToString } from '../../service/utils';
 import zlib from 'node:zlib';
 import CacheService from '../../service/cache/cache.service';
 import testData from '../../tests/utils/test-data';
+import { ReadStream } from 'node:fs';
+import { buildNorthConfiguration } from '../../tests/utils/test-utils';
 
 // Mock dependencies
-jest.mock('node:fs/promises');
 jest.mock('node:fs');
-jest.mock('node:path', () => {
-  const actual = jest.requireActual('node:path');
-  return {
-    ...actual,
-    parse: jest.fn(p => actual.parse(p)),
-    resolve: jest.fn((...args) => actual.resolve(...args))
-  };
-});
-jest.mock('node:zlib', () => ({
-  gzipSync: jest.fn().mockReturnValue('gzipped-content')
-}));
+jest.mock('node:zlib');
 jest.mock('form-data');
 jest.mock('../../service/http-request.utils');
 jest.mock('../../service/utils-oianalytics');
@@ -49,14 +35,23 @@ describe('NorthOIAnalytics', () => {
   const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
 
   // Test Data
-  const baseConfiguration: NorthConnectorEntity<NorthOIAnalyticsSettings> = {
-    ...testData.north.list[0],
-    id: 'northId',
-    name: 'north',
-    type: 'oianalytics',
-    enabled: true,
-    description: 'test connector',
-    settings: {
+  let configuration: NorthConnectorEntity<NorthOIAnalyticsSettings>;
+
+  // Mock Streams
+  const mockGzipStream = { pipe: jest.fn() };
+  const mockReadStream = {
+    pipe: jest.fn().mockReturnValue(mockGzipStream),
+    on: jest.fn(),
+    read: jest.fn()
+  } as unknown as ReadStream;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    logger = new PinoLogger();
+    cacheService = new CacheServiceMock();
+
+    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
+    configuration = buildNorthConfiguration<NorthOIAnalyticsSettings>('oianalytics', {
       useOiaModule: false,
       timeout: 30,
       compress: false,
@@ -68,227 +63,174 @@ describe('NorthOIAnalytics', () => {
         secretKey: 'pass',
         useProxy: false
       }
-    }
-  };
-
-  // Mock File Stream
-  const mockReadStream = {
-    pipe: jest.fn().mockReturnThis(),
-    on: jest.fn().mockReturnThis(),
-    pause: jest.fn(),
-    close: jest.fn(),
-    closed: false
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    logger = new PinoLogger();
-    cacheService = new CacheServiceMock();
-    mockReadStream.closed = false;
-
+    });
     // Default mock implementations
-    (fsSync.createReadStream as jest.Mock).mockReturnValue(mockReadStream);
     (buildHttpOptions as jest.Mock).mockResolvedValue({
       headers: { 'custom-header': 'val' },
       auth: { type: 'basic' },
       timeout: 30000
     });
     (getHost as jest.Mock).mockReturnValue('https://mock-host');
+    // Simple URL mock that returns a URL object
     (getUrl as jest.Mock).mockImplementation((endpoint, host) => new URL(endpoint, host));
-    (filesExists as jest.Mock).mockResolvedValue(true);
     (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(200));
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
 
-    // Mock FormData methods
+    // Mock streamToString to return a static string
+    (streamToString as jest.Mock).mockResolvedValue('stream-content-string');
+
+    // Mock zlib
+    (zlib.createGzip as jest.Mock).mockReturnValue(mockGzipStream);
+
+    // Mock FormData
     (FormData as unknown as jest.Mock).mockImplementation(() => ({
       append: jest.fn(),
-      getHeaders: jest.fn().mockReturnValue({ 'content-type': 'multipart/form-data' })
+      getHeaders: jest.fn().mockReturnValue({ 'content-type': 'multipart/form-data; boundary=---' })
     }));
 
-    north = new NorthOIAnalytics(
-      baseConfiguration,
-      logger,
-      'cacheFolder',
-      cacheService,
+    north = new NorthOIAnalytics(configuration, logger, cacheService, certificateRepository, oIAnalyticsRegistrationRepository);
+  });
+
+  it('should properly call test utils function', async () => {
+    await expect(north.testConnection()).resolves.not.toThrow();
+
+    expect(testOIAnalyticsConnection).toHaveBeenCalledWith(
+      configuration.settings.useOiaModule,
+      testData.oIAnalytics.registration.completed,
+      configuration.settings.specificSettings,
+      configuration.settings.timeout * 1000,
       certificateRepository,
-      oIAnalyticsRegistrationRepository
+      false
     );
   });
 
-  describe('testConnection', () => {
-    it('should succeed when API returns 200', async () => {
-      await expect(north.testConnection()).resolves.not.toThrow();
-
-      expect(buildHttpOptions).toHaveBeenCalledWith('GET', false, expect.anything(), expect.anything(), 30000, certificateRepository);
-      expect(HTTPRequest).toHaveBeenCalledWith(
-        expect.objectContaining({ href: 'https://mock-host/api/oianalytics/oibus/status' }),
-        expect.anything()
-      );
-    });
-
-    it('should throw error when API returns non-200', async () => {
-      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(500, 'Error'));
-      await expect(north.testConnection()).rejects.toThrow('HTTP request failed with status code 500');
-    });
-
-    it('should throw error when fetch fails', async () => {
-      (HTTPRequest as jest.Mock).mockRejectedValue(new Error('Network Error'));
-      await expect(north.testConnection()).rejects.toThrow('Fetch error Error: Network Error');
-    });
+  it('should return correct types', () => {
+    expect(north.supportedTypes()).toEqual(['any', 'time-values', 'oianalytics']);
   });
 
-  describe('handleValues (time-values)', () => {
-    const mockValues: Array<OIBusTimeValue> = [{ pointId: 'p1', timestamp: '2023-01-01', data: { value: 1 } }];
+  describe('handleValues (time-values/oianalytics)', () => {
     const metadata = {
       contentFile: 'file.json',
       contentSize: 100,
       numberOfElement: 1,
-      createdAt: 'date',
-      contentType: 'time-values',
-      source: 'south',
-      options: {}
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'time-values'
     };
 
-    beforeEach(() => {
-      (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(mockValues));
-    });
+    it('should send values as JSON without compression', async () => {
+      await north.handleContent(mockReadStream, metadata);
 
-    it('should send values as JSON', async () => {
-      await north.handleContent(metadata);
+      // Verify stream was read to string
+      expect(streamToString).toHaveBeenCalledWith(mockReadStream);
 
-      expect(buildHttpOptions).toHaveBeenCalledWith(
-        'POST',
-        expect.anything(),
-        expect.anything(),
-        expect.anything(),
-        30000,
-        expect.anything()
-      );
+      // Verify HTTP Request
       expect(HTTPRequest).toHaveBeenCalledWith(
-        expect.objectContaining({ href: 'https://mock-host/api/oianalytics/oibus/time-values' }),
+        expect.objectContaining({ href: expect.stringContaining('/api/oianalytics/oibus/time-values') }),
         expect.objectContaining({
-          body: JSON.stringify(mockValues),
-          headers: expect.objectContaining({ 'Content-Type': 'application/json' })
+          body: 'stream-content-string',
+          headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+          query: expect.objectContaining({ dataSourceId: configuration.name })
         })
       );
     });
 
-    it('should compress values if enabled', async () => {
+    it('should send values with compression if enabled', async () => {
       north['connector'].settings.compress = true;
 
-      await north.handleContent(metadata);
+      await north.handleContent(mockReadStream, metadata);
 
-      expect(zlib.gzipSync).toHaveBeenCalled();
+      // Verify piping to gzip
+      expect(mockReadStream.pipe).toHaveBeenCalled();
+      expect(zlib.createGzip).toHaveBeenCalledWith({ level: 9 });
+
+      // Verify streamToString called with the GZIP stream
+      expect(streamToString).toHaveBeenCalledWith(mockGzipStream);
+
       expect(HTTPRequest).toHaveBeenCalledWith(
-        expect.objectContaining({ href: 'https://mock-host/api/oianalytics/oibus/time-values/compressed' }),
+        expect.objectContaining({ href: expect.stringContaining('/api/oianalytics/oibus/time-values/compressed') }),
         expect.objectContaining({
-          body: 'gzipped-content'
+          body: 'stream-content-string'
         })
       );
-      north['connector'].settings.compress = false;
     });
 
-    it('should throw OIBusError on failure', async () => {
-      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
-
-      await expect(north.handleContent(metadata)).rejects.toThrow(OIBusError);
+    it('should throw OIBusError on fetch failure', async () => {
+      (HTTPRequest as jest.Mock).mockRejectedValue(new Error('Network Error'));
+      await expect(north.handleContent(mockReadStream, metadata)).rejects.toThrow('Fail to reach values endpoint');
     });
 
-    it('should throw OIBusError on HTTP failure', async () => {
-      (HTTPRequest as jest.Mock).mockRejectedValue(new Error('Fail'));
-
-      await expect(north.handleContent(metadata)).rejects.toThrow(OIBusError);
+    it('should throw OIBusError on non-ok response', async () => {
+      (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(500, 'Internal Server Error'));
+      await expect(north.handleContent(mockReadStream, metadata)).rejects.toThrow('Error 500: Internal Server Error');
     });
   });
 
   describe('handleFile (any)', () => {
     const metadata = {
-      contentFile: path.join('path', 'file.txt'),
+      contentFile: 'test-file.txt',
       contentSize: 100,
       numberOfElement: 1,
       createdAt: 'date',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
     };
 
     it('should upload file using FormData', async () => {
-      await north.handleContent(metadata);
+      await north.handleContent(mockReadStream, metadata);
 
-      expect(fsSync.createReadStream).toHaveBeenCalledWith(path.resolve('path', 'file.txt'));
+      // Get the mocked FormData instance
+      const formDataInstance = (FormData as unknown as jest.Mock).mock.results[0].value;
+
+      // Verify file was appended correctly
+      expect(formDataInstance.append).toHaveBeenCalledWith('file', mockReadStream, { filename: 'test-file.txt' });
+
+      // Verify headers were merged
+      expect(formDataInstance.getHeaders).toHaveBeenCalled();
+
       expect(HTTPRequest).toHaveBeenCalledWith(
-        expect.objectContaining({ href: 'https://mock-host/api/oianalytics/file-uploads' }),
+        expect.objectContaining({ href: expect.stringContaining('/api/oianalytics/file-uploads') }),
         expect.objectContaining({
-          body: expect.any(Object), // FormData mock
-          headers: expect.objectContaining({ 'content-type': 'multipart/form-data' })
+          body: formDataInstance,
+          query: expect.objectContaining({ dataSourceId: configuration.name }),
+          headers: expect.objectContaining({
+            'content-type': 'multipart/form-data; boundary=---'
+          })
         })
       );
     });
 
-    it('should throw if file does not exist', async () => {
-      (filesExists as jest.Mock).mockResolvedValue(false);
-      await expect(north.handleContent(metadata)).rejects.toThrow(`File ${path.join('path', 'file.txt')} does not exist`);
-    });
-
-    it('should compress file if enabled and not already gzip', async () => {
+    it('should compress file if enabled and not .gz', async () => {
       north['connector'].settings.compress = true;
-      (path.parse as jest.Mock).mockReturnValueOnce({ name: 'file', ext: '.txt', dir: 'path', base: 'file.txt' });
-      (path.resolve as jest.Mock).mockReturnValueOnce(path.join('path', 'file.txt.gz'));
-      // Mock that compressed file doesn't exist yet
-      (filesExists as jest.Mock).mockImplementation(f => Promise.resolve(f === path.join('path', 'file.txt')));
 
-      await north.handleContent(metadata);
+      await north.handleContent(mockReadStream, metadata);
 
-      expect(compress).toHaveBeenCalledWith(path.join('path', 'file.txt'), path.join('path', 'file.txt.gz'));
-      expect(fsSync.createReadStream).toHaveBeenCalledWith(path.join('path', 'file.txt.gz'));
-      expect(fs.unlink).toHaveBeenCalledWith(path.join('path', 'file.txt.gz')); // Cleanup
-      north['connector'].settings.compress = false;
+      expect(mockReadStream.pipe).toHaveBeenCalled();
+      expect(zlib.createGzip).toHaveBeenCalledWith({ level: 9 });
+
+      const formDataInstance = (FormData as unknown as jest.Mock).mock.results[0].value;
+      // Should pass the compressed stream and update filename
+      expect(formDataInstance.append).toHaveBeenCalledWith('file', mockGzipStream, { filename: 'test-file.txt.gz' });
     });
 
-    it('should NOT compress if file is already .gz', async () => {
-      const mockReadStream = { closed: true, close: jest.fn() };
-      (fsSync.createReadStream as jest.Mock).mockReturnValue(mockReadStream);
+    it('should NOT compress file if enabled but already .gz', async () => {
       north['connector'].settings.compress = true;
-      const gzMetadata = { ...metadata, contentFile: path.join('path', 'file.gz') };
-      (path.parse as jest.Mock).mockReturnValue({ name: 'file', ext: '.gz', dir: 'path', base: 'file.gz' });
+      const gzMetadata = { ...metadata, contentFile: 'archive.tar.gz' };
 
-      await north.handleContent(gzMetadata);
+      await north.handleContent(mockReadStream, gzMetadata);
 
-      expect(compress).not.toHaveBeenCalled();
-      expect(fsSync.createReadStream).toHaveBeenCalledWith(path.resolve('path', 'file.gz'));
-      north['connector'].settings.compress = false;
-      expect(mockReadStream.close).toHaveBeenCalledTimes(1);
+      expect(mockReadStream.pipe).not.toHaveBeenCalled(); // No compression
+
+      const formDataInstance = (FormData as unknown as jest.Mock).mock.results[0].value;
+      expect(formDataInstance.append).toHaveBeenCalledWith('file', mockReadStream, { filename: 'archive.tar.gz' });
     });
 
-    it('should close stream and throw OIBusError on fetch error', async () => {
-      (HTTPRequest as jest.Mock).mockRejectedValue(new Error('Fail'));
-
-      await expect(north.handleContent(metadata)).rejects.toThrow(OIBusError);
+    it('should throw OIBusError on fetch failure', async () => {
+      (HTTPRequest as jest.Mock).mockRejectedValue(new Error('Network Error'));
+      await expect(north.handleContent(mockReadStream, metadata)).rejects.toThrow('Fail to reach file endpoint');
     });
 
-    it('should throw OIBusError on failure', async () => {
+    it('should throw OIBusError on non-ok response', async () => {
       (HTTPRequest as jest.Mock).mockResolvedValue(createMockResponse(400, 'Bad Request'));
-
-      await expect(north.handleContent(metadata)).rejects.toThrow(OIBusError);
-    });
-  });
-
-  describe('supportedTypes', () => {
-    it('should return correct types', () => {
-      expect(north.supportedTypes()).toEqual(['any', 'time-values', 'oianalytics']);
-    });
-
-    it('should throw error for unsupported type', async () => {
-      const metadata = {
-        contentFile: 'file',
-        contentSize: 0,
-        numberOfElement: 0,
-        createdAt: '',
-        contentType: 'bad-type',
-        source: '',
-        options: {}
-      };
-      await expect(north.handleContent(metadata)).rejects.toThrow('Unsupported data type: bad-type');
+      await expect(north.handleContent(mockReadStream, metadata)).rejects.toThrow('Error 400: Bad Request');
     });
   });
 });

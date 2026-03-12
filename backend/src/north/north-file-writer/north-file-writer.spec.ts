@@ -1,21 +1,33 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-
+import { pipeline } from 'node:stream/promises';
+import { createWriteStream, ReadStream } from 'node:fs';
 import NorthFileWriter from './north-file-writer';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import csv from 'papaparse';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
 import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../service/transformers/oibus-transformer';
+import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import { getFilenameWithoutRandomId } from '../../service/utils';
+import { DateTime } from 'luxon';
+import { buildNorthConfiguration } from '../../tests/utils/test-utils';
 
+// Mock Node modules
 jest.mock('node:fs/promises');
+jest.mock('node:stream/promises');
+jest.mock('node:fs', () => {
+  const originalModule = jest.requireActual('node:fs');
+  return {
+    ...originalModule,
+    createWriteStream: jest.fn(),
+    ReadStream: jest.fn()
+  };
+});
+jest.mock('../../service/transformer.service');
 
 const logger: pino.Logger = new PinoLogger();
 const cacheService: CacheService = new CacheServiceMock();
@@ -28,138 +40,153 @@ jest.mock(
       return cacheService;
     }
 );
-jest.mock('../../service/utils');
-jest.mock('../../service/transformer.service');
-jest.mock('papaparse');
 
 let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
 let north: NorthFileWriter;
+const mockWriteStream = { write: jest.fn(), end: jest.fn() };
 
 describe('NorthFileWriter', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
-      outputFolder: 'outputFolder',
-      prefix: 'prefix',
-      suffix: 'suffix'
-    };
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
-    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
 
-    north = new NorthFileWriter(configuration, logger, 'cacheFolder', cacheService);
-    await north.start();
+    configuration = buildNorthConfiguration<NorthFileWriterSettings>('file-writer', {
+      outputFolder: 'outputFolder',
+      prefix: 'prefix_',
+      suffix: '_suffix'
+    });
+    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
+    (createWriteStream as jest.Mock).mockReturnValue(mockWriteStream);
+    (pipeline as jest.Mock).mockResolvedValue(undefined);
+
+    north = new NorthFileWriter(configuration, logger, cacheService);
   });
 
-  it('should properly handle files', async () => {
-    (fs.stat as jest.Mock).mockReturnValue({ size: 666 });
-    const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
-    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    await north.handleContent({
-      contentFile: 'path/to/file/example-123456789.file',
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('should retrieve supported types', () => {
+    expect(north.supportedTypes()).toEqual(['any', 'setpoint', 'time-values']);
+  });
+
+  it('should properly handle files with prefix and suffix', async () => {
+    const readStream = {} as ReadStream;
+    const metadata = {
+      contentFile: 'file-123456789.txt',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
-    });
-    expect(fs.copyFile).toHaveBeenCalledWith('path/to/file/example-123456789.file', path.join(expectedOutputFolder, expectedFileName));
+      contentType: 'any'
+    };
+
+    const expectedFilename = `prefix_file-123456789_suffix.txt`;
+    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
+    const expectedPath = path.join(expectedOutputFolder, expectedFilename);
+
+    await north.handleContent(readStream, metadata);
+
+    expect(createWriteStream).toHaveBeenCalledWith(expectedPath);
+    expect(pipeline).toHaveBeenCalledWith(readStream, mockWriteStream);
   });
 
-  it('should properly catch handle file error', async () => {
-    (fs.stat as jest.Mock).mockReturnValue({ size: 666 });
-    (fs.copyFile as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Error handling files');
-    });
+  it('should properly handle files with dynamic replacements in prefix/suffix', async () => {
+    configuration.settings.prefix = 'pre_@ConnectorName_';
+    configuration.settings.suffix = '_@CurrentDate_suf';
+    north = new NorthFileWriter(configuration, logger, cacheService);
+
+    const readStream = {} as ReadStream;
+    const metadata = {
+      contentFile: 'data.csv',
+      contentSize: 100,
+      numberOfElement: 1,
+      createdAt: '2020-02-02T02:02:02.222Z',
+      contentType: 'any'
+    };
+
+    const nowDate = DateTime.fromJSDate(new Date(testData.constants.dates.FAKE_NOW)).toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
+
+    // Simplified verification based on exact logic reconstruction
+    const p = `pre_${configuration.name}_`;
+    const s = `_${nowDate}_suf`;
+    const finalName = `${p}data${s}.csv`;
+    const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), finalName);
+
+    await north.handleContent(readStream, metadata);
+
+    expect(createWriteStream).toHaveBeenCalledWith(expectedPath);
+    expect(pipeline).toHaveBeenCalledWith(readStream, mockWriteStream);
+  });
+
+  it('should properly catch handle file error (pipeline failure)', async () => {
+    const error = new Error('Pipeline failed');
+    (pipeline as jest.Mock).mockRejectedValue(error);
+    const readStream = {} as ReadStream;
+
     await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.file',
+      north.handleContent(readStream, {
+        contentFile: 'example.file',
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'any',
-        source: 'south',
-        options: {}
+        contentType: 'any'
       })
-    ).rejects.toThrow('Error handling files');
-  });
-});
-
-describe('NorthFileWriter without suffix or prefix', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration.settings = {
-      outputFolder: 'outputFolder',
-      prefix: '',
-      suffix: ''
-    };
-    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
-    (getFilenameWithoutRandomId as jest.Mock).mockReturnValue('example.file');
-
-    north = new NorthFileWriter(configuration, logger, 'cacheFolder', cacheService);
+    ).rejects.toThrow('Pipeline failed');
   });
 
-  it('should properly handle files', async () => {
-    (fs.stat as jest.Mock).mockReturnValue({ size: 666 });
-    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    await north.handleContent({
-      contentFile: 'path/to/file/example-123456789.file',
+  it('should properly handle files (direct naming)', async () => {
+    const readStream = {} as ReadStream;
+    const metadata = {
+      contentFile: 'example-123.file',
       contentSize: 1234,
       numberOfElement: 1,
       createdAt: '2020-02-02T02:02:02.222Z',
-      contentType: 'any',
-      source: 'south',
-      options: {}
+      contentType: 'any'
+    };
+
+    north.connectorConfiguration = buildNorthConfiguration<NorthFileWriterSettings>('file-writer', {
+      outputFolder: 'outputFolder',
+      prefix: '',
+      suffix: ''
     });
-    expect(fs.copyFile).toHaveBeenCalledWith('path/to/file/example-123456789.file', path.join(expectedOutputFolder, 'example.file'));
+
+    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
+    // Logic: '' + 'example-123' + '' + '.file'
+    const expectedPath = path.join(expectedOutputFolder, 'example-123.file');
+
+    await north.handleContent(readStream, metadata);
+
+    expect(createWriteStream).toHaveBeenCalledWith(expectedPath);
+    expect(pipeline).toHaveBeenCalledWith(readStream, mockWriteStream);
   });
 
-  it('should have access to output folder', async () => {
-    (fs.access as jest.Mock).mockImplementation(() => Promise.resolve());
+  it('should have access to output folder (Test Connection)', async () => {
+    (fs.access as jest.Mock).mockResolvedValue(undefined);
 
     await expect(north.testConnection()).resolves.not.toThrow();
+
+    const outputFolder = path.resolve(configuration.settings.outputFolder);
+    // constants.F_OK is default if not specified, but implementation might pass it
+    expect(fs.access).toHaveBeenCalledWith(outputFolder, expect.anything());
   });
 
-  it('should handle folder not existing', async () => {
+  it('should handle folder not existing (Test Connection)', async () => {
     const outputFolder = path.resolve(configuration.settings.outputFolder);
 
     const errorMessage = 'Folder does not exist';
-    (fs.access as jest.Mock).mockImplementationOnce(() => {
-      throw new Error(errorMessage);
-    });
+    (fs.access as jest.Mock).mockRejectedValueOnce(new Error(errorMessage));
 
     await expect(north.testConnection()).rejects.toThrow(`Access error on "${outputFolder}": ${errorMessage}`);
   });
 
-  it('should handle not having write access on folder', async () => {
+  it('should handle not having write access on folder (Test Connection)', async () => {
     const outputFolder = path.resolve(configuration.settings.outputFolder);
 
     const errorMessage = 'No write access';
     (fs.access as jest.Mock)
-      .mockImplementationOnce(() => Promise.resolve())
-      .mockImplementationOnce(() => {
-        throw new Error(errorMessage);
-      });
+      .mockResolvedValueOnce(undefined) // F_OK success
+      .mockRejectedValueOnce(new Error(errorMessage)); // W_OK fail
 
     await expect(north.testConnection()).rejects.toThrow(`Access error on "${outputFolder}": ${errorMessage}`);
-  });
-
-  it('should ignore data if bad content type', async () => {
-    await expect(
-      north.handleContent({
-        contentFile: 'path/to/file/example-123456789.file',
-        contentSize: 1234,
-        numberOfElement: 1,
-        createdAt: '2020-02-02T02:02:02.222Z',
-        contentType: 'bad',
-        source: 'south',
-        options: {}
-      })
-    ).rejects.toThrow(`Unsupported data type: bad (file path/to/file/example-123456789.file)`);
   });
 });

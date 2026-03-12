@@ -11,7 +11,7 @@ export default class IpFilterRepository {
   constructor(private readonly database: Database) {}
 
   list(): Array<IPFilter> {
-    const query = `SELECT id, address, description FROM ${IP_FILTERS_TABLE};`;
+    const query = `SELECT id, address, description, created_by, updated_by FROM ${IP_FILTERS_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -19,21 +19,21 @@ export default class IpFilterRepository {
   }
 
   findById(id: string): IPFilter | null {
-    const query = `SELECT id, address, description FROM ${IP_FILTERS_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, address, description, created_by, updated_by FROM ${IP_FILTERS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     return result ? this.toIPFilter(result as Record<string, string>) : null;
   }
 
   create(command: Omit<IPFilter, 'id'>, id = generateRandomId(6)): IPFilter {
-    const insertQuery = `INSERT INTO ${IP_FILTERS_TABLE} (id, address, description) ` + `VALUES (?, ?, ?);`;
-    const result = this.database.prepare(insertQuery).run(id, command.address, command.description);
-    const query = `SELECT id, address, description FROM ${IP_FILTERS_TABLE} WHERE ROWID = ?;`;
+    const insertQuery = `INSERT INTO ${IP_FILTERS_TABLE} (id, address, description, created_by, updated_by) VALUES (?, ?, ?, ?, ?);`;
+    const result = this.database.prepare(insertQuery).run(id, command.address, command.description, command.createdBy, command.updatedBy);
+    const query = `SELECT id, address, description, created_by, updated_by FROM ${IP_FILTERS_TABLE} WHERE ROWID = ?;`;
     return this.toIPFilter(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
   }
 
   update(id: string, command: Omit<IPFilter, 'id'>): void {
-    const query = `UPDATE ${IP_FILTERS_TABLE} SET address = ?, description = ? WHERE id = ?;`;
-    this.database.prepare(query).run(command.address, command.description, id);
+    const query = `UPDATE ${IP_FILTERS_TABLE} SET address = ?, description = ?, updated_by = ? WHERE id = ?;`;
+    this.database.prepare(query).run(command.address, command.description, command.updatedBy, id);
   }
 
   delete(id: string): void {
@@ -45,7 +45,9 @@ export default class IpFilterRepository {
     return {
       id: result.id,
       address: result.address,
-      description: result.description
+      description: result.description,
+      createdBy: result.created_by ?? undefined,
+      updatedBy: result.updated_by ?? undefined
     };
   }
 }

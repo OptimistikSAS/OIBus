@@ -1,19 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {
-  SouthMQTTItemSettings,
-  SouthMQTTItemSettingsJsonPayloadTimestampPayload,
-  SouthMQTTSettings
-} from '../../shared/model/south-settings.model';
+import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../shared/model/south-settings.model';
 import { encryptionService } from './encryption.service';
 import mqtt from 'mqtt';
 import pino from 'pino';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
-import { Instant } from '../../shared/model/types';
-import { OIBusTimeValue } from '../../shared/model/engine.model';
-import objectPath from 'object-path';
-import { convertDateTimeToInstant } from './utils';
-import { DateTime } from 'luxon';
 import { NorthMQTTSettings } from '../../shared/model/north-settings.model';
 
 export const createConnectionOptions = async (
@@ -49,114 +40,6 @@ export const createConnectionOptions = async (
   }
   options.clean = !connectionSettings.persistent;
   return options;
-};
-
-export const parseMessage = (
-  topic: string,
-  message: string,
-  items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>>,
-  logger: pino.Logger
-): Array<OIBusTimeValue> => {
-  const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
-  try {
-    const associatedItem = getItem(topic, items);
-    return createContent(associatedItem, message, messageTimestamp, logger);
-  } catch (error: unknown) {
-    logger.error(`Could not handle message "${message.toString()}" for topic "${topic}": ${(error as Error).message}`);
-    return [];
-  }
-};
-
-export const createContent = (
-  associatedItem: SouthConnectorItemEntity<SouthMQTTItemSettings>,
-  message: string,
-  messageTimestamp: Instant,
-  logger: pino.Logger
-): Array<OIBusTimeValue> => {
-  switch (associatedItem.settings.valueType) {
-    case 'number':
-      return [
-        {
-          pointId: associatedItem.name,
-          timestamp: messageTimestamp,
-          data: {
-            value: message
-          }
-        }
-      ];
-
-    case 'string':
-      return [
-        {
-          pointId: associatedItem.name,
-          timestamp: messageTimestamp,
-          data: {
-            value: message
-          }
-        }
-      ];
-
-    case 'json':
-      return formatValues(associatedItem, JSON.parse(message), messageTimestamp, logger);
-  }
-};
-
-export const formatValues = (
-  item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
-  data: object,
-  messageTimestamp: Instant,
-  logger: pino.Logger
-): Array<OIBusTimeValue> => {
-  if (item.settings.jsonPayload!.useArray) {
-    const array = objectPath.get(data, item.settings.jsonPayload!.dataArrayPath!);
-    if (!array || !Array.isArray(array)) {
-      throw new Error(`Array not found for path ${item.settings.jsonPayload!.dataArrayPath!} in ${JSON.stringify(data)}`);
-    }
-    return array.map((element: Array<object>) => formatValue(item, element, messageTimestamp, logger));
-  }
-  return [formatValue(item, data, messageTimestamp, logger)];
-};
-
-export const formatValue = (
-  item: SouthConnectorItemEntity<SouthMQTTItemSettings>,
-  data: object,
-  messageTimestamp: Instant,
-  logger: pino.Logger
-): OIBusTimeValue => {
-  const dataTimestamp =
-    item.settings.jsonPayload!.timestampOrigin === 'oibus'
-      ? messageTimestamp
-      : getTimestamp(data, item.settings.jsonPayload!.timestampPayload!, messageTimestamp, logger);
-
-  const pointId =
-    item.settings.jsonPayload!.pointIdOrigin === 'oibus'
-      ? item.name
-      : getPointId(data, item.settings.jsonPayload!.pointIdPath!, item.name, logger);
-
-  const dataValue: { value: string; [key: string]: string | number } = {
-    value: objectPath.get(data, item.settings.jsonPayload!.valuePath)
-  };
-
-  for (const element of item.settings.jsonPayload!.otherFields!) {
-    dataValue[element.name] = objectPath.get(data, element.path);
-  }
-
-  return {
-    pointId: pointId,
-    timestamp: dataTimestamp,
-    data: {
-      ...dataValue
-    }
-  };
-};
-
-export const getPointId = (data: object, pointIdPath: string, itemName: string, logger: pino.Logger): string => {
-  const pointId = objectPath.get(data, pointIdPath);
-  if (!pointId || typeof pointId !== 'string') {
-    logger.warn(`Point ID not found for path ${pointIdPath} in ${JSON.stringify(data)}. Using item name "${itemName}" instead`);
-    return itemName;
-  }
-  return pointId;
 };
 
 export const getItem = (
@@ -205,26 +88,4 @@ export const wildcardTopic = (topic: string, wildcard: string): Array<string> | 
 
   if (t.length === w.length) return res;
   else return null;
-};
-
-export const getTimestamp = (
-  data: object,
-  formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload,
-  messageTimestamp: Instant,
-  logger: pino.Logger
-): string => {
-  const timestamp = objectPath.get(data, formatOptions.timestampPath!);
-  if (!timestamp) {
-    logger.warn(
-      `Timestamp not found for path ${formatOptions.timestampPath!} in ${JSON.stringify(
-        data
-      )}. Using OIBus timestamp "${messageTimestamp}" instead`
-    );
-    return messageTimestamp;
-  }
-  return convertDateTimeToInstant(timestamp, {
-    type: formatOptions.timestampType!,
-    timezone: formatOptions.timezone!,
-    format: formatOptions.timestampFormat!
-  });
 };

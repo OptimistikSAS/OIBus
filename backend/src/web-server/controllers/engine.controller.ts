@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
-import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO, EngineSettingsUpdateResultDTO, OIBusInfo } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import { toEngineSettingsDTO } from '../../service/oibus.service';
 
@@ -25,12 +25,16 @@ export class EngineController extends Controller {
    * Updates the configuration settings of the OIBus engine
    * @summary Update engine configuration
    * @param {EngineSettingsCommandDTO} command.body.required - Engine settings to update
+   * @returns {EngineSettingsUpdateResultDTO} Information about whether a redirect is needed
    */
   @Put('')
-  @SuccessResponse(204, 'Engine settings updated successfully')
-  async updateEngineSettings(@Body() command: EngineSettingsCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+  @SuccessResponse(200, 'Engine settings updated successfully')
+  async updateEngineSettings(
+    @Body() command: EngineSettingsCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<EngineSettingsUpdateResultDTO> {
     const oIBusService = request.services.oIBusService;
-    await oIBusService.updateEngineSettings(command);
+    return await oIBusService.updateEngineSettings(command);
   }
 
   /**

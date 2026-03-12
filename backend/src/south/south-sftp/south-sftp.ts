@@ -14,6 +14,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { encryptionService } from '../../service/encryption.service';
+import { Instant } from '../../model/types';
 
 /**
  * Class SouthSFTP - Retrieve files from remote SFTP instance
@@ -21,7 +22,7 @@ import { encryptionService } from '../../service/encryption.service';
 export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSFTPItemSettings> implements QueriesFile {
   constructor(
     connector: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent) => Promise<void>,
+    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -62,10 +63,42 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
   }
 
   /**
+   * List files recursively if enabled
+   */
+  private async listFilesRecursively(
+    client: sftpClient,
+    dirPath: string,
+    item: SouthConnectorItemEntity<SouthSFTPItemSettings>
+  ): Promise<Array<FileInfo>> {
+    const files: Array<FileInfo> = [];
+    const fileList = await client.list(dirPath);
+
+    for (const fileInfo of fileList) {
+      if (fileInfo.type === 'd' && item.settings.recursive) {
+        const subPath = `${dirPath}/${fileInfo.name}`;
+        const subFiles = await this.listFilesRecursively(client, subPath, item);
+        files.push(...subFiles);
+      } else if (fileInfo.type === '-' && this.checkCondition(item, fileInfo)) {
+        // Preserve the relative path for recursive files
+        fileInfo.name = `${dirPath}/${fileInfo.name}`.replace(item.settings.remoteFolder + '/', '');
+        files.push(fileInfo);
+      }
+    }
+    return files;
+  }
+
+  /**
    * Read the raw file and rewrite it to another file in the folder archive
    */
   async fileQuery(items: Array<SouthConnectorItemEntity<SouthSFTPItemSettings>>): Promise<void> {
     for (const item of items) {
+      let fileCount = 0;
+      let sizeRetrieved = 0;
+      const maxFiles = Number(item.settings.maxFiles) || 0;
+      const maxSize = (Number(item.settings.maxSize) || 0) * 1024 * 1024; // Convert MB to bytes
+
+      this.logger.debug(`File query limits for item ${item.name} - maxFiles: ${maxFiles}, maxSize: ${maxSize} bytes`);
+
       // List files in the inputFolder
       this.logger.trace(
         `Reading "${item.settings.remoteFolder}" remote folder on ${this.connector.settings.host}:${this.connector.settings.port} for item ${item.name}`
@@ -76,6 +109,21 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
       this.logger.debug(`Folder ${item.settings.remoteFolder} listed ${files.length} files in ${requestDuration} ms`);
 
       for (const file of files) {
+        // Check file count limit (applies across all items in this scan)
+        if (maxFiles > 0 && fileCount >= maxFiles) {
+          this.logger.debug(`Max files limit (${maxFiles}) reached for item ${item.name}, skipping remaining files`);
+          return;
+        }
+
+        // Check size limit (applies across all items in this scan)
+        const fileSize = file.size || 0;
+        if (maxSize > 0 && sizeRetrieved + fileSize > maxSize) {
+          this.logger.debug(`Max size limit (${item.settings.maxSize} MB) reached for item ${item.name}, skipping remaining files`);
+          return;
+        }
+
+        sizeRetrieved += fileSize;
+        fileCount++;
         await this.getFile(file, item);
       }
     }
@@ -133,9 +181,16 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     const connectionOptions = await this.createConnectionOptions();
     const client = new sftpClient();
     await client.connect(connectionOptions);
-    const fileList = await client.list(item.settings.remoteFolder, fileInfo => {
-      return this.checkCondition(item, fileInfo);
-    });
+
+    let fileList: Array<FileInfo>;
+    if (item.settings.recursive) {
+      fileList = await this.listFilesRecursively(client, item.settings.remoteFolder, item);
+    } else {
+      fileList = await client.list(item.settings.remoteFolder, fileInfo => {
+        return this.checkCondition(item, fileInfo);
+      });
+    }
+
     await client.end();
     return fileList;
   }
@@ -150,8 +205,13 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     await client.connect(connectionOptions);
 
     const fileToRetrieve = `${item.settings.remoteFolder}/${file.name}`;
-    const resultingFile = path.resolve(this.tmpFolder, file.name);
+    const safeFilename = file.name.split(path.sep).join('_');
+    const resultingFile = path.resolve(this.tmpFolder, safeFilename);
+    const startRequest = DateTime.now();
     await client.fastGet(fileToRetrieve, resultingFile);
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
+    this.logger.debug(`File "${fileToRetrieve}" downloaded in ${requestDuration} ms`);
+
     if (!item.settings.preserveFiles) {
       try {
         await client.delete(fileToRetrieve);
@@ -166,9 +226,9 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
     if (this.connector.settings.compression) {
       try {
         // Compress and send the compressed file
-        const gzipPath = path.resolve(this.tmpFolder, `${file.name}.gz`);
+        const gzipPath = path.resolve(this.tmpFolder, `${safeFilename}.gz`);
         await compress(resultingFile, gzipPath);
-        await this.addContent({ type: 'any', filePath: gzipPath });
+        await this.addContent({ type: 'any', filePath: gzipPath }, startRequest.toUTC().toISO(), [item.id]);
         try {
           await fs.unlink(resultingFile);
           await fs.unlink(gzipPath);
@@ -177,10 +237,10 @@ export default class SouthSFTP extends SouthConnector<SouthSFTPSettings, SouthSF
         }
       } catch {
         this.logger.error(`Error compressing file "${resultingFile}". Sending it raw instead`);
-        await this.addContent({ type: 'any', filePath: resultingFile });
+        await this.addContent({ type: 'any', filePath: resultingFile }, startRequest.toUTC().toISO(), [item.id]);
       }
     } else {
-      await this.addContent({ type: 'any', filePath: resultingFile });
+      await this.addContent({ type: 'any', filePath: resultingFile }, startRequest.toUTC().toISO(), [item.id]);
     }
 
     await client.end();

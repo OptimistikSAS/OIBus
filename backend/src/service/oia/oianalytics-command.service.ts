@@ -25,8 +25,12 @@ import {
   OIBusDeleteNorthConnectorCommand,
   OIBusDeleteScanModeCommand,
   OIBusDeleteSouthConnectorCommand,
+  OIBusGetHistoryCacheFileContentCommand,
+  OIBusGetNorthCacheFileContentCommand,
   OIBusRegenerateCipherKeysCommand,
   OIBusRestartEngineCommand,
+  OIBusSearchHistoryCacheContentCommand,
+  OIBusSearchNorthCacheContentCommand,
   OIBusSetpointCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
@@ -36,9 +40,11 @@ import {
   OIBusTestSouthConnectorItemCommand,
   OIBusUpdateCertificateCommand,
   OIBusUpdateEngineSettingsCommand,
+  OIBusUpdateHistoryCacheContentCommand,
   OIBusUpdateHistoryQueryCommand,
   OIBusUpdateHistoryQueryStatusCommand,
   OIBusUpdateIPFilterCommand,
+  OIBusUpdateNorthCacheContentCommand,
   OIBusUpdateNorthConnectorCommand,
   OIBusUpdateRegistrationSettingsCommand,
   OIBusUpdateScanModeCommand,
@@ -62,7 +68,7 @@ import { HistoryQueryCommandDTO, HistoryQueryItemDTO } from '../../../shared/mod
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
-import { SouthConnectorItemDTO, SouthConnectorItemCommandDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -447,6 +453,24 @@ export default class OIAnalyticsCommandService {
         case 'setpoint':
           await this.executeSetpointCommand(command);
           break;
+        case 'search-north-cache-content':
+          await this.executeSearchNorthCacheContentCommand(command);
+          break;
+        case 'search-history-cache-content':
+          await this.executeSearchHistoryCacheContentCommand(command);
+          break;
+        case 'get-north-cache-file-content':
+          await this.executeGetNorthCacheFileContentCommand(command);
+          break;
+        case 'get-history-cache-file-content':
+          await this.executeGetHistoryCacheFileContentCommand(command);
+          break;
+        case 'update-north-cache-content':
+          await this.executeUpdateNorthCacheContentCommand(command);
+          break;
+        case 'update-history-cache-content':
+          await this.executeUpdateHistoryCacheContentCommand(command);
+          break;
       }
     } catch (error: unknown) {
       this.ongoingExecuteCommand = false;
@@ -458,6 +482,7 @@ export default class OIAnalyticsCommandService {
       return;
     }
     this.ongoingExecuteCommand = false;
+    await this.sendAckCommands(registration);
     this.commandEvent.emit('next');
   }
 
@@ -666,7 +691,25 @@ export default class OIAnalyticsCommandService {
           : registration.commandPermissions.testNorthConnection,
         setpoint: registration.commandPermissions.setpoint
           ? command.commandContent.commandPermissions.setpoint
-          : registration.commandPermissions.setpoint
+          : registration.commandPermissions.setpoint,
+        searchNorthCacheContent: registration.commandPermissions.searchNorthCacheContent
+          ? command.commandContent.commandPermissions.searchNorthCacheContent
+          : registration.commandPermissions.searchNorthCacheContent,
+        getNorthCacheFileContent: registration.commandPermissions.getNorthCacheFileContent
+          ? command.commandContent.commandPermissions.getNorthCacheFileContent
+          : registration.commandPermissions.getNorthCacheFileContent,
+        updateNorthCacheContent: registration.commandPermissions.updateNorthCacheContent
+          ? command.commandContent.commandPermissions.updateNorthCacheContent
+          : registration.commandPermissions.updateNorthCacheContent,
+        searchHistoryCacheContent: registration.commandPermissions.searchHistoryCacheContent
+          ? command.commandContent.commandPermissions.searchHistoryCacheContent
+          : registration.commandPermissions.searchHistoryCacheContent,
+        getHistoryCacheFileContent: registration.commandPermissions.getHistoryCacheFileContent
+          ? command.commandContent.commandPermissions.getHistoryCacheFileContent
+          : registration.commandPermissions.getHistoryCacheFileContent,
+        updateHistoryCacheContent: registration.commandPermissions.updateHistoryCacheContent
+          ? command.commandContent.commandPermissions.updateHistoryCacheContent
+          : registration.commandPermissions.updateHistoryCacheContent
       }
     };
     await this.oIAnalyticsRegistrationService.editRegistrationSettings(registrationCommand);
@@ -679,12 +722,12 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeCreateScanModeCommand(command: OIBusCreateScanModeCommand) {
-    await this.scanModeService.create(command.commandContent);
+    await this.scanModeService.create(command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode created successfully');
   }
 
   private async executeUpdateScanModeCommand(command: OIBusUpdateScanModeCommand) {
-    await this.scanModeService.update(command.scanModeId, command.commandContent);
+    await this.scanModeService.update(command.scanModeId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Scan mode updated successfully');
   }
 
@@ -694,12 +737,12 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeCreateIPFilterCommand(command: OIBusCreateIPFilterCommand) {
-    await this.ipFilterService.create(command.commandContent);
+    await this.ipFilterService.create(command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'IP Filter created successfully');
   }
 
   private async executeUpdateIPFilterCommand(command: OIBusUpdateIPFilterCommand) {
-    await this.ipFilterService.update(command.ipFilterId, command.commandContent);
+    await this.ipFilterService.update(command.ipFilterId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'IP Filter updated successfully');
   }
 
@@ -709,12 +752,12 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeCreateCertificateCommand(command: OIBusCreateCertificateCommand) {
-    await this.certificateService.create(command.commandContent);
+    await this.certificateService.create(command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate created successfully');
   }
 
   private async executeUpdateCertificateCommand(command: OIBusUpdateCertificateCommand) {
-    await this.certificateService.update(command.certificateId, command.commandContent);
+    await this.certificateService.update(command.certificateId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Certificate updated successfully');
   }
 
@@ -768,13 +811,13 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateSouthCommand(command: OIBusCreateSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.create(command.commandContent, command.southConnectorId);
+    await this.southService.create(command.commandContent, command.southConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector created successfully');
   }
 
   private async executeUpdateSouthCommand(command: OIBusUpdateSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.update(command.southConnectorId, command.commandContent);
+    await this.southService.update(command.southConnectorId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connector updated successfully');
   }
 
@@ -815,6 +858,7 @@ export default class OIAnalyticsCommandService {
         scanModeId: item.scanMode.id,
         scanModeName: null
       })) as Array<SouthConnectorItemCommandDTO>,
+      'oianalytics',
       command.commandContent.deleteItemsNotPresent
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(
@@ -858,13 +902,13 @@ export default class OIAnalyticsCommandService {
 
   private async executeCreateNorthCommand(command: OIBusCreateNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.create(command.commandContent, command.northConnectorId);
+    await this.northService.create(command.commandContent, command.northConnectorId, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector created successfully');
   }
 
   private async executeUpdateNorthCommand(command: OIBusUpdateNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.update(command.northConnectorId, command.commandContent);
+    await this.northService.update(command.northConnectorId, command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connector updated successfully');
   }
 
@@ -921,14 +965,20 @@ export default class OIAnalyticsCommandService {
       command.commandContent,
       command.southConnectorId,
       command.northConnectorId,
-      command.historyQueryId
+      command.historyQueryId,
+      'oianalytics'
     );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query created successfully');
   }
 
   private async executeUpdateHistoryQueryCommand(command: OIBusUpdateHistoryQueryCommand, privateKey: string) {
     await this.decryptHistoryQuerySettings(command.commandContent.historyQuery, privateKey);
-    await this.historyQueryService.update(command.historyQueryId, command.commandContent.historyQuery, command.commandContent.resetCache);
+    await this.historyQueryService.update(
+      command.historyQueryId,
+      command.commandContent.historyQuery,
+      command.commandContent.resetCache,
+      'oianalytics'
+    );
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'History query updated successfully');
   }
 
@@ -960,7 +1010,7 @@ export default class OIAnalyticsCommandService {
       }
       throw new Error(stringError);
     }
-    await this.historyQueryService.importItems(historyQuery.id, items, command.commandContent.deleteItemsNotPresent);
+    await this.historyQueryService.importItems(historyQuery.id, items, 'oianalytics', command.commandContent.deleteItemsNotPresent);
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
       DateTime.now().toUTC().toISO(),
@@ -1072,6 +1122,70 @@ export default class OIAnalyticsCommandService {
     );
   }
 
+  async executeSearchNorthCacheContentCommand(command: OIBusSearchNorthCacheContentCommand): Promise<void> {
+    try {
+      const result = await this.oIBusService.searchCacheContent('north', command.northConnectorId, command.commandContent);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeSearchHistoryCacheContentCommand(command: OIBusSearchHistoryCacheContentCommand): Promise<void> {
+    try {
+      const result = await this.oIBusService.searchCacheContent('history', command.historyQueryId, command.commandContent);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeGetNorthCacheFileContentCommand(command: OIBusGetNorthCacheFileContentCommand): Promise<void> {
+    try {
+      const result = await this.oIBusService.getFileFromCache(
+        'north',
+        command.northConnectorId,
+        command.commandContent.folder,
+        command.commandContent.filename
+      );
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeGetHistoryCacheFileContentCommand(command: OIBusGetHistoryCacheFileContentCommand): Promise<void> {
+    try {
+      const result = await this.oIBusService.getFileFromCache(
+        'history',
+        command.historyQueryId,
+        command.commandContent.folder,
+        command.commandContent.filename
+      );
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeUpdateNorthCacheContentCommand(command: OIBusUpdateNorthCacheContentCommand): Promise<void> {
+    try {
+      await this.oIBusService.updateCacheContent('north', command.northConnectorId, command.commandContent);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Cache updated successfully');
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
+  async executeUpdateHistoryCacheContentCommand(command: OIBusUpdateHistoryCacheContentCommand): Promise<void> {
+    try {
+      await this.oIBusService.updateCacheContent('history', command.historyQueryId, command.commandContent);
+      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Cache updated successfully');
+    } catch (error: unknown) {
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+    }
+  }
+
   private checkCommandPermission(command: OIBusCommand, registration: OIAnalyticsRegistration) {
     switch (command.type) {
       case 'update-version':
@@ -1140,6 +1254,18 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.updateHistoryQuery;
       case 'setpoint':
         return registration.commandPermissions.setpoint;
+      case 'search-north-cache-content':
+        return registration.commandPermissions.searchNorthCacheContent;
+      case 'search-history-cache-content':
+        return registration.commandPermissions.searchHistoryCacheContent;
+      case 'get-north-cache-file-content':
+        return registration.commandPermissions.getNorthCacheFileContent;
+      case 'get-history-cache-file-content':
+        return registration.commandPermissions.getHistoryCacheFileContent;
+      case 'update-north-cache-content':
+        return registration.commandPermissions.updateNorthCacheContent;
+      case 'update-history-cache-content':
+        return registration.commandPermissions.updateHistoryCacheContent;
     }
   }
 }
@@ -1179,6 +1305,12 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'create-or-update-history-query-south-items-from-csv':
     case 'update-history-query-status':
     case 'setpoint':
+    case 'search-north-cache-content':
+    case 'search-history-cache-content':
+    case 'get-north-cache-file-content':
+    case 'get-history-cache-file-content':
+    case 'update-north-cache-content':
+    case 'update-history-cache-content':
       return command;
   }
 };

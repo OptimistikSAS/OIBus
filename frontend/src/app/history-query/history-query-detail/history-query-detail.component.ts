@@ -100,7 +100,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       this.scanModeService.list(),
       this.certificateService.list(),
       this.transformerService.list(),
-      this.engineService.getInfo()
+      this.engineService.info$
     ]).subscribe(([scanModes, certificates, transformers, engineInfo]) => {
       this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
       this.certificates = certificates;
@@ -186,7 +186,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
+  updateInMemoryTransformers(_transformers: Array<Omit<TransformerDTOWithOptions, 'south'>> | null) {
     this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
       this.historyQuery = JSON.parse(JSON.stringify(historyQuery)); // Used to force a refresh in history query item list
     });

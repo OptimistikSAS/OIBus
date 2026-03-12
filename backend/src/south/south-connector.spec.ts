@@ -92,6 +92,10 @@ describe('SouthConnector with file query', () => {
     await south.start();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly add to queue a new task and trigger next run', async () => {
     south.run = jest.fn();
 
@@ -273,6 +277,10 @@ describe('SouthConnector disabled', () => {
     await south.start();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should be properly initialized ', async () => {
     expect(logger.trace(`South connector ${testData.south.list[1].name} not enabled`));
     expect(south.isEnabled()).toEqual(false);
@@ -321,6 +329,10 @@ describe('SouthConnector with history and max instant per item', () => {
     south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
     await south.start();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should manage history query with several intervals with max instant per item', async () => {
@@ -494,6 +506,10 @@ describe('SouthConnector with history and subscription', () => {
     await south.start();
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should properly run task a task', async () => {
     south.historyQueryHandler = jest.fn().mockImplementationOnce(() => {
       throw new Error('history query error');
@@ -579,19 +595,40 @@ describe('SouthConnector with history and subscription', () => {
   });
 
   it('should add values', async () => {
-    await south.addContent({ type: 'time-values', content: [] });
+    await south.addContent({ type: 'time-values', content: [] }, testData.constants.dates.DATE_1, []);
     expect(logger.debug).toHaveBeenCalledTimes(1);
     expect(addContentCallback).not.toHaveBeenCalled();
 
-    await south.addContent({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> });
+    await south.addContent({ type: 'time-values', content: [{}, {}] as Array<OIBusTimeValue> }, testData.constants.dates.DATE_1, []);
     expect(logger.debug).toHaveBeenCalledWith(`Add 2 values to cache from South "${testData.south.list[2].name}"`);
-    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[2].id, { type: 'time-values', content: [{}, {}] });
+    expect(addContentCallback).toHaveBeenCalledWith(
+      testData.south.list[2].id,
+      { type: 'time-values', content: [{}, {}] },
+      testData.constants.dates.DATE_1,
+      []
+    );
   });
 
   it('should add file', async () => {
-    await south.addContent({ type: 'any', filePath: 'file.csv' });
+    await south.addContent({ type: 'any', filePath: 'file.csv' }, testData.constants.dates.DATE_1, []);
     expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${testData.south.list[2].name}"`);
-    expect(addContentCallback).toHaveBeenCalledWith(testData.south.list[2].id, { type: 'any', filePath: 'file.csv' });
+    expect(addContentCallback).toHaveBeenCalledWith(
+      testData.south.list[2].id,
+      { type: 'any', filePath: 'file.csv' },
+      testData.constants.dates.DATE_1,
+      []
+    );
+  });
+
+  it('should add any content', async () => {
+    await south.addContent({ type: 'any-content', content: 'file.csv' }, testData.constants.dates.DATE_1, []);
+    expect(logger.debug).toHaveBeenCalledWith(`Add 8 bytes of content to cache from South "${testData.south.list[2].name}"`);
+    expect(addContentCallback).toHaveBeenCalledWith(
+      testData.south.list[2].id,
+      { type: 'any-content', content: 'file.csv' },
+      testData.constants.dates.DATE_1,
+      []
+    );
   });
 
   it('should manage history query with several intervals', async () => {

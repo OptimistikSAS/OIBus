@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { Injectable, inject } from '@angular/core';
 import {
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
+  EngineSettingsUpdateResultDTO,
   OIBusInfo,
   RegistrationSettingsCommandDTO,
   RegistrationSettingsDTO
@@ -28,9 +29,10 @@ export class EngineService {
   /**
    * Update the selected external source
    * @param command - the new values of the engine settings
+   * @returns Information about whether a redirect is needed due to port change
    */
-  updateEngineSettings(command: EngineSettingsCommandDTO): Observable<void> {
-    return this.http.put<void>(`/api/engine`, command);
+  updateEngineSettings(command: EngineSettingsCommandDTO): Observable<EngineSettingsUpdateResultDTO> {
+    return this.http.put<EngineSettingsUpdateResultDTO>(`/api/engine`, command);
   }
 
   /**
@@ -43,6 +45,8 @@ export class EngineService {
   restart(): Observable<void> {
     return this.http.post<void>('/api/engine/restart', null);
   }
+
+  readonly info$: Observable<OIBusInfo> = this.http.get<OIBusInfo>('/api/engine/info').pipe(shareReplay(1));
 
   getInfo(): Observable<OIBusInfo> {
     return this.http.get<OIBusInfo>('/api/engine/info');
@@ -64,6 +68,13 @@ export class EngineService {
    */
   editRegistrationSettings(command: RegistrationSettingsCommandDTO): Observable<void> {
     return this.http.put<void>(`/api/oianalytics/registration`, command);
+  }
+
+  /**
+   * Test connection to OIAnalytics with the provided settings
+   */
+  testOIAnalyticsConnection(command: RegistrationSettingsCommandDTO): Observable<void> {
+    return this.http.post<void>(`/api/oianalytics/registration/test-connection`, command);
   }
 
   unregister(): Observable<void> {

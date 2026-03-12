@@ -33,6 +33,7 @@ import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { CustomTransformerCommandDTO } from '../../../shared/model/transformer.model';
+import { CustomTransformerDTO } from '../../../shared/model/transformer.model';
 import { Transformer } from '../../model/transformer.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 
@@ -86,6 +87,8 @@ const transformerCommandDTO: CustomTransformerCommandDTO = {
   inputType: 'time-values',
   outputType: 'any',
   customCode: 'console.log("Hello World");',
+  language: 'javascript',
+  timeout: 2000,
   customManifest: {
     type: 'object',
     key: 'transformers.options',
@@ -108,6 +111,8 @@ const transformers: Array<Transformer> = [
     inputType: 'time-values',
     outputType: 'any',
     customCode: 'console.log("Hello World");',
+    language: 'javascript',
+    timeout: 2000,
     customManifest: {
       type: 'object',
       key: 'transformers.options',
@@ -129,6 +134,8 @@ const transformers: Array<Transformer> = [
     inputType: 'any',
     outputType: 'any',
     customCode: 'console.log("Hello World");',
+    language: 'javascript',
+    timeout: 2000,
     customManifest: {
       type: 'object',
       key: 'transformers.options',
@@ -150,7 +157,57 @@ const transformers: Array<Transformer> = [
     inputType: 'setpoint',
     outputType: 'any',
     customCode: 'console.log("Hello World");',
+    language: 'javascript',
+    timeout: 2000,
     customManifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
+  }
+];
+const customTransformers: Array<CustomTransformerDTO> = [
+  {
+    id: 'transformerId1',
+    type: 'custom',
+    name: 'my transformer 1',
+    description: 'description',
+    inputType: 'time-values',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    language: 'javascript',
+    timeout: 2000,
+    manifest: {
+      type: 'object',
+      key: 'transformers.options',
+      translationKey: '',
+      attributes: [],
+      enablingConditions: [],
+      validators: [],
+      displayProperties: {
+        visible: true,
+        wrapInBox: false
+      }
+    }
+  },
+  {
+    id: 'transformerId2',
+    type: 'custom',
+    name: 'my transformer 2',
+    description: 'description',
+    inputType: 'any',
+    outputType: 'any',
+    customCode: 'console.log("Hello World");',
+    language: 'javascript',
+    timeout: 2000,
+    manifest: {
       type: 'object',
       key: 'transformers.options',
       translationKey: '',
@@ -471,6 +528,13 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         enabled: true,
         settings: {} as SouthItemSettings,
         scanMode: scanModes[0]
+      },
+      {
+        id: 'southItemId4',
+        name: 'item4',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        scanMode: scanModes[0]
       }
     ]
   },
@@ -502,7 +566,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     },
     items: [
       {
-        id: 'southItemId4',
+        id: 'southItemId5',
         name: 'opcua ha',
         enabled: true,
         settings: {
@@ -511,7 +575,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[0]
       },
       {
-        id: 'southItemId5',
+        id: 'southItemId6',
         name: 'opcua sub',
         enabled: true,
         settings: {
@@ -520,7 +584,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' }
       },
       {
-        id: 'southItemId6',
+        id: 'southItemId7',
         name: 'opcua da',
         enabled: true,
         settings: {
@@ -529,7 +593,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[1]
       },
       {
-        id: 'southItemId7',
+        id: 'southItemId8',
         name: 'opcua ha 2',
         enabled: true,
         settings: {
@@ -558,7 +622,10 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
         regex: '*',
         minAge: 100,
         preserveFiles: true,
-        ignoreModifiedDate: false
+        ignoreModifiedDate: false,
+        maxFiles: 0,
+        maxSize: 0,
+        recursive: false
       },
       scanModeId: scanModes[1].id,
       scanModeName: null
@@ -575,7 +642,10 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
     regex: '*',
     minAge: 100,
     preserveFiles: true,
-    ignoreModifiedDate: false
+    ignoreModifiedDate: false,
+    maxFiles: 0,
+    maxSize: 0,
+    recursive: false
   }
 };
 const itemTestingSettings: SouthConnectorItemTestingSettings = {
@@ -635,26 +705,48 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         retentionDuration: 72
       }
     },
-    subscriptions: [
+    transformers: [
       {
-        id: southConnectors[0].id,
-        name: southConnectors[0].name,
-        type: southConnectors[0].type,
-        description: southConnectors[0].description,
-        enabled: southConnectors[0].enabled
+        id: 'northTransformerId1',
+        transformer: transformers[0],
+        options: {},
+        inputType: transformers[0].inputType,
+        south: {
+          id: southConnectors[0].id,
+          name: southConnectors[0].name,
+          type: southConnectors[0].type,
+          description: southConnectors[0].description,
+          enabled: southConnectors[0].enabled
+        },
+        items: [
+          {
+            id: southConnectors[0].items[0].id,
+            name: southConnectors[0].items[0].name
+          }
+        ]
       },
       {
-        id: southConnectors[1].id,
-        name: southConnectors[1].name,
-        type: southConnectors[1].type,
-        description: southConnectors[1].description,
-        enabled: southConnectors[1].enabled
+        id: 'northTransformerId2',
+        transformer: transformers[1],
+        options: {},
+        inputType: transformers[1].inputType,
+        south: undefined,
+        items: []
+      },
+      {
+        id: 'northTransformerId3',
+        transformer: transformers[2],
+        options: {},
+        inputType: transformers[2].inputType,
+        south: {
+          id: southConnectors[1].id,
+          name: southConnectors[1].name,
+          type: southConnectors[1].type,
+          description: southConnectors[1].description,
+          enabled: southConnectors[1].enabled
+        },
+        items: []
       }
-    ],
-    transformers: [
-      { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
-      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType },
-      { transformer: transformers[2], options: {}, inputType: transformers[2].inputType }
     ]
   },
   {
@@ -689,15 +781,6 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         retentionDuration: 72
       }
     },
-    subscriptions: [
-      {
-        id: southConnectors[0].id,
-        name: southConnectors[0].name,
-        type: southConnectors[0].type,
-        description: southConnectors[0].description,
-        enabled: southConnectors[0].enabled
-      }
-    ],
     transformers: []
   }
 ];
@@ -733,10 +816,23 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
       retentionDuration: 0
     }
   },
-  subscriptions: [southConnectors[0].id],
   transformers: [
-    { transformerId: transformers[0].id, options: {}, inputType: transformers[0].inputType },
-    { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
+    {
+      id: 'northTransformerId4',
+      transformerId: transformers[0].id,
+      options: {},
+      inputType: transformers[0].inputType,
+      southId: southConnectors[0].id,
+      items: [{ id: southConnectors[0].items[0].id, name: southConnectors[0].items[0].name }]
+    },
+    {
+      id: 'northTransformerId5',
+      transformerId: transformers[1].id,
+      options: {},
+      inputType: transformers[1].inputType,
+      southId: undefined,
+      items: []
+    }
   ]
 };
 
@@ -830,8 +926,19 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       }
     ],
     northTransformers: [
-      { transformer: transformers[0], options: {}, inputType: transformers[0].inputType },
-      { transformer: transformers[1], options: {}, inputType: transformers[1].inputType }
+      {
+        id: 'historyTransformerId1',
+        transformer: transformers[0],
+        options: {},
+        inputType: transformers[0].inputType,
+        items: [
+          {
+            id: 'historyQueryItem2',
+            name: 'item2'
+          }
+        ]
+      },
+      { id: 'historyTransformerId2', transformer: transformers[1], options: {}, inputType: transformers[1].inputType, items: [] }
     ]
   },
   {
@@ -961,7 +1068,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   },
   items: [
     {
-      id: 'historyQueryItem4',
+      id: '',
       name: 'item4',
       enabled: true,
       settings: {
@@ -979,8 +1086,14 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
     }
   ],
   northTransformers: [
-    { transformerId: transformers[0].id, options: {}, inputType: transformers[0].inputType },
-    { transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType }
+    {
+      id: 'historyTransformerId3',
+      transformerId: transformers[0].id,
+      options: {},
+      inputType: transformers[0].inputType,
+      items: [{ id: '', name: 'item4' }]
+    },
+    { id: 'historyTransformerId4', transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType, items: [] }
   ]
 };
 const historyQueryItemCommand: HistoryQueryItemCommandDTO = {
@@ -1251,7 +1364,13 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchHistoryCacheContent: true,
+    getHistoryCacheFileContent: true,
+    updateHistoryCacheContent: true,
+    searchNorthCacheContent: true,
+    getNorthCacheFileContent: true,
+    updateNorthCacheContent: true
   }
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
@@ -1309,7 +1428,13 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchHistoryCacheContent: true,
+    getHistoryCacheFileContent: true,
+    updateHistoryCacheContent: true,
+    searchNorthCacheContent: true,
+    getNorthCacheFileContent: true,
+    updateNorthCacheContent: true
   }
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
@@ -1358,7 +1483,13 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
     updateNorth: true,
     deleteNorth: true,
     testNorthConnection: true,
-    setpoint: true
+    setpoint: true,
+    searchHistoryCacheContent: true,
+    getHistoryCacheFileContent: true,
+    updateHistoryCacheContent: true,
+    searchNorthCacheContent: true,
+    getNorthCacheFileContent: true,
+    updateNorthCacheContent: true
   }
 };
 
@@ -1585,7 +1716,13 @@ const oIBusCommands: Array<OIBusCommand> = [
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        updateHistoryCacheContent: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        updateNorthCacheContent: true
       }
     }
   }
@@ -1786,6 +1923,7 @@ export default Object.freeze({
   },
   transformers: {
     list: transformers,
+    customList: customTransformers,
     command: transformerCommandDTO
   },
   north: {

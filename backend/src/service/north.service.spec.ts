@@ -31,6 +31,7 @@ import { TransformerDTO } from '../../shared/model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { encryptionService } from './encryption.service';
 import { toScanModeDTO } from './scan-mode.service';
+import { NorthTransformerWithOptions } from '../model/transformer.model';
 
 jest.mock('./encryption.service');
 jest.mock('./utils');
@@ -78,6 +79,7 @@ describe('North Service', () => {
       }))
     );
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
+    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue(testData.south.list[0].items);
 
     service = new NorthService(
       validator,
@@ -92,6 +94,10 @@ describe('North Service', () => {
       transformerService,
       engine
     );
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should retrieve a list of north manifest', () => {
@@ -130,9 +136,9 @@ describe('North Service', () => {
   });
 
   it('should create a north connector', async () => {
-    await service.create(testData.north.command, null);
+    await service.create(testData.north.command, null, 'userTest');
 
-    expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
+    expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.createNorth).toHaveBeenCalledTimes(1);
     expect(engine.startNorth).toHaveBeenCalledTimes(1);
@@ -141,32 +147,31 @@ describe('North Service', () => {
   it('should create a north connector and not start it if disabled', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
     command.enabled = false;
-    command.subscriptions = [];
-    await service.create(command, null);
-    expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
+    await service.create(command, null, 'userTest');
+    expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.createNorth).toHaveBeenCalledTimes(1);
     expect(engine.startNorth).not.toHaveBeenCalled();
   });
 
-  it('should not create a north connector if subscription not found', async () => {
-    const command = JSON.parse(JSON.stringify(testData.north.command));
-    command.subscriptions = [testData.south.list[0].id, 'bad'];
-
-    await expect(service.create(command, null)).rejects.toThrow(`Could not find south connector "bad"`);
-  });
-
   it('should not create a north connector if transformer is not found', async () => {
     (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
-    await expect(service.create(testData.north.command, null)).rejects.toThrow(
+    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
       `Could not find OIBus transformer "${testData.transformers.list[0].id}"`
+    );
+  });
+
+  it('should not create a north connector if south is not found', async () => {
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([]);
+    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
+      `Could not find South connector "${testData.south.list[0].id}"`
     );
   });
 
   it('should not create a north connector with duplicate name', async () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'existing-id', name: testData.north.command.name }]);
 
-    await expect(service.create(testData.north.command, null)).rejects.toThrow(
+    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`North connector name "${testData.north.command.name}" already exists`)
     );
   });
@@ -174,9 +179,9 @@ describe('North Service', () => {
   it('should update a north connector', async () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
-    await service.update(testData.north.list[0].id, testData.north.command);
+    await service.update(testData.north.list[0].id, testData.north.command, 'userTest');
 
-    expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
+    expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadNorth).toHaveBeenCalledTimes(1);
   });
@@ -187,9 +192,9 @@ describe('North Service', () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
 
-    await service.update(testData.north.list[0].id, command);
+    await service.update(testData.north.list[0].id, command, 'userTest');
 
-    expect(northConnectorRepository.saveNorthConnector).toHaveBeenCalledTimes(1);
+    expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(engine.reloadNorth).toHaveBeenCalledTimes(1);
   });
 
@@ -199,8 +204,30 @@ describe('North Service', () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
 
-    await expect(service.update(testData.north.list[0].id, command)).rejects.toThrow(
+    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
       new OIBusValidationError(`North connector name "Duplicate Name" already exists`)
+    );
+  });
+
+  it('should not update a north connector if transformer not found', async () => {
+    const command = JSON.parse(JSON.stringify(testData.north.command));
+    command.name = 'New Name';
+    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
+
+    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
+      `Could not find OIBus transformer "${testData.transformers.list[0].id}"`
+    );
+  });
+
+  it('should not update a north connector if south not found', async () => {
+    const command = JSON.parse(JSON.stringify(testData.north.command));
+    command.name = 'New Name';
+    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
+    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([]);
+
+    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
+      `Could not find South connector "${testData.south.list[0].id}"`
     );
   });
 
@@ -230,7 +257,12 @@ describe('North Service', () => {
 
   it('should get a north stream for metrics', () => {
     service.getNorthDataStream(testData.north.list[0].id);
-    expect(engine.getNorthDataStream).toHaveBeenCalledWith(testData.north.list[0].id);
+    expect(engine.getNorthSSE).toHaveBeenCalledWith(testData.north.list[0].id);
+  });
+
+  it('should get a north metric', () => {
+    service.getNorthMetric(testData.north.list[0].id);
+    expect(engine.getNorthMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
   });
 
   it('should test a north connector in creation mode', async () => {
@@ -249,10 +281,13 @@ describe('North Service', () => {
 
   it('should add or edit transformer', () => {
     const transformerWithOptions = {
+      id: 'northTransformerId1',
       inputType: 'input',
       transformer: testData.transformers.list[0] as TransformerDTO,
-      options: {}
-    };
+      options: {},
+      south: undefined,
+      items: []
+    } as NorthTransformerWithOptions;
     service.addOrEditTransformer(testData.north.list[0].id, transformerWithOptions);
 
     expect(northConnectorRepository.addOrEditTransformer).toHaveBeenCalledWith(testData.north.list[0].id, transformerWithOptions);
@@ -261,140 +296,17 @@ describe('North Service', () => {
   });
 
   it('should remove transformer', () => {
-    service.removeTransformer(testData.north.list[0].id, testData.transformers.list[0].id);
+    service.removeTransformer(testData.north.list[0].id, testData.north.list[0].transformers[0].id);
 
-    expect(northConnectorRepository.removeTransformer).toHaveBeenCalledWith(testData.north.list[0].id, testData.transformers.list[0].id);
+    expect(northConnectorRepository.removeTransformer).toHaveBeenCalledWith(testData.north.list[0].transformers[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
     expect(engine.updateNorthConfiguration).toHaveBeenCalledWith(testData.north.list[0].id);
-  });
-
-  it('should check if subscription is set', () => {
-    (northConnectorRepository.checkSubscription as jest.Mock).mockReturnValueOnce(true);
-
-    expect(service.checkSubscription(testData.north.list[0].id, testData.south.list[0].id)).toEqual(true);
-
-    expect(northConnectorRepository.checkSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-  });
-
-  it('should subscribe to south', async () => {
-    (northConnectorRepository.checkSubscription as jest.Mock).mockReturnValueOnce(false);
-
-    await service.subscribeToSouth(testData.north.list[0].id, testData.south.list[0].id);
-
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(northConnectorRepository.checkSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-    expect(northConnectorRepository.createSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-  });
-
-  it('should throw if subscription already exists', async () => {
-    (northConnectorRepository.checkSubscription as jest.Mock).mockReturnValueOnce(true);
-
-    await expect(service.subscribeToSouth(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow(
-      new OIBusValidationError(`North connector "${testData.north.list[0].name}" already subscribed to "${testData.south.list[0].name}"`)
-    );
-
-    expect(northConnectorRepository.createSubscription).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
-  });
-
-  it('should throw if south not found when subscribing', async () => {
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
-
-    await expect(service.subscribeToSouth(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow(
-      new NotFoundError(`South connector "${testData.south.list[0].id}" not found`)
-    );
-
-    expect(northConnectorRepository.checkSubscription).not.toHaveBeenCalled();
-    expect(northConnectorRepository.createSubscription).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
-  });
-
-  it('should unsubscribe from south', async () => {
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
-
-    await service.unsubscribeFromSouth(testData.north.list[0].id, testData.south.list[0].id);
-
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(northConnectorRepository.deleteSubscription).toHaveBeenCalledWith(testData.north.list[0].id, testData.south.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-  });
-
-  it('should throw if south not found when unsubscribing', async () => {
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
-
-    await expect(service.unsubscribeFromSouth(testData.north.list[0].id, testData.south.list[0].id)).rejects.toThrow(
-      new NotFoundError(`South connector "${testData.south.list[0].id}" not found`)
-    );
-
-    expect(northConnectorRepository.deleteSubscription).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
-  });
-
-  it('should unsubscribe from all south', async () => {
-    await service.unsubscribeFromAllSouth(testData.north.list[0].id);
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(northConnectorRepository.deleteAllSubscriptionsByNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-  });
-
-  it('should search cache content', async () => {
-    await service.searchCacheContent(
-      testData.north.list[0].id,
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
-    expect(engine.searchCacheContent).toHaveBeenCalledWith(
-      'north',
-      testData.north.list[0].id,
-      { start: testData.constants.dates.DATE_1, end: testData.constants.dates.DATE_2, nameContains: 'file' },
-      'cache'
-    );
-  });
-
-  it('should get cache content file stream', async () => {
-    (engine.getCacheContentFileStream as jest.Mock).mockReturnValueOnce('file');
-    const result = await service.getCacheFileContent(testData.north.list[0].id, 'cache', 'filename');
-    expect(result).toEqual('file');
-    expect(engine.getCacheContentFileStream).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', 'filename');
-  });
-
-  it('should not get cache content file stream and throw not found', async () => {
-    (engine.getCacheContentFileStream as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.getCacheFileContent(testData.north.list[0].id, 'cache', 'filename')).rejects.toThrow(
-      new NotFoundError(`File "filename" not found in cache`)
-    );
-    expect(engine.getCacheContentFileStream).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', 'filename');
-  });
-
-  it('should remove cache content', async () => {
-    await service.removeCacheContent(testData.north.list[0].id, 'cache', ['filename']);
-    expect(engine.removeCacheContent).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', ['filename']);
-  });
-
-  it('should remove all cache content', async () => {
-    await service.removeAllCacheContent(testData.north.list[0].id, 'cache');
-    expect(engine.removeAllCacheContent).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache');
-  });
-
-  it('should move cache content', async () => {
-    await service.moveCacheContent(testData.north.list[0].id, 'cache', 'error', ['filename']);
-    expect(engine.moveCacheContent).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', 'error', ['filename']);
-  });
-
-  it('should move all cache content', async () => {
-    await service.moveAllCacheContent(testData.north.list[0].id, 'cache', 'archive');
-    expect(engine.moveAllCacheContent).toHaveBeenCalledWith('north', testData.north.list[0].id, 'cache', 'archive');
   });
 
   it('should execute setpoint', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     (northMock.isEnabled as jest.Mock).mockReturnValueOnce(true);
-    (engine.getNorth as jest.Mock).mockReturnValue(northMock);
+    (engine.getNorth as jest.Mock).mockReturnValue({ north: northMock });
     const callback = jest.fn();
     const commandContent = [{ reference: 'reference', value: '123456' }];
     await service.executeSetpoint('northId', commandContent, callback);
@@ -408,7 +320,7 @@ describe('North Service', () => {
           }
         ]
       },
-      'oianalytics'
+      { source: 'oianalytics' }
     );
     expect(callback).toHaveBeenCalledWith(
       `Setpoint ${JSON.stringify([{ reference: 'reference', value: '123456' }])} properly sent into the cache of northId`
@@ -418,19 +330,10 @@ describe('North Service', () => {
   it('should not execute setpoint if north disabled', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     (northMock.isEnabled as jest.Mock).mockReturnValueOnce(false);
-    (engine.getNorth as jest.Mock).mockReturnValue(northMock);
+    (engine.getNorth as jest.Mock).mockReturnValue({ north: northMock });
     const callback = jest.fn();
     await expect(service.executeSetpoint('northId', [{ reference: 'reference', value: '123456' }], callback)).rejects.toThrow(
       `North connector "northId" disabled`
-    );
-    expect(callback).not.toHaveBeenCalled();
-  });
-
-  it('should not execute setpoint content if north not found', async () => {
-    (engine.getNorth as jest.Mock).mockReturnValue(null);
-    const callback = jest.fn();
-    await expect(service.executeSetpoint('badId', [{ reference: 'reference', value: '123456' }], callback)).rejects.toThrow(
-      `North connector "badId" not found`
     );
     expect(callback).not.toHaveBeenCalled();
   });
@@ -481,11 +384,13 @@ describe('North Service', () => {
           retentionDuration: northEntity.caching.archive.retentionDuration
         }
       },
-      subscriptions: northEntity.subscriptions,
       transformers: northEntity.transformers.map(transformerWithOptions => ({
+        id: transformerWithOptions.id,
         transformer: toTransformerDTO(transformerWithOptions.transformer),
         options: transformerWithOptions.options,
-        inputType: transformerWithOptions.inputType
+        inputType: transformerWithOptions.inputType,
+        south: transformerWithOptions.south,
+        items: transformerWithOptions.items
       }))
     });
     expect(toNorthConnectorLightDTO(northEntity)).toEqual({

@@ -54,7 +54,13 @@ export default class OIAnalyticsRegistrationRepository {
         updateNorth: true,
         deleteNorth: true,
         testNorthConnection: true,
-        setpoint: true
+        setpoint: true,
+        searchNorthCacheContent: true,
+        getNorthCacheFileContent: true,
+        updateNorthCacheContent: true,
+        searchHistoryCacheContent: true,
+        getHistoryCacheFileContent: true,
+        updateHistoryCacheContent: true
       }
     });
   }
@@ -71,7 +77,9 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_history_query, command_update_history_query, command_delete_history_query, command_create_or_update_history_items_from_csv, ` +
       `command_test_history_north_connection, command_test_history_south_connection, command_test_history_south_item, ` +
       `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, command_test_south_connection, command_test_south_item, ` +
-      `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint ` +
+      `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
+      `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
+      `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content ` +
       `FROM ${REGISTRATIONS_TABLE};`;
     const results = this.database.prepare(query).all();
 
@@ -109,7 +117,9 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_history_query = ?, command_update_history_query = ?, command_delete_history_query = ?, ` +
       `command_create_or_update_history_items_from_csv = ?, command_test_history_north_connection = ?, command_test_history_south_connection = ?, command_test_history_south_item = ?, ` +
       `command_create_south = ?, command_update_south = ?, command_delete_south = ?, command_create_or_update_south_items_from_csv = ?, command_test_south_connection = ?, command_test_south_item = ?, ` +
-      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ? ` +
+      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
+      `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
+      `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ? ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
@@ -163,7 +173,13 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateNorth,
         +command.commandPermissions.deleteNorth,
         +command.commandPermissions.testNorthConnection,
-        +command.commandPermissions.setpoint
+        +command.commandPermissions.setpoint,
+        +command.commandPermissions.searchHistoryCacheContent,
+        +command.commandPermissions.getHistoryCacheFileContent,
+        +command.commandPermissions.updateHistoryCacheContent,
+        +command.commandPermissions.searchNorthCacheContent,
+        +command.commandPermissions.getNorthCacheFileContent,
+        +command.commandPermissions.updateNorthCacheContent
       );
   }
 
@@ -193,7 +209,9 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_history_query = ?, command_update_history_query = ?, command_delete_history_query = ?, ` +
       `command_create_or_update_history_items_from_csv = ?, command_test_history_north_connection = ?, command_test_history_south_connection = ?, command_test_history_south_item = ?,` +
       `command_create_south = ?, command_update_south = ?, command_delete_south = ?, command_create_or_update_south_items_from_csv = ?, command_test_south_connection = ?, command_test_south_item = ?,` +
-      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ? ` +
+      `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
+      `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
+      `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ? ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
@@ -241,7 +259,13 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateNorth,
         +command.commandPermissions.deleteNorth,
         +command.commandPermissions.testNorthConnection,
-        +command.commandPermissions.setpoint
+        +command.commandPermissions.setpoint,
+        +command.commandPermissions.searchHistoryCacheContent,
+        +command.commandPermissions.getHistoryCacheFileContent,
+        +command.commandPermissions.updateHistoryCacheContent,
+        +command.commandPermissions.searchNorthCacheContent,
+        +command.commandPermissions.getNorthCacheFileContent,
+        +command.commandPermissions.updateNorthCacheContent
       );
   }
 
@@ -254,7 +278,6 @@ export default class OIAnalyticsRegistrationRepository {
     if (this.get()) {
       return;
     }
-
     const query =
       `INSERT INTO ${REGISTRATIONS_TABLE} (id, host, status, use_proxy, proxy_url, proxy_username, proxy_password, use_api_gateway, api_gateway_header_key, api_gateway_header_value, api_gateway_base_endpoint, ` +
       `accept_unauthorized, command_refresh_interval, command_retry_interval, message_retry_interval, command_update_version, ` +
@@ -266,8 +289,10 @@ export default class OIAnalyticsRegistrationRepository {
       `command_test_history_north_connection, command_test_history_south_connection, command_test_history_south_item, ` +
       `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, ` +
       `command_test_south_connection, command_test_south_item, ` +
-      `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint ` +
-      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
+      `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
+      `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content ` +
+      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
     this.database
       .prepare(query)
       .run(
@@ -317,7 +342,13 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateNorth,
         +command.commandPermissions.deleteNorth,
         +command.commandPermissions.testNorthConnection,
-        +command.commandPermissions.setpoint
+        +command.commandPermissions.setpoint,
+        +command.commandPermissions.searchHistoryCacheContent,
+        +command.commandPermissions.getHistoryCacheFileContent,
+        +command.commandPermissions.updateHistoryCacheContent,
+        +command.commandPermissions.searchNorthCacheContent,
+        +command.commandPermissions.getNorthCacheFileContent,
+        +command.commandPermissions.updateNorthCacheContent
       );
   }
 
@@ -377,7 +408,13 @@ export default class OIAnalyticsRegistrationRepository {
         updateNorth: Boolean(result.command_update_north),
         deleteNorth: Boolean(result.command_delete_north),
         testNorthConnection: Boolean(result.command_test_north_connection),
-        setpoint: Boolean(result.command_setpoint)
+        setpoint: Boolean(result.command_setpoint),
+        searchHistoryCacheContent: Boolean(result.command_search_history_cache_content),
+        getHistoryCacheFileContent: Boolean(result.command_get_history_cache_file_content),
+        updateHistoryCacheContent: Boolean(result.command_update_history_cache_content),
+        searchNorthCacheContent: Boolean(result.command_search_north_cache_content),
+        getNorthCacheFileContent: Boolean(result.command_get_north_cache_file_content),
+        updateNorthCacheContent: Boolean(result.command_update_north_cache_content)
       }
     };
   }

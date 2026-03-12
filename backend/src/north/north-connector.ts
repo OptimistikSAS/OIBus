@@ -2,21 +2,30 @@ import pino from 'pino';
 import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
-import { CacheMetadata, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
+import {
+  CacheContentUpdateCommand,
+  CacheMetadata,
+  CacheMetadataSource,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  FileCacheContent,
+  OIBusContent
+} from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { delay, generateRandomId, validateCronExpression } from '../service/utils';
+import { createOIBusError, delay, generateRandomId, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
-import { OIBusError } from '../model/engine.model';
 import CacheService from '../service/cache/cache.service';
 import { Readable } from 'node:stream';
-import fsAsync from 'node:fs/promises';
 import { createTransformer } from '../service/transformer.service';
-import IgnoreTransformer from '../service/transformers/ignore-transformer';
-import IsoTransformer from '../service/transformers/iso-transformer';
+import IgnoreTransformer from '../transformers/ignore-transformer';
+import IsoTransformer from '../transformers/iso-transformer';
+import { NorthTransformerWithOptions } from '../model/transformer.model';
+import { CONTENT_FOLDER } from '../model/engine.model';
 
 /**
  * Class NorthConnector: provides general attributes and methods for north connectors.
@@ -36,13 +45,7 @@ import IsoTransformer from '../service/transformers/iso-transformer';
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
 export default abstract class NorthConnector<T extends NorthSettings> {
-  private cacheSize = {
-    cacheSize: 0,
-    errorSize: 0,
-    archiveSize: 0
-  };
-
-  private contentBeingSent: { metadataFilename: string; metadata: CacheMetadata } | null = null;
+  private contentBeingSent: { filename: string; metadata: CacheMetadata } | null = null;
   private errorCount = 0;
 
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
@@ -54,38 +57,16 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private taskRunnerEvent: EventEmitter = new EventEmitter();
   public metricsEvent: EventEmitter = new EventEmitter();
 
-  private cacheSizeWarningHasBeenTriggered = false;
   private stopping = false;
-  private cacheLogDebounceFlag = false;
-  private cacheLogDebounceTimeout: NodeJS.Timeout | null = null;
 
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
     protected logger: pino.Logger,
-    protected cacheFolderPath: string,
     private cacheService: CacheService
-  ) {
-    if (this.connector.id === 'test') {
-      return;
-    }
+  ) {}
 
-    this.cacheService.cacheSizeEventEmitter.on('cache-size', this.onCacheSize);
-    this.cacheService.cacheSizeEventEmitter.on('init-cache-size', this.onInitCacheSize);
-  }
-
-  private onCacheSize = (sizeToAdd: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
-    this.cacheSize.cacheSize += sizeToAdd.cacheSizeToAdd;
-    this.cacheSize.errorSize += sizeToAdd.errorSizeToAdd;
-    this.cacheSize.archiveSize += sizeToAdd.archiveSizeToAdd;
-    this.cacheSizeWarningHasBeenTriggered = false; // If the cache size is updated, allow the warning to trigger again
-    this.metricsEvent.emit('cache-size', this.cacheSize);
-  };
-
-  private onInitCacheSize = (initialCacheSize: { cacheSizeToAdd: number; errorSizeToAdd: number; archiveSizeToAdd: number }) => {
-    this.cacheSize.cacheSize = initialCacheSize.cacheSizeToAdd;
-    this.cacheSize.errorSize = initialCacheSize.errorSizeToAdd;
-    this.cacheSize.archiveSize = initialCacheSize.archiveSizeToAdd;
-    this.metricsEvent.emit('cache-size', this.cacheSize);
+  private onCacheSize = (cacheSize: { cache: number; error: number; archive: number }) => {
+    this.metricsEvent.emit('cache-size', cacheSize);
   };
 
   set connectorConfiguration(connectorConfiguration: NorthConnectorEntity<T>) {
@@ -97,15 +78,15 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   async start(): Promise<void> {
-    if (this.connector.id !== 'test') {
-      this.taskRunnerEvent.on('run', async (taskDescription: { id: string; name: string }) => {
-        await this.run(taskDescription);
-      });
-      this.logger.debug(`North connector "${this.connector.name}" enabled`);
-    }
-    this.cacheSizeWarningHasBeenTriggered = false;
+    this.cacheService.cacheSizeEventEmitter.on('cache-size', this.onCacheSize);
+    this.taskRunnerEvent.on('run', async (taskDescription: { id: string; name: string }) => {
+      await this.run(taskDescription);
+    });
+    this.logger.debug(`North connector "${this.connector.name}" enabled`);
     await this.cacheService.start();
-    await this.connect();
+    if (this.isEnabled()) {
+      await this.connect();
+    }
   }
 
   isEnabled(): boolean {
@@ -117,14 +98,13 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * North connector implementation to allow connection to a third party application for example.
    */
   async connect(): Promise<void> {
-    if (this.connector.id !== 'test') {
-      this.metricsEvent.emit('connect', {
-        lastConnection: DateTime.now().toUTC().toISO()!
-      });
-      this.createCronJob(this.connector.caching.trigger.scanMode);
-      // Check at startup if a run must be triggered
-      await this.triggerRunIfNecessary(this.connector.caching.throttling.runMinDelay);
-    }
+    this.metricsEvent.emit('connect', {
+      lastConnection: DateTime.now().toUTC().toISO()!
+    });
+    this.createCronJob(this.connector.caching.trigger.scanMode);
+    // Check at startup if a run must be triggered
+    await this.triggerRunIfNecessary(this.connector.caching.throttling.runMinDelay);
+
     this.logger.info(`North connector "${this.connector.name}" of type ${this.connector.type} started`);
   }
 
@@ -198,285 +178,305 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     if (!this.contentBeingSent) {
       return;
     }
+
     const runStart = DateTime.now();
-    try {
-      // Transform content filename into a full path of a file to ease the treatment in each north connector
-      const contentToSend: {
-        metadataFilename: string;
-        metadata: CacheMetadata;
-      } = JSON.parse(JSON.stringify(this.contentBeingSent));
-      contentToSend.metadata.contentFile = path.join(
-        this.cacheService.cacheFolder,
-        this.cacheService.CONTENT_FOLDER,
-        contentToSend.metadata.contentFile
-      );
-      this.metricsEvent.emit('run-start', {
-        lastRunStart: runStart.toUTC().toISO()!
+
+    // Transform content filename into a full path of a file to ease the treatment in each north connector
+    const contentToSend: {
+      filename: string;
+      metadata: CacheMetadata;
+    } = JSON.parse(JSON.stringify(this.contentBeingSent));
+    this.metricsEvent.emit('run-start', {
+      lastRunStart: runStart.toUTC().toISO()!
+    });
+
+    if (!this.supportedTypes().includes(contentToSend.metadata.contentType)) {
+      this.logger.error(`Unsupported data type: ${contentToSend.metadata.contentType} (file ${contentToSend.filename})`);
+      this.metricsEvent.emit('run-end', {
+        lastRunDuration: DateTime.now().toMillis() - runStart.toMillis(),
+        metadata: contentToSend.metadata,
+        action: 'errored'
       });
-      await this.handleContent(contentToSend.metadata);
+      await this.manageErrorContent(contentToSend);
+      this.contentBeingSent = null;
+      this.errorCount = 0;
+      return;
+    }
+    const fileStream = createReadStream(path.join(this.getCacheFolder(), CONTENT_FOLDER, contentToSend.filename));
+    try {
+      await this.handleContent(fileStream, contentToSend.metadata);
+      fileStream.close();
       if (this.connector.caching.archive.enabled) {
-        await this.cacheService.moveCacheContent('cache', 'archive', this.contentBeingSent!);
+        await this.cacheService.updateCacheContent({
+          cache: {
+            remove: [],
+            move: [{ to: 'archive', filename: contentToSend.filename }]
+          },
+          archive: { remove: [], move: [] },
+          error: { remove: [], move: [] }
+        });
         this.metricsEvent.emit('run-end', {
           lastRunDuration: DateTime.now().toMillis() - runStart.toMillis(),
-          metadata: this.contentBeingSent!.metadata,
+          metadata: contentToSend.metadata,
           action: 'archived'
         });
       } else {
-        await this.cacheService.removeCacheContent('cache', this.contentBeingSent!);
+        await this.cacheService.updateCacheContent({
+          cache: { remove: [contentToSend.filename], move: [] },
+          archive: { remove: [], move: [] },
+          error: { remove: [], move: [] }
+        });
         this.metricsEvent.emit('run-end', {
           lastRunDuration: DateTime.now().toMillis() - runStart.toMillis(),
-          metadata: this.contentBeingSent!.metadata,
+          metadata: contentToSend.metadata,
           action: 'sent'
         });
       }
-      this.contentBeingSent = null;
-      this.errorCount = 0;
     } catch (error: unknown) {
-      const oibusError = this.createOIBusError(error);
-      this.logger.error(
-        `Could not send content "${JSON.stringify(this.contentBeingSent)}" (${this.errorCount}). Error: ${oibusError.message}`
-      );
+      fileStream.close();
+      const oibusError = createOIBusError(error);
+      this.logger.error(`Could not send content "${JSON.stringify(contentToSend)}" (${this.errorCount}). Error: ${oibusError.message}`);
       this.metricsEvent.emit('run-end', {
         lastRunDuration: DateTime.now().toMillis() - runStart.toMillis(),
-        metadata: this.contentBeingSent!.metadata,
+        metadata: contentToSend.metadata,
         action: 'errored'
       });
       this.errorCount += 1;
-      if (!oibusError.retry && this.errorCount > this.connector.caching.error.retryCount) {
+      if (!oibusError.forceRetry && this.errorCount > this.connector.caching.error.retryCount) {
         this.logger.warn(`Moving content into error after ${this.errorCount} errors`);
-        await this.cacheService.moveCacheContent('cache', 'error', this.contentBeingSent!);
-        this.metricsEvent.emit('content-errored', {
-          filename: this.contentBeingSent!.metadata.contentFile,
-          size: this.contentBeingSent!.metadata.contentSize
-        });
-        this.contentBeingSent = null;
-        this.errorCount = 0;
+        await this.manageErrorContent(this.contentBeingSent!);
       }
+    } finally {
+      this.contentBeingSent = null;
+      this.errorCount = 0;
     }
   }
 
-  /**
-   * Create an OIBusError from an unknown error thrown by the handleFile or handleValues connector method
-   * The error thrown can be overridden with an OIBusError to force a retry on specific cases
-   */
-  createOIBusError(error: unknown): OIBusError {
-    if (typeof error === 'object' && error !== null && '_isOIBusError' in error) {
-      return error as OIBusError;
-    } else if (error instanceof Error) {
-      return new OIBusError(error.message, false);
-    } else if (typeof error === 'string') {
-      return new OIBusError(error, false);
-    } else {
-      return new OIBusError(JSON.stringify(error), false);
-    }
+  private async manageErrorContent(content: { filename: string; metadata: CacheMetadata }) {
+    await this.cacheService.updateCacheContent({
+      cache: {
+        remove: [],
+        move: [{ to: 'error', filename: content.filename }]
+      },
+      error: {
+        remove: [],
+        move: []
+      },
+      archive: {
+        remove: [],
+        move: []
+      }
+    });
+    this.metricsEvent.emit('content-errored', {
+      filename: content.metadata.contentFile,
+      size: content.metadata.contentSize
+    });
   }
 
-  async cacheContent(data: OIBusContent, source: string): Promise<void> {
-    const cacheSize = this.cacheSize.cacheSize + this.cacheSize.errorSize + this.cacheSize.archiveSize;
-    if (this.connector.caching.throttling.maxSize !== 0 && cacheSize >= this.connector.caching.throttling.maxSize * 1024 * 1024) {
-      if (!this.cacheSizeWarningHasBeenTriggered) {
-        this.logger.warn(
-          `North cache is exceeding the maximum allowed size (${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.throttling.maxSize} MB). Values will be discarded until the cache is emptied (by sending files/values or manual removal)`
-        );
-        this.cacheSizeWarningHasBeenTriggered = true;
-      }
+  async cacheContent(data: OIBusContent, source: CacheMetadataSource): Promise<void> {
+    if (this.cacheService.cacheIsFull(this.connector.caching.throttling.maxSize)) {
       return;
     }
 
-    const transformerWithOptions = this.connector.transformers.find(element => element.inputType === data.type);
-    if (!transformerWithOptions) {
-      if (!this.supportedTypes().includes(data.type)) {
-        this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
-      } else {
-        await this.cacheWithoutTransform(data, source);
-        // No delay needed here, we check for trigger right now, once the cache is updated
-        await this.triggerRunIfNecessary(0);
-      }
-      return;
+    const transformerConfig = this.findTransformer(data, source);
+    if (!transformerConfig) {
+      return this.handleNoTransformer(data);
     }
+
     if (
-      transformerWithOptions &&
-      transformerWithOptions.transformer.type === 'standard' &&
-      transformerWithOptions.transformer.functionName === IgnoreTransformer.transformerName
+      transformerConfig.transformer.type === 'standard' &&
+      transformerConfig.transformer.functionName === IgnoreTransformer.transformerName
     ) {
       this.logger.trace(`Ignoring data of type ${data.type}`);
       return;
     }
 
-    // Iso data
     if (
-      transformerWithOptions.transformer.type === 'standard' &&
-      transformerWithOptions.transformer.functionName === IsoTransformer.transformerName
+      transformerConfig.transformer.type === 'standard' &&
+      transformerConfig.transformer.functionName === IsoTransformer.transformerName
     ) {
-      await this.cacheWithoutTransform(data, source);
-      // No delay needed here, we check for trigger right now, once the cache is updated
-      await this.triggerRunIfNecessary(0);
-      return;
+      return this.cacheWithoutTransformAndTrigger(data);
     }
 
-    // Transform data
     this.logger.trace(
-      `Transforming data of type ${data.type} into ${transformerWithOptions.transformer.outputType} type with transformer ${transformerWithOptions.transformer.id}`
+      `Transforming data of type ${data.type} into ${transformerConfig.transformer.outputType} using transformer ${transformerConfig.transformer.id}`
     );
-    const transformer = createTransformer(transformerWithOptions, this.connector, this.logger);
-    switch (data.type) {
-      case 'time-values':
-        if (this.connector.caching.throttling.maxNumberOfElements > 0) {
-          for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
-            const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
-            const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(chunks)), source, null);
-            await this.persistDataInCache(metadata, output);
-          }
-        } else {
-          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
-          await this.persistDataInCache(metadata, output);
-        }
-        break;
-      case 'setpoint':
-        {
-          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
-          await this.persistDataInCache(metadata, output);
-        }
-        break;
-      case 'any':
-        // Use a random ID to be sure to have a unique filename
-        const randomId = generateRandomId(10);
-        const cacheFilename = `${path.parse(data.filePath).name}-${randomId}${path.parse(data.filePath).ext}`;
-        const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, cacheFilename);
-        await this.persistDataInCache(metadata, output);
-        break;
-    }
+    await this.executeTransformation(data, transformerConfig, source);
 
     // No delay needed here, we check for trigger right now, once the cache is updated
     await this.triggerRunIfNecessary(0);
   }
 
-  private async cacheWithoutTransform(data: OIBusContent, source: string) {
-    if (data.type === 'any') {
-      const randomId = generateRandomId(10);
-      const cacheFilename = `${path.parse(data.filePath).name}-${randomId}${path.parse(data.filePath).ext}`;
-      await this.persistDataInCache(
+  private findTransformer(data: OIBusContent, metadataSource: CacheMetadataSource): NorthTransformerWithOptions | undefined {
+    // First check with south id (most specific)
+    let transformerWithOptions: NorthTransformerWithOptions | undefined;
+    if (metadataSource.source === 'south') {
+      transformerWithOptions = this.connector.transformers.find(element => {
+        // first check input type, south and items
+        return (
+          element.inputType &&
+          element.south &&
+          element.items.length &&
+          element.inputType === data.type &&
+          element.south.id === metadataSource.southId &&
+          metadataSource.itemIds.some(itemId => element.items.find(item => item.id === itemId))
+        );
+      });
+
+      // then check input type and south
+      if (!transformerWithOptions) {
+        transformerWithOptions = this.connector.transformers.find(element => {
+          return (
+            element.inputType &&
+            element.south &&
+            !element.items.length &&
+            element.inputType === data.type &&
+            element.south.id === metadataSource.southId
+          );
+        });
+      }
+
+      // last check input type
+      if (!transformerWithOptions) {
+        transformerWithOptions = this.connector.transformers.find(element => {
+          return element.inputType && !element.south && !element.items.length && element.inputType === data.type;
+        });
+      }
+    } else {
+      // case oianalytics, api or test
+      transformerWithOptions = this.connector.transformers.find(element => {
+        return element.inputType === data.type && !element.south && !element.items.length;
+      });
+    }
+
+    return transformerWithOptions;
+  }
+
+  private async handleNoTransformer(data: OIBusContent): Promise<void> {
+    if (!this.supportedTypes().includes(data.type)) {
+      this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
+      return;
+    }
+    await this.cacheWithoutTransformAndTrigger(data);
+  }
+
+  private async cacheWithoutTransformAndTrigger(data: OIBusContent): Promise<void> {
+    await this.cacheWithoutTransform(data);
+    await this.triggerRunIfNecessary(0);
+  }
+
+  private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {
+    const transformer = createTransformer(config, this.connector, this.logger);
+
+    switch (data.type) {
+      case 'time-values':
         {
-          contentFile: cacheFilename,
-          contentSize: 0,
-          createdAt: '',
-          numberOfElement: 0,
-          contentType: data.type,
-          source,
-          options: {}
-        },
-        createReadStream(data.filePath)
-      );
+          const maxElements = this.connector.caching.throttling.maxNumberOfElements;
+          const content = data.content;
+
+          if (maxElements > 0 && content.length > maxElements) {
+            // Chunk processing
+            for (let i = 0; i < content.length; i += maxElements) {
+              const chunk = content.slice(i, i + maxElements);
+              const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(chunk)), source, null);
+              await this.cacheService.addCacheContent(output, {
+                contentType: metadata.contentType,
+                contentFilename: metadata.contentFile,
+                numberOfElement: metadata.numberOfElement
+              });
+            }
+          } else {
+            // Single batch
+            const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(content)), source, null);
+            await this.cacheService.addCacheContent(output, {
+              contentType: metadata.contentType,
+              contentFilename: metadata.contentFile,
+              numberOfElement: metadata.numberOfElement
+            });
+          }
+        }
+        break;
+
+      case 'setpoint':
+        {
+          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
+          await this.cacheService.addCacheContent(output, {
+            contentType: metadata.contentType,
+            contentFilename: metadata.contentFile,
+            numberOfElement: metadata.numberOfElement
+          });
+        }
+        break;
+      case 'any-content':
+        {
+          const { metadata, output } = await transformer.transform(Readable.from(data.content), source, null);
+          await this.cacheService.addCacheContent(output, {
+            contentType: metadata.contentType,
+            contentFilename: metadata.contentFile,
+            numberOfElement: metadata.numberOfElement
+          });
+        }
+        break;
+
+      case 'any':
+        {
+          const randomId = generateRandomId(10);
+          const { name, ext } = path.parse(data.filePath);
+          const cacheFilename = `${name}-${randomId}${ext}`;
+
+          const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, cacheFilename);
+          await this.cacheService.addCacheContent(output, {
+            contentType: metadata.contentType,
+            contentFilename: metadata.contentFile,
+            numberOfElement: metadata.numberOfElement
+          });
+        }
+        break;
+    }
+  }
+
+  private async cacheWithoutTransform(data: OIBusContent) {
+    if (data.type === 'any') {
+      await this.cacheService.addCacheContent(createReadStream(data.filePath), {
+        contentType: data.type,
+        contentFilename: data.filePath
+      });
+    } else if (data.type === 'any-content') {
+      await this.cacheService.addCacheContent(Readable.from(data.content), {
+        contentType: data.type
+      });
     } else {
       if (this.connector.caching.throttling.maxNumberOfElements > 0) {
         for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
           const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
-          const randomId = generateRandomId(10);
-          await this.persistDataInCache(
-            {
-              contentFile: randomId,
-              contentSize: 0,
-              createdAt: '',
-              numberOfElement: chunks.length,
-              contentType: data.type,
-              source,
-              options: {}
-            },
-            Readable.from(JSON.stringify(chunks))
-          );
+          await this.cacheService.addCacheContent(Readable.from(JSON.stringify(data.content)), {
+            contentType: data.type,
+            numberOfElement: chunks.length
+          });
         }
       } else {
-        const randomId = generateRandomId(10);
-        await this.persistDataInCache(
-          {
-            contentFile: randomId,
-            contentSize: 0,
-            createdAt: '',
-            numberOfElement: data.content.length,
-            contentType: data.type,
-            source,
-            options: {}
-          },
-          Readable.from(JSON.stringify(data.content))
-        );
+        await this.cacheService.addCacheContent(Readable.from(JSON.stringify(data.content)), {
+          contentType: data.type,
+          numberOfElement: data.content.length
+        });
       }
     }
-  }
-
-  async persistDataInCache(metadata: CacheMetadata, output: string | ReadStream | Readable) {
-    await fsAsync.writeFile(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, metadata.contentFile), output, {
-      encoding: 'utf-8',
-      flag: 'w'
-    });
-    const fileStat = await fsAsync.stat(path.join(this.cacheService.cacheFolder, this.cacheService.CONTENT_FOLDER, metadata.contentFile));
-    metadata.contentSize = fileStat.size;
-    metadata.createdAt = DateTime.fromMillis(fileStat.ctimeMs).toUTC().toISO()!;
-    const metadataFilename = `${generateRandomId(10)}.json`;
-    await fsAsync.writeFile(
-      path.join(this.cacheService.cacheFolder, this.cacheService.METADATA_FOLDER, metadataFilename),
-      JSON.stringify(metadata),
-      {
-        encoding: 'utf-8',
-        flag: 'w'
-      }
-    );
-    this.cacheService.addCacheContentToQueue({ metadataFilename, metadata });
-    this.metricsEvent.emit('cache-content-size', fileStat.size);
-    this.logCacheState(metadata);
   }
 
   isCacheEmpty(): boolean {
     return this.cacheService.cacheIsEmpty();
   }
 
-  async searchCacheContent(
-    searchParams: CacheSearchParam,
-    folder: 'cache' | 'archive' | 'error'
-  ): Promise<Array<{ metadataFilename: string; metadata: CacheMetadata }>> {
-    return await this.cacheService.searchCacheContent(searchParams, folder);
+  async searchCacheContent(searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> {
+    return await this.cacheService.searchCacheContent(searchParams);
   }
 
-  async metadataFileListToCacheContentList(folder: 'cache' | 'archive' | 'error', metadataFilenameList: Array<string>) {
-    return await this.cacheService.metadataFileListToCacheContentList(folder, metadataFilenameList);
+  async getFileFromCache(folder: DataFolderType, filename: string): Promise<FileCacheContent> {
+    return await this.cacheService.getFileFromCache(folder, filename);
   }
 
-  async getCacheContentFileStream(folder: 'cache' | 'archive' | 'error', filename: string): Promise<ReadStream | null> {
-    return await this.cacheService.getCacheContentFileStream(folder, filename);
-  }
-
-  async removeCacheContent(
-    folder: 'cache' | 'archive' | 'error',
-    cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }>
-  ): Promise<void> {
-    for (const cacheContent of cacheContentList) {
-      await this.cacheService.removeCacheContent(folder, cacheContent);
-    }
-  }
-
-  async removeAllCacheContent(folder: 'cache' | 'archive' | 'error'): Promise<void> {
-    await this.cacheService.removeAllCacheContent(folder);
-  }
-
-  async moveCacheContent(
-    originFolder: 'cache' | 'archive' | 'error',
-    destinationFolder: 'cache' | 'archive' | 'error',
-    cacheContentList: Array<{ metadataFilename: string; metadata: CacheMetadata }>
-  ): Promise<void> {
-    for (const cacheContent of cacheContentList) {
-      await this.cacheService.moveCacheContent(originFolder, destinationFolder, cacheContent);
-    }
-  }
-
-  async moveAllCacheContent(originFolder: 'cache' | 'archive' | 'error', destinationFolder: 'cache' | 'archive' | 'error'): Promise<void> {
-    await this.cacheService.moveAllCacheContent(originFolder, destinationFolder);
-  }
-
-  /**
-   * Check whether the North is subscribed to a South.
-   * If subscribedTo is not defined or an empty array, the subscription is true.
-   */
-  isSubscribed(southId: string): boolean {
-    return this.connector.subscriptions.length === 0 || this.connector.subscriptions.some(south => south.id === southId);
+  async updateCacheContent(updateCommand: CacheContentUpdateCommand): Promise<void> {
+    await this.cacheService.updateCacheContent(updateCommand);
   }
 
   /**
@@ -484,13 +484,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * North connector implementation to allow disconnecting to a third party application for example.
    */
   async disconnect(): Promise<void> {
-    if (this.cacheLogDebounceTimeout) {
-      clearTimeout(this.cacheLogDebounceTimeout);
-      this.cacheLogDebounceTimeout = null;
-    }
-    this.cacheLogDebounceFlag = false;
-    this.cacheService.cacheSizeEventEmitter.off('cache-size', this.onCacheSize);
-    this.cacheService.cacheSizeEventEmitter.off('init-cache-size', this.onInitCacheSize);
+    this.cacheService.stop();
     this.logger.info(`"${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
@@ -522,9 +516,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   async resetCache(): Promise<void> {
-    await this.cacheService.removeAllCacheContent('cache');
-    await this.cacheService.removeAllCacheContent('error');
-    await this.cacheService.removeAllCacheContent('archive');
+    await this.cacheService.removeAllCacheContent();
   }
 
   async updateScanMode(scanMode: ScanMode): Promise<void> {
@@ -564,56 +556,13 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
-  abstract testConnection(): Promise<void>;
-
-  abstract handleContent(cacheMetadata: CacheMetadata): Promise<void>;
-
   abstract supportedTypes(): Array<string>;
 
-  private logCacheState(metadata: CacheMetadata): void {
-    // Debounce logging to prevent verbose output during heavy data loads
-    if (this.cacheLogDebounceFlag) {
-      return;
-    }
+  abstract testConnection(): Promise<void>;
 
-    const cacheSnapshot = {
-      cacheSizeBytes: this.cacheSize.cacheSize,
-      errorSizeBytes: this.cacheSize.errorSize,
-      archiveSizeBytes: this.cacheSize.archiveSize,
-      queuedElements: this.cacheService.getNumberOfElementsInQueue(),
-      queuedRawFiles: this.cacheService.getNumberOfRawFilesInQueue()
-    };
+  abstract handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void>;
 
-    const cacheSizeMB = Math.floor((cacheSnapshot.cacheSizeBytes / 1024 / 1024) * 100) / 100;
-    const errorSizeMB = Math.floor((cacheSnapshot.errorSizeBytes / 1024 / 1024) * 100) / 100;
-    const archiveSizeMB = Math.floor((cacheSnapshot.archiveSizeBytes / 1024 / 1024) * 100) / 100;
-
-    this.logger.debug(
-      {
-        cacheState: {
-          ...cacheSnapshot,
-          cacheSizeMB,
-          errorSizeMB,
-          archiveSizeMB
-        },
-        lastAddedContent: {
-          contentType: metadata.contentType,
-          numberOfElement: metadata.numberOfElement,
-          contentSize: metadata.contentSize,
-          source: metadata.source
-        }
-      },
-      `Cache updated: ${cacheSnapshot.queuedElements} time-values and ${cacheSnapshot.queuedRawFiles} raw file(s) in queue. ` +
-        `Cache: ${cacheSizeMB} MB, Error: ${errorSizeMB} MB, Archive: ${archiveSizeMB} MB`
-    );
-
-    // Set debounce flag and reset after 10 seconds
-    this.cacheLogDebounceFlag = true;
-    if (this.cacheLogDebounceTimeout) {
-      clearTimeout(this.cacheLogDebounceTimeout);
-    }
-    this.cacheLogDebounceTimeout = setTimeout(() => {
-      this.cacheLogDebounceFlag = false;
-    }, 10000);
+  protected getCacheFolder() {
+    return this.cacheService.cacheFolder;
   }
 }

@@ -18,7 +18,9 @@ import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
-import { BaseFolders, NotFoundError, OIBusValidationError } from '../model/types';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import { OIBusError } from '../model/engine.model';
+import Stream from 'node:stream';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -120,19 +122,6 @@ export const createFolder = async (folder: string): Promise<void> => {
     await fs.stat(folderPath);
   } catch {
     await fs.mkdir(folderPath, { recursive: true });
-  }
-};
-
-/**
- * Create folders defined by the BaseFolders type
- */
-export const createBaseFolders = async (baseFolders: BaseFolders, entityType: 'south' | 'north' | 'history') => {
-  for (const type of Object.keys(baseFolders) as Array<keyof BaseFolders>) {
-    await createFolder(baseFolders[type]);
-    if (entityType === 'history') {
-      await createFolder(path.resolve(baseFolders[type], 'north'));
-      await createFolder(path.resolve(baseFolders[type], 'south'));
-    }
   }
 };
 
@@ -282,8 +271,10 @@ export const persistResults = async (
   serializationSettings: SerializationSettings,
   connectorName: string,
   itemName: string,
+  itemId: string,
+  queryTime: Instant,
   baseFolder: string,
-  addContentFn: (data: OIBusContent) => Promise<void>,
+  addContentFn: (data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
@@ -305,7 +296,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [itemId]);
         try {
           await fs.unlink(gzipPath);
           logger.trace(`File "${gzipPath}" deleted`);
@@ -314,7 +305,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending file "${filePath}" to Engine`);
-        await addContentFn({ type: 'any', filePath });
+        await addContentFn({ type: 'any', filePath }, queryTime, [itemId]);
         try {
           await fs.unlink(filePath);
           logger.trace(`File ${filePath} deleted`);
@@ -343,7 +334,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath });
+        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [itemId]);
 
         try {
           await fs.unlink(gzipPath);
@@ -353,7 +344,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: csvPath });
+        await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [itemId]);
 
         try {
           await fs.unlink(csvPath);
@@ -435,8 +426,8 @@ export const formatInstant = (
 
 export const convertDateTimeToInstant = (
   dateTime: string | number | Date,
-  options: { type?: DateTimeType; timezone?: string; format?: string; locale?: string }
-): string => {
+  options: { type?: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
+): Instant => {
   // Early return if no conversion is needed (assume input is already an ISO string)
   if (!options.type) {
     if (typeof dateTime === 'string' && DateTime.fromISO(dateTime).isValid) {
@@ -500,6 +491,15 @@ export const convertDateTimeToInstant = (
   } catch (error) {
     throw new Error(`Failed to convert "${dateTime}" to Instant for type "${type}": ${(error as Error).message}`);
   }
+};
+
+export const convertDateTime = (
+  dateTime: string | number | Date,
+  input: { type: DateTimeType; timezone?: string; format?: string; locale?: string },
+  output: { type: DateTimeType; timezone?: string; format?: string; locale?: string }
+) => {
+  const instant: Instant = convertDateTimeToInstant(dateTime, input);
+  return formatInstant(instant, output);
 };
 
 export const formatQueryParams = (
@@ -732,4 +732,118 @@ export const testIPOnFilter = (ipFilters: Array<string>, ipToCheck: string): boo
       return regexIPv6.test(ipToCheck);
     }
   });
+};
+
+export const sanitizeFilename = (originalName: string): string => {
+  return originalName.replace(/['"]/g, '').replace(/[^a-zA-Z0-9-_.]/g, '-');
+};
+
+/**
+ * Helper: Replaces '*' in a JSONPath with actual indices sequentially.
+ * Example: path="$.vals[*].sub[*]", indices=[0, 5] -> "$.vals[0].sub[5]"
+ * It is used to retrieve line by line each field and populate csv rows
+ */
+export const injectIndices = (pathDefinition: string, indices: Array<number>): string => {
+  let indexPointer = 0;
+  // Regex matches '[*]' literals
+  return pathDefinition.replace(/\[\*\]/g, () => {
+    // If we run out of indices (parent accessing global), we assume 0 or keep wildcard
+    // But usually, we just take the next available index.
+    const val = indices[indexPointer] !== undefined ? indices[indexPointer] : '*';
+    indexPointer++;
+    return `[${val}]`;
+  });
+};
+
+export const processCacheFileContent = async (
+  stream: NodeJS.ReadableStream,
+  sizeLimit = 1024 * 500 // 500KB limit
+): Promise<{ content: string; truncated: boolean }> => {
+  const chunks: Array<Buffer> = [];
+  let totalSize = 0;
+  let truncated = false;
+
+  for await (const chunk of stream) {
+    const bufferChunk = Buffer.from(chunk);
+    if (totalSize + bufferChunk.length > sizeLimit) {
+      const remaining = sizeLimit - totalSize;
+      if (remaining > 0) {
+        chunks.push(bufferChunk.subarray(0, remaining));
+        totalSize += remaining;
+      }
+      truncated = true;
+      break;
+    }
+    chunks.push(bufferChunk);
+    totalSize += bufferChunk.length;
+  }
+  return { content: Buffer.concat(chunks).toString('utf-8'), truncated };
+};
+
+export const determineContentTypeFromFilename = (filename: string): 'csv' | 'xml' | 'json' | 'raw' => {
+  const { ext } = path.parse(filename);
+  switch (ext) {
+    case '.csv':
+      return 'csv';
+    case '.json':
+      return 'json';
+    case '.xml':
+      return 'xml';
+    default:
+      return 'raw';
+  }
+};
+
+export const streamToString = (stream: Stream): Promise<string> => {
+  const chunks: Array<Buffer> = [];
+  return new Promise((resolve, reject) => {
+    stream.on('data', chunk => chunks.push(Buffer.from(chunk)));
+    stream.on('error', err => reject(err));
+    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+  });
+};
+/**
+ * Create an OIBusError from an unknown error thrown by the handleFile or handleValues connector method
+ * The error thrown can be overridden with an OIBusError to force a retry on specific cases
+ */
+export const createOIBusError = (error: unknown): OIBusError => {
+  if (typeof error === 'object' && error !== null && '_isOIBusError' in error) {
+    return error as OIBusError;
+  } else if (error instanceof Error) {
+    return new OIBusError(error.message, false);
+  } else if (typeof error === 'string') {
+    return new OIBusError(error, false);
+  } else {
+    return new OIBusError(JSON.stringify(error), false);
+  }
+};
+
+// Helper to bypass Node's strict "exports" rule in package.json
+export const resolveBypassingExports = (pkgName: string, subPath: string) => {
+  try {
+    // Try standard resolution first
+    return require.resolve(`${pkgName}/${subPath}`);
+  } catch (error: unknown) {
+    const err = error as Error & { code?: string };
+
+    // Native Node throws ERR_PACKAGE_PATH_NOT_EXPORTED.
+    // Jest throws MODULE_NOT_FOUND when "exports" blocks a path.
+    if (err.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED' || err.code === 'MODULE_NOT_FOUND') {
+      try {
+        const mainPath = require.resolve(pkgName); // e.g., .../node_modules/luxon/build/node/luxon.js
+        const searchStr = `node_modules${path.sep}${pkgName}`;
+        const rootIdx = mainPath.lastIndexOf(searchStr);
+
+        if (rootIdx !== -1) {
+          const rootPath = mainPath.substring(0, rootIdx + searchStr.length);
+          return path.join(rootPath, subPath);
+        }
+      } catch {
+        // If we can't even resolve the main package (pkgName), it truly doesn't exist.
+        // We throw the original error to preserve the exact message.
+        throw error;
+      }
+    }
+    throw error;
+  }
 };

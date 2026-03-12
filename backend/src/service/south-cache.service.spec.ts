@@ -16,6 +16,10 @@ describe('South cache service', () => {
     service = new SouthCacheService(southCacheRepository);
   });
 
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('should create or update cache scan mode', () => {
     const command: SouthCache = {
       scanModeId: 'id1',

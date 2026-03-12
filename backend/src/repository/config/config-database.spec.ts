@@ -25,7 +25,11 @@ import {
   OIAnalyticsFetchDeleteNorthConnectorCommandDTO,
   OIAnalyticsFetchDeleteScanModeCommandDTO,
   OIAnalyticsFetchDeleteSouthConnectorCommandDTO,
+  OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO,
+  OIAnalyticsFetchGetNorthCacheFileContentCommandDTO,
   OIAnalyticsFetchRestartEngineCommandDTO,
+  OIAnalyticsFetchSearchHistoryCacheContentCommandDTO,
+  OIAnalyticsFetchSearchNorthCacheContentCommandDTO,
   OIAnalyticsFetchSetpointCommandDTO,
   OIAnalyticsFetchTestHistoryQueryNorthConnectionCommandDTO,
   OIAnalyticsFetchTestHistoryQuerySouthConnectionCommandDTO,
@@ -35,9 +39,11 @@ import {
   OIAnalyticsFetchTestSouthItemCommandDTO,
   OIAnalyticsFetchUpdateCertificateCommandDTO,
   OIAnalyticsFetchUpdateEngineSettingsCommandDTO,
+  OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryCommandDTO,
   OIAnalyticsFetchUpdateHistoryQueryStatusCommandDTO,
   OIAnalyticsFetchUpdateIPFilterCommandDTO,
+  OIAnalyticsFetchUpdateNorthCacheContentCommandDTO,
   OIAnalyticsFetchUpdateNorthConnectorCommandDTO,
   OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO,
   OIAnalyticsFetchUpdateScanModeCommandDTO,
@@ -65,19 +71,22 @@ import {
 } from '../../../shared/model/south-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
 import TransformerRepository from './transformer.repository';
-import { CustomTransformer, StandardTransformer } from '../../model/transformer.model';
-import OIBusTimeValuesToCsvTransformer from '../../service/transformers/time-values/oibus-time-values-to-csv-transformer';
-import IsoTransformer from '../../service/transformers/iso-transformer';
-import OIBusTimeValuesToJSONTransformer from '../../service/transformers/time-values/oibus-time-values-to-json-transformer';
-import OIBusTimeValuesToMQTTTransformer from '../../service/transformers/time-values/oibus-time-values-to-mqtt-transformer';
-import OIBusTimeValuesToOPCUATransformer from '../../service/transformers/time-values/oibus-time-values-to-opcua-transformer';
-import OIBusTimeValuesToModbusTransformer from '../../service/transformers/time-values/oibus-time-values-to-modbus-transformer';
-import IgnoreTransformer from '../../service/transformers/ignore-transformer';
-import OIBusSetpointToModbusTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-modbus-transformer';
-import OIBusSetpointToMQTTTransformer from '../../service/transformers/setpoint/oibus-setpoint-to-mqtt-transformer';
-import OIBusSetpointToOPCUATransformer from '../../service/transformers/setpoint/oibus-setpoint-to-opcua-transformer';
-import { TransformerDTO } from '../../../shared/model/transformer.model';
-import OIBusTimeValuesToOIAnalyticsTransformer from '../../service/transformers/time-values/oibus-time-values-to-oianalytics-transformer';
+import { CustomTransformer, StandardTransformer, Transformer } from '../../model/transformer.model';
+import OIBusTimeValuesToCsvTransformer from '../../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
+import IsoTransformer from '../../transformers/iso-transformer';
+import OIBusTimeValuesToJSONTransformer from '../../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
+import OIBusTimeValuesToMQTTTransformer from '../../transformers/time-values/oibus-time-values-to-mqtt/oibus-time-values-to-mqtt-transformer';
+import OIBusTimeValuesToOPCUATransformer from '../../transformers/time-values/oibus-time-values-to-opcua/oibus-time-values-to-opcua-transformer';
+import OIBusTimeValuesToModbusTransformer from '../../transformers/time-values/oibus-time-values-to-modbus/oibus-time-values-to-modbus-transformer';
+import IgnoreTransformer from '../../transformers/ignore-transformer';
+import OIBusSetpointToModbusTransformer from '../../transformers/setpoint/oibus-setpoint-to-modbus/oibus-setpoint-to-modbus-transformer';
+import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
+import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-setpoint-to-opcua/oibus-setpoint-to-opcua-transformer';
+import OIBusTimeValuesToOIAnalyticsTransformer from '../../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
+import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
+import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
+import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
+import { CacheSearchParam } from '../../../shared/model/engine.model';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -89,6 +98,7 @@ describe('Repository with populated database', () => {
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('config');
   });
 
@@ -123,88 +133,109 @@ describe('Repository with populated database', () => {
   describe('Transformer', () => {
     const standardTransformers: Array<StandardTransformer> = [
       {
-        id: 'standardTransformer0',
+        id: 'csvToMqtt',
+        inputType: 'any',
+        functionName: CSVToMQTTTransformer.transformerName,
+        outputType: 'mqtt',
+        type: 'standard'
+      },
+      {
+        id: 'csvToTimeValues',
+        inputType: 'any',
+        functionName: CSVToTimeValuesTransformer.transformerName,
+        outputType: 'time-values',
+        type: 'standard'
+      },
+      {
+        id: 'ignore',
         type: 'standard',
         functionName: IgnoreTransformer.transformerName,
         inputType: 'any',
         outputType: 'any'
       },
       {
-        id: 'standardTransformer1',
+        id: 'iso',
         type: 'standard',
         functionName: IsoTransformer.transformerName,
         inputType: 'any',
         outputType: 'any'
       },
       {
-        id: 'standardTransformer2',
+        id: 'jsonToCsv',
+        inputType: 'any',
+        functionName: JSONToCSVTransformer.transformerName,
+        outputType: 'any',
+        type: 'standard'
+      },
+      {
+        id: 'oibusTimeValuesToCsv',
         type: 'standard',
         functionName: OIBusTimeValuesToCsvTransformer.transformerName,
         inputType: 'time-values',
         outputType: 'any'
       },
       {
-        id: 'standardTransformer3',
+        id: 'oibusTimeValuesToJson',
         type: 'standard',
         functionName: OIBusTimeValuesToJSONTransformer.transformerName,
         inputType: 'time-values',
         outputType: 'any'
       },
       {
-        id: 'standardTransformer4',
-        inputType: 'time-values',
-        functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
-        outputType: 'mqtt',
-        type: 'standard'
-      },
-      {
-        id: 'standardTransformer5',
-        inputType: 'time-values',
-        functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
-        outputType: 'opcua',
-        type: 'standard'
-      },
-      {
-        id: 'standardTransformer6',
+        id: 'oibusTimeValuesToModbus',
         inputType: 'time-values',
         functionName: OIBusTimeValuesToModbusTransformer.transformerName,
         outputType: 'modbus',
         type: 'standard'
       },
       {
-        id: 'standardTransformer7',
+        id: 'oibusTimeValuesToMqtt',
+        inputType: 'time-values',
+        functionName: OIBusTimeValuesToMQTTTransformer.transformerName,
+        outputType: 'mqtt',
+        type: 'standard'
+      },
+      {
+        id: 'oibusTimeValuesToOia',
+        inputType: 'time-values',
+        functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
+        outputType: 'oianalytics',
+        type: 'standard'
+      },
+      {
+        id: 'oibusTimeValuesToOpcua',
+        inputType: 'time-values',
+        functionName: OIBusTimeValuesToOPCUATransformer.transformerName,
+        outputType: 'opcua',
+        type: 'standard'
+      },
+      {
+        id: 'oibusSetpointToModbus',
         inputType: 'setpoint',
         functionName: OIBusSetpointToModbusTransformer.transformerName,
         outputType: 'modbus',
         type: 'standard'
       },
       {
-        id: 'standardTransformer8',
-        inputType: 'setpoint',
-        functionName: OIBusSetpointToOPCUATransformer.transformerName,
-        outputType: 'opcua',
-        type: 'standard'
-      },
-      {
-        id: 'standardTransformer9',
+        id: 'oibusSetpointToMqtt',
         inputType: 'setpoint',
         functionName: OIBusSetpointToMQTTTransformer.transformerName,
         outputType: 'mqtt',
         type: 'standard'
       },
       {
-        id: 'standardTransformer10',
-        inputType: 'time-values',
-        functionName: OIBusTimeValuesToOIAnalyticsTransformer.transformerName,
-        outputType: 'oianalytics',
+        id: 'oibusSetpointToOpcua',
+        inputType: 'setpoint',
+        functionName: OIBusSetpointToOPCUATransformer.transformerName,
+        outputType: 'opcua',
         type: 'standard'
       }
     ];
     let repository: TransformerRepository;
 
     beforeAll(() => {
-      for (let i = 0; i < standardTransformers.length; i++) {
-        (generateRandomId as jest.Mock).mockReturnValueOnce('standardTransformer' + i);
+      for (const element of standardTransformers) {
+        (generateRandomId as jest.Mock).mockReturnValueOnce(element.id);
       }
     });
 
@@ -307,10 +338,11 @@ describe('Repository with populated database', () => {
     });
 
     it('should update name and description certificate', () => {
-      repository.updateNameAndDescription('new id', 'new name', 'new description');
+      repository.updateNameAndDescription('new id', 'new name', 'new description', 'userTest');
       const result = repository.findById('new id')!;
       expect(result.name).toEqual('new name');
       expect(result.description).toEqual('new description');
+      expect(result.updatedBy).toEqual('userTest');
     });
 
     it('should delete certificate', () => {
@@ -507,6 +539,10 @@ describe('Repository with populated database', () => {
       jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
       repository = new OIAnalyticsCommandRepository(database);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it('should properly list commands', () => {
@@ -1445,6 +1481,158 @@ describe('Repository with populated database', () => {
         commandContent: command.commandContent
       });
     });
+
+    it('should properly read search-north-cache-content command from database', () => {
+      const command: OIAnalyticsFetchSearchNorthCacheContentCommandDTO = {
+        id: 'searchNorthCacheContentId',
+        targetVersion: '3.8.0',
+        type: 'search-north-cache-content',
+        northConnectorId: 'northId1',
+        commandContent: { searchParams: {} as CacheSearchParam, maxNumberOfFilesReturned: 1000 }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      });
+    });
+
+    it('should properly read search-history-cache-content command from database', () => {
+      const command: OIAnalyticsFetchSearchHistoryCacheContentCommandDTO = {
+        id: 'searchHistoryCacheContentId',
+        targetVersion: '3.8.0',
+        type: 'search-history-cache-content',
+        historyQueryId: 'historyId1',
+        commandContent: { searchParams: {} as CacheSearchParam, maxNumberOfFilesReturned: 1000 }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      });
+    });
+
+    it('should properly read get-north-cache-file-content command from database', () => {
+      const command: OIAnalyticsFetchGetNorthCacheFileContentCommandDTO = {
+        id: 'getNorthCacheFileContentId',
+        targetVersion: '3.8.0',
+        type: 'get-north-cache-file-content',
+        northConnectorId: 'northId1',
+        commandContent: { folder: 'error' as const, filename: 'file.txt' }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      });
+    });
+
+    it('should properly read get-history-cache-file-content command from database', () => {
+      const command: OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO = {
+        id: 'getHistoryCacheFileContentId',
+        targetVersion: '3.8.0',
+        type: 'get-history-cache-file-content',
+        historyQueryId: 'historyId1',
+        commandContent: { folder: 'error' as const, filename: 'file.txt' }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      });
+    });
+
+    it('should properly read update-north-cache-content command from database', () => {
+      const command: OIAnalyticsFetchUpdateNorthCacheContentCommandDTO = {
+        id: 'updateNorthCacheContentId',
+        targetVersion: '3.8.0',
+        type: 'update-north-cache-content',
+        northConnectorId: 'northId1',
+        commandContent: {
+          cache: { remove: [], move: [] },
+          error: { remove: [], move: [] },
+          archive: { remove: [], move: [] }
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        northConnectorId: command.northConnectorId,
+        commandContent: command.commandContent
+      });
+    });
+
+    it('should properly read update-history-cache-content command from database', () => {
+      const command: OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO = {
+        id: 'updateHistoryCacheContentId',
+        targetVersion: '3.8.0',
+        type: 'update-history-cache-content',
+        historyQueryId: 'historyId1',
+        commandContent: {
+          cache: { remove: [], move: [] },
+          error: { remove: [], move: [] },
+          archive: { remove: [], move: [] }
+        }
+      };
+      repository.create(command);
+
+      expect(repository.findById(command.id)).toEqual({
+        id: command.id,
+        type: command.type,
+        status: 'RETRIEVED',
+        ack: false,
+        targetVersion: command.targetVersion,
+        retrievedDate: testData.constants.dates.FAKE_NOW,
+        completedDate: null,
+        result: null,
+        historyQueryId: command.historyQueryId,
+        commandContent: command.commandContent
+      });
+    });
   });
 
   describe('OIAnalytics Message', () => {
@@ -1644,6 +1832,131 @@ describe('Repository with populated database', () => {
     });
   });
 
+  describe('North connector', () => {
+    let repository: NorthConnectorRepository;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      repository = new NorthConnectorRepository(database);
+    });
+
+    it('should properly get north connectors', () => {
+      expect(repository.findAllNorth()).toEqual(
+        testData.north.list.map(element => ({
+          id: element.id,
+          name: element.name,
+          type: element.type,
+          description: element.description,
+          enabled: element.enabled
+        }))
+      );
+    });
+
+    it('should properly get full north connectors', () => {
+      expect(repository.findAllNorthFull()).toEqual(testData.north.list);
+    });
+
+    it('should properly get a north connector', () => {
+      const result = repository.findNorthById(testData.north.list[0].id);
+      expect(result).toEqual(testData.north.list[0]);
+      expect(repository.findNorthById('badId')).toEqual(null);
+    });
+
+    it('should save a new north connector', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId').mockReturnValueOnce('newIdWithoutTransformer');
+
+      const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+      newNorthConnector.id = '';
+      newNorthConnector.name = 'new connector';
+      repository.saveNorth(newNorthConnector);
+
+      expect(newNorthConnector.id).toEqual('newId');
+      const createdConnector = repository.findNorthById('newId')!;
+
+      expect(createdConnector.id).toEqual('newId');
+      expect(createdConnector.name).toEqual('new connector');
+
+      const newNorthConnectorWithoutTransformer: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+      newNorthConnectorWithoutTransformer.id = '';
+      newNorthConnectorWithoutTransformer.name = 'new connector without transformer';
+      newNorthConnectorWithoutTransformer.transformers = [];
+      repository.saveNorth(newNorthConnectorWithoutTransformer);
+
+      expect(newNorthConnectorWithoutTransformer.id).toEqual('newIdWithoutTransformer');
+      const createdConnectorWithoutTransformer = repository.findNorthById('newIdWithoutTransformer')!;
+      expect(createdConnectorWithoutTransformer.transformers).toEqual([]);
+
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
+      repository.addOrEditTransformer(newNorthConnectorWithoutTransformer.id, {
+        id: '',
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        south: undefined,
+        items: []
+      });
+      const createdConnectorWithTransformer = repository.findNorthById('newIdWithoutTransformer')!;
+      expect(createdConnectorWithTransformer.transformers.length).toEqual(1);
+      expect(createdConnectorWithTransformer.transformers[0].transformer.id).toEqual(testData.transformers.list[0].id);
+
+      repository.removeTransformer('newId');
+      const createdConnectorWithRemovedTransformer = repository.findNorthById('newIdWithoutTransformer')!;
+      expect(createdConnectorWithRemovedTransformer.transformers).toEqual([]);
+    });
+
+    it('should remove all transformers for a north connector by transformer id', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newIdWithoutTransformer2');
+      const newNorthConnectorWithoutTransformer2: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+      newNorthConnectorWithoutTransformer2.id = '';
+      newNorthConnectorWithoutTransformer2.name = 'new connector without transformer 2';
+      newNorthConnectorWithoutTransformer2.transformers = [];
+      repository.saveNorth(newNorthConnectorWithoutTransformer2);
+
+      expect(newNorthConnectorWithoutTransformer2.id).toEqual('newIdWithoutTransformer2');
+
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId2');
+      repository.addOrEditTransformer(newNorthConnectorWithoutTransformer2.id, {
+        id: '',
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        south: undefined,
+        items: []
+      });
+      const connectorWithTransformer = repository.findNorthById('newIdWithoutTransformer2')!;
+      expect(connectorWithTransformer.transformers.length).toEqual(1);
+
+      repository.removeTransformersByTransformerId(testData.transformers.list[0].id);
+      const connectorWithRemovedTransformers = repository.findNorthById('newIdWithoutTransformer2')!;
+      expect(connectorWithRemovedTransformers.transformers).toEqual([]);
+    });
+
+    it('should update a north connector', () => {
+      const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
+      newNorthConnector.caching.throttling.maxSize = 999;
+      repository.saveNorth(newNorthConnector);
+
+      const updatedConnector = repository.findNorthById(newNorthConnector.id)!;
+
+      expect(updatedConnector.caching.throttling.maxSize).toEqual(newNorthConnector.caching.throttling.maxSize);
+    });
+
+    it('should delete a north connector', () => {
+      repository.deleteNorth('newId');
+      expect(repository.findNorthById('newId')).toEqual(null);
+    });
+
+    it('should stop north connector', () => {
+      repository.stopNorth(testData.north.list[0].id);
+      expect(repository.findNorthById(testData.north.list[0].id)!.enabled).toEqual(false);
+    });
+
+    it('should start north connector', () => {
+      repository.startNorth(testData.north.list[0].id);
+      expect(repository.findNorthById(testData.north.list[0].id)!.enabled).toEqual(true);
+    });
+  });
+
   describe('South connector', () => {
     let repository: SouthConnectorRepository;
 
@@ -1676,7 +1989,7 @@ describe('Repository with populated database', () => {
       newSouthConnector.id = '';
       newSouthConnector.name = 'new connector';
       newSouthConnector.items = [];
-      repository.saveSouthConnector(newSouthConnector);
+      repository.saveSouth(newSouthConnector);
 
       expect(newSouthConnector.id).toEqual('newId');
       const createdConnector = repository.findSouthById('newId')!;
@@ -1700,11 +2013,11 @@ describe('Repository with populated database', () => {
           settings: {} as SouthItemSettings
         }
       ];
-      repository.saveSouthConnector(newSouthConnector);
+      repository.saveSouth(newSouthConnector);
 
       const updatedConnector = repository.findSouthById(newSouthConnector.id)!;
 
-      expect(updatedConnector.items.length).toEqual(2);
+      expect(updatedConnector.items.length).toEqual(3);
     });
 
     it('should delete a south connector', () => {
@@ -1729,11 +2042,11 @@ describe('Repository with populated database', () => {
           enabled: true,
           name: 'item'
         }).length
-      ).toEqual(2);
+      ).toEqual(3);
 
       expect(
         repository.listItems(testData.south.list[1].id, { name: undefined, scanModeId: undefined, enabled: undefined }).length
-      ).toEqual(2);
+      ).toEqual(3);
     });
 
     it('should search items', () => {
@@ -1744,17 +2057,17 @@ describe('Repository with populated database', () => {
           name: 'item',
           page: 0
         }).totalElements
-      ).toEqual(2);
+      ).toEqual(3);
 
       expect(
         repository.searchItems(testData.south.list[1].id, { name: undefined, scanModeId: undefined, enabled: undefined, page: 0 })
           .totalElements
-      ).toEqual(2);
+      ).toEqual(3);
     });
 
     it('should find items', () => {
       const results = repository.findAllItemsForSouth(testData.south.list[1].id);
-      expect(results.length).toEqual(2);
+      expect(results.length).toEqual(3);
     });
 
     it('should find item', () => {
@@ -1764,7 +2077,8 @@ describe('Repository with populated database', () => {
     });
 
     it('should delete item', () => {
-      repository.deleteItem(testData.south.list[1].items[0].id);
+      repository.deleteItem(testData.south.list[1].id, testData.south.list[1].items[0].id);
+      repository.deleteItem(testData.south.list[1].id, testData.south.list[1].items[1].id);
       expect(repository.findItemById(testData.south.list[1].id, testData.south.list[1].items[0].id)).toEqual(null);
     });
 
@@ -1830,124 +2144,6 @@ describe('Repository with populated database', () => {
     });
   });
 
-  describe('North connector', () => {
-    let repository: NorthConnectorRepository;
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-      repository = new NorthConnectorRepository(database);
-    });
-
-    it('should properly get north connectors', () => {
-      expect(repository.findAllNorth()).toEqual(
-        testData.north.list.map(element => ({
-          id: element.id,
-          name: element.name,
-          type: element.type,
-          description: element.description,
-          enabled: element.enabled
-        }))
-      );
-    });
-
-    it('should properly get a north connector', () => {
-      expect(repository.findNorthById(testData.north.list[0].id)).toEqual(testData.north.list[0]);
-      expect(repository.findNorthById('badId')).toEqual(null);
-    });
-
-    it('should save a new north connector', () => {
-      (generateRandomId as jest.Mock).mockReturnValueOnce('newId').mockReturnValueOnce('newIdWithoutTransformer');
-
-      const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
-      newNorthConnector.id = '';
-      newNorthConnector.name = 'new connector';
-      newNorthConnector.subscriptions = [];
-      repository.saveNorthConnector(newNorthConnector);
-
-      expect(newNorthConnector.id).toEqual('newId');
-      const createdConnector = repository.findNorthById('newId')!;
-
-      expect(createdConnector.id).toEqual('newId');
-      expect(createdConnector.name).toEqual('new connector');
-      expect(createdConnector.subscriptions.length).toEqual(0);
-
-      const newNorthConnectorWithoutTransformer: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
-      newNorthConnectorWithoutTransformer.id = '';
-      newNorthConnectorWithoutTransformer.name = 'new connector without transformer';
-      newNorthConnectorWithoutTransformer.transformers = [];
-      repository.saveNorthConnector(newNorthConnectorWithoutTransformer);
-
-      expect(newNorthConnectorWithoutTransformer.id).toEqual('newIdWithoutTransformer');
-      const createdConnectorWithoutTransformer = repository.findNorthById('newIdWithoutTransformer')!;
-      expect(createdConnectorWithoutTransformer.transformers).toEqual([]);
-
-      repository.addOrEditTransformer(newNorthConnectorWithoutTransformer.id, {
-        inputType: 'input',
-        transformer: testData.transformers.list[0] as TransformerDTO,
-        options: {}
-      });
-      const createdConnectorWithTransformer = repository.findNorthById('newIdWithoutTransformer')!;
-      expect(createdConnectorWithTransformer.transformers.length).toEqual(1);
-      expect(createdConnectorWithTransformer.transformers[0].transformer.id).toEqual(testData.transformers.list[0].id);
-
-      repository.removeTransformer(newNorthConnectorWithoutTransformer.id, testData.transformers.list[0].id);
-      const createdConnectorWithRemovedTransformer = repository.findNorthById('newIdWithoutTransformer')!;
-      expect(createdConnectorWithRemovedTransformer.transformers).toEqual([]);
-    });
-
-    it('should update a north connector', () => {
-      const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[1]));
-      newNorthConnector.caching.throttling.maxSize = 999;
-      newNorthConnector.subscriptions = [
-        ...testData.north.list[1].subscriptions,
-        {
-          id: testData.south.list[1].id,
-          name: testData.south.list[1].name,
-          type: testData.south.list[1].type,
-          description: testData.south.list[1].description,
-          enabled: testData.south.list[1].enabled
-        }
-      ];
-      repository.saveNorthConnector(newNorthConnector);
-
-      const updatedConnector = repository.findNorthById(newNorthConnector.id)!;
-
-      expect(updatedConnector.caching.throttling.maxSize).toEqual(newNorthConnector.caching.throttling.maxSize);
-      expect(updatedConnector.subscriptions.length).toEqual(2);
-    });
-
-    it('should delete a north connector', () => {
-      repository.deleteNorth('newId');
-      expect(repository.findNorthById('newId')).toEqual(null);
-    });
-
-    it('should stop north connector', () => {
-      repository.stopNorth(testData.north.list[0].id);
-      expect(repository.findNorthById(testData.north.list[0].id)!.enabled).toEqual(false);
-    });
-
-    it('should start north connector', () => {
-      repository.startNorth(testData.north.list[0].id);
-      expect(repository.findNorthById(testData.north.list[0].id)!.enabled).toEqual(true);
-    });
-
-    it('should check subscription', () => {
-      expect(repository.checkSubscription(testData.north.list[1].id, testData.south.list[0].id)).toEqual(true);
-      expect(repository.checkSubscription(testData.north.list[1].id, 'bad id')).toEqual(false);
-    });
-
-    it('should delete and create subscription', () => {
-      repository.deleteSubscription(testData.north.list[1].id, testData.south.list[0].id);
-      expect(repository.checkSubscription(testData.north.list[1].id, testData.south.list[0].id)).toEqual(false);
-      repository.createSubscription(testData.north.list[1].id, testData.south.list[0].id);
-
-      expect(repository.checkSubscription(testData.north.list[1].id, testData.south.list[0].id)).toEqual(true);
-
-      repository.deleteAllSubscriptionsByNorth(testData.north.list[1].id);
-      expect(repository.checkSubscription(testData.north.list[1].id, testData.south.list[0].id)).toEqual(false);
-    });
-  });
-
   describe('History query', () => {
     let repository: HistoryQueryRepository;
 
@@ -1957,7 +2153,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly get history queries (light)', () => {
-      expect(repository.findAllHistoryQueriesLight()).toEqual(
+      expect(repository.findAllHistoriesLight()).toEqual(
         testData.historyQueries.list.map(element => ({
           id: element.id,
           name: element.name,
@@ -1972,12 +2168,12 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly get history queries (full)', () => {
-      expect(repository.findAllHistoryQueriesFull()).toEqual(testData.historyQueries.list);
+      expect(repository.findAllHistoriesFull()).toEqual(testData.historyQueries.list);
     });
 
     it('should properly get a history query', () => {
-      expect(repository.findHistoryQueryById(testData.historyQueries.list[0].id)).toEqual(testData.historyQueries.list[0]);
-      expect(repository.findHistoryQueryById('badId')).toEqual(null);
+      expect(repository.findHistoryById(testData.historyQueries.list[0].id)).toEqual(testData.historyQueries.list[0]);
+      expect(repository.findHistoryById('badId')).toEqual(null);
     });
 
     it('should save a new history query', () => {
@@ -1988,11 +2184,10 @@ describe('Repository with populated database', () => {
       );
       newHistoryQuery.id = '';
       newHistoryQuery.name = 'new history query';
-      newHistoryQuery.items = [];
-      repository.saveHistoryQuery(newHistoryQuery);
+      repository.saveHistory(newHistoryQuery);
 
       expect(newHistoryQuery.id).toEqual('newId');
-      const createdHistoryQuery = repository.findHistoryQueryById('newId')!;
+      const createdHistoryQuery = repository.findHistoryById('newId')!;
       expect(createdHistoryQuery.id).toEqual('newId');
       expect(createdHistoryQuery.name).toEqual('new history query');
       expect(createdHistoryQuery.items.length).toEqual(0);
@@ -2003,28 +2198,65 @@ describe('Repository with populated database', () => {
       newHistoryWithoutTransformer.id = '';
       newHistoryWithoutTransformer.name = 'new history query without transformer';
       newHistoryWithoutTransformer.northTransformers = [];
-      repository.saveHistoryQuery(newHistoryWithoutTransformer);
+      newHistoryQuery.items = [];
+      repository.saveHistory(newHistoryWithoutTransformer);
 
       expect(newHistoryWithoutTransformer.id).toEqual('newIdWithoutTransformer');
-      const createdHistoryWithoutTransformer = repository.findHistoryQueryById('newIdWithoutTransformer')!;
+      const createdHistoryWithoutTransformer = repository.findHistoryById('newIdWithoutTransformer')!;
       expect(createdHistoryWithoutTransformer.northTransformers).toEqual([]);
 
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
+
       repository.addOrEditTransformer(newHistoryWithoutTransformer.id, {
+        id: '',
         inputType: 'input',
-        transformer: testData.transformers.list[0] as TransformerDTO,
-        options: {}
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        items: []
       });
-      const createdHistoryWithTransformer = repository.findHistoryQueryById('newIdWithoutTransformer')!;
+      const createdHistoryWithTransformer = repository.findHistoryById('newIdWithoutTransformer')!;
       expect(createdHistoryWithTransformer.northTransformers.length).toEqual(1);
       expect(createdHistoryWithTransformer.northTransformers[0].transformer.id).toEqual(testData.transformers.list[0].id);
 
-      repository.removeTransformer(newHistoryWithoutTransformer.id, testData.transformers.list[0].id);
-      const createdHistoryWithRemovedTransformer = repository.findHistoryQueryById('newIdWithoutTransformer')!;
+      repository.removeTransformer('newId');
+      const createdHistoryWithRemovedTransformer = repository.findHistoryById('newIdWithoutTransformer')!;
       expect(createdHistoryWithRemovedTransformer.northTransformers).toEqual([]);
     });
 
+    it('should remove all transformers for a history query by transformer id', () => {
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryIdWithoutTransformer2');
+      const newHistoryWithoutTransformer2: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+        JSON.stringify(testData.historyQueries.list[1])
+      );
+      newHistoryWithoutTransformer2.id = '';
+      newHistoryWithoutTransformer2.name = 'new history without transformer 2';
+      newHistoryWithoutTransformer2.northTransformers = [];
+      newHistoryWithoutTransformer2.items = [];
+      repository.saveHistory(newHistoryWithoutTransformer2);
+
+      expect(newHistoryWithoutTransformer2.id).toEqual('newHistoryIdWithoutTransformer2');
+
+      (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryTransformerId2');
+      repository.addOrEditTransformer(newHistoryWithoutTransformer2.id, {
+        id: '',
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        items: []
+      });
+      const historyWithTransformer = repository.findHistoryById('newHistoryIdWithoutTransformer2')!;
+      expect(historyWithTransformer.northTransformers.length).toEqual(1);
+
+      repository.removeTransformersByTransformerId(testData.transformers.list[0].id);
+      const historyWithRemovedTransformers = repository.findHistoryById('newHistoryIdWithoutTransformer2')!;
+      expect(historyWithRemovedTransformers.northTransformers).toEqual([]);
+    });
+
     it('should update a history query', () => {
-      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemId');
+      (generateRandomId as jest.Mock)
+        .mockReturnValueOnce('newItemId')
+        .mockReturnValueOnce('anotherItemId')
+        .mockReturnValueOnce('newHistoryTransformerId');
 
       const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
         JSON.stringify(testData.historyQueries.list[1])
@@ -2036,87 +2268,122 @@ describe('Repository with populated database', () => {
           name: 'new item',
           enabled: true,
           settings: {} as SouthItemSettings
+        },
+        {
+          id: '',
+          name: 'another item',
+          enabled: true,
+          settings: {} as SouthItemSettings
         }
       ];
-      repository.saveHistoryQuery(newHistoryQuery);
+      newHistoryQuery.northTransformers = [
+        {
+          id: '',
+          transformer: testData.transformers.list[0],
+          options: {},
+          inputType: testData.transformers.list[0].inputType,
+          items: [
+            {
+              id: '',
+              name: 'new item'
+            },
+            {
+              id: '',
+              name: 'bad item'
+            }
+          ]
+        }
+      ];
+      repository.saveHistory(newHistoryQuery);
 
-      const updatedHistoryQuery = repository.findHistoryQueryById(newHistoryQuery.id)!;
+      const updatedHistoryQuery = repository.findHistoryById(newHistoryQuery.id)!;
 
-      expect(updatedHistoryQuery.items.length).toEqual(2);
+      expect(updatedHistoryQuery.items.length).toEqual(3);
+      expect(updatedHistoryQuery.northTransformers.length).toEqual(1);
+      expect(updatedHistoryQuery.northTransformers[0].items.length).toEqual(1);
+    });
+
+    it('should update a history query by removing items and transformers', () => {
+      const newHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+        JSON.stringify(testData.historyQueries.list[1])
+      );
+      newHistoryQuery.id = 'newId';
+      newHistoryQuery.name = 'new history query';
+      newHistoryQuery.items = [];
+      newHistoryQuery.northTransformers = [];
+      repository.saveHistory(newHistoryQuery);
+
+      const updatedHistoryQuery = repository.findHistoryById(newHistoryQuery.id)!;
+
+      expect(updatedHistoryQuery.items.length).toEqual(0);
+      expect(updatedHistoryQuery.northTransformers.length).toEqual(0);
     });
 
     it('should delete a history query', () => {
-      repository.deleteHistoryQuery('newId');
-      expect(repository.findHistoryQueryById('newId')).toEqual(null);
+      repository.deleteHistory('newId');
+      expect(repository.findHistoryById('newId')).toEqual(null);
     });
 
     it('should update status', () => {
-      repository.updateHistoryQueryStatus(testData.historyQueries.list[0].id, 'FINISHED');
-      expect(repository.findHistoryQueryById(testData.historyQueries.list[0].id)!.status).toEqual('FINISHED');
+      repository.updateHistoryStatus(testData.historyQueries.list[0].id, 'FINISHED');
+      expect(repository.findHistoryById(testData.historyQueries.list[0].id)!.status).toEqual('FINISHED');
     });
 
     it('should list items', () => {
       expect(
-        repository.listHistoryQueryItems(testData.historyQueries.list[1].id, {
+        repository.listItems(testData.historyQueries.list[1].id, {
           enabled: true,
           name: 'item'
         }).length
-      ).toEqual(2);
+      ).toEqual(3);
 
-      expect(repository.listHistoryQueryItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined }).length).toEqual(
-        2
-      );
+      expect(repository.listItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined }).length).toEqual(3);
     });
 
     it('should search items', () => {
       expect(
-        repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, {
+        repository.searchItems(testData.historyQueries.list[1].id, {
           enabled: true,
           name: 'item',
           page: 0
         }).totalElements
-      ).toEqual(2);
+      ).toEqual(3);
 
       expect(
-        repository.searchHistoryQueryItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined, page: 0 })
-          .totalElements
-      ).toEqual(2);
+        repository.searchItems(testData.historyQueries.list[1].id, { enabled: undefined, name: undefined, page: 0 }).totalElements
+      ).toEqual(3);
     });
 
     it('should find items', () => {
-      const results = repository.findAllItemsForHistoryQuery(testData.historyQueries.list[1].id);
-      expect(results.length).toEqual(2);
+      const results = repository.findAllItemsForHistory(testData.historyQueries.list[1].id);
+      expect(results.length).toEqual(3);
     });
 
     it('should find item', () => {
-      const result = repository.findHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id);
+      const result = repository.findItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id);
       expect(result).toEqual(testData.historyQueries.list[1].items[0]);
-      expect(repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[1].items[0].id)).toEqual(
-        null
-      );
+      expect(repository.findItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[1].items[0].id)).toEqual(null);
     });
 
     it('should delete item', () => {
-      repository.deleteHistoryQueryItem(testData.historyQueries.list[0].items[0].id);
-      expect(repository.findHistoryQueryItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id)).toEqual(
-        null
-      );
+      repository.deleteItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id);
+      expect(repository.findItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id)).toEqual(null);
     });
 
     it('should delete all item by south', () => {
-      repository.deleteAllHistoryQueryItemsByHistoryQuery(testData.historyQueries.list[0].id);
-      expect(repository.findAllItemsForHistoryQuery(testData.historyQueries.list[0].id).length).toEqual(0);
+      repository.deleteAllItemsByHistory(testData.historyQueries.list[0].id);
+      expect(repository.findAllItemsForHistory(testData.historyQueries.list[0].id).length).toEqual(0);
     });
 
     it('should disable and enable item', () => {
-      repository.disableHistoryQueryItem(testData.historyQueries.list[1].items[0].id);
-      expect(
-        repository.findHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id)!.enabled
-      ).toEqual(false);
-      repository.enableHistoryQueryItem(testData.historyQueries.list[1].items[0].id);
-      expect(
-        repository.findHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id)!.enabled
-      ).toEqual(true);
+      repository.disableItem(testData.historyQueries.list[1].items[0].id);
+      expect(repository.findItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id)!.enabled).toEqual(
+        false
+      );
+      repository.enableItem(testData.historyQueries.list[1].items[0].id);
+      expect(repository.findItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id)!.enabled).toEqual(
+        true
+      );
     });
 
     it('should save all items without and delete previous items', () => {
@@ -2135,13 +2402,13 @@ describe('Repository with populated database', () => {
 
       repository.saveAllItems(testData.historyQueries.list[1].id, itemsToSave, false);
 
-      const results = repository.findAllItemsForHistoryQuery(testData.historyQueries.list[1].id);
-      expect(results.length).toEqual(3);
+      const results = repository.findAllItemsForHistory(testData.historyQueries.list[1].id);
+      expect(results.length).toEqual(4);
 
-      expect(
-        repository.findHistoryQueryItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id)!.name
-      ).toEqual(itemsToSave[0].name);
-      expect(repository.findHistoryQueryItemById(testData.historyQueries.list[1].id, 'newItemIdHistory1')!.id).toEqual('newItemIdHistory1');
+      expect(repository.findItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id)!.name).toEqual(
+        itemsToSave[0].name
+      );
+      expect(repository.findItemById(testData.historyQueries.list[1].id, 'newItemIdHistory1')!.id).toEqual('newItemIdHistory1');
     });
 
     it('should save all items without deleting previous items', () => {
@@ -2160,19 +2427,20 @@ describe('Repository with populated database', () => {
 
       repository.saveAllItems(testData.historyQueries.list[1].id, itemsToSave, true);
 
-      const results = repository.findAllItemsForHistoryQuery(testData.historyQueries.list[1].id);
+      const results = repository.findAllItemsForHistory(testData.historyQueries.list[1].id);
       expect(results.length).toEqual(1);
-      expect(repository.findHistoryQueryItemById(testData.historyQueries.list[1].id, 'newItemIdHistory1')!.id).toEqual('newItemIdHistory1');
+      expect(repository.findItemById(testData.historyQueries.list[1].id, 'newItemIdHistory1')!.id).toEqual('newItemIdHistory1');
     });
   });
 });
 
 describe('Repository with empty database', () => {
   beforeAll(async () => {
-    await initDatabase('config', false);
+    database = await initDatabase('config', false);
   });
 
   afterAll(async () => {
+    database.close();
     await emptyDatabase('config');
   });
 
@@ -2290,7 +2558,13 @@ describe('Repository with empty database', () => {
           updateNorth: true,
           deleteNorth: true,
           testNorthConnection: true,
-          setpoint: true
+          setpoint: true,
+          searchHistoryCacheContent: true,
+          getHistoryCacheFileContent: true,
+          updateHistoryCacheContent: true,
+          searchNorthCacheContent: true,
+          getNorthCacheFileContent: true,
+          updateNorthCacheContent: true
         }
       });
     });

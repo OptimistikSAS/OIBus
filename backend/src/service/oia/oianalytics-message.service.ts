@@ -251,7 +251,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private createSendHistoryQueriesCommand(): OIBusHistoryQueriesCommandDTO {
-    const historyQueries = this.historyQueryRepository.findAllHistoryQueriesFull();
+    const historyQueries = this.historyQueryRepository.findAllHistoriesFull();
     return {
       historyQueries: historyQueries.map(historyQuery => {
         const southManifest = southManifestList.find(manifest => manifest.id === historyQuery.southType)!;
@@ -300,9 +300,11 @@ export default class OIAnalyticsMessageService {
               settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
             })),
             northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
+              id: transformerWithOptions.id,
               transformerId: transformerWithOptions.transformer.id,
               options: transformerWithOptions.options,
-              inputType: transformerWithOptions.inputType
+              inputType: transformerWithOptions.inputType,
+              items: transformerWithOptions.items
             }))
           }
         };
@@ -488,11 +490,12 @@ export default class OIAnalyticsMessageService {
               retentionDuration: north.caching.archive.retentionDuration
             }
           },
-          subscriptions: north.subscriptions.map(south => south.id),
           transformers: north.transformers.map(transformerWithOptions => ({
+            inputType: transformerWithOptions.inputType,
             transformerId: transformerWithOptions.transformer.id,
+            southId: transformerWithOptions.south?.id || undefined,
             options: transformerWithOptions.options,
-            inputType: transformerWithOptions.inputType
+            items: transformerWithOptions.items
           }))
         }
       };

@@ -295,6 +295,36 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'search-north-cache-content':
+        queryParams.push(command.northConnectorId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'search-history-cache-content':
+        queryParams.push(command.historyQueryId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'get-north-cache-file-content':
+        queryParams.push(command.northConnectorId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'get-history-cache-file-content':
+        queryParams.push(command.historyQueryId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'update-north-cache-content':
+        queryParams.push(command.northConnectorId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, north_connector_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'update-history-cache-content':
+        queryParams.push(command.historyQueryId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
   }
@@ -768,6 +798,84 @@ export default class OIAnalyticsCommandRepository {
           completedDate: command.completed_date as Instant,
           result: command.result as string,
           northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'search-north-cache-content':
+        return {
+          id: command.id as string,
+          type: 'search-north-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'search-history-cache-content':
+        return {
+          id: command.id as string,
+          type: 'search-history-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'get-north-cache-file-content':
+        return {
+          id: command.id as string,
+          type: 'get-north-cache-file-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'get-history-cache-file-content':
+        return {
+          id: command.id as string,
+          type: 'get-history-cache-file-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-north-cache-content':
+        return {
+          id: command.id as string,
+          type: 'update-north-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          northConnectorId: command.north_connector_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-history-cache-content':
+        return {
+          id: command.id as string,
+          type: 'update-history-cache-content',
+          status: command.status as OIBusCommandStatus,
+          ack: Boolean(command.ack),
+          targetVersion: command.target_version as string,
+          retrievedDate: command.retrieved_date as Instant,
+          completedDate: command.completed_date as Instant,
+          result: command.result as string,
+          historyQueryId: command.history_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
     }

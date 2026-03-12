@@ -426,6 +426,42 @@ export interface RegistrationSettingsDTO extends BaseEntity {
      * @example true
      */
     setpoint: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchHistoryCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getHistoryCacheFileContent: boolean;
+
+    /**
+     * Permission to move cache content.
+     * @example true
+     */
+    updateHistoryCacheContent: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchNorthCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getNorthCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    updateNorthCacheContent: boolean;
   };
 }
 
@@ -707,6 +743,42 @@ export interface RegistrationSettingsCommandDTO {
      * @example true
      */
     setpoint: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchHistoryCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getHistoryCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    updateHistoryCacheContent: boolean;
+
+    /**
+     * Permission to search cache content.
+     * @example true
+     */
+    searchNorthCacheContent: boolean;
+
+    /**
+     * Permission to get cache file content.
+     * @example true
+     */
+    getNorthCacheFileContent: boolean;
+
+    /**
+     * Permission to remove cache content.
+     * @example true
+     */
+    updateNorthCacheContent: boolean;
   };
 }
 
@@ -869,6 +941,24 @@ export interface EngineSettingsCommandDTO {
       interval: number;
     };
   };
+}
+
+/**
+ * Engine settings update result Data Transfer Object.
+ * Returned after updating engine settings to indicate if a redirect is needed.
+ */
+export interface EngineSettingsUpdateResultDTO {
+  /**
+   * Whether the client needs to redirect due to a port change.
+   * @example true
+   */
+  needsRedirect: boolean;
+
+  /**
+   * The new port to redirect to, if applicable.
+   * @example 3333
+   */
+  newPort: number | null;
 }
 
 /**
@@ -1469,7 +1559,7 @@ export interface OIBusSetpointContent extends BaseOIBusContent {
 /**
  * Raw content.
  */
-export interface OIBusRawContent extends BaseOIBusContent {
+export interface OIBusFileContent extends BaseOIBusContent {
   /**
    * The type of content.
    * @example "any"
@@ -1488,10 +1578,23 @@ export interface OIBusRawContent extends BaseOIBusContent {
   content?: string;
 }
 
+export interface OIBusAnyContent extends BaseOIBusContent {
+  /**
+   * The type of content.
+   * @example "any-content"
+   */
+  type: 'any-content';
+
+  /**
+   * The content
+   */
+  content: string;
+}
+
 /**
  * Type representing OIBus content.
  */
-export type OIBusContent = OIBusTimeValueContent | OIBusRawContent | OIBusSetpointContent;
+export type OIBusContent = OIBusTimeValueContent | OIBusFileContent | OIBusAnyContent | OIBusSetpointContent;
 
 /**
  * Metadata for cached content.
@@ -1526,18 +1629,45 @@ export interface CacheMetadata {
    * @example "time-values"
    */
   contentType: string;
-
-  /**
-   * The source of the content.
-   * @example "south1"
-   */
-  source: string;
-
-  /**
-   * Additional options associated with the content.
-   */
-  options: Record<string, string | number>;
 }
+
+export interface CacheMetadataSourceOriginSouth {
+  source: 'south';
+
+  /**
+   * Datetime in iso format when the query has been triggered
+   * @example "2023-01-01T00:00:00Z"
+   */
+  queryTime: Instant;
+
+  /**
+   * ID of the south connector at the source of the data
+   */
+  southId: string;
+
+  /**
+   * IDs of the items at the source of the data
+   */
+  itemIds: Array<string>;
+}
+
+export interface CacheMetadataSourceOriginOIAnalytics {
+  source: 'oianalytics';
+}
+
+export interface CacheMetadataSourceOriginAPI {
+  source: 'api';
+}
+
+export interface CacheMetadataSourceOriginTest {
+  source: 'test';
+}
+
+export type CacheMetadataSource =
+  | CacheMetadataSourceOriginSouth
+  | CacheMetadataSourceOriginOIAnalytics
+  | CacheMetadataSourceOriginAPI
+  | CacheMetadataSourceOriginTest;
 
 /**
  * Parameters for searching the cache.
@@ -1560,4 +1690,99 @@ export interface CacheSearchParam {
    * @example "example"
    */
   nameContains: string | undefined;
+
+  /**
+   * The maximum number of file to return. Default to 0, meaning no limit
+   */
+  maxNumberOfFilesReturned: number;
+}
+
+export interface CacheSearchResult {
+  searchDate: Instant;
+  metrics: {
+    /**
+     * The last connection time.
+     * @example "2023-01-01T00:00:00Z"
+     */
+    lastConnection: Instant | null;
+
+    /**
+     * The start time of the last run.
+     * @example "2023-01-01T00:00:00Z"
+     */
+    lastRunStart: Instant | null;
+
+    /**
+     * The duration of the last run in milliseconds.
+     * @example 1000
+     */
+    lastRunDuration: number | null;
+
+    /**
+     * The current size of the cache.
+     * @example 0
+     */
+    currentCacheSize: number;
+
+    /**
+     * The current size of errors.
+     * @example 0
+     */
+    currentErrorSize: number;
+
+    /**
+     * The current size of the archive.
+     * @example 0
+     */
+    currentArchiveSize: number;
+  };
+  error: Array<{ filename: string; metadata: CacheMetadata }>;
+  archive: Array<{ filename: string; metadata: CacheMetadata }>;
+  cache: Array<{ filename: string; metadata: CacheMetadata }>;
+}
+
+export type DataFolderType = 'cache' | 'error' | 'archive';
+
+export interface CacheMove {
+  action: 'move';
+  source: DataFolderType;
+  destination: DataFolderType;
+  filenames: Array<string>;
+}
+
+export interface CacheRemove {
+  action: 'remove';
+  folder: DataFolderType;
+  filenames: Array<string>;
+}
+
+export interface CacheView {
+  action: 'view';
+  folder: DataFolderType;
+  filename: string;
+}
+
+export type CacheOperation = CacheView | CacheRemove | CacheMove;
+
+export interface CacheContentUpdateCommand {
+  cache: {
+    remove: Array<string>;
+    move: Array<{ filename: string; to: DataFolderType }>;
+  };
+  error: {
+    remove: Array<string>;
+    move: Array<{ filename: string; to: DataFolderType }>;
+  };
+  archive: {
+    remove: Array<string>;
+    move: Array<{ filename: string; to: DataFolderType }>;
+  };
+}
+
+export interface FileCacheContent {
+  content: string;
+  contentFilename: string;
+  contentType: 'csv' | 'xml' | 'json' | 'raw';
+  truncated: boolean;
+  totalSize: number;
 }
