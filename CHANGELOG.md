@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.7.10](https://github.com/OptimistikSAS/OIBus/compare/v3.7.9...v3.7.10) (2026-03-12)
+
+
+### Bug Fixes
+
+* **https-proxy-agent:** fix dependencies loading ([817a800](https://github.com/OptimistikSAS/OIBus/commit/817a800e18e57e30c481224817e9794d7eac0cde))
+* **https-proxy-agent:** revert to v7, compatible with pkg ([96e5b6f](https://github.com/OptimistikSAS/OIBus/commit/96e5b6f40ef68b9c8b76335007a6adcc0ec582e7))
+* **south:** fix interval generation when querying history ([8727196](https://github.com/OptimistikSAS/OIBus/commit/8727196e28bb8b11a94ba0b5ebadfaaf1437fd17))
+* **tests:** fix dependencies tests ([9c18be8](https://github.com/OptimistikSAS/OIBus/commit/9c18be8170981c24f9646a5dec94427efea2596c))
+
 ## [3.7.9](https://github.com/OptimistikSAS/OIBus/compare/v3.7.8...v3.7.9) (2026-02-16)
 
 
