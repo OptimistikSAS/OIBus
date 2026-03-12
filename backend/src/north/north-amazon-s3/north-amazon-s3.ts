@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { HttpsProxyAgent } from 'https-proxy-agent/dist';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';

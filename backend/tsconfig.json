@@ -24,5 +24,7 @@
     "useDefineForClassFields": false,
     "allowSyntheticDefaultImports": true
   },
-  "exclude": ["./dist"]
+  "exclude": [
+    "./dist"
+  ]
 }
