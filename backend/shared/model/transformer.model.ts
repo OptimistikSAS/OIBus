@@ -1,5 +1,6 @@
 import { OIBusObjectAttribute } from './form.model';
 import { ItemLightDTO, SouthConnectorLightDTO } from './south-connector.model';
+import { Instant } from './types';
 
 export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
 export type InputType = (typeof INPUT_TYPES)[number];
@@ -78,6 +79,30 @@ export interface BaseTransformerDTO {
    * The manifest describing the transformer's input/output structure and attributes.
    */
   manifest: OIBusObjectAttribute;
+
+  /**
+   * The login of the user who created the transformer.
+   * @example "admin"
+   */
+  createdBy?: string;
+
+  /**
+   * The login of the user who last updated the transformer.
+   * @example "admin"
+   */
+  updatedBy?: string;
+
+  /**
+   * The date and time when the transformer was created.
+   * @example "2023-10-31T12:34:56.789Z"
+   */
+  createdAt?: Instant;
+
+  /**
+   * The date and time when the transformer was last updated.
+   * @example "2023-10-31T13:45:00.123Z"
+   */
+  updatedAt?: Instant;
 }
 
 /**

@@ -3,8 +3,8 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="configuration.oibus.manifest.transformers.list" id="title"></span>
-        @if (transformers.length) {
-          <span class="mx-1">({{ transformers.length }})</span>
+        @if (allTransformers.length) {
+          <span class="mx-1">({{ allTransformers.length }})</span>
         }
       </div>
       <div>
@@ -25,25 +25,54 @@
 </oib-box>
 
 <!-- the Custom Transformers list -->
-@if (transformers.length !== 0) {
+@if (displayedTransformers.content.length !== 0) {
   <div>
     <table class="mb-2 table table-sm table-hover oib-table">
       <thead class="light">
         <tr>
-          <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.name"></th>
+          <th>
+            <button type="button" style="background: none; border: none; font-weight: bold; color: inherit" (click)="toggleSort('name')">
+              <span translate="configuration.oibus.manifest.transformers.edit-transformer-modal.name" class="me-2"></span>
+              <span class="fa {{ getSortIcon('name') }}"></span>
+            </button>
+          </th>
           <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.description"></th>
           <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.input-type"></th>
           <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.output-type"></th>
+          <th translate="engine.transformer.created-by"></th>
+          <th>
+            <button
+              type="button"
+              style="background: none; border: none; font-weight: bold; color: inherit"
+              (click)="toggleSort('createdAt')"
+            >
+              <span translate="engine.transformer.created-at" class="me-2"></span>
+              <span class="fa {{ getSortIcon('createdAt') }}"></span>
+            </button>
+          </th>
+          <th>
+            <button
+              type="button"
+              style="background: none; border: none; font-weight: bold; color: inherit"
+              (click)="toggleSort('updatedAt')"
+            >
+              <span translate="engine.transformer.updated-at" class="me-2"></span>
+              <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+            </button>
+          </th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        @for (transformer of transformers; track transformer.id) {
+        @for (transformer of displayedTransformers.content; track transformer.id) {
           <tr>
             <td>{{ transformer.name }}</td>
             <td>{{ transformer.description }}</td>
             <td>{{ transformer.inputType }}</td>
             <td>{{ transformer.outputType }}</td>
+            <td>{{ transformer.createdBy }}</td>
+            <td>{{ transformer.createdAt | datetime }}</td>
+            <td>{{ transformer.updatedAt | datetime }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->
@@ -70,6 +99,9 @@
         }
       </tbody>
     </table>
+    @if (displayedTransformers.totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedTransformers" (pageChanged)="changePage($event)" />
+    }
   </div>
 } @else {
   <div class="oib-grey-container" id="no-transformer" translate="configuration.oibus.manifest.transformers.none"></div>

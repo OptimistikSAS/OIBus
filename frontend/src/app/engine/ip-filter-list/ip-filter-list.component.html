@@ -3,8 +3,8 @@
     <div class="d-flex justify-content-between align-items-center">
       <div>
         <span translate="engine.ip-filter.list" id="title"></span>
-        @if (ipFilters.length) {
-          <span class="mx-1">({{ ipFilters.length }})</span>
+        @if (allIpFilters.length) {
+          <span class="mx-1">({{ allIpFilters.length }})</span>
         }
       </div>
       <div>
@@ -25,21 +25,50 @@
 </oib-box>
 
 <!-- the IP filter list -->
-@if (ipFilters.length !== 0) {
+@if (displayedIpFilters.content.length !== 0) {
   <div>
     <table class="mb-2 table table-sm table-hover oib-table">
       <thead class="light">
         <tr>
-          <th translate="engine.ip-filter.address"></th>
+          <th>
+            <button type="button" style="background: none; border: none; font-weight: bold; color: inherit" (click)="toggleSort('address')">
+              <span translate="engine.ip-filter.address" class="me-2"></span>
+              <span class="fa {{ getSortIcon('address') }}"></span>
+            </button>
+          </th>
           <th translate="engine.ip-filter.description"></th>
+          <th translate="engine.ip-filter.created-by"></th>
+          <th>
+            <button
+              type="button"
+              style="background: none; border: none; font-weight: bold; color: inherit"
+              (click)="toggleSort('createdAt')"
+            >
+              <span translate="engine.ip-filter.created-at" class="me-2"></span>
+              <span class="fa {{ getSortIcon('createdAt') }}"></span>
+            </button>
+          </th>
+          <th>
+            <button
+              type="button"
+              style="background: none; border: none; font-weight: bold; color: inherit"
+              (click)="toggleSort('updatedAt')"
+            >
+              <span translate="engine.ip-filter.updated-at" class="me-2"></span>
+              <span class="fa {{ getSortIcon('updatedAt') }}"></span>
+            </button>
+          </th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        @for (ipFilter of ipFilters; track ipFilter.id) {
+        @for (ipFilter of displayedIpFilters.content; track ipFilter.id) {
           <tr>
             <td>{{ ipFilter.address }}</td>
             <td>{{ ipFilter.description }}</td>
+            <td>{{ ipFilter.createdBy }}</td>
+            <td>{{ ipFilter.createdAt | datetime }}</td>
+            <td>{{ ipFilter.updatedAt | datetime }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->
@@ -66,6 +95,9 @@
         }
       </tbody>
     </table>
+    @if (displayedIpFilters.totalPages > 1) {
+      <oib-pagination class="d-flex justify-content-end mt-2" [page]="displayedIpFilters" (pageChanged)="changePage($event)" />
+    }
   </div>
 } @else {
   <div class="oib-grey-container" id="no-ip-filter" translate="engine.ip-filter.none"></div>
