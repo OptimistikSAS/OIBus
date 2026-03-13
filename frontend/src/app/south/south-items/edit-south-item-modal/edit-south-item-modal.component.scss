@@ -1,0 +1,43 @@
+.form-select {
+  // Hide the caret added by ngbDropdownToggle (bootstrap class dropdown-toggle)
+  &::after {
+    display: none !important;
+  }
+
+  &:hover {
+    background-color: #d2dce2 !important;
+    cursor: pointer;
+  }
+}
+
+// Styling for the custom dropdown row (Name + Action Icons)
+.group-row {
+  cursor: pointer;
+  border-radius: 0; // standard dropdown item look
+
+  &:hover {
+    background-color: #d2dce2;
+  }
+
+  // Ensure the inner ngbDropdownItem button is transparent so row color shows
+  button[ngbDropdownItem] {
+    background-color: transparent !important;
+    padding-left: 0; // adjust padding if needed since row has padding
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: transparent !important;
+      color: inherit;
+    }
+  }
+
+  // Ensure action buttons are transparent/clean
+  .btn-link {
+    text-decoration: none;
+    &:hover,
+    &:focus {
+      background-color: transparent; // No separate background, just use row's
+      opacity: 0.8;
+    }
+  }
+}

@@ -1732,6 +1732,65 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthItemGroupDTO": {
+				"description": "Data Transfer Object for a South item group.\nRepresents a group of items that can share common settings.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"creationDate": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"lastEditInstant": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last edited.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the group.",
+						"example": "Production Line A"
+					},
+					"scanMode": {
+						"$ref": "#/components/schemas/ScanModeDTO",
+						"description": "The scan mode configuration for this group (default schedule)."
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.",
+						"example": 1000
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.",
+						"example": 200
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"scanMode",
+					"overlap",
+					"maxReadInterval",
+					"readDelay"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorItemTypedDTO_SouthADSItemSettings_": {
 				"properties": {
 					"id": {
@@ -1766,6 +1825,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -1773,7 +1867,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1931,6 +2030,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -1938,7 +2072,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2124,6 +2263,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -2131,7 +2305,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2365,6 +2544,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -2372,7 +2586,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2579,6 +2798,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -2586,7 +2840,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2890,6 +3149,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -2897,7 +3191,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3184,6 +3483,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -3191,7 +3525,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3474,6 +3813,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -3481,7 +3855,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3793,6 +4172,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -3800,7 +4214,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4081,6 +4500,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -4088,7 +4542,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4320,6 +4779,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -4327,7 +4821,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4644,6 +5143,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -4651,7 +5185,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4945,6 +5484,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -4952,7 +5526,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5129,6 +5708,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -5136,7 +5750,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5428,6 +6047,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -5435,7 +6089,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5985,6 +6644,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -5992,7 +6686,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6185,6 +6884,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -6192,7 +6926,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6449,6 +7188,41 @@
 					"scanMode": {
 						"$ref": "#/components/schemas/ScanModeDTO",
 						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -6456,7 +7230,12 @@
 					"name",
 					"enabled",
 					"settings",
-					"scanMode"
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6618,6 +7397,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -6626,7 +7443,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6713,6 +7536,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -6721,7 +7582,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6808,6 +7675,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -6816,7 +7721,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6903,6 +7814,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -6911,7 +7860,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6998,6 +7953,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7006,7 +7999,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7093,6 +8092,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7101,7 +8138,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7188,6 +8231,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7196,7 +8277,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7283,6 +8370,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7291,7 +8416,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7378,6 +8509,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7386,7 +8555,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7473,6 +8648,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7481,7 +8694,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7568,6 +8787,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7576,7 +8833,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7663,6 +8926,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7671,7 +8972,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7758,6 +9065,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7766,7 +9111,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7853,6 +9204,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7861,7 +9250,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7948,6 +9343,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -7956,7 +9389,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8043,6 +9482,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -8051,7 +9528,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8138,6 +9621,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -8146,7 +9667,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8233,6 +9760,44 @@
 						"nullable": true,
 						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
 						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
 					}
 				},
 				"required": [
@@ -8241,7 +9806,13 @@
 					"name",
 					"settings",
 					"scanModeId",
-					"scanModeName"
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8944,6 +10515,50 @@
 				"required": [
 					"items",
 					"errors"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthItemGroupCommandDTO": {
+				"description": "Command Data Transfer Object for creating or updating a South item group.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the group.",
+						"example": "Production Line A"
+					},
+					"scanModeId": {
+						"type": "string",
+						"description": "The ID of the scan mode to use for this group.",
+						"example": "periodic-5min"
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.",
+						"example": 1000
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"description": "Read delay in milliseconds before querying historical data.",
+						"example": 200
+					}
+				},
+				"required": [
+					"name",
+					"scanModeId",
+					"overlap",
+					"maxReadInterval",
+					"readDelay"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -22420,7 +24035,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.8.10",
+		"version": "3.7.10",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
@@ -24068,6 +25683,250 @@
 								"required": [
 									"items"
 								]
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/groups": {
+			"get": {
+				"operationId": "ListGroups",
+				"responses": {
+					"200": {
+						"description": "Array of group objects",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/SouthItemGroupDTO"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Lists all groups for a south connector",
+				"summary": "List south item groups",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"operationId": "CreateGroup",
+				"responses": {
+					"201": {
+						"description": "Created",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthItemGroupDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Creates a new group for a south connector",
+				"summary": "Create south item group",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/groups/{groupId}": {
+			"get": {
+				"operationId": "GetGroup",
+				"responses": {
+					"200": {
+						"description": "The group object",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthItemGroupDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Gets a specific group by ID",
+				"summary": "Get south item group",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "groupId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"operationId": "UpdateGroup",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Updates an existing group",
+				"summary": "Update south item group",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "groupId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "DeleteGroup",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Deletes a group",
+				"summary": "Delete south item group",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "groupId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/south/{southId}/items/move-to-group": {
+			"post": {
+				"operationId": "MoveItemsToGroup",
+				"responses": {
+					"204": {
+						"description": "No Content"
+					}
+				},
+				"description": "Moves items to a group (or removes them from a group if groupId is null)",
+				"summary": "Move items to group",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"groupId": {
+										"type": "string",
+										"nullable": true
+									},
+									"itemIds": {
+										"items": {
+											"type": "string"
+										},
+										"type": "array"
+									}
+								},
+								"required": [
+									"groupId",
+									"itemIds"
+								],
+								"type": "object"
 							}
 						}
 					}

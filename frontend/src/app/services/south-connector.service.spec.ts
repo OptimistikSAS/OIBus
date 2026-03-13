@@ -109,7 +109,12 @@ describe('SouthConnectorService', () => {
         name: 'MySouthItem',
         enabled: true,
         scanMode: testData.scanMode.list[0],
-        settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
+        settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
       }
     ]);
 
