@@ -26,6 +26,7 @@ import {
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
+  SouthItemLastValue,
   SouthType
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
@@ -312,6 +313,21 @@ export class SouthConnectorController extends Controller {
   }
 
   /**
+   * Retrieves the last cached value for a specific item
+   * @summary Get item last value
+   * @returns {Promise<SouthItemLastValue>} The item's last cached value
+   */
+  @Get('/{southId}/items/{itemId}/last-value')
+  async getItemLastValue(
+    @Path() southId: string,
+    @Path() itemId: string,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthItemLastValue> {
+    const southService = request.services.southService as SouthService;
+    return southService.getItemLastValue(southId, itemId);
+  }
+
+  /**
    * Creates a new item in a south connector
    * @summary Create south connector item
    * @returns {Promise<SouthConnectorItemDTO>} The created item
@@ -544,11 +560,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<SouthItemGroupDTO>} The group object
    */
   @Get('/{southId}/groups/{groupId}')
-  async getGroup(
-    @Path() southId: string,
-    @Path() groupId: string,
-    @Request() request: CustomExpressRequest
-  ): Promise<SouthItemGroupDTO> {
+  async getGroup(@Path() southId: string, @Path() groupId: string, @Request() request: CustomExpressRequest): Promise<SouthItemGroupDTO> {
     const southService = request.services.southService as SouthService;
     return southService.getGroup(southId, groupId);
   }
@@ -591,11 +603,7 @@ export class SouthConnectorController extends Controller {
    */
   @Delete('/{southId}/groups/{groupId}')
   @SuccessResponse(204, 'No Content')
-  async deleteGroup(
-    @Path() southId: string,
-    @Path() groupId: string,
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  async deleteGroup(@Path() southId: string, @Path() groupId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const southService = request.services.southService as SouthService;
     await southService.deleteGroup(southId, groupId);
   }

@@ -1,0 +1,81 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate>south.items.last-value-modal.title</h4>
+  <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+</div>
+
+<div class="modal-body">
+  <div class="container-fluid">
+    <div class="row mb-3">
+      <div class="col-md-4 fw-bold" translate>south.items.last-value-modal.item-name</div>
+      <div class="col-md-8">{{ itemLastValue?.itemName }}</div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4 fw-bold" translate>south.items.group</div>
+      <div class="col-md-8">{{ itemLastValue?.groupName }}</div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4 fw-bold" translate>south.items.last-value-modal.query-time</div>
+      <div class="col-md-8">
+        @if (itemLastValue?.queryTime) {
+          <span>{{ itemLastValue!.queryTime | date: 'medium' }}</span>
+        } @else {
+          <span class="text-muted" translate>south.items.last-value-modal.no-value</span>
+        }
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-4 fw-bold" translate>south.items.last-value-modal.tracked-instant</div>
+      <div class="col-md-8">
+        @if (itemLastValue?.trackedInstant) {
+          <span>{{ itemLastValue!.trackedInstant | date: 'medium' }}</span>
+        } @else {
+          <span class="text-muted">-</span>
+        }
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 fw-bold" translate>south.items.last-value-modal.value</div>
+      <div class="col-md-8">
+        @if (!hasValue) {
+          <div class="text-muted" translate>south.items.last-value-modal.no-value</div>
+        }
+
+        <!-- File array display -->
+        @if (isFileArray) {
+          <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+              <thead>
+                <tr>
+                  <th translate>south.items.last-value-modal.filename</th>
+                  <th translate>south.items.last-value-modal.modified-time</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (file of fileArray; track file) {
+                  <tr>
+                    <td>{{ file.filename }}</td>
+                    <td>{{ file.modifiedTime | date: 'medium' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <div class="text-muted small">{{ fileArray.length }} file(s) tracked</div>
+          </div>
+        }
+
+        <!-- Generic JSON display -->
+        @if (hasValue && !isFileArray) {
+          <pre class="bg-light p-2 rounded">{{ itemLastValue!.value | json }}</pre>
+        }
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" (click)="close()" translate>common.close</button>
+</div>

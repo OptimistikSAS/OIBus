@@ -167,6 +167,15 @@
                   >
                     <span class="fa fa-pencil"></span>
                   </button>
+                  <!-- View Last Value button -->
+                  <button
+                    type="button"
+                    class="btn btn-link view-item-last-value px-1 py-0"
+                    [ngbTooltip]="'south.items.view-last-value' | translate"
+                    (click)="viewItemLastValue(item)"
+                  >
+                    <span class="fa fa-search"></span>
+                  </button>
                   <!-- Duplicate button -->
                   <button
                     type="button"

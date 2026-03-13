@@ -10403,6 +10403,53 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthItemLastValueDTO": {
+				"description": "DTO for South connector item last value with item name.",
+				"properties": {
+					"itemId": {
+						"type": "string",
+						"description": "The ID of the item.",
+						"example": "item-123"
+					},
+					"queryTime": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The timestamp when the data was last queried (ISO 8601 format).",
+						"example": "2024-02-02T12:00:00.000Z"
+					},
+					"value": {
+						"description": "The cached value (JSON-serialized, structure depends on connector type).\nFor file-based connectors: array of {filename, modifiedTime}\nFor history connectors: {maxInstant}"
+					},
+					"trackedInstant": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The tracked instant from group/item (ISO 8601 format).\nCan be null for non-history connectors.",
+						"example": "2024-02-02T12:00:00.000Z"
+					},
+					"itemName": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Sensor 1"
+					}
+				},
+				"required": [
+					"itemId",
+					"queryTime",
+					"value",
+					"trackedInstant",
+					"itemName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorItemCommandDTO": {
 				"anyOf": [
 					{
@@ -25198,6 +25245,47 @@
 				},
 				"description": "Delete a south item",
 				"summary": "Delete south item",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "itemId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/south/{southId}/items/{itemId}/last-value": {
+			"get": {
+				"operationId": "GetItemLastValue",
+				"responses": {
+					"200": {
+						"description": "The item's last cached value",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthItemLastValueDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves the last cached value for a specific item",
+				"summary": "Get item last value",
 				"tags": [
 					"South Connectors"
 				],

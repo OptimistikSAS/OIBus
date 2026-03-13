@@ -1,5 +1,5 @@
 import { Database } from 'better-sqlite3';
-import { SouthCache } from '../../../shared/model/south-connector.model';
+import { SouthCache, SouthItemLastValue } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../../shared/model/types';
 
 /**
@@ -14,54 +14,54 @@ export default class SouthCacheRepository {
     this._database = database;
   }
 
-  getSouthCache(tableName: string, scanModeId: string, itemId: string): SouthCache | null {
-    const query = `SELECT south_id, scan_mode_id, item_id, max_instant FROM "${tableName}" WHERE scan_mode_id = ? AND item_id = ?;`;
-    const result = this._database.prepare(query).get(scanModeId, itemId);
-    if (!result) return null;
-    return this.toSouthCache(result as Record<string, string>);
+  getSouthCache(southId: string, scanModeId: string, itemId: string): SouthCache | null {
+    // Determine key: if itemId is 'all', use scanModeId, otherwise use itemId
+    const key = itemId === 'all' ? scanModeId : itemId;
+    const itemValue = this.getItemLastValue(southId, key);
+
+    if (!itemValue) return null;
+
+    return {
+      southId,
+      scanModeId,
+      itemId,
+      maxInstant: itemValue.trackedInstant || ''
+    };
   }
 
-  save(tableName: string, command: SouthCache): void {
-    const foundScanMode = this.getSouthCache(tableName, command.scanModeId, command.itemId);
-    if (!foundScanMode) {
-      const insertQuery = `INSERT INTO "${tableName}" (south_id, scan_mode_id, item_id, max_instant) VALUES (?, ?, ?, ?);`;
-      this._database.prepare(insertQuery).run(command.southId, command.scanModeId, command.itemId, command.maxInstant);
-    } else {
-      const query = `UPDATE "${tableName}" SET max_instant = ? WHERE scan_mode_id = ? AND item_id = ?;`;
-      this._database.prepare(query).run(command.maxInstant, command.scanModeId, command.itemId);
-    }
+  save(command: SouthCache): void {
+    const key = command.itemId === 'all' ? command.scanModeId : command.itemId;
+    this.saveItemLastValue(command.southId, {
+      itemId: key, // Use correct key logic
+      queryTime: null,
+      value: null,
+      trackedInstant: command.maxInstant
+    });
   }
 
   /**
-   * Retrieve a map of unique scan modes with their latest max instant
-   *
-   * NOTE: Map elements are sorted by max instant from latest to oldest
+   * @deprecated Use getAllItemValues and filter/aggregate in service
    */
-  getLatestMaxInstants(tableName: string): Map<string, Instant> | null {
-    const query = `SELECT max(max_instant) as maxInstant, scan_mode_id AS scanModeId FROM "${tableName}" GROUP BY scan_mode_id ORDER BY max_instant DESC;`;
-    const results = this._database.prepare(query).all() as Array<{ maxInstant: Instant; scanModeId: string }>;
-    if (results.length === 0) return null;
-    return new Map(results.map(r => [r.scanModeId, r.maxInstant]));
+  getLatestMaxInstants(_southId: string): Map<string, Instant> | null {
+    return null;
   }
 
-  delete(tableName: string, scanModeId: string, itemId: string): void {
-    const query = `DELETE FROM "${tableName}" WHERE scan_mode_id = ? AND item_id = ?;`;
-    this._database.prepare(query).run(scanModeId, itemId);
+  delete(southId: string, scanModeId: string, itemId: string): void {
+    const key = itemId === 'all' ? scanModeId : itemId;
+    this.deleteItemValue(southId, key);
   }
 
-  deleteAllBySouthConnector(tableName: string): void {
-    const query = `DELETE FROM "${tableName}";`;
-    this._database.prepare(query).run();
+  deleteAllBySouthConnector(southId: string): void {
+    this.dropItemValueTable(southId);
   }
 
-  deleteAllBySouthItem(tableName: string, itemId: string): void {
-    const query = `DELETE FROM "${tableName}" WHERE item_id = ?;`;
-    this._database.prepare(query).run(itemId);
+  deleteAllBySouthItem(_itemId: string): void {
+    // No-op: Requires southId which is not provided.
+    // SouthConnector now uses deleteItemValue(southId, itemId) directly.
   }
 
-  deleteAllByScanMode(tableName: string, scanModeId: string): void {
-    const query = `DELETE FROM "${tableName}" WHERE scan_mode_id = ?;`;
-    this._database.prepare(query).run(scanModeId);
+  deleteAllByScanMode(_scanModeId: string): void {
+    // No-op: Incompatible with per-connector tables.
   }
 
   createCustomTable(tableName: string, fields: string): void {
@@ -76,12 +76,111 @@ export default class SouthCacheRepository {
     return this._database.prepare(query).get(...params);
   }
 
-  private toSouthCache(result: Record<string, string>): SouthCache {
+  /**
+   * Create item value table for a connector
+   */
+  createItemValueTable(connectorId: string): void {
+    const tableName = `south_item_cache_${connectorId}`;
+    this._database
+      .prepare(
+        `CREATE TABLE IF NOT EXISTS "${tableName}" (` +
+          'item_id TEXT PRIMARY KEY, ' +
+          'query_time TEXT, ' +
+          'value TEXT, ' +
+          'tracked_instant TEXT' +
+          ');'
+      )
+      .run();
+  }
+
+  /**
+   * Drop item value table for a connector
+   */
+  dropItemValueTable(connectorId: string): void {
+    const tableName = `south_item_cache_${connectorId}`;
+    this._database.prepare(`DROP TABLE IF EXISTS "${tableName}";`).run();
+  }
+
+  /**
+   * Get last value for an item
+   */
+  getItemLastValue(connectorId: string, itemId: string): Omit<SouthItemLastValue, 'itemName'> | null {
+    const tableName = `south_item_cache_${connectorId}`;
+    // Check if the table exists first? No, we assume the table exists (created on start)
+    // However, if the table doesn't exist, this might throw?
+    // better-sqlite3 throws if the table is not found? Yes.
+    // So createItemValueTable at startup is CRITICAL.
+    const query = `SELECT item_id, query_time, value, tracked_instant FROM "${tableName}" WHERE item_id = ?;`;
+    try {
+      const result = this._database.prepare(query).get(itemId) as Record<string, string> | undefined;
+      if (!result) return null;
+      return this.toSouthItemLastValue(result);
+    } catch {
+      // Table might not exist if cache never initialized or deleted
+      return null;
+    }
+  }
+
+  /**
+   * Get all item values for a connector
+   */
+  getAllItemValues(connectorId: string): Array<Omit<SouthItemLastValue, 'itemName'>> {
+    const tableName = `south_item_cache_${connectorId}`;
+    const query = `SELECT item_id, query_time, value, tracked_instant FROM "${tableName}";`;
+    try {
+      const results = this._database.prepare(query).all() as Array<Record<string, string>>;
+      return results.map(result => this.toSouthItemLastValue(result));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Save or update the item last value
+   */
+  saveItemLastValue(connectorId: string, command: Omit<SouthItemLastValue, 'itemName'>): void {
+    const tableName = `south_item_cache_${connectorId}`;
+    const existing = this.getItemLastValue(connectorId, command.itemId);
+
+    const valueStr = command.value !== null && command.value !== undefined ? JSON.stringify(command.value) : null;
+
+    if (!existing) {
+      const insertQuery = `INSERT INTO "${tableName}" (item_id, query_time, value, tracked_instant) VALUES (?, ?, ?, ?);`;
+      this._database.prepare(insertQuery).run(command.itemId, command.queryTime, valueStr, command.trackedInstant);
+    } else {
+      const updateQuery = `UPDATE "${tableName}" SET query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ?;`;
+      this._database.prepare(updateQuery).run(command.queryTime, valueStr, command.trackedInstant, command.itemId);
+    }
+  }
+
+  /**
+   * Delete item value
+   */
+  deleteItemValue(connectorId: string, itemId: string): void {
+    const tableName = `south_item_cache_${connectorId}`;
+    const query = `DELETE FROM "${tableName}" WHERE item_id = ?;`;
+    try {
+      this._database.prepare(query).run(itemId);
+    } catch {
+      // Ignore if table/item fails
+    }
+  }
+
+  private toSouthItemLastValue(result: Record<string, string>): Omit<SouthItemLastValue, 'itemName'> {
+    let parsedValue: unknown = null;
+    if (result.value) {
+      try {
+        parsedValue = JSON.parse(result.value);
+      } catch {
+        parsedValue = result.value;
+      }
+    }
+
     return {
-      southId: result.south_id,
-      scanModeId: result.scan_mode_id,
       itemId: result.item_id,
-      maxInstant: result.max_instant
+      queryTime: result.query_time || null,
+      value: parsedValue,
+      trackedInstant: result.tracked_instant || null
     };
   }
 }

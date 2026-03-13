@@ -736,6 +736,48 @@ export interface SouthCache {
 }
 
 /**
+ * Last value information for a South connector item.
+ * Stores the last received value and metadata per item.
+ */
+export interface SouthItemLastValue {
+  /**
+   * The ID of the item.
+   *
+   * @example "item-123"
+   */
+  itemId: string;
+
+  /**
+   * The name of the item.
+   *
+   * @example "Temperature Sensor 1"
+   */
+  itemName: string;
+
+  /**
+   * The timestamp when the data was last queried (ISO 8601 format).
+   *
+   * @example "2024-02-02T12:00:00.000Z"
+   */
+  queryTime: Instant | null;
+
+  /**
+   * The cached value (JSON-serialized, structure depends on connector type).
+   * For file-based connectors: array of {filename, modifiedTime}
+   * For history connectors: {maxInstant}
+   */
+  value: unknown;
+
+  /**
+   * The tracked instant from group/item (ISO 8601 format).
+   * Can be null for non-history connectors.
+   *
+   * @example "2024-02-02T12:00:00.000Z"
+   */
+  trackedInstant: Instant | null;
+}
+
+/**
  * Search parameters for South connector items.
  * Used for filtering and paginating item lists.
  */

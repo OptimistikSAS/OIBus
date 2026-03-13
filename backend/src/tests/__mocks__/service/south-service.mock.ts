@@ -26,6 +26,7 @@ export default jest.fn().mockImplementation(() => ({
   deleteItem: jest.fn(),
   deleteItems: jest.fn(),
   deleteAllItems: jest.fn(),
+  getItemLastValue: jest.fn(),
   checkImportItems: jest.fn(),
   importItems: jest.fn(),
   retrieveSecretsFromSouth: jest.fn(),
