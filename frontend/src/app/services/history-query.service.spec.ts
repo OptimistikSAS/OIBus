@@ -312,6 +312,23 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
+  it('should test a History query item', () => {
+    let done = false;
+    const itemSettings = testData.south.itemCommand.settings;
+    const southSettings = testData.south.command.settings;
+    const testingSettings = {
+      history: {
+        startTime: testData.constants.dates.DATE_1,
+        endTime: testData.constants.dates.DATE_2
+      }
+    };
+    service.testItem('id1', null, 'mysql', 'my item', southSettings, itemSettings, testingSettings).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/test/items?southType=mysql&itemName=my%20item' });
+    expect(testRequest.request.body).toEqual({ southSettings, itemSettings, testingSettings });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
   it('should search cache content', () => {
     let expectedNorthCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> | null = null;
     const northCacheFiles: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
