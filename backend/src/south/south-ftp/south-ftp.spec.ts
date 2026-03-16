@@ -93,7 +93,7 @@ describe('SouthFTP', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -114,7 +114,7 @@ describe('SouthFTP', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -135,7 +135,7 @@ describe('SouthFTP', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

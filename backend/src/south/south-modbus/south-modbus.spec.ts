@@ -108,7 +108,7 @@ describe('South Modbus', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -127,7 +127,7 @@ describe('South Modbus', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -146,7 +146,7 @@ describe('South Modbus', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -161,7 +161,7 @@ describe('South Modbus', () => {
           modbusType: 'discrete-input'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -176,7 +176,7 @@ describe('South Modbus', () => {
           modbusType: 'coil'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -196,7 +196,7 @@ describe('South Modbus', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -407,7 +407,7 @@ describe('South Modbus', () => {
         modbusType: 'bad type' as SouthModbusItemSettingsModbusType,
         address: '1010'
       },
-      groups: [],
+      group: null,
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
