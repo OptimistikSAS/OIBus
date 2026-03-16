@@ -626,13 +626,13 @@ describe('SouthConnector with history and subscription', () => {
     expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(testData.south.list[2].id, {
       itemId: 'item1',
       queryTime: testData.constants.dates.DATE_1,
-      value: values,
+      value: values[values.length - 1],
       trackedInstant: null
     });
     expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(testData.south.list[2].id, {
       itemId: 'item2',
       queryTime: testData.constants.dates.DATE_1,
-      value: values,
+      value: values[values.length - 1],
       trackedInstant: null
     });
   });
@@ -1015,7 +1015,7 @@ describe('SouthConnector with history and subscription', () => {
           mode: 'da'
         } as SouthOPCUAItemSettings,
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -1029,7 +1029,7 @@ describe('SouthConnector with history and subscription', () => {
           mode: 'da'
         } as SouthOPCUAItemSettings,
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

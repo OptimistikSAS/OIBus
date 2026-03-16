@@ -100,7 +100,7 @@ describe('SouthSQLite', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -123,7 +123,7 @@ describe('SouthSQLite', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -163,7 +163,7 @@ describe('SouthSQLite', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -360,7 +360,7 @@ describe('SouthSQLite test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -383,7 +383,7 @@ describe('SouthSQLite test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -423,7 +423,7 @@ describe('SouthSQLite test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

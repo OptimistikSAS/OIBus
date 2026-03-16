@@ -60,7 +60,7 @@ describe('South OPC', () => {
           resampling: 'none'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -75,7 +75,7 @@ describe('South OPC', () => {
           aggregate: 'raw'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -91,7 +91,7 @@ describe('South OPC', () => {
           resampling: '10s'
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
