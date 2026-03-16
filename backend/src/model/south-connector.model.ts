@@ -37,7 +37,7 @@ export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends B
   enabled: boolean;
   scanMode: ScanMode;
   settings: I;
-  groups: Array<SouthItemGroupEntity>;
+  group: SouthItemGroupEntity | null;
   syncWithGroup: boolean;
   maxReadInterval: number | null;
   readDelay: number | null;
