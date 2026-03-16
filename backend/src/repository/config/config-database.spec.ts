@@ -54,7 +54,7 @@ import OIAnalyticsMessageRepository from './oianalytics-message.repository';
 import SouthConnectorRepository from './south-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
 import NorthConnectorRepository from './north-connector.repository';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -2030,7 +2030,7 @@ describe('Repository with populated database', () => {
           enabled: true,
           scanMode: testData.scanMode.list[0],
           settings: {} as SouthItemSettings,
-          groups: [],
+          group: null,
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
@@ -2128,7 +2128,7 @@ describe('Repository with populated database', () => {
         enabled: false,
         scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings,
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -2160,7 +2160,7 @@ describe('Repository with populated database', () => {
         enabled: false,
         scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings,
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -2200,7 +2200,7 @@ describe('Repository with populated database', () => {
           enabled: true,
           scanMode: testData.scanMode.list[0],
           settings: {} as SouthItemSettings,
-          groups: [group],
+          group,
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
@@ -2212,8 +2212,7 @@ describe('Repository with populated database', () => {
 
       const savedItem = repository.findItemById(southWithGroups.id, 'newItemWithGroupId');
       expect(savedItem).toBeDefined();
-      expect(savedItem!.groups.length).toEqual(1);
-      expect(savedItem!.groups[0].id).toEqual('testGroupId1');
+      expect(savedItem!.group!.id).toEqual('testGroupId1');
     });
 
     it('should save item with groups', () => {
@@ -2237,7 +2236,7 @@ describe('Repository with populated database', () => {
         enabled: true,
         scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings,
-        groups: [group],
+        group,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -2248,8 +2247,7 @@ describe('Repository with populated database', () => {
 
       const savedItem = repository.findItemById(testData.south.list[0].id, 'newItemIdWithGroup');
       expect(savedItem).toBeDefined();
-      expect(savedItem!.groups.length).toEqual(1);
-      expect(savedItem!.groups[0].id).toEqual('testGroupId2');
+      expect(savedItem!.group!.id).toEqual('testGroupId2');
     });
 
     it('should save and find item with historian fields', () => {
@@ -2261,7 +2259,7 @@ describe('Repository with populated database', () => {
         enabled: true,
         scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings,
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
@@ -2286,7 +2284,7 @@ describe('Repository with populated database', () => {
         enabled: true,
         scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings,
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -2297,30 +2295,7 @@ describe('Repository with populated database', () => {
 
       const savedItem = repository.findItemById(testData.south.list[0].id, 'newItemIdEmptyGroups');
       expect(savedItem).toBeDefined();
-      expect(savedItem!.groups.length).toEqual(0);
-    });
-
-    it('should save item with undefined groups', () => {
-      (generateRandomId as jest.Mock).mockReturnValueOnce('newItemIdUndefinedGroups');
-
-      const itemWithUndefinedGroups: SouthConnectorItemEntity<SouthItemSettings> = {
-        id: '',
-        name: 'item-with-undefined-groups',
-        enabled: true,
-        scanMode: testData.scanMode.list[0],
-        settings: {} as SouthItemSettings,
-        groups: undefined as unknown as Array<SouthItemGroupEntity>,
-        syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
-      };
-
-      repository.saveItem(testData.south.list[0].id, itemWithUndefinedGroups);
-
-      const savedItem = repository.findItemById(testData.south.list[0].id, 'newItemIdUndefinedGroups');
-      expect(savedItem).toBeDefined();
-      expect(savedItem!.groups.length).toEqual(0);
+      expect(savedItem!.group).toBeNull();
     });
 
     it('should move items to a group', () => {
@@ -2350,8 +2325,7 @@ describe('Repository with populated database', () => {
       const itemsAfterMove = repository.findAllItemsForSouth(testData.south.list[0].id);
       const movedItems = itemsAfterMove.filter(item => itemIds.includes(item.id));
       movedItems.forEach(item => {
-        expect(item.groups.length).toEqual(1);
-        expect(item.groups[0].id).toEqual('testGroupId3');
+        expect(item.group!.id).toEqual('testGroupId3');
       });
     });
 
@@ -2379,7 +2353,7 @@ describe('Repository with populated database', () => {
       // Verify items are in the group
       let itemsInGroup = repository.findAllItemsForSouth(testData.south.list[0].id);
       let itemInGroup = itemsInGroup.find(item => itemIds.includes(item.id));
-      expect(itemInGroup!.groups.length).toEqual(1);
+      expect(itemInGroup!.group).not.toBeNull();
 
       // Remove items from groups
       repository.moveItemsToGroup(itemIds, null);
@@ -2387,7 +2361,7 @@ describe('Repository with populated database', () => {
       // Verify items are no longer in any group
       itemsInGroup = repository.findAllItemsForSouth(testData.south.list[0].id);
       itemInGroup = itemsInGroup.find(item => itemIds.includes(item.id));
-      expect(itemInGroup!.groups.length).toEqual(0);
+      expect(itemInGroup!.group).toBeNull();
     });
 
     it('should handle empty itemIds array in moveItemsToGroup', () => {

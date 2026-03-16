@@ -104,7 +104,7 @@ describe('SouthMSSQL with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -127,7 +127,7 @@ describe('SouthMSSQL with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -167,7 +167,7 @@ describe('SouthMSSQL with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -375,7 +375,7 @@ describe('SouthMSSQL without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -398,7 +398,7 @@ describe('SouthMSSQL without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -438,7 +438,7 @@ describe('SouthMSSQL without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -549,7 +549,7 @@ describe('SouthMSSQL test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -572,7 +572,7 @@ describe('SouthMSSQL test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -612,7 +612,7 @@ describe('SouthMSSQL test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

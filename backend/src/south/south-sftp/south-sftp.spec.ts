@@ -76,7 +76,7 @@ describe('SouthSFTP', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -97,7 +97,7 @@ describe('SouthSFTP', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -118,7 +118,7 @@ describe('SouthSFTP', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -546,7 +546,7 @@ describe('SouthFTP with preserve file and compression', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -567,7 +567,7 @@ describe('SouthFTP with preserve file and compression', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -588,7 +588,7 @@ describe('SouthFTP with preserve file and compression', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -733,7 +733,7 @@ describe('SouthSFTP test connection with private key', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -754,7 +754,7 @@ describe('SouthSFTP test connection with private key', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -775,7 +775,7 @@ describe('SouthSFTP test connection with private key', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

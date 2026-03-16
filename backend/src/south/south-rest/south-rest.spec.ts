@@ -87,7 +87,7 @@ const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorI
   name: 'Test Item',
   enabled: true,
   scanMode: testData.scanMode.list[0],
-  groups: [],
+  group: null,
   syncWithGroup: false,
   maxReadInterval: null,
   readDelay: null,

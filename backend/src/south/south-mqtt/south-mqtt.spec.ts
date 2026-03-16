@@ -84,7 +84,7 @@ describe('SouthMQTT', () => {
           topic: 'my/first/topic'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -98,7 +98,7 @@ describe('SouthMQTT', () => {
           topic: 'my/+/+/topic/with/wildcard/#'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -112,7 +112,7 @@ describe('SouthMQTT', () => {
           topic: 'my/wrong/topic////'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -126,7 +126,7 @@ describe('SouthMQTT', () => {
           topic: 'json/topic'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -140,7 +140,7 @@ describe('SouthMQTT', () => {
           topic: 'json/topic'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -154,7 +154,7 @@ describe('SouthMQTT', () => {
           topic: 'json/topic'
         },
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

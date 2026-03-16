@@ -492,7 +492,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         this.cacheService!.saveItemLastValue(this.connector.id, {
           itemId,
           queryTime,
-          value: data.content,
+          value: data.content[data.content.length - 1],
           trackedInstant: null
         });
       }
