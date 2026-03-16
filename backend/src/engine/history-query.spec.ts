@@ -71,11 +71,11 @@ describe('HistoryQuery enabled', () => {
           id: 'history',
           name: 'history'
         },
-        groups: [],
+        group: null,
         syncWithGroup: false,
-        maxReadInterval: item.maxReadInterval ?? null,
-        readDelay: item.readDelay ?? 0,
-        overlap: item.overlap ?? null
+        maxReadInterval: 0,
+        readDelay: 0,
+        overlap: 0
       })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,
@@ -123,11 +123,11 @@ describe('HistoryQuery enabled', () => {
           id: 'history',
           name: 'history'
         },
-        groups: [],
+        group: null,
         syncWithGroup: false,
-        maxReadInterval: item.maxReadInterval ?? null,
-        readDelay: item.readDelay ?? 0,
-        overlap: item.overlap ?? null
+        maxReadInterval: 0,
+        readDelay: 0,
+        overlap: 0
       })),
       testData.historyQueries.list[0].startTime,
       testData.historyQueries.list[0].endTime,

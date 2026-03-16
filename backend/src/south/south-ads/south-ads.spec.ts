@@ -82,7 +82,7 @@ describe('South ADS', () => {
           address: 'GVL_Test.TestINT1'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -96,7 +96,7 @@ describe('South ADS', () => {
           address: 'GVL_Test.TestINT2'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

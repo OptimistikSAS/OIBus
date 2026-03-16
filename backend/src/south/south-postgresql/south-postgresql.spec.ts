@@ -96,7 +96,7 @@ describe('SouthPostgreSQL with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -119,7 +119,7 @@ describe('SouthPostgreSQL with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -159,7 +159,7 @@ describe('SouthPostgreSQL with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -420,7 +420,7 @@ describe('SouthPostgreSQL without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -443,7 +443,7 @@ describe('SouthPostgreSQL without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -483,7 +483,7 @@ describe('SouthPostgreSQL without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -583,7 +583,7 @@ describe('SouthPostgreSQL test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -606,7 +606,7 @@ describe('SouthPostgreSQL test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -646,7 +646,7 @@ describe('SouthPostgreSQL test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
