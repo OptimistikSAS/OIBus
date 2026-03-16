@@ -98,7 +98,7 @@ describe('SouthODBC odbc driver with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -121,7 +121,7 @@ describe('SouthODBC odbc driver with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -161,7 +161,7 @@ describe('SouthODBC odbc driver with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -472,7 +472,7 @@ describe('SouthODBC odbc driver without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -495,7 +495,7 @@ describe('SouthODBC odbc driver without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -535,7 +535,7 @@ describe('SouthODBC odbc driver without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -677,7 +677,7 @@ describe('SouthODBC odbc driver test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -700,7 +700,7 @@ describe('SouthODBC odbc driver test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -740,7 +740,7 @@ describe('SouthODBC odbc driver test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -964,7 +964,7 @@ describe('SouthODBC odbc remote with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -987,7 +987,7 @@ describe('SouthODBC odbc remote with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -1027,7 +1027,7 @@ describe('SouthODBC odbc remote with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -1354,7 +1354,7 @@ describe('SouthODBC odbc remote test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -1377,7 +1377,7 @@ describe('SouthODBC odbc remote test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -1417,7 +1417,7 @@ describe('SouthODBC odbc remote test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

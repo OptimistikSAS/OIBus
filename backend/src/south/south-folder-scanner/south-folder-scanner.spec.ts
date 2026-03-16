@@ -56,7 +56,7 @@ describe('SouthFolderScanner', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -76,7 +76,7 @@ describe('SouthFolderScanner', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -96,7 +96,7 @@ describe('SouthFolderScanner', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -321,7 +321,7 @@ describe('SouthFolderScanner with compression', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -341,7 +341,7 @@ describe('SouthFolderScanner with compression', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -361,7 +361,7 @@ describe('SouthFolderScanner with compression', () => {
           recursive: false
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
