@@ -24,7 +24,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/first/topic'
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -38,7 +38,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/+/+/topic/with/wildcard/#'
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -52,7 +52,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/wrong/topic////'
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -66,7 +66,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'json/topic'
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -80,7 +80,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'json/topic'
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -94,7 +94,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'json/topic'
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -109,7 +109,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'disabled/topic'
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -123,7 +123,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/second/topic' // Duplicate topic with id1
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -137,7 +137,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'my/second/topic' // Duplicate topic with id1
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
@@ -151,7 +151,7 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
       topic: 'simple/+' // Simple wildcard
     },
     scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-    groups: [],
+    group: null,
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
