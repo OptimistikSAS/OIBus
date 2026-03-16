@@ -10452,13 +10452,18 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthItemLastValueDTO": {
-				"description": "DTO for South connector item last value with item name.",
+			"SouthItemLastValue": {
+				"description": "Last value information for a South connector item.\nStores the last received value and metadata per item.",
 				"properties": {
 					"itemId": {
 						"type": "string",
 						"description": "The ID of the item.",
 						"example": "item-123"
+					},
+					"itemName": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Sensor 1"
 					},
 					"queryTime": {
 						"allOf": [
@@ -10482,19 +10487,14 @@
 						"nullable": true,
 						"description": "The tracked instant from group/item (ISO 8601 format).\nCan be null for non-history connectors.",
 						"example": "2024-02-02T12:00:00.000Z"
-					},
-					"itemName": {
-						"type": "string",
-						"description": "The name of the item.",
-						"example": "Temperature Sensor 1"
 					}
 				},
 				"required": [
 					"itemId",
+					"itemName",
 					"queryTime",
 					"value",
-					"trackedInstant",
-					"itemName"
+					"trackedInstant"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -25334,7 +25334,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/SouthItemLastValueDTO"
+									"$ref": "#/components/schemas/SouthItemLastValue"
 								}
 							}
 						}

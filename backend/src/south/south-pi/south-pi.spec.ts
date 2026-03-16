@@ -56,7 +56,7 @@ describe('South PI', () => {
           piPoint: 'FACTORY.WORKSHOP.POINT.ID1'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -71,7 +71,7 @@ describe('South PI', () => {
           piQuery: '*'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,

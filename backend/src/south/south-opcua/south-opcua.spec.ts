@@ -137,7 +137,7 @@ describe('SouthOPCUA', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -156,7 +156,7 @@ describe('SouthOPCUA', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -175,7 +175,7 @@ describe('SouthOPCUA', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -191,7 +191,7 @@ describe('SouthOPCUA', () => {
           timestampOrigin: 'oibus'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -207,7 +207,7 @@ describe('SouthOPCUA', () => {
           timestampOrigin: 'point'
         },
         scanMode: testData.scanMode.list[0],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
@@ -223,7 +223,7 @@ describe('SouthOPCUA', () => {
           timestampOrigin: 'server'
         },
         scanMode: testData.scanMode.list[1],
-        groups: [],
+        group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
