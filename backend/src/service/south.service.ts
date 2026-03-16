@@ -371,7 +371,7 @@ export default class SouthService {
       id: 'test',
       enabled: false,
       name: itemName,
-      groups: [],
+      group: null,
       syncWithGroup: false,
       scanMode: {
         id: '',
@@ -947,8 +947,7 @@ export const copySouthItemCommandToSouthItemEntity = async (
   // Handle group assignment
   if (southItemGroupRepository && southId) {
     if (command.groupId) {
-      const group = southItemGroupRepository.findById(command.groupId);
-      southItemEntity.groups = group ? [group] : [];
+      southItemEntity.group = southItemGroupRepository.findById(command.groupId);
     } else if (command.groupName && command.groupName.trim()) {
       // Find or create group by name
       let group = southItemGroupRepository.findByNameAndSouthId(command.groupName.trim(), southId);
@@ -965,17 +964,16 @@ export const copySouthItemCommandToSouthItemEntity = async (
         };
         group = southItemGroupRepository.create(groupEntity);
       }
-      southItemEntity.groups = [group];
+      southItemEntity.group = group;
     } else {
-      southItemEntity.groups = [];
+      southItemEntity.group = null;
     }
   } else if (southItemGroupRepository) {
     // Legacy support: only groupId when southId is not available
     if (command.groupId) {
-      const group = southItemGroupRepository.findById(command.groupId);
-      southItemEntity.groups = group ? [group] : [];
+      southItemEntity.group = southItemGroupRepository.findById(command.groupId);
     } else {
-      southItemEntity.groups = [];
+      southItemEntity.group = null;
     }
   }
 };
@@ -1017,7 +1015,7 @@ export const toSouthConnectorItemDTO = (entity: SouthConnectorItemEntity<SouthIt
     enabled: entity.enabled,
     scanMode: toScanModeDTO(entity.scanMode),
     settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest),
-    group: entity.groups && entity.groups.length > 0 ? toSouthItemGroupDTO(entity.groups[0]) : null,
+    group: entity.group ? toSouthItemGroupDTO(entity.group) : null,
     syncWithGroup: entity.syncWithGroup,
     maxReadInterval: entity.maxReadInterval,
     readDelay: entity.readDelay,

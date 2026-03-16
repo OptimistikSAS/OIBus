@@ -3065,14 +3065,14 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthItemLastValueDTO": {
+    "SouthItemLastValue": {
         "dataType": "refObject",
         "properties": {
             "itemId": {"dataType":"string","required":true},
+            "itemName": {"dataType":"string","required":true},
             "queryTime": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "value": {"dataType":"any","required":true},
             "trackedInstant": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
-            "itemName": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
