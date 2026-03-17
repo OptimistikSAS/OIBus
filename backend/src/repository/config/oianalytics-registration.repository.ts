@@ -355,6 +355,10 @@ export default class OIAnalyticsRegistrationRepository {
   private toOIAnalyticsRegistration(result: Record<string, string | number>): OIAnalyticsRegistration {
     return {
       id: result.id as string,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
       host: result.host as string,
       activationCode: result.activation_code as string,
       token: result.token as string,
