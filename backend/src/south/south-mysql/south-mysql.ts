@@ -175,7 +175,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
               formattedEntry[key] = value;
             } else {
               const entryDate = convertDateTimeToInstant(value, datetimeField);
-              if (datetimeField.useAsReference) {
+              if (datetimeField.useAsReference && entryDate) {
                 if (!updatedStartTime || entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }

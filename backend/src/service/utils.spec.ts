@@ -119,6 +119,16 @@ describe('Service utils', () => {
       expect(numberOfIntervalsDone).toEqual(0);
     });
 
+    it('should return only one interval when max number of seconds is 0', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
+      const endTime = '2020-01-01T01:00:00.000Z';
+      const expectedIntervals = [{ start: startTime, end: endTime }];
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, 0);
+      expect(intervals).toEqual(expectedIntervals);
+      expect(numberOfIntervalsDone).toEqual(0);
+    });
+
     it('should return two intervals', () => {
       const startTime1 = '2020-01-01T00:00:00.000Z';
       const startTimeFromCache = '2020-01-01T01:30:00.000Z';
@@ -823,6 +833,11 @@ describe('Service utils', () => {
     });
 
     describe('when no type is provided', () => {
+      it('should return empty string if value is null', () => {
+        const result = convertDateTimeToInstant(null, {});
+        expect(result).toEqual('');
+      });
+
       it('should return the input if it is a valid ISO string', () => {
         const result = convertDateTimeToInstant('2023-01-01T00:00:00Z', {});
         expect(result).toBe('2023-01-01T00:00:00Z');
