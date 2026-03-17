@@ -1197,6 +1197,10 @@ const jpGet = (obj: any, path: string) => {
 
   return {
     id: generateRandomId(6),
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     inputType: 'any-content',
     outputType: 'time-values',
     type: 'custom',

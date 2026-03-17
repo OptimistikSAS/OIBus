@@ -2,10 +2,10 @@ export type Instant = string;
 
 export interface BaseEntity {
   id: string;
-  createdBy?: string;
-  updatedBy?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type BaseFolders = Record<'archive' | 'error' | 'cache', string>;
