@@ -10,6 +10,7 @@ import { OibCodeBlockComponent } from '../../../shared/form/oib-code-block/oib-c
 import { OibCodeBlockStubComponent } from '../../../shared/form/oib-code-block/oib-code-block-stub.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { of } from 'rxjs';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 
 class EditTransformerModalComponentTester extends ComponentTester<EditTransformerModalComponent> {
   constructor() {
@@ -57,18 +58,23 @@ describe('EditTransformerModalComponent', () => {
   let tester: EditTransformerModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
   let transformerService: jasmine.SpyObj<TransformerService>;
+  let confirmationService: jasmine.SpyObj<ConfirmationService>;
 
   beforeEach(() => {
     transformerService = createMock(TransformerService);
+    confirmationService = createMock(ConfirmationService);
     fakeActiveModal = createMock(NgbActiveModal);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: TransformerService, useValue: transformerService },
+        { provide: ConfirmationService, useValue: confirmationService },
         { provide: NgbActiveModal, useValue: fakeActiveModal }
       ]
     });
+
+    confirmationService.confirm.and.returnValue(of(undefined));
 
     TestBed.overrideComponent(EditTransformerModalComponent, {
       remove: {
