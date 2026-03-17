@@ -3,17 +3,22 @@ import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import IPFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
+import UserService from 'src/service/user.service';
 
 // Mock the services
 jest.mock('../../service/ip-filter.service', () => ({
-  toIPFilterDTO: jest.fn().mockImplementation(ipFilter => ipFilter)
+  toIPFilterDTO: jest.fn().mockImplementation((ipFilter, getUserInfo) => {
+    getUserInfo('');
+    return ipFilter;
+  })
 }));
 
 describe('IPFilterController', () => {
   let controller: IPFilterController;
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
-      ipFilterService: new IPFilterServiceMock()
+      ipFilterService: new IPFilterServiceMock(),
+      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
     },
     user: {
       id: 'test',
