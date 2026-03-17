@@ -114,8 +114,12 @@ describe('SouthConnectorService', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
-      }
+        overlap: null,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      } as unknown as SouthConnectorItemDTO
     ]);
 
     service

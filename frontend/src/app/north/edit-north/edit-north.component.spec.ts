@@ -8,6 +8,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { CertificateService } from '../../services/certificate.service';
 import { NorthConsoleSettings } from '../../../../../backend/shared/model/north-settings.model';
 import { TransformerService } from '../../services/transformer.service';
@@ -108,7 +109,7 @@ describe('EditNorthComponent', () => {
       } as NorthConsoleSettings,
       caching: {
         trigger: {
-          scanMode: testData.scanMode.list[0],
+          scanMode: testData.scanMode.list[0] as unknown as ScanModeDTO,
           numberOfElements: 1_000,
           numberOfFiles: 1
         },
@@ -127,7 +128,11 @@ describe('EditNorthComponent', () => {
           retentionDuration: 0
         }
       },
-      transformers: []
+      transformers: [],
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     };
 
     beforeEach(async () => {

@@ -132,7 +132,11 @@ describe('EditEngineComponent', () => {
         level: 'silent',
         interval: 60
       }
-    }
+    },
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' },
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {

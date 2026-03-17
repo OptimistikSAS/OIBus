@@ -109,9 +109,9 @@
                 <td>{{ south.name }}</td>
                 <td>{{ south.type | oIBusSouthTypeEnum }}</td>
                 <td>{{ south.description }}</td>
-                <td>{{ south.createdBy }}</td>
-                <td>{{ south.createdAt | datetime }}</td>
-                <td>{{ south.updatedAt | datetime }}</td>
+                <td>{{ south.createdBy.friendlyName }}</td>
+                <td>{{ south.createdAt | datetime: 'ff' }}</td>
+                <td>{{ south.updatedAt | datetime: 'ff' }}</td>
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     <button

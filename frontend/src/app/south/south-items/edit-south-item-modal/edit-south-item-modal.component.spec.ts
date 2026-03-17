@@ -8,6 +8,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { of } from 'rxjs';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -51,7 +52,7 @@ describe('EditSouthItemModalComponent', () => {
   const southId = 'southId';
   const southConnectorCommand = testData.south.command;
   const manifest = testData.south.manifest;
-  const allItems: Array<SouthConnectorItemDTO> = [
+  const allItems = [
     {
       id: 'id1',
       enabled: true,
@@ -62,7 +63,11 @@ describe('EditSouthItemModalComponent', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      overlap: null,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     },
     {
       id: 'id2',
@@ -74,10 +79,14 @@ describe('EditSouthItemModalComponent', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      overlap: null,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
-  ];
-  const scanModes = testData.scanMode.list;
+  ] as unknown as Array<SouthConnectorItemDTO>;
+  const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -141,7 +150,11 @@ describe('EditSouthItemModalComponent', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       });
     }));
 
@@ -217,7 +230,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('copy mode', () => {
-    const southItem: SouthConnectorItemDTO = {
+    const southItem = {
       id: 'id1',
       name: 'myName',
       enabled: true,
@@ -227,8 +240,12 @@ describe('EditSouthItemModalComponent', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
-    };
+      overlap: null,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
+    } as unknown as SouthConnectorItemDTO;
 
     it('should duplicate item', async () => {
       tester.componentInstance.prepareForCopy(allItems, scanModes, [], southItem, southId, southConnectorCommand, manifest, [], false);
@@ -255,13 +272,17 @@ describe('EditSouthItemModalComponent', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       });
     });
   });
 
   describe('edit mode', () => {
-    const southItem: SouthConnectorItemDTO = {
+    const southItem = {
       id: 'id1',
       name: 'myName',
       enabled: true,
@@ -271,8 +292,12 @@ describe('EditSouthItemModalComponent', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
-    };
+      overlap: null,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
+    } as unknown as SouthConnectorItemDTO;
 
     beforeEach(async () => {
       tester.componentInstance.prepareForEdition(
@@ -329,7 +354,16 @@ describe('EditSouthItemModalComponent', () => {
         id: 'id1',
         enabled: false,
         name: 'South Item 1 (updated)',
-        scanMode: { id: 'scanModeId2', name: 'scanMode2', description: 'my second scanMode', cron: '0 * * * * *' },
+        scanMode: {
+          id: 'scanModeId2',
+          name: 'scanMode2',
+          description: 'my second scanMode',
+          cron: '0 * * * * *',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
         settings: {
           objectArray: [],
           objectSettings: {},
@@ -339,7 +373,11 @@ describe('EditSouthItemModalComponent', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       });
     }));
 

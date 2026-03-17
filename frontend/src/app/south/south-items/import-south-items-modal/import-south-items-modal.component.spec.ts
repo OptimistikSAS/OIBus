@@ -6,6 +6,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { SouthConnectorDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportSouthItemsModalComponent> {
   constructor() {
@@ -27,7 +28,7 @@ describe('ImportSouthItemsModalComponent', () => {
   const southConnector: SouthConnectorDTO = {
     ...testData.south.list[0],
     items: testData.south.list[0].items.map(item => ({ ...item, group: null }))
-  } as SouthConnectorDTO;
+  } as unknown as SouthConnectorDTO;
 
   beforeEach(async () => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -51,11 +52,15 @@ describe('ImportSouthItemsModalComponent', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null
+          overlap: null,
+          createdBy: { id: '', friendlyName: '' },
+          updatedBy: { id: '', friendlyName: '' },
+          createdAt: '',
+          updatedAt: ''
         }
       ],
       [{ item: { name: 'item2' }, error: '' }],
-      testData.scanMode.list
+      testData.scanMode.list as unknown as Array<ScanModeDTO>
     );
     await tester.change();
   });
@@ -73,7 +78,11 @@ describe('ImportSouthItemsModalComponent', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       }
     ]);
   }));

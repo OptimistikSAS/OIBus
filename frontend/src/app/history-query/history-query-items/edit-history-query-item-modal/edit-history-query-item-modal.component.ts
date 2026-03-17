@@ -151,11 +151,16 @@ export class EditHistoryQueryItemModalComponent {
   get formItem(): HistoryQueryItemDTO {
     const formValue = this.form!.value;
 
+    const itemAsDto = this.item as HistoryQueryItemDTO | null;
     return {
       id: this.item?.id || '',
       enabled: formValue.enabled!,
       name: formValue.name!,
-      settings: formValue.settings!
+      settings: formValue.settings!,
+      createdBy: itemAsDto?.createdBy ?? { id: '', friendlyName: '' },
+      updatedBy: itemAsDto?.updatedBy ?? { id: '', friendlyName: '' },
+      createdAt: itemAsDto?.createdAt ?? '',
+      updatedAt: itemAsDto?.updatedAt ?? ''
     };
   }
 
