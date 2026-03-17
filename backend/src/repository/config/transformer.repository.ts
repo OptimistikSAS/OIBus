@@ -38,7 +38,7 @@ export default class TransformerRepository {
       transformer.id = generateRandomId(6);
       this.database
         .prepare(
-          `INSERT INTO ${TRANSFORMERS_TABLE} (id, type, input_type, output_type, name, description, custom_manifest, custom_code, language, timeout, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+          `INSERT INTO ${TRANSFORMERS_TABLE} (id, type, input_type, output_type, name, description, custom_manifest, custom_code, language, timeout, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))`
         )
         .run(
           transformer.id,
@@ -57,7 +57,7 @@ export default class TransformerRepository {
     } else {
       this.database
         .prepare(
-          `UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, custom_manifest = ?, custom_code = ?, language = ?, timeout = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?`
+          `UPDATE ${TRANSFORMERS_TABLE} SET name = ?, description = ?, custom_manifest = ?, custom_code = ?, language = ?, timeout = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?`
         )
         .run(
           transformer.name,
@@ -303,10 +303,10 @@ export const toTransformer = (result: Record<string, string>): Transformer => {
       language: result.language as TransformerLanguage,
       customManifest: JSON.parse(result.custom_manifest as string) as OIBusObjectAttribute,
       timeout: Number(result.timeout),
-      createdBy: result.created_by ?? undefined,
-      updatedBy: result.updated_by ?? undefined,
-      createdAt: result.created_at,
-      updatedAt: result.updated_at
+      createdBy: result.created_by ?? '',
+      updatedBy: result.updated_by ?? '',
+      createdAt: result.created_at ?? '',
+      updatedAt: result.updated_at ?? ''
     };
   }
 };

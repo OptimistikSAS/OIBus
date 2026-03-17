@@ -10,13 +10,72 @@ const SCAN_MODES_TABLE = 'scan_modes';
 export default class ScanModeRepository {
   constructor(private readonly database: Database) {
     if (this.findAll().length === 0) {
-      this.create({ name: 'Every second', description: 'Trigger every second', cron: '* * * * * *' });
-      this.create({ name: 'Every 10 seconds', description: 'Trigger every 10 seconds', cron: '*/10 * * * * *' });
-      this.create({ name: 'Every minute', description: 'Trigger every minute', cron: '0 * * * * *' });
-      this.create({ name: 'Every 10 minutes', description: 'Trigger every 10 minutes', cron: '0 */10 * * * *' });
-      this.create({ name: 'Every hour', description: 'Trigger every hour', cron: '0 0 * * * *' });
-      this.create({ name: 'Every 24 hours', description: 'Trigger every 24 hours', cron: '0 0 0 * * *' });
-      this.create({ name: 'Subscription', description: 'Used for subscription', cron: '' }, 'subscription');
+      this.create({
+        name: 'Every second',
+        description: 'Trigger every second',
+        cron: '* * * * * *',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      });
+      this.create({
+        name: 'Every 10 seconds',
+        description: 'Trigger every 10 seconds',
+        cron: '*/10 * * * * *',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      });
+      this.create({
+        name: 'Every minute',
+        description: 'Trigger every minute',
+        cron: '0 * * * * *',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      });
+      this.create({
+        name: 'Every 10 minutes',
+        description: 'Trigger every 10 minutes',
+        cron: '0 */10 * * * *',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      });
+      this.create({
+        name: 'Every hour',
+        description: 'Trigger every hour',
+        cron: '0 0 * * * *',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      });
+      this.create({
+        name: 'Every 24 hours',
+        description: 'Trigger every 24 hours',
+        cron: '0 0 0 * * *',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      });
+      this.create(
+        {
+          name: 'Subscription',
+          description: 'Used for subscription',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        'subscription'
+      );
     }
   }
 
@@ -35,7 +94,7 @@ export default class ScanModeRepository {
   }
 
   create(command: Omit<ScanMode, 'id'>, id = generateRandomId(6)): ScanMode {
-    const insertQuery = `INSERT INTO ${SCAN_MODES_TABLE} (id, name, description, cron, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'));`;
+    const insertQuery = `INSERT INTO ${SCAN_MODES_TABLE} (id, name, description, cron, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     const result = this.database
       .prepare(insertQuery)
       .run(id, command.name, command.description, command.cron, command.createdBy, command.updatedBy);
@@ -44,7 +103,7 @@ export default class ScanModeRepository {
   }
 
   update(id: string, command: Omit<ScanMode, 'id'>): void {
-    const query = `UPDATE ${SCAN_MODES_TABLE} SET name = ?, description = ?, cron = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
+    const query = `UPDATE ${SCAN_MODES_TABLE} SET name = ?, description = ?, cron = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
     this.database.prepare(query).run(command.name, command.description, command.cron, command.updatedBy, id);
   }
 
@@ -60,9 +119,9 @@ export const toScanMode = (result: Record<string, string>): ScanMode => {
     name: result.name,
     description: result.description,
     cron: result.cron,
-    createdBy: result.created_by ?? undefined,
-    updatedBy: result.updated_by ?? undefined,
-    createdAt: result.created_at ?? undefined,
-    updatedAt: result.updated_at ?? undefined
+    createdBy: result.created_by ?? '',
+    updatedBy: result.updated_by ?? '',
+    createdAt: result.created_at ?? '',
+    updatedAt: result.updated_at ?? ''
   };
 };
