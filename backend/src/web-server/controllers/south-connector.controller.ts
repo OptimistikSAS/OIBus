@@ -114,7 +114,7 @@ export class SouthConnectorController extends Controller {
   async list(@Request() request: CustomExpressRequest): Promise<Array<SouthConnectorLightDTO>> {
     const southService = request.services.southService as SouthService;
     const southConnectors = southService.list();
-    return southConnectors.map(connector => toSouthConnectorLightDTO(connector));
+    return southConnectors.map(connector => toSouthConnectorLightDTO(connector, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -125,7 +125,7 @@ export class SouthConnectorController extends Controller {
   @Get('/{southId}')
   async findById(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<SouthConnectorDTO> {
     const southService = request.services.southService as SouthService;
-    return toSouthConnectorDTO(southService.findById(southId));
+    return toSouthConnectorDTO(southService.findById(southId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -141,7 +141,9 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<SouthConnectorDTO> {
     const southService = request.services.southService as SouthService;
-    return toSouthConnectorDTO(await southService.create(command, duplicate || null, request.user.id));
+    return toSouthConnectorDTO(await southService.create(command, duplicate || null, request.user.id), id =>
+      request.services.userService.getUserInfo(id)
+    );
   }
 
   /**
@@ -260,7 +262,7 @@ export class SouthConnectorController extends Controller {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const southItems = southService.listItems(southId);
-    return southItems.map(item => toSouthConnectorItemDTO(item, southConnector.type));
+    return southItems.map(item => toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -287,7 +289,9 @@ export class SouthConnectorController extends Controller {
     };
     const pageResult = await southService.searchItems(southId, searchParams);
     return {
-      content: pageResult.content.map(item => toSouthConnectorItemDTO(item, southConnector.type)),
+      content: pageResult.content.map(item =>
+        toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id))
+      ),
       totalElements: pageResult.totalElements,
       size: pageResult.size,
       number: pageResult.number,
@@ -309,7 +313,7 @@ export class SouthConnectorController extends Controller {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const item = southService.findItemById(southId, itemId);
-    return toSouthConnectorItemDTO(item, southConnector.type);
+    return toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -342,7 +346,7 @@ export class SouthConnectorController extends Controller {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const item = await southService.createItem(southId, command, request.user.id);
-    return toSouthConnectorItemDTO(item, southConnector.type);
+    return toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -502,7 +506,9 @@ export class SouthConnectorController extends Controller {
     const scanModeService = request.services.scanModeService as ScanModeService;
     const southConnector = southService.findById(southId);
     const csv = itemToFlattenedCSV(
-      southConnector.items.map(item => toSouthConnectorItemDTO(item, southConnector.type)),
+      southConnector.items.map(item =>
+        toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id))
+      ),
       command.delimiter,
       scanModeService.list()
     );

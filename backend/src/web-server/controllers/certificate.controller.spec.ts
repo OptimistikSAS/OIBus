@@ -3,17 +3,22 @@ import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
+import UserService from 'src/service/user.service';
 
 // Mock the services
 jest.mock('../../service/certificate.service', () => ({
-  toCertificateDTO: jest.fn().mockImplementation(cert => cert)
+  toCertificateDTO: jest.fn().mockImplementation((cert, getUserInfo) => {
+    getUserInfo('');
+    return cert;
+  })
 }));
 
 describe('CertificateController', () => {
   let controller: CertificateController;
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
-      certificateService: new CertificateServiceMock()
+      certificateService: new CertificateServiceMock(),
+      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
     },
     user: {
       id: 'test',
