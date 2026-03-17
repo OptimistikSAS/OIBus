@@ -7,11 +7,18 @@ import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shar
 import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/engine.model';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import { OIBusTestingError } from '../../model/types';
+import UserService from 'src/service/user.service';
 
 // Mock the services
 jest.mock('../../service/north.service', () => ({
-  toNorthConnectorDTO: jest.fn().mockImplementation(connector => connector),
-  toNorthConnectorLightDTO: jest.fn().mockImplementation(connector => connector)
+  toNorthConnectorDTO: jest.fn().mockImplementation((connector, getUserInfo) => {
+    getUserInfo('');
+    return connector;
+  }),
+  toNorthConnectorLightDTO: jest.fn().mockImplementation((connector, getUserInfo) => {
+    getUserInfo('');
+    return connector;
+  })
 }));
 
 describe('NorthConnectorController', () => {
@@ -19,7 +26,8 @@ describe('NorthConnectorController', () => {
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
       northService: new NorthServiceMock(),
-      oIBusService: new OibusServiceMock()
+      oIBusService: new OibusServiceMock(),
+      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
     },
     user: {
       id: 'test',

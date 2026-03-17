@@ -77,7 +77,7 @@ export class NorthConnectorController extends Controller {
   list(@Request() request: CustomExpressRequest): Array<NorthConnectorLightDTO> {
     const northService = request.services.northService as NorthService;
     const northConnectors = northService.list();
-    return northConnectors.map(connector => toNorthConnectorLightDTO(connector));
+    return northConnectors.map(connector => toNorthConnectorLightDTO(connector, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -88,7 +88,7 @@ export class NorthConnectorController extends Controller {
   @Get('/{northId}')
   findById(@Path() northId: string, @Request() request: CustomExpressRequest): NorthConnectorDTO {
     const northService = request.services.northService as NorthService;
-    return toNorthConnectorDTO(northService.findById(northId));
+    return toNorthConnectorDTO(northService.findById(northId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -104,7 +104,9 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<NorthConnectorDTO> {
     const northService = request.services.northService as NorthService;
-    return toNorthConnectorDTO(await northService.create(command, duplicate || null, request.user.id));
+    return toNorthConnectorDTO(await northService.create(command, duplicate || null, request.user.id), id =>
+      request.services.userService.getUserInfo(id)
+    );
   }
 
   /**
@@ -197,7 +199,7 @@ export class NorthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const northService = request.services.northService as NorthService;
-    northService.addOrEditTransformer(northId, command as NorthTransformerWithOptions);
+    northService.addOrEditTransformer(northId, command as unknown as NorthTransformerWithOptions);
   }
 
   /**
