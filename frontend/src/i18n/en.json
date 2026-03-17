@@ -949,7 +949,8 @@
           "created": "Transformer {{ name }} created",
           "updated": "Transformer {{ name }} updated",
           "edited": "Transformer {{ name }} edited",
-          "confirm-deletion": "Are you sure you want to delete the custom transformer {{ name }}?",
+          "confirm-deletion": "Are you sure you want to delete the custom transformer {{ name }}? All north connectors and history queries using it will be immediately impacted.",
+          "confirm-edit": "Are you sure you want to update the custom transformer {{ name }}? All north connectors and history queries using it will be reloaded.",
           "deleted": "Transformer {{ name }} deleted",
           "standard": {
             "csv-to-mqtt": "MQTT payloads (from CSV)",
