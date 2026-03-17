@@ -14,12 +14,22 @@ import { OIBusContent } from '../../../shared/model/engine.model';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import { OIBusTestingError } from '../../model/types';
+import UserService from 'src/service/user.service';
 
 // Mock the services
 jest.mock('../../service/south.service', () => ({
-  toSouthConnectorDTO: jest.fn().mockImplementation(connector => connector),
-  toSouthConnectorLightDTO: jest.fn().mockImplementation(connector => connector),
-  toSouthConnectorItemDTO: jest.fn().mockImplementation(item => item)
+  toSouthConnectorDTO: jest.fn().mockImplementation((connector, getUserInfo) => {
+    getUserInfo('');
+    return connector;
+  }),
+  toSouthConnectorLightDTO: jest.fn().mockImplementation((connector, getUserInfo) => {
+    getUserInfo('');
+    return connector;
+  }),
+  toSouthConnectorItemDTO: jest.fn().mockImplementation((item, southType, getUserInfo) => {
+    if (getUserInfo) getUserInfo('');
+    return item;
+  })
 }));
 
 jest.mock('../../service/utils', () => ({
@@ -32,7 +42,8 @@ describe('SouthConnectorController', () => {
     services: {
       southService: new SouthServiceMock(),
       scanModeService: new ScanModeServiceMock(),
-      oIBusService: new OibusServiceMock()
+      oIBusService: new OibusServiceMock(),
+      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
     },
     user: {
       id: 'test',

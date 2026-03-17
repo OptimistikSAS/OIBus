@@ -19,7 +19,7 @@ export class IPFilterController extends Controller {
   async list(@Request() request: CustomExpressRequest): Promise<Array<IPFilterDTO>> {
     const ipFilterService = request.services.ipFilterService;
     const ipFilters = ipFilterService.list();
-    return ipFilters.map(ipFilter => toIPFilterDTO(ipFilter));
+    return ipFilters.map(ipFilter => toIPFilterDTO(ipFilter, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -30,7 +30,7 @@ export class IPFilterController extends Controller {
   @Get('/{ipFilterId}')
   async findById(@Path() ipFilterId: string, @Request() request: CustomExpressRequest): Promise<IPFilterDTO> {
     const ipFilterService = request.services.ipFilterService;
-    return toIPFilterDTO(ipFilterService.findById(ipFilterId));
+    return toIPFilterDTO(ipFilterService.findById(ipFilterId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -43,7 +43,7 @@ export class IPFilterController extends Controller {
   async create(@Body() command: IPFilterCommandDTO, @Request() request: CustomExpressRequest): Promise<IPFilterDTO> {
     const ipFilterService = request.services.ipFilterService;
     const ipFilter = await ipFilterService.create(command, request.user.id);
-    return toIPFilterDTO(ipFilter);
+    return toIPFilterDTO(ipFilter, id => request.services.userService.getUserInfo(id));
   }
 
   /**
