@@ -25,14 +25,14 @@ export default class IpFilterRepository {
   }
 
   create(command: Omit<IPFilter, 'id'>, id = generateRandomId(6)): IPFilter {
-    const insertQuery = `INSERT INTO ${IP_FILTERS_TABLE} (id, address, description, created_by, updated_by) VALUES (?, ?, ?, ?, ?);`;
+    const insertQuery = `INSERT INTO ${IP_FILTERS_TABLE} (id, address, description, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     const result = this.database.prepare(insertQuery).run(id, command.address, command.description, command.createdBy, command.updatedBy);
     const query = `SELECT id, address, description, created_by, updated_by, created_at, updated_at FROM ${IP_FILTERS_TABLE} WHERE ROWID = ?;`;
     return this.toIPFilter(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
   }
 
   update(id: string, command: Omit<IPFilter, 'id'>): void {
-    const query = `UPDATE ${IP_FILTERS_TABLE} SET address = ?, description = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
+    const query = `UPDATE ${IP_FILTERS_TABLE} SET address = ?, description = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
     this.database.prepare(query).run(command.address, command.description, command.updatedBy, id);
   }
 
@@ -46,8 +46,8 @@ export default class IpFilterRepository {
       id: result.id,
       address: result.address,
       description: result.description,
-      createdBy: result.created_by ?? undefined,
-      updatedBy: result.updated_by ?? undefined,
+      createdBy: result.created_by ?? '',
+      updatedBy: result.updated_by ?? '',
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };
