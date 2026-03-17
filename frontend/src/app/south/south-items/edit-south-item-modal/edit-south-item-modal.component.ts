@@ -251,14 +251,27 @@ export class EditSouthItemModalComponent {
       name: formValue.name!,
       scanMode:
         scanModeAttribute.acceptableType === 'SUBSCRIPTION'
-          ? { id: 'subscription', name: 'subscription', description: '', cron: '' }
+          ? ({
+              id: 'subscription',
+              name: 'subscription',
+              description: '',
+              cron: '',
+              createdBy: { id: '', friendlyName: '' },
+              updatedBy: { id: '', friendlyName: '' },
+              createdAt: '',
+              updatedAt: ''
+            } as ScanModeDTO)
           : formValue.scanMode!,
       settings: formValue.settings!,
       group: group || null,
       syncWithGroup,
       maxReadInterval: syncWithGroup ? null : (rawHistorianValues.maxReadInterval ?? null),
       readDelay: syncWithGroup ? null : (rawHistorianValues.readDelay ?? null),
-      overlap: syncWithGroup ? null : (rawHistorianValues.overlap ?? null)
+      overlap: syncWithGroup ? null : (rawHistorianValues.overlap ?? null),
+      createdBy: this.item?.createdBy ?? { id: '', friendlyName: '' },
+      updatedBy: this.item?.updatedBy ?? { id: '', friendlyName: '' },
+      createdAt: this.item?.createdAt ?? '',
+      updatedAt: this.item?.updatedAt ?? ''
     };
   }
 

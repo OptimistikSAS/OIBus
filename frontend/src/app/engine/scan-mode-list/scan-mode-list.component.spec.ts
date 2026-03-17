@@ -69,13 +69,21 @@ describe('ScanModeListComponent', () => {
         id: 'id1',
         name: 'scanMode1',
         description: 'My Scan Mode 1',
-        cron: '* * * * * *'
+        cron: '* * * * * *',
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
         name: 'scanMode2',
         description: 'My Scan Mode 2',
-        cron: '* * * * * *'
+        cron: '* * * * * *',
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       }
     ];
 

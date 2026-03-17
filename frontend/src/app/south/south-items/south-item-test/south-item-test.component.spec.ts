@@ -13,6 +13,7 @@ import { DateTime, Settings } from 'luxon';
 import { provideDatepicker } from '../../../shared/datepicker.providers';
 import { OIBusContent, OIBusFileContent, OIBusTimeValueContent } from '../../../../../../backend/shared/model/engine.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 
 @Component({
   selector: 'oib-test-south-item-test-component',
@@ -46,8 +47,12 @@ class TestComponent {
     syncWithGroup: false,
     maxReadInterval: null,
     readDelay: null,
-    overlap: null
-  };
+    overlap: null,
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' },
+    createdAt: '',
+    updatedAt: ''
+  } as unknown as SouthConnectorItemDTO;
   connectorCommand = testData.south.command;
   manifest = testData.south.manifest;
 }

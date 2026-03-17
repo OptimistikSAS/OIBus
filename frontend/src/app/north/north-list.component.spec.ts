@@ -34,14 +34,22 @@ describe('NorthListComponent', () => {
       name: 'myNorthConnector1',
       description: 'a test north connector',
       enabled: true,
-      type: 'file-writer'
+      type: 'file-writer',
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     },
     {
       id: 'id2',
       name: 'myNorthConnector2',
       description: 'a test north connector',
       enabled: false,
-      type: 'file-writer'
+      type: 'file-writer',
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
   ];
 
