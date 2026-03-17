@@ -35,7 +35,11 @@ describe('HistoryQueryListComponent', () => {
       description: 'a test history query',
       status: 'RUNNING',
       startTime: '2020-02-02T02:02:02.222Z',
-      endTime: '2022-02-02T02:02:02.222Z'
+      endTime: '2022-02-02T02:02:02.222Z',
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     } as HistoryQueryLightDTO,
     {
       id: 'id2',
@@ -43,7 +47,11 @@ describe('HistoryQueryListComponent', () => {
       description: 'a test history query',
       status: 'PENDING',
       startTime: '2020-02-02T02:02:02.222Z',
-      endTime: '2022-02-02T02:02:02.222Z'
+      endTime: '2022-02-02T02:02:02.222Z',
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     } as HistoryQueryLightDTO
   ];
 

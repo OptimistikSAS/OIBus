@@ -14,6 +14,8 @@ import testData from '../../../../../backend/src/tests/utils/test-data';
 import { CertificateService } from '../../services/certificate.service';
 import { SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 
 class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> {
   constructor() {
@@ -54,7 +56,7 @@ describe('SouthDetailComponent', () => {
   const southConnector: SouthConnectorDTO = {
     ...testData.south.list[0],
     items: testData.south.list[0].items.map(item => ({ ...item, group: null }))
-  } as SouthConnectorDTO;
+  } as unknown as SouthConnectorDTO;
   const engineInfo = testData.engine.oIBusInfo;
 
   beforeEach(() => {
@@ -87,8 +89,8 @@ describe('SouthDetailComponent', () => {
       ]
     });
 
-    scanModeService.list.and.returnValue(of(testData.scanMode.list));
-    certificateService.list.and.returnValue(of(testData.certificates.list));
+    scanModeService.list.and.returnValue(of(testData.scanMode.list as unknown as Array<ScanModeDTO>));
+    certificateService.list.and.returnValue(of(testData.certificates.list as unknown as Array<CertificateDTO>));
     engineService.getInfo.and.returnValue(of(engineInfo));
     (engineService as any).info$ = of(engineInfo);
     southConnectorService.findById.and.returnValue(

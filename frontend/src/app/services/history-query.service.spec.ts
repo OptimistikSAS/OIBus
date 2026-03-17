@@ -100,8 +100,12 @@ describe('HistoryQueryService', () => {
         id: 'itemId',
         name: 'MySouthItem',
         enabled: true,
-        settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings
-      }
+        settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      } as unknown as HistoryQueryItemDTO
     ]);
 
     service.searchItems('id1', { name: undefined, enabled: undefined, page: 0 }).subscribe(c => (expectedItems = c));

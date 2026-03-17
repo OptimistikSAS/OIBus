@@ -66,9 +66,9 @@
           <tr>
             <td>{{ ipFilter.address }}</td>
             <td>{{ ipFilter.description }}</td>
-            <td>{{ ipFilter.createdBy }}</td>
-            <td>{{ ipFilter.createdAt | datetime }}</td>
-            <td>{{ ipFilter.updatedAt | datetime }}</td>
+            <td>{{ ipFilter.createdBy.friendlyName }}</td>
+            <td>{{ ipFilter.createdAt | datetime: 'ff' }}</td>
+            <td>{{ ipFilter.updatedAt | datetime: 'ff' }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->

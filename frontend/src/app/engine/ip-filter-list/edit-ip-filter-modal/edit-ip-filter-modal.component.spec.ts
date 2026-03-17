@@ -111,7 +111,11 @@ describe('EditIpFilterModalComponent', () => {
     const ipFilterToUpdate: IPFilterDTO = {
       id: 'id1',
       address: '127.0.0.1',
-      description: 'My IP Filter 1'
+      description: 'My IP Filter 1',
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     };
 
     beforeEach(async () => {

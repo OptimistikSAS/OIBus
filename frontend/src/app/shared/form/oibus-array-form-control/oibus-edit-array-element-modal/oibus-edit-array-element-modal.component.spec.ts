@@ -7,6 +7,8 @@ import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-
 import { FormGroup } from '@angular/forms';
 import testData from '../../../../../../../backend/src/tests/utils/test-data';
 import { OIBusObjectAttribute } from '../../../../../../../backend/shared/model/form.model';
+import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
+import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../../default-validation-errors/default-validation-errors.component';
 
@@ -48,8 +50,8 @@ describe('OIBusEditArrayElementModalComponent', () => {
       wrapInBox: false
     }
   };
-  const scanModes = testData.scanMode.list;
-  const certificates = testData.certificates.list;
+  const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+  const certificates = testData.certificates.list as unknown as Array<CertificateDTO>;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
