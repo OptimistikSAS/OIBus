@@ -103,7 +103,11 @@ describe('SouthMSSQL with authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -122,6 +126,10 @@ describe('SouthMSSQL with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
@@ -162,13 +170,21 @@ describe('SouthMSSQL with authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
         overlap: 0
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -373,7 +389,11 @@ describe('SouthMSSQL without authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -392,6 +412,10 @@ describe('SouthMSSQL without authentication', () => {
           }
         },
         scanMode: testData.scanMode.list[0],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
@@ -436,9 +460,17 @@ describe('SouthMSSQL without authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -542,7 +574,11 @@ describe('SouthMSSQL test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -565,7 +601,11 @@ describe('SouthMSSQL test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -601,13 +641,21 @@ describe('SouthMSSQL test connection', () => {
           }
         },
         scanMode: testData.scanMode.list[1],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
         overlap: 0
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   // Error codes handled by the test function

@@ -90,7 +90,7 @@ describe('HistoryQueryFactory', () => {
           items: []
         }
       ]
-    } as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
+    } as unknown as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
 
     const mockNorthConnector = { cacheContent: jest.fn() };
     const mockSouthConnector = {};
