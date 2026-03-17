@@ -66,8 +66,8 @@ export default class NorthConnectorRepository {
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
-          `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+          `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by, created_at, updated_at) ` +
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -97,7 +97,7 @@ export default class NorthConnectorRepository {
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
           `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
-          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, updated_by = ?, updated_at = datetime('now') ` +
+          `caching_archive_enabled = ?, caching_archive_retention_duration = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
           `WHERE id = ?;`;
         this.database
           .prepare(query)
@@ -280,7 +280,11 @@ export default class NorthConnectorRepository {
       name: result.name,
       type: result.type as OIBusSouthType,
       description: result.description,
-      enabled: Boolean(result.enabled)
+      enabled: Boolean(result.enabled),
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
   }
 
@@ -289,7 +293,11 @@ export default class NorthConnectorRepository {
     const results = this.database.prepare(query).all(northTransformerId) as Array<Record<string, string>>;
     return results.map(result => ({
       id: result.item_id as string,
-      name: result.name as string
+      name: result.name as string,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     }));
   }
 
@@ -300,8 +308,8 @@ export default class NorthConnectorRepository {
       type: result.type as OIBusNorthType,
       description: result.description,
       enabled: Boolean(result.enabled),
-      createdBy: result.created_by ?? undefined,
-      updatedBy: result.updated_by ?? undefined,
+      createdBy: result.created_by ?? '',
+      updatedBy: result.updated_by ?? '',
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };
@@ -337,8 +345,8 @@ export default class NorthConnectorRepository {
         }
       },
       transformers: this.findTransformersForNorth(result.id as string),
-      createdBy: (result.created_by as string) ?? undefined,
-      updatedBy: (result.updated_by as string) ?? undefined,
+      createdBy: (result.created_by as string) ?? '',
+      updatedBy: (result.updated_by as string) ?? '',
       createdAt: result.created_at as string,
       updatedAt: result.updated_at as string
     };

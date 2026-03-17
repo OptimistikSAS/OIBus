@@ -383,6 +383,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-version':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-version',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -395,6 +399,10 @@ export default class OIAnalyticsCommandRepository {
       case 'restart-engine':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: command.type as OIBusCommandType,
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -406,6 +414,10 @@ export default class OIAnalyticsCommandRepository {
       case 'regenerate-cipher-keys':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: command.type as OIBusCommandType,
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -417,6 +429,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-engine-settings':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-engine-settings',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -429,6 +445,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-registration-settings':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-registration-settings',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -441,6 +461,10 @@ export default class OIAnalyticsCommandRepository {
       case 'create-north':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'create-north',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -454,6 +478,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-north':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-north',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -467,6 +495,10 @@ export default class OIAnalyticsCommandRepository {
       case 'delete-north':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'delete-north',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -479,6 +511,10 @@ export default class OIAnalyticsCommandRepository {
       case 'test-north-connection':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'test-north-connection',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -492,6 +528,10 @@ export default class OIAnalyticsCommandRepository {
       case 'create-south':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'create-south',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -505,6 +545,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-south':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-south',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -518,6 +562,10 @@ export default class OIAnalyticsCommandRepository {
       case 'delete-south':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'delete-south',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -530,6 +578,10 @@ export default class OIAnalyticsCommandRepository {
       case 'create-or-update-south-items-from-csv':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'create-or-update-south-items-from-csv',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -543,6 +595,10 @@ export default class OIAnalyticsCommandRepository {
       case 'test-south-connection':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'test-south-connection',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -556,6 +612,10 @@ export default class OIAnalyticsCommandRepository {
       case 'test-south-item':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'test-south-item',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -570,6 +630,10 @@ export default class OIAnalyticsCommandRepository {
       case 'create-scan-mode':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'create-scan-mode',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -582,6 +646,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-scan-mode':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-scan-mode',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -595,6 +663,10 @@ export default class OIAnalyticsCommandRepository {
       case 'delete-scan-mode':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'delete-scan-mode',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -607,6 +679,10 @@ export default class OIAnalyticsCommandRepository {
       case 'create-ip-filter':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'create-ip-filter',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -619,6 +695,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-ip-filter':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-ip-filter',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -632,6 +712,10 @@ export default class OIAnalyticsCommandRepository {
       case 'delete-ip-filter':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'delete-ip-filter',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -644,6 +728,10 @@ export default class OIAnalyticsCommandRepository {
       case 'create-certificate':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'create-certificate',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -656,6 +744,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-certificate':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-certificate',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -669,6 +761,10 @@ export default class OIAnalyticsCommandRepository {
       case 'delete-certificate':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'delete-certificate',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -681,6 +777,10 @@ export default class OIAnalyticsCommandRepository {
       case 'create-history-query':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'create-history-query',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -696,6 +796,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-history-query':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-history-query',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -709,6 +813,10 @@ export default class OIAnalyticsCommandRepository {
       case 'delete-history-query':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'delete-history-query',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -721,6 +829,10 @@ export default class OIAnalyticsCommandRepository {
       case 'create-or-update-history-query-south-items-from-csv':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'create-or-update-history-query-south-items-from-csv',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -734,6 +846,10 @@ export default class OIAnalyticsCommandRepository {
       case 'test-history-query-north-connection':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'test-history-query-north-connection',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -748,6 +864,10 @@ export default class OIAnalyticsCommandRepository {
       case 'test-history-query-south-connection':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'test-history-query-south-connection',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -762,6 +882,10 @@ export default class OIAnalyticsCommandRepository {
       case 'test-history-query-south-item':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'test-history-query-south-item',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -777,6 +901,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-history-query-status':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-history-query-status',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -790,6 +918,10 @@ export default class OIAnalyticsCommandRepository {
       case 'setpoint':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'setpoint',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -803,6 +935,10 @@ export default class OIAnalyticsCommandRepository {
       case 'search-north-cache-content':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'search-north-cache-content',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -816,6 +952,10 @@ export default class OIAnalyticsCommandRepository {
       case 'search-history-cache-content':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'search-history-cache-content',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -829,6 +969,10 @@ export default class OIAnalyticsCommandRepository {
       case 'get-north-cache-file-content':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'get-north-cache-file-content',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -842,6 +986,10 @@ export default class OIAnalyticsCommandRepository {
       case 'get-history-cache-file-content':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'get-history-cache-file-content',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -855,6 +1003,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-north-cache-content':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-north-cache-content',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
@@ -868,6 +1020,10 @@ export default class OIAnalyticsCommandRepository {
       case 'update-history-cache-content':
         return {
           id: command.id as string,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'update-history-cache-content',
           status: command.status as OIBusCommandStatus,
           ack: Boolean(command.ack),
