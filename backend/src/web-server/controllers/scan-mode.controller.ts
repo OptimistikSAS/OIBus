@@ -18,7 +18,7 @@ export class ScanModeController extends Controller {
   @Get('/')
   async list(@Request() request: CustomExpressRequest): Promise<Array<ScanModeDTO>> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    return scanModeService.list().map(scanMode => toScanModeDTO(scanMode));
+    return scanModeService.list().map(scanMode => toScanModeDTO(scanMode, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -29,7 +29,7 @@ export class ScanModeController extends Controller {
   @Get('/{scanModeId}')
   async findById(@Path() scanModeId: string, @Request() request: CustomExpressRequest): Promise<ScanModeDTO> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    return toScanModeDTO(scanModeService.findById(scanModeId));
+    return toScanModeDTO(scanModeService.findById(scanModeId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -41,7 +41,7 @@ export class ScanModeController extends Controller {
   @SuccessResponse(201, 'Scan mode created successfully')
   async create(@Body() command: ScanModeCommandDTO, @Request() request: CustomExpressRequest): Promise<ScanModeDTO> {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    return toScanModeDTO(await scanModeService.create(command, request.user.id));
+    return toScanModeDTO(await scanModeService.create(command, request.user.id), id => request.services.userService.getUserInfo(id));
   }
 
   /**

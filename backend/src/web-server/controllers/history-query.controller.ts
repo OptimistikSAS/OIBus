@@ -101,7 +101,7 @@ export class HistoryQueryController extends Controller {
   async list(@Request() request: CustomExpressRequest): Promise<Array<HistoryQueryLightDTO>> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQueries = historyQueryService.list();
-    return historyQueries.map(historyQuery => toHistoryQueryLightDTO(historyQuery));
+    return historyQueries.map(historyQuery => toHistoryQueryLightDTO(historyQuery, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -112,7 +112,7 @@ export class HistoryQueryController extends Controller {
   @Get('/{historyId}')
   async findById(@Path() historyId: string, @Request() request: CustomExpressRequest): Promise<HistoryQueryDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    return toHistoryQueryDTO(historyQueryService.findById(historyId));
+    return toHistoryQueryDTO(historyQueryService.findById(historyId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -130,7 +130,9 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<HistoryQueryDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    return toHistoryQueryDTO(await historyQueryService.create(command, fromSouth, fromNorth, duplicate, request.user.id));
+    return toHistoryQueryDTO(await historyQueryService.create(command, fromSouth, fromNorth, duplicate, request.user.id), id =>
+      request.services.userService.getUserInfo(id)
+    );
   }
 
   /**
@@ -261,7 +263,7 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const items = historyQueryService.listItems(historyId);
-    return items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType));
+    return items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -286,7 +288,9 @@ export class HistoryQueryController extends Controller {
     };
     const pageResult = await historyQueryService.searchItems(historyId, searchParams);
     return {
-      content: pageResult.content.map(item => toHistoryQueryItemDTO(item, historyQuery.southType)),
+      content: pageResult.content.map(item =>
+        toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id))
+      ),
       totalElements: pageResult.totalElements,
       size: pageResult.size,
       number: pageResult.number,
@@ -308,7 +312,7 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const historyQueryItem = historyQueryService.findItemById(historyId, itemId);
-    return toHistoryQueryItemDTO(historyQueryItem, historyQuery.southType);
+    return toHistoryQueryItemDTO(historyQueryItem, historyQuery.southType, id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -326,7 +330,7 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const item = await historyQueryService.createItem(historyId, command, request.user.id);
-    return toHistoryQueryItemDTO(item, historyQuery.southType);
+    return toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -482,7 +486,9 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const csv = itemToFlattenedCSV(
-      historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType)),
+      historyQuery.items.map(item =>
+        toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id))
+      ),
       command.delimiter
     );
     request.res!.attachment('items.csv');
@@ -573,7 +579,7 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    await historyQueryService.addOrEditTransformer(historyId, command as HistoryTransformerWithOptions);
+    await historyQueryService.addOrEditTransformer(historyId, command as unknown as HistoryTransformerWithOptions);
   }
 
   /**
