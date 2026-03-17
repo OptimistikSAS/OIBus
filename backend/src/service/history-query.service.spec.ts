@@ -1,5 +1,7 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import HistoryQueryService, { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from './history-query.service';
+import { toScanModeDTO } from './scan-mode.service';
+import { toTransformerDTO } from './transformer.service';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
@@ -173,6 +175,17 @@ describe('History Query service', () => {
     await service.update(testData.historyQueries.list[0].id, command, false, 'user1');
 
     expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update a history query and use empty createdBy when item id not found in previous settings', async () => {
+    const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
+    command.items[0].id = 'non-existent-item-id';
+
+    await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
+
+    expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
+    const savedEntity = (historyQueryRepository.saveHistory as jest.Mock).mock.calls[0][0];
+    expect(savedEntity.items[0].createdBy).toBe('');
   });
 
   it('should update a history query with a new unique name', async () => {
@@ -545,7 +558,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       'file content',
       ',',
-      testData.historyQueries.list[0].items as Array<HistoryQueryItemDTO>
+      testData.historyQueries.list[0].items as unknown as Array<HistoryQueryItemDTO>
     );
     expect(result).toEqual({
       items: [
@@ -626,7 +639,7 @@ describe('History Query service', () => {
       testData.historyQueries.command.southType,
       'file content',
       ',',
-      testData.historyQueries.list[1].items as Array<HistoryQueryItemDTO>
+      testData.historyQueries.list[1].items as unknown as Array<HistoryQueryItemDTO>
     );
     expect(result).toEqual({
       items: [
@@ -805,8 +818,9 @@ describe('History Query service', () => {
   });
 
   it('should properly convert to DTO', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
     const historyQuery = testData.historyQueries.list[0];
-    expect(toHistoryQueryDTO(historyQuery)).toEqual({
+    expect(toHistoryQueryDTO(historyQuery, getUserInfo)).toEqual({
       id: historyQuery.id,
       name: historyQuery.name,
       description: historyQuery.description,
@@ -823,7 +837,7 @@ describe('History Query service', () => {
       northSettings: historyQuery.northSettings,
       caching: {
         trigger: {
-          scanMode: historyQuery.caching.trigger.scanMode,
+          scanMode: toScanModeDTO(historyQuery.caching.trigger.scanMode, getUserInfo),
           numberOfElements: historyQuery.caching.trigger.numberOfElements,
           numberOfFiles: historyQuery.caching.trigger.numberOfFiles
         },
@@ -842,14 +856,18 @@ describe('History Query service', () => {
           retentionDuration: historyQuery.caching.archive.retentionDuration
         }
       },
-      items: historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType)),
+      items: historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, getUserInfo)),
       northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
         id: transformerWithOptions.id,
-        transformer: transformerWithOptions.transformer,
+        transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
         inputType: transformerWithOptions.inputType,
         items: transformerWithOptions.items
-      }))
+      })),
+      createdBy: getUserInfo(historyQuery.createdBy),
+      updatedBy: getUserInfo(historyQuery.updatedBy),
+      createdAt: historyQuery.createdAt,
+      updatedAt: historyQuery.updatedAt
     });
     const historyQueryLight: HistoryQueryEntityLight = {
       id: historyQuery.id,
@@ -859,9 +877,13 @@ describe('History Query service', () => {
       startTime: historyQuery.queryTimeRange.startTime,
       endTime: historyQuery.queryTimeRange.endTime,
       southType: historyQuery.southType,
-      northType: historyQuery.northType
+      northType: historyQuery.northType,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
-    expect(toHistoryQueryLightDTO(historyQueryLight)).toEqual({
+    expect(toHistoryQueryLightDTO(historyQueryLight, getUserInfo)).toEqual({
       id: historyQuery.id,
       name: historyQuery.name,
       description: historyQuery.description,
@@ -869,7 +891,11 @@ describe('History Query service', () => {
       startTime: historyQuery.queryTimeRange.startTime,
       endTime: historyQuery.queryTimeRange.endTime,
       southType: historyQuery.southType,
-      northType: historyQuery.northType
+      northType: historyQuery.northType,
+      createdBy: getUserInfo(historyQueryLight.createdBy),
+      updatedBy: getUserInfo(historyQueryLight.updatedBy),
+      createdAt: historyQueryLight.createdAt,
+      updatedAt: historyQueryLight.updatedAt
     });
   });
 });

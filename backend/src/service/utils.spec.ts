@@ -173,6 +173,15 @@ describe('Service utils', () => {
       expect(intervals).toEqual(expectedIntervals);
       expect(numberOfIntervalsDone).toEqual(1);
     });
+
+    it('should return single interval when maxNumberOfSecondsInInterval is 0', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
+      const endTime = '2020-01-02T00:00:00.000Z';
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, 0);
+      expect(intervals).toEqual([{ start: startTimeFromCache, end: endTime }]);
+      expect(numberOfIntervalsDone).toEqual(0);
+    });
   });
 
   describe('filesExists', () => {
@@ -1249,7 +1258,7 @@ describe('Service utils', () => {
             {
               ...testData.south.list[2].items[0]
             }
-          ] as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
+          ] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ',',
           testData.scanMode.list
         )
@@ -1266,7 +1275,7 @@ describe('Service utils', () => {
             {
               ...testData.south.list[2].items[0]
             }
-          ] as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
+          ] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ','
         )
       ).toEqual('csv content');

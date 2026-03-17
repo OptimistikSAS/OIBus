@@ -1740,7 +1740,7 @@ describe('OIAnalytics Command Service', () => {
           ]
         }
       }
-    } as OIBusUpdateNorthCacheContentCommand;
+    } as unknown as OIBusUpdateNorthCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
 
@@ -1790,7 +1790,7 @@ describe('OIAnalytics Command Service', () => {
           ]
         }
       }
-    } as OIBusUpdateHistoryCacheContentCommand;
+    } as unknown as OIBusUpdateHistoryCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
 
@@ -1891,7 +1891,7 @@ describe('OIAnalytics Command Service', () => {
         },
         archive: { remove: [], move: [] }
       }
-    } as OIBusUpdateNorthCacheContentCommand;
+    } as unknown as OIBusUpdateNorthCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
       ...testData.oIAnalytics.registration.completed,
@@ -1975,7 +1975,7 @@ describe('OIAnalytics Command Service', () => {
         },
         archive: { remove: [], move: [] }
       }
-    } as OIBusUpdateNorthCacheContentCommand;
+    } as unknown as OIBusUpdateNorthCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIBusService.updateCacheContent as jest.Mock).mockRejectedValueOnce(new Error('error while removing file'));
     await service.executeCommand();
@@ -2050,7 +2050,7 @@ describe('OIAnalytics Command Service', () => {
         },
         archive: { remove: [], move: [] }
       }
-    } as OIBusUpdateHistoryCacheContentCommand;
+    } as unknown as OIBusUpdateHistoryCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIBusService.updateCacheContent as jest.Mock).mockRejectedValueOnce(new Error('Update failed'));
 

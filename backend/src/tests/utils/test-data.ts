@@ -71,12 +71,20 @@ const ipFilters: Array<IPFilter> = [
   {
     id: 'ipFilterId1',
     address: '192.168.1.1',
-    description: 'my first ip filter'
+    description: 'my first ip filter',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'ipFilterId2',
     address: '*',
-    description: 'All ips'
+    description: 'All ips',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   }
 ];
 
@@ -124,7 +132,11 @@ const transformers: Array<Transformer> = [
         visible: true,
         wrapInBox: false
       }
-    }
+    },
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'transformerId2',
@@ -147,7 +159,11 @@ const transformers: Array<Transformer> = [
         visible: true,
         wrapInBox: false
       }
-    }
+    },
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'transformerId3',
@@ -170,7 +186,11 @@ const transformers: Array<Transformer> = [
         visible: true,
         wrapInBox: false
       }
-    }
+    },
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   }
 ];
 const customTransformers: Array<CustomTransformerDTO> = [
@@ -232,19 +252,31 @@ const scanModes: Array<ScanMode> = [
     id: 'scanModeId1',
     name: 'scanMode1',
     description: 'my first scanMode',
-    cron: '* * * * * *'
+    cron: '* * * * * *',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'scanModeId2',
     name: 'scanMode2',
     description: 'my second scanMode',
-    cron: '0 * * * * *'
+    cron: '0 * * * * *',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'subscription',
     name: 'Subscription',
     description: 'Subscription',
-    cron: 'subscription'
+    cron: 'subscription',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   }
 ];
 
@@ -256,7 +288,11 @@ const users: Array<User> = [
     lastName: null,
     email: null,
     language: 'en',
-    timezone: 'Europe/Paris'
+    timezone: 'Europe/Paris',
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' },
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'user2',
@@ -265,7 +301,11 @@ const users: Array<User> = [
     lastName: 'last name',
     email: 'email',
     language: 'fr',
-    timezone: 'Europe/Paris'
+    timezone: 'Europe/Paris',
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' },
+    createdAt: '',
+    updatedAt: ''
   }
 ];
 const userCommand: Omit<User, 'id'> = {
@@ -274,7 +314,11 @@ const userCommand: Omit<User, 'id'> = {
   lastName: 'last name',
   email: 'another-user@mail.com',
   language: 'en',
-  timezone: 'Europe/Paris'
+  timezone: 'Europe/Paris',
+  createdBy: { id: '', friendlyName: '' },
+  updatedBy: { id: '', friendlyName: '' },
+  createdAt: '',
+  updatedAt: ''
 };
 
 const certificates: Array<Certificate> = [
@@ -285,7 +329,11 @@ const certificates: Array<Certificate> = [
     publicKey: 'public key',
     privateKey: 'private key',
     certificate: 'certificate',
-    expiry: constants.dates.DATE_1
+    expiry: constants.dates.DATE_1,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'certificate2',
@@ -294,7 +342,11 @@ const certificates: Array<Certificate> = [
     publicKey: 'public key',
     privateKey: 'private key',
     certificate: 'certificate',
-    expiry: constants.dates.DATE_2
+    expiry: constants.dates.DATE_2,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   }
 ];
 const certificateCommand: CertificateCommandDTO = {
@@ -476,6 +528,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'folder-scanner',
     description: 'my folder scanner',
     enabled: true,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     settings: {
       inputFolder: 'input',
       compression: true
@@ -491,7 +547,11 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'southItemId2',
@@ -503,7 +563,11 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
     ]
   },
@@ -513,6 +577,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'mssql',
     description: 'my MSSQL south connector',
     enabled: false,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     settings: {
       host: 'host',
       port: 1433,
@@ -532,6 +600,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         enabled: true,
         settings: {} as SouthItemSettings,
         scanMode: scanModes[0],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
@@ -544,6 +616,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         enabled: true,
         settings: {} as SouthItemSettings,
         scanMode: scanModes[0],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
@@ -558,6 +634,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     type: 'opcua',
     description: 'my OPCUA south connector',
     enabled: true,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
@@ -584,7 +664,11 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 10
+        overlap: 10,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'southItemId6',
@@ -598,7 +682,21 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 10
+        overlap: 10,
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'southItemId7',
@@ -612,7 +710,11 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 10
+        overlap: 10,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'southItemId8',
@@ -626,7 +728,11 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 10
+        overlap: 10,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
     ]
   }
@@ -718,6 +824,10 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     type: 'file-writer',
     description: 'my file writer',
     enabled: true,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     settings: {
       outputFolder: 'output-folder',
       prefix: 'prefix-',
@@ -755,13 +865,21 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
           name: southConnectors[0].name,
           type: southConnectors[0].type,
           description: southConnectors[0].description,
-          enabled: southConnectors[0].enabled
+          enabled: southConnectors[0].enabled,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
         group: undefined,
         items: [
           {
             id: southConnectors[0].items[0].id,
-            name: southConnectors[0].items[0].name
+            name: southConnectors[0].items[0].name,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
           }
         ]
       },
@@ -784,7 +902,11 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
           name: southConnectors[1].name,
           type: southConnectors[1].type,
           description: southConnectors[1].description,
-          enabled: southConnectors[1].enabled
+          enabled: southConnectors[1].enabled,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
         group: undefined,
         items: []
@@ -797,6 +919,10 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     type: 'oianalytics',
     description: 'my oianalytics',
     enabled: false,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     settings: {
       useOiaModule: true,
       timeout: 5_000,
@@ -865,7 +991,16 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
       options: {},
       inputType: transformers[0].inputType,
       southId: southConnectors[0].id,
-      items: [{ id: southConnectors[0].items[0].id, name: southConnectors[0].items[0].name }]
+      items: [
+        {
+          id: southConnectors[0].items[0].id,
+          name: southConnectors[0].items[0].name,
+          createdBy: { id: '', friendlyName: '' },
+          updatedBy: { id: '', friendlyName: '' },
+          createdAt: '',
+          updatedAt: ''
+        }
+      ]
     },
     {
       id: 'northTransformerId5',
@@ -892,6 +1027,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     },
     southType: 'mssql',
     northType: 'oianalytics',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     southSettings: {
       host: 'host',
       port: 1433,
@@ -946,7 +1085,11 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings
+        } as SouthMSSQLItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'historyQueryItem2',
@@ -963,7 +1106,11 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings
+        } as SouthMSSQLItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
     ],
     northTransformers: [
@@ -975,7 +1122,11 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         items: [
           {
             id: 'historyQueryItem2',
-            name: 'item2'
+            name: 'item2',
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
           }
         ]
       },
@@ -995,6 +1146,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     },
     southType: 'mssql',
     northType: 'file-writer',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     southSettings: {
       host: 'host',
       port: 1433,
@@ -1049,7 +1204,11 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings
+        } as SouthMSSQLItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
     ],
     northTransformers: []
@@ -1130,7 +1289,16 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
       transformerId: transformers[0].id,
       options: {},
       inputType: transformers[0].inputType,
-      items: [{ id: '', name: 'item4' }]
+      items: [
+        {
+          id: '',
+          name: 'item4',
+          createdBy: { id: '', friendlyName: '' },
+          updatedBy: { id: '', friendlyName: '' },
+          createdAt: '',
+          updatedAt: ''
+        }
+      ]
     },
     { id: 'historyTransformerId4', transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType, items: [] }
   ]
@@ -1185,7 +1353,11 @@ const engineSettings: EngineSettings = {
       level: 'info',
       interval: 10
     }
-  }
+  },
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
 };
 const engineSettingsCommand: EngineSettingsCommandDTO = {
   name: 'updated OIBus',
@@ -1410,7 +1582,11 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
     updateNorthCacheContent: true
-  }
+  },
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
 };
 const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
   id: 'registrationId1',
@@ -1474,7 +1650,11 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
     updateNorthCacheContent: true
-  }
+  },
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
 };
 const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
   host: 'http://localhost:4200',
@@ -1547,7 +1727,11 @@ const oIBusCommands: Array<OIBusCommand> = [
       assetId: 'assetId',
       backupFolders: 'cache/*',
       updateLauncher: false
-    }
+    },
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId2',
@@ -1558,7 +1742,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: engineSettings.version,
-    commandContent: engineSettingsCommand
+    commandContent: engineSettingsCommand,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId3',
@@ -1568,7 +1756,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     ack: false,
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
-    result: 'ok'
+    result: 'ok',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId4',
@@ -1580,7 +1772,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     scanModeId: 'scanModeId1',
     targetVersion: engineSettings.version,
-    commandContent: scanModeCommandDTO
+    commandContent: scanModeCommandDTO,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId5',
@@ -1592,7 +1788,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     southConnectorId: 'southId1',
     targetVersion: engineSettings.version,
-    commandContent: southConnectorCommand
+    commandContent: southConnectorCommand,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId6',
@@ -1604,7 +1804,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     northConnectorId: 'northId1',
     targetVersion: engineSettings.version,
-    commandContent: northConnectorCommand
+    commandContent: northConnectorCommand,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId7',
@@ -1615,7 +1819,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     scanModeId: 'scanModeId1',
-    targetVersion: engineSettings.version
+    targetVersion: engineSettings.version,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId8',
@@ -1626,7 +1834,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     southConnectorId: 'southId1',
-    targetVersion: engineSettings.version
+    targetVersion: engineSettings.version,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId9',
@@ -1637,7 +1849,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     northConnectorId: 'northId1',
-    targetVersion: engineSettings.version
+    targetVersion: engineSettings.version,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId10',
@@ -1648,7 +1864,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     completedDate: '',
     result: 'ok',
     targetVersion: engineSettings.version,
-    commandContent: scanModeCommandDTO
+    commandContent: scanModeCommandDTO,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId11',
@@ -1660,7 +1880,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     targetVersion: engineSettings.version,
     southConnectorId: null,
-    commandContent: southConnectorCommand
+    commandContent: southConnectorCommand,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId12',
@@ -1672,7 +1896,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     result: 'ok',
     targetVersion: engineSettings.version,
     northConnectorId: null,
-    commandContent: northConnectorCommand
+    commandContent: northConnectorCommand,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId13',
@@ -1682,7 +1910,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
     result: 'ok',
-    targetVersion: engineSettings.version
+    targetVersion: engineSettings.version,
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId14',
@@ -1692,7 +1924,11 @@ const oIBusCommands: Array<OIBusCommand> = [
     ack: false,
     retrievedDate: constants.dates.DATE_1,
     completedDate: '',
-    result: 'ok'
+    result: 'ok',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'commandId15',
@@ -1708,7 +1944,11 @@ const oIBusCommands: Array<OIBusCommand> = [
       deleteItemsNotPresent: false,
       csvContent: '',
       delimiter: ','
-    }
+    },
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'newCommandId16',
@@ -1763,7 +2003,11 @@ const oIBusCommands: Array<OIBusCommand> = [
         getNorthCacheFileContent: true,
         updateNorthCacheContent: true
       }
-    }
+    },
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   }
 ];
 const oIAnalyticsCommands: Array<OIAnalyticsFetchCommandDTO> = [
@@ -1871,14 +2115,22 @@ const oIBusMessages: Array<OIAnalyticsMessage> = [
     status: 'PENDING',
     error: null,
     completedDate: null,
-    type: 'full-config'
+    type: 'full-config',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   },
   {
     id: 'messageId2',
     status: 'PENDING',
     error: null,
     completedDate: null,
-    type: 'full-config'
+    type: 'full-config',
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   }
 ];
 

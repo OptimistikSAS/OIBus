@@ -381,6 +381,10 @@ describe('OIBus Service', () => {
     const engineSettings = testData.engine.settings;
     expect(toEngineSettingsDTO(engineSettings)).toEqual({
       id: engineSettings.id,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: engineSettings.createdAt,
+      updatedAt: engineSettings.updatedAt,
       name: engineSettings.name,
       port: engineSettings.port,
       version: engineSettings.version,

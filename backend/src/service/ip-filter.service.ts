@@ -6,6 +6,7 @@ import { IPFilterCommandDTO, IPFilterDTO } from '../../shared/model/ip-filter.mo
 import { IPFilter } from '../model/ip-filter.model';
 import { EventEmitter } from 'node:events';
 import { NotFoundError } from '../model/types';
+import { GetUserInfo } from '../../shared/model/types';
 
 export default class IPFilterService {
   public whiteListEvent: EventEmitter = new EventEmitter(); // Used to trigger white list for Proxy server and Web server
@@ -30,7 +31,7 @@ export default class IPFilterService {
 
   async create(command: IPFilterCommandDTO, createdBy: string): Promise<IPFilter> {
     await this.validator.validate(ipFilterSchema, command);
-    const ipFilter = this.ipFilterRepository.create({ ...command, createdBy, updatedBy: createdBy });
+    const ipFilter = this.ipFilterRepository.create({ ...command, createdBy, updatedBy: createdBy, createdAt: '', updatedAt: '' });
     this.whiteListEvent.emit(
       'update-white-list',
       this.ipFilterRepository.list().map(ip => ip.address)
@@ -42,7 +43,13 @@ export default class IPFilterService {
   async update(ipFilterId: string, command: IPFilterCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(ipFilterSchema, command);
     const ipFilter = this.findById(ipFilterId);
-    this.ipFilterRepository.update(ipFilter.id, { ...command, updatedBy });
+    this.ipFilterRepository.update(ipFilter.id, {
+      ...command,
+      createdBy: ipFilter.createdBy,
+      updatedBy,
+      createdAt: ipFilter.createdAt,
+      updatedAt: ''
+    });
     this.whiteListEvent.emit(
       'update-white-list',
       this.ipFilterRepository.list().map(ip => ip.address)
@@ -61,13 +68,13 @@ export default class IPFilterService {
   }
 }
 
-export const toIPFilterDTO = (ipFilter: IPFilter): IPFilterDTO => {
+export const toIPFilterDTO = (ipFilter: IPFilter, getUserInfo: GetUserInfo): IPFilterDTO => {
   return {
     id: ipFilter.id,
     address: ipFilter.address,
     description: ipFilter.description,
-    createdBy: ipFilter.createdBy,
-    updatedBy: ipFilter.updatedBy,
+    createdBy: getUserInfo(ipFilter.createdBy),
+    updatedBy: getUserInfo(ipFilter.updatedBy),
     createdAt: ipFilter.createdAt,
     updatedAt: ipFilter.updatedAt
   };
