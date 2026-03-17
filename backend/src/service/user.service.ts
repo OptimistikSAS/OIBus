@@ -2,7 +2,7 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import UserRepository from '../repository/config/user.repository';
 import { User } from '../model/user.model';
-import { Page } from '../../shared/model/types';
+import { Page, UserInfo } from '../../shared/model/types';
 import { UserCommandDTO, UserDTO, UserSearchParam } from '../../shared/model/user.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 
@@ -40,7 +40,7 @@ export default class UserService {
     return this.userRepository.search(searchParams);
   }
 
-  async create(command: Omit<User, 'id'>, password: string | undefined): Promise<User> {
+  async create(command: UserCommandDTO, password: string | undefined): Promise<User> {
     await this.validator.validate(userSchema, command);
     if (!password) {
       throw new OIBusValidationError('Password is required');
@@ -66,7 +66,21 @@ export default class UserService {
     const user = this.findById(userId);
     this.userRepository.delete(user.id);
   }
+
+  getUserInfo(userId: string): UserInfo {
+    if (userId === 'oianalytics') return { id: userId, friendlyName: 'OIAnalytics' };
+    const user = this.userRepository.findById(userId);
+    if (!user) return { id: userId, friendlyName: userId };
+    return computeUserInfo(userId, user);
+  }
 }
+
+const computeUserInfo = (id: string, user: User): UserInfo => {
+  if (user.login === 'admin') return { id, friendlyName: 'Admin' };
+  const nameParts = [user.firstName, user.lastName].filter(Boolean);
+  const name = nameParts.length > 0 ? nameParts.join(' ') : user.login;
+  return { id, friendlyName: `${name} (${user.login})` };
+};
 
 export const toUserDTO = (user: User): UserDTO => {
   return {
@@ -77,6 +91,10 @@ export const toUserDTO = (user: User): UserDTO => {
     email: user.email,
     language: user.language,
     timezone: user.timezone,
-    friendlyName: `${user.firstName} ${user.lastName}`
+    friendlyName: computeUserInfo(user.id, user).friendlyName,
+    createdBy: user.createdBy,
+    updatedBy: user.updatedBy,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt
   };
 };

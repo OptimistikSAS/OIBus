@@ -45,7 +45,7 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import LogRepository from '../repository/logs/log.repository';
 import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
-import { Page } from '../../shared/model/types';
+import { GetUserInfo, Page } from '../../shared/model/types';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
@@ -324,7 +324,11 @@ export default class SouthService {
       enabled: false,
       settings: await encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings),
       name: southConnector ? southConnector.name : `${southType}:test-connection`,
-      items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>>
+      items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>>,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     /* istanbul ignore next */
@@ -377,12 +381,21 @@ export default class SouthService {
         id: '',
         name: '',
         description: '',
-        cron: ''
+        cron: '',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest),
       maxReadInterval: null,
       readDelay: 0,
-      overlap: null
+      overlap: null,
+      settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest),
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
     const testConnectorToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: 'test',
@@ -391,7 +404,11 @@ export default class SouthService {
       description: '',
       settings: await encryptionService.encryptConnectorSecrets(southSettings, southConnector?.settings || null, manifest.settings),
       name: `${southType}:test-connection`,
-      items: [testItemToRun]
+      items: [testItemToRun],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     /* istanbul ignore next */
@@ -607,7 +624,7 @@ export default class SouthService {
         scanMode: foundScanMode,
         settings: {} as SouthItemSettings,
         group: null as SouthItemGroupDTO | null
-      } as SouthConnectorItemDTO;
+      } as unknown as SouthConnectorItemDTO;
 
       // Parse group name from CSV
       const groupName = (data as Record<string, string>).group?.trim();
@@ -621,7 +638,6 @@ export default class SouthService {
           readDelay: 0
         } as SouthItemGroupDTO;
       }
-
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
         errors.push({
           item: data as Record<string, string>,
@@ -980,23 +996,26 @@ export const copySouthItemCommandToSouthItemEntity = async (
   }
 };
 
-export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight): SouthConnectorLightDTO => {
+export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight, getUserInfo: GetUserInfo): SouthConnectorLightDTO => {
   return {
     id: entity.id,
     name: entity.name,
     type: entity.type,
     description: entity.description,
     enabled: entity.enabled,
-    createdBy: entity.createdBy,
-    updatedBy: entity.updatedBy,
+    createdBy: getUserInfo(entity.createdBy),
+    updatedBy: getUserInfo(entity.updatedBy),
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt
   };
 };
 
-export const toSouthConnectorDTO = (southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>): SouthConnectorDTO => {
+export const toSouthConnectorDTO = (
+  southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
+  getUserInfo: GetUserInfo
+): SouthConnectorDTO => {
   const manifest = southManifestList.find(element => element.id === southEntity.type)!;
-  const items = southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type));
+  const items = southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type, getUserInfo));
   const baseDTO = {
     id: southEntity.id,
     name: southEntity.name,
@@ -1005,8 +1024,8 @@ export const toSouthConnectorDTO = (southEntity: SouthConnectorEntity<SouthSetti
     enabled: southEntity.enabled,
     settings: encryptionService.filterSecrets(southEntity.settings, manifest.settings),
     items,
-    createdBy: southEntity.createdBy,
-    updatedBy: southEntity.updatedBy,
+    createdBy: getUserInfo(southEntity.createdBy),
+    updatedBy: getUserInfo(southEntity.updatedBy),
     createdAt: southEntity.createdAt,
     updatedAt: southEntity.updatedAt
   };
@@ -1014,7 +1033,11 @@ export const toSouthConnectorDTO = (southEntity: SouthConnectorEntity<SouthSetti
   return baseDTO as SouthConnectorDTO;
 };
 
-export const toSouthConnectorItemDTO = (entity: SouthConnectorItemEntity<SouthItemSettings>, southType: string): SouthConnectorItemDTO => {
+export const toSouthConnectorItemDTO = (
+  entity: SouthConnectorItemEntity<SouthItemSettings>,
+  southType: string,
+  getUserInfo: GetUserInfo
+): SouthConnectorItemDTO => {
   const manifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
     attribute => attribute.key === 'settings'
@@ -1023,8 +1046,12 @@ export const toSouthConnectorItemDTO = (entity: SouthConnectorItemEntity<SouthIt
     id: entity.id,
     name: entity.name,
     enabled: entity.enabled,
-    scanMode: toScanModeDTO(entity.scanMode),
+    scanMode: toScanModeDTO(entity.scanMode, getUserInfo),
     settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest),
+    createdBy: getUserInfo(entity.createdBy),
+    updatedBy: getUserInfo(entity.updatedBy),
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt,
     group: entity.group ? toSouthItemGroupDTO(entity.group) : null,
     syncWithGroup: entity.syncWithGroup,
     maxReadInterval: entity.maxReadInterval,

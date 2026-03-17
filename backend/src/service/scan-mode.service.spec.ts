@@ -1,5 +1,5 @@
 import DataStreamEngine from '../engine/data-stream-engine';
-import ScanModeService, { toScanModeDTO } from './scan-mode.service';
+import ScanModeService from './scan-mode.service';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
@@ -49,7 +49,7 @@ describe('Scan Mode Service', () => {
     const result = service.list();
 
     expect(scanModeRepository.findAll).toHaveBeenCalled();
-    expect(result).toEqual(testData.scanMode.list.map(element => toScanModeDTO(element)));
+    expect(result).toEqual(testData.scanMode.list);
   });
 
   it('findById() should find a scan mode by id', () => {
@@ -58,7 +58,7 @@ describe('Scan Mode Service', () => {
     const result = service.findById(testData.scanMode.list[0].id);
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(result).toEqual(toScanModeDTO(testData.scanMode.list[0]));
+    expect(result).toEqual(testData.scanMode.list[0]);
   });
 
   it('findById() should throw not found', () => {
@@ -77,7 +77,7 @@ describe('Scan Mode Service', () => {
 
     expect(validator.validate).toHaveBeenCalledWith(scanModeSchema, testData.scanMode.command);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(result).toEqual(toScanModeDTO(testData.scanMode.list[0]));
+    expect(result).toEqual(testData.scanMode.list[0]);
   });
 
   it('create() should not create a scan mode with duplicate name', async () => {
@@ -102,7 +102,10 @@ describe('Scan Mode Service', () => {
     expect(scanModeRepository.findById).toHaveBeenCalledTimes(2);
     expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
       ...testData.scanMode.command,
-      updatedBy: 'userTest'
+      createdBy: testData.scanMode.list[0].createdBy,
+      updatedBy: 'userTest',
+      createdAt: testData.scanMode.list[0].createdAt,
+      updatedAt: ''
     });
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
@@ -118,7 +121,13 @@ describe('Scan Mode Service', () => {
 
     await service.update(testData.scanMode.list[0].id, command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, { ...command, updatedBy: 'userTest' });
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
+      ...command,
+      createdBy: testData.scanMode.list[0].createdBy,
+      updatedBy: 'userTest',
+      createdAt: testData.scanMode.list[0].createdAt,
+      updatedAt: ''
+    });
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
     expect(scanModeRepository.findAll).not.toHaveBeenCalled();
   });
@@ -133,7 +142,13 @@ describe('Scan Mode Service', () => {
 
     await service.update(testData.scanMode.list[0].id, command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, { ...command, updatedBy: 'userTest' });
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
+      ...command,
+      createdBy: testData.scanMode.list[0].createdBy,
+      updatedBy: 'userTest',
+      createdAt: testData.scanMode.list[0].createdAt,
+      updatedAt: ''
+    });
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
   });
 
@@ -147,7 +162,10 @@ describe('Scan Mode Service', () => {
 
     expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
       ...testData.scanMode.command,
-      updatedBy: 'userTest'
+      createdBy: testData.scanMode.list[0].createdBy,
+      updatedBy: 'userTest',
+      createdAt: testData.scanMode.list[0].createdAt,
+      updatedAt: ''
     });
     expect(dataStreamEngine.updateScanMode).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();

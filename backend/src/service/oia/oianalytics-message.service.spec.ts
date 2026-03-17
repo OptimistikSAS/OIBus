@@ -330,7 +330,11 @@ describe('OIAnalytics message service without completed registration', () => {
       status: 'PENDING',
       error: null,
       completedDate: null,
-      type: 'history-queries'
+      type: 'history-queries',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
     (oIAnalyticsMessageRepository.list as jest.Mock).mockReturnValueOnce([saveHistoryQueryMessage]);
@@ -347,7 +351,11 @@ describe('OIAnalytics message service without completed registration', () => {
       status: 'PENDING',
       error: null,
       completedDate: null,
-      type: 'history-queries'
+      type: 'history-queries',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
       .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
