@@ -24,6 +24,7 @@ import NorthConnectorMetricsRepository from '../repository/metrics/north-connect
 import LogRepository from '../repository/logs/log.repository';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { checkScanMode } from './utils';
+import { GetUserInfo } from '../../shared/model/types';
 import { ScanMode } from '../model/scan-mode.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import { NorthSettings } from '../../shared/model/north-settings.model';
@@ -42,6 +43,7 @@ import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
+import { SouthConnectorItemEntityLight } from '../model/south-connector.model';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -138,10 +140,20 @@ export default class NorthService {
         options: transformerIdWithOptions.options,
         inputType: transformerIdWithOptions.inputType,
         south: south
-          ? { id: south.id, type: south.type, name: south.name, description: south.description, enabled: south.enabled }
+          ? {
+              id: south.id,
+              type: south.type,
+              name: south.name,
+              description: south.description,
+              enabled: south.enabled,
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            }
           : undefined,
         group: transformerIdWithOptions.groupId ? { id: transformerIdWithOptions.groupId, name: '' } : undefined,
-        items: transformerIdWithOptions.items
+        items: transformerIdWithOptions.items as unknown as Array<SouthConnectorItemEntityLight>
       };
     });
     this.northConnectorRepository.saveNorth(northEntity);
@@ -191,10 +203,20 @@ export default class NorthService {
         options: transformerIdWithOptions.options,
         inputType: transformerIdWithOptions.inputType,
         south: south
-          ? { id: south.id, type: south.type, name: south.name, description: south.description, enabled: south.enabled }
+          ? {
+              id: south.id,
+              type: south.type,
+              name: south.name,
+              description: south.description,
+              enabled: south.enabled,
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            }
           : undefined,
         group: transformerIdWithOptions.groupId ? { id: transformerIdWithOptions.groupId, name: '' } : undefined,
-        items: transformerIdWithOptions.items
+        items: transformerIdWithOptions.items as unknown as Array<SouthConnectorItemEntityLight>
       };
     });
 
@@ -246,6 +268,10 @@ export default class NorthService {
 
     const testToRun: NorthConnectorEntity<NorthSettings> = {
       id: 'test',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
       type: northType,
       description: '',
       enabled: false,
@@ -258,7 +284,11 @@ export default class NorthService {
             id: 'test',
             name: 'test',
             description: '',
-            cron: ''
+            cron: '',
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
           },
           numberOfElements: 0,
           numberOfFiles: 0
@@ -351,21 +381,21 @@ export default class NorthService {
   }
 }
 
-export const toNorthConnectorLightDTO = (northEntity: NorthConnectorEntityLight): NorthConnectorLightDTO => {
+export const toNorthConnectorLightDTO = (northEntity: NorthConnectorEntityLight, getUserInfo: GetUserInfo): NorthConnectorLightDTO => {
   return {
     id: northEntity.id,
     name: northEntity.name,
     type: northEntity.type,
     description: northEntity.description,
     enabled: northEntity.enabled,
-    createdBy: northEntity.createdBy,
-    updatedBy: northEntity.updatedBy,
+    createdBy: getUserInfo(northEntity.createdBy),
+    updatedBy: getUserInfo(northEntity.updatedBy),
     createdAt: northEntity.createdAt,
     updatedAt: northEntity.updatedAt
   };
 };
 
-export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSettings>): NorthConnectorDTO => {
+export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSettings>, getUserInfo: GetUserInfo): NorthConnectorDTO => {
   return {
     id: northEntity.id,
     name: northEntity.name,
@@ -378,7 +408,7 @@ export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSetti
     ),
     caching: {
       trigger: {
-        scanMode: toScanModeDTO(northEntity.caching.trigger.scanMode),
+        scanMode: toScanModeDTO(northEntity.caching.trigger.scanMode, getUserInfo),
         numberOfElements: northEntity.caching.trigger.numberOfElements,
         numberOfFiles: northEntity.caching.trigger.numberOfFiles
       },
@@ -399,18 +429,18 @@ export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSetti
     },
     transformers: northEntity.transformers.map(transformerWithOptions => ({
       id: transformerWithOptions.id,
-      transformer: toTransformerDTO(transformerWithOptions.transformer),
+      transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType,
       south: transformerWithOptions.south,
       group: transformerWithOptions.group,
       items: transformerWithOptions.items
     })),
-    createdBy: northEntity.createdBy,
-    updatedBy: northEntity.updatedBy,
+    createdBy: getUserInfo(northEntity.createdBy),
+    updatedBy: getUserInfo(northEntity.updatedBy),
     createdAt: northEntity.createdAt,
     updatedAt: northEntity.updatedAt
-  } as NorthConnectorDTO;
+  } as unknown as NorthConnectorDTO;
 };
 
 export const copyNorthConnectorCommandToNorthEntity = async (
