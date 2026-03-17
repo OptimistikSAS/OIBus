@@ -56,7 +56,7 @@ export const delay = async (timeout: number): Promise<void> =>
   });
 
 /**
- * Compute a list of end interval from a start, end and maxInterval.
+ * Compute a list of an end interval from a start, end, and maxInterval.
  */
 export const generateIntervals = (
   startInstant: Instant,
@@ -434,9 +434,10 @@ export const formatInstant = (
 };
 
 export const convertDateTimeToInstant = (
-  dateTime: string | number | Date,
+  dateTime: string | number | Date | null,
   options: { type?: DateTimeType; timezone?: string; format?: string; locale?: string }
 ): string => {
+  if (!dateTime) return '';
   // Early return if no conversion is needed (assume input is already an ISO string)
   if (!options.type) {
     if (typeof dateTime === 'string' && DateTime.fromISO(dateTime).isValid) {

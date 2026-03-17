@@ -169,7 +169,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
               formattedEntry[key] = value;
             } else {
               const entryDate = convertDateTimeToInstant(value, datetimeField);
-              if (datetimeField.useAsReference) {
+              if (datetimeField.useAsReference && entryDate) {
                 if (!updatedStartTime || entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }

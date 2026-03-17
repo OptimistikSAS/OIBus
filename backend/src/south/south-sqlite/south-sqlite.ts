@@ -136,7 +136,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
               formattedEntry[key] = value;
             } else {
               const entryDate = convertDateTimeToInstant(value, datetimeField);
-              if (datetimeField.useAsReference) {
+              if (datetimeField.useAsReference && entryDate) {
                 if (!updatedStartTime || entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
