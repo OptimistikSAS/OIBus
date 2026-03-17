@@ -97,7 +97,11 @@ describe('SouthFTP', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -118,7 +122,11 @@ describe('SouthFTP', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -139,9 +147,17 @@ describe('SouthFTP', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -442,7 +458,11 @@ describe('SouthFTP', () => {
               recursive: true
             }
           }))
-        ]
+        ],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
       const southRecursive = new SouthFtp(configRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
       await southRecursive.start();
@@ -525,7 +545,11 @@ describe('SouthFTP', () => {
               maxSize: 0
             }
           }))
-        ]
+        ],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
       const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
       await southWithLimit.start();
@@ -557,7 +581,11 @@ describe('SouthFTP', () => {
               maxSize: 0
             }
           }))
-        ]
+        ],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
       const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
       await southWithLimit.start();
@@ -590,7 +618,11 @@ describe('SouthFTP', () => {
               maxSize: 1
             }
           }))
-        ]
+        ],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
       const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
       await southWithLimit.start();
@@ -621,7 +653,11 @@ describe('SouthFTP', () => {
               maxSize: 1
             }
           }))
-        ]
+        ],
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
       const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
       await southWithLimit.start();

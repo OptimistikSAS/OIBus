@@ -66,9 +66,17 @@ describe('SouthFolderScanner', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null
+          overlap: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         }
-      ]
+      ],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     // Default mock behaviors
