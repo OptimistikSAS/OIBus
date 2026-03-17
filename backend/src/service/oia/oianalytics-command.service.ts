@@ -66,7 +66,7 @@ import CertificateService from '../certificate.service';
 import HistoryQueryService from '../history-query.service';
 import { HistoryQueryCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
 import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 
@@ -503,7 +503,7 @@ export default class OIAnalyticsCommandService {
 
     const runStart = DateTime.now();
     const engineSettings = this.oIBusService.getEngineSettings()!;
-    const oibusInfo = getOIBusInfo(engineSettings);
+    const oibusInfo = getOIBusInfo(engineSettings as unknown as EngineSettingsDTO);
 
     this.logger.info(
       `Upgrading OIBus from ${oibusInfo.version} to ${command.commandContent.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
@@ -839,7 +839,7 @@ export default class OIAnalyticsCommandService {
       // Type assertion is safe because checkImportItems accepts the union type
       command.commandContent.deleteItemsNotPresent
         ? []
-        : (southConnector.items.map(i => toSouthConnectorItemDTO(i, southConnector.type)) as Array<SouthConnectorItemDTO>)
+        : (southConnector.items.map(i => toSouthConnectorItemDTO(i, southConnector.type)) as unknown as Array<SouthConnectorItemDTO>)
     );
 
     if (errors.length > 0) {
@@ -1002,7 +1002,7 @@ export default class OIAnalyticsCommandService {
       command.commandContent.csvContent,
       command.commandContent.delimiter,
       // Type assertion is safe because checkImportItems accepts the union type
-      command.commandContent.deleteItemsNotPresent ? [] : (historyQuery.items as Array<HistoryQueryItemDTO>)
+      command.commandContent.deleteItemsNotPresent ? [] : (historyQuery.items as unknown as Array<HistoryQueryItemDTO>)
     );
 
     if (errors.length > 0) {

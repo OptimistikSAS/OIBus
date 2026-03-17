@@ -9,6 +9,7 @@ import { ScanMode } from '../model/scan-mode.model';
 import { validateCronExpression } from './utils';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import { GetUserInfo } from '../../shared/model/types';
 
 export default class ScanModeService {
   constructor(
@@ -41,7 +42,7 @@ export default class ScanModeService {
       throw new OIBusValidationError(`Scan mode name "${command.name}" already exists`);
     }
 
-    const scanMode = this.scanModeRepository.create({ ...command, createdBy, updatedBy: createdBy });
+    const scanMode = this.scanModeRepository.create({ ...command, createdBy, updatedBy: createdBy, createdAt: '', updatedAt: '' });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return scanMode;
   }
@@ -58,7 +59,13 @@ export default class ScanModeService {
       }
     }
 
-    this.scanModeRepository.update(oldScanMode.id, { ...command, updatedBy });
+    this.scanModeRepository.update(oldScanMode.id, {
+      ...command,
+      createdBy: oldScanMode.createdBy,
+      updatedBy,
+      createdAt: oldScanMode.createdAt,
+      updatedAt: ''
+    });
     const newScanMode = this.findById(scanModeId);
     if (oldScanMode.cron !== newScanMode.cron) {
       await this.dataStreamEngine.updateScanMode(newScanMode);
@@ -77,14 +84,14 @@ export default class ScanModeService {
   }
 }
 
-export const toScanModeDTO = (scanMode: ScanMode): ScanModeDTO => {
+export const toScanModeDTO = (scanMode: ScanMode, getUserInfo: GetUserInfo): ScanModeDTO => {
   return {
     id: scanMode.id,
     name: scanMode.name,
     description: scanMode.description,
     cron: scanMode.cron,
-    createdBy: scanMode.createdBy,
-    updatedBy: scanMode.updatedBy,
+    createdBy: getUserInfo(scanMode.createdBy),
+    updatedBy: getUserInfo(scanMode.updatedBy),
     createdAt: scanMode.createdAt,
     updatedAt: scanMode.updatedAt
   };

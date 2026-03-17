@@ -6,7 +6,7 @@ import { DateTime } from 'luxon';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import EngineRepository from '../../repository/config/engine.repository';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsDTO, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { registrationSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
 import crypto from 'node:crypto';
@@ -64,7 +64,7 @@ export default class OIAnalyticsRegistrationService {
       command.apiGatewayHeaderValue = await encryptionService.encryptText(command.apiGatewayHeaderValue);
     }
 
-    const oibusInfo = getOIBusInfo(engineSettings);
+    const oibusInfo = getOIBusInfo(engineSettings as unknown as EngineSettingsDTO);
     // Generate an RSA key pair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 4096,
@@ -180,6 +180,10 @@ export default class OIAnalyticsRegistrationService {
 export const toOIAnalyticsRegistrationDTO = (registration: OIAnalyticsRegistration): RegistrationSettingsDTO => {
   return {
     id: registration.id,
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' },
+    createdAt: registration.createdAt,
+    updatedAt: registration.updatedAt,
     host: registration.host,
     activationCode: registration.activationCode,
     status: registration.status,

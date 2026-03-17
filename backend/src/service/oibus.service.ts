@@ -6,6 +6,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   EngineMetrics,
+  EngineSettingsCommandDTO,
   EngineSettingsDTO,
   EngineSettingsUpdateResultDTO,
   FileCacheContent,
@@ -120,14 +121,14 @@ export default class OIBusService {
   }
 
   getInfo(): OIBusInfo {
-    return getOIBusInfo(this.getEngineSettings());
+    return getOIBusInfo(this.getEngineSettings() as unknown as EngineSettingsDTO);
   }
 
   getProxyServer(): ProxyServer {
     return this.proxyServer;
   }
 
-  async updateEngineSettings(command: Omit<EngineSettings, 'id' | 'version' | 'launcherVersion'>): Promise<EngineSettingsUpdateResultDTO> {
+  async updateEngineSettings(command: EngineSettingsCommandDTO): Promise<EngineSettingsUpdateResultDTO> {
     await this.validator.validate(engineSchema, command);
 
     if (command.port === command.proxyPort) {
@@ -312,6 +313,10 @@ export default class OIBusService {
 export const toEngineSettingsDTO = (engineSettings: EngineSettings): EngineSettingsDTO => {
   return {
     id: engineSettings.id,
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' },
+    createdAt: engineSettings.createdAt,
+    updatedAt: engineSettings.updatedAt,
     name: engineSettings.name,
     port: engineSettings.port,
     version: engineSettings.version,

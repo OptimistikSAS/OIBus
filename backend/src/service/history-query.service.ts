@@ -16,10 +16,11 @@ import HistoryQueryRepository from '../repository/config/history-query.repositor
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { checkScanMode, stringToBoolean } from './utils';
+import { toScanModeDTO } from './scan-mode.service';
 import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
-import { Page } from '../../shared/model/types';
+import { GetUserInfo, Page } from '../../shared/model/types';
 import { HistoryQueryMetrics, OIBusConnectionTestResult, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -33,6 +34,7 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { HistoryTransformerWithOptions } from '../model/transformer.model';
+import { SouthConnectorItemEntityLight } from '../model/south-connector.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -120,7 +122,7 @@ export default class HistoryQueryService {
         transformer: foundTransformer,
         options: transformerIdWithOptions.options,
         inputType: transformerIdWithOptions.inputType,
-        items: transformerIdWithOptions.items
+        items: transformerIdWithOptions.items as unknown as Array<SouthConnectorItemEntityLight>
       };
     });
 
@@ -161,7 +163,7 @@ export default class HistoryQueryService {
       if (!item.id) {
         item.createdBy = updatedBy;
       } else {
-        item.createdBy = previousSettings.items.find(i => i.id === item.id)?.createdBy;
+        item.createdBy = previousSettings.items.find(i => i.id === item.id)?.createdBy ?? '';
       }
       item.updatedBy = updatedBy;
     }
@@ -177,7 +179,7 @@ export default class HistoryQueryService {
         transformer: foundTransformer,
         options: transformerIdWithOptions.options,
         inputType: transformerIdWithOptions.inputType,
-        items: transformerIdWithOptions.items
+        items: transformerIdWithOptions.items as unknown as Array<SouthConnectorItemEntityLight>
       };
     });
 
@@ -675,7 +677,7 @@ const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async (
   );
 };
 
-export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight): HistoryQueryLightDTO => {
+export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight, getUserInfo: GetUserInfo): HistoryQueryLightDTO => {
   return {
     id: historyQuery.id,
     name: historyQuery.name,
@@ -685,17 +687,20 @@ export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight): H
     endTime: historyQuery.endTime,
     southType: historyQuery.southType,
     northType: historyQuery.northType,
-    createdBy: historyQuery.createdBy,
-    updatedBy: historyQuery.updatedBy,
+    createdBy: getUserInfo(historyQuery.createdBy),
+    updatedBy: getUserInfo(historyQuery.updatedBy),
     createdAt: historyQuery.createdAt,
     updatedAt: historyQuery.updatedAt
   };
 };
 
-export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): HistoryQueryDTO => {
+export const toHistoryQueryDTO = (
+  historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
+  getUserInfo: GetUserInfo
+): HistoryQueryDTO => {
   const southManifest = southManifestList.find(element => element.id === historyQuery.southType)!;
   const northManifest = northManifestList.find(element => element.id === historyQuery.northType)!;
-  const items = historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType));
+  const items = historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, getUserInfo));
   const baseDTO = {
     id: historyQuery.id,
     name: historyQuery.name,
@@ -713,7 +718,7 @@ export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings
     northSettings: encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
     caching: {
       trigger: {
-        scanMode: historyQuery.caching.trigger.scanMode,
+        scanMode: toScanModeDTO(historyQuery.caching.trigger.scanMode, getUserInfo),
         numberOfElements: historyQuery.caching.trigger.numberOfElements,
         numberOfFiles: historyQuery.caching.trigger.numberOfFiles
       },
@@ -735,23 +740,24 @@ export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings
     items,
     northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
       id: transformerWithOptions.id,
-      transformer: toTransformerDTO(transformerWithOptions.transformer),
+      transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType,
       items: transformerWithOptions.items
     })),
-    createdBy: historyQuery.createdBy,
-    updatedBy: historyQuery.updatedBy,
+    createdBy: getUserInfo(historyQuery.createdBy),
+    updatedBy: getUserInfo(historyQuery.updatedBy),
     createdAt: historyQuery.createdAt,
     updatedAt: historyQuery.updatedAt
   };
   // Type assertion is safe because we know the southType and northType fields match the settings and items at runtime
-  return baseDTO as HistoryQueryDTO;
+  return baseDTO as unknown as HistoryQueryDTO;
 };
 
 export const toHistoryQueryItemDTO = (
   historyQueryItem: HistoryQueryItemEntity<SouthItemSettings>,
-  southType: string
+  southType: string,
+  getUserInfo: GetUserInfo
 ): HistoryQueryItemDTO => {
   const southManifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
@@ -761,6 +767,10 @@ export const toHistoryQueryItemDTO = (
     id: historyQueryItem.id,
     name: historyQueryItem.name,
     enabled: historyQueryItem.enabled,
-    settings: encryptionService.filterSecrets<SouthItemSettings>(historyQueryItem.settings, itemSettingsManifest)
+    settings: encryptionService.filterSecrets<SouthItemSettings>(historyQueryItem.settings, itemSettingsManifest),
+    createdBy: getUserInfo(historyQueryItem.createdBy),
+    updatedBy: getUserInfo(historyQueryItem.updatedBy),
+    createdAt: historyQueryItem.createdAt,
+    updatedAt: historyQueryItem.updatedAt
   } as HistoryQueryItemDTO;
 };
