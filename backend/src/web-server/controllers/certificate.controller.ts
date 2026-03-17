@@ -18,7 +18,7 @@ export class CertificateController extends Controller {
   @Get('/')
   async list(@Request() request: CustomExpressRequest): Promise<Array<CertificateDTO>> {
     const certificateService: CertificateService = request.services.certificateService;
-    return certificateService.list().map(certificate => toCertificateDTO(certificate));
+    return certificateService.list().map(certificate => toCertificateDTO(certificate, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -29,7 +29,7 @@ export class CertificateController extends Controller {
   @Get('/{certificateId}')
   async findById(@Path() certificateId: string, @Request() request: CustomExpressRequest): Promise<CertificateDTO> {
     const certificateService: CertificateService = request.services.certificateService;
-    return toCertificateDTO(certificateService.findById(certificateId));
+    return toCertificateDTO(certificateService.findById(certificateId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -41,7 +41,7 @@ export class CertificateController extends Controller {
   @SuccessResponse(201, 'Certificate created successfully')
   async create(@Body() command: CertificateCommandDTO, @Request() request: CustomExpressRequest): Promise<CertificateDTO> {
     const certificateService: CertificateService = request.services.certificateService;
-    return toCertificateDTO(await certificateService.create(command, request.user.id));
+    return toCertificateDTO(await certificateService.create(command, request.user.id), id => request.services.userService.getUserInfo(id));
   }
 
   /**

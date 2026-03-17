@@ -72,7 +72,7 @@ export class TransformerController extends Controller {
     const result = transformerService.search(searchParams);
 
     return {
-      content: result.content.map(transformer => toTransformerDTO(transformer)),
+      content: result.content.map(transformer => toTransformerDTO(transformer, id => request.services.userService.getUserInfo(id))),
       totalElements: result.totalElements,
       size: result.size,
       number: result.number,
@@ -89,7 +89,7 @@ export class TransformerController extends Controller {
   async list(@Request() request: CustomExpressRequest): Promise<Array<TransformerDTO>> {
     const transformerService = request.services.transformerService;
     const result = transformerService.findAll();
-    return result.map(element => toTransformerDTO(element));
+    return result.map(element => toTransformerDTO(element, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -100,7 +100,7 @@ export class TransformerController extends Controller {
   @Get('/{transformerId}')
   async findById(@Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<TransformerDTO> {
     const transformerService = request.services.transformerService;
-    return toTransformerDTO(transformerService.findById(transformerId));
+    return toTransformerDTO(transformerService.findById(transformerId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -113,7 +113,9 @@ export class TransformerController extends Controller {
   @SuccessResponse(201, 'Transformer created successfully')
   async create(@Body() command: CustomTransformerCommandDTO, @Request() request: CustomExpressRequest): Promise<CustomTransformerDTO> {
     const transformerService = request.services.transformerService;
-    return toTransformerDTO(await transformerService.create(command, request.user.id)) as CustomTransformerDTO;
+    return toTransformerDTO(await transformerService.create(command, request.user.id), id =>
+      request.services.userService.getUserInfo(id)
+    ) as CustomTransformerDTO;
   }
 
   /**

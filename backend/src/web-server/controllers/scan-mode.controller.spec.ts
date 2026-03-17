@@ -3,17 +3,22 @@ import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../shared/mod
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
+import UserService from 'src/service/user.service';
 
 // Mock the services
 jest.mock('../../service/scan-mode.service', () => ({
-  toScanModeDTO: jest.fn().mockImplementation(scanMode => scanMode)
+  toScanModeDTO: jest.fn().mockImplementation((scanMode, getUserInfo) => {
+    getUserInfo('');
+    return scanMode;
+  })
 }));
 
 describe('ScanModeController', () => {
   let controller: ScanModeController;
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
-      scanModeService: new ScanModeServiceMock()
+      scanModeService: new ScanModeServiceMock(),
+      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
     },
     user: {
       id: 'test',
