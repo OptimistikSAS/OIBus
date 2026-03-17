@@ -3,7 +3,7 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 
 import pino from 'pino';
 import { CronJob } from 'cron';
-import { delay, generateIntervals, groupItemsByGroup, validateCronExpression } from '../service/utils';
+import { generateIntervals, groupItemsByGroup, validateCronExpression } from '../service/utils';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import SouthFolderScanner from './south-folder-scanner/south-folder-scanner';
@@ -162,7 +162,16 @@ describe('SouthConnector with file query', () => {
     expect(south['cronByScanModeIds'].size).toBe(2);
 
     south.createOrUpdateCronJob = jest.fn();
-    south.updateScanModeIfUsed({ id: 'bad id', cron: '', description: '', name: '' });
+    south.updateScanModeIfUsed({
+      id: 'bad id',
+      cron: '',
+      description: '',
+      name: '',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    });
 
     south['connector'].items = [];
     south.updateCronJobs();
@@ -502,12 +511,25 @@ describe('SouthConnector with history and subscription', () => {
         settings: {
           mode: 'da'
         } as SouthOPCUAItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'southItemId5',
@@ -516,12 +538,25 @@ describe('SouthConnector with history and subscription', () => {
         settings: {
           mode: 'da'
         } as SouthOPCUAItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
     ];
     south.unsubscribe = jest.fn().mockImplementationOnce(() => {

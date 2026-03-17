@@ -134,7 +134,11 @@ describe('SouthOPCUA', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -153,7 +157,11 @@ describe('SouthOPCUA', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -172,7 +180,11 @@ describe('SouthOPCUA', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id1',
@@ -188,7 +200,11 @@ describe('SouthOPCUA', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -204,7 +220,11 @@ describe('SouthOPCUA', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -220,9 +240,17 @@ describe('SouthOPCUA', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
   let historyReadRequest: HistoryReadRequest;
 
@@ -616,7 +644,11 @@ describe('SouthOPCUA', () => {
                 },
                 statusCode: StatusCodes.Good
               }
-            ]
+            ],
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
           },
           statusCode: StatusCodes.Good,
           continuationPoint: false
@@ -673,7 +705,11 @@ describe('SouthOPCUA', () => {
                   },
                   statusCode: StatusCodes.Good
                 }
-              ]
+              ],
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
             },
             statusCode: StatusCodes.Good,
             continuationPoint: true
@@ -696,7 +732,11 @@ describe('SouthOPCUA', () => {
                   },
                   statusCode: StatusCodes.Good
                 }
-              ]
+              ],
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
             },
             statusCode: StatusCodes.Good,
             continuationPoint: false
