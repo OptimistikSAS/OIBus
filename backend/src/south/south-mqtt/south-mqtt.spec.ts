@@ -83,7 +83,20 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'my/first/topic'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
@@ -97,7 +110,20 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'my/+/+/topic/with/wildcard/#'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
@@ -111,7 +137,20 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'my/wrong/topic////'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
@@ -125,7 +164,20 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'json/topic'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
@@ -139,7 +191,20 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'json/topic'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
@@ -153,14 +218,31 @@ describe('SouthMQTT', () => {
         settings: {
           topic: 'json/topic'
         },
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+        scanMode: {
+          id: 'subscription',
+          name: 'subscription',
+          description: '',
+          cron: '',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
         overlap: null
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
   const mqttStream = new CustomStream();
   mqttStream.subscribeAsync = jest.fn();
