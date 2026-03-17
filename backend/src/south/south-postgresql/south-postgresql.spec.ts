@@ -95,7 +95,11 @@ describe('SouthPostgreSQL with authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -118,7 +122,11 @@ describe('SouthPostgreSQL with authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -158,9 +166,17 @@ describe('SouthPostgreSQL with authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -418,7 +434,11 @@ describe('SouthPostgreSQL without authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -441,7 +461,11 @@ describe('SouthPostgreSQL without authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -481,9 +505,17 @@ describe('SouthPostgreSQL without authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -576,7 +608,11 @@ describe('SouthPostgreSQL test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -599,7 +635,11 @@ describe('SouthPostgreSQL test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -639,9 +679,17 @@ describe('SouthPostgreSQL test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   // Error messages handled by the test function
