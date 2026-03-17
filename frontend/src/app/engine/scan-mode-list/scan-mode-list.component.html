@@ -67,9 +67,9 @@
             <td>{{ scanMode.name }}</td>
             <td>{{ scanMode.description }}</td>
             <td>{{ scanMode.cron }}</td>
-            <td>{{ scanMode.createdBy }}</td>
-            <td>{{ scanMode.createdAt | datetime }}</td>
-            <td>{{ scanMode.updatedAt | datetime }}</td>
+            <td>{{ scanMode.createdBy.friendlyName }}</td>
+            <td>{{ scanMode.createdAt | datetime: 'ff' }}</td>
+            <td>{{ scanMode.updatedAt | datetime: 'ff' }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->

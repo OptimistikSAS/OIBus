@@ -109,9 +109,9 @@
                 <td>{{ north.name }}</td>
                 <td>{{ north.type | oIBusNorthTypeEnum }}</td>
                 <td>{{ north.description }}</td>
-                <td>{{ north.createdBy }}</td>
-                <td>{{ north.createdAt | datetime }}</td>
-                <td>{{ north.updatedAt | datetime }}</td>
+                <td>{{ north.createdBy.friendlyName }}</td>
+                <td>{{ north.createdAt | datetime: 'ff' }}</td>
+                <td>{{ north.updatedAt | datetime: 'ff' }}</td>
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     <button

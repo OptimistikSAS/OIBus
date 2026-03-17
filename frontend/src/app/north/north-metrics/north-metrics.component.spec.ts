@@ -7,6 +7,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { NorthConnectorLightDTO } from '../../../../../backend/shared/model/north-connector.model';
 
 @Component({
   selector: 'oib-test-north-metrics-component',
@@ -15,7 +16,7 @@ import testData from '../../../../../backend/src/tests/utils/test-data';
 })
 class TestComponent {
   metrics = testData.north.metrics;
-  northConnector = testData.north.list[0];
+  northConnector = testData.north.list[0] as unknown as NorthConnectorLightDTO;
   manifest = testData.north.manifest;
 }
 

@@ -9,6 +9,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideModalTesting } from '../../shared/mock-modal.service.spec';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { ModalService } from '../../shared/modal.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -81,7 +82,7 @@ describe('CertificateListComponent', () => {
 
   describe('with certificate', () => {
     beforeEach(async () => {
-      certificateService.list.and.returnValue(of(certificates));
+      certificateService.list.and.returnValue(of(certificates as unknown as Array<CertificateDTO>));
       tester = new CertificateListComponentTester();
       await tester.change();
     });

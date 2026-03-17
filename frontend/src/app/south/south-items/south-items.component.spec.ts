@@ -14,13 +14,14 @@ import { NotificationService } from '../../shared/notification.service';
 import { SouthItemsComponent } from './south-items.component';
 import { Component } from '@angular/core';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { ImportSouthItemsModalComponent } from './import-south-items-modal/import-south-items-modal.component';
 import { OIBusBooleanAttribute, OIBusNumberAttribute, OIBusStringAttribute } from '../../../../../backend/shared/model/form.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-const testSouthConnector: SouthConnectorDTO = {
+const testSouthConnector = {
   id: 'southId',
   name: 'South Connector',
   items: [
@@ -31,7 +32,11 @@ const testSouthConnector: SouthConnectorDTO = {
       settings: {
         query: 'sql'
       } as SouthItemSettings,
-      scanMode: testData.scanMode.list[0]
+      scanMode: testData.scanMode.list[0] as unknown as ScanModeDTO,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     },
     {
       id: 'id2',
@@ -40,7 +45,11 @@ const testSouthConnector: SouthConnectorDTO = {
       settings: {
         query: 'sql'
       } as SouthItemSettings,
-      scanMode: testData.scanMode.list[0]
+      scanMode: testData.scanMode.list[0] as unknown as ScanModeDTO,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     },
     {
       id: 'id3',
@@ -49,10 +58,14 @@ const testSouthConnector: SouthConnectorDTO = {
       settings: {
         query: 'sql'
       } as SouthItemSettings,
-      scanMode: testData.scanMode.list[0]
+      scanMode: testData.scanMode.list[0] as unknown as ScanModeDTO,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
   ]
-} as SouthConnectorDTO;
+} as unknown as SouthConnectorDTO;
 
 @Component({
   selector: 'oib-test-south-items-component',
@@ -71,7 +84,7 @@ const testSouthConnector: SouthConnectorDTO = {
 class TestComponent {
   _southConnectorService!: SouthConnectorService;
   southConnector = structuredClone(testSouthConnector);
-  scanModes = testData.scanMode.list;
+  scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
   manifest = testData.south.manifest;
   saveChangesDirectly!: boolean;
   inMemoryItems: Array<SouthConnectorItemDTO> = [];
@@ -614,7 +627,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should open ImportSouthItemsModalComponent after successful check', () => {
-      const mockItems: Array<SouthConnectorItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -634,7 +647,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
       ];
       const mockErrors = [{ item: { id: 'new1', name: 'newItem1', enabled: 'true' }, error: 'Invalid query' }];
 
-      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: mockErrors }));
+      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: mockErrors } as any));
 
       modalService.open.and.returnValues(
         {
@@ -665,7 +678,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should call importItems service when import is confirmed', () => {
-      const mockItems: Array<SouthConnectorItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -684,7 +697,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
         }
       ];
 
-      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] } as any));
 
       modalService.open.and.returnValues(
         {
@@ -718,7 +731,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     it('should emit null inMemoryItems after successful import', () => {
       spyOn(tester.componentInstance, 'updateInMemoryItems');
 
-      const mockItems: Array<SouthConnectorItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -737,7 +750,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
         }
       ];
 
-      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] } as any));
 
       modalService.open.and.returnValues(
         {
@@ -763,7 +776,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should add items to allItems array instead of calling service', () => {
-      const mockItems: Array<SouthConnectorItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -782,7 +795,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
         }
       ];
 
-      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] } as any));
 
       modalService.open.and.returnValues(
         {
@@ -805,7 +818,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
     });
 
     it('should not call backend services in memory mode', () => {
-      const mockItems: Array<SouthConnectorItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -824,7 +837,7 @@ describe('SouthItemsComponent CSV Import Tests', () => {
         }
       ];
 
-      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+      southConnectorService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] } as any));
 
       modalService.open.and.returnValues(
         {
