@@ -77,7 +77,11 @@ const baseConfiguration: SouthConnectorEntity<SouthRestSettings, SouthRestItemSe
       useProxy: false
     }
   },
-  items: []
+  items: [],
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
 };
 
 const createConfiguration = () => structuredClone(baseConfiguration);
@@ -99,7 +103,11 @@ const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorI
     headers: [],
     trackingInstant: { trackInstant: false },
     ...overrides
-  }
+  },
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
 });
 
 const getRequestOptions = (index = 0): ReqOptions => httpRequestMock.mock.calls[index][1] as ReqOptions;

@@ -68,7 +68,11 @@ export default class HistoryQuery {
               id: 'history',
               name: 'history',
               description: '',
-              cron: ''
+              cron: '',
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
             },
             maxReadInterval: this.historyConfiguration.queryTimeRange.maxReadInterval,
             readDelay: this.historyConfiguration.queryTimeRange.readDelay,
@@ -179,7 +183,11 @@ export default class HistoryQuery {
       enabled: historyQueryConfiguration.status === 'RUNNING',
       type: historyQueryConfiguration.southType,
       settings: historyQueryConfiguration.southSettings,
-      items: []
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
     this.north.connectorConfiguration = {
       id: historyQueryConfiguration.id,
@@ -197,7 +205,11 @@ export default class HistoryQuery {
         south: undefined,
         group: undefined,
         items: element.items
-      }))
+      })),
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
   }
 

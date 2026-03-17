@@ -99,7 +99,11 @@ describe('SouthSQLite', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -122,7 +126,11 @@ describe('SouthSQLite', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -162,9 +170,17 @@ describe('SouthSQLite', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -358,7 +374,11 @@ describe('SouthSQLite test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -381,7 +401,11 @@ describe('SouthSQLite test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -421,9 +445,17 @@ describe('SouthSQLite test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {

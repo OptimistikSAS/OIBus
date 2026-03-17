@@ -95,7 +95,11 @@ describe('SouthOracle with authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -119,7 +123,11 @@ describe('SouthOracle with authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -160,9 +168,17 @@ describe('SouthOracle with authentication', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -430,7 +446,11 @@ describe('SouthOracle without authentication but with thick mode', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -454,7 +474,11 @@ describe('SouthOracle without authentication but with thick mode', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -495,9 +519,17 @@ describe('SouthOracle without authentication but with thick mode', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -593,7 +625,11 @@ describe('SouthOracle test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -617,7 +653,11 @@ describe('SouthOracle test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -658,9 +698,17 @@ describe('SouthOracle test connection', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0
+        overlap: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   // Error codes handled by the test function

@@ -69,7 +69,11 @@ describe('HistoryQuery enabled', () => {
           cron: '',
           description: '',
           id: 'history',
-          name: 'history'
+          name: 'history',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
         group: null,
         syncWithGroup: false,
@@ -117,7 +121,11 @@ describe('HistoryQuery enabled', () => {
           cron: '',
           description: '',
           id: 'history',
-          name: 'history'
+          name: 'history',
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
         group: null,
         syncWithGroup: false,

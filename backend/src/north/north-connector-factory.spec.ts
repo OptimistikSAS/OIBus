@@ -60,9 +60,13 @@ describe('North Connector Factory', () => {
     description: 'test-description',
     enabled: true,
     settings: {},
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: '',
     caching: {
       trigger: {
-        scanMode: { id: 'manual', name: 'Manual', description: '', cron: '' },
+        scanMode: { id: 'manual', name: 'Manual', description: '', cron: '', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
         numberOfElements: 100,
         numberOfFiles: 10
       },

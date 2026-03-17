@@ -86,7 +86,11 @@ describe('South ADS', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -100,9 +104,17 @@ describe('South ADS', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
