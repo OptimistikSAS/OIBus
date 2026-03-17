@@ -21,6 +21,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { TransformerService } from '../../../services/transformer.service';
 import { ModalService } from '../../../shared/modal.service';
+import { ConfirmationService } from '../../../shared/confirmation.service';
 import { TestTransformerModalComponent } from '../test-transformer-modal/test-transformer-modal.component';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 import { OibusOutputDataTypeEnumPipe } from '../../../shared/oibus-output-data-type-enum.pipe';
@@ -49,6 +50,7 @@ export class EditTransformerModalComponent implements OnInit {
   private modal = inject(NgbActiveModal);
   private transformerService = inject(TransformerService);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
   private fb = inject(NonNullableFormBuilder);
 
@@ -263,9 +265,15 @@ function transform(inputData, source, filename, options) {
     if (this.mode === 'create') {
       obs = this.transformerService.create(command);
     } else {
-      obs = this.transformerService
-        .update(this.customTransformer!.id, command)
-        .pipe(switchMap(() => this.transformerService.findById(this.customTransformer!.id)));
+      obs = this.confirmationService
+        .confirm({
+          messageKey: 'configuration.oibus.manifest.transformers.confirm-edit',
+          interpolateParams: { name: this.customTransformer!.name }
+        })
+        .pipe(
+          switchMap(() => this.transformerService.update(this.customTransformer!.id, command)),
+          switchMap(() => this.transformerService.findById(this.customTransformer!.id))
+        );
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(transformer => {
       this.modal.close(transformer);
