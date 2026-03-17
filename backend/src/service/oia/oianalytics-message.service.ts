@@ -1,4 +1,5 @@
 import { getOIBusInfo } from '../utils';
+import { EngineSettingsDTO } from '../../../shared/model/engine.model';
 import pino from 'pino';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
@@ -313,14 +314,14 @@ export default class OIAnalyticsMessageService {
           }
         };
         // Type assertion is safe because we know the southType and northType match the settings at runtime
-        return result as { oIBusInternalId: string; settings: HistoryQueryCommandDTO };
+        return result as unknown as { oIBusInternalId: string; settings: HistoryQueryCommandDTO };
       })
     };
   }
 
   private createEngineCommand(): OIAnalyticsEngineCommandDTO {
     const engine = this.engineRepository.get()!;
-    const info = getOIBusInfo(engine);
+    const info = getOIBusInfo(engine as unknown as EngineSettingsDTO);
     return {
       oIBusInternalId: engine.id,
       name: engine.name,
@@ -406,7 +407,11 @@ export default class OIAnalyticsMessageService {
         description: certificate.description,
         publicKey: certificate.publicKey,
         certificate: certificate.certificate,
-        expiry: certificate.expiry
+        expiry: certificate.expiry,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: certificate.createdAt,
+        updatedAt: certificate.updatedAt
       }
     }));
   }
@@ -504,7 +509,7 @@ export default class OIAnalyticsMessageService {
         }
       };
       // Type assertion is safe because we know the type field matches the settings at runtime
-      return result as OIAnalyticsNorthCommandDTO;
+      return result as unknown as OIAnalyticsNorthCommandDTO;
     });
   }
 

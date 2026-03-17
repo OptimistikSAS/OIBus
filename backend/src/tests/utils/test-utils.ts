@@ -728,6 +728,10 @@ export const buildNorthConfiguration = <T extends NorthSettings>(type: OIBusNort
   description: 'my north connector',
   enabled: true,
   settings,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: '',
   caching: {
     trigger: {
       scanMode: testData.scanMode.list[0],

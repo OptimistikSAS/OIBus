@@ -13,7 +13,7 @@ import {
   TransformerTestResponse
 } from '../../shared/model/transformer.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import { Page } from '../../shared/model/types';
+import { GetUserInfo, Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import pino from 'pino';
@@ -340,7 +340,7 @@ export const copyTransformerCommandToTransformerEntity = async (
   transformer.timeout = command.timeout;
 };
 
-export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
+export const toTransformerDTO = (transformer: Transformer, getUserInfo: GetUserInfo): TransformerDTO => {
   switch (transformer.type) {
     case 'standard':
       return {
@@ -363,8 +363,8 @@ export const toTransformerDTO = (transformer: Transformer): TransformerDTO => {
         language: transformer.language,
         manifest: transformer.customManifest,
         timeout: transformer.timeout,
-        createdBy: transformer.createdBy,
-        updatedBy: transformer.updatedBy,
+        createdBy: transformer.createdBy ? getUserInfo(transformer.createdBy) : undefined,
+        updatedBy: transformer.updatedBy ? getUserInfo(transformer.updatedBy) : undefined,
         createdAt: transformer.createdAt,
         updatedAt: transformer.updatedAt
       };

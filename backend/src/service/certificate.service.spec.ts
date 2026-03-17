@@ -40,7 +40,7 @@ describe('Certificate Service', () => {
     const result = service.list();
 
     expect(certificateRepository.list).toHaveBeenCalled();
-    expect(result).toEqual(testData.certificates.list.map(element => toCertificateDTO(element)));
+    expect(result).toEqual(testData.certificates.list);
   });
 
   it('should find a certificate by id', () => {
@@ -49,7 +49,7 @@ describe('Certificate Service', () => {
     const result = service.findById(testData.certificates.list[0].id);
 
     expect(certificateRepository.findById).toHaveBeenCalledWith(testData.certificates.list[0].id);
-    expect(result).toEqual(toCertificateDTO(testData.certificates.list[0]));
+    expect(result).toEqual(testData.certificates.list[0]);
   });
 
   it('should not get if the certificate is not found', async () => {
@@ -87,9 +87,11 @@ describe('Certificate Service', () => {
         .plus(Duration.fromObject({ days: testData.certificates.command.options!.daysBeforeExpiry }))
         .toISO()!,
       createdBy: 'userTest',
-      updatedBy: 'userTest'
+      updatedBy: 'userTest',
+      createdAt: '',
+      updatedAt: ''
     });
-    expect(result).toEqual(toCertificateDTO(testData.certificates.list[0]));
+    expect(result).toEqual(testData.certificates.list[0]);
   });
 
   it('should update a certificate', async () => {
@@ -117,7 +119,10 @@ describe('Certificate Service', () => {
         .startOf('day')
         .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
         .toISO()!,
-      updatedBy: 'userTest'
+      createdBy: '',
+      updatedBy: 'userTest',
+      createdAt: '',
+      updatedAt: ''
     });
   });
 
@@ -146,14 +151,18 @@ describe('Certificate Service', () => {
 
   it('should properly convert to DTO', () => {
     const certificate = testData.certificates.list[0];
-    expect(toCertificateDTO(certificate)).toEqual({
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    expect(toCertificateDTO(certificate, getUserInfo)).toEqual({
       id: certificate.id,
       name: certificate.name,
       description: certificate.description,
       publicKey: certificate.publicKey,
-      privateKey: certificate.privateKey,
       certificate: certificate.certificate,
-      expiry: certificate.expiry
+      expiry: certificate.expiry,
+      createdBy: getUserInfo(certificate.createdBy),
+      updatedBy: getUserInfo(certificate.updatedBy),
+      createdAt: certificate.createdAt,
+      updatedAt: certificate.updatedAt
     });
   });
 });
