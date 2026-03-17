@@ -112,7 +112,11 @@ describe('South Modbus', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
@@ -131,7 +135,11 @@ describe('South Modbus', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
@@ -150,7 +158,11 @@ describe('South Modbus', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id4',
@@ -165,7 +177,11 @@ describe('South Modbus', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id5',
@@ -180,7 +196,11 @@ describe('South Modbus', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id6',
@@ -200,9 +220,17 @@ describe('South Modbus', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       }
-    ]
+    ],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
   };
   const mockedEmitter = new CustomStream();
 
@@ -411,7 +439,11 @@ describe('South Modbus', () => {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      overlap: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
     await expect(south.modbusFunction(mockedClient, item)).rejects.toThrow(
       `Wrong Modbus type "${item.settings.modbusType}" for point "${item.name}"`
