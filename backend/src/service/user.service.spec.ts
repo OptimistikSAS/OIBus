@@ -186,7 +186,54 @@ describe('User Service', () => {
       email: user.email,
       language: user.language,
       timezone: user.timezone,
-      friendlyName: `${user.firstName} ${user.lastName}`
+      friendlyName: 'Admin',
+      createdBy: user.createdBy,
+      updatedBy: user.updatedBy,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
     });
+  });
+
+  it('should properly convert non-admin user to DTO with firstName and lastName', () => {
+    const user = testData.users.list[1];
+    expect(toUserDTO(user)).toEqual({
+      id: user.id,
+      login: user.login,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      language: user.language,
+      timezone: user.timezone,
+      friendlyName: `${user.firstName} ${user.lastName} (${user.login})`,
+      createdBy: user.createdBy,
+      updatedBy: user.updatedBy,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    });
+  });
+
+  it('should return OIAnalytics info for "oianalytics" userId', () => {
+    expect(service.getUserInfo('oianalytics')).toEqual({ id: 'oianalytics', friendlyName: 'OIAnalytics' });
+  });
+
+  it('should return id as friendlyName when user is not found', () => {
+    (userRepository.findById as jest.Mock).mockReturnValueOnce(null);
+    expect(service.getUserInfo('unknown-id')).toEqual({ id: 'unknown-id', friendlyName: 'unknown-id' });
+  });
+
+  it('should return formatted friendlyName when user is found', () => {
+    (userRepository.findById as jest.Mock).mockReturnValueOnce(testData.users.list[1]);
+    const result = service.getUserInfo(testData.users.list[1].id);
+    expect(result).toEqual({
+      id: testData.users.list[1].id,
+      friendlyName: `${testData.users.list[1].firstName} ${testData.users.list[1].lastName} (${testData.users.list[1].login})`
+    });
+  });
+
+  it('should use login as name when user has no firstName or lastName', () => {
+    const userNoName = { ...testData.users.list[1], login: 'noname', firstName: null, lastName: null };
+    (userRepository.findById as jest.Mock).mockReturnValueOnce(userNoName);
+    const result = service.getUserInfo('some-id');
+    expect(result).toEqual({ id: 'some-id', friendlyName: 'noname (noname)' });
   });
 });

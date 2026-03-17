@@ -181,7 +181,11 @@ describe('OIAnalytics Registration Service', () => {
         searchHistoryCacheContent: true,
         getHistoryCacheFileContent: true,
         updateHistoryCacheContent: true
-      }
+      },
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
     const result = {
       redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
@@ -394,7 +398,11 @@ describe('OIAnalytics Registration Service', () => {
       commandRefreshInterval: registration.commandRefreshInterval,
       commandRetryInterval: registration.commandRetryInterval,
       messageRetryInterval: registration.messageRetryInterval,
-      commandPermissions: registration.commandPermissions
+      commandPermissions: registration.commandPermissions,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: registration.createdAt,
+      updatedAt: registration.updatedAt
     });
   });
 });

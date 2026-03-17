@@ -15,15 +15,25 @@ jest.mock('./encryption.service', () => ({
 }));
 const logger: pino.Logger = new PinoLogger();
 
+const scanMode = {
+  id: 'subscription',
+  name: 'subscription',
+  description: '',
+  cron: '',
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: ''
+};
+const auditFields = { createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' };
 const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
     enabled: true,
-    settings: {
-      topic: 'my/first/topic'
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'my/first/topic' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -34,10 +44,9 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     id: 'id2',
     name: 'item2',
     enabled: true,
-    settings: {
-      topic: 'my/+/+/topic/with/wildcard/#'
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'my/+/+/topic/with/wildcard/#' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -48,10 +57,9 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     id: 'id3',
     name: 'item3',
     enabled: true,
-    settings: {
-      topic: 'my/wrong/topic////'
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'my/wrong/topic////' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -62,10 +70,9 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     id: 'id4',
     name: 'item4',
     enabled: true,
-    settings: {
-      topic: 'json/topic'
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'json/topic' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -76,10 +83,9 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     id: 'id5',
     name: 'item5',
     enabled: true,
-    settings: {
-      topic: 'json/topic'
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'json/topic' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -90,10 +96,9 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     id: 'id6',
     name: 'item6',
     enabled: true,
-    settings: {
-      topic: 'json/topic'
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'json/topic' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -104,11 +109,10 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
   {
     id: 'id7',
     name: 'item7',
-    enabled: false, // Disabled item
-    settings: {
-      topic: 'disabled/topic'
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    enabled: false,
+    settings: { topic: 'disabled/topic' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -119,10 +123,9 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     id: 'id8',
     name: 'item8',
     enabled: true,
-    settings: {
-      topic: 'my/second/topic' // Duplicate topic with id1
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'my/second/topic' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -133,10 +136,9 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     id: 'id9',
     name: 'item9',
     enabled: true,
-    settings: {
-      topic: 'my/second/topic' // Duplicate topic with id1
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'my/second/topic' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,
@@ -147,10 +149,9 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     id: 'id10',
     name: 'item10',
     enabled: true,
-    settings: {
-      topic: 'simple/+' // Simple wildcard
-    },
-    scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
+    settings: { topic: 'simple/+' },
+    scanMode,
+    ...auditFields,
     group: null,
     syncWithGroup: false,
     maxReadInterval: null,

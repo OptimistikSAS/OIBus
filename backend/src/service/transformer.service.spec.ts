@@ -121,7 +121,7 @@ describe('Transformer Service', () => {
   });
 
   it('should update a transformer', async () => {
-    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(JSON.parse(JSON.stringify(testData.transformers.list[0])));
     (transformerRepository.list as jest.Mock).mockReturnValueOnce(testData.transformers.list);
 
     await service.update(testData.transformers.list[0].id, testData.transformers.command, 'userTest');
@@ -132,14 +132,17 @@ describe('Transformer Service', () => {
       ...testData.transformers.command,
       id: testData.transformers.list[0].id,
       type: 'custom',
-      updatedBy: 'userTest'
+      createdBy: (testData.transformers.list[0] as CustomTransformer).createdBy,
+      updatedBy: 'userTest',
+      createdAt: (testData.transformers.list[0] as CustomTransformer).createdAt,
+      updatedAt: (testData.transformers.list[0] as CustomTransformer).updatedAt
     });
   });
 
   it('should update a transformer without changing the name', async () => {
     const command = JSON.parse(JSON.stringify(testData.transformers.command));
     command.name = (testData.transformers.list[0] as CustomTransformer).name;
-    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(JSON.parse(JSON.stringify(testData.transformers.list[0])));
     (transformerRepository.list as jest.Mock).mockClear();
 
     await service.update(testData.transformers.list[0].id, command, 'userTest');
@@ -148,7 +151,10 @@ describe('Transformer Service', () => {
       ...command,
       id: testData.transformers.list[0].id,
       type: 'custom',
-      updatedBy: 'userTest'
+      createdBy: (testData.transformers.list[0] as CustomTransformer).createdBy,
+      updatedBy: 'userTest',
+      createdAt: (testData.transformers.list[0] as CustomTransformer).createdAt,
+      updatedAt: (testData.transformers.list[0] as CustomTransformer).updatedAt
     });
     expect(transformerRepository.list).not.toHaveBeenCalled();
   });
@@ -156,7 +162,7 @@ describe('Transformer Service', () => {
   it('should update a transformer with a new unique name', async () => {
     const command = JSON.parse(JSON.stringify(testData.transformers.command));
     command.name = 'Updated Transformer Name';
-    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(testData.transformers.list[0]);
+    (transformerRepository.findById as jest.Mock).mockReturnValueOnce(JSON.parse(JSON.stringify(testData.transformers.list[0])));
     (transformerRepository.list as jest.Mock).mockReturnValueOnce(testData.transformers.list);
 
     await service.update(testData.transformers.list[0].id, command, 'userTest');
@@ -165,7 +171,10 @@ describe('Transformer Service', () => {
       ...command,
       id: testData.transformers.list[0].id,
       type: 'custom',
-      updatedBy: 'userTest'
+      createdBy: (testData.transformers.list[0] as CustomTransformer).createdBy,
+      updatedBy: 'userTest',
+      createdAt: (testData.transformers.list[0] as CustomTransformer).createdAt,
+      updatedAt: (testData.transformers.list[0] as CustomTransformer).updatedAt
     });
   });
 
@@ -465,7 +474,11 @@ describe('Transformer Service', () => {
             visible: true,
             wrapInBox: false
           }
-        }
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (transformerRepository.findById as jest.Mock).mockReturnValueOnce(customTransformer);
@@ -513,7 +526,11 @@ describe('Transformer Service', () => {
             visible: true,
             wrapInBox: false
           }
-        }
+        },
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (transformerRepository.findById as jest.Mock).mockReturnValueOnce(customTransformer);
@@ -651,9 +668,24 @@ describe('Transformer Service', () => {
     expect(() => getStandardManifest('bad-id')).toThrow(`Could not find manifest for "bad-id" transformer`);
   });
 
+  it('should properly convert to DTO with empty createdBy/updatedBy', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const customTransformerNoAudit = { ...(testData.transformers.list[0] as CustomTransformer), createdBy: '', updatedBy: '' };
+    const result = toTransformerDTO(customTransformerNoAudit, getUserInfo);
+    expect(result).toMatchObject({ createdBy: undefined, updatedBy: undefined });
+  });
+
+  it('should properly convert to DTO with non-empty createdBy/updatedBy', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const customTransformerWithAudit = { ...(testData.transformers.list[0] as CustomTransformer), createdBy: 'user1', updatedBy: 'user2' };
+    const result = toTransformerDTO(customTransformerWithAudit, getUserInfo);
+    expect(result).toMatchObject({ createdBy: { id: 'user1', friendlyName: 'user1' }, updatedBy: { id: 'user2', friendlyName: 'user2' } });
+  });
+
   it('should properly convert to DTO', () => {
     const customTransformer = testData.transformers.list[0] as CustomTransformer;
-    expect(toTransformerDTO(testData.transformers.list[0])).toEqual({
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    expect(toTransformerDTO(testData.transformers.list[0], getUserInfo)).toEqual({
       id: customTransformer.id,
       type: customTransformer.type,
       name: customTransformer.name,
@@ -664,8 +696,8 @@ describe('Transformer Service', () => {
       customCode: customTransformer.customCode,
       timeout: customTransformer.timeout,
       manifest: customTransformer.customManifest,
-      createdBy: customTransformer.createdBy,
-      updatedBy: customTransformer.updatedBy,
+      createdBy: customTransformer.createdBy ? getUserInfo(customTransformer.createdBy) : undefined,
+      updatedBy: customTransformer.updatedBy ? getUserInfo(customTransformer.updatedBy) : undefined,
       createdAt: customTransformer.createdAt,
       updatedAt: customTransformer.updatedAt
     });
@@ -676,7 +708,7 @@ describe('Transformer Service', () => {
       type: 'standard',
       functionName: 'iso'
     };
-    expect(toTransformerDTO(standardTransformer)).toEqual({
+    expect(toTransformerDTO(standardTransformer, getUserInfo)).toEqual({
       id: standardTransformer.id,
       type: standardTransformer.type,
       inputType: standardTransformer.inputType,
