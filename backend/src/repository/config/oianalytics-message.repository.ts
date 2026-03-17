@@ -93,7 +93,7 @@ export default class OIAnalyticsMessageRepository {
     return result ? this.toMessage(result as Record<string, string>) : null;
   }
 
-  create(message: Omit<OIAnalyticsMessage, 'id' | 'status' | 'completedDate' | 'error'>): OIAnalyticsMessage {
+  create(message: Pick<OIAnalyticsMessage, 'type'>): OIAnalyticsMessage {
     // id, type, status
     const queryParams = [generateRandomId(), message.type, 'PENDING'];
     let insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE} `;
@@ -133,6 +133,10 @@ export default class OIAnalyticsMessageRepository {
       case 'full-config':
         return {
           id: message.id,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'full-config',
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,
@@ -141,6 +145,10 @@ export default class OIAnalyticsMessageRepository {
       case 'history-queries':
         return {
           id: message.id,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           type: 'history-queries',
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,

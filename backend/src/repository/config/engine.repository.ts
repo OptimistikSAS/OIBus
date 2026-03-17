@@ -1,6 +1,7 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { EngineSettings } from '../../model/engine.model';
+import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { version } from '../../../package.json';
 import { LogLevel } from '../../../shared/model/logs.model';
 
@@ -11,6 +12,10 @@ const DEFAULT_ENGINE_SETTINGS: Omit<EngineSettings, 'id' | 'version' | 'launcher
   port: 2223,
   proxyEnabled: false,
   proxyPort: 9000,
+  createdBy: '',
+  updatedBy: '',
+  createdAt: '',
+  updatedAt: '',
   logParameters: {
     console: {
       level: 'silent'
@@ -65,7 +70,7 @@ export default class EngineRepository {
     }
   }
 
-  update(command: Omit<EngineSettings, 'id' | 'version' | 'launcherVersion'>): void {
+  update(command: EngineSettingsCommandDTO): void {
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, proxy_enabled = ?, proxy_port = ?, ` +
       'log_console_level = ?, ' +
@@ -157,6 +162,10 @@ export default class EngineRepository {
       launcherVersion: result.oibus_launcher_version as string,
       proxyEnabled: Boolean(result.proxy_enabled),
       proxyPort: result.proxy_port as number,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
       logParameters: {
         console: {
           level: result.log_console_level as LogLevel

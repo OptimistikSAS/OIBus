@@ -4,7 +4,7 @@ import { Database } from 'better-sqlite3';
 import { generateRandomId } from '../../service/utils';
 import { Language, Page } from '../../../shared/model/types';
 import { User } from '../../model/user.model';
-import { UserSearchParam } from '../../../shared/model/user.model';
+import { UserCommandDTO, UserSearchParam } from '../../../shared/model/user.model';
 
 const USERS_TABLE = 'users';
 const PAGE_SIZE = 50;
@@ -15,7 +15,11 @@ const DEFAULT_USER: Omit<User, 'id'> = {
   lastName: null,
   email: null,
   language: 'en',
-  timezone: 'Europe/Paris'
+  timezone: 'Europe/Paris',
+  createdBy: { id: '', friendlyName: '' },
+  updatedBy: { id: '', friendlyName: '' },
+  createdAt: '',
+  updatedAt: ''
 };
 const DEFAULT_PASSWORD = 'pass';
 
@@ -84,7 +88,7 @@ export default class UserRepository {
     return result.password;
   }
 
-  async create(command: Omit<User, 'id'>, password: string): Promise<User> {
+  async create(command: UserCommandDTO, password: string): Promise<User> {
     const id = generateRandomId(6);
     const insertQuery =
       `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone) ` +
@@ -106,7 +110,7 @@ export default class UserRepository {
     this.database.prepare(queryUpdate).run(hash, id);
   }
 
-  update(id: string, command: Omit<User, 'id'>): void {
+  update(id: string, command: UserCommandDTO): void {
     const queryUpdate = `UPDATE ${USERS_TABLE} SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;`;
     this.database
       .prepare(queryUpdate)
@@ -133,6 +137,10 @@ export default class UserRepository {
   private toUser(result: Record<string, string>): User {
     return {
       id: result.id,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: '',
       login: result.login,
       firstName: result.first_name || null,
       lastName: result.last_name || null,

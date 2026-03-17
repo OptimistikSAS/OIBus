@@ -47,7 +47,7 @@ export default class SouthConnectorRepository {
     const transaction = this.database.transaction(() => {
       if (!south.id) {
         south.id = generateRandomId(6);
-        const insertQuery = `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        const insertQuery = `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, settings, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
         this.database
           .prepare(insertQuery)
           .run(
@@ -61,7 +61,7 @@ export default class SouthConnectorRepository {
             south.updatedBy
           );
       } else {
-        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
+        const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
         this.database
           .prepare(query)
           .run(south.name, south.description, +south.enabled, JSON.stringify(south.settings), south.updatedBy, south.id);
@@ -95,10 +95,10 @@ export default class SouthConnectorRepository {
             south.items.filter(item => item.id).map(item => item.id)
           );
         const insert = this.database.prepare(
-          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+          `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`
         );
         const update = this.database.prepare(
-          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`
+          `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
         );
         const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);
         const deleteGroups = this.database.prepare(`DELETE FROM group_items WHERE item_id = ?;`);
@@ -267,8 +267,8 @@ export default class SouthConnectorRepository {
     if (!southItem.id) {
       southItem.id = generateRandomId(6);
       const insertQuery =
-        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by) ` +
-        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap, created_by, updated_by, created_at, updated_at) ` +
+        `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
       this.database
         .prepare(insertQuery)
         .run(
@@ -286,7 +286,7 @@ export default class SouthConnectorRepository {
           southItem.updatedBy
         );
     } else {
-      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
+      const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
@@ -413,8 +413,8 @@ export default class SouthConnectorRepository {
         result.max_read_interval !== null && result.max_read_interval !== undefined ? Number(result.max_read_interval) : null,
       readDelay: result.read_delay !== null && result.read_delay !== undefined ? Number(result.read_delay) : null,
       overlap: result.overlap !== null && result.overlap !== undefined ? Number(result.overlap) : null,
-      createdBy: result.created_by ?? undefined,
-      updatedBy: result.updated_by ?? undefined,
+      createdBy: result.created_by ?? '',
+      updatedBy: result.updated_by ?? '',
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };
@@ -429,8 +429,8 @@ export default class SouthConnectorRepository {
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as SouthSettings,
       items: this.findAllItemsForSouth(result.id as string),
-      createdBy: (result.created_by as string) ?? undefined,
-      updatedBy: (result.updated_by as string) ?? undefined,
+      createdBy: (result.created_by as string) ?? '',
+      updatedBy: (result.updated_by as string) ?? '',
       createdAt: result.created_at as string,
       updatedAt: result.updated_at as string
     };
@@ -444,8 +444,8 @@ export const toSouthConnectorLight = (result: Record<string, string>): SouthConn
     type: result.type as OIBusSouthType,
     description: result.description,
     enabled: Boolean(result.enabled),
-    createdBy: result.created_by ?? undefined,
-    updatedBy: result.updated_by ?? undefined,
+    createdBy: result.created_by ?? '',
+    updatedBy: result.updated_by ?? '',
     createdAt: result.created_at,
     updatedAt: result.updated_at
   };
