@@ -8,6 +8,7 @@ import { SouthConnectorService } from '../../../services/south-connector.service
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthConnectorMetrics } from '../../../../../../backend/shared/model/engine.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
 
 @Component({
   selector: 'oib-test-south-metrics-component',
@@ -16,7 +17,7 @@ import testData from '../../../../../../backend/src/tests/utils/test-data';
 })
 class TestComponent {
   metrics: SouthConnectorMetrics = testData.south.metrics;
-  southConnector = testData.south.list[0];
+  southConnector = testData.south.list[0] as unknown as SouthConnectorLightDTO;
   manifest = testData.south.manifest;
 }
 

@@ -17,28 +17,23 @@ const FRIENDLY_FORMATS = {
 type FriendlyFormat = keyof typeof FRIENDLY_FORMATS;
 
 export function formatDateTime(
-  value: string | Date | number | DateTime | undefined | null,
+  value: string | Date | number | DateTime,
   locale: string,
   timezone: Timezone,
   format: FriendlyFormat | string = 'mediumDate'
 ): string | null {
-  if (value == null || value === '' || value !== value) {
+  if (typeof value === 'string' && !value) {
     return null;
   }
-
   let dateTime: DateTime;
   if (value instanceof Date) {
     dateTime = DateTime.fromJSDate(value);
   } else if (value instanceof DateTime) {
     dateTime = value as DateTime;
   } else if (typeof value === 'number') {
-    dateTime = DateTime.fromMillis(value as number);
+    dateTime = DateTime.fromMillis(value);
   } else {
-    dateTime = DateTime.fromISO(value as string);
-    if (!dateTime.isValid) {
-      // Fallback for SQLite's CURRENT_TIMESTAMP format: "YYYY-MM-DD HH:MM:SS"
-      dateTime = DateTime.fromSQL(value as string);
-    }
+    dateTime = DateTime.fromISO(value);
   }
 
   if (!dateTime.isValid) {
@@ -77,11 +72,7 @@ export class DatetimePipe implements PipeTransform {
   private locale = inject(LOCALE_ID);
   private currentUserService = inject(CurrentUserService);
 
-  transform(
-    value: string | Date | number | DateTime | undefined | null,
-    format: FriendlyFormat | string = 'mediumDate',
-    timezone?: Timezone
-  ): string | null {
+  transform(value: string | Date | number | DateTime, format: FriendlyFormat | string = 'mediumDate', timezone?: Timezone): string | null {
     return formatDateTime(value, this.locale, timezone ?? this.currentUserService.getTimezone(), format);
   }
 }

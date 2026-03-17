@@ -7,6 +7,7 @@ import { OIBusScanModeAttribute } from '../../../../../../backend/shared/model/f
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusScanModeFormControlComponent } from './oibus-scan-mode-form-control.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 
 @Component({
   selector: 'oib-test-oibus-scan-mode-form-control-component',
@@ -27,7 +28,7 @@ class TestComponent {
     acceptableType: 'SUBSCRIPTION_AND_POLL'
   } as OIBusScanModeAttribute;
 
-  allScanModes = testData.scanMode.list;
+  allScanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
   formGroup = new FormGroup({
     testGroup: new FormGroup({
       testKey: new FormControl('')

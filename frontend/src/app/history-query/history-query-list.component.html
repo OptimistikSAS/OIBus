@@ -111,9 +111,9 @@
                   </div>
                 </td>
                 <td>{{ query.description }}</td>
-                <td>{{ query.createdBy }}</td>
-                <td>{{ query.createdAt | datetime }}</td>
-                <td>{{ query.updatedAt | datetime }}</td>
+                <td>{{ query.createdBy.friendlyName }}</td>
+                <td>{{ query.createdAt | datetime: 'ff' }}</td>
+                <td>{{ query.updatedAt | datetime: 'ff' }}</td>
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     @if (query.status === 'PENDING') {

@@ -136,7 +136,11 @@ describe('EditScanModeModalComponent', () => {
       id: 'id1',
       name: 'proxy1',
       description: 'My Proxy 1',
-      cron: '* * * * * *'
+      cron: '* * * * * *',
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     };
 
     beforeEach(async () => {

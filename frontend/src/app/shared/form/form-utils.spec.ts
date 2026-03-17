@@ -29,8 +29,26 @@ describe('FormUtils', () => {
     translateService = TestBed.inject(TranslateService);
 
     mockScanModes = [
-      { id: 'scanModeId1', name: 'Scan Mode 1', description: 'First scan mode', cron: '* * * * * *' },
-      { id: 'scanModeId2', name: 'Scan Mode 2', description: 'Second scan mode', cron: '0 * * * * *' }
+      {
+        id: 'scanModeId1',
+        name: 'Scan Mode 1',
+        description: 'First scan mode',
+        cron: '* * * * * *',
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      },
+      {
+        id: 'scanModeId2',
+        name: 'Scan Mode 2',
+        description: 'Second scan mode',
+        cron: '0 * * * * *',
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      }
     ];
   });
 

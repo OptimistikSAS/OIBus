@@ -36,7 +36,11 @@ class TestHostComponent {
       id: 'scan-mode-1',
       name: 'Scan Mode 1',
       description: 'Description',
-      cron: '* * * * *'
+      cron: '* * * * *',
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
   ];
 
@@ -47,7 +51,11 @@ class TestHostComponent {
       description: 'Description',
       publicKey: 'public',
       certificate: 'certificate',
-      expiry: '2024-01-01T00:00:00Z'
+      expiry: '2024-01-01T00:00:00Z',
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
   ];
 

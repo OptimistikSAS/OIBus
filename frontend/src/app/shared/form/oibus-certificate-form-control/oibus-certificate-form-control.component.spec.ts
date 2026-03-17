@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OIBusCertificateAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { OibusCertificateFormControlComponent } from './oibus-certificate-form-control.component';
 
 @Component({
@@ -26,7 +27,7 @@ class TestComponent {
     translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name'
   } as OIBusCertificateAttribute;
 
-  allCertificates = testData.certificates.list;
+  allCertificates = testData.certificates.list as unknown as Array<CertificateDTO>;
   formGroup = new FormGroup({
     testGroup: new FormGroup({
       testKey: new FormControl('')
