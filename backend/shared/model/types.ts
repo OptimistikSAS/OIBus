@@ -41,6 +41,30 @@ export const LANGUAGES = ['fr', 'en'] as const;
 export type Language = (typeof LANGUAGES)[number];
 
 /**
+ * Represents the user who performed an action, with a computed display name.
+ */
+export interface UserInfo {
+  /**
+   * The unique identifier of the user.
+   * @example "abc123"
+   */
+  id: string;
+
+  /**
+   * A human-readable display name for the user.
+   * "OIAnalytics" for the oianalytics system user, "Admin" for the admin login,
+   * or "Firstname Lastname (login)" for regular users.
+   * @example "John Doe (john.doe)"
+   */
+  friendlyName: string;
+}
+
+/**
+ * A function type that resolves a user ID to a UserInfo object.
+ */
+export type GetUserInfo = (userId: string) => UserInfo;
+
+/**
  * Base entity interface that includes common properties for all entities.
  */
 export interface BaseEntity {
@@ -51,28 +75,26 @@ export interface BaseEntity {
   id: string;
 
   /**
-   * The login of the user who created the entity.
-   * @example "admin"
+   * The user who created the entity.
    */
-  createdBy?: string;
+  createdBy: UserInfo;
 
   /**
-   * The login of the user who last updated the entity.
-   * @example "admin"
+   * The user who last updated the entity.
    */
-  updatedBy?: string;
+  updatedBy: UserInfo;
 
   /**
    * The date and time when the entity was created.
    * @example "2023-10-31T12:34:56.789Z"
    */
-  createdAt?: Instant;
+  createdAt: Instant;
 
   /**
    * The date and time when the entity was last updated.
    * @example "2023-10-31T13:45:00.123Z"
    */
-  updatedAt?: Instant;
+  updatedAt: Instant;
 }
 
 /**
