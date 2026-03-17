@@ -9,6 +9,7 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
+import { ItemLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
 
 class EditHistoryQueryTransformerModalComponentTester extends ComponentTester<EditHistoryQueryTransformerModalComponent> {
   constructor() {
@@ -228,7 +229,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' },
         { id: 'item3', name: 'Item 3' }
-      ];
+      ] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.totalSearchResults = 3;
 
       tester.componentInstance.selectAllResults();
@@ -241,11 +242,11 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
     it('should not add duplicate items when selecting all results', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
       tester.componentInstance.selectAllItems = false;
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.searchResults = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
-      ];
+      ] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.totalSearchResults = 2;
 
       tester.componentInstance.selectAllResults();
@@ -262,12 +263,12 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
       const items = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
-      ];
+      ] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], items);
       tester.componentInstance.selectedItems = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
-      ];
+      ] as unknown as Array<ItemLightDTO>;
 
       tester.componentInstance.removeAllItems();
 
@@ -278,8 +279,8 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
     it('should remove a single item', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
-      const item1 = { id: 'item1', name: 'Item 1' };
-      const item2 = { id: 'item2', name: 'Item 2' };
+      const item1 = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
+      const item2 = { id: 'item2', name: 'Item 2' } as unknown as ItemLightDTO;
       tester.componentInstance.selectedItems = [item1, item2];
 
       tester.componentInstance.removeItem(item1);
@@ -289,7 +290,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
     it('should toggle item selection', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
-      const item = { id: 'item1', name: 'Item 1' };
+      const item = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
       tester.componentInstance.itemSearchText = '';
       tester.componentInstance.searchResults = [item];
       tester.componentInstance.totalSearchResults = 1;
@@ -309,11 +310,11 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
     it('should check if item is selected', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
-      const item = { id: 'item1', name: 'Item 1' };
+      const item = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
       tester.componentInstance.selectedItems = [item];
 
       expect(tester.componentInstance.isItemSelected(item)).toBe(true);
-      expect(tester.componentInstance.isItemSelected({ id: 'item2', name: 'Item 2' })).toBe(false);
+      expect(tester.componentInstance.isItemSelected({ id: 'item2', name: 'Item 2' } as unknown as ItemLightDTO)).toBe(false);
     });
 
     it('should filter items based on search text', () => {
@@ -321,7 +322,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
         { id: 'item1', name: 'Random Item' },
         { id: 'item2', name: 'Another Random' },
         { id: 'item3', name: 'Different' }
-      ];
+      ] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], items);
       tester.componentInstance.selectedItems = [];
 
@@ -370,7 +371,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
         []
       );
       tester.componentInstance.selectAllItems = true;
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       await tester.change();
 
       await tester.save.click();
@@ -392,14 +393,14 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
           transformer,
           options: {},
           inputType: transformer.inputType,
-          items: [{ id: 'item1', name: 'Item 1' }]
+          items: [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>
         },
         [transformer],
         ['mqtt'],
         []
       );
       tester.componentInstance.selectAllItems = false;
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       await tester.change();
 
       await tester.save.click();

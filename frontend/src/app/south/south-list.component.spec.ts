@@ -8,6 +8,7 @@ import { SouthConnectorService } from '../services/south-connector.service';
 import { of } from 'rxjs';
 import { NotificationService } from '../shared/notification.service';
 import testData from '../../../../backend/src/tests/utils/test-data';
+import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 
 class SouthListComponentTester extends ComponentTester<SouthListComponent> {
   constructor() {
@@ -27,7 +28,7 @@ describe('SouthListComponent', () => {
   let tester: SouthListComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
-  const southConnectors = testData.south.list;
+  const southConnectors = testData.south.list as unknown as Array<SouthConnectorLightDTO>;
 
   beforeEach(async () => {
     southConnectorService = createMock(SouthConnectorService);

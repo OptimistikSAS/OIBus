@@ -302,7 +302,7 @@ describe('RegisterOibusModalComponent', () => {
           getNorthCacheFileContent: true,
           updateNorthCacheContent: true
         }
-      } as RegistrationSettingsDTO,
+      } as unknown as RegistrationSettingsDTO,
       'edit'
     );
     await tester.change();

@@ -62,7 +62,16 @@ class TestComponent {
     } as NorthConsoleSettings,
     caching: {
       trigger: {
-        scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },
+        scanMode: {
+          id: 'scanModeId1',
+          name: 'scan mode',
+          description: '',
+          cron: '* * * *',
+          createdBy: { id: '', friendlyName: '' },
+          updatedBy: { id: '', friendlyName: '' },
+          createdAt: '',
+          updatedAt: ''
+        } as any,
         numberOfElements: 1_000,
         numberOfFiles: 1
       },
@@ -82,7 +91,11 @@ class TestComponent {
       }
     },
     items: [],
-    northTransformers: []
+    northTransformers: [],
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' },
+    createdAt: '',
+    updatedAt: ''
   };
   historyMetrics: HistoryQueryMetrics = {
     metricsStart: '2020-01-01T00:00:00.000Z',

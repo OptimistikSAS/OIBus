@@ -76,7 +76,7 @@ describe('ExploreHistoryCacheComponent', () => {
     southSettings: {} as SouthSettings,
     items: [],
     northTransformers: []
-  } as HistoryQueryDTO;
+  } as unknown as HistoryQueryDTO;
   const cacheSearchResult: CacheSearchResult = {
     searchDate: testData.constants.dates.DATE_3,
     metrics: {

@@ -99,9 +99,9 @@
               </div>
             </td>
             <td>{{ certificate.expiry | datetime }}</td>
-            <td>{{ certificate.createdBy }}</td>
-            <td>{{ certificate.createdAt | datetime }}</td>
-            <td>{{ certificate.updatedAt | datetime }}</td>
+            <td>{{ certificate.createdBy.friendlyName }}</td>
+            <td>{{ certificate.createdAt | datetime: 'ff' }}</td>
+            <td>{{ certificate.updatedAt | datetime: 'ff' }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->

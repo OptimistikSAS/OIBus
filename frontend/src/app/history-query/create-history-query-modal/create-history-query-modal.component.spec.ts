@@ -157,14 +157,22 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'myNorthConnector1',
         description: 'a test north connector',
         enabled: true,
-        type: 'console'
+        type: 'console',
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
         name: 'myNorthConnector2',
         description: 'a test north connector',
         enabled: true,
-        type: 'console'
+        type: 'console',
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       }
     ];
     const southConnectors: Array<SouthConnectorLightDTO> = [
@@ -173,21 +181,33 @@ describe('CreateHistoryQueryModalComponent', () => {
         type: 'mssql',
         name: 'South Connector1 ',
         description: 'My first South connector description',
-        enabled: true
+        enabled: true,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id2',
         type: 'opcua',
         name: 'South Connector 2',
         description: 'My second South connector description',
-        enabled: true
+        enabled: true,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       },
       {
         id: 'id3',
         type: 'mqtt',
         name: 'South Connector 3',
         description: 'My third South connector description',
-        enabled: true
+        enabled: true,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       }
     ];
 

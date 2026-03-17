@@ -9,6 +9,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideModalTesting } from '../../shared/mock-modal.service.spec';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { ModalService } from '../../shared/modal.service';
 
 class IpFilterListComponentTester extends ComponentTester<IpFilterListComponent> {
@@ -81,7 +82,7 @@ describe('IpFilterListComponent', () => {
 
   describe('with ip filter', () => {
     beforeEach(async () => {
-      ipFilterService.list.and.returnValue(of(ipFilters));
+      ipFilterService.list.and.returnValue(of(ipFilters as unknown as Array<IPFilterDTO>));
       await tester.change();
     });
 

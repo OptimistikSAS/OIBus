@@ -9,6 +9,7 @@ import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-obje
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { of } from 'rxjs';
+import { ItemLightDTO, SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
 
 class EditNorthTransformerModalComponentTester extends ComponentTester<EditNorthTransformerModalComponent> {
   constructor() {
@@ -229,7 +230,7 @@ describe('EditNorthTransformerModalComponent', () => {
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' },
         { id: 'item3', name: 'Item 3' }
-      ];
+      ] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.totalSearchResults = 3;
 
       tester.componentInstance.selectAllResults();
@@ -242,11 +243,11 @@ describe('EditNorthTransformerModalComponent', () => {
     it('should not add duplicate items when selecting all results', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
       tester.componentInstance.selectionType = 'items';
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.searchResults = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
-      ];
+      ] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.totalSearchResults = 2;
 
       tester.componentInstance.selectAllResults();
@@ -260,13 +261,23 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should remove all selected items and refresh search results', () => {
-      const southConnector = { id: 'south1', name: 'South 1', type: 'opcua' as const, description: '', enabled: false };
+      const southConnector = {
+        id: 'south1',
+        name: 'South 1',
+        type: 'opcua' as const,
+        description: '',
+        enabled: false,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      } as SouthConnectorLightDTO;
       tester.componentInstance.prepareForCreation([southConnector], [], [], [], [transformer], []);
       tester.componentInstance.form.controls.source.setValue({ inputType: null, south: southConnector });
       tester.componentInstance.selectedItems = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
-      ];
+      ] as unknown as Array<ItemLightDTO>;
 
       const items: Array<any> = [
         { id: 'item1', name: 'Item 1' },
@@ -285,8 +296,8 @@ describe('EditNorthTransformerModalComponent', () => {
 
     it('should remove a single item', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      const item1 = { id: 'item1', name: 'Item 1' };
-      const item2 = { id: 'item2', name: 'Item 2' };
+      const item1 = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
+      const item2 = { id: 'item2', name: 'Item 2' } as unknown as ItemLightDTO;
       tester.componentInstance.selectedItems = [item1, item2];
 
       tester.componentInstance.removeItem(item1);
@@ -296,7 +307,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
     it('should toggle item selection', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      const item = { id: 'item1', name: 'Item 1' };
+      const item = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
       tester.componentInstance.itemSearchText = '';
       tester.componentInstance.searchResults = [item];
       tester.componentInstance.totalSearchResults = 1;
@@ -316,15 +327,25 @@ describe('EditNorthTransformerModalComponent', () => {
 
     it('should check if item is selected', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      const item = { id: 'item1', name: 'Item 1' };
+      const item = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
       tester.componentInstance.selectedItems = [item];
 
       expect(tester.componentInstance.isItemSelected(item)).toBe(true);
-      expect(tester.componentInstance.isItemSelected({ id: 'item2', name: 'Item 2' })).toBe(false);
+      expect(tester.componentInstance.isItemSelected({ id: 'item2', name: 'Item 2' } as unknown as ItemLightDTO)).toBe(false);
     });
 
     it('should filter items based on search text', () => {
-      const southConnector = { id: 'south1', name: 'South 1', type: 'opcua' as const, description: '', enabled: false };
+      const southConnector = {
+        id: 'south1',
+        name: 'South 1',
+        type: 'opcua' as const,
+        description: '',
+        enabled: false,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      } as SouthConnectorLightDTO;
       tester.componentInstance.prepareForCreation([southConnector], [], [], [], [transformer], []);
       tester.componentInstance.form.controls.source.setValue({ inputType: null, south: southConnector });
       tester.componentInstance.selectedItems = [];
@@ -383,7 +404,7 @@ describe('EditNorthTransformerModalComponent', () => {
         ['mqtt']
       );
       tester.componentInstance.selectionType = 'all';
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       await tester.change();
 
       await tester.save.click();
@@ -406,13 +427,13 @@ describe('EditNorthTransformerModalComponent', () => {
           options: {},
           inputType: transformer.inputType,
           south: undefined,
-          items: [{ id: 'item1', name: 'Item 1' }]
+          items: [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>
         },
         [transformer],
         ['mqtt']
       );
       tester.componentInstance.selectionType = 'items';
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       await tester.change();
 
       await tester.save.click();
