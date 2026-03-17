@@ -21,6 +21,27 @@
 				"example": "Europe/Paris",
 				"description": "Represents a timezone as an IANA timezone string."
 			},
+			"UserInfo": {
+				"description": "Represents the user who performed an action, with a computed display name.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the user.",
+						"example": "abc123"
+					},
+					"friendlyName": {
+						"type": "string",
+						"description": "A human-readable display name for the user.\n\"OIAnalytics\" for the oianalytics system user, \"Admin\" for the admin login,\nor \"Firstname Lastname (login)\" for regular users.",
+						"example": "John Doe (john.doe)"
+					}
+				},
+				"required": [
+					"id",
+					"friendlyName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Instant": {
 				"type": "string",
 				"example": "2023-10-31T12:34:56.789Z",
@@ -35,14 +56,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -95,6 +114,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"login",
 					"firstName",
 					"lastName",
@@ -1136,14 +1159,12 @@
 						"description": "The manifest describing the transformer's input/output structure and attributes."
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the transformer.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the transformer. Only present for custom transformers."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the transformer.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the transformer. Only present for custom transformers."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -1228,14 +1249,12 @@
 						"description": "The manifest describing the transformer's input/output structure and attributes."
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the transformer.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the transformer. Only present for custom transformers."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the transformer.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the transformer. Only present for custom transformers."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -1592,14 +1611,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -1634,6 +1651,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -1758,14 +1779,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -1795,6 +1814,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"description",
 					"cron"
@@ -1870,14 +1893,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -1945,6 +1966,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -1966,14 +1991,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -2023,6 +2046,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -2095,14 +2122,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -2170,6 +2195,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -2191,14 +2220,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -2248,6 +2275,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -2348,14 +2379,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -2423,6 +2452,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -2444,14 +2477,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -2501,6 +2532,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -2649,14 +2684,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -2724,6 +2757,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -2745,14 +2782,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -2802,6 +2837,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -2923,14 +2962,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -2998,6 +3035,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -3019,14 +3060,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -3076,6 +3115,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -3267,14 +3310,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -3342,6 +3383,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -3363,14 +3408,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -3420,6 +3463,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -3594,14 +3641,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -3669,6 +3714,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -3690,14 +3739,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -3747,6 +3794,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -3917,14 +3968,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -3992,6 +4041,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -4013,14 +4066,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -4070,6 +4121,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -4269,14 +4324,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -4344,6 +4397,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -4365,14 +4422,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -4422,6 +4477,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -4590,14 +4649,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -4665,6 +4722,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -4686,14 +4747,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -4743,6 +4802,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -4858,14 +4921,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -4933,6 +4994,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -4954,14 +5019,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -5011,6 +5074,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -5207,14 +5274,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -5282,6 +5347,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -5303,14 +5372,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -5360,6 +5427,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -5541,14 +5612,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -5616,6 +5685,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -5637,14 +5710,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -5694,6 +5765,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -5754,14 +5829,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -5829,6 +5902,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -5850,14 +5927,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -5907,6 +5982,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -6086,14 +6165,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -6161,6 +6238,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -6182,14 +6263,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -6239,6 +6318,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -6698,14 +6781,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -6773,6 +6854,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -6794,14 +6879,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -6851,6 +6934,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -6958,14 +7045,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -7033,6 +7118,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -7054,14 +7143,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -7111,6 +7198,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -7255,14 +7346,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -7330,6 +7419,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings",
@@ -7351,14 +7444,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -7408,6 +7499,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -10850,14 +10945,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -11160,6 +11253,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"host",
 					"activationCode",
 					"status",
@@ -13415,14 +13512,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -13442,6 +13537,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name"
 				],
 				"type": "object",
@@ -19632,14 +19731,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -19674,6 +19771,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -19771,14 +19872,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -19946,6 +20045,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -19965,14 +20068,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -20140,6 +20241,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -20159,14 +20264,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -20334,6 +20437,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -20353,14 +20460,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -20528,6 +20633,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -20547,14 +20656,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -20722,6 +20829,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -20741,14 +20852,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -20916,6 +21025,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -20935,14 +21048,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -21110,6 +21221,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -21129,14 +21244,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -21304,6 +21417,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -21323,14 +21440,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -21498,6 +21613,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -21517,14 +21636,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -21692,6 +21809,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"type",
 					"description",
@@ -22109,14 +22230,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22141,6 +22260,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"address",
 					"description"
 				],
@@ -22156,14 +22279,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22213,6 +22334,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"description",
 					"status",
@@ -22233,14 +22358,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22254,7 +22377,11 @@
 					}
 				},
 				"required": [
-					"id"
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -22504,14 +22631,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22535,6 +22660,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -22577,14 +22706,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22608,6 +22735,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -22650,14 +22781,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22681,6 +22810,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -22723,14 +22856,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22754,6 +22885,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -22796,14 +22931,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22827,6 +22960,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -22869,14 +23006,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22900,6 +23035,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -22942,14 +23081,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -22973,6 +23110,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23015,14 +23156,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23046,6 +23185,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23088,14 +23231,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23119,6 +23260,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23161,14 +23306,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23192,6 +23335,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23234,14 +23381,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23265,6 +23410,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23307,14 +23456,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23338,6 +23485,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23380,14 +23531,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23411,6 +23560,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23453,14 +23606,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23484,6 +23635,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23526,14 +23681,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23557,6 +23710,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23599,14 +23756,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23630,6 +23785,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23672,14 +23831,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23703,6 +23860,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -23745,14 +23906,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -23776,6 +23935,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"enabled",
 					"settings"
@@ -24319,14 +24482,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -24505,6 +24666,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"port",
 					"version",
@@ -24623,14 +24788,12 @@
 						"example": "entity123"
 					},
 					"createdBy": {
-						"type": "string",
-						"description": "The login of the user who created the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
 					},
 					"updatedBy": {
-						"type": "string",
-						"description": "The login of the user who last updated the entity.",
-						"example": "admin"
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
 					},
 					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
@@ -24669,6 +24832,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"description",
 					"publicKey",

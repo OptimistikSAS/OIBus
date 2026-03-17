@@ -10,17 +10,22 @@ import testData from '../../tests/utils/test-data';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import { createPageFromArray } from '../../../shared/model/types';
 import { OIBusDataType } from '../../../shared/model/engine.model';
+import UserService from 'src/service/user.service';
 
 // Mock the services
 jest.mock('../../service/transformer.service', () => ({
-  toTransformerDTO: jest.fn().mockImplementation(transformer => transformer)
+  toTransformerDTO: jest.fn().mockImplementation((transformer, getUserInfo) => {
+    getUserInfo('');
+    return transformer;
+  })
 }));
 
 describe('TransformerController', () => {
   let controller: TransformerController;
   const mockRequest: Partial<CustomExpressRequest> = {
     services: {
-      transformerService: new TransformerServiceMock()
+      transformerService: new TransformerServiceMock(),
+      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
     },
     user: {
       id: 'test',

@@ -9,6 +9,7 @@ import { OIBusTestingError } from '../../model/types';
 import { SouthSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import fs from 'node:fs/promises';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import UserService from 'src/service/user.service';
 
 interface HistorySouthItemTestRequest {
   southSettings: SouthSettings;
@@ -24,9 +25,18 @@ interface HistorySouthItemTestRequest {
 jest.mock('node:fs/promises');
 // Mock the services
 jest.mock('../../service/history-query.service', () => ({
-  toHistoryQueryDTO: jest.fn().mockImplementation(query => query),
-  toHistoryQueryLightDTO: jest.fn().mockImplementation(query => query),
-  toHistoryQueryItemDTO: jest.fn().mockImplementation(item => item)
+  toHistoryQueryDTO: jest.fn().mockImplementation((query, getUserInfo) => {
+    getUserInfo('');
+    return query;
+  }),
+  toHistoryQueryLightDTO: jest.fn().mockImplementation((query, getUserInfo) => {
+    getUserInfo('');
+    return query;
+  }),
+  toHistoryQueryItemDTO: jest.fn().mockImplementation((item, southType, getUserInfo) => {
+    getUserInfo('');
+    return item;
+  })
 }));
 
 jest.mock('../../service/utils', () => ({
@@ -43,7 +53,8 @@ describe('HistoryQueryController', () => {
           .fn()
           .mockReturnValue([{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }])
       },
-      oIBusService: new OibusServiceMock()
+      oIBusService: new OibusServiceMock(),
+      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
     },
     user: {
       id: 'test',
