@@ -774,7 +774,7 @@ describe('South Service', () => {
       testData.south.list[0].type,
       'file content',
       ',',
-      testData.south.list[0].items.map(item => ({ ...item, group: null })) as Array<SouthConnectorItemDTO>
+      testData.south.list[0].items.map(item => ({ ...item, group: null })) as unknown as Array<SouthConnectorItemDTO>
     );
     expect(result).toEqual({
       items: [
@@ -872,7 +872,7 @@ describe('South Service', () => {
       testData.south.list[1].type,
       'file content',
       ',',
-      testData.south.list[1].items.map(item => ({ ...item, group: null })) as Array<SouthConnectorItemDTO>
+      testData.south.list[1].items.map(item => ({ ...item, group: null })) as unknown as Array<SouthConnectorItemDTO>
     );
     expect(result).toEqual({
       items: [
@@ -1051,29 +1051,42 @@ describe('South Service', () => {
   });
 
   it('should properly convert to DTO', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
     const southEntity = testData.south.list[0];
     const southLight: SouthConnectorEntityLight = {
       id: southEntity.id,
       name: southEntity.name,
       type: southEntity.type,
       description: southEntity.description,
-      enabled: southEntity.enabled
+      enabled: southEntity.enabled,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
-    expect(toSouthConnectorLightDTO(southLight)).toEqual({
+    expect(toSouthConnectorLightDTO(southLight, getUserInfo)).toEqual({
       id: southLight.id,
       name: southLight.name,
       type: southLight.type,
       description: southLight.description,
-      enabled: southLight.enabled
+      enabled: southLight.enabled,
+      createdBy: getUserInfo(southLight.createdBy),
+      updatedBy: getUserInfo(southLight.updatedBy),
+      createdAt: southLight.createdAt,
+      updatedAt: southLight.updatedAt
     });
-    expect(toSouthConnectorDTO(southEntity)).toEqual({
+    expect(toSouthConnectorDTO(southEntity, getUserInfo)).toEqual({
       id: southEntity.id,
       name: southEntity.name,
       type: southEntity.type,
       description: southEntity.description,
       enabled: southEntity.enabled,
       settings: southEntity.settings,
-      items: southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type))
+      createdBy: getUserInfo(southEntity.createdBy),
+      updatedBy: getUserInfo(southEntity.updatedBy),
+      createdAt: southEntity.createdAt,
+      updatedAt: southEntity.updatedAt,
+      items: southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type, getUserInfo))
     });
   });
 

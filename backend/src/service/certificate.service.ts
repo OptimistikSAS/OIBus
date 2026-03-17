@@ -3,11 +3,12 @@ import { certificateSchema } from '../web-server/controllers/validators/oibus-va
 import CertificateRepository from '../repository/config/certificate.repository';
 import { Certificate } from '../model/certificate.model';
 import EncryptionService from './encryption.service';
-import { CertificateCommandDTO } from '../../shared/model/certificate.model';
+import { CertificateCommandDTO, CertificateDTO } from '../../shared/model/certificate.model';
 import { generateRandomId } from './utils';
 import { DateTime, Duration } from 'luxon';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { NotFoundError } from '../model/types';
+import { GetUserInfo } from '../../shared/model/types';
 
 export default class CertificateService {
   constructor(
@@ -53,7 +54,9 @@ export default class CertificateService {
         .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
         .toISO()!,
       createdBy,
-      updatedBy: createdBy
+      updatedBy: createdBy,
+      createdAt: '',
+      updatedAt: ''
     });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return certificate;
@@ -83,7 +86,10 @@ export default class CertificateService {
           .startOf('day')
           .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
           .toISO()!,
-        updatedBy
+        createdBy: '',
+        updatedBy,
+        createdAt: '',
+        updatedAt: ''
       });
     } else {
       this.certificateRepository.updateNameAndDescription(certificate.id, command.name, command.description, updatedBy);
@@ -98,17 +104,16 @@ export default class CertificateService {
   }
 }
 
-export const toCertificateDTO = (certificate: Certificate): Certificate => {
+export const toCertificateDTO = (certificate: Certificate, getUserInfo: GetUserInfo): CertificateDTO => {
   return {
     id: certificate.id,
     name: certificate.name,
     description: certificate.description,
     publicKey: certificate.publicKey,
-    privateKey: certificate.privateKey,
     certificate: certificate.certificate,
     expiry: certificate.expiry,
-    createdBy: certificate.createdBy,
-    updatedBy: certificate.updatedBy,
+    createdBy: getUserInfo(certificate.createdBy),
+    updatedBy: getUserInfo(certificate.updatedBy),
     createdAt: certificate.createdAt,
     updatedAt: certificate.updatedAt
   };

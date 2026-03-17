@@ -72,7 +72,10 @@ describe('IP Filter Service', () => {
     expect(ipFilterRepository.list).toHaveBeenCalled();
     expect(ipFilterRepository.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, {
       ...testData.ipFilters.command,
-      updatedBy: 'userTest'
+      createdBy: testData.ipFilters.list[0].createdBy,
+      updatedBy: 'userTest',
+      createdAt: testData.ipFilters.list[0].createdAt,
+      updatedAt: ''
     });
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
@@ -114,10 +117,15 @@ describe('IP Filter Service', () => {
 
   it('should properly convert to DTO', () => {
     const ipFilter = testData.ipFilters.list[0];
-    expect(toIPFilterDTO(ipFilter)).toEqual({
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    expect(toIPFilterDTO(ipFilter, getUserInfo)).toEqual({
       id: ipFilter.id,
       address: ipFilter.address,
-      description: ipFilter.description
+      description: ipFilter.description,
+      createdBy: getUserInfo(ipFilter.createdBy),
+      updatedBy: getUserInfo(ipFilter.updatedBy),
+      createdAt: ipFilter.createdAt,
+      updatedAt: ipFilter.updatedAt
     });
   });
 });

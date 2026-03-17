@@ -374,7 +374,8 @@ describe('North Service', () => {
 
   it('should properly convert to DTOs', () => {
     const northEntity = testData.north.list[0];
-    expect(toNorthConnectorDTO(northEntity)).toEqual({
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    expect(toNorthConnectorDTO(northEntity, getUserInfo)).toEqual({
       id: northEntity.id,
       name: northEntity.name,
       type: northEntity.type,
@@ -386,7 +387,7 @@ describe('North Service', () => {
       ),
       caching: {
         trigger: {
-          scanMode: toScanModeDTO(northEntity.caching.trigger.scanMode),
+          scanMode: toScanModeDTO(northEntity.caching.trigger.scanMode, getUserInfo),
           numberOfElements: northEntity.caching.trigger.numberOfElements,
           numberOfFiles: northEntity.caching.trigger.numberOfFiles
         },
@@ -407,20 +408,28 @@ describe('North Service', () => {
       },
       transformers: northEntity.transformers.map(transformerWithOptions => ({
         id: transformerWithOptions.id,
-        transformer: toTransformerDTO(transformerWithOptions.transformer),
+        transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
         inputType: transformerWithOptions.inputType,
         south: transformerWithOptions.south,
         group: transformerWithOptions.group,
         items: transformerWithOptions.items
-      }))
+      })),
+      createdBy: getUserInfo(northEntity.createdBy),
+      updatedBy: getUserInfo(northEntity.updatedBy),
+      createdAt: northEntity.createdAt,
+      updatedAt: northEntity.updatedAt
     });
-    expect(toNorthConnectorLightDTO(northEntity)).toEqual({
+    expect(toNorthConnectorLightDTO(northEntity, getUserInfo)).toEqual({
       id: northEntity.id,
       name: northEntity.name,
       type: northEntity.type,
       description: northEntity.description,
-      enabled: northEntity.enabled
+      enabled: northEntity.enabled,
+      createdBy: getUserInfo(northEntity.createdBy),
+      updatedBy: getUserInfo(northEntity.updatedBy),
+      createdAt: northEntity.createdAt,
+      updatedAt: northEntity.updatedAt
     });
   });
 
