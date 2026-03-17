@@ -35,7 +35,7 @@ describe('ExploreNorthCacheComponent', () => {
   let tester: ExploreNorthCacheComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
 
-  const northConnector: NorthConnectorDTO = {
+  const northConnector = {
     id: 'id1',
     type: 'file-writer',
     name: 'North Connector',
@@ -62,7 +62,7 @@ describe('ExploreNorthCacheComponent', () => {
         retentionDuration: 0
       }
     }
-  } as NorthConnectorDTO;
+  } as unknown as NorthConnectorDTO;
   const cacheSearchResult: CacheSearchResult = {
     searchDate: testData.constants.dates.DATE_3,
     metrics: {

@@ -46,7 +46,7 @@ describe('NorthDetailComponent', () => {
   let certificateService: jasmine.SpyObj<CertificateService>;
   let transformerService: jasmine.SpyObj<TransformerService>;
 
-  const northConnector = testData.north.list[0] as NorthConnectorDTO;
+  const northConnector = testData.north.list[0] as unknown as NorthConnectorDTO;
   const manifest = testData.north.manifest;
   const engineInfo = testData.engine.oIBusInfo;
 

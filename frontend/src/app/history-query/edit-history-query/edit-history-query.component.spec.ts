@@ -18,6 +18,7 @@ import { SouthConnectorCommandDTO, SouthConnectorCommandTypedDTO } from '../../.
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { DateRange } from '../../shared/date-range-selector/date-range-selector.component';
 
@@ -109,7 +110,16 @@ describe('EditHistoryQueryComponent', () => {
     } as SouthMSSQLSettings,
     caching: {
       trigger: {
-        scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },
+        scanMode: {
+          id: 'scanModeId1',
+          name: 'scan mode',
+          description: '',
+          cron: '* * * *',
+          createdBy: { id: '', friendlyName: '' },
+          updatedBy: { id: '', friendlyName: '' },
+          createdAt: '',
+          updatedAt: ''
+        } as ScanModeDTO,
         numberOfElements: 1_000,
         numberOfFiles: 1
       },
@@ -144,10 +154,18 @@ describe('EditHistoryQueryComponent', () => {
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
             outputTimezone: 'Europe/Paris'
           }
-        } as SouthMSSQLItemSettings
+        } as SouthMSSQLItemSettings,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       }
     ],
-    northTransformers: []
+    northTransformers: [],
+    createdBy: { id: '', friendlyName: '' },
+    updatedBy: { id: '', friendlyName: '' },
+    createdAt: '',
+    updatedAt: ''
   };
 
   beforeEach(async () => {
@@ -181,7 +199,7 @@ describe('EditHistoryQueryComponent', () => {
       ]
     });
 
-    scanModeService.list.and.returnValue(of(testData.scanMode.list));
+    scanModeService.list.and.returnValue(of(testData.scanMode.list as unknown as Array<ScanModeDTO>));
     certificateService.list.and.returnValue(of([]));
     transformerService.list.and.returnValue(of([]));
     historyQueryService.list.and.returnValue(of([]));

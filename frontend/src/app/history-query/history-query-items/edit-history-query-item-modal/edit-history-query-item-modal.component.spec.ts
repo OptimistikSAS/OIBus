@@ -53,7 +53,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
         regex: '*',
         minAge: 100,
         preserveFiles: true
-      } as SouthFolderScannerItemSettings
+      } as SouthFolderScannerItemSettings,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     },
     {
       id: 'id2',
@@ -63,7 +67,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
         regex: '*',
         minAge: 100,
         preserveFiles: true
-      } as SouthFolderScannerItemSettings
+      } as SouthFolderScannerItemSettings,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
   ];
 
@@ -111,7 +119,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
         id: '',
         enabled: true,
         name: 'MyName',
-        settings: { objectArray: [], objectSettings: {}, objectValue: 1 }
+        settings: { objectArray: [], objectSettings: {}, objectValue: 1 },
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       });
     }));
 
@@ -130,7 +142,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
         regex: '*',
         minAge: 100,
         preserveFiles: true
-      } as SouthFolderScannerItemSettings
+      } as SouthFolderScannerItemSettings,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     };
 
     it('should duplicate item', async () => {
@@ -147,7 +163,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
         id: '',
         enabled: true,
         name: 'MyName-2',
-        settings: { objectArray: [], objectSettings: {}, objectValue: 1 }
+        settings: { objectArray: [], objectSettings: {}, objectValue: 1 },
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       });
     });
   });
@@ -161,7 +181,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
         regex: '*',
         minAge: 100,
         preserveFiles: true
-      } as SouthFolderScannerItemSettings
+      } as SouthFolderScannerItemSettings,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     };
 
     beforeEach(async () => {
@@ -206,7 +230,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
         id: 'id1',
         enabled: false,
         name: 'South Item 1 (updated)',
-        settings: { objectArray: [], objectSettings: {}, objectValue: 1 }
+        settings: { objectArray: [], objectSettings: {}, objectValue: 1 },
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       });
     }));
 

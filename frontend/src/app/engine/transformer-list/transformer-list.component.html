@@ -70,9 +70,9 @@
             <td>{{ transformer.description }}</td>
             <td>{{ transformer.inputType }}</td>
             <td>{{ transformer.outputType }}</td>
-            <td>{{ transformer.createdBy }}</td>
-            <td>{{ transformer.createdAt | datetime }}</td>
-            <td>{{ transformer.updatedAt | datetime }}</td>
+            <td>{{ transformer.createdBy?.friendlyName }}</td>
+            <td>{{ transformer.createdAt ?? '' | datetime: 'ff' }}</td>
+            <td>{{ transformer.updatedAt ?? '' | datetime: 'ff' }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->

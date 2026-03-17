@@ -7,6 +7,8 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusArrayFormControlComponent } from './oibus-array-form-control.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { OIBusArrayAttribute } from '../../../../../../backend/shared/model/form.model';
+import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { MockModalService, provideModalTesting } from '../../mock-modal.service.spec';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
@@ -37,8 +39,8 @@ class TestComponent {
   });
 
   parentGroup = new FormGroup<any>({});
-  scanModes = testData.scanMode.list;
-  certificates = testData.certificates.list;
+  scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+  certificates = testData.certificates.list as unknown as Array<CertificateDTO>;
   arrayAttribute: OIBusArrayAttribute = {
     type: 'array',
     paginate: true,

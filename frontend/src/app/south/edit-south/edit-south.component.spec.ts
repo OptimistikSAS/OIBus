@@ -96,7 +96,7 @@ describe('EditSouthComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southConnector: SouthConnectorDTO = {
+    const southConnector = {
       id: 'id1',
       type: 'mssql',
       name: 'My South Connector 1',
@@ -121,7 +121,7 @@ describe('EditSouthComponent', () => {
         requestTimeout: 5_000
       } as SouthMSSQLSettings,
       items: []
-    };
+    } as unknown as SouthConnectorDTO;
 
     beforeEach(async () => {
       TestBed.overrideProvider(ActivatedRoute, {

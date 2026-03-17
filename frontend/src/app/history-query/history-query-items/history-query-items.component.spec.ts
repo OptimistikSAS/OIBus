@@ -56,7 +56,16 @@ const testHistoryQuery: HistoryQueryDTO = {
   } as NorthFileWriterSettings,
   caching: {
     trigger: {
-      scanMode: { id: 'scanModeId1', name: 'scan mode', description: '', cron: '* * * *' },
+      scanMode: {
+        id: 'scanModeId1',
+        name: 'scan mode',
+        description: '',
+        cron: '* * * *',
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      } as any,
       numberOfElements: 1_000,
       numberOfFiles: 1
     },
@@ -82,7 +91,11 @@ const testHistoryQuery: HistoryQueryDTO = {
       enabled: true,
       settings: {
         mode: 'ha'
-      } as SouthOPCUAItemSettings
+      } as SouthOPCUAItemSettings,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     },
     {
       id: 'id2',
@@ -90,7 +103,11 @@ const testHistoryQuery: HistoryQueryDTO = {
       enabled: false,
       settings: {
         mode: 'ha'
-      } as SouthOPCUAItemSettings
+      } as SouthOPCUAItemSettings,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     },
     {
       id: 'id3',
@@ -98,10 +115,18 @@ const testHistoryQuery: HistoryQueryDTO = {
       enabled: false,
       settings: {
         mode: 'ha'
-      } as SouthOPCUAItemSettings
+      } as SouthOPCUAItemSettings,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
   ],
-  northTransformers: []
+  northTransformers: [],
+  createdBy: { id: '', friendlyName: '' },
+  updatedBy: { id: '', friendlyName: '' },
+  createdAt: '',
+  updatedAt: ''
 };
 
 @Component({
@@ -615,7 +640,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
     });
 
     it('should open ImportHistoryQueryItemsModalComponent after successful check', () => {
-      const mockItems: Array<HistoryQueryItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -628,7 +653,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
       ];
       const mockErrors = [{ item: mockItems[0], error: 'Invalid query' }];
 
-      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: mockErrors }));
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: mockErrors } as any));
 
       modalService.open.and.returnValues(
         {
@@ -658,7 +683,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
     });
 
     it('should call importItems service when import is confirmed', () => {
-      const mockItems: Array<HistoryQueryItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -682,7 +707,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
         }
       ];
 
-      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] } as any));
 
       modalService.open.and.returnValues(
         {
@@ -704,7 +729,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
     it('should emit null inMemoryItems after successful import', () => {
       spyOn(tester.componentInstance, 'updateInMemoryItems');
 
-      const mockItems: Array<HistoryQueryItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -728,7 +753,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
         }
       ];
 
-      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] } as any));
 
       modalService.open.and.returnValues(
         {
@@ -754,7 +779,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
     });
 
     it('should add items to allItems array instead of calling service', () => {
-      const mockItems: Array<HistoryQueryItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -796,7 +821,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
         }
       ];
 
-      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] } as any));
 
       modalService.open.and.returnValues(
         {
@@ -818,7 +843,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
     });
 
     it('should not call backend services in memory mode', () => {
-      const mockItems: Array<HistoryQueryItemDTO> = [
+      const mockItems = [
         {
           id: 'new1',
           name: 'newItem1',
@@ -842,7 +867,7 @@ describe('HistoryQueryItemsComponent CSV Import Tests', () => {
         }
       ];
 
-      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] }));
+      historyQueryService.checkImportItems.and.returnValue(of({ items: mockItems, errors: [] } as any));
 
       modalService.open.and.returnValues(
         {
