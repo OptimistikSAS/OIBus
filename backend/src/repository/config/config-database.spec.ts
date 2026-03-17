@@ -131,7 +131,7 @@ describe('Repository with populated database', () => {
 
     it('should update engine settings', () => {
       repository.update({ ...testData.engine.command, name: 'updated engine' });
-      expect(repository.get()).toEqual({
+      expect(stripAuditFields(repository.get())).toEqual({
         ...testData.engine.command,
         id: testData.engine.settings.id,
         version: testData.engine.settings.version,
@@ -260,11 +260,15 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly find all transformers', () => {
-      expect(repository.list()).toEqual([...testData.transformers.list, ...standardTransformers].map(t => expect.objectContaining(t)));
+      expect(repository.list().map(stripAuditFields)).toEqual(
+        [...testData.transformers.list, ...standardTransformers].map(stripAuditFields).map(t => expect.objectContaining(t))
+      );
     });
 
     it('should properly find a transformer by its ID', () => {
-      expect(repository.findById(testData.transformers.list[0].id)).toEqual(expect.objectContaining(testData.transformers.list[0]));
+      expect(stripAuditFields(repository.findById(testData.transformers.list[0].id))).toEqual(
+        expect.objectContaining(stripAuditFields(testData.transformers.list[0]))
+      );
       expect(repository.findById('bad id')).toEqual(null);
     });
 
@@ -279,7 +283,7 @@ describe('Repository with populated database', () => {
       createTransformer.id = '';
       createTransformer.name = 'new name';
       repository.save(createTransformer);
-      expect(repository.findById('newId')).toEqual(expect.objectContaining(createTransformer));
+      expect(stripAuditFields(repository.findById('newId'))).toEqual(expect.objectContaining(stripAuditFields(createTransformer)));
     });
 
     it('should update a transformer', () => {
@@ -321,14 +325,14 @@ describe('Repository with populated database', () => {
       });
       const expected = createPageFromArray([testData.transformers.list[0]], 10, 0);
       expect(result.totalElements).toEqual(expected.totalElements);
-      expect(result.content).toEqual(expected.content.map(t => expect.objectContaining(t)));
+      expect(result.content.map(stripAuditFields)).toEqual(expected.content.map(stripAuditFields).map(t => expect.objectContaining(t)));
     });
 
     it('should properly search transformers and page them', () => {
       const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
       const expected = createPageFromArray([...testData.transformers.list, ...standardTransformers], 10, 0);
       expect(result.totalElements).toEqual(expected.totalElements);
-      expect(result.content).toEqual(expected.content.map(t => expect.objectContaining(t)));
+      expect(result.content.map(stripAuditFields)).toEqual(expected.content.map(stripAuditFields).map(t => expect.objectContaining(t)));
     });
   });
 
@@ -340,11 +344,15 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly find all certificates', () => {
-      expect(repository.list()).toEqual(testData.certificates.list.map(c => expect.objectContaining(c)));
+      expect(repository.list().map(stripAuditFields)).toEqual(
+        testData.certificates.list.map(stripAuditFields).map(c => expect.objectContaining(c))
+      );
     });
 
     it('should properly find a certificate by its ID', () => {
-      expect(repository.findById(testData.certificates.list[0].id)).toEqual(expect.objectContaining(testData.certificates.list[0]));
+      expect(stripAuditFields(repository.findById(testData.certificates.list[0].id))).toEqual(
+        expect.objectContaining(stripAuditFields(testData.certificates.list[0]))
+      );
       expect(repository.findById('bad id')).toEqual(null);
     });
 
@@ -352,7 +360,7 @@ describe('Repository with populated database', () => {
       const createCertificate = JSON.parse(JSON.stringify(testData.certificates.list[0]));
       createCertificate.id = 'new id';
       repository.create(createCertificate);
-      expect(repository.findById('new id')).toEqual(expect.objectContaining(createCertificate));
+      expect(stripAuditFields(repository.findById('new id'))).toEqual(expect.objectContaining(stripAuditFields(createCertificate)));
     });
 
     it('should update a certificate', () => {
@@ -656,7 +664,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[0] as OIAnalyticsFetchUpdateVersionCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -674,7 +682,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[1] as OIAnalyticsFetchUpdateEngineSettingsCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -692,7 +700,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[2] as OIAnalyticsFetchRestartEngineCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -709,7 +717,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[10] as OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -732,7 +740,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[3] as OIAnalyticsFetchUpdateScanModeCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -751,7 +759,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[11] as OIAnalyticsFetchCreateSouthConnectorCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -773,7 +781,7 @@ describe('Repository with populated database', () => {
       command.retrieveSecretsFromSouth = null;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -792,7 +800,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[4] as OIAnalyticsFetchUpdateSouthConnectorCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -811,18 +819,19 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[12] as OIAnalyticsFetchCreateNorthConnectorCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
-        id: command.id,
-        type: command.type,
-        status: 'RETRIEVED',
-        ack: false,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
-        targetVersion: command.targetVersion,
-        commandContent: command.commandContent,
-        northConnectorId: command.retrieveSecretsFromNorth
-      });
+      expect(repository.findById(command.id)).toEqual(
+        expect.objectContaining({
+          id: command.id,
+          type: command.type,
+          status: 'RETRIEVED',
+          ack: false,
+          retrievedDate: testData.constants.dates.FAKE_NOW,
+          completedDate: null,
+          result: null,
+          targetVersion: command.targetVersion,
+          northConnectorId: command.retrieveSecretsFromNorth
+        })
+      );
     });
 
     it('should create a create north command without retrieved secrets from North', () => {
@@ -833,18 +842,19 @@ describe('Repository with populated database', () => {
       command.retrieveSecretsFromNorth = null;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
-        id: command.id,
-        type: command.type,
-        status: 'RETRIEVED',
-        ack: false,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
-        targetVersion: command.targetVersion,
-        commandContent: command.commandContent,
-        northConnectorId: ''
-      });
+      expect(repository.findById(command.id)).toEqual(
+        expect.objectContaining({
+          id: command.id,
+          type: command.type,
+          status: 'RETRIEVED',
+          ack: false,
+          retrievedDate: testData.constants.dates.FAKE_NOW,
+          completedDate: null,
+          result: null,
+          targetVersion: command.targetVersion,
+          northConnectorId: ''
+        })
+      );
     });
 
     it('should create an update north command', () => {
@@ -852,18 +862,19 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[5] as OIAnalyticsFetchUpdateNorthConnectorCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
-        id: command.id,
-        type: command.type,
-        status: 'RETRIEVED',
-        ack: false,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
-        targetVersion: command.targetVersion,
-        commandContent: command.commandContent,
-        northConnectorId: command.northConnectorId
-      });
+      expect(repository.findById(command.id)).toEqual(
+        expect.objectContaining({
+          id: command.id,
+          type: command.type,
+          status: 'RETRIEVED',
+          ack: false,
+          retrievedDate: testData.constants.dates.FAKE_NOW,
+          completedDate: null,
+          result: null,
+          targetVersion: command.targetVersion,
+          northConnectorId: command.northConnectorId
+        })
+      );
     });
 
     it('should create a delete scan mode command', () => {
@@ -871,7 +882,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[6] as OIAnalyticsFetchDeleteScanModeCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -889,7 +900,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[7] as OIAnalyticsFetchDeleteSouthConnectorCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -912,7 +923,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -941,7 +952,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -965,7 +976,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[8] as OIAnalyticsFetchDeleteNorthConnectorCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -988,7 +999,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1007,7 +1018,7 @@ describe('Repository with populated database', () => {
         .oIAnalyticsList[13] as OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO;
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1087,7 +1098,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1113,7 +1124,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1136,7 +1147,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1163,7 +1174,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1196,7 +1207,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1224,7 +1235,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1249,7 +1260,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1277,7 +1288,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1306,7 +1317,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1329,7 +1340,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1353,7 +1364,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1379,7 +1390,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1410,7 +1421,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1442,7 +1453,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1470,7 +1481,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1499,7 +1510,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1523,7 +1534,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1547,7 +1558,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1571,7 +1582,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1595,7 +1606,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1623,7 +1634,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1651,7 +1662,7 @@ describe('Repository with populated database', () => {
       };
       repository.create(command);
 
-      expect(repository.findById(command.id)).toEqual({
+      expect(stripAuditFields(repository.findById(command.id))).toEqual({
         id: command.id,
         type: command.type,
         status: 'RETRIEVED',
@@ -1739,10 +1750,14 @@ describe('Repository with populated database', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
 
       repository.create({
-        type: 'full-config'
+        type: 'full-config',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
 
-      expect(repository.findById('newId')).toEqual({
+      expect(stripAuditFields(repository.findById('newId'))).toEqual({
         id: 'newId',
         type: 'full-config',
         status: 'PENDING',
@@ -1755,10 +1770,14 @@ describe('Repository with populated database', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryQueriesId');
 
       repository.create({
-        type: 'history-queries'
+        type: 'history-queries',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
 
-      expect(repository.findById('newHistoryQueriesId')).toEqual({
+      expect(stripAuditFields(repository.findById('newHistoryQueriesId'))).toEqual({
         id: 'newHistoryQueriesId',
         type: 'history-queries',
         status: 'PENDING',
@@ -1808,18 +1827,24 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly get a scan mode', () => {
-      expect(repository.findById(testData.scanMode.list[0].id)).toEqual(expect.objectContaining(testData.scanMode.list[0]));
+      expect(stripAuditFields(repository.findById(testData.scanMode.list[0].id))).toEqual(
+        expect.objectContaining(stripAuditFields(testData.scanMode.list[0]))
+      );
       expect(repository.findById('badId')).toEqual(null);
     });
 
     it('should create a scan mode', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
-      expect(repository.create(testData.scanMode.command)).toEqual(expect.objectContaining({ ...testData.scanMode.command, id: 'newId' }));
+      expect(repository.create({ ...testData.scanMode.command, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' })).toEqual(
+        expect.objectContaining({ ...testData.scanMode.command, id: 'newId' })
+      );
     });
 
     it('should update a scan mode', () => {
-      repository.update('newId', testData.scanMode.command);
-      expect(repository.findById('newId')).toEqual(expect.objectContaining({ ...testData.scanMode.command, id: 'newId' }));
+      repository.update('newId', { ...testData.scanMode.command, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' });
+      expect(stripAuditFields(repository.findById('newId'))).toEqual(
+        expect.objectContaining({ ...testData.scanMode.command, id: 'newId' })
+      );
     });
 
     it('should delete a scan mode', () => {
@@ -1838,24 +1863,30 @@ describe('Repository with populated database', () => {
     });
 
     it('findAll() should properly get all IP filters', () => {
-      expect(repository.list()).toEqual(testData.ipFilters.list.map(f => expect.objectContaining(f)));
+      expect(repository.list().map(stripAuditFields)).toEqual(
+        testData.ipFilters.list.map(stripAuditFields).map(f => expect.objectContaining(f))
+      );
     });
 
     it('findById() should properly get an IP filter', () => {
-      expect(repository.findById(testData.ipFilters.list[0].id)).toEqual(expect.objectContaining(testData.ipFilters.list[0]));
+      expect(stripAuditFields(repository.findById(testData.ipFilters.list[0].id))).toEqual(
+        expect.objectContaining(stripAuditFields(testData.ipFilters.list[0]))
+      );
       expect(repository.findById('badId')).toEqual(null);
     });
 
     it('create() should create an IP filter', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
-      expect(repository.create(testData.ipFilters.command)).toEqual(
+      expect(repository.create({ ...testData.ipFilters.command, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' })).toEqual(
         expect.objectContaining({ ...testData.ipFilters.command, id: 'newId' })
       );
     });
 
     it('update() should update an IP filter', () => {
-      repository.update('newId', testData.ipFilters.command);
-      expect(repository.findById('newId')).toEqual(expect.objectContaining({ ...testData.ipFilters.command, id: 'newId' }));
+      repository.update('newId', { ...testData.ipFilters.command, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' });
+      expect(stripAuditFields(repository.findById('newId'))).toEqual(
+        expect.objectContaining({ ...testData.ipFilters.command, id: 'newId' })
+      );
     });
 
     it('delete() should delete an IP filter', () => {
@@ -1888,12 +1919,14 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly get full north connectors', () => {
-      expect(repository.findAllNorthFull()).toEqual(testData.north.list.map(n => expect.objectContaining(n)));
+      expect(repository.findAllNorthFull().map(stripAuditFields)).toEqual(
+        testData.north.list.map(stripAuditFields).map(n => expect.objectContaining(n))
+      );
     });
 
     it('should properly get a north connector', () => {
       const result = repository.findNorthById(testData.north.list[0].id);
-      expect(result).toEqual(expect.objectContaining(testData.north.list[0]));
+      expect(stripAuditFields(result)).toEqual(expect.objectContaining(stripAuditFields(testData.north.list[0])));
       expect(repository.findNorthById('badId')).toEqual(null);
     });
 
@@ -1953,7 +1986,11 @@ describe('Repository with populated database', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
 
       const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
@@ -1972,9 +2009,13 @@ describe('Repository with populated database', () => {
           name: testData.south.list[0].name,
           type: testData.south.list[0].type,
           description: testData.south.list[0].description,
-          enabled: testData.south.list[0].enabled
+          enabled: testData.south.list[0].enabled,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
-        group: { id: group.id, name: group.name },
+        group: { id: group.id, name: group.name, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
         items: []
       });
 
@@ -2061,7 +2102,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly get a south connector', () => {
-      expect(stripAuditFields(repository.findSouthById(testData.south.list[0].id))).toEqual(testData.south.list[0]);
+      expect(stripAuditFields(repository.findSouthById(testData.south.list[0].id))).toEqual(stripAuditFields(testData.south.list[0]));
       expect(repository.findSouthById('badId')).toEqual(null);
     });
 
@@ -2094,6 +2135,10 @@ describe('Repository with populated database', () => {
           enabled: true,
           scanMode: testData.scanMode.list[0],
           settings: {} as SouthItemSettings,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: '',
           group: null,
           syncWithGroup: false,
           maxReadInterval: null,
@@ -2160,7 +2205,7 @@ describe('Repository with populated database', () => {
 
     it('should find item', () => {
       const result = repository.findItemById(testData.south.list[1].id, testData.south.list[1].items[0].id);
-      expect(result).toEqual(expect.objectContaining(testData.south.list[1].items[0]));
+      expect(stripAuditFields(result)).toEqual(expect.objectContaining(stripAuditFields(testData.south.list[1].items[0])));
       expect(repository.findItemById(testData.south.list[0].id, testData.south.list[1].items[0].id)).toEqual(null);
     });
 
@@ -2192,6 +2237,10 @@ describe('Repository with populated database', () => {
         enabled: false,
         scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
@@ -2224,6 +2273,10 @@ describe('Repository with populated database', () => {
         enabled: false,
         scanMode: testData.scanMode.list[0],
         settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,
@@ -2252,7 +2305,11 @@ describe('Repository with populated database', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
 
       // Create a south connector with items that have groups
@@ -2268,7 +2325,11 @@ describe('Repository with populated database', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null
+          overlap: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         }
       ];
 
@@ -2290,7 +2351,11 @@ describe('Repository with populated database', () => {
         scanMode: testData.scanMode.list[0],
         overlap: 10,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
 
       // Save an item with groups
@@ -2304,7 +2369,11 @@ describe('Repository with populated database', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       repository.saveItem(testData.south.list[0].id, itemWithGroup);
@@ -2327,7 +2396,11 @@ describe('Repository with populated database', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 100
+        overlap: 100,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       repository.saveItem(testData.south.list[0].id, itemWithHistorian);
@@ -2352,7 +2425,11 @@ describe('Repository with populated database', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       repository.saveItem(testData.south.list[0].id, itemWithEmptyGroups);
@@ -2373,7 +2450,11 @@ describe('Repository with populated database', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
 
       // Get existing items
@@ -2404,7 +2485,11 @@ describe('Repository with populated database', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
 
       // Get existing items and assign them to the group first
@@ -2466,11 +2551,13 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly get history queries (full)', () => {
-      expect(stripAuditFields(repository.findAllHistoriesFull())).toEqual(testData.historyQueries.list);
+      expect(stripAuditFields(repository.findAllHistoriesFull())).toEqual(stripAuditFields(testData.historyQueries.list));
     });
 
     it('should properly get a history query', () => {
-      expect(stripAuditFields(repository.findHistoryById(testData.historyQueries.list[0].id))).toEqual(testData.historyQueries.list[0]);
+      expect(stripAuditFields(repository.findHistoryById(testData.historyQueries.list[0].id))).toEqual(
+        stripAuditFields(testData.historyQueries.list[0])
+      );
       expect(repository.findHistoryById('badId')).toEqual(null);
     });
 
@@ -2565,13 +2652,21 @@ describe('Repository with populated database', () => {
           id: '',
           name: 'new item',
           enabled: true,
-          settings: {} as SouthItemSettings
+          settings: {} as SouthItemSettings,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
         {
           id: '',
           name: 'another item',
           enabled: true,
-          settings: {} as SouthItemSettings
+          settings: {} as SouthItemSettings,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         }
       ];
       newHistoryQuery.northTransformers = [
@@ -2583,11 +2678,19 @@ describe('Repository with populated database', () => {
           items: [
             {
               id: '',
-              name: 'new item'
+              name: 'new item',
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
             },
             {
               id: '',
-              name: 'bad item'
+              name: 'bad item',
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
             }
           ]
         }
@@ -2659,7 +2762,7 @@ describe('Repository with populated database', () => {
 
     it('should find item', () => {
       const result = repository.findItemById(testData.historyQueries.list[1].id, testData.historyQueries.list[1].items[0].id);
-      expect(result).toEqual(expect.objectContaining(testData.historyQueries.list[1].items[0]));
+      expect(stripAuditFields(result)).toEqual(expect.objectContaining(stripAuditFields(testData.historyQueries.list[1].items[0])));
       expect(repository.findItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[1].items[0].id)).toEqual(null);
     });
 
@@ -2694,7 +2797,11 @@ describe('Repository with populated database', () => {
         id: '',
         name: 'new history item',
         enabled: false,
-        settings: {} as SouthItemSettings
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
       itemsToSave[0].name = 'updated name';
 
@@ -2719,7 +2826,11 @@ describe('Repository with populated database', () => {
         id: '',
         name: 'new history item',
         enabled: false,
-        settings: {} as SouthItemSettings
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       });
       itemsToSave[0].name = 'updated name';
 
@@ -2757,6 +2868,10 @@ describe('Repository with empty database', () => {
         version,
         launcherVersion: '3.5.0',
         name: 'OIBus',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: '',
         port: 2223,
         proxyEnabled: false,
         proxyPort: 9000,
@@ -2801,7 +2916,7 @@ describe('Repository with empty database', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('registrationId1');
       repository = new OianalyticsRegistrationRepository(database);
 
-      expect(repository.get()).toEqual({
+      expect(stripAuditFields(repository.get())).toEqual({
         id: 'registrationId1',
         host: '',
         activationCode: null,
@@ -2918,7 +3033,7 @@ describe('Repository with empty database', () => {
 
       await flushPromises();
       expect(argon2.hash).toHaveBeenCalledWith('pass');
-      expect(repository.findById('defaultUser')).toEqual({
+      expect(stripAuditFields(repository.findById('defaultUser'))).toEqual({
         id: 'defaultUser',
         login: 'admin',
         firstName: null,

@@ -82,7 +82,7 @@ export default class CertificateRepository {
   update(certificate: Certificate): void {
     const query =
       `UPDATE ${CERTIFICATES_TABLE} SET name = ?, description = ?, public_key  = ?, private_key = ?, certificate = ?, ` +
-      `expiry = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?;`;
+      `expiry = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
     this.database
       .prepare(query)
       .run(
@@ -102,7 +102,7 @@ export default class CertificateRepository {
                        SET name        = ?,
                            description = ?,
                            updated_by  = ?,
-                           updated_at  = datetime('now')
+                           updated_at  = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
                        WHERE id = ?;`;
     this.database.prepare(query).run(newName, newDescription, updatedBy, certificateId);
   }
@@ -123,8 +123,8 @@ export default class CertificateRepository {
       privateKey: result.private_key,
       certificate: result.certificate,
       expiry: result.expiry,
-      createdBy: result.created_by ?? undefined,
-      updatedBy: result.updated_by ?? undefined,
+      createdBy: result.created_by ?? '',
+      updatedBy: result.updated_by ?? '',
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };
