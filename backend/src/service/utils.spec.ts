@@ -450,15 +450,16 @@ describe('Service utils', () => {
             compression: false
           },
           'connectorName',
-          'itemName',
-          'itemId',
+          testData.south.list[0].items[0],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, [
+          testData.south.list[0].items[0]
+        ]);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -475,15 +476,16 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
-          'itemName',
-          'itemId',
+          testData.south.list[0].items[0],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, [
+          testData.south.list[0].items[0]
+        ]);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
@@ -503,15 +505,16 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
-          'itemName',
-          'itemId',
+          testData.south.list[0].items[0],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, [
+          testData.south.list[0].items[0]
+        ]);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(
@@ -531,15 +534,16 @@ describe('Service utils', () => {
             compression: false
           },
           'connectorName',
-          'itemName',
-          'itemId',
+          testData.south.list[0].items[0],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, ['itemId']);
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, [
+          testData.south.list[0].items[0]
+        ]);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
         expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
@@ -584,15 +588,16 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
-          'itemName',
-          'itemId',
+          testData.south.list[0].items[0],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, [
+          testData.south.list[0].items[0]
+        ]);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -607,15 +612,16 @@ describe('Service utils', () => {
             compression: true
           },
           'connectorName',
-          'itemName',
-          'itemId',
+          testData.south.list[0].items[0],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, [
+          testData.south.list[0].items[0]
+        ]);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -636,8 +642,7 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
-          'itemName',
-          'itemId',
+          testData.south.list[0].items[0],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
@@ -649,7 +654,9 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, [
+          testData.south.list[0].items[0]
+        ]);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);
@@ -667,8 +674,7 @@ describe('Service utils', () => {
             compression: true
           },
           'connectorName',
-          'itemName',
-          'itemId',
+          testData.south.list[0].items[0],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
           addContent,
@@ -680,7 +686,9 @@ describe('Service utils', () => {
         expect(logger.error).toHaveBeenCalledWith(
           `Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, ['itemId']);
+        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, [
+          testData.south.list[0].items[0]
+        ]);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
         expect(fs.unlink).toHaveBeenCalledTimes(2);

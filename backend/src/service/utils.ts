@@ -15,12 +15,14 @@ import os from 'node:os';
 import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
-import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
+import { OIBusSouthType, SOUTH_SINGLE_ITEMS, SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { OIBusError } from '../model/engine.model';
 import Stream from 'node:stream';
+import { SouthConnectorItemEntity } from '../model/south-connector.model';
+import { SouthFolderScannerItemSettings, SouthItemSettings } from '../../shared/model/south-settings.model';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -58,7 +60,7 @@ export const delay = async (timeout: number): Promise<void> =>
   });
 
 /**
- * Compute a list of an end interval from a start, end, and maxInterval.
+ * Compute a list of intervals from a start, end, and maxInterval.
  */
 export const generateIntervals = (
   startInstant: Instant,
@@ -270,16 +272,15 @@ export const persistResults = async (
   data: Array<unknown> | string,
   serializationSettings: SerializationSettings,
   connectorName: string,
-  itemName: string,
-  itemId: string,
+  item: SouthConnectorItemEntity<SouthItemSettings>,
   queryTime: Instant,
   baseFolder: string,
-  addContentFn: (data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+  addContentFn: (data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>,
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
     case 'file':
-      const filePath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
+      const filePath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, item.name);
       logger.debug(`Writing ${data.length} bytes into file at "${filePath}"`);
       await fs.writeFile(filePath, data as string);
 
@@ -296,7 +297,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [itemId]);
+        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
         try {
           await fs.unlink(gzipPath);
           logger.trace(`File "${gzipPath}" deleted`);
@@ -305,7 +306,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending file "${filePath}" to Engine`);
-        await addContentFn({ type: 'any', filePath }, queryTime, [itemId]);
+        await addContentFn({ type: 'any', filePath }, queryTime, [item]);
         try {
           await fs.unlink(filePath);
           logger.trace(`File ${filePath} deleted`);
@@ -315,7 +316,7 @@ export const persistResults = async (
       }
       break;
     case 'csv':
-      const csvPath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, itemName);
+      const csvPath = generateFilenameForSerialization(baseFolder, serializationSettings.filename, connectorName, item.name);
       const csvContent = generateCsvContent(data as Array<Record<string, string>>, serializationSettings.delimiter);
 
       logger.debug(`Writing ${csvContent.length} bytes into CSV file at "${csvPath}"`);
@@ -334,7 +335,7 @@ export const persistResults = async (
         }
 
         logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [itemId]);
+        await addContentFn({ type: 'any', filePath: gzipPath }, queryTime, [item]);
 
         try {
           await fs.unlink(gzipPath);
@@ -344,7 +345,7 @@ export const persistResults = async (
         }
       } else {
         logger.debug(`Sending CSV file "${csvPath}" to Engine`);
-        await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [itemId]);
+        await addContentFn({ type: 'any', filePath: csvPath }, queryTime, [item]);
 
         try {
           await fs.unlink(csvPath);
@@ -850,4 +851,50 @@ export const resolveBypassingExports = (pkgName: string, subPath: string) => {
     }
     throw error;
   }
+};
+
+export const checkAge = (
+  item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>,
+  filename: string,
+  mtimeMs: number,
+  filesPreserved: Array<{ filename: string; modifiedTime: number }>,
+  logger: pino.Logger
+): boolean => {
+  const timestamp = new Date().getTime();
+  logger.trace(
+    `Check age condition: mT:${mtimeMs} + mA ${item.settings.minAge} < ts:${timestamp} ` + `= ${mtimeMs + item.settings.minAge < timestamp}`
+  );
+
+  if (mtimeMs + item.settings.minAge > timestamp) return false;
+  logger.trace(`File "${filename}" matches age`);
+
+  // Check if the file was already sent (if preserveFiles is true)
+  if (item.settings.preserveFiles) {
+    if (item.settings.ignoreModifiedDate) return true;
+    const fileEntry = filesPreserved.find(f => f.filename === filename);
+    const lastModifiedTime = fileEntry ? fileEntry.modifiedTime : 0;
+    if (mtimeMs <= lastModifiedTime) return false;
+    logger.trace(`File "${filename}" last modified time ${lastModifiedTime} is older than mtimeMs ${mtimeMs}. The file will be sent`);
+  }
+  return true;
+};
+
+export const groupItemsByGroup = <I extends SouthItemSettings>(
+  southType: OIBusSouthType,
+  items: Array<SouthConnectorItemEntity<I>>
+): Array<Array<SouthConnectorItemEntity<I>>> => {
+  const groupedItemsList: Array<Array<SouthConnectorItemEntity<I>>> = [];
+  for (const item of items) {
+    if (!(items[0].group && items[0].syncWithGroup && SOUTH_SINGLE_ITEMS.includes(southType))) {
+      groupedItemsList.push([item]);
+    } else {
+      const groupIndex = groupedItemsList.findIndex(element => element[0].group && element[0].group.id === item.group!.id);
+      if (groupIndex !== -1) {
+        groupedItemsList[groupIndex].push(item);
+      } else {
+        groupedItemsList.push([item]);
+      }
+    }
+  }
+  return groupedItemsList;
 };

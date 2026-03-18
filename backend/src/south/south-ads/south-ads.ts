@@ -3,13 +3,13 @@ import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../shared/model/types';
 import pino from 'pino';
-import { QueriesLastPoint } from '../south-interface';
-import { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
+import { SouthADSItemSettings, SouthADSSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
+import { SouthDirectQuery } from '../south-interface';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -24,14 +24,19 @@ interface ADSOptions {
 /**
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
-export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements QueriesLastPoint {
+export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements SouthDirectQuery {
   private client: Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
   constructor(
     connector: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -158,21 +163,23 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     return [];
   }
 
-  async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<void> {
-    const timestamp = DateTime.now().toUTC().toISO()!;
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<OIBusTimeValue | null> {
+    const contentResult: Array<OIBusTimeValue> = [];
     try {
+      const timestamp = DateTime.now().toUTC().toISO()!;
       const startRequest = DateTime.now();
       const results = await Promise.all(items.map(item => this.readAdsSymbol(item, timestamp)));
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
 
+      const contentResult = results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []);
       await this.addContent(
         {
           type: 'time-values',
-          content: results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
+          content: contentResult
         },
         startRequest.toUTC().toISO(),
-        [...new Set(items.map(item => item.id))]
+        items
       );
     } catch (error: unknown) {
       if ((error as Error).message.includes('Client is not connected')) {
@@ -183,6 +190,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
         throw error;
       }
     }
+    return contentResult.length > 0 ? contentResult[contentResult.length - 1] : null;
   }
 
   async readAdsSymbol(item: SouthConnectorItemEntity<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusTimeValue>> {

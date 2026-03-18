@@ -47,11 +47,6 @@ describe('SouthPostgreSQL with authentication', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       host: 'localhost',
       port: 5432,
       database: 'db',
@@ -98,9 +93,9 @@ describe('SouthPostgreSQL with authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -121,9 +116,9 @@ describe('SouthPostgreSQL with authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -161,9 +156,9 @@ describe('SouthPostgreSQL with authentication', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -184,43 +179,47 @@ describe('SouthPostgreSQL with authentication', () => {
     jest.useRealTimers();
   });
 
-  it('should get throttling settings', () => {
-    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
-      maxReadInterval: configuration.settings.throttling.maxReadInterval,
-      readDelay: configuration.settings.throttling.readDelay
-    });
-    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(true);
-    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
-  });
-
   it('should properly run historyQuery', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    south.queryData = jest
-      .fn()
-      .mockReturnValueOnce([
-        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
-        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-      ])
-      .mockReturnValueOnce([
-        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ])
-      .mockReturnValue([]);
-    (utils.formatInstant as jest.Mock)
-      .mockReturnValueOnce('2020-02-01 00:00:00.000')
-      .mockReturnValueOnce('2020-03-01 00:00:00.000')
-      .mockReturnValue(startTime);
+    const startTime = testData.constants.dates.DATE_1;
+    south.queryData = jest.fn().mockReturnValueOnce([
+      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
+      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    ]);
+    (utils.formatInstant as jest.Mock).mockReturnValueOnce('2020-02-01 00:00:00.000');
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
-    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(utils.persistResults).toHaveBeenCalledTimes(2);
-    expect(south.queryData).toHaveBeenCalledTimes(3);
-    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryData).toHaveBeenCalledWith(configuration.items[1], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryData).toHaveBeenCalledWith(configuration.items[2], startTime, testData.constants.dates.FAKE_NOW);
-
+    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+    expect(utils.persistResults).toHaveBeenCalledTimes(1);
+    expect(south.queryData).toHaveBeenCalledTimes(1);
+    expect(south.queryData).toHaveBeenCalledWith(
+      configuration.items[0],
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.FAKE_NOW
+    );
+    expect(result).toEqual({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    });
     expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${configuration.items[0].name} in 0 ms`);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[2].name}. Request done in 0 ms`);
+  });
+
+  it('should properly run historyQuery without result', async () => {
+    const startTime = testData.constants.dates.DATE_1;
+    south.queryData = jest.fn().mockReturnValueOnce([]);
+
+    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+    expect(utils.persistResults).not.toHaveBeenCalled();
+    expect(south.queryData).toHaveBeenCalledTimes(1);
+    expect(south.queryData).toHaveBeenCalledWith(
+      configuration.items[0],
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.FAKE_NOW
+    );
+    expect(result).toEqual({
+      trackedInstant: null,
+      value: null
+    });
+    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
   });
 
   it('should get data from PostgreSQL', async () => {
@@ -371,11 +370,6 @@ describe('SouthPostgreSQL without authentication', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       host: 'localhost',
       port: 1521,
       database: 'db',
@@ -422,9 +416,9 @@ describe('SouthPostgreSQL without authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -445,9 +439,9 @@ describe('SouthPostgreSQL without authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -485,9 +479,9 @@ describe('SouthPostgreSQL without authentication', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -534,11 +528,6 @@ describe('SouthPostgreSQL test connection', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       host: 'localhost',
       port: 5432,
       database: 'db',
@@ -585,9 +574,9 @@ describe('SouthPostgreSQL test connection', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -608,9 +597,9 @@ describe('SouthPostgreSQL test connection', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -648,9 +637,9 @@ describe('SouthPostgreSQL test connection', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };

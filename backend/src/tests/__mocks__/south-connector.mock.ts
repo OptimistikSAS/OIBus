@@ -14,7 +14,6 @@ export default class SouthConnectorMock {
   start = jest.fn().mockImplementation(() => Promise.resolve());
   connect = jest.fn();
   updateScanModeIfUsed = jest.fn();
-  updateSouthCacheOnScanModeAndMaxInstantChanges = jest.fn();
   isEnabled = jest.fn();
   updateCronJobs = jest.fn();
   updateSubscriptions = jest.fn();
@@ -23,6 +22,7 @@ export default class SouthConnectorMock {
   createDeferredPromise = jest.fn();
   resolveDeferredPromise = jest.fn();
   historyQueryHandler = jest.fn();
+  directQueryHandler = jest.fn();
   addContent = jest.fn();
   disconnect = jest.fn();
   stop = jest.fn();
@@ -33,14 +33,9 @@ export default class SouthConnectorMock {
   resetMetrics = jest.fn();
   connectedEvent = new EventEmitter();
   metricsEvent = new EventEmitter();
-  queriesHistory = jest.fn();
-  queriesFile = jest.fn();
-  queriesLastPoint = jest.fn();
-  queriesSubscription = jest.fn();
-  getThrottlingSettings = jest
-    .fn()
-    .mockImplementation(value => ({ maxReadInterval: value.throttling.maxReadInterval, overlap: value.throttling.overlap }));
-  getMaxInstantPerItem = jest.fn().mockImplementation(value => value.throttling?.maxInstantPerItem || false);
+  hasHistoryQuery = jest.fn();
+  hasDirectQuery = jest.fn();
+  hasSubscription = jest.fn();
 
   set connectorConfiguration(connectorConfiguration: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
     this.connector = connectorConfiguration;

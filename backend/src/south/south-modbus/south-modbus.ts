@@ -5,9 +5,9 @@ import { client } from 'jsmodbus';
 import SouthConnector from '../south-connector';
 import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { QueriesLastPoint } from '../south-interface';
+import { SouthDirectQuery } from '../south-interface';
 import { DateTime } from 'luxon';
-import { SouthModbusItemSettings, SouthModbusSettings } from '../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthModbusItemSettings, SouthModbusSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -18,7 +18,7 @@ import { Instant } from '../../model/types';
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
-export default class SouthModbus extends SouthConnector<SouthModbusSettings, SouthModbusItemSettings> implements QueriesLastPoint {
+export default class SouthModbus extends SouthConnector<SouthModbusSettings, SouthModbusItemSettings> implements SouthDirectQuery {
   private socket: net.Socket | null = null;
   private modbusClient: ModbusTCPClient | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
@@ -26,7 +26,12 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
 
   constructor(
     connector: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -113,7 +118,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     }
   }
 
-  async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthModbusItemSettings>>): Promise<void> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthModbusItemSettings>>): Promise<OIBusTimeValue | null> {
     const dataValues: Array<OIBusTimeValue> = [];
     try {
       if (!this.modbusClient) {
@@ -131,7 +136,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
           content: dataValues
         },
         startRequest.toUTC().toISO(),
-        [...new Set(items.map(item => item.id))]
+        items
       );
     } catch (error: unknown) {
       await this.disconnect();
@@ -140,6 +145,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       }
       throw error;
     }
+    return dataValues.length > 0 ? dataValues[dataValues.length - 1] : null;
   }
 
   /**

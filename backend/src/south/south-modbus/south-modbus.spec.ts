@@ -285,14 +285,14 @@ describe('South Modbus', () => {
       return [];
     });
 
-    await south.lastPointQuery(configuration.items);
+    await south.directQuery(configuration.items);
     expect(south.modbusFunction).toHaveBeenCalledTimes(configuration.items.length);
     expect(south.modbusFunction).toHaveBeenCalledWith(mockedClient, configuration.items[0]);
     expect(south.disconnect).not.toHaveBeenCalled();
     expect(south.addContent).toHaveBeenCalledWith(
       { content: [], type: 'time-values' },
       testData.constants.dates.FAKE_NOW,
-      configuration.items.map(item => item.id)
+      configuration.items
     );
   });
 
@@ -306,12 +306,12 @@ describe('South Modbus', () => {
     south.modbusFunction = jest.fn().mockImplementation(() => {
       throw new Error('modbus function error');
     });
-    await expect(south.lastPointQuery([configuration.items[1]])).rejects.toThrow(new Error('modbus function error'));
+    await expect(south.directQuery([configuration.items[1]])).rejects.toThrow(new Error('modbus function error'));
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
 
     south['disconnecting'] = false;
-    await expect(south.lastPointQuery([configuration.items[1]])).rejects.toThrow(new Error('modbus function error'));
+    await expect(south.directQuery([configuration.items[1]])).rejects.toThrow(new Error('modbus function error'));
     expect(south.disconnect).toHaveBeenCalledTimes(2);
     expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
   });
@@ -421,7 +421,7 @@ describe('South Modbus', () => {
   it('should throw an error when client not set', async () => {
     south.modbusFunction = jest.fn();
 
-    await expect(south.lastPointQuery(configuration.items)).rejects.toThrow(`Could not read address: Modbus client not set`);
+    await expect(south.directQuery(configuration.items)).rejects.toThrow(`Could not read address: Modbus client not set`);
     expect(south.modbusFunction).not.toHaveBeenCalled();
   });
 

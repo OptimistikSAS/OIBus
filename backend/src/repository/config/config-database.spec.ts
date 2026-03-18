@@ -2499,19 +2499,13 @@ describe('Repository with populated database', () => {
           id: '',
           name: 'new item',
           enabled: true,
-          settings: {} as SouthItemSettings,
-          maxReadInterval: null,
-          readDelay: null,
-          overlap: null
+          settings: {} as SouthItemSettings
         },
         {
           id: '',
           name: 'another item',
           enabled: true,
-          settings: {} as SouthItemSettings,
-          maxReadInterval: null,
-          readDelay: null,
-          overlap: null
+          settings: {} as SouthItemSettings
         }
       ];
       newHistoryQuery.northTransformers = [
@@ -2634,10 +2628,7 @@ describe('Repository with populated database', () => {
         id: '',
         name: 'new history item',
         enabled: false,
-        settings: {} as SouthItemSettings,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        settings: {} as SouthItemSettings
       });
       itemsToSave[0].name = 'updated name';
 
@@ -2662,10 +2653,7 @@ describe('Repository with populated database', () => {
         id: '',
         name: 'new history item',
         enabled: false,
-        settings: {} as SouthItemSettings,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        settings: {} as SouthItemSettings
       });
       itemsToSave[0].name = 'updated name';
 
