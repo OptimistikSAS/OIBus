@@ -17,7 +17,7 @@ import {
 import { ScanMode } from '../model/scan-mode.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { SouthConnectorEntity, SouthConnectorEntityLight } from '../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
 import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
@@ -31,7 +31,7 @@ import { buildNorth, createNorthOrchestrator, deleteNorthCache, initNorthCache }
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import { HistoryQueryEntity, HistoryQueryEntityLight } from '../model/histor-query.model';
+import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
 import HistoryQuery from './history-query';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
@@ -240,10 +240,10 @@ export default class DataStreamEngine {
     south.connectorConfiguration = this.southConnectorRepository.findSouthById(southId)!;
     south.connectedEvent.removeAllListeners();
     south.connectedEvent.on('connected', async () => {
-      if (south.queriesLastPoint() || south.queriesFile() || south.queriesHistory()) {
+      if (south.hasDirectQuery() || south.hasHistoryQuery()) {
         south.updateCronJobs();
       }
-      if (south.queriesSubscription()) {
+      if (south.hasSubscription()) {
         await south.updateSubscriptions();
       }
     });
@@ -282,13 +282,6 @@ export default class DataStreamEngine {
   async reloadSouth(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
     await this.stopSouth(southConnector.id);
     const south = this.getSouth(southConnector.id).south;
-    if (south.queriesHistory()) {
-      south.updateSouthCacheOnScanModeAndMaxInstantChanges(
-        south.connectorConfiguration,
-        southConnector,
-        south.getMaxInstantPerItem(south.connectorConfiguration.settings)
-      );
-    }
     south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
     await this.startSouth(southConnector.id);
   }
@@ -297,17 +290,10 @@ export default class DataStreamEngine {
     const south = this.getSouth(southConnector.id).south;
     south.connectorConfiguration = this.southConnectorRepository.findSouthById(southConnector.id)!;
     if (south.isEnabled()) {
-      if (south.queriesHistory()) {
-        south.updateSouthCacheOnScanModeAndMaxInstantChanges(
-          south.connectorConfiguration,
-          southConnector,
-          south.getMaxInstantPerItem(south.connectorConfiguration.settings)
-        );
-      }
-      if (south.queriesLastPoint() || south.queriesHistory() || south.queriesFile()) {
+      if (south.hasDirectQuery() || south.hasHistoryQuery()) {
         south.updateCronJobs();
       }
-      if (south.queriesSubscription()) {
+      if (south.hasSubscription()) {
         await south.updateSubscriptions();
       }
     }
@@ -461,10 +447,15 @@ export default class DataStreamEngine {
   /**
    * Method called by South connectors to add content to the appropriate Norths
    */
-  async addContent(southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) {
+  async addContent(
+    southId: string,
+    data: OIBusContent,
+    queryTime: Instant,
+    items: Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
+  ) {
     for (const north of this.northConnectors.values()) {
       if (north.north.isEnabled()) {
-        await north.north.cacheContent(data, { source: 'south', southId, queryTime, itemIds });
+        await north.north.cacheContent(data, { source: 'south', southId, queryTime, items });
       }
     }
   }

@@ -68,19 +68,6 @@ export default class ScanModeService {
 
   async delete(scanModeId: string): Promise<void> {
     const scanMode = this.findById(scanModeId);
-
-    // Delete cache entries for this scan mode from all South connector cache tables
-    const southConnectors = this.southConnectorRepository.findAllSouth();
-    for (const southConnector of southConnectors) {
-      const items = this.southConnectorRepository.findAllItemsForSouth(southConnector.id);
-      const itemsUsingScanMode = items.filter(item => item.scanMode.id === scanMode.id);
-      for (const item of itemsUsingScanMode) {
-        this.southCacheRepository.deleteItemValue(southConnector.id, item.id);
-      }
-      // Also delete the scan mode entry itself (used in shared mode)
-      this.southCacheRepository.deleteItemValue(southConnector.id, scanMode.id);
-    }
-
     this.scanModeRepository.delete(scanMode.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }

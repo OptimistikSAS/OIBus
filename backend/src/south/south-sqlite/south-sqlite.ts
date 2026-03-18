@@ -14,20 +14,25 @@ import {
 } from '../../service/utils';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
-import { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
+import { SouthHistoryQuery } from '../south-interface';
+import { SouthItemSettings, SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
  */
-export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings> implements QueriesHistory {
+export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings> implements SouthHistoryQuery {
   constructor(
     connector: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -140,71 +145,53 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     items: Array<SouthConnectorItemEntity<SouthSQLiteItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant | null> {
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
     let updatedStartTime: Instant | null = null;
 
-    for (const item of items) {
-      const startRequest = DateTime.now();
-      const result: Array<Record<string, string | number>> = await this.queryData(item, startTime, endTime);
-      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
+    const startRequest = DateTime.now();
+    const result: Array<Record<string, string | number>> = await this.queryData(items[0], startTime, endTime);
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
-      if (result.length > 0) {
-        this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
+    if (result.length > 0) {
+      this.logger.info(`Found ${result.length} results for item ${items[0].name} in ${requestDuration} ms`);
 
-        const formattedResult = result.map(entry => {
-          const formattedEntry: Record<string, string | number> = {};
-          Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
-            if (!datetimeField) {
-              formattedEntry[key] = value;
-            } else {
-              const entryDate = convertDateTimeToInstant(value, datetimeField);
-              if (datetimeField.useAsReference && entryDate) {
-                if (!updatedStartTime || entryDate > updatedStartTime) {
-                  updatedStartTime = entryDate;
-                }
+      const formattedResult = result.map(entry => {
+        const formattedEntry: Record<string, string | number> = {};
+        Object.entries(entry).forEach(([key, value]) => {
+          const datetimeField = items[0].settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
+          if (!datetimeField) {
+            formattedEntry[key] = value;
+          } else {
+            const entryDate = convertDateTimeToInstant(value, datetimeField);
+            if (datetimeField.useAsReference && entryDate) {
+              if (!updatedStartTime || entryDate > updatedStartTime) {
+                updatedStartTime = entryDate;
               }
-              formattedEntry[key] = formatInstant(entryDate, {
-                type: 'string',
-                format: item.settings.serialization.outputTimestampFormat,
-                timezone: item.settings.serialization.outputTimezone,
-                locale: 'en-En'
-              });
             }
-          });
-          return formattedEntry;
+            formattedEntry[key] = formatInstant(entryDate, {
+              type: 'string',
+              format: items[0].settings.serialization.outputTimestampFormat,
+              timezone: items[0].settings.serialization.outputTimezone,
+              locale: 'en-En'
+            });
+          }
         });
-        await persistResults(
-          formattedResult,
-          item.settings.serialization,
-          this.connector.name,
-          item.name,
-          item.id,
-          startRequest.toUTC().toISO(),
-          this.tmpFolder,
-          this.addContent.bind(this),
-          this.logger
-        );
-      } else {
-        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
-      }
+        return formattedEntry;
+      });
+      await persistResults(
+        formattedResult,
+        items[0].settings.serialization,
+        this.connector.name,
+        items[0],
+        startRequest.toUTC().toISO(),
+        this.tmpFolder,
+        this.addContent.bind(this),
+        this.logger
+      );
+    } else {
+      this.logger.debug(`No result found for item ${items[0].name}. Request done in ${requestDuration} ms`);
     }
-    return updatedStartTime;
-  }
-
-  getThrottlingSettings(settings: SouthSQLiteSettings): SouthThrottlingSettings {
-    return {
-      maxReadInterval: settings.throttling.maxReadInterval,
-      readDelay: settings.throttling.readDelay
-    };
-  }
-
-  getMaxInstantPerItem(_settings: SouthSQLiteSettings): boolean {
-    return true;
-  }
-
-  getOverlap(settings: SouthSQLiteSettings): number {
-    return settings.throttling.overlap;
+    return { trackedInstant: updatedStartTime, value: result.length > 0 ? result[result.length - 1] : null };
   }
 
   /**

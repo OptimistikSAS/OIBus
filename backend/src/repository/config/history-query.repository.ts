@@ -37,6 +37,7 @@ export default class HistoryQueryRepository {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
+      `throttling_max_read_interval, throttling_read_delay, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
@@ -51,6 +52,7 @@ export default class HistoryQueryRepository {
     const query =
       `SELECT id, name, description, status, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, ` +
+      `throttling_max_read_interval, throttling_read_delay, ` +
       `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
       `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
       `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
@@ -70,11 +72,12 @@ export default class HistoryQueryRepository {
         const insertQuery =
           `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, ` +
           `start_time, end_time, south_type, north_type, south_settings, north_settings, ` +
+          `throttling_max_read_interval, throttling_read_delay, ` +
           `caching_trigger_schedule, caching_trigger_number_of_elements, caching_trigger_number_of_files, ` +
           `caching_throttling_run_min_delay, caching_throttling_cache_max_size, caching_throttling_max_number_of_elements, ` +
           `caching_error_retry_interval, caching_error_retry_count, caching_error_retention_duration, ` +
           `caching_archive_enabled, caching_archive_retention_duration, created_by, updated_by) ` +
-          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         this.database.prepare(insertQuery).run(
           history.id,
           history.name,
@@ -86,6 +89,8 @@ export default class HistoryQueryRepository {
           history.northType,
           JSON.stringify(history.southSettings),
           JSON.stringify(history.northSettings),
+          history.throttling.maxReadInterval,
+          history.throttling.readDelay,
           history.caching.trigger.scanMode.id,
           history.caching.trigger.numberOfElements,
           history.caching.trigger.numberOfFiles,
@@ -104,6 +109,7 @@ export default class HistoryQueryRepository {
         const query =
           `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, start_time = ?, ` +
           `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
+          `throttling_max_read_interval = ?, throttling_read_delay = ?, ` +
           `caching_trigger_schedule = ?, caching_trigger_number_of_elements = ?, caching_trigger_number_of_files = ?, ` +
           `caching_throttling_run_min_delay = ?, caching_throttling_cache_max_size = ?, caching_throttling_max_number_of_elements = ?, ` +
           `caching_error_retry_interval = ?, caching_error_retry_count = ?, caching_error_retention_duration = ?, ` +
@@ -120,6 +126,8 @@ export default class HistoryQueryRepository {
             history.northType,
             JSON.stringify(history.southSettings),
             JSON.stringify(history.northSettings),
+            history.throttling.maxReadInterval,
+            history.throttling.readDelay,
             history.caching.trigger.scanMode.id,
             history.caching.trigger.numberOfElements,
             history.caching.trigger.numberOfFiles,
@@ -484,9 +492,6 @@ export default class HistoryQueryRepository {
       name: result.name,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings) as SouthItemSettings,
-      maxReadInterval: null,
-      readDelay: null,
-      overlap: null,
       createdBy: result.created_by ?? undefined,
       updatedBy: result.updated_by ?? undefined
     };
@@ -506,6 +511,10 @@ export default class HistoryQueryRepository {
       northType: result.north_type as OIBusNorthType,
       southSettings: JSON.parse(result.south_settings as string) as SouthSettings,
       northSettings: JSON.parse(result.north_settings as string) as NorthSettings,
+      throttling: {
+        maxReadInterval: result.throttling_max_read_interval as number,
+        readDelay: result.throttling_read_delay as number
+      },
       caching: {
         trigger: {
           scanMode: this.findScanModeForHistory(result.caching_trigger_schedule as string),

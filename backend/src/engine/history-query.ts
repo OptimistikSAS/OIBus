@@ -16,7 +16,6 @@ import {
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { EventEmitter } from 'node:events';
 import { Instant } from '../model/types';
-import { QueriesHistory } from '../south/south-interface';
 
 const FINISH_INTERVAL = 5000;
 
@@ -71,16 +70,12 @@ export default class HistoryQuery {
               description: '',
               cron: ''
             },
-            maxReadInterval: 0,
-            readDelay: 0,
-            overlap: 0
+            maxReadInterval: this.historyConfiguration.throttling.maxReadInterval,
+            readDelay: this.historyConfiguration.throttling.readDelay,
+            overlap: null
           })),
         this.historyConfiguration.startTime,
-        this.historyConfiguration.endTime,
-        'history',
-        (this.south as unknown as QueriesHistory).getThrottlingSettings(this.historyConfiguration.southSettings),
-        (this.south as unknown as QueriesHistory).getMaxInstantPerItem(this.historyConfiguration.southSettings),
-        0
+        this.historyConfiguration.endTime
       )
         .then(() => {
           this.south!.resolveDeferredPromise();
