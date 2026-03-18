@@ -320,7 +320,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           element.items.length &&
           element.inputType === data.type &&
           element.south.id === metadataSource.southId &&
-          metadataSource.itemIds.some(itemId => element.items.find(item => item.id === itemId))
+          metadataSource.items.some(itemMetadata => element.items.find(item => item.id === itemMetadata.id))
         );
       });
 

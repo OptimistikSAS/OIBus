@@ -37,12 +37,6 @@ describe('South OPC', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        maxInstantPerItem: true
-      },
       agentUrl: 'http://localhost:2224',
       retryInterval: 1000,
       host: 'localhost',
@@ -62,9 +56,9 @@ describe('South OPC', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -77,9 +71,9 @@ describe('South OPC', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -93,9 +87,9 @@ describe('South OPC', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -109,15 +103,6 @@ describe('South OPC', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-  });
-
-  it('should get throttling settings', () => {
-    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
-      maxReadInterval: configuration.settings.throttling.maxReadInterval,
-      readDelay: configuration.settings.throttling.readDelay
-    });
-    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(configuration.settings.throttling.maxInstantPerItem);
-    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
   it('should properly connect to remote agent and disconnect', async () => {
@@ -319,20 +304,26 @@ describe('South OPC', () => {
       }
     );
 
-    expect(result).toEqual('2020-03-01T00:00:00.001Z');
+    expect(result).toEqual({
+      trackedInstant: '2020-03-01T00:00:00.001Z',
+      value: { content: [], maxInstantRetrieved: '2020-03-01T00:00:00.000Z', recordCount: 0 }
+    });
     expect(south.addContent).toHaveBeenCalledWith(
       {
         type: 'time-values',
         content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
       },
       testData.constants.dates.FAKE_NOW,
-      [configuration.items[0].id, configuration.items[1].id]
+      [configuration.items[0], configuration.items[1]]
     );
 
     expect(logger.debug).toHaveBeenCalledWith(`No result found. Request done in 0 ms`);
 
-    const noUpdateInstant = await south.historyQuery([configuration.items[0]], result!, endTime);
-    expect(noUpdateInstant).toEqual(null);
+    const noUpdateInstant = await south.historyQuery([configuration.items[0]], result!.trackedInstant!, endTime);
+    expect(noUpdateInstant).toEqual({
+      trackedInstant: null,
+      value: { content: [{ timestamp: '2020-02-01T00:00:00.000Z' }], maxInstantRetrieved: '2020-02-01T00:00:00.000Z', recordCount: 1 }
+    });
   });
 
   it('should manage query error', async () => {
