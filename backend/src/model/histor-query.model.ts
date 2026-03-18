@@ -27,6 +27,10 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   northType: OIBusNorthType;
   southSettings: S;
   northSettings: N;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+  };
   caching: {
     trigger: {
       scanMode: ScanMode;
@@ -56,7 +60,4 @@ export interface HistoryQueryItemEntity<T extends SouthItemSettings> extends Bas
   name: string;
   enabled: boolean;
   settings: T;
-  maxReadInterval: number | null;
-  readDelay: number | null;
-  overlap: number | null;
 }

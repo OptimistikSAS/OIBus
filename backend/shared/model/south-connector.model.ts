@@ -331,7 +331,7 @@ export interface SouthItemGroupDTO extends BaseEntity {
    *
    * @example 200
    */
-  readDelay: number;
+  readDelay: number | null;
 }
 
 /**
@@ -701,41 +701,6 @@ export interface SouthConnectorManifest {
 }
 
 /**
- * Cache information for a South connector item.
- * Tracks the latest collected data for an item.
- */
-export interface SouthCache {
-  /**
-   * The ID of the South connector.
-   *
-   * @example "south-folder-1"
-   */
-  southId: string;
-
-  /**
-   * The ID of the scan mode used for this cached data.
-   *
-   * @example "periodic-5min"
-   */
-  scanModeId: string;
-
-  /**
-   * The ID of the item this cache entry belongs to.
-   *
-   * @example "item-1"
-   */
-  itemId: string;
-
-  /**
-   * The timestamp of the most recent data in the cache (ISO 8601 format).
-   * For folder-scanner, this represents when the last file was processed.
-   *
-   * @example "2023-05-15T12:34:56.789Z"
-   */
-  maxInstant: Instant;
-}
-
-/**
  * Last value information for a South connector item.
  * Stores the last received value and metadata per item.
  */
@@ -753,6 +718,20 @@ export interface SouthItemLastValue {
    * @example "Temperature Sensor 1"
    */
   itemName: string;
+
+  /**
+   * The ID of the group.
+   *
+   * @example "group-123"
+   */
+  groupId: string | null;
+
+  /**
+   * The name of the group.
+   *
+   * @example "Temperature Group"
+   */
+  groupName: string;
 
   /**
    * The timestamp when the data was last queried (ISO 8601 format).
@@ -813,3 +792,18 @@ export interface SouthConnectorItemSearchParam {
    */
   page: number;
 }
+
+export const SOUTH_SINGLE_ITEMS: Array<OIBusSouthType> = [
+  'folder-scanner',
+  'ftp',
+  'mssql',
+  'mysql',
+  'odbc',
+  'oianalytics',
+  'oledb',
+  'oracle',
+  'postgresql',
+  'rest',
+  'sftp',
+  'sqlite'
+];

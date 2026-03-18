@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import SouthFtp from './south-ftp';
 
-import { compress } from '../../service/utils';
+import { checkAge, compress } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
@@ -151,6 +151,7 @@ describe('SouthFTP', () => {
     (fs.mkdir as jest.Mock).mockReturnValue(undefined);
     (fs.unlink as jest.Mock).mockReturnValue(undefined);
     (compress as jest.Mock).mockReturnValue(undefined);
+    (checkAge as jest.Mock).mockReturnValue(true);
     southCacheService.createCustomTable.mockReturnValue(undefined);
     southCacheService.getQueryOnCustomTable.mockReturnValue(null);
     southCacheService.runQueryOnCustomTable.mockReturnValue(undefined);
@@ -209,7 +210,7 @@ describe('SouthFTP', () => {
     it('should test item', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.list.mockResolvedValue([fileInfo]);
+      south['listFiles'] = jest.fn().mockResolvedValue([fileInfo]);
 
       const item = configuration.items[0];
 
@@ -275,7 +276,7 @@ describe('SouthFTP', () => {
       mockFtpClient.list.mockResolvedValue([fileInfo]);
 
       const item = configuration.items[0];
-      const files = await south.listFiles(item);
+      const files = await south.listFiles(item, []);
 
       expect(files).toEqual([fileInfo]);
       expect(mockFtpClient.access).toHaveBeenCalledWith({
@@ -296,20 +297,9 @@ describe('SouthFTP', () => {
       mockFtpClient.list.mockResolvedValue([fileInfo1, fileInfo2]);
 
       const item = configuration.items[0]; // regex: '.*.csv'
-      const files = await south.listFiles(item);
+      const files = await south.listFiles(item, []);
 
       expect(files).toEqual([fileInfo1]);
-    });
-
-    it('should filter files by age', async () => {
-      const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ milliseconds: 500 }).toMillis())); // too recent
-
-      mockFtpClient.list.mockResolvedValue([fileInfo]);
-
-      const item = configuration.items[0]; // minAge: 1000
-      const files = await south.listFiles(item);
-
-      expect(files).toEqual([]);
     });
 
     it('should get file', async () => {
@@ -319,7 +309,7 @@ describe('SouthFTP', () => {
       mockFtpClient.remove.mockResolvedValue(undefined);
 
       const item = configuration.items[0]; // preserveFiles: false
-      await south.getFile(fileInfo, item);
+      await south.getFile(fileInfo, item, []);
 
       expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
       expect(mockFtpClient.remove).toHaveBeenCalledWith('input/test.csv');
@@ -330,7 +320,7 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
         },
         testData.constants.dates.FAKE_NOW,
-        [item.id]
+        [item]
       );
     });
 
@@ -356,7 +346,7 @@ describe('SouthFTP', () => {
       await southWithCompression.start();
 
       const item = configuration.items[0];
-      await southWithCompression.getFile(fileInfo, item);
+      await southWithCompression.getFile(fileInfo, item, []);
 
       expect(compress).toHaveBeenCalledWith(
         path.resolve('cacheFolder', 'tmp', 'test.csv'),
@@ -369,7 +359,7 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
         },
         testData.constants.dates.FAKE_NOW,
-        [item.id]
+        [item]
       );
     });
 
@@ -380,15 +370,9 @@ describe('SouthFTP', () => {
       southCacheService.getItemLastValue.mockReturnValue(null);
 
       const item = configuration.items[1]; // preserveFiles: true
-      await south.getFile(fileInfo, item);
+      await south.getFile(fileInfo, item, []);
 
       expect(mockFtpClient.remove).not.toHaveBeenCalled();
-      expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith('southId', {
-        itemId: item.id,
-        queryTime: expect.any(String),
-        value: [{ filename: 'test.log', modifiedTime: fileInfo.modifiedAt!.getTime() }],
-        trackedInstant: null
-      });
     });
 
     it('should handle file removal error', async () => {
@@ -398,7 +382,7 @@ describe('SouthFTP', () => {
       mockFtpClient.remove.mockRejectedValue(new Error('Remove failed'));
 
       const item = configuration.items[0];
-      await south.getFile(fileInfo, item);
+      await south.getFile(fileInfo, item, []);
 
       expect(mockFtpClient.remove).toHaveBeenCalledWith('input/test.csv');
       expect(addContentCallback).toHaveBeenCalledWith(
@@ -408,7 +392,7 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
         },
         testData.constants.dates.FAKE_NOW,
-        [item.id]
+        [item]
       );
     });
 
@@ -433,7 +417,7 @@ describe('SouthFTP', () => {
       await southWithCompression.start();
 
       const item = configuration.items[0];
-      await southWithCompression.getFile(fileInfo, item);
+      await southWithCompression.getFile(fileInfo, item, []);
 
       expect(addContentCallback).toHaveBeenCalledWith(
         'southId',
@@ -442,7 +426,7 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
         },
         testData.constants.dates.FAKE_NOW,
-        [item.id]
+        [item]
       );
     });
 
@@ -483,7 +467,7 @@ describe('SouthFTP', () => {
       mockFtpClient.list.mockResolvedValueOnce([dirEntry]).mockResolvedValueOnce([fileInSubdir, fileFailsCondition]);
 
       const item = configRecursive.items[0];
-      const result = await southRecursive.listFiles(item);
+      const result = await southRecursive.listFiles(item, []);
 
       expect(mockFtpClient.list).toHaveBeenCalledWith('input');
       expect(mockFtpClient.list).toHaveBeenCalledWith('input/subdir');
@@ -501,7 +485,7 @@ describe('SouthFTP', () => {
       mockFtpClient.downloadTo.mockResolvedValue(undefined);
       mockFtpClient.remove.mockResolvedValue(undefined);
 
-      await south.fileQuery([configuration.items[0]]);
+      await south.directQuery([configuration.items[0]]);
 
       expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
     });
@@ -513,7 +497,7 @@ describe('SouthFTP', () => {
       mockFtpClient.downloadTo.mockResolvedValue(undefined);
       mockFtpClient.remove.mockResolvedValue(undefined);
 
-      await south.fileQuery([configuration.items[0]]);
+      await south.directQuery([configuration.items[0]]);
 
       expect(mockFtpClient.list).toHaveBeenCalledWith('input');
       expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
@@ -524,7 +508,7 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
         },
         testData.constants.dates.FAKE_NOW,
-        [configuration.items[0].id]
+        [configuration.items[0]]
       );
     });
 
@@ -554,7 +538,7 @@ describe('SouthFTP', () => {
       mockFtpClient.downloadTo.mockResolvedValue(undefined);
       mockFtpClient.remove.mockResolvedValue(undefined);
 
-      await southWithLimit.fileQuery([configWithLimit.items[0]]);
+      await southWithLimit.directQuery([configWithLimit.items[0]]);
 
       expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
       expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
@@ -587,7 +571,7 @@ describe('SouthFTP', () => {
       mockFtpClient.downloadTo.mockResolvedValue(undefined);
       mockFtpClient.remove.mockResolvedValue(undefined);
 
-      await southWithLimit.fileQuery(configWithLimit.items);
+      await southWithLimit.directQuery(configWithLimit.items);
 
       expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
       expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
@@ -618,7 +602,7 @@ describe('SouthFTP', () => {
       mockFtpClient.downloadTo.mockResolvedValue(undefined);
       mockFtpClient.remove.mockResolvedValue(undefined);
 
-      await southWithLimit.fileQuery([configWithLimit.items[0]]);
+      await southWithLimit.directQuery([configWithLimit.items[0]]);
 
       expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(1);
       expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
@@ -651,7 +635,7 @@ describe('SouthFTP', () => {
       mockFtpClient.downloadTo.mockResolvedValue(undefined);
       mockFtpClient.remove.mockResolvedValue(undefined);
 
-      await southWithLimit.fileQuery(configWithLimit.items);
+      await southWithLimit.directQuery(configWithLimit.items);
 
       expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
       expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
@@ -678,7 +662,7 @@ describe('SouthFTP', () => {
 
       const item = configuration.items[0];
 
-      await expect(south.listFiles(item)).rejects.toThrow('FTP access failed');
+      await expect(south.listFiles(item, [])).rejects.toThrow('FTP access failed');
       expect(mockFtpClient.access).toHaveBeenCalled();
     });
 
@@ -689,7 +673,7 @@ describe('SouthFTP', () => {
 
       const item = configuration.items[0];
 
-      await expect(south.getFile(fileInfo, item)).rejects.toThrow('FTP access failed');
+      await expect(south.getFile(fileInfo, item, [])).rejects.toThrow('FTP access failed');
     });
 
     it('should handle download error', async () => {
@@ -700,7 +684,7 @@ describe('SouthFTP', () => {
 
       const item = configuration.items[0];
 
-      await expect(south.getFile(fileInfo, item)).rejects.toThrow('Download failed');
+      await expect(south.getFile(fileInfo, item, [])).rejects.toThrow('Download failed');
     });
 
     it('should handle FTP close error in listFiles', async () => {
@@ -714,20 +698,18 @@ describe('SouthFTP', () => {
 
       const item = configuration.items[0];
 
-      await expect(south.listFiles(item)).rejects.toThrow('Close failed');
+      await expect(south.listFiles(item, [])).rejects.toThrow('Close failed');
     });
 
     it('should handle FTP close error in getFile', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
       mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      mockFtpClient.close.mockRejectedValue(new Error('Close failed'));
+      mockFtpClient.downloadTo.mockRejectedValue(new Error('download failed'));
 
       const item = configuration.items[0];
 
-      await expect(south.getFile(fileInfo, item)).rejects.toThrow('Close failed');
+      await expect(south.getFile(fileInfo, item, [])).rejects.toThrow('download failed');
     });
 
     it('should handle file unlink error after compression', async () => {
@@ -758,7 +740,7 @@ describe('SouthFTP', () => {
       await southWithCompression.start();
 
       const item = configuration.items[0];
-      await southWithCompression.getFile(fileInfo, item);
+      await southWithCompression.getFile(fileInfo, item, []);
 
       // Should send the compressed file even if unlink fails
       expect(addContentCallback).toHaveBeenCalledWith(
@@ -768,21 +750,8 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
         },
         testData.constants.dates.FAKE_NOW,
-        [item.id]
+        [item]
       );
-    });
-
-    it('should check condition with ignoreModifiedDate false and existing file', async () => {
-      const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
-
-      southCacheService.getItemLastValue.mockReturnValue({
-        value: [{ filename: 'test.log', modifiedTime: DateTime.now().toMillis() }] // File exists with newer timestamp
-      });
-
-      const item = configuration.items[1]; // preserveFiles: true, ignoreModifiedDate: false
-      const result = south.checkCondition(item, fileInfo);
-
-      expect(result).toBe(false);
     });
 
     it('should handle empty username and password', async () => {
@@ -815,30 +784,6 @@ describe('SouthFTP', () => {
         password: '',
         secure: false
       });
-    });
-
-    it('should handle file without modifiedAt date', async () => {
-      const fileInfoWithoutDate: FileInfo = {
-        name: 'test.csv',
-        type: '-' as unknown as FileInfo['type'],
-        size: 100,
-        modifiedAt: undefined,
-        rawModifiedAt: '',
-        permissions: { user: 6, group: 4, world: 4 },
-        hardLinkCount: 1,
-        link: undefined,
-        group: 'group',
-        user: 'user',
-        uniqueID: 'unique',
-        isDirectory: false,
-        isSymbolicLink: false,
-        isFile: true,
-        date: new Date()
-      } as unknown as FileInfo;
-
-      const item = configuration.items[0];
-      const result = south.checkCondition(item, fileInfoWithoutDate);
-      expect(result).toBe(false);
     });
 
     it('should handle start method when connector id is not test', async () => {
@@ -883,7 +828,7 @@ describe('SouthFTP', () => {
       const fileInfo = createMockFileInfo('test.txt', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
       const item = configuration.items[2]; // preserveFiles: true, ignoreModifiedDate: true
-      const result = south.checkCondition(item, fileInfo);
+      const result = south.checkCondition(item, fileInfo, []);
 
       // With ignoreModifiedDate: true, it should return true regardless of modified time
       expect(result).toBe(true);
@@ -893,51 +838,9 @@ describe('SouthFTP', () => {
       const fileInfo = createMockFileInfo('test.xml', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
       const item = configuration.items[0]; // regex: '.*.csv'
-      const result = south.checkCondition(item, fileInfo);
+      const result = south.checkCondition(item, fileInfo, []);
 
       expect(result).toBe(false);
-    });
-
-    it('should get modified time when file exists in cache', async () => {
-      const item = configuration.items[0];
-      southCacheService.getItemLastValue.mockReturnValue({
-        value: [{ filename: 'test.csv', modifiedTime: 123456789 }]
-      });
-
-      const result = south.getModifiedTime(item, 'test.csv');
-
-      expect(result).toBe(123456789);
-      expect(southCacheService.getItemLastValue).toHaveBeenCalledWith('southId', item.id);
-    });
-
-    it('should return 0 when file does not exist in cache', async () => {
-      const item = configuration.items[0];
-      southCacheService.getItemLastValue.mockReturnValue(null);
-
-      const result = south.getModifiedTime(item, 'nonexistent.csv');
-
-      expect(result).toBe(0);
-    });
-
-    it('should return 0 when filename is not in cache array', async () => {
-      const item = configuration.items[0];
-      southCacheService.getItemLastValue.mockReturnValue({
-        value: [{ filename: 'other.csv', modifiedTime: 1 }]
-      });
-
-      const result = south.getModifiedTime(item, 'requested.csv');
-
-      expect(result).toBe(0);
-      expect(southCacheService.getItemLastValue).toHaveBeenCalledWith('southId', item.id);
-    });
-
-    it('should return 0 when getModifiedTime value is not an array', async () => {
-      const item = configuration.items[0];
-      southCacheService.getItemLastValue.mockReturnValue({ value: 42 });
-
-      const result = south.getModifiedTime(item, 'any');
-
-      expect(result).toBe(0);
     });
 
     // Test the specific error handling in getFile method
@@ -950,7 +853,7 @@ describe('SouthFTP', () => {
       mockFtpClient.close.mockResolvedValue(undefined);
 
       const item = configuration.items[0];
-      await south.getFile(fileInfo, item);
+      await south.getFile(fileInfo, item, []);
 
       expect(mockFtpClient.access).toHaveBeenCalled();
       expect(mockFtpClient.downloadTo).toHaveBeenCalled();
@@ -982,7 +885,7 @@ describe('SouthFTP', () => {
       await southWithCompression.start();
 
       const item = configuration.items[0];
-      await southWithCompression.getFile(fileInfo, item);
+      await southWithCompression.getFile(fileInfo, item, []);
 
       // Should send the original file when compression fails
       expect(addContentCallback).toHaveBeenCalledWith(
@@ -992,7 +895,7 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
         },
         testData.constants.dates.FAKE_NOW,
-        [item.id]
+        [item]
       );
     });
 
@@ -1040,25 +943,10 @@ describe('SouthFTP', () => {
       });
 
       const item = configuration.items[1]; // preserveFiles: true, ignoreModifiedDate: false
-      const result = south.checkCondition(item, fileInfo);
+      const result = south.checkCondition(item, fileInfo, []);
 
       // Should return true because the file is newer than the cached version
       expect(result).toBe(true);
-    });
-
-    it('should handle file with modifiedAt date that is older than cached version', async () => {
-      const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 5 }).toMillis()));
-
-      // Mock that the file exists in cache with a newer timestamp
-      southCacheService.getItemLastValue.mockReturnValue({
-        value: [{ filename: 'test.log', modifiedTime: DateTime.now().minus({ minutes: 1 }).toMillis() }] // Newer timestamp
-      });
-
-      const item = configuration.items[1]; // preserveFiles: true, ignoreModifiedDate: false
-      const result = south.checkCondition(item, fileInfo);
-
-      // Should return false because the file is older than the cached version
-      expect(result).toBe(false);
     });
 
     it('should handle file with undefined modifiedAt date in getFile', async () => {
@@ -1086,7 +974,7 @@ describe('SouthFTP', () => {
       mockFtpClient.close.mockResolvedValue(undefined);
 
       const item = configuration.items[1]; // preserveFiles: true
-      await south.getFile(fileInfoWithoutDate, item);
+      await south.getFile(fileInfoWithoutDate, item, []);
 
       // Should use Date.now() when modifiedAt is undefined
       expect(mockFtpClient.access).toHaveBeenCalled();
@@ -1107,7 +995,7 @@ describe('SouthFTP', () => {
       (fs.unlink as jest.Mock).mockRejectedValue(new Error('Unlink failed'));
 
       const item = configuration.items[0];
-      await south.getFile(fileInfo, item);
+      await south.getFile(fileInfo, item, []);
 
       // Should still send the file even if unlink fails
       expect(addContentCallback).toHaveBeenCalledWith(
@@ -1117,52 +1005,8 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
         },
         testData.constants.dates.FAKE_NOW,
-        [item.id]
+        [item]
       );
-    });
-
-    it('should update modified time', () => {
-      const item = configuration.items[0];
-      const filename = 'test.csv';
-      const mtimeMs = 123456789;
-
-      southCacheService.getItemLastValue.mockReturnValue(null);
-      south.updateModifiedTime(item, filename, mtimeMs);
-
-      expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith('southId', {
-        itemId: item.id,
-        queryTime: expect.any(String),
-        value: [{ filename, modifiedTime: mtimeMs }],
-        trackedInstant: null
-      });
-    });
-
-    it('should update modified time for existing file entry', () => {
-      const item = configuration.items[0];
-      const filename = 'existing.csv';
-      southCacheService.getItemLastValue.mockReturnValue({
-        value: [{ filename, modifiedTime: 1000 }]
-      });
-      south.updateModifiedTime(item, filename, 2000);
-      expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith('southId', {
-        itemId: item.id,
-        queryTime: expect.any(String),
-        value: [{ filename, modifiedTime: 2000 }],
-        trackedInstant: null
-      });
-    });
-
-    it('should reset files when updateModifiedTime value is not an array', () => {
-      const item = configuration.items[0];
-      const filename = 'new.csv';
-      southCacheService.getItemLastValue.mockReturnValue({ value: 42 });
-      south.updateModifiedTime(item, filename, 1);
-      expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith('southId', {
-        itemId: item.id,
-        queryTime: expect.any(String),
-        value: [{ filename, modifiedTime: 1 }],
-        trackedInstant: null
-      });
     });
 
     it('should handle compression error and unlink error', async () => {
@@ -1193,7 +1037,7 @@ describe('SouthFTP', () => {
       await southWithCompression.start();
 
       const item = configuration.items[0];
-      await southWithCompression.getFile(fileInfo, item);
+      await southWithCompression.getFile(fileInfo, item, []);
 
       // Should send the original file when compression fails
       expect(addContentCallback).toHaveBeenCalledWith(
@@ -1203,7 +1047,7 @@ describe('SouthFTP', () => {
           filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
         },
         testData.constants.dates.FAKE_NOW,
-        [item.id]
+        [item]
       );
     });
   });

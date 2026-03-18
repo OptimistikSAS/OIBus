@@ -5,8 +5,8 @@ import SouthConnector from '../south-connector';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../shared/model/types';
-import { QueriesSubscription } from '../south-interface';
-import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
+import { SouthSubscription } from '../south-interface';
+import { SouthItemSettings, SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -16,7 +16,7 @@ import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
 /**
  * Class SouthMQTT - Subscribe to a data topic from a MQTT broker
  */
-export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings> implements QueriesSubscription {
+export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings> implements SouthSubscription {
   private client: mqtt.MqttClient | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
@@ -31,7 +31,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   constructor(
     connector: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -114,7 +119,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
             )
           },
           DateTime.now().toUTC().toISO(),
-          [...new Set(messageToParse.map(element => element.item.id))]
+          [...new Set(messageToParse.map(element => element.item))]
         );
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${(error as Error).message}`);

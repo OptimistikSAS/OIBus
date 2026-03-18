@@ -188,17 +188,6 @@ describe('Scan Mode Service', () => {
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(scanModeRepository.delete).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(southConnectorRepository.findAllSouth).toHaveBeenCalled();
-    expect(southConnectorRepository.findAllItemsForSouth).toHaveBeenCalledWith('south1');
-    expect(southConnectorRepository.findAllItemsForSouth).toHaveBeenCalledWith('south2');
-
-    // Verify cache deletion for items
-    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('south1', 'item1');
-    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('south2', 'item1');
-
-    // Verify cache deletion for scan mode itself
-    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('south1', testData.scanMode.list[0].id);
-    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('south2', testData.scanMode.list[0].id);
 
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
@@ -212,7 +201,7 @@ describe('Scan Mode Service', () => {
 
     expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
     expect(scanModeRepository.delete).not.toHaveBeenCalled();
-    expect(southCacheRepository.deleteAllByScanMode).not.toHaveBeenCalled();
+    expect(southCacheRepository.dropItemValueTable).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
   });
 

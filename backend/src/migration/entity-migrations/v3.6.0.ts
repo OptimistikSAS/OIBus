@@ -1,10 +1,5 @@
 import { Knex } from 'knex';
-import {
-  SouthMQTTSettingsAuthentication,
-  SouthMQTTSettingsQos,
-  SouthOPCSettingsMode,
-  SouthOPCSettingsThrottling
-} from '../../../shared/model/south-settings.model';
+import { SouthMQTTSettingsAuthentication, SouthMQTTSettingsQos, SouthOPCSettingsMode } from '../../../shared/model/south-settings.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const COMMANDS_TABLE = 'commands';
@@ -39,7 +34,12 @@ interface NewSouthMQTTSettings {
 }
 
 interface OldSouthOPCSettings {
-  throttling: SouthOPCSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+    maxInstantPerItem: boolean;
+  };
   agentUrl: string;
   retryInterval: number;
   host: string;
@@ -47,7 +47,12 @@ interface OldSouthOPCSettings {
 }
 
 interface NewSouthOPCSettings {
-  throttling: SouthOPCSettingsThrottling;
+  throttling: {
+    maxReadInterval: number;
+    readDelay: number;
+    overlap: number;
+    maxInstantPerItem: boolean;
+  };
   agentUrl: string;
   retryInterval: number;
   host: string;

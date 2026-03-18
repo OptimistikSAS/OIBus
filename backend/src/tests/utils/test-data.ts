@@ -514,12 +514,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     description: 'my MSSQL south connector',
     enabled: false,
     settings: {
-      throttling: {
-        maxInstantPerItem: false,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        overlap: 0
-      },
       host: 'host',
       port: 1433,
       connectionTimeout: 1_000,
@@ -540,9 +534,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 0
       },
       {
         id: 'southItemId4',
@@ -552,9 +546,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 0
       }
     ]
   },
@@ -565,13 +559,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     description: 'my OPCUA south connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxInstantPerItem: false,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        overlap: 10
-      },
-      sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
@@ -595,9 +582,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 10
       },
       {
         id: 'southItemId6',
@@ -609,9 +596,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 10
       },
       {
         id: 'southItemId7',
@@ -623,9 +610,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 10
       },
       {
         id: 'southItemId8',
@@ -637,9 +624,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         scanMode: scanModes[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 10
       }
     ]
   }
@@ -899,11 +886,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     southType: 'mssql',
     northType: 'oianalytics',
     southSettings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 200,
-        overlap: 0
-      },
       host: 'host',
       port: 1433,
       connectionTimeout: 1_000,
@@ -919,6 +901,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       useOiaModule: true,
       timeout: 5_000,
       compress: true
+    },
+    throttling: {
+      maxReadInterval: 3600,
+      readDelay: 200
     },
     caching: {
       trigger: {
@@ -957,10 +943,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        } as SouthMSSQLItemSettings
       },
       {
         id: 'historyQueryItem2',
@@ -977,10 +960,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        } as SouthMSSQLItemSettings
       }
     ],
     northTransformers: [
@@ -1009,11 +989,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     southType: 'mssql',
     northType: 'file-writer',
     southSettings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 200,
-        overlap: 10
-      },
       host: 'host',
       port: 1433,
       connectionTimeout: 1_000,
@@ -1029,6 +1004,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       outputFolder: 'output-folder',
       prefix: 'prefix-',
       suffix: '-suffix'
+    },
+    throttling: {
+      maxReadInterval: 3600,
+      readDelay: 200
     },
     caching: {
       trigger: {
@@ -1067,10 +1046,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
             outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
             outputTimezone: 'UTC'
           }
-        } as SouthMSSQLItemSettings,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        } as SouthMSSQLItemSettings
       }
     ],
     northTransformers: []
@@ -1084,11 +1060,6 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   southType: 'mssql',
   northType: 'file-writer',
   southSettings: {
-    throttling: {
-      maxReadInterval: 3600,
-      readDelay: 200,
-      overlap: 10
-    },
     host: 'host',
     port: 1433,
     connectionTimeout: 1_000,

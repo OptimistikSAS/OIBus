@@ -126,9 +126,9 @@ describe('EditSouthItemGroupModalComponent', () => {
       expect(southConnectorService.createGroup).toHaveBeenCalledWith(southId, {
         name: 'New Group',
         scanModeId: scanModes[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+        overlap: 0,
+        maxReadInterval: 3600,
+        readDelay: 200
       });
       expect(fakeActiveModal.close).toHaveBeenCalledWith(newGroup);
     }));
@@ -158,8 +158,8 @@ describe('EditSouthItemGroupModalComponent', () => {
         name: 'New Group',
         scanModeId: scanModes[0].id,
         overlap: 100,
-        maxReadInterval: null,
-        readDelay: 0
+        maxReadInterval: 3600,
+        readDelay: 200
       });
     }));
 
