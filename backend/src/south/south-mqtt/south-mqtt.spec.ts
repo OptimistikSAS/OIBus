@@ -271,10 +271,10 @@ describe('SouthMQTT', () => {
         type: 'any-content'
       },
       testData.constants.dates.FAKE_NOW,
-      [mockPayload.item.id]
+      [mockPayload.item]
     );
 
-    // Verify internal state was properly reset
+    // Verify the internal state was properly reset
     expect(south['bufferedMessages']).toEqual([]);
     expect(clearTimeoutSpy).toHaveBeenCalled();
   });

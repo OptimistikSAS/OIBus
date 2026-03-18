@@ -469,8 +469,10 @@ describe('South Service', () => {
 
     expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(southId);
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(southId, itemId);
-    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, itemId);
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, null, itemId);
     expect(result).toEqual({
+      groupId: null,
+      groupName: '',
       itemId,
       itemName: testData.south.list[0].items[0].name,
       queryTime: cached.queryTime,
@@ -486,8 +488,10 @@ describe('South Service', () => {
 
     const result = service.getItemLastValue(southId, itemId);
 
-    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, itemId);
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, null, itemId);
     expect(result).toEqual({
+      groupId: null,
+      groupName: '',
       itemId,
       itemName: testData.south.list[0].items[0].name,
       queryTime: null,
@@ -704,7 +708,7 @@ describe('South Service', () => {
     await service.deleteAllItems(testData.south.list[0].id);
 
     expect(southConnectorRepository.deleteAllItemsBySouth).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(southCacheRepository.deleteAllBySouthConnector).toHaveBeenCalledWith(testData.south.list[0].id);
+    expect(southCacheRepository.dropItemValueTable).toHaveBeenCalledWith(testData.south.list[0].id);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
   });

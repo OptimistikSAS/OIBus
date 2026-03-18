@@ -4,7 +4,7 @@
 export default class SouthCacheServiceMock {
   getSouthCache = jest.fn();
   saveSouthCache = jest.fn();
-  resetSouthCache = jest.fn();
+  dropItemValueTable = jest.fn();
   createCustomTable = jest.fn();
   createItemValueTable = jest.fn();
   getQueryOnCustomTable = jest.fn();
