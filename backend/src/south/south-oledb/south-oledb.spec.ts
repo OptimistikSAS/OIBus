@@ -48,11 +48,6 @@ describe('SouthOLEDB', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: 'encrypted-password',
@@ -97,9 +92,9 @@ describe('SouthOLEDB', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -120,9 +115,9 @@ describe('SouthOLEDB', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -160,9 +155,9 @@ describe('SouthOLEDB', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -181,15 +176,6 @@ describe('SouthOLEDB', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-  });
-
-  it('should get throttling settings', () => {
-    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
-      maxReadInterval: configuration.settings.throttling.maxReadInterval,
-      readDelay: configuration.settings.throttling.readDelay
-    });
-    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(true);
-    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
   it('should properly connect to remote agent and disconnect ', async () => {
@@ -338,14 +324,23 @@ describe('SouthOLEDB', () => {
   });
 
   it('should properly run historyQuery', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
+    const startTime = testData.constants.dates.DATE_1;
+    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    });
 
-    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[1], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[2], startTime, testData.constants.dates.FAKE_NOW);
+    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
+      configuration.items[0],
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.FAKE_NOW
+    );
+    expect(result).toEqual({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    });
   });
 
   it('should get data from Remote agent', async () => {
@@ -393,7 +388,10 @@ describe('SouthOLEDB', () => {
       }
     );
 
-    expect(result).toEqual('2020-03-01T00:00:00.000Z');
+    expect(result).toEqual({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+    });
     expect(persistResults).toHaveBeenCalledWith(
       [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
       {
@@ -402,8 +400,7 @@ describe('SouthOLEDB', () => {
         compression: configuration.items[0].settings.serialization.compression
       },
       configuration.name,
-      configuration.items[0].name,
-      configuration.items[0].id,
+      configuration.items[0],
       testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
@@ -448,7 +445,10 @@ describe('SouthOLEDB', () => {
       }
     );
 
-    expect(result).toEqual(null);
+    expect(result).toEqual({
+      trackedInstant: null,
+      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+    });
   });
 
   it('should manage query error', async () => {

@@ -161,6 +161,7 @@ export async function up(knex: Knex): Promise<void> {
   await createGroupItemsTable(knex);
   await addItemHistorianFields(knex);
   await populateItemHistorianFields(knex);
+  await removeThrottlingFieldsInConnectorSettings(knex);
 }
 
 async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
@@ -826,12 +827,12 @@ async function populateItemHistorianFields(knex: Knex): Promise<void> {
     // Only populate historian fields for items NOT in a group
     if (isHistorian) {
       try {
-        const settings = typeof item.connector_settings === 'string' ? JSON.parse(item.connector_settings) : item.connector_settings;
+        const settings = JSON.parse(item.connector_settings);
 
-        if (settings && settings.throttling) {
-          maxReadInterval = settings.throttling.maxReadInterval ?? null;
-          readDelay = settings.throttling.readDelay ?? null;
-          overlap = settings.throttling.overlap ?? null;
+        if (settings.throttling) {
+          maxReadInterval = settings.throttling.maxReadInterval;
+          readDelay = settings.throttling.readDelay;
+          overlap = settings.throttling.overlap;
         }
       } catch (error) {
         // If parsing fails, use default values
@@ -846,6 +847,52 @@ async function populateItemHistorianFields(knex: Knex): Promise<void> {
       overlap: overlap,
       sync_with_group: 0
     });
+  }
+}
+
+async function removeThrottlingFieldsInConnectorSettings(knex: Knex): Promise<void> {
+  const oldSouth: Array<{
+    id: string;
+    type: string;
+    settings: string;
+  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings');
+
+  for (const south of oldSouth) {
+    const isHistorian = HISTORIAN_CONNECTOR_TYPES.includes(south.type);
+    if (isHistorian) {
+      const newSettings = JSON.parse(south.settings);
+      delete newSettings.throttling;
+      await knex(SOUTH_CONNECTORS_TABLE)
+        .update({ settings: JSON.stringify(newSettings) })
+        .where('id', south.id);
+    }
+  }
+
+  await knex.schema.alterTable(HISTORY_QUERIES_TABLE, table => {
+    table.integer('throttling_max_read_interval');
+    table.integer('throttling_read_delay');
+  });
+
+  const oldHistoryQueries: Array<{
+    id: string;
+    south_type: string;
+    south_settings: string;
+  }> = await knex(HISTORY_QUERIES_TABLE).select('id', 'south_type', 'south_settings');
+
+  for (const historyQuery of oldHistoryQueries) {
+    const newSettings = JSON.parse(historyQuery.south_settings);
+    const throttling = {
+      maxReadInterval: newSettings.throttling.maxReadInterval,
+      readDelay: newSettings.throttling.readDelay
+    };
+    delete newSettings.throttling;
+    await knex(HISTORY_QUERIES_TABLE)
+      .update({
+        south_settings: JSON.stringify(newSettings),
+        throttling_max_read_interval: throttling.maxReadInterval,
+        throttling_read_delay: throttling.readDelay
+      })
+      .where('id', historyQuery.id);
   }
 }
 

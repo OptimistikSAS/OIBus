@@ -2,7 +2,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-serv
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import SouthSftp from './south-sftp';
-import { compress } from '../../service/utils';
+import { checkAge, compress } from '../../service/utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { encryptionService } from '../../service/encryption.service';
@@ -130,6 +130,7 @@ describe('SouthSFTP', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
+    (checkAge as jest.Mock).mockReturnValue(true);
 
     south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
@@ -138,7 +139,7 @@ describe('SouthSFTP', () => {
     jest.useRealTimers();
   });
 
-  it('fileQuery should manage file retrieval', async () => {
+  it('directQuery should manage file retrieval', async () => {
     expect(southCacheService.getQueryOnCustomTable).not.toHaveBeenCalled();
     (fs.readdir as jest.Mock)
       .mockImplementationOnce(() => Promise.resolve([]))
@@ -150,30 +151,16 @@ describe('SouthSFTP', () => {
     const fileInfo2: FileInfo = {
       name: 'file2'
     } as FileInfo;
-    const fileInfo3: FileInfo = {
-      name: 'file3'
-    } as FileInfo;
 
-    south.listFiles = jest
-      .fn()
-      .mockImplementationOnce(() => [fileInfo1, fileInfo2])
-      .mockImplementationOnce(() => [fileInfo3])
-      .mockImplementationOnce(() => []);
+    south.listFiles = jest.fn().mockImplementationOnce(() => [fileInfo1, fileInfo2]);
     south.getFile = jest.fn();
 
-    await south.fileQuery(configuration.items);
+    await south.directQuery(configuration.items);
 
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Reading "${configuration.items[0].settings.remoteFolder}" remote folder on ${configuration.settings.host}:${configuration.settings.port} for item ${configuration.items[0].name}`
-    );
-    expect(south.listFiles).toHaveBeenCalledTimes(3);
+    expect(south.listFiles).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith(`Folder ${configuration.items[0].settings.remoteFolder} listed 2 files in 0 ms`);
-    expect(logger.debug).toHaveBeenCalledWith(`Folder ${configuration.items[1].settings.remoteFolder} listed 1 files in 0 ms`);
-    expect(logger.debug).toHaveBeenCalledWith(`Folder ${configuration.items[2].settings.remoteFolder} listed 0 files in 0 ms`);
-    expect(south.getFile).toHaveBeenCalledTimes(3);
-    expect(south.getFile).toHaveBeenCalledWith(fileInfo1, configuration.items[0]);
-    expect(south.getFile).toHaveBeenCalledWith(fileInfo2, configuration.items[0]);
-    expect(south.getFile).toHaveBeenCalledWith(fileInfo3, configuration.items[1]);
+    expect(south.getFile).toHaveBeenCalledTimes(2);
+    expect(south.getFile).toHaveBeenCalledWith(fileInfo1, configuration.items[0], []);
   });
 
   it('should respect max files limit and skip remaining files', async () => {
@@ -204,7 +191,7 @@ describe('SouthSFTP', () => {
     mockSftpClient.fastGet.mockResolvedValue(undefined);
     mockSftpClient.delete.mockResolvedValue(undefined);
 
-    await southWithLimit.fileQuery([configWithLimit.items[0]]);
+    await southWithLimit.directQuery([configWithLimit.items[0]]);
 
     expect(mockSftpClient.fastGet).toHaveBeenCalledTimes(2);
     expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
@@ -239,7 +226,7 @@ describe('SouthSFTP', () => {
     mockSftpClient.fastGet.mockResolvedValue(undefined);
     mockSftpClient.delete.mockResolvedValue(undefined);
 
-    await southWithLimit.fileQuery(configWithLimit.items);
+    await southWithLimit.directQuery(configWithLimit.items);
 
     expect(mockSftpClient.fastGet).toHaveBeenCalledTimes(2);
     expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
@@ -272,7 +259,7 @@ describe('SouthSFTP', () => {
     mockSftpClient.fastGet.mockResolvedValue(undefined);
     mockSftpClient.delete.mockResolvedValue(undefined);
 
-    await southWithLimit.fileQuery([configWithLimit.items[0]]);
+    await southWithLimit.directQuery([configWithLimit.items[0]]);
 
     expect(mockSftpClient.fastGet).toHaveBeenCalledTimes(1);
     expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
@@ -307,45 +294,20 @@ describe('SouthSFTP', () => {
     mockSftpClient.fastGet.mockResolvedValue(undefined);
     mockSftpClient.delete.mockResolvedValue(undefined);
 
-    await southWithLimit.fileQuery(configWithLimit.items);
+    await southWithLimit.directQuery(configWithLimit.items);
 
     expect(mockSftpClient.fastGet).toHaveBeenCalledTimes(2);
     expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
   });
 
-  it('should properly check condition', () => {
-    const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).toMillis();
-    const timestamp = DateTime.now().toMillis();
-    const fileInfo: FileInfo = {
-      name: 'myFile',
-      size: 123,
-      modifyTime: mtimeMs
-    } as FileInfo;
-
-    expect(south.checkCondition(configuration.items[0], fileInfo)).toEqual(false);
-    expect(logger.trace).toHaveBeenCalledWith(`File name "${fileInfo.name}" does not match regex ${configuration.items[0].settings.regex}`);
-
-    fileInfo.name = 'myFile.csv';
-    expect(south.checkCondition(configuration.items[0], fileInfo)).toEqual(false);
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Check age condition: mT:${mtimeMs} + mA ${configuration.items[0].settings.minAge} < ts:${timestamp} ` +
-        `= ${mtimeMs + configuration.items[0].settings.minAge < timestamp}`
-    );
-
-    fileInfo.modifyTime = mtimeMs - 10000;
-    expect(south.checkCondition(configuration.items[0], fileInfo)).toEqual(true);
-    expect(logger.trace).toHaveBeenCalledWith(`File "${fileInfo.name}" matches age`);
-  });
-
   it('should properly get file', async () => {
     south.addContent = jest.fn();
-    south.updateModifiedTime = jest.fn();
 
     const fileInfo: FileInfo = {
       name: 'myFile1',
       size: 123
     } as FileInfo;
-    await south.getFile(fileInfo, configuration.items[0]);
+    await south.getFile(fileInfo, configuration.items[0], []);
 
     expect(mockSftpClient.connect as jest.Mock).toHaveBeenCalledTimes(1);
     expect(mockSftpClient.fastGet as jest.Mock).toHaveBeenCalledTimes(1);
@@ -357,82 +319,21 @@ describe('SouthSFTP', () => {
         filePath: path.resolve('cacheFolder', 'tmp', fileInfo.name)
       },
       testData.constants.dates.FAKE_NOW,
-      [configuration.items[0].id]
+      [configuration.items[0]]
     );
     expect(fs.unlink).not.toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
-    expect(south.updateModifiedTime).not.toHaveBeenCalled();
 
     (mockSftpClient.delete as jest.Mock).mockImplementation(() => {
       throw new Error('delete error');
     });
-    await south.getFile(fileInfo, configuration.items[0]);
+    await south.getFile(fileInfo, configuration.items[0], []);
 
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing "${configuration.items[0].settings.remoteFolder}/${fileInfo.name}": ${new Error('delete error')}`
     );
     expect(south.addContent).toHaveBeenCalledTimes(2);
     expect(mockSftpClient.end).toHaveBeenCalledTimes(2);
-  });
-
-  it('should get modified time', () => {
-    const item = configuration.items[0];
-    southCacheService.getItemLastValue.mockReturnValueOnce({ value: [{ filename: 'my file', modifiedTime: 1 }] }).mockReturnValueOnce(null);
-    expect(south.getModifiedTime(item, 'my file')).toEqual(1);
-    expect(south.getModifiedTime(item, 'my file')).toEqual(0);
-    expect(southCacheService.getItemLastValue).toHaveBeenCalledWith(configuration.id, item.id);
-  });
-
-  it('should return 0 when getModifiedTime value is not an array', () => {
-    const item = configuration.items[0];
-    southCacheService.getItemLastValue.mockReturnValue({ value: 42 });
-    expect(south.getModifiedTime(item, 'any')).toEqual(0);
-  });
-
-  it('should return 0 when file is not found in cache', () => {
-    const item = configuration.items[0];
-    southCacheService.getItemLastValue.mockReturnValue({
-      value: [{ filename: 'other.txt', modifiedTime: 1000 }]
-    });
-    expect(south.getModifiedTime(item, 'missing.txt')).toEqual(0);
-  });
-
-  it('should update modified time', () => {
-    const item = configuration.items[0];
-    southCacheService.getItemLastValue.mockReturnValue(null);
-    south.updateModifiedTime(item, 'my file', 1);
-    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(configuration.id, {
-      itemId: item.id,
-      queryTime: expect.any(String),
-      value: [{ filename: 'my file', modifiedTime: 1 }],
-      trackedInstant: null
-    });
-  });
-
-  it('should update modified time for existing file entry', () => {
-    const item = configuration.items[0];
-    southCacheService.getItemLastValue.mockReturnValue({
-      value: [{ filename: 'existing.txt', modifiedTime: 1000 }]
-    });
-    south.updateModifiedTime(item, 'existing.txt', 2000);
-    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(configuration.id, {
-      itemId: item.id,
-      queryTime: expect.any(String),
-      value: [{ filename: 'existing.txt', modifiedTime: 2000 }],
-      trackedInstant: null
-    });
-  });
-
-  it('should reset files when updateModifiedTime value is not an array', () => {
-    const item = configuration.items[0];
-    southCacheService.getItemLastValue.mockReturnValue({ value: 42 });
-    south.updateModifiedTime(item, 'new file', 1);
-    expect(southCacheService.saveItemLastValue).toHaveBeenCalledWith(configuration.id, {
-      itemId: item.id,
-      queryTime: expect.any(String),
-      value: [{ filename: 'new file', modifiedTime: 1 }],
-      trackedInstant: null
-    });
   });
 
   it('should properly list files', async () => {
@@ -444,10 +345,10 @@ describe('SouthSFTP', () => {
     });
     configuration.settings.username = '';
     configuration.settings.password = '';
-    const result = await south.listFiles(configuration.items[0]);
+    const result = await south.listFiles(configuration.items[0], []);
     expect(encryptionService.decryptText).not.toHaveBeenCalled();
     expect(mockSftpClient.connect).toHaveBeenCalledTimes(1);
-    expect(south.checkCondition).toHaveBeenCalledWith(configuration.items[0], fileInfo);
+    expect(south.checkCondition).toHaveBeenCalledWith(configuration.items[0], fileInfo, []);
     expect(mockSftpClient.end).toHaveBeenCalledTimes(1);
     expect(result).toEqual([fileInfo]);
   });
@@ -488,29 +389,12 @@ describe('SouthSFTP', () => {
     mockSftpClient.list.mockResolvedValueOnce([dirEntry]).mockResolvedValueOnce([fileInSubdir, fileFailsCondition]);
 
     const item = configRecursive.items[0];
-    const result = await southRecursive.listFiles(item);
+    const result = await southRecursive.listFiles(item, []);
 
     expect(mockSftpClient.list).toHaveBeenCalledWith('input');
     expect(mockSftpClient.list).toHaveBeenCalledWith('input/subdir');
     expect(result).toHaveLength(1);
     expect(result[0].name).toBe('subdir/file.csv');
-  });
-
-  it('should properly check condition with ignore modified date', () => {
-    const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
-    south.getModifiedTime = jest
-      .fn()
-      .mockReturnValueOnce(mtimeMs - 10000) // saved modified time same than mTime (mtimeMs - 10000) => file did not change
-      .mockReturnValueOnce(mtimeMs - 999999); // saved modified time is more recent than mTime (mtimeMs - 999999) => file changed
-
-    const fileInfo: FileInfo = {
-      name: 'myFile1.txt',
-      size: 123,
-      modifyTime: mtimeMs - 10000
-    } as FileInfo;
-    expect(south.checkCondition(configuration.items[2], fileInfo)).toEqual(true);
-    fileInfo.name = 'myFile2.txt';
-    expect(south.checkCondition(configuration.items[2], fileInfo)).toEqual(true);
   });
 });
 
@@ -602,32 +486,14 @@ describe('SouthFTP with preserve file and compression', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
     (sftpClient as jest.Mock).mockImplementation(() => mockSftpClient);
+    (checkAge as jest.Mock).mockReturnValue(true);
+
     south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     await south.start();
   });
 
   afterEach(() => {
     jest.useRealTimers();
-  });
-
-  it('should properly check condition', () => {
-    const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
-    south.getModifiedTime = jest
-      .fn()
-      .mockReturnValueOnce(mtimeMs - 10_000) // saved modified time same than mTime (mtimeMs - 10000) => file did not change
-      .mockReturnValueOnce(mtimeMs - 999_999); // saved modified time is more recent than mTime (mtimeMs - 999999) => file changed
-
-    const fileInfo: FileInfo = {
-      name: 'myFile1.log',
-      size: 123,
-      modifyTime: mtimeMs - 10_000
-    } as FileInfo;
-    expect(south.checkCondition(configuration.items[1], fileInfo)).toEqual(false);
-    fileInfo.name = 'myFile2.log';
-    expect(south.checkCondition(configuration.items[1], fileInfo)).toEqual(true);
-    expect(logger.trace).toHaveBeenCalledWith(
-      `File "myFile2.log" last modified time ${mtimeMs - 999_999} is older than modify time ${mtimeMs - 10_000}. The file will be sent`
-    );
   });
 
   it('should properly add compressed file', async () => {
@@ -639,17 +505,15 @@ describe('SouthFTP with preserve file and compression', () => {
     } as FileInfo;
 
     south.addContent = jest.fn();
-    south.updateModifiedTime = jest.fn();
     (fs.unlink as jest.Mock)
       .mockImplementationOnce(() => null)
       .mockImplementationOnce(() => null)
       .mockImplementationOnce(() => {
         throw new Error('error');
       });
-    await south.getFile(fileInfo, configuration.items[1]);
+    await south.getFile(fileInfo, configuration.items[1], []);
 
     expect(mockSftpClient.fastGet as jest.Mock).toHaveBeenCalledTimes(1);
-    expect(south.updateModifiedTime as jest.Mock).toHaveBeenCalledTimes(1);
     expect(compress).toHaveBeenCalledWith(
       path.resolve('cacheFolder', 'tmp', fileInfo.name),
       `${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`
@@ -660,7 +524,7 @@ describe('SouthFTP with preserve file and compression', () => {
         filePath: path.resolve('cacheFolder', 'tmp', `${fileInfo.name}.gz`)
       },
       testData.constants.dates.FAKE_NOW,
-      [configuration.items[1].id]
+      [configuration.items[1]]
     );
     expect(logger.error).not.toHaveBeenCalled();
     expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve('cacheFolder', 'tmp', 'myFile1')}.gz`);
@@ -668,14 +532,14 @@ describe('SouthFTP with preserve file and compression', () => {
     expect(mockSftpClient.end as jest.Mock).toHaveBeenCalledTimes(1);
 
     fileInfo.name = 'myFile2';
-    await south.getFile(fileInfo, configuration.items[1]);
+    await south.getFile(fileInfo, configuration.items[1], []);
     expect(south.addContent).toHaveBeenCalledWith(
       {
         type: 'any',
         filePath: `${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz`
       },
       testData.constants.dates.FAKE_NOW,
-      [configuration.items[1].id]
+      [configuration.items[1]]
     );
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing compressed file "${path.resolve('cacheFolder', 'tmp', 'myFile2')}.gz": ${new Error('error')}`
@@ -684,14 +548,14 @@ describe('SouthFTP with preserve file and compression', () => {
     (compress as jest.Mock).mockImplementationOnce(() => {
       throw new Error('compression error');
     });
-    await south.getFile(fileInfo, configuration.items[1]);
+    await south.getFile(fileInfo, configuration.items[1], []);
     expect(south.addContent).toHaveBeenCalledWith(
       {
         type: 'any',
         filePath: path.resolve('cacheFolder', 'tmp', 'myFile2')
       },
       testData.constants.dates.FAKE_NOW,
-      [configuration.items[1].id]
+      [configuration.items[1]]
     );
 
     expect(logger.error).toHaveBeenCalledWith(

@@ -21,107 +21,6 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'object',
-        key: 'throttling',
-        translationKey: 'configuration.oibus.manifest.south.opc.throttling.title',
-        displayProperties: {
-          visible: true,
-          wrapInBox: false
-        },
-        enablingConditions: [],
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        attributes: [
-          {
-            type: 'number',
-            key: 'maxReadInterval',
-            translationKey: 'configuration.oibus.manifest.south.opc.throttling.max-read-interval',
-            unit: 's',
-            defaultValue: 3600,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 3,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'number',
-            key: 'readDelay',
-            translationKey: 'configuration.oibus.manifest.south.opc.throttling.read-delay',
-            unit: 'ms',
-            defaultValue: 200,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 3,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'number',
-            key: 'overlap',
-            translationKey: 'configuration.oibus.manifest.south.opc.throttling.overlap',
-            unit: 'ms',
-            defaultValue: 0,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 3,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'boolean',
-            key: 'maxInstantPerItem',
-            translationKey: 'configuration.oibus.manifest.south.opc.throttling.max-instant-per-item',
-            defaultValue: false,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 3,
-              displayInViewMode: true
-            }
-          }
-        ]
-      },
-      {
         type: 'string',
         key: 'agentUrl',
         translationKey: 'configuration.oibus.manifest.south.opc.agent-url',
@@ -133,7 +32,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 9,
           displayInViewMode: false
         }
@@ -159,7 +58,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 3,
           displayInViewMode: false
         }
@@ -176,7 +75,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 1,
           columns: 8,
           displayInViewMode: true
         }
@@ -193,7 +92,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 1,
           columns: 4,
           displayInViewMode: true
         }
@@ -211,7 +110,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 1,
           columns: 2,
           displayInViewMode: true
         }

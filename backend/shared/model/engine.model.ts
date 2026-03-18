@@ -1,5 +1,8 @@
 import { BaseEntity, Instant } from './types';
 import { LogLevel } from './logs.model';
+import { SouthConnectorItemEntity } from '../../src/model/south-connector.model';
+import { SouthItemSettings } from './south-settings.model';
+import { HistoryQueryItemEntity } from '../../src/model/histor-query.model';
 
 /**
  * List of possible OIBus data types.
@@ -1646,9 +1649,9 @@ export interface CacheMetadataSourceOriginSouth {
   southId: string;
 
   /**
-   * IDs of the items at the source of the data
+   * The items at the source of the data
    */
-  itemIds: Array<string>;
+  items: Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>;
 }
 
 export interface CacheMetadataSourceOriginOIAnalytics {

@@ -3,10 +3,10 @@ import { formatQueryParams, persistResults } from '../../service/utils';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
-import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
+import { SouthHistoryQuery } from '../south-interface';
+import { SouthItemSettings, SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../../repository/config/certificate.repository';
@@ -19,11 +19,16 @@ import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData, testOIAnal
  */
 export default class SouthOIAnalytics
   extends SouthConnector<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
-  implements QueriesHistory
+  implements SouthHistoryQuery
 {
   constructor(
     connector: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string,
@@ -63,53 +68,30 @@ export default class SouthOIAnalytics
     items: Array<SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant | null> {
-    let updatedStartTime: Instant | null = null;
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const item = items[0];
+    const startRequest = DateTime.now();
+    const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
+    const { formattedResult, maxInstant } = parseData(result);
 
-    for (const item of items) {
-      const startRequest = DateTime.now();
-      const result: Array<OIATimeValues> = await this.queryData(item, startTime, endTime);
-      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-
-      const { formattedResult, maxInstant } = parseData(result);
-
-      if (!updatedStartTime || maxInstant > updatedStartTime) {
-        updatedStartTime = maxInstant;
-      }
-      if (formattedResult.length > 0) {
-        this.logger.info(`Found ${formattedResult.length} results for item ${item.name} in ${requestDuration} ms`);
-
-        await persistResults(
-          formattedResult,
-          item.settings.serialization,
-          this.connector.name,
-          item.name,
-          item.id,
-          startRequest.toUTC().toISO(),
-          this.tmpFolder,
-          this.addContent.bind(this),
-          this.logger
-        );
-      } else {
-        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
-      }
+    if (formattedResult.length > 0) {
+      this.logger.info(`Found ${formattedResult.length} results for item ${item.name} in ${requestDuration} ms`);
+      await persistResults(
+        formattedResult,
+        item.settings.serialization,
+        this.connector.name,
+        item,
+        startRequest.toUTC().toISO(),
+        this.tmpFolder,
+        this.addContent.bind(this),
+        this.logger
+      );
+    } else {
+      this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
     }
-    return updatedStartTime;
-  }
 
-  getThrottlingSettings(settings: SouthOIAnalyticsSettings): SouthThrottlingSettings {
-    return {
-      maxReadInterval: settings.throttling.maxReadInterval,
-      readDelay: settings.throttling.readDelay
-    };
-  }
-
-  getMaxInstantPerItem(_settings: SouthOIAnalyticsSettings): boolean {
-    return true;
-  }
-
-  getOverlap(settings: SouthOIAnalyticsSettings): number {
-    return settings.throttling.overlap;
+    return { trackedInstant: maxInstant, value: formattedResult.length > 0 ? formattedResult[formattedResult.length - 1] : null };
   }
 
   async queryData(

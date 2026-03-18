@@ -284,7 +284,7 @@ export default class SouthService {
     this.southConnectorRepository.deleteSouth(southConnector.id);
     this.logRepository.deleteLogsByScopeId('south', southConnector.id);
     this.southMetricsRepository.removeMetrics(southConnector.id);
-    this.southCacheRepository.deleteAllBySouthConnector(southConnector.id);
+    this.southCacheRepository.dropItemValueTable(southConnector.id);
     this.engine.updateNorthTransformerBySouth(southConnector.id); // Do this once it has been removed from the database to properly reload the subscription list
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
@@ -436,12 +436,14 @@ export default class SouthService {
     this.findById(southId);
     const item = this.findItemById(southId, itemId);
 
-    // Get last value from cache
-    const lastValue = this.southCacheRepository.getItemLastValue(southId, itemId);
+    // Get the last value from the cache
+    const lastValue = this.southCacheRepository.getItemLastValue(southId, item.group?.id || null, itemId);
 
     return {
+      groupId: item.group?.id || null,
       itemId,
       itemName: item.name,
+      groupName: item.group?.name || '',
       queryTime: lastValue?.queryTime || null,
       value: lastValue?.value || null,
       trackedInstant: lastValue?.trackedInstant || null
@@ -564,7 +566,7 @@ export default class SouthService {
   async deleteAllItems(southId: string): Promise<void> {
     const southConnector = this.findById(southId)!;
     this.southConnectorRepository.deleteAllItemsBySouth(southId);
-    this.southCacheRepository.deleteAllBySouthConnector(southId);
+    this.southCacheRepository.dropItemValueTable(southId);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }

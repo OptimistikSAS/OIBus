@@ -2,10 +2,10 @@ import SouthConnector from '../south-connector';
 import pino from 'pino';
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
-import { SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
+import { SouthHistoryQuery } from '../south-interface';
+import { SouthItemSettings, SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
@@ -14,14 +14,19 @@ import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
  * Class SouthOPC - Run an OPC agent to connect to an OPC server.
  * This connector communicates with the Agent through an HTTP connection
  */
-export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCItemSettings> implements QueriesHistory {
+export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCItemSettings> implements SouthHistoryQuery {
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
   constructor(
     connector: SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -146,17 +151,21 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
     items: Array<SouthConnectorItemEntity<SouthOPCItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant | null> {
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    let updatedStartTime: Instant | null = null;
+    let result: {
+      recordCount: number;
+      content: Array<OIBusTimeValue>;
+      maxInstantRetrieved: Instant;
+    } | null = null;
     try {
-      let updatedStartTime: Instant | null = null;
       const itemsByAggregates = new Map<
         Aggregate,
         Map<
           Resampling | undefined,
           Array<{
             nodeId: string;
-            name: string;
-            id: string;
+            item: SouthConnectorItemEntity<SouthOPCItemSettings>;
           }>
         >
       >();
@@ -168,8 +177,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
               Resampling,
               Array<{
                 nodeId: string;
-                name: string;
-                id: string;
+                item: SouthConnectorItemEntity<SouthOPCItemSettings>;
               }>
             >()
           );
@@ -178,14 +186,13 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
         if (!itemsByAggregates.get(item.settings.aggregate!)!.has(resampling)) {
           itemsByAggregates.get(item.settings.aggregate)!.set(resampling, [
             {
-              name: item.name,
               nodeId: item.settings.nodeId,
-              id: item.id
+              item
             }
           ]);
         } else {
           const currentList = itemsByAggregates.get(item.settings.aggregate)!.get(resampling)!;
-          currentList.push({ name: item.name, nodeId: item.settings.nodeId, id: item.id });
+          currentList.push({ nodeId: item.settings.nodeId, item });
           itemsByAggregates.get(item.settings.aggregate)!.set(resampling, currentList);
         }
       });
@@ -210,17 +217,13 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
               resampling,
               startTime,
               endTime,
-              items: resampledItems.map(item => ({ name: item.name, nodeId: item.nodeId }))
+              items: resampledItems.map(item => ({ name: item.item.name, nodeId: item.nodeId }))
             })
           };
           const requestUrl = new URL(`/api/opc/${this.connector.id}/read`, this.connector.settings.agentUrl);
           const response = await HTTPRequest(requestUrl, fetchOptions);
           if (response.statusCode === 200) {
-            const result: {
-              recordCount: number;
-              content: Array<OIBusTimeValue>;
-              maxInstantRetrieved: Instant;
-            } = (await response.body.json()) as {
+            result = (await response.body.json()) as {
               recordCount: number;
               content: Array<OIBusTimeValue>;
               maxInstantRetrieved: string;
@@ -231,9 +234,11 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
               this.logger.debug(
                 `Found ${result.recordCount} results for ${resampledItems.length} items in ${requestDuration} ms. Max instant retrieved: ${result.maxInstantRetrieved}`
               );
-              await this.addContent({ type: 'time-values', content: result.content }, startRequest.toUTC().toISO(), [
-                ...new Set(resampledItems.map(item => item.id))
-              ]);
+              await this.addContent(
+                { type: 'time-values', content: result.content },
+                startRequest.toUTC().toISO(),
+                resampledItems.map(item => item.item)
+              );
               if (result.maxInstantRetrieved > startTime) {
                 // 1ms is added to the maxInstantRetrieved, so it does not take the last retrieve value on the last run
                 updatedStartTime = DateTime.fromISO(result.maxInstantRetrieved).plus({ millisecond: 1 }).toUTC().toISO()!;
@@ -251,7 +256,6 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
           }
         }
       }
-      return updatedStartTime;
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -259,21 +263,7 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       }
       throw error;
     }
-  }
-
-  getThrottlingSettings(settings: SouthOPCSettings): SouthThrottlingSettings {
-    return {
-      maxReadInterval: settings.throttling.maxReadInterval,
-      readDelay: settings.throttling.readDelay
-    };
-  }
-
-  getMaxInstantPerItem(settings: SouthOPCSettings): boolean {
-    return settings.throttling.maxInstantPerItem;
-  }
-
-  getOverlap(settings: SouthOPCSettings): number {
-    return settings.throttling.overlap;
+    return { trackedInstant: updatedStartTime, value: result };
   }
 
   async disconnect(): Promise<void> {

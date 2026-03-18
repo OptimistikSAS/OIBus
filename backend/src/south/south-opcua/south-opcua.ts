@@ -4,11 +4,11 @@ import pino from 'pino';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { QueriesHistory, QueriesLastPoint, QueriesSubscription } from '../south-interface';
-import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
+import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from '../south-interface';
+import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import { OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import {
@@ -39,7 +39,7 @@ import {
  */
 export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
-  implements QueriesHistory, QueriesLastPoint, QueriesSubscription
+  implements SouthHistoryQuery, SouthDirectQuery, SouthSubscription
 {
   private clientCertificateManager: OPCUACertificateManager | null = null;
   private disconnecting = false;
@@ -58,7 +58,12 @@ export default class SouthOPCUA
 
   constructor(
     connector: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -170,20 +175,14 @@ export default class SouthOPCUA
     let session;
     try {
       session = await this.createSession();
-      let content: OIBusContent;
       if (item.settings.mode === 'da') {
         const nodeId = resolveNodeId(item.settings.nodeId);
-        content = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session);
+        const result = await this.getDAValues([{ nodeId, name: item.name, settings: item.settings }], session);
+        return { type: 'time-values', content: result };
       } else {
-        content = (await this.getHAValues(
-          [item],
-          testingSettings.history!.startTime,
-          testingSettings.history!.endTime,
-          session,
-          true
-        )) as OIBusContent;
+        const result = await this.getHAValues([item], testingSettings.history!.startTime, testingSettings.history!.endTime, session, true);
+        return { type: 'time-values', content: result.value };
       }
-      return content;
     } finally {
       await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
       if (session) {
@@ -196,7 +195,23 @@ export default class SouthOPCUA
   override filterHistoryItems(
     items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
   ): Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>> {
-    return items.filter(item => item.settings.mode === 'ha');
+    return items.filter(
+      item =>
+        item.settings.mode === 'ha' &&
+        ((item.syncWithGroup && item.group && item.group.scanMode.id !== 'subscription') ||
+          (!(item.syncWithGroup && item.group) && item.scanMode.id !== 'subscription'))
+    );
+  }
+
+  override filterDirectItems(
+    items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
+  ): Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>> {
+    return items.filter(
+      item =>
+        item.settings.mode === 'da' &&
+        ((item.syncWithGroup && item.group && item.group.scanMode.id !== 'subscription') ||
+          (!(item.syncWithGroup && item.group) && item.scanMode.id !== 'subscription'))
+    );
   }
 
   async createSession(): Promise<ClientSession> {
@@ -220,12 +235,16 @@ export default class SouthOPCUA
     items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant | null> {
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
     try {
       if (!this.client) {
         throw new Error('OPCUA client not set');
       }
-      return (await this.getHAValues(items, startTime, endTime, this.client)) as Instant;
+      const result = await this.getHAValues(items, startTime, endTime, this.client);
+      return {
+        trackedInstant: result.trackedInstant,
+        value: result.value.length > 0 ? result.value[result.value.length - 1] : null
+      };
     } catch (error: unknown) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -241,11 +260,11 @@ export default class SouthOPCUA
     endTime: Instant,
     session: ClientSession,
     testingItem = false
-  ): Promise<Instant | OIBusContent | null> {
+  ): Promise<{ trackedInstant: Instant | null; value: Array<OIBusTimeValue> }> {
     let maxTimestamp: number | null = null;
     const itemsByAggregates = new Map<
       Aggregate,
-      Map<Resampling | undefined, Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings; id: string }>>
+      Map<Resampling | undefined, Array<{ nodeId: NodeId; item: SouthConnectorItemEntity<SouthOPCUAItemSettings> }>>
     >();
 
     for (const item of items) {
@@ -264,25 +283,21 @@ export default class SouthOPCUA
             Resampling,
             Array<{
               nodeId: NodeId;
-              name: string;
-              settings: SouthOPCUAItemSettings;
-              id: string;
+              item: SouthConnectorItemEntity<SouthOPCUAItemSettings>;
             }>
           >()
         );
       }
       if (!itemsByAggregates.get(item.settings.haMode!.aggregate!)!.has(item.settings.haMode!.resampling)) {
-        itemsByAggregates
-          .get(item.settings.haMode!.aggregate)!
-          .set(item.settings.haMode!.resampling, [{ name: item.name, nodeId, settings: item.settings, id: item.id }]);
+        itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, [{ nodeId, item }]);
       } else {
         const currentList = itemsByAggregates.get(item.settings.haMode!.aggregate)!.get(item.settings.haMode!.resampling)!;
-        currentList.push({ name: item.name, nodeId, settings: item.settings, id: item.id });
+        currentList.push({ nodeId, item });
         itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, currentList);
       }
     }
 
-    let dataByItems: Array<OIBusTimeValue> = [];
+    let values: Array<OIBusTimeValue> = [];
     for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
       for (const [resampling, resampledItems] of aggregatedItems.entries()) {
         const logs = new Map<string, { description: string; affectedNodes: Array<string> }>();
@@ -320,10 +335,10 @@ export default class SouthOPCUA
                   if (!logs.has(result.statusCode.name)) {
                     logs.set(result.statusCode.name, {
                       description: result.statusCode.description,
-                      affectedNodes: [associatedItem.name]
+                      affectedNodes: [associatedItem.item.name]
                     });
                   } else {
-                    logs.get(result.statusCode.name)!.affectedNodes.push(associatedItem.name);
+                    logs.get(result.statusCode.name)!.affectedNodes.push(associatedItem.item.name);
                   }
                 } else if (result.historyData && (result.historyData as HistoryDataOptions).dataValues) {
                   const historyDataValues = (result.historyData as HistoryDataOptions).dataValues!.filter(
@@ -335,15 +350,15 @@ export default class SouthOPCUA
                       `${result.statusCode.name}, continuation point is ${result.continuationPoint}`
                   );
                   for (const historyValue of historyDataValues) {
-                    const value = parseOPCUAValue(associatedItem.name, historyValue.value, this.logger);
+                    const value = parseOPCUAValue(associatedItem.item.name, historyValue.value, this.logger);
                     if (!value) {
                       continue;
                     }
                     const selectedTimestamp = historyValue.sourceTimestamp ?? historyValue.serverTimestamp;
                     maxTimestamp =
                       !maxTimestamp || selectedTimestamp!.getTime() > maxTimestamp ? selectedTimestamp!.getTime() : maxTimestamp;
-                    dataByItems.push({
-                      pointId: associatedItem.name,
+                    values.push({
+                      pointId: associatedItem.item.name,
                       timestamp: selectedTimestamp!.toISOString(),
                       data: {
                         value,
@@ -371,12 +386,14 @@ export default class SouthOPCUA
                   node.continuationPoint.length > 0
               );
 
-            this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
+            this.logger.debug(`Adding ${values.length} values between ${startTime} and ${endTime}`);
             if (!testingItem) {
-              await this.addContent({ type: 'time-values', content: dataByItems }, startRequest.toUTC().toISO(), [
-                ...new Set(resampledItems.map(item => item.id))
-              ]);
-              dataByItems = [];
+              await this.addContent(
+                { type: 'time-values', content: values },
+                startRequest.toUTC().toISO(),
+                resampledItems.map(item => item.item)
+              );
+              values = [];
               this.logger.trace(`Continue read for ${nodesToRead.length} points`);
             }
           } else {
@@ -404,14 +421,15 @@ export default class SouthOPCUA
       }
     }
 
-    if (testingItem) {
-      return { type: 'time-values', content: dataByItems };
-    }
-    return maxTimestamp ? DateTime.fromMillis(maxTimestamp).toUTC().toISO() : null;
+    return {
+      trackedInstant: maxTimestamp ? DateTime.fromMillis(maxTimestamp).toUTC().toISO() : null,
+      value: values
+    };
   }
 
-  async lastPointQuery(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
+  async directQuery(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<OIBusTimeValue | null> {
     const nodesToRead: Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }> = [];
+    let content: Array<OIBusTimeValue> = [];
     for (const item of items) {
       if (item.settings.mode === 'da') {
         let nodeId;
@@ -424,7 +442,7 @@ export default class SouthOPCUA
       }
     }
     if (nodesToRead.length === 0) {
-      return;
+      return null;
     } else if (nodesToRead.length > 1) {
       this.logger.debug(`Read ${nodesToRead.length} nodes ` + `[${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`);
     } else {
@@ -436,8 +454,8 @@ export default class SouthOPCUA
       }
 
       const queryTime = DateTime.now().toUTC().toISO();
-      const content = await this.getDAValues(nodesToRead, this.client);
-      await this.addContent(content, queryTime, [...new Set(items.map(item => item.id))]);
+      content = await this.getDAValues(nodesToRead, this.client);
+      await this.addContent({ type: 'time-values', content }, queryTime, items);
     } catch (error) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -445,12 +463,13 @@ export default class SouthOPCUA
       }
       throw error;
     }
+    return content && content.length > 0 ? content[content.length - 1] : null;
   }
 
   async getDAValues(
     nodesToRead: Array<{ nodeId: NodeId; name: string; settings: SouthOPCUAItemSettings }>,
     session: ClientSession
-  ): Promise<OIBusContent> {
+  ): Promise<Array<OIBusTimeValue>> {
     const startRequest = DateTime.now().toMillis();
     const dataValues = await session.read(nodesToRead);
     const requestDuration = DateTime.now().toMillis() - startRequest;
@@ -462,7 +481,7 @@ export default class SouthOPCUA
     }
 
     const oibusTimestamp = DateTime.now().toUTC().toISO();
-    const values = dataValues
+    const values: Array<OIBusTimeValue> = dataValues
       .map((dataValue: DataValue, i) => {
         const selectedTimestamp = getTimestamp(dataValue, nodesToRead[i].settings, oibusTimestamp);
         return {
@@ -475,7 +494,7 @@ export default class SouthOPCUA
         };
       })
       .filter(parsedValue => parsedValue.data.value);
-    return { type: 'time-values', content: values };
+    return values;
   }
 
   async subscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
@@ -559,7 +578,7 @@ export default class SouthOPCUA
             }))
           },
           DateTime.now().toUTC().toISO(),
-          [...new Set(valuesToSend.map(element => element.item.id))]
+          [...new Set(valuesToSend.map(element => element.item))]
         );
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
@@ -576,20 +595,5 @@ export default class SouthOPCUA
         this.monitoredItems.delete(item.id);
       }
     }
-  }
-
-  getThrottlingSettings(settings: SouthOPCUASettings): SouthThrottlingSettings {
-    return {
-      maxReadInterval: settings.throttling.maxReadInterval,
-      readDelay: settings.throttling.readDelay
-    };
-  }
-
-  getMaxInstantPerItem(settings: SouthOPCUASettings): boolean {
-    return settings.throttling.maxInstantPerItem;
-  }
-
-  getOverlap(settings: SouthOPCUASettings): number {
-    return settings.throttling.overlap;
   }
 }

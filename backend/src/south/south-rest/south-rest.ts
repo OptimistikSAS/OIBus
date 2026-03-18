@@ -4,14 +4,15 @@ import pino from 'pino';
 import { JSONPath } from 'jsonpath-plus';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
+import { SouthHistoryQuery } from '../south-interface';
 import {
+  SouthItemSettings,
   SouthRestItemSettings,
   SouthRestItemSettingsTrackingInstantDateTimeInput,
   SouthRestSettings
 } from '../../../shared/model/south-settings.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from '../../service/http-request.utils';
@@ -19,10 +20,15 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { encryptionService } from '../../service/encryption.service';
 
-export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRestItemSettings> implements QueriesHistory {
+export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRestItemSettings> implements SouthHistoryQuery {
   constructor(
     connector: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -78,43 +84,22 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     items: Array<SouthConnectorItemEntity<SouthRestItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant | null> {
-    let updatedStartTime: Instant | null = null;
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    const startRequest = DateTime.now();
+    const { filename, content, maxInstant } = await this.queryData(items[0], startTime, endTime);
+    const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
-    for (const item of items) {
-      const startRequest = DateTime.now();
-      const { filename, content, maxInstant } = await this.queryData(item, startTime, endTime);
-      const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
-
-      const filePath = path.resolve(this.tmpFolder, filename);
-      await fs.writeFile(filePath, content);
-      const stats = await fs.stat(filePath);
-      if (stats.size > 0) {
-        this.logger.info(`Downloaded file for item ${item.name} (${stats.size} bytes) in ${requestDuration} ms`);
-        await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [item.id]);
-      } else {
-        this.logger.debug(`Empty file downloaded for item ${item.name}. Request done in ${requestDuration} ms`);
-      }
-      if (!updatedStartTime || (maxInstant && maxInstant > updatedStartTime)) {
-        updatedStartTime = maxInstant || updatedStartTime;
-      }
+    const filePath = path.resolve(this.tmpFolder, filename);
+    await fs.writeFile(filePath, content);
+    const stats = await fs.stat(filePath);
+    if (stats.size > 0) {
+      this.logger.info(`Downloaded file for item ${items[0].name} (${stats.size} bytes) in ${requestDuration} ms`);
+      await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [items[0]]);
+    } else {
+      this.logger.debug(`Empty file downloaded for item ${items[0].name}. Request done in ${requestDuration} ms`);
     }
-    return updatedStartTime;
-  }
 
-  getThrottlingSettings(settings: SouthRestSettings): SouthThrottlingSettings {
-    return {
-      maxReadInterval: settings.throttling.maxReadInterval,
-      readDelay: settings.throttling.readDelay
-    };
-  }
-
-  getMaxInstantPerItem(_settings: SouthRestSettings): boolean {
-    return true;
-  }
-
-  getOverlap(settings: SouthRestSettings): number {
-    return settings.throttling.overlap;
+    return { trackedInstant: maxInstant, value: content };
   }
 
   async queryData(

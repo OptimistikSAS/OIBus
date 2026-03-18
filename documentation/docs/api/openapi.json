@@ -1776,6 +1776,7 @@
 					"readDelay": {
 						"type": "number",
 						"format": "double",
+						"nullable": true,
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.",
 						"example": 200
 					}
@@ -2915,34 +2916,8 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMSSQLSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthMSSQLSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthMSSQLSettingsThrottling"
-					},
 					"host": {
 						"type": "string"
 					},
@@ -2981,7 +2956,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"host",
 					"port",
 					"connectionTimeout",
@@ -3266,34 +3240,8 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthMySQLSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthMySQLSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthMySQLSettingsThrottling"
-					},
 					"host": {
 						"type": "string"
 					},
@@ -3318,7 +3266,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"host",
 					"port",
 					"connectionTimeout",
@@ -3600,34 +3547,8 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthODBCSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthODBCSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthODBCSettingsThrottling"
-					},
 					"remoteAgent": {
 						"type": "boolean"
 					},
@@ -3655,7 +3576,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"remoteAgent",
 					"connectionTimeout",
 					"retryInterval",
@@ -3930,29 +3850,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOIAnalyticsSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthOIAnalyticsSettingsSpecificSettingsAuthentication": {
 				"type": "string",
 				"enum": [
@@ -4020,9 +3917,6 @@
 			},
 			"SouthOIAnalyticsSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthOIAnalyticsSettingsThrottling"
-					},
 					"useOiaModule": {
 						"type": "boolean"
 					},
@@ -4040,7 +3934,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"useOiaModule",
 					"timeout"
 				],
@@ -4289,34 +4182,8 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOLEDBSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthOLEDBSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthOLEDBSettingsThrottling"
-					},
 					"agentUrl": {
 						"type": "string"
 					},
@@ -4341,7 +4208,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"agentUrl",
 					"connectionTimeout",
 					"retryInterval",
@@ -4617,33 +4483,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOPCSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					},
-					"maxInstantPerItem": {
-						"type": "boolean"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap",
-					"maxInstantPerItem"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthOPCSettingsMode": {
 				"type": "string",
 				"enum": [
@@ -4653,9 +4492,6 @@
 			},
 			"SouthOPCSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthOPCSettingsThrottling"
-					},
 					"agentUrl": {
 						"type": "string"
 					},
@@ -4674,7 +4510,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"agentUrl",
 					"retryInterval",
 					"host",
@@ -4896,33 +4731,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOPCUASettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					},
-					"maxInstantPerItem": {
-						"type": "boolean"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap",
-					"maxInstantPerItem"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthOPCUASettingsSecurityMode": {
 				"type": "string",
 				"enum": [
@@ -4982,12 +4790,6 @@
 			},
 			"SouthOPCUASettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthOPCUASettingsThrottling"
-					},
-					"sharedConnection": {
-						"type": "boolean"
-					},
 					"url": {
 						"type": "string"
 					},
@@ -5021,8 +4823,6 @@
 					}
 				},
 				"required": [
-					"throttling",
-					"sharedConnection",
 					"url",
 					"keepSessionAlive",
 					"readTimeout",
@@ -5260,34 +5060,8 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthOracleSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthOracleSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthOracleSettingsThrottling"
-					},
 					"thickMode": {
 						"type": "boolean"
 					},
@@ -5318,7 +5092,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"thickMode",
 					"host",
 					"port",
@@ -5601,38 +5374,8 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthPISettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					},
-					"maxInstantPerItem": {
-						"type": "boolean"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap",
-					"maxInstantPerItem"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthPISettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthPISettingsThrottling"
-					},
 					"agentUrl": {
 						"type": "string"
 					},
@@ -5642,7 +5385,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"agentUrl",
 					"retryInterval"
 				],
@@ -5825,34 +5567,8 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthPostgreSQLSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthPostgreSQLSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthPostgreSQLSettingsThrottling"
-					},
 					"host": {
 						"type": "string"
 					},
@@ -5884,7 +5600,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"host",
 					"port",
 					"sslMode",
@@ -6164,29 +5879,6 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthRestSettingsAuthenticationType": {
 				"type": "string",
 				"enum": [
@@ -6294,9 +5986,6 @@
 			},
 			"SouthRestSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthRestSettingsThrottling"
-					},
 					"host": {
 						"type": "string"
 					},
@@ -6318,7 +6007,6 @@
 					}
 				},
 				"required": [
-					"throttling",
 					"host",
 					"acceptUnauthorized",
 					"timeout",
@@ -7001,40 +6689,13 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthSQLiteSettingsThrottling": {
-				"properties": {
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double"
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double"
-					}
-				},
-				"required": [
-					"maxReadInterval",
-					"readDelay",
-					"overlap"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"SouthSQLiteSettings": {
 				"properties": {
-					"throttling": {
-						"$ref": "#/components/schemas/SouthSQLiteSettingsThrottling"
-					},
 					"databasePath": {
 						"type": "string"
 					}
 				},
 				"required": [
-					"throttling",
 					"databasePath"
 				],
 				"type": "object",
@@ -10416,6 +10077,17 @@
 						"description": "The name of the item.",
 						"example": "Temperature Sensor 1"
 					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"description": "The name of the group.",
+						"example": "Temperature Group"
+					},
 					"queryTime": {
 						"allOf": [
 							{
@@ -10443,6 +10115,8 @@
 				"required": [
 					"itemId",
 					"itemName",
+					"groupId",
+					"groupName",
 					"queryTime",
 					"value",
 					"trackedInstant"

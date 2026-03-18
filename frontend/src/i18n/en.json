@@ -1417,12 +1417,6 @@
             "max-number-of-messages": "Number of messages before flush"
           },
           "mssql": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "host": "Host",
             "port": "Port",
             "connection-timeout": "Connection timeout",
@@ -1435,12 +1429,6 @@
             "request-timeout": "Request timeout"
           },
           "mysql": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "host": "Host",
             "port": "Port",
             "connection-timeout": "Connection timeout",
@@ -1449,12 +1437,6 @@
             "password": "Password"
           },
           "odbc": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "remote-agent": "Use remote agent",
             "agent-url": "Remote agent URL",
             "connection-timeout": "Connection timeout",
@@ -1464,12 +1446,6 @@
             "password": "Password"
           },
           "oianalytics": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "use-oia-module": "Use OIAnalytics registration",
             "timeout": "Timeout",
             "specific-settings": {
@@ -1496,12 +1472,6 @@
             }
           },
           "oledb": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "agent-url": "Remote agent URL",
             "connection-timeout": "Connection timeout",
             "retry-interval": "Retry interval",
@@ -1510,13 +1480,6 @@
             "password": "Password"
           },
           "opc": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap",
-              "max-instant-per-item": "Max instant per item"
-            },
             "agent-url": "Remote agent URL",
             "retry-interval": "Retry interval",
             "host": "Server URL (from the agent)",
@@ -1528,14 +1491,6 @@
             }
           },
           "opcua": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap",
-              "max-instant-per-item": "Max instant per item"
-            },
-            "shared-connection": "Share the session with other connectors?",
             "url": "URL",
             "keep-session-alive": "Keep session alive",
             "read-timeout": "Read timeout",
@@ -1574,12 +1529,6 @@
             "key-file-path": "Key file path"
           },
           "oracle": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "thick-mode": "Thick mode",
             "oracle-client": "Oracle Client Library",
             "host": "Host",
@@ -1590,23 +1539,10 @@
             "password": "Password"
           },
           "osisoft-pi": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap",
-              "max-instant-per-item": "Max instant per item"
-            },
             "agent-url": "Remote agent URL",
             "retry-interval": "Retry interval"
           },
           "postgresql": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "host": "Host",
             "port": "Port",
             "ssl-mode": "SSL",
@@ -1617,12 +1553,6 @@
             "password": "Password"
           },
           "rest": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "host": "Host",
             "accept-unauthorized": "Accept unauthorized certificate",
             "authentication": {
@@ -1705,12 +1635,6 @@
             "recursive": "Scan sub-folders"
           },
           "sqlite": {
-            "throttling": {
-              "title": "Throttling",
-              "max-read-interval": "Max read interval",
-              "read-delay": "Read delay",
-              "overlap": "Overlap"
-            },
             "database-path": "Database path"
           },
           "items": {

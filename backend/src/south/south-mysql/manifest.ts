@@ -21,90 +21,6 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'object',
-        key: 'throttling',
-        translationKey: 'configuration.oibus.manifest.south.mysql.throttling.title',
-        displayProperties: {
-          visible: true,
-          wrapInBox: false
-        },
-        enablingConditions: [],
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        attributes: [
-          {
-            type: 'number',
-            key: 'maxReadInterval',
-            translationKey: 'configuration.oibus.manifest.south.mysql.throttling.max-read-interval',
-            unit: 's',
-            defaultValue: 3600,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'number',
-            key: 'readDelay',
-            translationKey: 'configuration.oibus.manifest.south.mysql.throttling.read-delay',
-            unit: 'ms',
-            defaultValue: 200,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'number',
-            key: 'overlap',
-            translationKey: 'configuration.oibus.manifest.south.mysql.throttling.overlap',
-            unit: 'ms',
-            defaultValue: 0,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          }
-        ]
-      },
-      {
         type: 'string',
         key: 'host',
         translationKey: 'configuration.oibus.manifest.south.mysql.host',
@@ -116,7 +32,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 6,
           displayInViewMode: true
         }
@@ -142,7 +58,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 3,
           displayInViewMode: true
         }
@@ -168,7 +84,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 3,
           displayInViewMode: true
         }
@@ -185,7 +101,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 1,
           columns: 6,
           displayInViewMode: true
         }
@@ -197,7 +113,7 @@ const manifest: SouthConnectorManifest = {
         defaultValue: null,
         validators: [],
         displayProperties: {
-          row: 2,
+          row: 1,
           columns: 3,
           displayInViewMode: true
         }
@@ -208,7 +124,7 @@ const manifest: SouthConnectorManifest = {
         translationKey: 'configuration.oibus.manifest.south.mysql.password',
         validators: [],
         displayProperties: {
-          row: 2,
+          row: 1,
           columns: 3,
           displayInViewMode: false
         }
