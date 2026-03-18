@@ -406,10 +406,10 @@ describe('South ADS', () => {
   it('should query last point', async () => {
     south.addContent = jest.fn();
     south.readAdsSymbol = jest.fn().mockReturnValue([1]);
-    await south.lastPointQuery(configuration.items);
+    await south.directQuery(configuration.items);
     expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [1, 1] }, testData.constants.dates.FAKE_NOW, [
-      configuration.items[0].id,
-      configuration.items[1].id
+      configuration.items[0],
+      configuration.items[1]
     ]);
   });
 
@@ -420,7 +420,7 @@ describe('South ADS', () => {
     south.readAdsSymbol = jest.fn().mockImplementationOnce(() => {
       throw { ...new Error(''), message: 'Client is not connected' };
     });
-    await south.lastPointQuery(configuration.items);
+    await south.directQuery(configuration.items);
     expect(logger.error).toHaveBeenCalledWith('ADS client disconnected. Reconnecting');
     expect(south.addContent).not.toHaveBeenCalledWith();
     expect(clearTimeoutSpy).not.toHaveBeenCalled();
@@ -436,7 +436,7 @@ describe('South ADS', () => {
     south.readAdsSymbol = jest.fn().mockImplementationOnce(() => {
       throw new Error('read error');
     });
-    await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('read error');
+    await expect(south.directQuery(configuration.items)).rejects.toThrow('read error');
     expect(south.disconnect).not.toHaveBeenCalled();
     expect(south.addContent).not.toHaveBeenCalled();
   });

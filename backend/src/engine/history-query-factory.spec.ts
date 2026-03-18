@@ -15,6 +15,7 @@ import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north
 import { SouthItemSettings, SouthModbusSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
 import testData from '../tests/utils/test-data';
+import { Transformer } from '../model/transformer.model';
 
 // Mock dependencies
 jest.mock('node:fs/promises');
@@ -50,6 +51,10 @@ describe('HistoryQueryFactory', () => {
       southSettings: { someSouthSetting: true } as unknown as SouthModbusSettings,
       northType: 'file-writer',
       northSettings: { someNorthSetting: true } as unknown as NorthFileWriterSettings,
+      throttling: {
+        maxReadInterval: 0,
+        readDelay: 0
+      },
       caching: {
         trigger: {
           scanMode: { id: 'manual', name: 'Manual', description: '', cron: '' },
@@ -75,7 +80,7 @@ describe('HistoryQueryFactory', () => {
       northTransformers: [
         {
           id: 't1',
-          transformer: {} as any,
+          transformer: {} as Transformer,
           options: {},
           inputType: 'time-values',
           items: []
@@ -167,7 +172,7 @@ describe('HistoryQueryFactory', () => {
         source: 'south',
         southId: mockSettings.id,
         queryTime: mockQueryTime,
-        itemIds: mockItemIds
+        items: mockItemIds
       });
     });
   });

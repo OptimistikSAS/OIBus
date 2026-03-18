@@ -28,10 +28,12 @@ export async function up(knex: Knex): Promise<void> {
     const tableName = `south_item_cache_${connectorId}`;
 
     await knex.schema.createTable(tableName, table => {
-      table.uuid('item_id').primary();
+      table.string('item_id');
+      table.string('group_id');
       table.datetime('query_time');
       table.text('value');
       table.datetime('tracked_instant');
+      table.unique(['item_id', 'group_id']);
     });
 
     // Migrate tracked_instant from cache_history
@@ -59,21 +61,6 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.dropTableIfExists(SOUTH_CACHE_TABLE);
 }
 
-export async function down(knex: Knex): Promise<void> {
-  // Drop all south_item_cache_* tables
-  const tables: Array<{ name: string }> = await knex.raw(
-    `SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'south_item_cache_%'`
-  );
-  for (const table of tables) {
-    await knex.schema.dropTableIfExists(table.name);
-  }
-
-  // Recreate cache_history table
-  await knex.schema.createTable(SOUTH_CACHE_TABLE, table => {
-    table.uuid('south_id').notNullable();
-    table.uuid('scan_mode_id').notNullable();
-    table.uuid('item_id').notNullable();
-    table.primary(['south_id', 'scan_mode_id', 'item_id']);
-    table.datetime('max_instant');
-  });
+export async function down(_knex: Knex): Promise<void> {
+  return;
 }

@@ -114,13 +114,6 @@ describe('Service utils OPCUA', () => {
 
     it('should properly create session configs without auth', async () => {
       const southSettings: SouthOPCUASettings = {
-        throttling: {
-          maxInstantPerItem: true,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          overlap: 0
-        },
-        sharedConnection: false,
         url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
         authentication: {
           type: 'none'
@@ -155,13 +148,6 @@ describe('Service utils OPCUA', () => {
 
     it('should properly create session configs with basic auth', async () => {
       const southSettings: SouthOPCUASettings = {
-        throttling: {
-          maxInstantPerItem: true,
-          maxReadInterval: 3600,
-          readDelay: 0,
-          overlap: 0
-        },
-        sharedConnection: false,
         url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
         authentication: {
           type: 'basic',

@@ -73,16 +73,12 @@ describe('HistoryQuery enabled', () => {
         },
         group: null,
         syncWithGroup: false,
-        maxReadInterval: 0,
-        readDelay: 0,
-        overlap: 0
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: null
       })),
       testData.historyQueries.list[0].startTime,
-      testData.historyQueries.list[0].endTime,
-      'history',
-      { maxReadInterval: 3600, overlap: 0 },
-      false,
-      0
+      testData.historyQueries.list[0].endTime
     );
     expect(clearIntervalSpy).not.toHaveBeenCalled();
     mockedSouth1.connectedEvent.emit('connected');
@@ -125,16 +121,12 @@ describe('HistoryQuery enabled', () => {
         },
         group: null,
         syncWithGroup: false,
-        maxReadInterval: 0,
-        readDelay: 0,
-        overlap: 0
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: null
       })),
       testData.historyQueries.list[0].startTime,
-      testData.historyQueries.list[0].endTime,
-      'history',
-      { maxReadInterval: 3600, overlap: 0 },
-      false,
-      0
+      testData.historyQueries.list[0].endTime
     );
 
     expect(mockedSouth1.start).toHaveBeenCalledTimes(2);

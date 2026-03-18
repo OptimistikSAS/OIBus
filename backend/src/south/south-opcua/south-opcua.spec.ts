@@ -104,13 +104,6 @@ describe('SouthOPCUA', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
-      sharedConnection: false,
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       readTimeout: 15000,
@@ -139,9 +132,9 @@ describe('SouthOPCUA', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -158,9 +151,9 @@ describe('SouthOPCUA', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -177,9 +170,9 @@ describe('SouthOPCUA', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id1',
@@ -193,9 +186,9 @@ describe('SouthOPCUA', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -209,9 +202,9 @@ describe('SouthOPCUA', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -225,9 +218,9 @@ describe('SouthOPCUA', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -408,8 +401,8 @@ describe('SouthOPCUA', () => {
   it('should properly test ha item', async () => {
     const mockedClient = { close: jest.fn() };
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
-    south.getDAValues = jest.fn();
-    south.getHAValues = jest.fn();
+    south.getDAValues = jest.fn().mockReturnValue({ value: [] });
+    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
 
     await south.testItem(configuration.items[0], {
       history: {
@@ -435,8 +428,8 @@ describe('SouthOPCUA', () => {
   it('should properly test da item', async () => {
     const mockedClient = { close: jest.fn() };
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
-    south.getDAValues = jest.fn();
-    south.getHAValues = jest.fn();
+    south.getDAValues = jest.fn().mockReturnValue({ value: [] });
+    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
     await south.testItem(configuration.items[3], { history: undefined });
     expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
     expect(resolveNodeId).toHaveBeenCalledWith(configuration.items[0].settings.nodeId);
@@ -460,7 +453,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly manage history query', async () => {
-    south.getHAValues = jest.fn();
+    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
     south['client'] = {} as unknown as ClientSession;
     await south.historyQuery(
       [configuration.items[0], configuration.items[1], configuration.items[2]],
@@ -642,14 +635,14 @@ describe('SouthOPCUA', () => {
     );
     expect(historyRead).toHaveBeenCalled();
     expect(result).toEqual({
-      content: [
+      value: [
         {
           data: { quality: 'Good', value: '123' },
           pointId: 'item1',
           timestamp: testData.constants.dates.FAKE_NOW
         }
       ],
-      type: 'time-values'
+      trackedInstant: '2021-01-02T00:00:00.000Z'
     });
   });
 
@@ -733,7 +726,7 @@ describe('SouthOPCUA', () => {
         type: 'time-values'
       },
       testData.constants.dates.FAKE_NOW,
-      [configuration.items[0].id]
+      [configuration.items[0]]
     );
   });
 
@@ -768,8 +761,8 @@ describe('SouthOPCUA', () => {
     );
     expect(historyRead).toHaveBeenCalled();
     expect(result).toEqual({
-      content: [],
-      type: 'time-values'
+      value: [],
+      trackedInstant: null
     });
     const expectedLogs = new Map();
     expectedLogs.set('Bad', {
@@ -802,14 +795,222 @@ describe('SouthOPCUA', () => {
     expect(historyRead).toHaveBeenCalled();
   });
 
-  it('should filter HA items', () => {
-    const result = south.filterHistoryItems(configuration.items);
-    expect(result).toEqual(configuration.items.filter(item => item.settings.mode === 'ha'));
+  describe('filter items', () => {
+    const items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>> = [
+      {
+        id: 'id1', // kept
+        enabled: true,
+        settings: {
+          mode: 'ha'
+        },
+        scanMode: testData.scanMode.list[0],
+        group: null,
+        syncWithGroup: false
+      },
+      {
+        id: 'id2', // filtered out
+        enabled: true,
+        settings: {
+          mode: 'ha'
+        },
+        scanMode: { id: 'subscription' },
+        group: null,
+        syncWithGroup: false
+      },
+      {
+        id: 'id3', // kept
+        enabled: true,
+        settings: {
+          mode: 'ha'
+        },
+        scanMode: testData.scanMode.list[0],
+        group: {
+          scanMode: { id: testData.scanMode.list[0] }
+        },
+        syncWithGroup: true
+      },
+      {
+        id: 'id4', // filtered out
+        enabled: true,
+        settings: {
+          mode: 'ha'
+        },
+        scanMode: testData.scanMode.list[0],
+        group: {
+          scanMode: { id: 'subscription' }
+        },
+        syncWithGroup: true
+      },
+      {
+        id: 'id5', // kept
+        enabled: true,
+        settings: {
+          mode: 'ha'
+        },
+        scanMode: testData.scanMode.list[0],
+        group: {
+          scanMode: { id: 'subscription' }
+        },
+        syncWithGroup: false
+      },
+      {
+        id: 'id6', // filtered out
+        enabled: true,
+        settings: {
+          mode: 'ha'
+        },
+        scanMode: { id: 'subscription' },
+        group: {
+          scanMode: { id: testData.scanMode.list[0] }
+        },
+        syncWithGroup: false
+      },
+      {
+        id: 'id7', // filtered out
+        enabled: true,
+        settings: {
+          mode: 'da'
+        },
+        scanMode: { id: 'subscription' },
+        group: {
+          scanMode: { id: testData.scanMode.list[0] }
+        },
+        syncWithGroup: false
+      },
+      {
+        id: 'id8', // filtered out
+        enabled: true,
+        settings: {
+          mode: 'da'
+        },
+        scanMode: testData.scanMode.list[0],
+        group: {
+          scanMode: { id: 'subscription' }
+        },
+        syncWithGroup: true
+      },
+      {
+        id: 'id9', // filtered out
+        enabled: true,
+        settings: {
+          mode: 'da'
+        },
+        scanMode: testData.scanMode.list[0],
+        group: {
+          scanMode: { id: 'subscription' }
+        },
+        syncWithGroup: false
+      },
+      {
+        id: 'id10', // filtered out
+        enabled: true,
+        settings: {
+          mode: 'da'
+        },
+        scanMode: { id: 'subscription' },
+        group: {
+          scanMode: { id: testData.scanMode.list[0] }
+        },
+        syncWithGroup: false
+      },
+      {
+        id: 'id11', // filtered out
+        enabled: true,
+        settings: {
+          mode: 'da'
+        },
+        scanMode: testData.scanMode.list[0],
+        group: {
+          scanMode: { id: testData.scanMode.list[0] }
+        },
+        syncWithGroup: true
+      }
+    ] as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>;
+
+    it('should filter HA items', () => {
+      const result = south.filterHistoryItems(items);
+      expect(result).toEqual([
+        {
+          id: 'id1',
+          enabled: true,
+          settings: {
+            mode: 'ha'
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false
+        },
+        {
+          id: 'id3',
+          enabled: true,
+          settings: {
+            mode: 'ha'
+          },
+          scanMode: testData.scanMode.list[0],
+          group: {
+            scanMode: { id: testData.scanMode.list[0] }
+          },
+          syncWithGroup: true
+        },
+        {
+          id: 'id5',
+          enabled: true,
+          settings: {
+            mode: 'ha'
+          },
+          scanMode: testData.scanMode.list[0],
+          group: {
+            scanMode: { id: 'subscription' }
+          },
+          syncWithGroup: false
+        }
+      ]);
+    });
+
+    it('should filter DA items', () => {
+      const result = south.filterHistoryItems(items);
+      expect(result).toEqual([
+        {
+          id: 'id1',
+          enabled: true,
+          settings: {
+            mode: 'ha'
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false
+        },
+        {
+          id: 'id3',
+          enabled: true,
+          settings: {
+            mode: 'ha'
+          },
+          scanMode: testData.scanMode.list[0],
+          group: {
+            scanMode: { id: testData.scanMode.list[0] }
+          },
+          syncWithGroup: true
+        },
+        {
+          id: 'id5',
+          enabled: true,
+          settings: {
+            mode: 'ha'
+          },
+          scanMode: testData.scanMode.list[0],
+          group: {
+            scanMode: { id: 'subscription' }
+          },
+          syncWithGroup: false
+        }
+      ]);
+    });
   });
 
   it('should properly throw error on query last point if client not set', async () => {
     south.getDAValues = jest.fn();
-    await expect(south.lastPointQuery(configuration.items)).rejects.toThrow('OPCUA client not set');
+    await expect(south.directQuery(configuration.items)).rejects.toThrow('OPCUA client not set');
     expect(south.getDAValues).not.toHaveBeenCalled();
   });
 
@@ -817,7 +1018,7 @@ describe('SouthOPCUA', () => {
     south['client'] = {} as unknown as ClientSession;
     south.getDAValues = jest.fn();
     south.addContent = jest.fn();
-    await south.lastPointQuery([]);
+    await south.directQuery([]);
     expect(south.getDAValues).not.toHaveBeenCalled();
     expect(south.addContent).not.toHaveBeenCalled();
   });
@@ -825,15 +1026,18 @@ describe('SouthOPCUA', () => {
   it('should query last point (only one)', async () => {
     const mockedClient = {} as unknown as ClientSession;
     south['client'] = mockedClient;
-    south.getDAValues = jest.fn().mockReturnValue(testData.oibusContent[0]);
+    south.getDAValues = jest.fn().mockReturnValue(testData.oibusContent[0].content);
     south.addContent = jest.fn();
-    await south.lastPointQuery([configuration.items[0], configuration.items[3]]);
+    await south.directQuery([configuration.items[0], configuration.items[3]]);
     expect(logger.debug(`Read node ${configuration.items[3].settings.nodeId}`));
     expect(south.getDAValues).toHaveBeenCalledWith(
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
     );
-    expect(south.addContent).toHaveBeenCalledWith(testData.oibusContent[0], testData.constants.dates.FAKE_NOW, [configuration.items[0].id]);
+    expect(south.addContent).toHaveBeenCalledWith(testData.oibusContent[0], testData.constants.dates.FAKE_NOW, [
+      configuration.items[0],
+      configuration.items[3]
+    ]);
   });
 
   it('should query last point (several) and fail and reconnect', async () => {
@@ -846,7 +1050,7 @@ describe('SouthOPCUA', () => {
     south.addContent = jest.fn();
     south.disconnect = jest.fn();
     south.connect = jest.fn();
-    await expect(south.lastPointQuery([configuration.items[0], configuration.items[3]])).rejects.toThrow('opcua read error');
+    await expect(south.directQuery([configuration.items[0], configuration.items[3]])).rejects.toThrow('opcua read error');
     expect(logger.debug(`Read node ${configuration.items[3].settings.nodeId}`));
     expect(south.getDAValues).toHaveBeenCalledWith(
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
@@ -867,7 +1071,7 @@ describe('SouthOPCUA', () => {
     south.disconnect = jest.fn();
     south.connect = jest.fn();
     south['disconnecting'] = true;
-    await expect(south.lastPointQuery([configuration.items[0], configuration.items[3]])).rejects.toThrow('opcua read error');
+    await expect(south.directQuery([configuration.items[0], configuration.items[3]])).rejects.toThrow('opcua read error');
     expect(logger.debug(`Read node ${configuration.items[3].settings.nodeId}`));
     expect(south.getDAValues).toHaveBeenCalledWith(
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
@@ -892,7 +1096,7 @@ describe('SouthOPCUA', () => {
         throw new Error('bad node id');
       });
 
-    await south.lastPointQuery([configuration.items[3], configuration.items[4], configuration.items[5]]);
+    await south.directQuery([configuration.items[3], configuration.items[4], configuration.items[5]]);
     expect(south.getDAValues).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledTimes(3);
   });
@@ -935,19 +1139,16 @@ describe('SouthOPCUA', () => {
       client
     );
     expect(read).toHaveBeenCalled();
-    expect(result).toEqual({
-      content: [
-        {
-          data: { quality: 'Good', value: '123' },
-          pointId: 'item2',
-          timestamp: testData.constants.dates.FAKE_NOW
-        }
-      ],
-      type: 'time-values'
-    });
+    expect(result).toEqual([
+      {
+        data: { quality: 'Good', value: '123' },
+        pointId: 'item2',
+        timestamp: testData.constants.dates.FAKE_NOW
+      }
+    ]);
   });
 
-  it('getDAValues() should properly retrieve data', async () => {
+  it('getDAValues() should properly retrieve empty data', async () => {
     const read = jest.fn().mockReturnValue([]);
     const client = { read } as unknown as ClientSession;
 
@@ -962,10 +1163,7 @@ describe('SouthOPCUA', () => {
       client
     );
     expect(read).toHaveBeenCalled();
-    expect(result).toEqual({
-      content: [],
-      type: 'time-values'
-    });
+    expect(result).toEqual([]);
     expect(logger.error).toHaveBeenCalledWith(`Received 0 node results, requested 1 nodes. Request done in 0 ms`);
   });
 
@@ -1057,15 +1255,6 @@ describe('SouthOPCUA', () => {
     expect(south['monitoredItems'].size).toBe(0);
   });
 
-  it('should get throttling settings', () => {
-    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
-      maxReadInterval: configuration.settings.throttling.maxReadInterval,
-      readDelay: configuration.settings.throttling.readDelay
-    });
-    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(configuration.settings.throttling.maxInstantPerItem);
-    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
-  });
-
   it('should not flush messages if none in buffer', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
@@ -1122,7 +1311,10 @@ describe('SouthOPCUA', () => {
         ]
       },
       testData.constants.dates.FAKE_NOW,
-      ['itemId']
+      [
+        { name: 'pointId', id: 'itemId' },
+        { name: 'pointId', id: 'itemId' }
+      ]
     );
     expect(clearTimeoutSpy).toHaveBeenCalled();
     expect(setTimeoutSpy).toHaveBeenCalled();

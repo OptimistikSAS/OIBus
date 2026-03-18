@@ -552,7 +552,7 @@ const models: TsoaRoute.Models = {
             "scanMode": {"ref":"ScanModeDTO","required":true},
             "overlap": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
             "maxReadInterval": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
-            "readDelay": {"dataType":"double","required":true},
+            "readDelay": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
         },
         "additionalProperties": false,
     },
@@ -891,20 +891,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMSSQLSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthMSSQLSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthMSSQLSettingsThrottling","required":true},
             "host": {"dataType":"string","required":true},
             "port": {"dataType":"double","required":true},
             "connectionTimeout": {"dataType":"double","required":true},
@@ -1005,20 +994,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthMySQLSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthMySQLSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthMySQLSettingsThrottling","required":true},
             "host": {"dataType":"string","required":true},
             "port": {"dataType":"double","required":true},
             "connectionTimeout": {"dataType":"double","required":true},
@@ -1116,20 +1094,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthODBCSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthODBCSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthODBCSettingsThrottling","required":true},
             "remoteAgent": {"dataType":"boolean","required":true},
             "agentUrl": {"dataType":"string"},
             "connectionTimeout": {"dataType":"double","required":true},
@@ -1227,16 +1194,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOIAnalyticsSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOIAnalyticsSettingsSpecificSettingsAuthentication": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["aad-client-secret"]},{"dataType":"enum","enums":["aad-certificate"]}],"validators":{}},
@@ -1266,7 +1223,6 @@ const models: TsoaRoute.Models = {
     "SouthOIAnalyticsSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthOIAnalyticsSettingsThrottling","required":true},
             "useOiaModule": {"dataType":"boolean","required":true},
             "timeout": {"dataType":"double","required":true},
             "specificSettings": {"dataType":"union","subSchemas":[{"ref":"SouthOIAnalyticsSettingsSpecificSettings"},{"dataType":"enum","enums":[null]}]},
@@ -1351,20 +1307,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOLEDBSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOLEDBSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthOLEDBSettingsThrottling","required":true},
             "agentUrl": {"dataType":"string","required":true},
             "connectionTimeout": {"dataType":"double","required":true},
             "retryInterval": {"dataType":"double","required":true},
@@ -1461,17 +1406,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOPCSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-            "maxInstantPerItem": {"dataType":"boolean","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOPCSettingsMode": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["hda"]},{"dataType":"enum","enums":["da"]}],"validators":{}},
@@ -1480,7 +1414,6 @@ const models: TsoaRoute.Models = {
     "SouthOPCSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthOPCSettingsThrottling","required":true},
             "agentUrl": {"dataType":"string","required":true},
             "retryInterval": {"dataType":"double","required":true},
             "host": {"dataType":"string","required":true},
@@ -1545,17 +1478,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOPCUASettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-            "maxInstantPerItem": {"dataType":"boolean","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOPCUASettingsSecurityMode": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["sign"]},{"dataType":"enum","enums":["sign-and-encrypt"]}],"validators":{}},
@@ -1586,8 +1508,6 @@ const models: TsoaRoute.Models = {
     "SouthOPCUASettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthOPCUASettingsThrottling","required":true},
-            "sharedConnection": {"dataType":"boolean","required":true},
             "url": {"dataType":"string","required":true},
             "keepSessionAlive": {"dataType":"boolean","required":true},
             "readTimeout": {"dataType":"double","required":true},
@@ -1676,20 +1596,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthOracleSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthOracleSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthOracleSettingsThrottling","required":true},
             "thickMode": {"dataType":"boolean","required":true},
             "oracleClient": {"dataType":"string"},
             "host": {"dataType":"string","required":true},
@@ -1789,21 +1698,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPISettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-            "maxInstantPerItem": {"dataType":"boolean","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthPISettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthPISettingsThrottling","required":true},
             "agentUrl": {"dataType":"string","required":true},
             "retryInterval": {"dataType":"double","required":true},
         },
@@ -1860,20 +1757,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthPostgreSQLSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthPostgreSQLSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthPostgreSQLSettingsThrottling","required":true},
             "host": {"dataType":"string","required":true},
             "port": {"dataType":"double","required":true},
             "sslMode": {"dataType":"boolean","required":true},
@@ -1972,16 +1858,6 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestSettingsAuthenticationType": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["none"]},{"dataType":"enum","enums":["basic"]},{"dataType":"enum","enums":["bearer"]},{"dataType":"enum","enums":["api-key"]}],"validators":{}},
@@ -2036,7 +1912,6 @@ const models: TsoaRoute.Models = {
     "SouthRestSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthRestSettingsThrottling","required":true},
             "host": {"dataType":"string","required":true},
             "acceptUnauthorized": {"dataType":"boolean","required":true},
             "timeout": {"dataType":"double","required":true},
@@ -2276,20 +2151,9 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthSQLiteSettingsThrottling": {
-        "dataType": "refObject",
-        "properties": {
-            "maxReadInterval": {"dataType":"double","required":true},
-            "readDelay": {"dataType":"double","required":true},
-            "overlap": {"dataType":"double","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthSQLiteSettings": {
         "dataType": "refObject",
         "properties": {
-            "throttling": {"ref":"SouthSQLiteSettingsThrottling","required":true},
             "databasePath": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
@@ -3086,6 +2950,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "itemId": {"dataType":"string","required":true},
             "itemName": {"dataType":"string","required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"string","required":true},
             "queryTime": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "value": {"dataType":"any","required":true},
             "trackedInstant": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},

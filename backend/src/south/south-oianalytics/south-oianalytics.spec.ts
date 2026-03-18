@@ -37,7 +37,6 @@ describe('SouthOIAnalytics', () => {
     description: 'test connector',
     enabled: true,
     settings: {
-      throttling: { maxReadInterval: 3600, readDelay: 0, overlap: 0 },
       useOiaModule: false,
       timeout: 30,
       specificSettings: {
@@ -66,7 +65,12 @@ describe('SouthOIAnalytics', () => {
             outputTimezone: 'Europe/Paris'
           }
         },
-        scanMode: testData.scanMode.list[0]
+        scanMode: testData.scanMode.list[0],
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       } as SouthConnectorItemEntity<SouthOIAnalyticsItemSettings>
     ]
   };
@@ -99,23 +103,6 @@ describe('SouthOIAnalytics', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-  });
-
-  describe('Getters', () => {
-    it('should return throttling settings', () => {
-      expect(south.getThrottlingSettings(baseConfiguration.settings)).toEqual({
-        maxReadInterval: 3600,
-        readDelay: 0
-      });
-    });
-
-    it('should return max instant per item setting', () => {
-      expect(south.getMaxInstantPerItem(baseConfiguration.settings)).toBe(true);
-    });
-
-    it('should return overlap setting', () => {
-      expect(south.getOverlap(baseConfiguration.settings)).toBe(0);
-    });
   });
 
   describe('testConnection', () => {
@@ -198,15 +185,14 @@ describe('SouthOIAnalytics', () => {
         mockFormatted,
         item.settings.serialization,
         baseConfiguration.name,
-        item.name,
-        item.id,
+        item,
         testData.constants.dates.FAKE_NOW,
         path.resolve('cacheFolder', 'tmp'),
         expect.any(Function), // addContent callback
         expect.anything() // logger
       );
       expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(`Found ${mockFormatted.length} results`));
-      expect(resultInstant).toBe(maxInstant);
+      expect(resultInstant).toEqual({ trackedInstant: '2023-02-01T12:00:00.000Z', value: { pointId: 'p1' } });
     });
 
     it('should handle empty results gracefully', async () => {
@@ -237,7 +223,7 @@ describe('SouthOIAnalytics', () => {
 
       const result = await south.historyQuery(items, 'start', 'end');
 
-      expect(result).toBe('2023-01-02');
+      expect(result).toEqual({ trackedInstant: '2023-01-02', value: null });
     });
   });
 });

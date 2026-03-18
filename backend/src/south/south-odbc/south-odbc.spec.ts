@@ -51,11 +51,6 @@ describe('SouthODBC odbc driver with authentication', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: 'password',
@@ -100,9 +95,9 @@ describe('SouthODBC odbc driver with authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -123,9 +118,9 @@ describe('SouthODBC odbc driver with authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -163,9 +158,9 @@ describe('SouthODBC odbc driver with authentication', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -181,15 +176,6 @@ describe('SouthODBC odbc driver with authentication', () => {
 
   afterEach(() => {
     jest.useRealTimers();
-  });
-
-  it('should get throttling settings', () => {
-    expect(south.getThrottlingSettings(configuration.settings)).toEqual({
-      maxReadInterval: configuration.settings.throttling.maxReadInterval,
-      readDelay: configuration.settings.throttling.readDelay
-    });
-    expect(south.getMaxInstantPerItem(configuration.settings)).toEqual(true);
-    expect(south.getOverlap(configuration.settings)).toEqual(configuration.settings.throttling.overlap);
   });
 
   it('should do nothing on connect and disconnect', async () => {
@@ -209,14 +195,23 @@ describe('SouthODBC odbc driver with authentication', () => {
   });
 
   it('should properly run historyQuery', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    south.queryOdbcData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
+    const startTime = testData.constants.dates.DATE_1;
+    south.queryOdbcData = jest.fn().mockReturnValueOnce({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    });
 
-    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryOdbcData).toHaveBeenCalledTimes(3);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(configuration.items[1], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(configuration.items[2], startTime, testData.constants.dates.FAKE_NOW);
+    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryOdbcData).toHaveBeenCalledTimes(1);
+    expect(south.queryOdbcData).toHaveBeenCalledWith(
+      configuration.items[0],
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.FAKE_NOW
+    );
+    expect(result).toEqual({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    });
   });
 
   it('should get data from ODBC', async () => {
@@ -253,7 +248,10 @@ describe('SouthODBC odbc driver with authentication', () => {
     expect(odbcConnection.query).toHaveBeenCalledWith(configuration.items[0].settings.query);
     expect(odbcConnection.close).toHaveBeenCalledTimes(1);
 
-    expect(result).toEqual('2020-03-01T00:00:00.000Z');
+    expect(result).toEqual({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z', value: 1 }
+    });
     expect(persistResults).toHaveBeenCalledWith(
       [
         { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
@@ -261,8 +259,7 @@ describe('SouthODBC odbc driver with authentication', () => {
       ],
       configuration.items[0].settings.serialization,
       configuration.name,
-      configuration.items[0].name,
-      configuration.items[0].id,
+      configuration.items[0],
       testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
@@ -271,7 +268,7 @@ describe('SouthODBC odbc driver with authentication', () => {
 
     const noResult = await south.queryOdbcData(configuration.items[0], startTime, endTime);
     expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
-    expect(noResult).toEqual(null);
+    expect(noResult).toEqual({ trackedInstant: null, value: null });
   });
 
   it('should get data from ODBC without datetime reference', async () => {
@@ -285,13 +282,10 @@ describe('SouthODBC odbc driver with authentication', () => {
 
     const odbcConnection = {
       close: jest.fn(),
-      query: jest
-        .fn()
-        .mockReturnValueOnce([
-          { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
-          { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
-        ])
-        .mockReturnValueOnce([])
+      query: jest.fn().mockReturnValueOnce([
+        { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
+        { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
+      ])
     };
     (formatInstant as jest.Mock).mockImplementation(value => value);
 
@@ -301,7 +295,14 @@ describe('SouthODBC odbc driver with authentication', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
 
-    expect(result).toEqual(null);
+    expect(result).toEqual({
+      trackedInstant: null,
+      value: {
+        anotherTimestamp: '2020-03-01T00:00:00.000Z',
+        timestamp: '2020-03-01T00:00:00.000Z',
+        value: 2
+      }
+    });
   });
 
   it('should manage query error', async () => {
@@ -360,18 +361,9 @@ describe('SouthODBC odbc driver with authentication', () => {
   });
 
   it('should test item with queryOdbcData', async () => {
-    south.queryOdbcData = jest
-      .fn()
-      .mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as Array<OIBusTimeValue>);
-
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    expect(south.queryOdbcData).toHaveBeenCalledTimes(1);
-  });
-
-  it('should test item with queryOdbcData', async () => {
-    south.queryOdbcData = jest
-      .fn()
-      .mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as Array<OIBusTimeValue>);
+    south.queryOdbcData = jest.fn().mockReturnValue({
+      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as Array<OIBusTimeValue>
+    });
 
     await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     expect(south.queryOdbcData).toHaveBeenCalledTimes(1);
@@ -425,11 +417,6 @@ describe('SouthODBC odbc driver without authentication', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: null,
@@ -474,9 +461,9 @@ describe('SouthODBC odbc driver without authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -497,9 +484,9 @@ describe('SouthODBC odbc driver without authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -537,9 +524,9 @@ describe('SouthODBC odbc driver without authentication', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -580,13 +567,12 @@ describe('SouthODBC odbc driver without authentication', () => {
     });
     expect(logger.debug).toHaveBeenCalledWith(`Connecting with connection string ${configuration.settings.connectionString}`);
 
-    expect(result).toEqual('2020-03-01T00:00:00.000Z');
+    expect(result).toEqual({ trackedInstant: '2020-03-01T00:00:00.000Z', value: { timestamp: '2020-03-01T00:00:00.000Z' } });
     expect(persistResults).toHaveBeenCalledWith(
       [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
       configuration.items[0].settings.serialization,
       configuration.name,
-      configuration.items[0].name,
-      configuration.items[0].id,
+      configuration.items[0],
       testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
@@ -630,11 +616,6 @@ describe('SouthODBC odbc driver test connection', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       remoteAgent: false,
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: 'password',
@@ -679,9 +660,9 @@ describe('SouthODBC odbc driver test connection', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -702,9 +683,9 @@ describe('SouthODBC odbc driver test connection', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -742,9 +723,9 @@ describe('SouthODBC odbc driver test connection', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -916,11 +897,6 @@ describe('SouthODBC odbc remote with authentication', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       remoteAgent: true,
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -966,9 +942,9 @@ describe('SouthODBC odbc remote with authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -989,9 +965,9 @@ describe('SouthODBC odbc remote with authentication', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -1029,9 +1005,9 @@ describe('SouthODBC odbc remote with authentication', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
@@ -1134,14 +1110,23 @@ describe('SouthODBC odbc remote with authentication', () => {
   });
 
   it('should properly run historyQuery', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce('2023-02-01T00:00:00.000Z').mockReturnValue('2023-02-01T00:00:00.000Z');
+    const startTime = testData.constants.dates.DATE_1;
+    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    });
 
-    await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(3);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[0], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[1], startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[2], startTime, testData.constants.dates.FAKE_NOW);
+    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
+    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
+      configuration.items[0],
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.FAKE_NOW
+    );
+    expect(result).toEqual({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    });
   });
 
   it('should get data from Remote agent', async () => {
@@ -1190,7 +1175,10 @@ describe('SouthODBC odbc remote with authentication', () => {
       }
     );
 
-    expect(result).toEqual('2020-03-01T00:00:00.000Z');
+    expect(result).toEqual({
+      trackedInstant: '2020-03-01T00:00:00.000Z',
+      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+    });
     expect(persistResults).toHaveBeenCalledWith(
       [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
       {
@@ -1199,8 +1187,7 @@ describe('SouthODBC odbc remote with authentication', () => {
         compression: configuration.items[0].settings.serialization.compression
       },
       configuration.name,
-      configuration.items[0].name,
-      configuration.items[0].id,
+      configuration.items[0],
       testData.constants.dates.FAKE_NOW,
       path.resolve('cacheFolder', 'tmp'),
       expect.any(Function),
@@ -1245,7 +1232,10 @@ describe('SouthODBC odbc remote with authentication', () => {
       }
     );
 
-    expect(result).toEqual(null);
+    expect(result).toEqual({
+      trackedInstant: null,
+      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+    });
   });
 
   it('should manage query error', async () => {
@@ -1306,11 +1296,6 @@ describe('SouthODBC odbc remote test connection', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      throttling: {
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0
-      },
       remoteAgent: true,
       agentUrl: 'http://localhost:2224',
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
@@ -1356,9 +1341,9 @@ describe('SouthODBC odbc remote test connection', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id2',
@@ -1379,9 +1364,9 @@ describe('SouthODBC odbc remote test connection', () => {
         scanMode: testData.scanMode.list[0],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       },
       {
         id: 'id3',
@@ -1419,9 +1404,9 @@ describe('SouthODBC odbc remote test connection', () => {
         scanMode: testData.scanMode.list[1],
         group: null,
         syncWithGroup: false,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        maxReadInterval: 3600,
+        readDelay: 0,
+        overlap: 0
       }
     ]
   };
