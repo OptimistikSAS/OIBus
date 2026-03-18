@@ -9,7 +9,7 @@ import { NorthSettings } from '../../shared/model/north-settings.model';
 import { createFolder } from '../service/utils';
 import path from 'node:path';
 import HistoryQuery from './history-query';
-import { HistoryQueryEntity } from '../model/histor-query.model';
+import { HistoryQueryEntity, HistoryQueryItemEntity } from '../model/histor-query.model';
 import { buildNorth } from '../north/north-connector-factory';
 import { buildSouth } from '../south/south-connector-factory';
 import CacheService from '../service/cache/cache.service';
@@ -17,10 +17,16 @@ import { OIBusSouthType } from '../../shared/model/south-connector.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import fs from 'node:fs/promises';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
+import { SouthConnectorItemEntity } from '../model/south-connector.model';
 
 export const buildHistoryQuery = (
   settings: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
-  addContent: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+  addContent: (
+    southId: string,
+    data: OIBusContent,
+    queryTime: Instant,
+    items: Array<HistoryQueryItemEntity<SouthItemSettings>>
+  ) => Promise<void>,
   logger: pino.Logger,
   baseFolderPath: string,
   southCacheRepository: SouthCacheRepository,
@@ -61,8 +67,8 @@ export const buildHistoryQuery = (
       settings: settings.southSettings,
       items: []
     },
-    async (historyId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) =>
-      await north.cacheContent(data, { source: 'south', southId: settings.id, queryTime, itemIds }),
+    async (historyId: string, data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
+      await north.cacheContent(data, { source: 'south', southId: settings.id, queryTime, items }),
     logger,
     path.join(baseFolderPath, 'cache', `history-${settings.id}`, 'south'),
     southCacheRepository,

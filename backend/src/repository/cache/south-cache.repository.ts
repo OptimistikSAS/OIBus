@@ -1,6 +1,5 @@
 import { Database } from 'better-sqlite3';
-import { SouthCache, SouthItemLastValue } from '../../../shared/model/south-connector.model';
-import { Instant } from '../../../shared/model/types';
+import { SouthItemLastValue } from '../../../shared/model/south-connector.model';
 
 /**
  * Repository used for South connector cache (Scan mode instant storage)
@@ -14,70 +13,8 @@ export default class SouthCacheRepository {
     this._database = database;
   }
 
-  getSouthCache(southId: string, scanModeId: string, itemId: string): SouthCache | null {
-    // Determine key: if itemId is 'all', use scanModeId, otherwise use itemId
-    const key = itemId === 'all' ? scanModeId : itemId;
-    const itemValue = this.getItemLastValue(southId, key);
-
-    if (!itemValue) return null;
-
-    return {
-      southId,
-      scanModeId,
-      itemId,
-      maxInstant: itemValue.trackedInstant || ''
-    };
-  }
-
-  save(command: SouthCache): void {
-    const key = command.itemId === 'all' ? command.scanModeId : command.itemId;
-    this.saveItemLastValue(command.southId, {
-      itemId: key, // Use correct key logic
-      queryTime: null,
-      value: null,
-      trackedInstant: command.maxInstant
-    });
-  }
-
   /**
-   * @deprecated Use getAllItemValues and filter/aggregate in service
-   */
-  getLatestMaxInstants(_southId: string): Map<string, Instant> | null {
-    return null;
-  }
-
-  delete(southId: string, scanModeId: string, itemId: string): void {
-    const key = itemId === 'all' ? scanModeId : itemId;
-    this.deleteItemValue(southId, key);
-  }
-
-  deleteAllBySouthConnector(southId: string): void {
-    this.dropItemValueTable(southId);
-  }
-
-  deleteAllBySouthItem(_itemId: string): void {
-    // No-op: Requires southId which is not provided.
-    // SouthConnector now uses deleteItemValue(southId, itemId) directly.
-  }
-
-  deleteAllByScanMode(_scanModeId: string): void {
-    // No-op: Incompatible with per-connector tables.
-  }
-
-  createCustomTable(tableName: string, fields: string): void {
-    this._database.prepare(`CREATE TABLE IF NOT EXISTS "${tableName}" (${fields});`).run();
-  }
-
-  runQueryOnCustomTable(query: string, params: Array<string | number>): void {
-    this._database.prepare(query).run(...params);
-  }
-
-  getQueryOnCustomTable(query: string, params: Array<string | number>): unknown {
-    return this._database.prepare(query).get(...params);
-  }
-
-  /**
-   * Create item value table for a connector
+   * Create an item value table for a connector
    */
   createItemValueTable(connectorId: string): void {
     const tableName = `south_item_cache_${connectorId}`;
@@ -85,6 +22,7 @@ export default class SouthCacheRepository {
       .prepare(
         `CREATE TABLE IF NOT EXISTS "${tableName}" (` +
           'item_id TEXT PRIMARY KEY, ' +
+          'group_id TEXT, ' +
           'query_time TEXT, ' +
           'value TEXT, ' +
           'tracked_instant TEXT' +
@@ -94,7 +32,7 @@ export default class SouthCacheRepository {
   }
 
   /**
-   * Drop item value table for a connector
+   * Drop the item value table for a connector
    */
   dropItemValueTable(connectorId: string): void {
     const tableName = `south_item_cache_${connectorId}`;
@@ -104,15 +42,17 @@ export default class SouthCacheRepository {
   /**
    * Get last value for an item
    */
-  getItemLastValue(connectorId: string, itemId: string): Omit<SouthItemLastValue, 'itemName'> | null {
+  getItemLastValue(connectorId: string, groupId: string | null, itemId: string): Omit<SouthItemLastValue, 'itemName' | 'groupName'> | null {
     const tableName = `south_item_cache_${connectorId}`;
-    // Check if the table exists first? No, we assume the table exists (created on start)
-    // However, if the table doesn't exist, this might throw?
-    // better-sqlite3 throws if the table is not found? Yes.
-    // So createItemValueTable at startup is CRITICAL.
-    const query = `SELECT item_id, query_time, value, tracked_instant FROM "${tableName}" WHERE item_id = ?;`;
+    let whereClause = 'WHERE item_id = ?';
+    const queryParams = [itemId];
+    if (groupId) {
+      whereClause += ` AND group_id = ?`;
+      queryParams.push(groupId);
+    }
+    const query = `SELECT group_id, item_id, query_time, value, tracked_instant FROM "${tableName}" ${whereClause};`;
     try {
-      const result = this._database.prepare(query).get(itemId) as Record<string, string> | undefined;
+      const result = this._database.prepare(query).get(...queryParams) as Record<string, string> | undefined;
       if (!result) return null;
       return this.toSouthItemLastValue(result);
     } catch {
@@ -122,43 +62,26 @@ export default class SouthCacheRepository {
   }
 
   /**
-   * Get all item values for a connector
+   * Save or update the last item value
    */
-  getAllItemValues(connectorId: string): Array<Omit<SouthItemLastValue, 'itemName'>> {
+  saveItemLastValue(connectorId: string, command: Omit<SouthItemLastValue, 'itemName' | 'groupName'>): void {
     const tableName = `south_item_cache_${connectorId}`;
-    const query = `SELECT item_id, query_time, value, tracked_instant FROM "${tableName}";`;
-    try {
-      const results = this._database.prepare(query).all() as Array<Record<string, string>>;
-      return results.map(result => this.toSouthItemLastValue(result));
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * Save or update the item last value
-   */
-  saveItemLastValue(connectorId: string, command: Omit<SouthItemLastValue, 'itemName'>): void {
-    const tableName = `south_item_cache_${connectorId}`;
-    const existing = this.getItemLastValue(connectorId, command.itemId);
+    const existing = this.getItemLastValue(connectorId, command.groupId, command.itemId);
 
     const valueStr = command.value !== null && command.value !== undefined ? JSON.stringify(command.value) : null;
 
     if (!existing) {
-      const insertQuery = `INSERT INTO "${tableName}" (item_id, query_time, value, tracked_instant) VALUES (?, ?, ?, ?);`;
-      this._database.prepare(insertQuery).run(command.itemId, command.queryTime, valueStr, command.trackedInstant);
+      const insertQuery = `INSERT INTO "${tableName}" (group_id, item_id, query_time, value, tracked_instant) VALUES (?, ?, ?, ?, ?);`;
+      this._database.prepare(insertQuery).run(command.groupId, command.itemId, command.queryTime, valueStr, command.trackedInstant);
     } else {
-      const updateQuery = `UPDATE "${tableName}" SET query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ?;`;
-      this._database.prepare(updateQuery).run(command.queryTime, valueStr, command.trackedInstant, command.itemId);
+      const updateQuery = `UPDATE "${tableName}" SET query_time = ?, value = ?, tracked_instant = ? WHERE group_id = ? AND item_id = ?;`;
+      this._database.prepare(updateQuery).run(command.queryTime, valueStr, command.trackedInstant, command.groupId, command.itemId);
     }
   }
 
-  /**
-   * Delete item value
-   */
-  deleteItemValue(connectorId: string, itemId: string): void {
+  deleteItemValue(connectorId: string, groupId: string | null, itemId: string | null): void {
     const tableName = `south_item_cache_${connectorId}`;
-    const query = `DELETE FROM "${tableName}" WHERE item_id = ?;`;
+    const query = `DELETE FROM "${tableName}" WHERE group_id = ? AND item_id = ?;`;
     try {
       this._database.prepare(query).run(itemId);
     } catch {
@@ -166,7 +89,7 @@ export default class SouthCacheRepository {
     }
   }
 
-  private toSouthItemLastValue(result: Record<string, string>): Omit<SouthItemLastValue, 'itemName'> {
+  private toSouthItemLastValue(result: Record<string, string>): Omit<SouthItemLastValue, 'itemName' | 'groupName'> {
     let parsedValue: unknown = null;
     if (result.value) {
       try {
@@ -178,6 +101,7 @@ export default class SouthCacheRepository {
 
     return {
       itemId: result.item_id,
+      groupId: result.group_id || null,
       queryTime: result.query_time || null,
       value: parsedValue,
       trackedInstant: result.tracked_instant || null

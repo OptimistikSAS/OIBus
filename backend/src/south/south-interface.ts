@@ -1,38 +1,28 @@
 import { Instant } from '../../shared/model/types';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { SouthConnectorItemEntity, SouthThrottlingSettings } from '../model/south-connector.model';
+import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import { SouthConnectorItemEntity } from '../model/south-connector.model';
 
-export interface QueriesFile {
-  fileQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
+export interface SouthDirectQuery {
+  directQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<unknown | null>;
 }
 
-export interface QueriesLastPoint {
-  lastPointQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
-}
-
-export interface QueriesHistory {
+export interface SouthHistoryQuery {
   /**
    * @param items
    * @param startTime - the start of the current interval being requested (when the original interval is split)
    * @param endTime - the end of the current interval
    * @param startTimeFromCache - the start of the history query (may differ of start time if split in intervals). The origin start
-   * time is used to not skip interval in case history query throw an error instead of retrieving values
+   * time is used to not skip an interval in case a history query throws an error instead of retrieving values
    */
   historyQuery(
     items: Array<SouthConnectorItemEntity<SouthItemSettings>>,
     startTime: Instant,
     endTime: Instant,
     startTimeFromCache: Instant
-  ): Promise<Instant | null>;
-
-  getThrottlingSettings(settings: SouthSettings): SouthThrottlingSettings;
-
-  getMaxInstantPerItem(settings: SouthSettings): boolean;
-
-  getOverlap(settings: SouthSettings): number;
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }>;
 }
 
-export interface QueriesSubscription {
+export interface SouthSubscription {
   subscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
   unsubscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
 }

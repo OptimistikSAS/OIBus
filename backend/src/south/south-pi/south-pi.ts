@@ -2,10 +2,10 @@ import SouthConnector from '../south-connector';
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
-import { SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
+import { SouthHistoryQuery } from '../south-interface';
+import { SouthItemSettings, SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest } from '../../service/http-request.utils';
@@ -14,14 +14,19 @@ import { HTTPRequest } from '../../service/http-request.utils';
  * Class SouthPI - Run a PI Agent to connect to a PI server.
  * This connector communicates with the Agent through a HTTP connection
  */
-export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItemSettings> implements QueriesHistory {
+export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItemSettings> implements SouthHistoryQuery {
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
   constructor(
     connector: SouthConnectorEntity<SouthPISettings, SouthPIItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -129,7 +134,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     items: Array<SouthConnectorItemEntity<SouthPIItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant | null> {
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
     let updatedStartTime: Instant | null = null;
     this.logger.debug(`Requesting ${items.length} items between ${startTime} and ${endTime}`);
     const startRequest = DateTime.now();
@@ -150,13 +155,14 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     };
     const requestUrl = new URL(`/api/pi/${this.connector.id}/read`, this.connector.settings.agentUrl);
     const response = await HTTPRequest(requestUrl, fetchOptions);
+    let result: {
+      recordCount: number;
+      content: Array<OIBusTimeValue>;
+      logs: Array<string>;
+      maxInstantRetrieved: Instant;
+    } | null = null;
     if (response.statusCode === 200) {
-      const result: {
-        recordCount: number;
-        content: Array<OIBusTimeValue>;
-        logs: Array<string>;
-        maxInstantRetrieved: Instant;
-      } = (await response.body.json()) as {
+      result = (await response.body.json()) as {
         recordCount: number;
         content: Array<OIBusTimeValue>;
         logs: Array<string>;
@@ -171,9 +177,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       }
       if (result.recordCount > 0) {
         this.logger.debug(`Found ${result.recordCount} results for ${items.length} items in ${requestDuration} ms`);
-        await this.addContent({ type: 'time-values', content: result.content }, startRequest.toUTC().toISO(), [
-          ...new Set(items.map(item => item.id))
-        ]);
+        await this.addContent({ type: 'time-values', content: result.content }, startRequest.toUTC().toISO(), items);
         if (result.maxInstantRetrieved > startTime) {
           updatedStartTime = result.maxInstantRetrieved;
         }
@@ -186,22 +190,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
     } else {
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
-    return updatedStartTime;
-  }
-
-  getThrottlingSettings(settings: SouthPISettings): SouthThrottlingSettings {
-    return {
-      maxReadInterval: settings.throttling.maxReadInterval,
-      readDelay: settings.throttling.readDelay
-    };
-  }
-
-  getMaxInstantPerItem(settings: SouthPISettings): boolean {
-    return settings.throttling.maxInstantPerItem;
-  }
-
-  getOverlap(settings: SouthPISettings): number {
-    return settings.throttling.overlap;
+    return { trackedInstant: updatedStartTime, value: result?.content.length > 0 ? result.content[result.content.length - 1] : null };
   }
 
   async disconnect(): Promise<void> {
