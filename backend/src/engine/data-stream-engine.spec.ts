@@ -400,9 +400,9 @@ describe('DataStreamEngine', () => {
       const southEntity = testData.south.list[0];
 
       // Mock capabilities
-      (mockedSouth1.queriesHistory as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.queriesLastPoint as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.queriesSubscription as unknown as jest.Mock).mockReturnValue(true);
+      (mockedSouth1.hasHistoryQuery as unknown as jest.Mock).mockReturnValue(true);
+      (mockedSouth1.hasDirectQuery as unknown as jest.Mock).mockReturnValue(true);
+      (mockedSouth1.hasSubscription as unknown as jest.Mock).mockReturnValue(true);
       (mockedSouth1.isEnabled as jest.Mock).mockReturnValue(true);
 
       const spyStop = jest.spyOn(engine, 'stopSouth');
@@ -412,14 +412,13 @@ describe('DataStreamEngine', () => {
 
       expect(spyStop).toHaveBeenCalled();
       expect(spyStart).toHaveBeenCalled();
-      expect(mockedSouth1.updateSouthCacheOnScanModeAndMaxInstantChanges).toHaveBeenCalled();
       expect(mockedSouth1.setLogger).toHaveBeenCalled();
     });
 
     it('should reload south connector and not update cache history', async () => {
       const southEntity = testData.south.list[0];
 
-      (mockedSouth1.queriesHistory as unknown as jest.Mock).mockReturnValue(false);
+      (mockedSouth1.hasHistoryQuery as unknown as jest.Mock).mockReturnValue(false);
 
       const spyStop = jest.spyOn(engine, 'stopSouth');
       const spyStart = jest.spyOn(engine, 'startSouth');
@@ -428,14 +427,13 @@ describe('DataStreamEngine', () => {
 
       expect(spyStop).toHaveBeenCalled();
       expect(spyStart).toHaveBeenCalled();
-      expect(mockedSouth1.updateSouthCacheOnScanModeAndMaxInstantChanges).not.toHaveBeenCalled();
     });
 
     it('should manage south connect event', async () => {
       engine.getSouth = jest.fn().mockReturnValueOnce({ south: mockedSouth1 });
 
-      const queriesHistorySpy = jest.spyOn(mockedSouth1, 'queriesHistory').mockReturnValueOnce(false).mockReturnValueOnce(true);
-      const queriesSubscriptionSpy = jest.spyOn(mockedSouth1, 'queriesSubscription').mockReturnValueOnce(false).mockReturnValueOnce(true);
+      const hasHistoryQuerySpy = jest.spyOn(mockedSouth1, 'hasHistoryQuery').mockReturnValueOnce(false).mockReturnValueOnce(true);
+      const hasSubscriptionSpy = jest.spyOn(mockedSouth1, 'hasSubscription').mockReturnValueOnce(false).mockReturnValueOnce(true);
 
       await engine.startSouth(testData.south.list[0].id);
       mockedSouth1.connectedEvent.emit('connected');
@@ -444,22 +442,21 @@ describe('DataStreamEngine', () => {
       mockedSouth1.connectedEvent.emit('connected');
       expect(mockedSouth1.updateCronJobs).toHaveBeenCalledTimes(1);
       expect(mockedSouth1.updateSubscriptions).toHaveBeenCalledTimes(1);
-      expect(queriesHistorySpy).toHaveBeenCalledTimes(2);
-      expect(queriesSubscriptionSpy).toHaveBeenCalledTimes(2);
+      expect(hasHistoryQuerySpy).toHaveBeenCalledTimes(2);
+      expect(hasSubscriptionSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should reload south items', async () => {
       const southEntity = testData.south.list[0];
 
       // Mock capabilities
-      (mockedSouth1.queriesHistory as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.queriesLastPoint as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.queriesSubscription as unknown as jest.Mock).mockReturnValue(true);
+      (mockedSouth1.hasHistoryQuery as unknown as jest.Mock).mockReturnValue(true);
+      (mockedSouth1.hasDirectQuery as unknown as jest.Mock).mockReturnValue(true);
+      (mockedSouth1.hasSubscription as unknown as jest.Mock).mockReturnValue(true);
       (mockedSouth1.isEnabled as jest.Mock).mockReturnValue(true);
 
       await engine.reloadSouthItems(southEntity);
 
-      expect(mockedSouth1.updateSouthCacheOnScanModeAndMaxInstantChanges).toHaveBeenCalled();
       expect(mockedSouth1.updateCronJobs).toHaveBeenCalled();
       expect(mockedSouth1.updateSubscriptions).toHaveBeenCalled();
     });
@@ -468,14 +465,13 @@ describe('DataStreamEngine', () => {
       const southEntity = testData.south.list[0];
 
       // Mock capabilities
-      (mockedSouth1.queriesHistory as unknown as jest.Mock).mockReturnValue(false);
-      (mockedSouth1.queriesLastPoint as unknown as jest.Mock).mockReturnValue(false);
-      (mockedSouth1.queriesSubscription as unknown as jest.Mock).mockReturnValue(false);
+      (mockedSouth1.hasHistoryQuery as unknown as jest.Mock).mockReturnValue(false);
+      (mockedSouth1.hasDirectQuery as unknown as jest.Mock).mockReturnValue(false);
+      (mockedSouth1.hasSubscription as unknown as jest.Mock).mockReturnValue(false);
       (mockedSouth1.isEnabled as jest.Mock).mockReturnValue(true);
 
       await engine.reloadSouthItems(southEntity);
 
-      expect(mockedSouth1.updateSouthCacheOnScanModeAndMaxInstantChanges).not.toHaveBeenCalled();
       expect(mockedSouth1.updateCronJobs).not.toHaveBeenCalled();
       expect(mockedSouth1.updateSubscriptions).not.toHaveBeenCalled();
     });
@@ -487,7 +483,6 @@ describe('DataStreamEngine', () => {
 
       await engine.reloadSouthItems(southEntity);
 
-      expect(mockedSouth1.updateSouthCacheOnScanModeAndMaxInstantChanges).not.toHaveBeenCalled();
       expect(mockedSouth1.updateCronJobs).not.toHaveBeenCalled();
       expect(mockedSouth1.updateSubscriptions).not.toHaveBeenCalled();
     });

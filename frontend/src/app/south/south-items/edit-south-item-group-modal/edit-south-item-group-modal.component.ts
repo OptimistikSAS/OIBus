@@ -47,8 +47,8 @@ export class EditSouthItemGroupModalComponent {
   form: FormGroup<{
     name: FormControl<string>;
     scanMode: FormControl<string | null>;
-    overlap: FormControl<number | null>;
-    maxReadInterval: FormControl<number | null>;
+    overlap: FormControl<number>;
+    maxReadInterval: FormControl<number>;
     readDelay: FormControl<number>;
   }> | null = null;
 
@@ -105,18 +105,18 @@ export class EditSouthItemGroupModalComponent {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       scanMode: this.fb.control<string | null>(null, [Validators.required]),
-      overlap: [null as number | null, [Validators.min(0)]],
-      maxReadInterval: [null as number | null, [Validators.min(0)]],
-      readDelay: [0, [Validators.required, Validators.min(0)]]
+      overlap: [0, [Validators.min(0)]],
+      maxReadInterval: [3600, [Validators.min(0)]],
+      readDelay: [200, [Validators.required, Validators.min(0)]]
     });
 
     if (this.group) {
       this.form.patchValue({
         name: this.group.name,
         scanMode: this.group.scanMode.id,
-        overlap: this.group.overlap,
-        maxReadInterval: this.group.maxReadInterval,
-        readDelay: this.group.readDelay
+        overlap: this.group.overlap!,
+        maxReadInterval: this.group.maxReadInterval!,
+        readDelay: this.group.readDelay!
       });
     }
   }

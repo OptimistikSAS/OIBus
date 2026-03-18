@@ -20,7 +20,7 @@ export interface SouthItemGroupEntity extends BaseEntity {
   scanMode: ScanMode;
   overlap: number | null;
   maxReadInterval: number | null;
-  readDelay: number;
+  readDelay: number | null;
 }
 
 export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {

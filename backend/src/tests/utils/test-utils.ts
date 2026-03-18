@@ -585,6 +585,8 @@ const createHistoryQuery = async (
       north_type: historyQuery.northType,
       south_settings: JSON.stringify(historyQuery.southSettings),
       north_settings: JSON.stringify(historyQuery.northSettings),
+      throttling_max_read_interval: historyQuery.throttling.maxReadInterval,
+      throttling_read_delay: historyQuery.throttling.readDelay,
       caching_trigger_schedule: historyQuery.caching.trigger.scanMode.id,
       caching_trigger_number_of_elements: historyQuery.caching.trigger.numberOfElements,
       caching_trigger_number_of_files: historyQuery.caching.trigger.numberOfFiles,

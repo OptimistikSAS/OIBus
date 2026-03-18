@@ -27,90 +27,6 @@ const manifest: SouthConnectorManifest = {
     validators: [],
     attributes: [
       {
-        type: 'object',
-        key: 'throttling',
-        translationKey: 'configuration.oibus.manifest.south.oianalytics.throttling.title',
-        displayProperties: {
-          visible: true,
-          wrapInBox: false
-        },
-        enablingConditions: [],
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        attributes: [
-          {
-            type: 'number',
-            key: 'maxReadInterval',
-            translationKey: 'configuration.oibus.manifest.south.oianalytics.throttling.max-read-interval',
-            unit: 's',
-            defaultValue: 3600,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'number',
-            key: 'readDelay',
-            translationKey: 'configuration.oibus.manifest.south.oianalytics.throttling.read-delay',
-            unit: 'ms',
-            defaultValue: 200,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'number',
-            key: 'overlap',
-            translationKey: 'configuration.oibus.manifest.south.oianalytics.throttling.overlap',
-            unit: 'ms',
-            defaultValue: 0,
-            validators: [
-              {
-                type: 'REQUIRED',
-                arguments: []
-              },
-              {
-                type: 'POSITIVE_INTEGER',
-                arguments: []
-              }
-            ],
-            displayProperties: {
-              row: 0,
-              columns: 4,
-              displayInViewMode: true
-            }
-          }
-        ]
-      },
-      {
         type: 'boolean',
         key: 'useOiaModule',
         translationKey: 'configuration.oibus.manifest.south.oianalytics.use-oia-module',
@@ -122,7 +38,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 3,
           displayInViewMode: true
         }
@@ -140,7 +56,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 0,
           columns: 3,
           displayInViewMode: false
         }

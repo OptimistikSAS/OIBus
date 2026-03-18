@@ -566,7 +566,7 @@ describe('NorthConnector', () => {
         {
           type: 'time-values'
         } as OIBusContent,
-        { source: 'south', southId: 'southId1', itemIds: ['southItemId1'] } as CacheMetadataSource
+        { source: 'south', southId: 'southId1', items: [testData.south.list[0].items[0]] } as CacheMetadataSource
       )
     ).toEqual(north['connector'].transformers[0]);
 
@@ -576,7 +576,7 @@ describe('NorthConnector', () => {
         {
           type: 'time-values'
         } as OIBusContent,
-        { source: 'south', southId: 'southId1', itemIds: ['southItemId1'] } as CacheMetadataSource
+        { source: 'south', southId: 'southId1', items: [testData.south.list[0].items[0]] } as CacheMetadataSource
       )
     ).toEqual(north['connector'].transformers[0]);
 
@@ -586,7 +586,7 @@ describe('NorthConnector', () => {
         {
           type: 'time-values'
         } as OIBusContent,
-        { source: 'south', southId: 'southId1', itemIds: ['southItemId1'] } as CacheMetadataSource
+        { source: 'south', southId: 'southId1', items: [testData.south.list[0].items[0]] } as CacheMetadataSource
       )
     ).toEqual(north['connector'].transformers[0]);
   });

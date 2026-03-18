@@ -63,7 +63,6 @@ const baseConfiguration: SouthConnectorEntity<SouthRestSettings, SouthRestItemSe
   description: 'Rest connector',
   enabled: true,
   settings: {
-    throttling: { maxReadInterval: 900, readDelay: 5, overlap: 10 },
     host: 'https://api.example.com/',
     acceptUnauthorized: true,
     authentication: {
@@ -89,9 +88,9 @@ const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorI
   scanMode: testData.scanMode.list[0],
   group: null,
   syncWithGroup: false,
-  maxReadInterval: null,
-  readDelay: null,
-  overlap: null,
+  maxReadInterval: 900,
+  readDelay: 5,
+  overlap: 10,
   settings: {
     endpoint: '/data',
     method: 'GET',
@@ -459,7 +458,6 @@ describe('SouthRestAPI connector', () => {
 
   it('should execute historyQuery for multiple items and save content', async () => {
     const item1 = createItem({ endpoint: '/item1' });
-    const item2 = createItem({ endpoint: '/item2' });
 
     // Mock two responses
     south.queryData = jest
@@ -471,29 +469,19 @@ describe('SouthRestAPI connector', () => {
         maxInstant: testData.constants.dates.DATE_1
       });
 
-    await south.historyQuery([item1, item2], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+    await south.historyQuery([item1], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
     // Verify file writes
-    expect(fsMock.writeFile).toHaveBeenCalledTimes(2);
+    expect(fsMock.writeFile).toHaveBeenCalledTimes(1);
     // Verify engine callback
-    expect(addContentCallback).toHaveBeenCalledTimes(2);
+    expect(addContentCallback).toHaveBeenCalledTimes(1);
     // Verify first call arguments for addContent
     expect(addContentCallback).toHaveBeenCalledWith(
       'south-rest',
       expect.objectContaining({ type: 'any', filePath: expect.stringContaining('REST-Test Item-random-id.json') }),
       testData.constants.dates.FAKE_NOW,
-      [item1.id]
+      [item1]
     );
-  });
-
-  it('should get settings', async () => {
-    const config = createConfiguration();
-    expect(south.getThrottlingSettings(config.settings)).toEqual({
-      maxReadInterval: config.settings.throttling.maxReadInterval,
-      readDelay: config.settings.throttling.readDelay
-    });
-    expect(south.getMaxInstantPerItem(config.settings)).toEqual(true);
-    expect(south.getOverlap(config.settings)).toEqual(config.settings.throttling.overlap);
   });
 
   it('should update maxInstant across multiple items in historyQuery', async () => {
@@ -511,12 +499,10 @@ describe('SouthRestAPI connector', () => {
 
     // Let's Spy on queryData to control return strictly
     const querySpy = jest.spyOn(south, 'queryData');
-    querySpy
-      .mockResolvedValueOnce({ filename: 'f1', content: '', maxInstant: testData.constants.dates.DATE_1 })
-      .mockResolvedValueOnce({ filename: 'f2', content: '', maxInstant: testData.constants.dates.DATE_2 });
+    querySpy.mockResolvedValueOnce({ filename: 'f1', content: '', maxInstant: testData.constants.dates.DATE_1 });
 
     const result = await south.historyQuery([item1, item1], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result).toBe(testData.constants.dates.DATE_2);
+    expect(result).toEqual({ trackedInstant: testData.constants.dates.DATE_1, value: '' });
   });
 
   it('should not add content if file is empty', async () => {

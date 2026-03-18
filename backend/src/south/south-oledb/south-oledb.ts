@@ -3,10 +3,10 @@ import { convertDelimiter, formatInstant, generateFilenameForSerialization, logQ
 import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
-import { SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/south-settings.model';
+import { SouthHistoryQuery } from '../south-interface';
+import { SouthItemSettings, SouthOLEDBItemSettings, SouthOLEDBSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity, SouthThrottlingSettings } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
@@ -16,13 +16,18 @@ import { encryptionService } from '../../service/encryption.service';
  * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.
  */
 
-export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, SouthOLEDBItemSettings> implements QueriesHistory {
+export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, SouthOLEDBItemSettings> implements SouthHistoryQuery {
   private connected = false;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     connector: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
-    engineAddContentCallback: (southId: string, data: OIBusContent, queryTime: Instant, itemIds: Array<string>) => Promise<void>,
+    engineAddContentCallback: (
+      southId: string,
+      data: OIBusContent,
+      queryTime: Instant,
+      items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
     logger: pino.Logger,
     cacheFolderPath: string
@@ -110,7 +115,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
   ): Promise<OIBusContent> {
     const startTime = testingSettings.history!.startTime;
     const endTime = testingSettings.history!.endTime;
-    const result = (await this.queryRemoteAgentData(item, startTime, endTime, true)) as string;
+    const result = await this.queryRemoteAgentData(item, startTime, endTime, true);
 
     let oibusContent: OIBusContent;
     switch (item.settings.serialization.type) {
@@ -121,7 +126,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
           this.connector.name,
           item.name
         );
-        oibusContent = { type: 'any', filePath, content: result };
+        oibusContent = { type: 'any', filePath, content: result.value as string };
         break;
       }
     }
@@ -136,29 +141,8 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     items: Array<SouthConnectorItemEntity<SouthOLEDBItemSettings>>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Instant | null> {
-    let updatedStartTime: Instant | null = null;
-
-    for (const item of items) {
-      // Has to query through a remote agent
-      updatedStartTime = (await this.queryRemoteAgentData(item, startTime, endTime)) as string;
-    }
-    return updatedStartTime;
-  }
-
-  getThrottlingSettings(settings: SouthOLEDBSettings): SouthThrottlingSettings {
-    return {
-      maxReadInterval: settings.throttling.maxReadInterval,
-      readDelay: settings.throttling.readDelay
-    };
-  }
-
-  getMaxInstantPerItem(_settings: SouthOLEDBSettings): boolean {
-    return true;
-  }
-
-  getOverlap(settings: SouthOLEDBSettings): number {
-    return settings.throttling.overlap;
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    return await this.queryRemoteAgentData(items[0], startTime, endTime);
   }
 
   async queryRemoteAgentData(
@@ -166,7 +150,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
     startTime: Instant,
     endTime: Instant,
     test?: boolean
-  ): Promise<Instant | string | null> {
+  ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
     let updatedStartTime: Instant | null = null;
     const startRequest = DateTime.now();
 
@@ -195,8 +179,9 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
 
     const requestUrl = new URL(`/api/ole/${this.connector.id}/read`, this.connector.settings.agentUrl);
     const response = await HTTPRequest(requestUrl, fetchOptions);
+    let result: { recordCount: number; content: string; maxInstant: Instant };
     if (response.statusCode === 200) {
-      const result: { recordCount: number; content: string; maxInstant: Instant } = (await response.body.json()) as {
+      result = (await response.body.json()) as {
         recordCount: number;
         content: string;
         maxInstant: Instant;
@@ -204,16 +189,13 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
 
-      if (test) {
-        return result.content;
-      } else {
+      if (!test) {
         if (result.recordCount > 0) {
           await persistResults(
             result.content,
             { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
             this.connector.name,
-            item.name,
-            item.id,
+            item,
             startRequest.toUTC().toISO(),
             this.tmpFolder,
             this.addContent.bind(this),
@@ -234,8 +216,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       this.logger.error(`Error occurred when querying remote agent with status ${response.statusCode}`);
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
-
-    return updatedStartTime;
+    return { trackedInstant: updatedStartTime, value: result.content };
   }
 
   private async buildConnectionString(settings: SouthOLEDBSettings): Promise<{ connectionString: string; logValue: string }> {
