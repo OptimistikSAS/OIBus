@@ -49,7 +49,7 @@ const manifest: NorthConnectorManifest = {
       {
         type: 'string',
         key: 'host',
-        translationKey: 'configuration.oibus.manifest.north.rest.specific-settings.host',
+        translationKey: 'configuration.oibus.manifest.north.rest.host',
         defaultValue: 'https://instance_name.fr',
         validators: [
           {
@@ -251,7 +251,7 @@ const manifest: NorthConnectorManifest = {
       {
         type: 'boolean',
         key: 'useProxy',
-        translationKey: 'configuration.oibus.manifest.north.rest.use-proxy',
+        translationKey: 'configuration.oibus.manifest.north.rest.proxy.use-proxy',
         defaultValue: false,
         validators: [
           {
@@ -268,7 +268,7 @@ const manifest: NorthConnectorManifest = {
       {
         type: 'string',
         key: 'proxyUrl',
-        translationKey: 'configuration.oibus.manifest.north.rest.proxy-url',
+        translationKey: 'configuration.oibus.manifest.north.rest.proxy.url',
         defaultValue: null,
         validators: [
           {
@@ -285,7 +285,7 @@ const manifest: NorthConnectorManifest = {
       {
         type: 'string',
         key: 'proxyUsername',
-        translationKey: 'configuration.oibus.manifest.north.rest.proxy-username',
+        translationKey: 'configuration.oibus.manifest.north.rest.proxy.username',
         defaultValue: null,
         validators: [],
         displayProperties: {
@@ -297,7 +297,7 @@ const manifest: NorthConnectorManifest = {
       {
         type: 'secret',
         key: 'proxyPassword',
-        translationKey: 'configuration.oibus.manifest.north.rest.proxy-password',
+        translationKey: 'configuration.oibus.manifest.north.rest.password',
         validators: [],
         displayProperties: {
           row: 3,
