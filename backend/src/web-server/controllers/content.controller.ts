@@ -1,6 +1,7 @@
 import { Body, Controller, Post, Query, Request, Route, SuccessResponse, Tags, UploadedFile } from 'tsoa';
 import { OIBusSetpointContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
+import fs from 'node:fs/promises';
 
 @Route('/api/content')
 @Tags('Content')
@@ -22,9 +23,20 @@ export class ContentController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const oIBusService = request.services.oIBusService;
-    const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
-    for (const id of normalizedNorthIds) {
-      await oIBusService.addExternalContent(id, { type: 'any', filePath: file.path }, 'api');
+    try {
+      const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
+      for (const id of normalizedNorthIds) {
+        await oIBusService.addExternalContent(id, { type: 'any', filePath: file.path }, 'api');
+      }
+    } finally {
+      // Cleanup: This block runs NO MATTER WHAT (success or failure)
+      if (file && file.path) {
+        try {
+          await fs.unlink(file.path);
+        } catch {
+          // catch the error but don't fail the request
+        }
+      }
     }
   }
 

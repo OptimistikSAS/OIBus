@@ -29,6 +29,7 @@ import path from 'path';
 import multer from 'multer';
 import { ValidateError } from 'tsoa';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
+import os from 'node:os';
 
 /**
  * OIBus web server - using express
@@ -259,11 +260,22 @@ export default class WebServer {
   }
 
   private setupRoutes(app: Express): void {
-    // Routes are generated with the npm run generate:openapi command
+    // 1. Configure Disk Storage
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        // Save to the operating system's default temporary directory
+        cb(null, os.tmpdir());
+      },
+      filename: (req, file, cb) => {
+        // Create a unique filename to prevent collisions if 2 users upload files with the same name
+        cb(null, file.originalname);
+      }
+    });
     RegisterRoutes(app, {
       multer: multer({
+        storage,
         limits: {
-          fieldNameSize: 120
+          fieldNameSize: 255
           // any other multer config
         }
       })
