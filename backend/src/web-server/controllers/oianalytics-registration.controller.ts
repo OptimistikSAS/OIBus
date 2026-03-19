@@ -18,7 +18,9 @@ export class OIAnalyticsRegistrationController extends Controller {
   @Get('/registration')
   async getRegistrationSettings(@Request() request: CustomExpressRequest): Promise<RegistrationSettingsDTO> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    return toOIAnalyticsRegistrationDTO(oIAnalyticsRegistrationService.getRegistrationSettings());
+    return toOIAnalyticsRegistrationDTO(oIAnalyticsRegistrationService.getRegistrationSettings(), id =>
+      request.services.userService.getUserInfo(id)
+    );
   }
 
   /**
@@ -30,7 +32,7 @@ export class OIAnalyticsRegistrationController extends Controller {
   @SuccessResponse(204, 'Registration completed successfully')
   async register(@Body() requestBody: RegistrationSettingsCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    await oIAnalyticsRegistrationService.register(requestBody);
+    await oIAnalyticsRegistrationService.register(requestBody, request.user.id);
   }
 
   /**
@@ -45,7 +47,7 @@ export class OIAnalyticsRegistrationController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    await oIAnalyticsRegistrationService.editRegistrationSettings(requestBody);
+    await oIAnalyticsRegistrationService.editRegistrationSettings(requestBody, request.user.id);
   }
 
   /**
@@ -69,6 +71,6 @@ export class OIAnalyticsRegistrationController extends Controller {
   @SuccessResponse(204, 'Unregistration completed successfully')
   async unregister(@Request() request: CustomExpressRequest): Promise<void> {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
-    await oIAnalyticsRegistrationService.unregister();
+    oIAnalyticsRegistrationService.unregister();
   }
 }

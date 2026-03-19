@@ -32,6 +32,7 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import { encryptionService } from './encryption.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
+import { toSouthConnectorLightDTO, toSouthItemGroupLightDTO } from './south.service';
 
 jest.mock('./encryption.service');
 jest.mock('./utils');
@@ -150,7 +151,14 @@ describe('North Service', () => {
     await service.create(command, null, 'userTest');
 
     const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.transformers[0].group).toEqual({ id: 'groupId1', name: '' });
+    expect(savedEntity.transformers[0].group).toEqual({
+      id: 'groupId1',
+      name: '',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    });
   });
 
   it('should create a north connector and not start it if disabled', async () => {
@@ -203,7 +211,14 @@ describe('North Service', () => {
     await service.update(testData.north.list[0].id, command, 'userTest');
 
     const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.transformers[0].group).toEqual({ id: 'groupId1', name: '' });
+    expect(savedEntity.transformers[0].group).toEqual({
+      id: 'groupId1',
+      name: '',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    });
   });
 
   it('should update a north connector with a new unique name', async () => {
@@ -411,9 +426,16 @@ describe('North Service', () => {
         transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
         inputType: transformerWithOptions.inputType,
-        south: transformerWithOptions.south,
-        group: transformerWithOptions.group,
-        items: transformerWithOptions.items
+        south: transformerWithOptions.south ? toSouthConnectorLightDTO(transformerWithOptions.south, getUserInfo) : undefined,
+        group: transformerWithOptions.group ? toSouthItemGroupLightDTO(transformerWithOptions.group, getUserInfo) : undefined,
+        items: transformerWithOptions.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          createdBy: getUserInfo(item.createdBy),
+          updatedBy: getUserInfo(item.updatedBy),
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt
+        }))
       })),
       createdBy: getUserInfo(northEntity.createdBy),
       updatedBy: getUserInfo(northEntity.updatedBy),
@@ -435,9 +457,17 @@ describe('North Service', () => {
 
   it('should include group in toNorthConnectorDTO when group is defined', () => {
     const northEntity = { ...testData.north.list[0] };
-    const group = { id: 'group1', name: 'Group 1' };
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const group = { id: 'group1', name: 'Group 1', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' };
     northEntity.transformers = [{ ...northEntity.transformers[0], group }];
-    const dto = toNorthConnectorDTO(northEntity);
-    expect(dto.transformers[0].group).toEqual(group);
+    const dto = toNorthConnectorDTO(northEntity, id => ({ id, friendlyName: id }));
+    expect(dto.transformers[0].group).toEqual({
+      id: group.id,
+      name: group.name,
+      createdBy: getUserInfo(group.createdBy),
+      updatedBy: getUserInfo(group.updatedBy),
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt
+    });
   });
 });

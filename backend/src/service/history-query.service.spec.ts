@@ -177,15 +177,13 @@ describe('History Query service', () => {
     expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
   });
 
-  it('should update a history query and use empty createdBy when item id not found in previous settings', async () => {
+  it('should update a history query with an item id not found in previous settings', async () => {
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.items[0].id = 'non-existent-item-id';
 
     await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
 
     expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
-    const savedEntity = (historyQueryRepository.saveHistory as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.items[0].createdBy).toBe('');
   });
 
   it('should update a history query with a new unique name', async () => {
@@ -862,7 +860,14 @@ describe('History Query service', () => {
         transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
         inputType: transformerWithOptions.inputType,
-        items: transformerWithOptions.items
+        items: transformerWithOptions.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          createdBy: getUserInfo(item.createdBy),
+          updatedBy: getUserInfo(item.updatedBy),
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt
+        }))
       })),
       createdBy: getUserInfo(historyQuery.createdBy),
       updatedBy: getUserInfo(historyQuery.updatedBy),

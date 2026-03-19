@@ -3,6 +3,7 @@ import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 
 // Mock the services
 jest.mock('../../service/oibus.service', () => ({
@@ -12,8 +13,10 @@ jest.mock('../../service/oibus.service', () => ({
 describe('EngineController', () => {
   let controller: EngineController;
   const mockRequest: Partial<CustomExpressRequest> = {
+    user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
     services: {
-      oIBusService: new OIBusServiceMock()
+      oIBusService: new OIBusServiceMock(),
+      userService: new UserServiceMock()
     }
   } as CustomExpressRequest;
 
@@ -38,7 +41,7 @@ describe('EngineController', () => {
 
     await controller.updateEngineSettings(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.updateEngineSettings).toHaveBeenCalledWith(command);
+    expect(mockRequest.services!.oIBusService.updateEngineSettings).toHaveBeenCalledWith(command, testData.users.list[0].id);
   });
 
   it('should reset engine metrics', async () => {

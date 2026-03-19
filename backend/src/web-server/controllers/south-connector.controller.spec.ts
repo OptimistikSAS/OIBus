@@ -7,6 +7,7 @@ import {
   SouthItemGroupDTO,
   SouthItemGroupCommandDTO
 } from '../../../shared/model/south-connector.model';
+import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
@@ -15,6 +16,12 @@ import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import { OIBusTestingError } from '../../model/types';
 import UserService from 'src/service/user.service';
+
+const toScanModeDTO = (sm: (typeof testData.scanMode.list)[0]): ScanModeDTO => ({
+  ...sm,
+  createdBy: { id: sm.createdBy, friendlyName: sm.createdBy },
+  updatedBy: { id: sm.updatedBy, friendlyName: sm.updatedBy }
+});
 
 // Mock the services
 jest.mock('../../service/south.service', () => ({
@@ -29,6 +36,10 @@ jest.mock('../../service/south.service', () => ({
   toSouthConnectorItemDTO: jest.fn().mockImplementation((item, southType, getUserInfo) => {
     if (getUserInfo) getUserInfo('');
     return item;
+  }),
+  toSouthItemGroupDTO: jest.fn().mockImplementation((group, getUserInfo) => {
+    if (getUserInfo) getUserInfo('');
+    return group;
   })
 }));
 
@@ -564,12 +575,14 @@ describe('SouthConnectorController', () => {
       {
         id: 'group1',
         name: 'Group 1',
-        scanMode: testData.scanMode.list[0],
+        scanMode: toScanModeDTO(testData.scanMode.list[0]),
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
-        creationDate: '2024-01-01T00:00:00.000Z',
-        lastEditInstant: '2024-01-01T00:00:00.000Z'
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z'
       }
     ];
 
@@ -587,12 +600,14 @@ describe('SouthConnectorController', () => {
     const mockGroup: SouthItemGroupDTO = {
       id: 'group1',
       name: 'Group 1',
-      scanMode: testData.scanMode.list[0],
+      scanMode: toScanModeDTO(testData.scanMode.list[0]),
       overlap: null,
       maxReadInterval: null,
       readDelay: 0,
-      creationDate: '2024-01-01T00:00:00.000Z',
-      lastEditInstant: '2024-01-01T00:00:00.000Z'
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z'
     };
 
     (mockRequest.services!.southService.getGroup as jest.Mock).mockReturnValue(mockGroup);
@@ -615,19 +630,21 @@ describe('SouthConnectorController', () => {
     const mockCreatedGroup: SouthItemGroupDTO = {
       id: 'newGroupId',
       name: 'New Group',
-      scanMode: testData.scanMode.list[0],
+      scanMode: toScanModeDTO(testData.scanMode.list[0]),
       overlap: 5,
       maxReadInterval: null,
       readDelay: 0,
-      creationDate: '2024-01-01T00:00:00.000Z',
-      lastEditInstant: '2024-01-01T00:00:00.000Z'
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z'
     };
 
     (mockRequest.services!.southService.createGroup as jest.Mock).mockReturnValue(mockCreatedGroup);
 
     const result = await controller.createGroup(southId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.southService.createGroup).toHaveBeenCalledWith(southId, command);
+    expect(mockRequest.services!.southService.createGroup).toHaveBeenCalledWith(southId, command, 'test');
     expect(result).toEqual(mockCreatedGroup);
   });
 
@@ -646,7 +663,7 @@ describe('SouthConnectorController', () => {
 
     await controller.updateGroup(southId, groupId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.southService.updateGroup).toHaveBeenCalledWith(southId, groupId, command);
+    expect(mockRequest.services!.southService.updateGroup).toHaveBeenCalledWith(southId, groupId, 'test', command);
   });
 
   it('should delete a group', async () => {

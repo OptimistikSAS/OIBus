@@ -35,10 +35,11 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import csv from 'papaparse';
 import { stringToBoolean } from './utils';
 import { SouthConnectorEntityLight, SouthItemGroupEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
-import { SouthConnectorItemDTO, SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
+import { SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
+import { toScanModeDTO } from './scan-mode.service';
 
 jest.mock('../south/south-opcua/south-opcua');
 jest.mock('./metrics/south-connector-metrics.service');
@@ -159,7 +160,11 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
@@ -207,7 +212,11 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     let callCount = 0;
@@ -531,7 +540,11 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     (southItemGroupRepository.findById as jest.Mock).mockReturnValue(group);
@@ -598,7 +611,11 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     (southItemGroupRepository.findById as jest.Mock).mockReturnValue(group);
@@ -714,6 +731,8 @@ describe('South Service', () => {
   });
 
   it('should properly check items', async () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+
     const csvData = [
       {
         name: 'item1',
@@ -774,7 +793,7 @@ describe('South Service', () => {
       testData.south.list[0].type,
       'file content',
       ',',
-      testData.south.list[0].items.map(item => ({ ...item, group: null })) as unknown as Array<SouthConnectorItemDTO>
+      testData.south.list[0].items.map(item => ({ ...item, group: null }))
     );
     expect(result).toEqual({
       items: [
@@ -782,14 +801,18 @@ describe('South Service', () => {
           id: '',
           name: csvData[4].name,
           enabled: true,
-          scanMode: testData.scanMode.list[0],
+          scanMode: toScanModeDTO(testData.scanMode.list[0], getUserInfo),
           settings: {
             ignoreModifiedDate: true,
             minAge: 100,
             preserveFiles: true,
             regex: undefined
           },
-          group: null
+          group: null,
+          maxReadInterval: 0,
+          overlap: 0,
+          readDelay: 0,
+          syncWithGroup: true
         }
       ],
       errors: [
@@ -847,6 +870,8 @@ describe('South Service', () => {
   });
 
   it('should properly check items with array or object', async () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+
     const csvData = [
       {
         name: 'item',
@@ -872,14 +897,14 @@ describe('South Service', () => {
       testData.south.list[1].type,
       'file content',
       ',',
-      testData.south.list[1].items.map(item => ({ ...item, group: null })) as unknown as Array<SouthConnectorItemDTO>
+      testData.south.list[1].items.map(item => ({ ...item, group: null }))
     );
     expect(result).toEqual({
       items: [
         {
           id: '',
           name: csvData[0].name,
-          scanMode: testData.scanMode.list[0],
+          scanMode: toScanModeDTO(testData.scanMode.list[0], getUserInfo),
           enabled: true,
           settings: {
             query: 'query',
@@ -893,7 +918,11 @@ describe('South Service', () => {
               outputTimezone: 'Europe/Paris'
             }
           },
-          group: null
+          group: null,
+          maxReadInterval: 0,
+          overlap: 0,
+          readDelay: 0,
+          syncWithGroup: true
         }
       ],
       errors: []
@@ -901,6 +930,8 @@ describe('South Service', () => {
   });
 
   it('should properly check items with group name from CSV', async () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+
     const csvData = [
       {
         name: 'itemWithGroup',
@@ -921,7 +952,7 @@ describe('South Service', () => {
       testData.south.list[0].type,
       'file content',
       ',',
-      testData.south.list[0].items.map(item => ({ ...item, group: null })) as Array<SouthConnectorItemDTO>
+      testData.south.list[0].items.map(item => ({ ...item, group: null }))
     );
     expect(result).toEqual({
       items: [
@@ -929,21 +960,18 @@ describe('South Service', () => {
           id: '',
           name: csvData[0].name,
           enabled: true,
-          scanMode: testData.scanMode.list[0],
+          scanMode: toScanModeDTO(testData.scanMode.list[0], getUserInfo),
           settings: {
             ignoreModifiedDate: true,
             minAge: 100,
             preserveFiles: true,
             regex: '*'
           },
-          group: {
-            id: '',
-            name: 'Test Group',
-            scanMode: testData.scanMode.list[0],
-            overlap: null,
-            maxReadInterval: null,
-            readDelay: 0
-          }
+          group: null,
+          maxReadInterval: 0,
+          overlap: 0,
+          readDelay: 0,
+          syncWithGroup: true
         }
       ],
       errors: []
@@ -977,7 +1005,11 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
@@ -1015,7 +1047,11 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(existingGroup);
@@ -1100,7 +1136,11 @@ describe('South Service', () => {
           scanMode: testData.scanMode.list[0],
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
         {
           id: 'group2',
@@ -1109,7 +1149,11 @@ describe('South Service', () => {
           scanMode: testData.scanMode.list[1],
           overlap: 10,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         }
       ];
 
@@ -1130,7 +1174,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(mockGroup);
@@ -1158,7 +1206,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(mockGroup);
@@ -1184,13 +1236,17 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: 5,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([]);
       (southItemGroupRepository.create as jest.Mock).mockReturnValue(createdGroup);
 
-      const result = service.createGroup(testData.south.list[0].id, command);
+      const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
       expect(result.id).toEqual('newGroupId');
       expect(result.name).toEqual('New Group');
       expect(southItemGroupRepository.create).toHaveBeenCalled();
@@ -1212,13 +1268,17 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([]);
       (southItemGroupRepository.create as jest.Mock).mockReturnValue(createdGroup);
 
-      const result = service.createGroup(testData.south.list[0].id, command);
+      const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
       expect(result.overlap).toBeNull();
       expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ overlap: null }));
     });
@@ -1239,13 +1299,17 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([]);
       (southItemGroupRepository.create as jest.Mock).mockReturnValue(createdGroup);
 
-      const result = service.createGroup(testData.south.list[0].id, command);
+      const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
       expect(result.readDelay).toEqual(0);
       expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ readDelay: 0 }));
     });
@@ -1266,13 +1330,17 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: 5,
         maxReadInterval: 3600,
-        readDelay: 200
+        readDelay: 200,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([]);
       (southItemGroupRepository.create as jest.Mock).mockReturnValue(createdGroup);
 
-      const result = service.createGroup(testData.south.list[0].id, command);
+      const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
       expect(result.id).toEqual('newGroupId');
       expect(result.maxReadInterval).toEqual(3600);
       expect(result.readDelay).toEqual(200);
@@ -1301,12 +1369,16 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
 
-      expect(() => service.createGroup(testData.south.list[0].id, command)).toThrow(
+      expect(() => service.createGroup(testData.south.list[0].id, command, 'testUser')).toThrow(
         new OIBusValidationError('A group with name "Existing Group" already exists for this south connector')
       );
     });
@@ -1327,7 +1399,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       const updatedGroup: SouthItemGroupEntity = {
@@ -1344,7 +1420,7 @@ describe('South Service', () => {
         .mockReturnValueOnce(updatedGroup); // Second call after update
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
 
-      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdate', command);
+      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command);
       expect(result.name).toEqual('Updated Group');
       expect(result.scanMode.id).toEqual(testData.scanMode.list[1].id);
       expect(result.maxReadInterval).toEqual(3600);
@@ -1368,7 +1444,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       const updatedGroup: SouthItemGroupEntity = {
@@ -1383,7 +1463,7 @@ describe('South Service', () => {
       (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce(existingGroup).mockReturnValueOnce(updatedGroup);
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
 
-      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdateNull', command);
+      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdateNull', 'testUser', command);
       expect(result.name).toEqual('Updated Name Only');
       expect(result.maxReadInterval).toBeNull();
       expect(result.readDelay).toEqual(0);
@@ -1413,7 +1493,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       const updatedGroup: SouthItemGroupEntity = {
@@ -1425,7 +1509,7 @@ describe('South Service', () => {
       (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce(existingGroup).mockReturnValueOnce(updatedGroup);
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
 
-      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdateUndefDelay', command);
+      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdateUndefDelay', 'testUser', command);
       expect(result.readDelay).toEqual(0);
       expect(southItemGroupRepository.update).toHaveBeenCalledWith('groupToUpdateUndefDelay', expect.objectContaining({ readDelay: 0 }));
     });
@@ -1441,7 +1525,7 @@ describe('South Service', () => {
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(null);
 
-      expect(() => service.updateGroup(testData.south.list[0].id, 'nonExistentGroup', command)).toThrow(
+      expect(() => service.updateGroup(testData.south.list[0].id, 'nonExistentGroup', 'testUser', command)).toThrow(
         new NotFoundError('South item group "nonExistentGroup" not found')
       );
     });
@@ -1462,12 +1546,16 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(groupFromDifferentSouth);
 
-      expect(() => service.updateGroup(testData.south.list[0].id, 'groupFromOtherSouth', command)).toThrow(
+      expect(() => service.updateGroup(testData.south.list[0].id, 'groupFromOtherSouth', 'testUser', command)).toThrow(
         new NotFoundError(`South item group "groupFromOtherSouth" does not belong to south connector "${testData.south.list[0].id}"`)
       );
     });
@@ -1488,7 +1576,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock)
@@ -1496,7 +1588,7 @@ describe('South Service', () => {
         .mockReturnValueOnce(null); // Second call after update returns null
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
 
-      expect(() => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', command)).toThrow(
+      expect(() => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command)).toThrow(
         new NotFoundError('Failed to update south item group "groupToUpdate"')
       );
     });
@@ -1517,7 +1609,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       const otherGroup: SouthItemGroupEntity = {
@@ -1527,13 +1623,17 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(existingGroup);
       (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup, otherGroup]);
 
-      expect(() => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', command)).toThrow(
+      expect(() => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command)).toThrow(
         new OIBusValidationError('A group with name "Existing Group" already exists for this south connector')
       );
     });
@@ -1546,7 +1646,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(groupToDelete);
@@ -1573,7 +1677,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(groupFromDifferentSouth);
@@ -1591,7 +1699,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(group);
@@ -1615,7 +1727,11 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(groupFromDifferentSouth);
@@ -1668,10 +1784,14 @@ describe('South Service', () => {
           scanMode: testData.scanMode.list[0],
           overlap: 10,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         };
 
-        const dto = toSouthItemGroupDTO(entity);
+        const dto = toSouthItemGroupDTO(entity, id => ({ id, friendlyName: id }));
         expect(dto.id).toEqual('group1');
         expect(dto.name).toEqual('Test Group');
         expect(dto.scanMode.id).toEqual(testData.scanMode.list[0].id);
@@ -1686,10 +1806,14 @@ describe('South Service', () => {
           scanMode: testData.scanMode.list[0],
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         };
 
-        const dto = toSouthItemGroupDTO(entity);
+        const dto = toSouthItemGroupDTO(entity, id => ({ id, friendlyName: id }));
         expect(dto.overlap).toBeNull();
       });
 
@@ -1701,7 +1825,11 @@ describe('South Service', () => {
           scanMode: testData.scanMode.list[0],
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         };
 
         (southItemGroupRepository.findById as jest.Mock).mockReturnValue(group);
@@ -1717,10 +1845,14 @@ describe('South Service', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null
+          overlap: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         };
 
-        const itemDTO = toSouthConnectorItemDTO(itemWithGroup, testData.south.list[0].type);
+        const itemDTO = toSouthConnectorItemDTO(itemWithGroup, testData.south.list[0].type, id => ({ id, friendlyName: id }));
         expect(itemDTO.group).toBeDefined();
         expect(itemDTO.group!.id).toEqual('group1');
         expect(itemDTO.group!.name).toEqual('Test Group');
@@ -1737,10 +1869,14 @@ describe('South Service', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null
+          overlap: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         };
 
-        const itemDTO = toSouthConnectorItemDTO(itemWithoutGroup, testData.south.list[0].type);
+        const itemDTO = toSouthConnectorItemDTO(itemWithoutGroup, testData.south.list[0].type, id => ({ id, friendlyName: id }));
         expect(itemDTO.group).toBeNull();
       });
 
@@ -1767,7 +1903,9 @@ describe('South Service', () => {
             testData.south.list[0].type,
             testData.scanMode.list,
             undefined, // retrieveSecretsFromSouth - should default to false
-            undefined // southItemGroupRepository
+            southItemGroupRepository, // southId: null below, so group path is never entered
+            null,
+            ''
           );
 
           // When retrieveSecretsFromSouth is false (default) and command.id is truthy, id should be set to command.id
@@ -1794,7 +1932,9 @@ describe('South Service', () => {
             testData.south.list[0].type,
             testData.scanMode.list,
             false,
-            undefined
+            southItemGroupRepository,
+            null,
+            ''
           );
 
           expect(southItemEntity.syncWithGroup).toBe(true);
@@ -1818,7 +1958,9 @@ describe('South Service', () => {
             testData.south.list[0].type,
             testData.scanMode.list,
             false,
-            undefined
+            southItemGroupRepository,
+            null,
+            ''
           );
 
           expect(southItemEntity.syncWithGroup).toBe(false);
@@ -1839,7 +1981,9 @@ describe('South Service', () => {
             testData.south.list[0].type,
             testData.scanMode.list,
             false,
-            undefined
+            southItemGroupRepository,
+            null,
+            ''
           );
 
           expect(southItemEntity.syncWithGroup).toBe(false);
@@ -1854,7 +1998,11 @@ describe('South Service', () => {
             scanMode: testData.scanMode.list[0],
             overlap: null,
             maxReadInterval: null,
-            readDelay: 0
+            readDelay: 0,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
           };
 
           (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(existingGroup);
@@ -1873,7 +2021,8 @@ describe('South Service', () => {
             testData.scanMode.list,
             false,
             southItemGroupRepository,
-            testData.south.list[0].id
+            testData.south.list[0].id,
+            ''
           );
 
           expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('Existing Group', testData.south.list[0].id);
@@ -1890,7 +2039,11 @@ describe('South Service', () => {
             scanMode: testData.scanMode.list[0],
             overlap: null,
             maxReadInterval: null,
-            readDelay: 0
+            readDelay: 0,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
           };
 
           (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
@@ -1910,7 +2063,8 @@ describe('South Service', () => {
             testData.scanMode.list,
             false,
             southItemGroupRepository,
-            testData.south.list[0].id
+            testData.south.list[0].id,
+            ''
           );
 
           expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('New Group', testData.south.list[0].id);
@@ -1927,7 +2081,11 @@ describe('South Service', () => {
             scanMode: testData.scanMode.list[0],
             overlap: null,
             maxReadInterval: null,
-            readDelay: 0
+            readDelay: 0,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
           };
 
           (southItemGroupRepository.findById as jest.Mock).mockReturnValue(existingGroup);
@@ -1946,7 +2104,8 @@ describe('South Service', () => {
             testData.scanMode.list,
             false,
             southItemGroupRepository,
-            undefined // southId is not provided - legacy support
+            null, // southId is not provided - legacy support
+            ''
           );
 
           expect(southItemGroupRepository.findById).toHaveBeenCalledWith('groupId');
@@ -1973,7 +2132,8 @@ describe('South Service', () => {
             testData.scanMode.list,
             false,
             southItemGroupRepository,
-            undefined // southId is not provided - legacy support
+            null, // southId is not provided - legacy support
+            ''
           );
 
           expect(southItemGroupRepository.findById).toHaveBeenCalledWith('nonExistentGroupId');

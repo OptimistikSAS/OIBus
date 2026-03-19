@@ -100,13 +100,7 @@ describe('Scan Mode Service', () => {
     expect(scanModeRepository.findById).toHaveBeenNthCalledWith(1, testData.scanMode.list[0].id);
     expect(scanModeRepository.findById).toHaveBeenNthCalledWith(2, testData.scanMode.list[0].id);
     expect(scanModeRepository.findById).toHaveBeenCalledTimes(2);
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
-      ...testData.scanMode.command,
-      createdBy: testData.scanMode.list[0].createdBy,
-      updatedBy: 'userTest',
-      createdAt: testData.scanMode.list[0].createdAt,
-      updatedAt: ''
-    });
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
@@ -121,13 +115,7 @@ describe('Scan Mode Service', () => {
 
     await service.update(testData.scanMode.list[0].id, command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
-      ...command,
-      createdBy: testData.scanMode.list[0].createdBy,
-      updatedBy: 'userTest',
-      createdAt: testData.scanMode.list[0].createdAt,
-      updatedAt: ''
-    });
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, command, 'userTest');
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
     expect(scanModeRepository.findAll).not.toHaveBeenCalled();
   });
@@ -142,13 +130,7 @@ describe('Scan Mode Service', () => {
 
     await service.update(testData.scanMode.list[0].id, command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
-      ...command,
-      createdBy: testData.scanMode.list[0].createdBy,
-      updatedBy: 'userTest',
-      createdAt: testData.scanMode.list[0].createdAt,
-      updatedAt: ''
-    });
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, command, 'userTest');
     expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
   });
 
@@ -160,13 +142,7 @@ describe('Scan Mode Service', () => {
 
     await service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, {
-      ...testData.scanMode.command,
-      createdBy: testData.scanMode.list[0].createdBy,
-      updatedBy: 'userTest',
-      createdAt: testData.scanMode.list[0].createdAt,
-      updatedAt: ''
-    });
+    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
     expect(dataStreamEngine.updateScanMode).not.toHaveBeenCalled();
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });

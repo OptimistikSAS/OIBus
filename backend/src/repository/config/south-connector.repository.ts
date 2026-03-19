@@ -388,7 +388,7 @@ export default class SouthConnectorRepository {
   }
 
   findScanModeForSouth(scanModeId: string): ScanMode {
-    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
+    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
   }
@@ -413,8 +413,8 @@ export default class SouthConnectorRepository {
         result.max_read_interval !== null && result.max_read_interval !== undefined ? Number(result.max_read_interval) : null,
       readDelay: result.read_delay !== null && result.read_delay !== undefined ? Number(result.read_delay) : null,
       overlap: result.overlap !== null && result.overlap !== undefined ? Number(result.overlap) : null,
-      createdBy: result.created_by ?? '',
-      updatedBy: result.updated_by ?? '',
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };
@@ -429,8 +429,8 @@ export default class SouthConnectorRepository {
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings as string) as SouthSettings,
       items: this.findAllItemsForSouth(result.id as string),
-      createdBy: (result.created_by as string) ?? '',
-      updatedBy: (result.updated_by as string) ?? '',
+      createdBy: result.created_by as string,
+      updatedBy: result.updated_by as string,
       createdAt: result.created_at as string,
       updatedAt: result.updated_at as string
     };
@@ -444,8 +444,8 @@ export const toSouthConnectorLight = (result: Record<string, string>): SouthConn
     type: result.type as OIBusSouthType,
     description: result.description,
     enabled: Boolean(result.enabled),
-    createdBy: result.created_by ?? '',
-    updatedBy: result.updated_by ?? '',
+    createdBy: result.created_by,
+    updatedBy: result.updated_by,
     createdAt: result.created_at,
     updatedAt: result.updated_at
   };

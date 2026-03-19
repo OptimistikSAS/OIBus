@@ -46,6 +46,16 @@ describe('ContentController', () => {
     expect(fs.unlink).toHaveBeenCalledWith('filePath');
   });
 
+  it('should add file and skip unlink if file has no path', async () => {
+    const northId = 'northId1';
+    const mockFile = {} as Express.Multer.File;
+    (mockRequest.services!.oIBusService.addExternalContent as jest.Mock).mockResolvedValue(undefined);
+
+    await controller.addFile(northId, mockFile, mockRequest as CustomExpressRequest);
+
+    expect(fs.unlink).not.toHaveBeenCalled();
+  });
+
   it('should add file and not throw if unlink fails', async () => {
     const northId = 'northId1';
     const mockFile = {

@@ -31,7 +31,12 @@ import {
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { CustomExpressRequest } from '../express';
-import SouthService, { toSouthConnectorDTO, toSouthConnectorItemDTO, toSouthConnectorLightDTO } from '../../service/south.service';
+import SouthService, {
+  toSouthConnectorDTO,
+  toSouthConnectorItemDTO,
+  toSouthConnectorLightDTO,
+  toSouthItemGroupDTO
+} from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import ScanModeService from '../../service/scan-mode.service';
@@ -124,7 +129,7 @@ export class SouthConnectorController extends Controller {
   @Get('/{southId}')
   async findById(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<SouthConnectorDTO> {
     const southService = request.services.southService as SouthService;
-    return toSouthConnectorDTO(southService.findById(southId), id => request.services.userService.getUserInfo(id));
+    return toSouthConnectorDTO(southService.findById(southId), id => request.services.userService.getUserInfo(id)) as SouthConnectorDTO;
   }
 
   /**
@@ -142,7 +147,7 @@ export class SouthConnectorController extends Controller {
     const southService = request.services.southService as SouthService;
     return toSouthConnectorDTO(await southService.create(command, duplicate || null, request.user.id), id =>
       request.services.userService.getUserInfo(id)
-    );
+    ) as SouthConnectorDTO;
   }
 
   /**
@@ -261,7 +266,10 @@ export class SouthConnectorController extends Controller {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const southItems = southService.listItems(southId);
-    return southItems.map(item => toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id)));
+    return southItems.map(
+      item =>
+        toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id)) as SouthConnectorItemDTO
+    );
   }
 
   /**
@@ -288,8 +296,9 @@ export class SouthConnectorController extends Controller {
     };
     const pageResult = await southService.searchItems(southId, searchParams);
     return {
-      content: pageResult.content.map(item =>
-        toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id))
+      content: pageResult.content.map(
+        item =>
+          toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id)) as SouthConnectorItemDTO
       ),
       totalElements: pageResult.totalElements,
       size: pageResult.size,
@@ -312,7 +321,7 @@ export class SouthConnectorController extends Controller {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const item = southService.findItemById(southId, itemId);
-    return toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id));
+    return toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id)) as SouthConnectorItemDTO;
   }
 
   /**
@@ -345,7 +354,7 @@ export class SouthConnectorController extends Controller {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const item = await southService.createItem(southId, command, request.user.id);
-    return toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id));
+    return toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id)) as SouthConnectorItemDTO;
   }
 
   /**
@@ -493,8 +502,9 @@ export class SouthConnectorController extends Controller {
     const scanModeService = request.services.scanModeService as ScanModeService;
     const southConnector = southService.findById(southId);
     const csv = itemToFlattenedCSV(
-      southConnector.items.map(item =>
-        toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id))
+      southConnector.items.map(
+        item =>
+          toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id)) as SouthConnectorItemDTO
       ),
       command.delimiter,
       scanModeService.list()
@@ -556,7 +566,7 @@ export class SouthConnectorController extends Controller {
   @Get('/{southId}/groups')
   async listGroups(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<Array<SouthItemGroupDTO>> {
     const southService = request.services.southService as SouthService;
-    return southService.getGroups(southId);
+    return southService.getGroups(southId).map(group => toSouthItemGroupDTO(group, id => request.services.userService.getUserInfo(id)));
   }
 
   /**
@@ -567,7 +577,7 @@ export class SouthConnectorController extends Controller {
   @Get('/{southId}/groups/{groupId}')
   async getGroup(@Path() southId: string, @Path() groupId: string, @Request() request: CustomExpressRequest): Promise<SouthItemGroupDTO> {
     const southService = request.services.southService as SouthService;
-    return southService.getGroup(southId, groupId);
+    return toSouthItemGroupDTO(southService.getGroup(southId, groupId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -583,7 +593,9 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<SouthItemGroupDTO> {
     const southService = request.services.southService as SouthService;
-    return southService.createGroup(southId, command);
+    return toSouthItemGroupDTO(southService.createGroup(southId, command, request.user.id), id =>
+      request.services.userService.getUserInfo(id)
+    );
   }
 
   /**
@@ -599,7 +611,7 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
-    await southService.updateGroup(southId, groupId, command);
+    await southService.updateGroup(southId, groupId, request.user.id, command);
   }
 
   /**

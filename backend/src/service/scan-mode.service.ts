@@ -42,7 +42,7 @@ export default class ScanModeService {
       throw new OIBusValidationError(`Scan mode name "${command.name}" already exists`);
     }
 
-    const scanMode = this.scanModeRepository.create({ ...command, createdBy, updatedBy: createdBy, createdAt: '', updatedAt: '' });
+    const scanMode = this.scanModeRepository.create(command, createdBy);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return scanMode;
   }
@@ -59,13 +59,7 @@ export default class ScanModeService {
       }
     }
 
-    this.scanModeRepository.update(oldScanMode.id, {
-      ...command,
-      createdBy: oldScanMode.createdBy,
-      updatedBy,
-      createdAt: oldScanMode.createdAt,
-      updatedAt: ''
-    });
+    this.scanModeRepository.update(oldScanMode.id, command, updatedBy);
     const newScanMode = this.findById(scanModeId);
     if (oldScanMode.cron !== newScanMode.cron) {
       await this.dataStreamEngine.updateScanMode(newScanMode);

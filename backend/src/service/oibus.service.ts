@@ -16,6 +16,7 @@ import {
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import EngineRepository from '../repository/config/engine.repository';
 import { EngineSettings } from '../model/engine.model';
+import { GetUserInfo } from '../../shared/model/types';
 import { contentSchema, engineSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import { encryptionService } from './encryption.service';
 import LoggerService from './logger/logger.service';
@@ -33,6 +34,7 @@ import HistoryQueryService from './history-query.service';
 import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import { EventEmitter } from 'node:events';
 import IPFilterService from './ip-filter.service';
+import UserService from './user.service';
 
 const HEALTH_SIGNAL_INTERVAL = 1_800_000; // 30 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
@@ -63,6 +65,7 @@ export default class OIBusService {
     private southService: SouthService,
     private northService: NorthService,
     private historyQueryService: HistoryQueryService,
+    private userService: UserService,
     private engine: DataStreamEngine,
     private readonly ignoreIpFilters: boolean
   ) {
@@ -121,14 +124,14 @@ export default class OIBusService {
   }
 
   getInfo(): OIBusInfo {
-    return getOIBusInfo(this.getEngineSettings() as unknown as EngineSettingsDTO);
+    return getOIBusInfo(toEngineSettingsDTO(this.getEngineSettings(), id => this.userService.getUserInfo(id)));
   }
 
   getProxyServer(): ProxyServer {
     return this.proxyServer;
   }
 
-  async updateEngineSettings(command: EngineSettingsCommandDTO): Promise<EngineSettingsUpdateResultDTO> {
+  async updateEngineSettings(command: EngineSettingsCommandDTO, updatedBy: string): Promise<EngineSettingsUpdateResultDTO> {
     await this.validator.validate(engineSchema, command);
 
     if (command.port === command.proxyPort) {
@@ -142,7 +145,7 @@ export default class OIBusService {
     } else {
       command.logParameters.loki.password = await encryptionService.encryptText(command.logParameters.loki.password);
     }
-    this.engineRepository.update(command);
+    this.engineRepository.update(command, updatedBy);
     const settings = this.getEngineSettings();
 
     if (
@@ -310,11 +313,11 @@ export default class OIBusService {
   }
 }
 
-export const toEngineSettingsDTO = (engineSettings: EngineSettings): EngineSettingsDTO => {
+export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo: GetUserInfo): EngineSettingsDTO => {
   return {
     id: engineSettings.id,
-    createdBy: { id: '', friendlyName: '' },
-    updatedBy: { id: '', friendlyName: '' },
+    createdBy: getUserInfo(engineSettings.createdBy),
+    updatedBy: getUserInfo(engineSettings.updatedBy),
     createdAt: engineSettings.createdAt,
     updatedAt: engineSettings.updatedAt,
     name: engineSettings.name,
