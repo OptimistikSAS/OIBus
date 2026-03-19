@@ -517,7 +517,8 @@ describe('OIAnalytics Command Service', () => {
 
     expect(encryptionService.decryptTextWithPrivateKey).not.toHaveBeenCalled();
     expect(oIBusService.updateEngineSettings).toHaveBeenCalledWith(
-      (testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineSettingsCommand).commandContent
+      (testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineSettingsCommand).commandContent,
+      'oianalytics'
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[1].id,
@@ -534,7 +535,10 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(oIBusService.updateEngineSettings).toHaveBeenCalledWith((command as OIBusUpdateEngineSettingsCommand).commandContent);
+    expect(oIBusService.updateEngineSettings).toHaveBeenCalledWith(
+      (command as OIBusUpdateEngineSettingsCommand).commandContent,
+      'oianalytics'
+    );
     expect(encryptionService.decryptTextWithPrivateKey).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[1].id,
@@ -548,25 +552,28 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith({
-      host: testData.oIAnalytics.registration.completed.host,
-      useProxy: testData.oIAnalytics.registration.completed.useProxy,
-      proxyUrl: testData.oIAnalytics.registration.completed.proxyUrl,
-      proxyUsername: testData.oIAnalytics.registration.completed.proxyUsername,
-      proxyPassword: '',
-      useApiGateway: testData.oIAnalytics.registration.completed.useApiGateway,
-      apiGatewayHeaderKey: testData.oIAnalytics.registration.completed.apiGatewayHeaderKey,
-      apiGatewayHeaderValue: '',
-      apiGatewayBaseEndpoint: testData.oIAnalytics.registration.completed.apiGatewayBaseEndpoint,
-      acceptUnauthorized: testData.oIAnalytics.registration.completed.acceptUnauthorized,
-      commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-        .commandRefreshInterval,
-      commandRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-        .commandRetryInterval,
-      messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-        .messageRetryInterval,
-      commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions
-    });
+    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith(
+      {
+        host: testData.oIAnalytics.registration.completed.host,
+        useProxy: testData.oIAnalytics.registration.completed.useProxy,
+        proxyUrl: testData.oIAnalytics.registration.completed.proxyUrl,
+        proxyUsername: testData.oIAnalytics.registration.completed.proxyUsername,
+        proxyPassword: '',
+        useApiGateway: testData.oIAnalytics.registration.completed.useApiGateway,
+        apiGatewayHeaderKey: testData.oIAnalytics.registration.completed.apiGatewayHeaderKey,
+        apiGatewayHeaderValue: '',
+        apiGatewayBaseEndpoint: testData.oIAnalytics.registration.completed.apiGatewayBaseEndpoint,
+        acceptUnauthorized: testData.oIAnalytics.registration.completed.acceptUnauthorized,
+        commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+          .commandRefreshInterval,
+        commandRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+          .commandRetryInterval,
+        messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+          .messageRetryInterval,
+        commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions
+      },
+      'oianalytics'
+    );
     expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[15].id,
@@ -625,25 +632,28 @@ describe('OIAnalytics Command Service', () => {
       registration
     );
 
-    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith({
-      host: registration.host,
-      useProxy: registration.useProxy,
-      proxyUrl: registration.proxyUrl,
-      proxyUsername: registration.proxyUsername,
-      proxyPassword: '',
-      useApiGateway: registration.useApiGateway,
-      apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
-      apiGatewayHeaderValue: '',
-      apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
-      acceptUnauthorized: registration.acceptUnauthorized,
-      commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-        .commandRefreshInterval,
-      commandRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-        .commandRetryInterval,
-      messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
-        .messageRetryInterval,
-      commandPermissions: registration.commandPermissions
-    });
+    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith(
+      {
+        host: registration.host,
+        useProxy: registration.useProxy,
+        proxyUrl: registration.proxyUrl,
+        proxyUsername: registration.proxyUsername,
+        proxyPassword: '',
+        useApiGateway: registration.useApiGateway,
+        apiGatewayHeaderKey: registration.apiGatewayHeaderKey,
+        apiGatewayHeaderValue: '',
+        apiGatewayBaseEndpoint: registration.apiGatewayBaseEndpoint,
+        acceptUnauthorized: registration.acceptUnauthorized,
+        commandRefreshInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+          .commandRefreshInterval,
+        commandRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+          .commandRetryInterval,
+        messageRetryInterval: (testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand).commandContent
+          .messageRetryInterval,
+        commandPermissions: registration.commandPermissions
+      },
+      'oianalytics'
+    );
     expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[15].id,
@@ -854,7 +864,9 @@ describe('OIAnalytics Command Service', () => {
       testData.south.list[0].type,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
-      testData.south.list[0].items.map(item => toSouthConnectorItemDTO(item, testData.south.list[0].type))
+      testData.south.list[0].items.map(item =>
+        toSouthConnectorItemDTO(item, testData.south.list[0].type, (id: string) => ({ id, friendlyName: id }))
+      )
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       testData.oIAnalytics.commands.oIBusList[14].id,
@@ -1302,7 +1314,11 @@ describe('OIAnalytics Command Service', () => {
       testData.historyQueries.list[0].southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
-      testData.historyQueries.list[0].items
+      testData.historyQueries.list[0].items.map(item => ({
+        ...item,
+        updatedBy: { id: '', friendlyName: '' },
+        createdBy: { id: '', friendlyName: '' }
+      }))
     );
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
@@ -1334,7 +1350,7 @@ describe('OIAnalytics Command Service', () => {
     );
   });
 
-  it('should execute create-or-update-history-query-south-items-from-csv command', async () => {
+  it('should execute create-or-update-history-query-south-items-from-csv command with item error', async () => {
     const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
       id: 'createOrUpdateHistoryQuerySouthItemsId',
       type: 'create-or-update-history-query-south-items-from-csv',
@@ -1740,7 +1756,7 @@ describe('OIAnalytics Command Service', () => {
           ]
         }
       }
-    } as unknown as OIBusUpdateNorthCacheContentCommand;
+    } as OIBusUpdateNorthCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
 
@@ -1790,7 +1806,7 @@ describe('OIAnalytics Command Service', () => {
           ]
         }
       }
-    } as unknown as OIBusUpdateHistoryCacheContentCommand;
+    } as OIBusUpdateHistoryCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
 
@@ -1872,6 +1888,10 @@ describe('OIAnalytics Command Service', () => {
   it('should not execute update-cache-content command if permission is not right', async () => {
     const command: OIBusUpdateNorthCacheContentCommand = {
       id: 'updateNorthCacheContentId',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
       type: 'update-north-cache-content',
       targetVersion: testData.engine.settings.version,
       status: 'RETRIEVED',
@@ -1891,7 +1911,7 @@ describe('OIAnalytics Command Service', () => {
         },
         archive: { remove: [], move: [] }
       }
-    } as unknown as OIBusUpdateNorthCacheContentCommand;
+    } as OIBusUpdateNorthCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
       ...testData.oIAnalytics.registration.completed,
@@ -1956,6 +1976,10 @@ describe('OIAnalytics Command Service', () => {
   it('should fail to execute update-north-cache-content command when action return an error', async () => {
     const command: OIBusUpdateNorthCacheContentCommand = {
       id: 'updateNorthCacheContentId',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
       type: 'update-north-cache-content',
       targetVersion: testData.engine.settings.version,
       status: 'RETRIEVED',
@@ -1975,7 +1999,7 @@ describe('OIAnalytics Command Service', () => {
         },
         archive: { remove: [], move: [] }
       }
-    } as unknown as OIBusUpdateNorthCacheContentCommand;
+    } as OIBusUpdateNorthCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIBusService.updateCacheContent as jest.Mock).mockRejectedValueOnce(new Error('error while removing file'));
     await service.executeCommand();
@@ -2031,6 +2055,10 @@ describe('OIAnalytics Command Service', () => {
   it('should handle error in executeUpdateHistoryCacheContentCommand', async () => {
     const command: OIBusUpdateHistoryCacheContentCommand = {
       id: 'updateHistoryCacheContentId',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
       type: 'update-history-cache-content',
       targetVersion: testData.engine.settings.version,
       status: 'RETRIEVED',
@@ -2050,7 +2078,7 @@ describe('OIAnalytics Command Service', () => {
         },
         archive: { remove: [], move: [] }
       }
-    } as unknown as OIBusUpdateHistoryCacheContentCommand;
+    } as OIBusUpdateHistoryCacheContentCommand;
     (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
     (oIBusService.updateCacheContent as jest.Mock).mockRejectedValueOnce(new Error('Update failed'));
 

@@ -322,7 +322,11 @@ const createEngineSettings = async (database: knex.Knex, engineSettings: EngineS
       proxy_enabled: engineSettings.proxyEnabled,
       proxy_port: engineSettings.proxyPort,
       oibus_version: engineSettings.version,
-      oibus_launcher_version: engineSettings.launcherVersion
+      oibus_launcher_version: engineSettings.launcherVersion,
+      created_by: engineSettings.createdBy,
+      updated_by: engineSettings.updatedBy,
+      created_at: engineSettings.createdAt,
+      updated_at: engineSettings.updatedAt
     })
     .into('engines');
 };
@@ -389,7 +393,11 @@ const createOIAnalyticsRegistration = async (database: knex.Knex, registration: 
       command_update_history_cache_content: registration.commandPermissions.updateHistoryCacheContent,
       command_search_north_cache_content: registration.commandPermissions.searchNorthCacheContent,
       command_get_north_cache_file_content: registration.commandPermissions.getNorthCacheFileContent,
-      command_update_north_cache_content: registration.commandPermissions.updateNorthCacheContent
+      command_update_north_cache_content: registration.commandPermissions.updateNorthCacheContent,
+      created_by: registration.createdBy,
+      updated_by: registration.updatedBy,
+      created_at: registration.createdAt,
+      updated_at: registration.updatedAt
     })
     .into('registrations');
 };
@@ -427,7 +435,11 @@ const createOIAnalyticsCommand = async (database: knex.Knex, command: OIBusComma
         : null,
       north_connector_id: ['create-north', 'update-north', 'delete-north'].includes(command.type)
         ? (command as OIBusUpdateNorthConnectorCommand).northConnectorId
-        : null
+        : null,
+      created_by: command.createdBy,
+      updated_by: command.updatedBy,
+      created_at: command.createdAt || testData.constants.dates.FAKE_NOW,
+      updated_at: command.updatedAt || testData.constants.dates.FAKE_NOW
     })
     .into('commands');
 };
@@ -440,6 +452,8 @@ const createOIAnalyticsMessage = async (database: knex.Knex, command: OIAnalytic
       status: command.status,
       completed_date: command.completedDate,
       error: command.error,
+      created_by: 'system',
+      updated_by: 'system',
       created_at: testData.constants.dates.FAKE_NOW,
       updated_at: testData.constants.dates.FAKE_NOW
     })
@@ -524,7 +538,11 @@ const createIpFilter = async (database: knex.Knex, ipFilter: IPFilter) => {
     .insert({
       id: ipFilter.id,
       description: ipFilter.description,
-      address: ipFilter.address
+      address: ipFilter.address,
+      created_by: ipFilter.createdBy,
+      updated_by: ipFilter.updatedBy,
+      created_at: ipFilter.createdAt,
+      updated_at: ipFilter.updatedAt
     })
     .into('ip_filters');
 };
@@ -535,7 +553,11 @@ const createScanMode = async (database: knex.Knex, scanMode: ScanMode) => {
       id: scanMode.id,
       name: scanMode.name,
       description: scanMode.description,
-      cron: scanMode.cron
+      cron: scanMode.cron,
+      created_by: scanMode.createdBy,
+      updated_by: scanMode.updatedBy,
+      created_at: scanMode.createdAt,
+      updated_at: scanMode.updatedAt
     })
     .into('scan_modes');
 };
@@ -549,7 +571,11 @@ const createCertificate = async (database: knex.Knex, certificate: Certificate) 
       public_key: certificate.publicKey,
       private_key: certificate.privateKey,
       expiry: certificate.expiry,
-      certificate: certificate.certificate
+      certificate: certificate.certificate,
+      created_by: certificate.createdBy,
+      updated_by: certificate.updatedBy,
+      created_at: certificate.createdAt,
+      updated_at: certificate.updatedAt
     })
     .into('certificates');
 };
@@ -564,7 +590,11 @@ const createUser = async (database: knex.Knex, user: User) => {
       last_name: user.lastName,
       email: user.email,
       language: user.language,
-      timezone: user.timezone
+      timezone: user.timezone,
+      created_by: user.createdBy,
+      updated_by: user.updatedBy,
+      created_at: user.createdAt,
+      updated_at: user.updatedAt
     })
     .into('users');
 };
@@ -728,10 +758,10 @@ export const buildNorthConfiguration = <T extends NorthSettings>(type: OIBusNort
   description: 'my north connector',
   enabled: true,
   settings,
-  createdBy: '',
-  updatedBy: '',
-  createdAt: '',
-  updatedAt: '',
+  createdBy: testData.users.list[0].id,
+  updatedBy: testData.users.list[0].id,
+  createdAt: testData.constants.dates.FAKE_NOW,
+  updatedAt: testData.constants.dates.FAKE_NOW,
   caching: {
     trigger: {
       scanMode: testData.scanMode.list[0],

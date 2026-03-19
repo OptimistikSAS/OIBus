@@ -532,7 +532,7 @@ export const formatQueryParams = (
   return params;
 };
 
-export const getOIBusInfo = (oibusSettings: EngineSettingsDTO): OIBusInfo => {
+export const getOIBusInfo = (oibusSettings: Omit<EngineSettingsDTO, 'createdBy' | 'updatedBy'>): OIBusInfo => {
   return {
     dataDirectory: process.cwd(),
     binaryDirectory: process.execPath,

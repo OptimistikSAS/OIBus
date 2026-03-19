@@ -1158,24 +1158,6 @@
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The manifest describing the transformer's input/output structure and attributes."
 					},
-					"createdBy": {
-						"$ref": "#/components/schemas/UserInfo",
-						"description": "The user who created the transformer. Only present for custom transformers."
-					},
-					"updatedBy": {
-						"$ref": "#/components/schemas/UserInfo",
-						"description": "The user who last updated the transformer. Only present for custom transformers."
-					},
-					"createdAt": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the transformer was created.",
-						"example": "2023-10-31T12:34:56.789Z"
-					},
-					"updatedAt": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the transformer was last updated.",
-						"example": "2023-10-31T13:45:00.123Z"
-					},
 					"name": {
 						"type": "string",
 						"description": "The name of the custom transformer.",
@@ -1201,6 +1183,24 @@
 						"format": "double",
 						"description": "The maximum execution time for the custom code in milliseconds.",
 						"example": 2000
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the transformer. Only present for custom transformers."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the transformer. Only present for custom transformers."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the transformer was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the transformer was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
 					}
 				},
 				"required": [
@@ -1213,7 +1213,11 @@
 					"description",
 					"customCode",
 					"language",
-					"timeout"
+					"timeout",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1247,24 +1251,6 @@
 					"manifest": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The manifest describing the transformer's input/output structure and attributes."
-					},
-					"createdBy": {
-						"$ref": "#/components/schemas/UserInfo",
-						"description": "The user who created the transformer. Only present for custom transformers."
-					},
-					"updatedBy": {
-						"$ref": "#/components/schemas/UserInfo",
-						"description": "The user who last updated the transformer. Only present for custom transformers."
-					},
-					"createdAt": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the transformer was created.",
-						"example": "2023-10-31T12:34:56.789Z"
-					},
-					"updatedAt": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the transformer was last updated.",
-						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"functionName": {
 						"type": "string",
@@ -1833,14 +1819,22 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -1876,6 +1870,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name",
 					"scanMode",
 					"overlap",
@@ -19790,14 +19788,22 @@
 						"description": "The unique identifier of the entity.",
 						"example": "entity123"
 					},
-					"creationDate": {
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
 						"$ref": "#/components/schemas/Instant",
 						"description": "The date and time when the entity was created.",
 						"example": "2023-10-31T12:34:56.789Z"
 					},
-					"lastEditInstant": {
+					"updatedAt": {
 						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last edited.",
+						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
 					"name": {
@@ -19808,6 +19814,10 @@
 				},
 				"required": [
 					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
 					"name"
 				],
 				"type": "object",

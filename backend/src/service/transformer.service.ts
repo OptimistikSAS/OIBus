@@ -363,8 +363,8 @@ export const toTransformerDTO = (transformer: Transformer, getUserInfo: GetUserI
         language: transformer.language,
         manifest: transformer.customManifest,
         timeout: transformer.timeout,
-        createdBy: transformer.createdBy ? getUserInfo(transformer.createdBy) : undefined,
-        updatedBy: transformer.updatedBy ? getUserInfo(transformer.updatedBy) : undefined,
+        createdBy: getUserInfo(transformer.createdBy),
+        updatedBy: getUserInfo(transformer.updatedBy),
         createdAt: transformer.createdAt,
         updatedAt: transformer.updatedAt
       };

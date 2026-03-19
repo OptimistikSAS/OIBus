@@ -4,7 +4,6 @@ import LoggerService from './service/logger/logger.service';
 import { encryptionService } from './service/encryption.service';
 
 import { createFolder, getCommandLineArguments, getOIBusInfo } from './service/utils';
-import { EngineSettingsDTO } from '../shared/model/engine.model';
 import RepositoryService from './service/repository.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
@@ -190,6 +189,8 @@ const CERT_FOLDER = 'certs';
     dataStreamEngine
   );
 
+  const userService = new UserService(new JoiValidator(), repositoryService.userRepository);
+  const logService = new LogService(new JoiValidator(), repositoryService.logRepository);
   const ipFilterService = new IPFilterService(new JoiValidator(), repositoryService.ipFilterRepository, oIAnalyticsMessageService);
   const oIBusService = new OIBusService(
     new JoiValidator(),
@@ -202,6 +203,7 @@ const CERT_FOLDER = 'certs';
     southService,
     northService,
     historyQueryService,
+    userService,
     dataStreamEngine,
     ignoreIpFilters
   );
@@ -223,8 +225,6 @@ const CERT_FOLDER = 'certs';
     encryptionService,
     oIAnalyticsMessageService
   );
-  const userService = new UserService(new JoiValidator(), repositoryService.userRepository);
-  const logService = new LogService(new JoiValidator(), repositoryService.logRepository);
 
   const oIAnalyticsCommandService = new OIAnalyticsCommandService(
     repositoryService.oianalyticsCommandRepository,
@@ -298,6 +298,6 @@ const CERT_FOLDER = 'certs';
   });
 
   const updatedOIBusSettings = repositoryService.engineRepository.get()!;
-  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings as unknown as EngineSettingsDTO))}`);
-  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings as unknown as EngineSettingsDTO))}`);
+  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
+  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
 })();

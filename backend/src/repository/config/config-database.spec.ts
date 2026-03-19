@@ -88,6 +88,7 @@ import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import { CacheSearchParam } from '../../../shared/model/engine.model';
+import { UserCommandDTO } from '../../../shared/model/user.model';
 
 jest.mock('../../service/utils');
 jest.mock('argon2');
@@ -130,7 +131,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should update engine settings', () => {
-      repository.update({ ...testData.engine.command, name: 'updated engine' });
+      repository.update({ ...testData.engine.command, name: 'updated engine' }, testData.users.list[0].id);
       expect(stripAuditFields(repository.get())).toEqual({
         ...testData.engine.command,
         id: testData.engine.settings.id,
@@ -454,14 +455,14 @@ describe('Repository with populated database', () => {
     it('should create a user', async () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
 
-      const result = await repository.create(testData.users.command, 'password');
+      const result = await repository.create(testData.users.command, 'password', testData.users.list[0].id);
 
       expect(argon2.hash).toHaveBeenCalledWith('password');
-      expect(result).toEqual({ ...testData.users.command, id: 'newId' });
+      expect(stripAuditFields(result)).toEqual(stripAuditFields({ ...testData.users.command, id: 'newId' }));
     });
 
     it('should update a user', async () => {
-      const newCommand: User = JSON.parse(JSON.stringify(testData.users.command));
+      const newCommand: UserCommandDTO = JSON.parse(JSON.stringify(testData.users.command));
       newCommand.login = 'new login';
       newCommand.timezone = 'UTC';
       repository.update('newId', newCommand);
@@ -509,10 +510,11 @@ describe('Repository with populated database', () => {
         'http://localhost:4200/api/oianalytics/oibus/registration?id=id',
         testData.constants.dates.FAKE_NOW,
         'public key',
-        'private key'
+        'private key',
+        testData.users.list[0].id
       );
 
-      expect(repository.get()).toEqual(expectedResult);
+      expect(stripAuditFields(repository.get())).toEqual(stripAuditFields(expectedResult));
     });
 
     it('should activate registration', () => {
@@ -526,7 +528,7 @@ describe('Repository with populated database', () => {
 
       repository.activate(testData.constants.dates.FAKE_NOW, 'token');
 
-      expect(repository.get()).toEqual(expectedResult);
+      expect(stripAuditFields(repository.get())).toEqual(stripAuditFields(expectedResult));
     });
 
     it('should unregister', () => {
@@ -540,7 +542,7 @@ describe('Repository with populated database', () => {
 
       repository.unregister();
 
-      expect(repository.get()).toEqual(expectedResult);
+      expect(stripAuditFields(repository.get())).toEqual(stripAuditFields(expectedResult));
     });
 
     it('should update registration', () => {
@@ -552,7 +554,7 @@ describe('Repository with populated database', () => {
         proxyUsername: 'oibus',
         proxyPassword: 'pass'
       };
-      repository.update(specificCommand);
+      repository.update(specificCommand, testData.users.list[0].id);
 
       const result = repository.get()!;
       expect(result.useProxy).toEqual(specificCommand.useProxy);
@@ -585,24 +587,26 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly list commands', () => {
-      expect(repository.findAll()).toEqual(testData.oIAnalytics.commands.oIBusList);
+      expect(repository.findAll().map(stripAuditFields)).toEqual(testData.oIAnalytics.commands.oIBusList.map(stripAuditFields));
     });
 
     it('should properly search commands and page them', () => {
-      expect(
-        repository.search({
-          types: ['update-version'],
-          status: ['RUNNING'],
-          ack: false,
-          start: testData.constants.dates.JANUARY_1ST_2020_UTC,
-          end: testData.constants.dates.FAKE_NOW_IN_FUTURE,
-          page: 0
-        })
-      ).toEqual(
+      const filteredResult = repository.search({
+        types: ['update-version'],
+        status: ['RUNNING'],
+        ack: false,
+        start: testData.constants.dates.JANUARY_1ST_2020_UTC,
+        end: testData.constants.dates.FAKE_NOW_IN_FUTURE,
+        page: 0
+      });
+      expect({
+        ...filteredResult,
+        content: filteredResult.content.map(stripAuditFields)
+      }).toEqual(
         createPageFromArray(
-          testData.oIAnalytics.commands.oIBusList.filter(
-            element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status)
-          ),
+          testData.oIAnalytics.commands.oIBusList
+            .filter(element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status))
+            .map(stripAuditFields),
           50,
           0
         )
@@ -618,29 +622,27 @@ describe('Repository with populated database', () => {
       });
       expect({
         ...searchResult,
-        content: searchResult.content.sort((a, b) => a.id.localeCompare(b.id))
+        content: searchResult.content.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields)
       }).toEqual(
-        createPageFromArray(
-          testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id)),
-          50,
-          0
-        )
+        createPageFromArray(testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields), 50, 0)
       );
     });
 
     it('should properly search commands and list them', () => {
       expect(
-        repository.list({
-          types: ['update-version'],
-          status: ['RUNNING'],
-          ack: false,
-          start: testData.constants.dates.JANUARY_1ST_2020_UTC,
-          end: testData.constants.dates.FAKE_NOW_IN_FUTURE
-        })
+        repository
+          .list({
+            types: ['update-version'],
+            status: ['RUNNING'],
+            ack: false,
+            start: testData.constants.dates.JANUARY_1ST_2020_UTC,
+            end: testData.constants.dates.FAKE_NOW_IN_FUTURE
+          })
+          .map(stripAuditFields)
       ).toEqual(
-        testData.oIAnalytics.commands.oIBusList.filter(
-          element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status)
-        )
+        testData.oIAnalytics.commands.oIBusList
+          .filter(element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status))
+          .map(stripAuditFields)
       );
       const listResult = repository.list({
         types: [],
@@ -649,13 +651,15 @@ describe('Repository with populated database', () => {
         start: undefined,
         end: undefined
       });
-      expect(listResult.sort((a, b) => a.id.localeCompare(b.id))).toEqual(
-        testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id))
+      expect(listResult.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields)).toEqual(
+        testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields)
       );
     });
 
     it('should properly find by id', () => {
-      expect(repository.findById(testData.oIAnalytics.commands.oIBusList[2].id)).toEqual(testData.oIAnalytics.commands.oIBusList[2]);
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[2].id))).toEqual(
+        stripAuditFields(testData.oIAnalytics.commands.oIBusList[2])
+      );
       expect(repository.findById('badId')).toEqual(null);
     });
 
@@ -1034,50 +1038,60 @@ describe('Repository with populated database', () => {
     it('should mark a command as COMPLETED', () => {
       repository.markAsCompleted(testData.oIAnalytics.commands.oIBusList[0].id, testData.constants.dates.FAKE_NOW, 'ok');
 
-      expect(repository.findById(testData.oIAnalytics.commands.oIBusList[0].id)).toEqual({
-        ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[0])),
-        completedDate: testData.constants.dates.FAKE_NOW,
-        result: 'ok',
-        status: 'COMPLETED',
-        ack: false
-      });
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[0].id))).toEqual(
+        stripAuditFields({
+          ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[0])),
+          completedDate: testData.constants.dates.FAKE_NOW,
+          result: 'ok',
+          status: 'COMPLETED',
+          ack: false
+        })
+      );
     });
 
     it('should mark a command as ERRORED', () => {
       repository.markAsErrored(testData.oIAnalytics.commands.oIBusList[1].id, 'not ok');
 
-      expect(repository.findById(testData.oIAnalytics.commands.oIBusList[1].id)).toEqual({
-        ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[1])),
-        result: 'not ok',
-        status: 'ERRORED'
-      });
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[1].id))).toEqual(
+        stripAuditFields({
+          ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[1])),
+          result: 'not ok',
+          status: 'ERRORED'
+        })
+      );
     });
 
     it('should mark a command as RUNNING', () => {
       repository.markAsRunning(testData.oIAnalytics.commands.oIBusList[2].id);
 
-      expect(repository.findById(testData.oIAnalytics.commands.oIBusList[2].id)).toEqual({
-        ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[2])),
-        status: 'RUNNING'
-      });
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[2].id))).toEqual(
+        stripAuditFields({
+          ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[2])),
+          status: 'RUNNING'
+        })
+      );
     });
 
     it('should mark a command as Acknowledged', () => {
       repository.markAsAcknowledged(testData.oIAnalytics.commands.oIBusList[3].id);
 
-      expect(repository.findById(testData.oIAnalytics.commands.oIBusList[3].id)).toEqual({
-        ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[3])),
-        ack: true
-      });
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[3].id))).toEqual(
+        stripAuditFields({
+          ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[3])),
+          ack: true
+        })
+      );
     });
 
     it('should mark a command as CANCELLED', () => {
       repository.cancel(testData.oIAnalytics.commands.oIBusList[4].id);
 
-      expect(repository.findById(testData.oIAnalytics.commands.oIBusList[4].id)).toEqual({
-        ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[4])),
-        status: 'CANCELLED'
-      });
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[4].id))).toEqual(
+        stripAuditFields({
+          ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[4])),
+          status: 'CANCELLED'
+        })
+      );
     });
 
     it('should delete a command', () => {
@@ -1686,75 +1700,67 @@ describe('Repository with populated database', () => {
     });
 
     it('should properly find by id', () => {
-      expect(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id)).toEqual(testData.oIAnalytics.messages.oIBusList[0]);
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id))).toEqual(
+        stripAuditFields(testData.oIAnalytics.messages.oIBusList[0])
+      );
       expect(repository.findById('badId')).toEqual(null);
     });
 
     it('should properly get messages page by search criteria', () => {
-      expect(
-        repository.search(
-          {
-            types: ['full-config'],
-            status: ['PENDING'],
-            start: testData.constants.dates.JANUARY_1ST_2020_UTC,
-            end: testData.constants.dates.FAKE_NOW_IN_FUTURE
-          },
-          0
-        )
-      ).toEqual(
-        createPageFromArray(
-          testData.oIAnalytics.messages.oIBusList.filter(
-            element => ['full-config'].includes(element.type) && ['PENDING'].includes(element.status)
-          ),
-          50,
-          0
-        )
-      );
-      expect(
-        repository.search(
-          {
-            types: [],
-            status: [],
-            start: undefined,
-            end: undefined
-          },
-          0
-        )
-      ).toEqual(createPageFromArray(testData.oIAnalytics.messages.oIBusList, 50, 0));
-    });
-
-    it('should properly get messages list by search criteria', () => {
-      expect(
-        repository.list({
+      const filteredResult = repository.search(
+        {
           types: ['full-config'],
           status: ['PENDING'],
           start: testData.constants.dates.JANUARY_1ST_2020_UTC,
           end: testData.constants.dates.FAKE_NOW_IN_FUTURE
-        })
-      ).toEqual(
-        testData.oIAnalytics.messages.oIBusList.filter(
-          element => ['full-config'].includes(element.type) && ['PENDING'].includes(element.status)
+        },
+        0
+      );
+      expect({
+        ...filteredResult,
+        content: filteredResult.content.map(stripAuditFields)
+      }).toEqual(
+        createPageFromArray(
+          testData.oIAnalytics.messages.oIBusList
+            .filter(element => ['full-config'].includes(element.type) && ['PENDING'].includes(element.status))
+            .map(stripAuditFields),
+          50,
+          0
         )
       );
+
+      const allResult = repository.search({ types: [], status: [], start: undefined, end: undefined }, 0);
+      expect({
+        ...allResult,
+        content: allResult.content.map(stripAuditFields)
+      }).toEqual(createPageFromArray(testData.oIAnalytics.messages.oIBusList.map(stripAuditFields), 50, 0));
+    });
+
+    it('should properly get messages list by search criteria', () => {
       expect(
-        repository.list({
-          types: [],
-          status: [],
-          start: undefined,
-          end: undefined
-        })
-      ).toEqual(testData.oIAnalytics.messages.oIBusList);
+        repository
+          .list({
+            types: ['full-config'],
+            status: ['PENDING'],
+            start: testData.constants.dates.JANUARY_1ST_2020_UTC,
+            end: testData.constants.dates.FAKE_NOW_IN_FUTURE
+          })
+          .map(stripAuditFields)
+      ).toEqual(
+        testData.oIAnalytics.messages.oIBusList
+          .filter(element => ['full-config'].includes(element.type) && ['PENDING'].includes(element.status))
+          .map(stripAuditFields)
+      );
+      expect(repository.list({ types: [], status: [], start: undefined, end: undefined }).map(stripAuditFields)).toEqual(
+        testData.oIAnalytics.messages.oIBusList.map(stripAuditFields)
+      );
     });
 
     it('should create full-config message', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
 
       repository.create({
-        type: 'full-config',
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
+        type: 'full-config'
       });
 
       expect(stripAuditFields(repository.findById('newId'))).toEqual({
@@ -1770,11 +1776,7 @@ describe('Repository with populated database', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryQueriesId');
 
       repository.create({
-        type: 'history-queries',
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
+        type: 'history-queries'
       });
 
       expect(stripAuditFields(repository.findById('newHistoryQueriesId'))).toEqual({
@@ -1789,22 +1791,26 @@ describe('Repository with populated database', () => {
     it('should mark a command as COMPLETED', () => {
       repository.markAsCompleted(testData.oIAnalytics.messages.oIBusList[0].id, testData.constants.dates.FAKE_NOW);
 
-      expect(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id)).toEqual({
-        ...JSON.parse(JSON.stringify(testData.oIAnalytics.messages.oIBusList[0])),
-        status: 'COMPLETED',
-        completedDate: testData.constants.dates.FAKE_NOW
-      });
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id))).toEqual(
+        stripAuditFields({
+          ...JSON.parse(JSON.stringify(testData.oIAnalytics.messages.oIBusList[0])),
+          status: 'COMPLETED',
+          completedDate: testData.constants.dates.FAKE_NOW
+        })
+      );
     });
 
     it('should mark a command as ERRORED', () => {
       repository.markAsErrored(testData.oIAnalytics.messages.oIBusList[0].id, testData.constants.dates.FAKE_NOW, 'not ok');
 
-      expect(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id)).toEqual({
-        ...JSON.parse(JSON.stringify(testData.oIAnalytics.messages.oIBusList[0])),
-        status: 'ERRORED',
-        completedDate: testData.constants.dates.FAKE_NOW,
-        error: 'not ok'
-      });
+      expect(stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id))).toEqual(
+        stripAuditFields({
+          ...JSON.parse(JSON.stringify(testData.oIAnalytics.messages.oIBusList[0])),
+          status: 'ERRORED',
+          completedDate: testData.constants.dates.FAKE_NOW,
+          error: 'not ok'
+        })
+      );
     });
 
     it('should properly delete new message', () => {
@@ -1835,15 +1841,15 @@ describe('Repository with populated database', () => {
 
     it('should create a scan mode', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
-      expect(repository.create({ ...testData.scanMode.command, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' })).toEqual(
-        expect.objectContaining({ ...testData.scanMode.command, id: 'newId' })
+      expect(repository.create(testData.scanMode.command, 'userTest')).toEqual(
+        expect.objectContaining({ ...testData.scanMode.command, id: 'newId', createdBy: 'userTest', updatedBy: 'userTest' })
       );
     });
 
     it('should update a scan mode', () => {
-      repository.update('newId', { ...testData.scanMode.command, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' });
-      expect(stripAuditFields(repository.findById('newId'))).toEqual(
-        expect.objectContaining({ ...testData.scanMode.command, id: 'newId' })
+      repository.update('newId', testData.scanMode.command, 'userTest');
+      expect(repository.findById('newId')).toEqual(
+        expect.objectContaining({ ...testData.scanMode.command, id: 'newId', updatedBy: 'userTest' })
       );
     });
 
@@ -1877,15 +1883,15 @@ describe('Repository with populated database', () => {
 
     it('create() should create an IP filter', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
-      expect(repository.create({ ...testData.ipFilters.command, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' })).toEqual(
-        expect.objectContaining({ ...testData.ipFilters.command, id: 'newId' })
+      expect(repository.create(testData.ipFilters.command, 'userTest')).toEqual(
+        expect.objectContaining({ ...testData.ipFilters.command, id: 'newId', createdBy: 'userTest', updatedBy: 'userTest' })
       );
     });
 
     it('update() should update an IP filter', () => {
-      repository.update('newId', { ...testData.ipFilters.command, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' });
-      expect(stripAuditFields(repository.findById('newId'))).toEqual(
-        expect.objectContaining({ ...testData.ipFilters.command, id: 'newId' })
+      repository.update('newId', testData.ipFilters.command, 'userTest');
+      expect(repository.findById('newId')).toEqual(
+        expect.objectContaining({ ...testData.ipFilters.command, id: 'newId', updatedBy: 'userTest' })
       );
     });
 
@@ -1988,9 +1994,7 @@ describe('Repository with populated database', () => {
         maxReadInterval: null,
         readDelay: 0,
         createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
+        updatedBy: ''
       });
 
       const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
@@ -2021,7 +2025,7 @@ describe('Repository with populated database', () => {
 
       const connector = repository.findNorthById(newNorthConnector.id)!;
       expect(connector.transformers.length).toEqual(1);
-      expect(connector.transformers[0].group).toEqual({ id: group.id, name: group.name });
+      expect(connector.transformers[0].group).toEqual(expect.objectContaining({ id: group.id, name: group.name }));
       expect(connector.transformers[0].items).toEqual([]);
     });
 
@@ -2151,6 +2155,20 @@ describe('Repository with populated database', () => {
       const updatedConnector = repository.findSouthById(newSouthConnector.id)!;
 
       expect(updatedConnector.items.length).toEqual(3);
+    });
+
+    it('should update a south connector item with non-null historian fields', () => {
+      const connector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+      connector.items = connector.items.map((item, index) =>
+        index === 0 ? { ...item, maxReadInterval: 3600, readDelay: 200, overlap: 100 } : item
+      );
+      repository.saveSouth(connector);
+
+      const updatedConnector = repository.findSouthById(connector.id)!;
+      const updatedItem = updatedConnector.items.find(item => item.id === connector.items[0].id)!;
+      expect(updatedItem.maxReadInterval).toEqual(3600);
+      expect(updatedItem.readDelay).toEqual(200);
+      expect(updatedItem.overlap).toEqual(100);
     });
 
     it('should delete a south connector', () => {
@@ -2307,9 +2325,7 @@ describe('Repository with populated database', () => {
         maxReadInterval: null,
         readDelay: 0,
         createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
+        updatedBy: ''
       });
 
       // Create a south connector with items that have groups
@@ -2353,9 +2369,7 @@ describe('Repository with populated database', () => {
         maxReadInterval: null,
         readDelay: 0,
         createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
+        updatedBy: ''
       });
 
       // Save an item with groups
@@ -2452,9 +2466,7 @@ describe('Repository with populated database', () => {
         maxReadInterval: null,
         readDelay: 0,
         createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
+        updatedBy: ''
       });
 
       // Get existing items
@@ -2487,9 +2499,7 @@ describe('Repository with populated database', () => {
         maxReadInterval: null,
         readDelay: 0,
         createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
+        updatedBy: ''
       });
 
       // Get existing items and assign them to the group first
@@ -2863,15 +2873,11 @@ describe('Repository with empty database', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('engineId1');
       repository = new EngineRepository(database, '3.5.0');
 
-      const expectedResult: EngineSettings = {
+      const expectedResult: Omit<EngineSettings, 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'> = {
         id: 'engineId1',
         version,
         launcherVersion: '3.5.0',
         name: 'OIBus',
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: '',
         port: 2223,
         proxyEnabled: false,
         proxyPort: 9000,
@@ -2901,7 +2907,7 @@ describe('Repository with empty database', () => {
           }
         }
       };
-      expect(repository.get()).toEqual(expectedResult);
+      expect(stripAuditFields(repository.get())).toEqual(expectedResult);
     });
   });
 

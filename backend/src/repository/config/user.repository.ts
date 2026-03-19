@@ -9,17 +9,13 @@ import { UserCommandDTO, UserSearchParam } from '../../../shared/model/user.mode
 const USERS_TABLE = 'users';
 const PAGE_SIZE = 50;
 
-const DEFAULT_USER: Omit<User, 'id'> = {
+const DEFAULT_USER: Omit<User, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'> = {
   login: 'admin',
   firstName: null,
   lastName: null,
   email: null,
   language: 'en',
-  timezone: 'Europe/Paris',
-  createdBy: { id: '', friendlyName: '' },
-  updatedBy: { id: '', friendlyName: '' },
-  createdAt: '',
-  updatedAt: ''
+  timezone: 'Europe/Paris'
 };
 const DEFAULT_PASSWORD = 'pass';
 
@@ -29,7 +25,7 @@ export default class UserRepository {
   }
 
   list(): Array<User> {
-    const query = `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE}`;
+    const query = `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE}`;
     return this.database
       .prepare(query)
       .all()
@@ -45,7 +41,7 @@ export default class UserRepository {
       queryParams.push(searchParams.login);
     }
     const query =
-      `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE} ${whereClause}` +
+      `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
     const results = this.database
       .prepare(query)
@@ -66,14 +62,14 @@ export default class UserRepository {
   }
 
   findById(id: string): User | null {
-    const query = `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     if (!result) return null;
     return this.toUser(result as Record<string, string>);
   }
 
   findByLogin(login: string): User | null {
-    const query = `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE} WHERE login = ?;`;
+    const query = `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE} WHERE login = ?;`;
     const result = this.database.prepare(query).get(login);
     if (!result) return null;
     return this.toUser(result as Record<string, string>);
@@ -88,18 +84,33 @@ export default class UserRepository {
     return result.password;
   }
 
-  async create(command: UserCommandDTO, password: string): Promise<User> {
+  async create(
+    command: Omit<User, 'id' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>,
+    password: string,
+    createdBy: string
+  ): Promise<User> {
     const id = generateRandomId(6);
     const insertQuery =
-      `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+      `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at) ` +
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
 
     const hash = await argon2.hash(password);
     const insertResult = this.database
       .prepare(insertQuery)
-      .run(id, command.login, hash, command.firstName, command.lastName, command.email, command.language, command.timezone);
+      .run(
+        id,
+        command.login,
+        hash,
+        command.firstName,
+        command.lastName,
+        command.email,
+        command.language,
+        command.timezone,
+        createdBy,
+        createdBy
+      );
 
-    const query = `SELECT id, login, first_name, last_name, email, language, timezone FROM ${USERS_TABLE} WHERE ROWID = ?;`;
+    const query = `SELECT id, login, first_name, last_name, email, language, timezone, created_by, updated_by, created_at, updated_at FROM ${USERS_TABLE} WHERE ROWID = ?;`;
     return this.toUser(this.database.prepare(query).get(insertResult.lastInsertRowid) as Record<string, string>);
   }
 
@@ -129,7 +140,7 @@ export default class UserRepository {
       return;
     }
 
-    this.create(DEFAULT_USER, DEFAULT_PASSWORD).catch(err => {
+    this.create(DEFAULT_USER, DEFAULT_PASSWORD, 'system').catch(err => {
       console.error(err.message);
     });
   }
@@ -137,10 +148,10 @@ export default class UserRepository {
   private toUser(result: Record<string, string>): User {
     return {
       id: result.id,
-      createdBy: { id: '', friendlyName: '' },
-      updatedBy: { id: '', friendlyName: '' },
-      createdAt: '',
-      updatedAt: '',
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at,
       login: result.login,
       firstName: result.first_name || null,
       lastName: result.last_name || null,
