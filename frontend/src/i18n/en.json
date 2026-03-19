@@ -806,17 +806,18 @@
             "key-file-path": "Key file path"
           },
           "rest": {
+            "host": "Host",
             "endpoint": "Endpoint",
-            "test-path": "Test path",
+            "test-endpoint": "Test endpoint",
             "timeout": "Timeout",
-            "auth-type": {
-              "title": "Authentication type",
-              "bearer": "Bearer Auth"
-            },
+            "accept-unauthorized": "Accept unauthorized",
             "auth": {
               "title": "Authentication type",
-              "basic": "Basic Auth",
-              "bearer": "Bearer Auth",
+              "auth-type": {
+                "title": "Authentication type",
+                "basic": "Basic Auth",
+                "bearer": "Bearer Auth"
+              },
               "bearer-token": "Bearer token",
               "basic-username": "Username",
               "basic-password": "Password"
@@ -827,7 +828,7 @@
               "value": "Value"
             },
             "proxy": {
-              "title": "Use proxy",
+              "use-proxy": "Use proxy",
               "url": "Proxy URL",
               "username": "Proxy username",
               "password": "Proxy password"
