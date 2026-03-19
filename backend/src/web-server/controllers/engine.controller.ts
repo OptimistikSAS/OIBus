@@ -18,7 +18,10 @@ export class EngineController extends Controller {
   @Get('')
   async getEngineSettings(@Request() request: CustomExpressRequest): Promise<EngineSettingsDTO> {
     const oIBusService = request.services.oIBusService;
-    return toEngineSettingsDTO(oIBusService.getEngineSettings());
+    return toEngineSettingsDTO(
+      oIBusService.getEngineSettings(),
+      request.services.userService.getUserInfo.bind(request.services.userService)
+    );
   }
 
   /**
@@ -34,7 +37,7 @@ export class EngineController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<EngineSettingsUpdateResultDTO> {
     const oIBusService = request.services.oIBusService;
-    return await oIBusService.updateEngineSettings(command);
+    return await oIBusService.updateEngineSettings(command, request.user.id);
   }
 
   /**

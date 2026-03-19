@@ -4,11 +4,14 @@ import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } f
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import {
   HistoryQueryCommandDTO,
-  HistoryQueryDTO,
+  HistoryQueryCommonDTO,
   HistoryQueryItemCommandDTO,
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam,
-  HistoryQueryLightDTO
+  HistoryQueryItemTypedDTO,
+  HistoryQueryLightDTO,
+  HistoryQueryNorthTypedDTO,
+  HistoryQuerySouthTypedDTO
 } from '../../shared/model/history-query.model';
 import { NorthConnectorManifest, OIBusNorthType } from '../../shared/model/north-connector.model';
 import { encryptionService } from './encryption.service';
@@ -20,7 +23,7 @@ import { toScanModeDTO } from './scan-mode.service';
 import SouthService, { southManifestList } from './south.service';
 import NorthService, { northManifestList } from './north.service';
 import LogRepository from '../repository/logs/log.repository';
-import { GetUserInfo, Page } from '../../shared/model/types';
+import { BaseEntity, GetUserInfo, Page } from '../../shared/model/types';
 import { HistoryQueryMetrics, OIBusConnectionTestResult, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -34,7 +37,6 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { HistoryTransformerWithOptions } from '../model/transformer.model';
-import { SouthConnectorItemEntityLight } from '../model/south-connector.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -116,13 +118,19 @@ export default class HistoryQueryService {
       if (!foundTransformer) {
         throw new Error(`Could not find OIBus transformer "${transformerIdWithOptions.transformerId}"`);
       }
-
       return {
         id: '',
         transformer: foundTransformer,
         options: transformerIdWithOptions.options,
         inputType: transformerIdWithOptions.inputType,
-        items: transformerIdWithOptions.items as unknown as Array<SouthConnectorItemEntityLight>
+        items: transformerIdWithOptions.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          createdBy: item.createdBy.id,
+          updatedBy: item.updatedBy.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt
+        }))
       };
     });
 
@@ -162,8 +170,6 @@ export default class HistoryQueryService {
     for (const item of historyQuery.items) {
       if (!item.id) {
         item.createdBy = updatedBy;
-      } else {
-        item.createdBy = previousSettings.items.find(i => i.id === item.id)?.createdBy ?? '';
       }
       item.updatedBy = updatedBy;
     }
@@ -179,7 +185,14 @@ export default class HistoryQueryService {
         transformer: foundTransformer,
         options: transformerIdWithOptions.options,
         inputType: transformerIdWithOptions.inputType,
-        items: transformerIdWithOptions.items as unknown as Array<SouthConnectorItemEntityLight>
+        items: transformerIdWithOptions.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          createdBy: item.createdBy.id,
+          updatedBy: item.updatedBy.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt
+        }))
       };
     });
 
@@ -432,13 +445,13 @@ export default class HistoryQueryService {
     southType: string,
     fileContent: string,
     delimiter: string,
-    existingItems: Array<HistoryQueryItemDTO>
+    existingItems: Array<Omit<HistoryQueryItemDTO, 'createdBy' | 'updatedBy'>>
   ): Promise<{
     items: Array<HistoryQueryItemDTO>;
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.southService.getManifest(southType);
-    const csvContent = csv.parse(fileContent, { header: true, delimiter, skipEmptyLines: true });
+    const csvContent = csv.parse<Record<string, string>>(fileContent, { header: true, delimiter, skipEmptyLines: true });
     if (csvContent.meta.delimiter !== delimiter) {
       throw new OIBusValidationError(
         `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`
@@ -448,16 +461,16 @@ export default class HistoryQueryService {
     const validItems: Array<HistoryQueryItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
     for (const data of csvContent.data) {
-      const item = {
+      const item: HistoryQueryItemDTO = {
         id: '',
-        name: (data as unknown as Record<string, string>).name,
-        enabled: stringToBoolean((data as unknown as Record<string, string>).enabled),
+        name: data.name,
+        enabled: stringToBoolean(data.enabled),
         settings: {} as SouthItemSettings
       } as HistoryQueryItemDTO;
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
         errors.push({
-          item: data as Record<string, string>,
-          error: `Item name "${(data as unknown as Record<string, string>).name}" already used`
+          item: data,
+          error: `Item name "${data.name}" already used`
         });
         continue;
       }
@@ -467,7 +480,7 @@ export default class HistoryQueryService {
       const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
         attribute => attribute.key === 'settings'
       )! as OIBusObjectAttribute;
-      for (const [key, value] of Object.entries(data as unknown as Record<string, string>)) {
+      for (const [key, value] of Object.entries(data)) {
         if (key.startsWith('settings_')) {
           const settingsKey = key.replace('settings_', '');
           const fieldManifest = itemSettingsManifest.attributes.find(settings => settings.key === settingsKey);
@@ -480,7 +493,7 @@ export default class HistoryQueryService {
             break;
           }
           if ((fieldManifest.type === 'array' || fieldManifest.type === 'object') && value) {
-            settings[settingsKey] = JSON.parse(value as string);
+            settings[settingsKey] = JSON.parse(value);
           } else if (fieldManifest.type === 'boolean') {
             settings[settingsKey] = stringToBoolean(value);
           } else {
@@ -697,11 +710,14 @@ export const toHistoryQueryLightDTO = (historyQuery: HistoryQueryEntityLight, ge
 export const toHistoryQueryDTO = (
   historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
   getUserInfo: GetUserInfo
-): HistoryQueryDTO => {
+): BaseEntity &
+  HistoryQueryCommonDTO &
+  HistoryQuerySouthTypedDTO<OIBusSouthType, SouthSettings, SouthItemSettings> &
+  HistoryQueryNorthTypedDTO<OIBusNorthType, NorthSettings> => {
   const southManifest = southManifestList.find(element => element.id === historyQuery.southType)!;
   const northManifest = northManifestList.find(element => element.id === historyQuery.northType)!;
   const items = historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, getUserInfo));
-  const baseDTO = {
+  return {
     id: historyQuery.id,
     name: historyQuery.name,
     description: historyQuery.description,
@@ -743,22 +759,27 @@ export const toHistoryQueryDTO = (
       transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType,
-      items: transformerWithOptions.items
+      items: transformerWithOptions.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        createdBy: getUserInfo(item.createdBy),
+        updatedBy: getUserInfo(item.updatedBy),
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt
+      }))
     })),
     createdBy: getUserInfo(historyQuery.createdBy),
     updatedBy: getUserInfo(historyQuery.updatedBy),
     createdAt: historyQuery.createdAt,
     updatedAt: historyQuery.updatedAt
   };
-  // Type assertion is safe because we know the southType and northType fields match the settings and items at runtime
-  return baseDTO as unknown as HistoryQueryDTO;
 };
 
 export const toHistoryQueryItemDTO = (
   historyQueryItem: HistoryQueryItemEntity<SouthItemSettings>,
   southType: string,
   getUserInfo: GetUserInfo
-): HistoryQueryItemDTO => {
+): HistoryQueryItemTypedDTO<SouthItemSettings> => {
   const southManifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
     attribute => attribute.key === 'settings'
@@ -772,5 +793,5 @@ export const toHistoryQueryItemDTO = (
     updatedBy: getUserInfo(historyQueryItem.updatedBy),
     createdAt: historyQueryItem.createdAt,
     updatedAt: historyQueryItem.updatedAt
-  } as HistoryQueryItemDTO;
+  };
 };

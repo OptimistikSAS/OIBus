@@ -593,13 +593,24 @@ describe('NorthConnector', () => {
 
   it('should find transformer from south metadata at group level', () => {
     north['connector'].transformers[0].items = [];
-    north['connector'].transformers[0].group = { id: 'groupId1', name: 'Group 1' };
+    north['connector'].transformers[0].group = {
+      id: 'groupId1',
+      name: 'Group 1',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
     north['connector'].transformers[0].south = {
       id: testData.south.list[0].id,
       name: testData.south.list[0].name,
       type: testData.south.list[0].type,
       description: testData.south.list[0].description,
-      enabled: testData.south.list[0].enabled
+      enabled: testData.south.list[0].enabled,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
 
     const itemWithMatchingGroup = {

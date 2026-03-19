@@ -8,6 +8,12 @@ import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { SouthConnectorDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 
+const toScanModeDTO = (sm: (typeof testData.scanMode.list)[0]): ScanModeDTO => ({
+  ...sm,
+  createdBy: { id: sm.createdBy, friendlyName: sm.createdBy },
+  updatedBy: { id: sm.updatedBy, friendlyName: sm.updatedBy }
+});
+
 class ImportSouthItemsModalComponentTester extends ComponentTester<ImportSouthItemsModalComponent> {
   constructor() {
     super(ImportSouthItemsModalComponent);
@@ -47,7 +53,7 @@ describe('ImportSouthItemsModalComponent', () => {
           name: 'item999',
           enabled: true,
           settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
-          scanMode: testData.scanMode.list[0],
+          scanMode: toScanModeDTO(testData.scanMode.list[0]),
           group: null,
           syncWithGroup: false,
           maxReadInterval: null,
@@ -60,7 +66,7 @@ describe('ImportSouthItemsModalComponent', () => {
         }
       ],
       [{ item: { name: 'item2' }, error: '' }],
-      testData.scanMode.list as unknown as Array<ScanModeDTO>
+      testData.scanMode.list.map(toScanModeDTO)
     );
     await tester.change();
   });
@@ -73,7 +79,7 @@ describe('ImportSouthItemsModalComponent', () => {
         name: 'item999',
         enabled: true,
         settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
-        scanMode: testData.scanMode.list[0],
+        scanMode: toScanModeDTO(testData.scanMode.list[0]),
         group: null,
         syncWithGroup: false,
         maxReadInterval: null,

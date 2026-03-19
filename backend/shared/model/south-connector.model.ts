@@ -292,7 +292,7 @@ export interface ItemLightDTO extends BaseEntity {
   name: string;
 }
 
-export interface GroupLightDTO extends BaseEntity {
+export interface SouthItemGroupLightDTO extends BaseEntity {
   /**
    * The name of the group.
    *

@@ -12,6 +12,7 @@ jest.mock('../../service/oia/oianalytics-registration.service', () => ({
 describe('OIAnalyticsRegistrationController', () => {
   let controller: OIAnalyticsRegistrationController;
   const mockRequest: Partial<CustomExpressRequest> = {
+    user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
     services: {
       oIAnalyticsRegistrationService: new OIAnalyticsRegistrationServiceMock()
     }
@@ -38,7 +39,7 @@ describe('OIAnalyticsRegistrationController', () => {
 
     await controller.register(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsRegistrationService.register).toHaveBeenCalledWith(command);
+    expect(mockRequest.services!.oIAnalyticsRegistrationService.register).toHaveBeenCalledWith(command, testData.users.list[0].id);
   });
 
   it('should update registration settings', async () => {
@@ -47,7 +48,10 @@ describe('OIAnalyticsRegistrationController', () => {
 
     await controller.editRegistrationSettings(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith(command);
+    expect(mockRequest.services!.oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith(
+      command,
+      testData.users.list[0].id
+    );
   });
 
   it('should unregister from OIAnalytics service', async () => {

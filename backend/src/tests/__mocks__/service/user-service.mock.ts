@@ -6,6 +6,7 @@ export default jest.fn().mockImplementation(() => ({
   findById: jest.fn(),
   findByLogin: jest.fn(),
   getHashedPasswordByLogin: jest.fn(),
+  getUserInfo: jest.fn(),
   search: jest.fn(),
   create: jest.fn(),
   update: jest.fn(),

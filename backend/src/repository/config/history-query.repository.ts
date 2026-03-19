@@ -472,20 +472,20 @@ export default class HistoryQueryRepository {
   }
 
   private findHistoryItems(historyTransformerId: string): Array<SouthConnectorItemEntityLight> {
-    const query = `SELECT ht.id, ht.item_id, hi.name FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} ht JOIN ${HISTORY_ITEMS_TABLE} hi ON ht.item_id = hi.id WHERE ht.id = ?;`;
+    const query = `SELECT ht.id, ht.item_id, hi.name, hi.created_by, hi.updated_by, hi.created_at, hi.updated_at FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} ht JOIN ${HISTORY_ITEMS_TABLE} hi ON ht.item_id = hi.id WHERE ht.id = ?;`;
     const results = this.database.prepare(query).all(historyTransformerId) as Array<Record<string, string>>;
     return results.map(result => ({
       id: result.item_id as string,
       name: result.name as string,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at
     }));
   }
 
   private findScanModeForHistory(scanModeId: string): ScanMode {
-    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
+    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
   }
@@ -496,8 +496,8 @@ export default class HistoryQueryRepository {
       name: result.name,
       enabled: Boolean(result.enabled),
       settings: JSON.parse(result.settings) as SouthItemSettings,
-      createdBy: result.created_by ?? '',
-      updatedBy: result.updated_by ?? '',
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };
@@ -544,8 +544,8 @@ export default class HistoryQueryRepository {
       },
       items: this.findAllItemsForHistory(result.id as string),
       northTransformers: this.findTransformersForHistory(result.id as string),
-      createdBy: (result.created_by as string) ?? '',
-      updatedBy: (result.updated_by as string) ?? '',
+      createdBy: result.created_by as string,
+      updatedBy: result.updated_by as string,
       createdAt: result.created_at as string,
       updatedAt: result.updated_at as string
     };
@@ -562,8 +562,8 @@ export const toHistoryQueryLight = (result: Record<string, string>): HistoryQuer
     endTime: result.end_time,
     southType: result.south_type as OIBusSouthType,
     northType: result.north_type as OIBusNorthType,
-    createdBy: result.created_by ?? '',
-    updatedBy: result.updated_by ?? '',
+    createdBy: result.created_by,
+    updatedBy: result.updated_by,
     createdAt: result.created_at,
     updatedAt: result.updated_at
   };

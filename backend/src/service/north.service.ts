@@ -1,9 +1,9 @@
 import { encryptionService } from './encryption.service';
 import {
   NorthConnectorCommandDTO,
-  NorthConnectorDTO,
   NorthConnectorLightDTO,
   NorthConnectorManifest,
+  NorthConnectorTypedDTO,
   OIBusNorthType
 } from '../../shared/model/north-connector.model';
 import azureManifest from '../north/north-azure-blob/manifest';
@@ -43,7 +43,7 @@ import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
-import { SouthConnectorItemEntityLight } from '../model/south-connector.model';
+import { toSouthConnectorLightDTO, toSouthItemGroupLightDTO } from './south.service';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -139,21 +139,18 @@ export default class NorthService {
         transformer: foundTransformer,
         options: transformerIdWithOptions.options,
         inputType: transformerIdWithOptions.inputType,
-        south: south
-          ? {
-              id: south.id,
-              type: south.type,
-              name: south.name,
-              description: south.description,
-              enabled: south.enabled,
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            }
+        south: south ? south : undefined,
+        group: transformerIdWithOptions.groupId
+          ? { id: transformerIdWithOptions.groupId, name: '', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
           : undefined,
-        group: transformerIdWithOptions.groupId ? { id: transformerIdWithOptions.groupId, name: '' } : undefined,
-        items: transformerIdWithOptions.items as unknown as Array<SouthConnectorItemEntityLight>
+        items: transformerIdWithOptions.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          createdBy: item.createdBy.id,
+          updatedBy: item.updatedBy.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt
+        }))
       };
     });
     this.northConnectorRepository.saveNorth(northEntity);
@@ -202,21 +199,18 @@ export default class NorthService {
         transformer: foundTransformer,
         options: transformerIdWithOptions.options,
         inputType: transformerIdWithOptions.inputType,
-        south: south
-          ? {
-              id: south.id,
-              type: south.type,
-              name: south.name,
-              description: south.description,
-              enabled: south.enabled,
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            }
+        south: south ? south : undefined,
+        group: transformerIdWithOptions.groupId
+          ? { id: transformerIdWithOptions.groupId, name: '', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
           : undefined,
-        group: transformerIdWithOptions.groupId ? { id: transformerIdWithOptions.groupId, name: '' } : undefined,
-        items: transformerIdWithOptions.items as unknown as Array<SouthConnectorItemEntityLight>
+        items: transformerIdWithOptions.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          createdBy: item.createdBy.id,
+          updatedBy: item.updatedBy.id,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt
+        }))
       };
     });
 
@@ -395,7 +389,10 @@ export const toNorthConnectorLightDTO = (northEntity: NorthConnectorEntityLight,
   };
 };
 
-export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSettings>, getUserInfo: GetUserInfo): NorthConnectorDTO => {
+export const toNorthConnectorDTO = (
+  northEntity: NorthConnectorEntity<NorthSettings>,
+  getUserInfo: GetUserInfo
+): NorthConnectorTypedDTO<OIBusNorthType, NorthSettings> => {
   return {
     id: northEntity.id,
     name: northEntity.name,
@@ -432,15 +429,22 @@ export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSetti
       transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType,
-      south: transformerWithOptions.south,
-      group: transformerWithOptions.group,
-      items: transformerWithOptions.items
+      south: transformerWithOptions.south ? toSouthConnectorLightDTO(transformerWithOptions.south, getUserInfo) : undefined,
+      group: transformerWithOptions.group ? toSouthItemGroupLightDTO(transformerWithOptions.group, getUserInfo) : undefined,
+      items: transformerWithOptions.items.map(item => ({
+        id: item.id,
+        name: item.name,
+        createdBy: getUserInfo(item.createdBy),
+        updatedBy: getUserInfo(item.updatedBy),
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt
+      }))
     })),
     createdBy: getUserInfo(northEntity.createdBy),
     updatedBy: getUserInfo(northEntity.updatedBy),
     createdAt: northEntity.createdAt,
     updatedAt: northEntity.updatedAt
-  } as unknown as NorthConnectorDTO;
+  };
 };
 
 export const copyNorthConnectorCommandToNorthEntity = async (

@@ -672,7 +672,7 @@ describe('Transformer Service', () => {
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
     const customTransformerNoAudit = { ...(testData.transformers.list[0] as CustomTransformer), createdBy: '', updatedBy: '' };
     const result = toTransformerDTO(customTransformerNoAudit, getUserInfo);
-    expect(result).toMatchObject({ createdBy: undefined, updatedBy: undefined });
+    expect(result).toMatchObject({ createdBy: { id: '', friendlyName: '' }, updatedBy: { id: '', friendlyName: '' } });
   });
 
   it('should properly convert to DTO with non-empty createdBy/updatedBy', () => {
@@ -696,8 +696,8 @@ describe('Transformer Service', () => {
       customCode: customTransformer.customCode,
       timeout: customTransformer.timeout,
       manifest: customTransformer.customManifest,
-      createdBy: customTransformer.createdBy ? getUserInfo(customTransformer.createdBy) : undefined,
-      updatedBy: customTransformer.updatedBy ? getUserInfo(customTransformer.updatedBy) : undefined,
+      createdBy: getUserInfo(customTransformer.createdBy),
+      updatedBy: getUserInfo(customTransformer.updatedBy),
       createdAt: customTransformer.createdAt,
       updatedAt: customTransformer.updatedAt
     });

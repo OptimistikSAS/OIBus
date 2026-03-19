@@ -94,30 +94,27 @@ export default class OIAnalyticsMessageRepository {
   }
 
   create(message: Pick<OIAnalyticsMessage, 'type'>): OIAnalyticsMessage {
-    // id, type, status
-    const queryParams = [generateRandomId(), message.type, 'PENDING'];
-    let insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE} `;
-
-    switch (message.type) {
-      case 'full-config':
-        insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
-        break;
-      case 'history-queries':
-        insertQuery += `(id, type, status) VALUES (?, ?, ?);`;
-        break;
-    }
-    const result = this.database.prepare(insertQuery).run(...queryParams);
+    const id = generateRandomId();
+    const insertQuery = `INSERT INTO ${OIANALYTICS_MESSAGE_TABLE} (id, type, status, created_by, updated_by, created_at, updated_at)
+                         VALUES (?, ?, 'PENDING', 'system', 'system', strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+    const result = this.database.prepare(insertQuery).run(id, message.type);
     const query = `SELECT * FROM ${OIANALYTICS_MESSAGE_TABLE} WHERE ROWID = ?;`;
     return this.toMessage(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
   }
 
   markAsCompleted(id: string, completedDate: Instant): void {
-    const query = `UPDATE ${OIANALYTICS_MESSAGE_TABLE} SET status = 'COMPLETED', completed_date = ? WHERE id = ?;`;
+    const query = `UPDATE ${OIANALYTICS_MESSAGE_TABLE}
+                   SET status = 'COMPLETED', completed_date = ?,
+                       updated_by = 'system', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+                   WHERE id = ?;`;
     this.database.prepare(query).run(completedDate, id);
   }
 
   markAsErrored(id: string, completedDate: Instant, result: string): void {
-    const query = `UPDATE ${OIANALYTICS_MESSAGE_TABLE} SET status = 'ERRORED', completed_date = ?, error = ? WHERE id = ?;`;
+    const query = `UPDATE ${OIANALYTICS_MESSAGE_TABLE}
+                   SET status = 'ERRORED', completed_date = ?, error = ?,
+                       updated_by = 'system', updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+                   WHERE id = ?;`;
     this.database.prepare(query).run(completedDate, result, id);
   }
 
@@ -133,10 +130,10 @@ export default class OIAnalyticsMessageRepository {
       case 'full-config':
         return {
           id: message.id,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: '',
+          createdBy: message.created_by,
+          updatedBy: message.updated_by,
+          createdAt: message.created_at,
+          updatedAt: message.updated_at,
           type: 'full-config',
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,
@@ -145,10 +142,10 @@ export default class OIAnalyticsMessageRepository {
       case 'history-queries':
         return {
           id: message.id,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: '',
+          createdBy: message.created_by,
+          updatedBy: message.updated_by,
+          createdAt: message.created_at,
+          updatedAt: message.updated_at,
           type: 'history-queries',
           status: message.status as OIAnalyticsMessageStatus,
           error: message.error,
