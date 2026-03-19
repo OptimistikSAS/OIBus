@@ -94,15 +94,17 @@ describe('User Service', () => {
   it('should create a user', async () => {
     (userRepository.create as jest.Mock).mockReturnValueOnce(testData.users.list[0]);
 
-    const result = await service.create(testData.users.command, 'password');
+    const result = await service.create(testData.users.command, 'password', testData.users.list[0].id);
 
     expect(validator.validate).toHaveBeenCalledWith(userSchema, testData.users.command);
-    expect(userRepository.create).toHaveBeenCalledWith(testData.users.command, 'password');
+    expect(userRepository.create).toHaveBeenCalledWith(testData.users.command, 'password', testData.users.list[0].id);
     expect(result).toEqual(testData.users.list[0]);
   });
 
   it('should not create if the password is not provided', async () => {
-    await expect(service.create(testData.users.command, undefined)).rejects.toThrow(new OIBusValidationError('Password is required'));
+    await expect(service.create(testData.users.command, undefined, testData.users.list[0].id)).rejects.toThrow(
+      new OIBusValidationError('Password is required')
+    );
 
     expect(userRepository.create).not.toHaveBeenCalled();
   });
@@ -178,7 +180,7 @@ describe('User Service', () => {
 
   it('should properly convert to DTO', () => {
     const user = testData.users.list[0];
-    expect(toUserDTO(user)).toEqual({
+    expect(toUserDTO(user, id => ({ id, friendlyName: 'test' }))).toEqual({
       id: user.id,
       login: user.login,
       firstName: user.firstName,
@@ -187,8 +189,8 @@ describe('User Service', () => {
       language: user.language,
       timezone: user.timezone,
       friendlyName: 'Admin',
-      createdBy: user.createdBy,
-      updatedBy: user.updatedBy,
+      createdBy: { id: user.createdBy, friendlyName: 'test' },
+      updatedBy: { id: user.updatedBy, friendlyName: 'test' },
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     });
@@ -196,7 +198,7 @@ describe('User Service', () => {
 
   it('should properly convert non-admin user to DTO with firstName and lastName', () => {
     const user = testData.users.list[1];
-    expect(toUserDTO(user)).toEqual({
+    expect(toUserDTO(user, id => ({ id, friendlyName: 'test' }))).toEqual({
       id: user.id,
       login: user.login,
       firstName: user.firstName,
@@ -205,8 +207,8 @@ describe('User Service', () => {
       language: user.language,
       timezone: user.timezone,
       friendlyName: `${user.firstName} ${user.lastName} (${user.login})`,
-      createdBy: user.createdBy,
-      updatedBy: user.updatedBy,
+      createdBy: { id: user.createdBy, friendlyName: 'test' },
+      updatedBy: { id: user.updatedBy, friendlyName: 'test' },
       createdAt: user.createdAt,
       updatedAt: user.updatedAt
     });
@@ -214,6 +216,10 @@ describe('User Service', () => {
 
   it('should return OIAnalytics info for "oianalytics" userId', () => {
     expect(service.getUserInfo('oianalytics')).toEqual({ id: 'oianalytics', friendlyName: 'OIAnalytics' });
+  });
+
+  it('should return System info for "system" userId', () => {
+    expect(service.getUserInfo('system')).toEqual({ id: 'system', friendlyName: 'System' });
   });
 
   it('should return id as friendlyName when user is not found', () => {

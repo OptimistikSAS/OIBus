@@ -13,7 +13,6 @@ import { DateTime, Settings } from 'luxon';
 import { provideDatepicker } from '../../../shared/datepicker.providers';
 import { OIBusContent, OIBusFileContent, OIBusTimeValueContent } from '../../../../../../backend/shared/model/engine.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 
 @Component({
   selector: 'oib-test-south-item-test-component',

@@ -79,7 +79,8 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_south, command_update_south, command_delete_south, command_create_or_update_south_items_from_csv, command_test_south_connection, command_test_south_item, ` +
       `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
       `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
-      `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content ` +
+      `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content, ` +
+      `created_by, updated_by, created_at, updated_at ` +
       `FROM ${REGISTRATIONS_TABLE};`;
     const results = this.database.prepare(query).all();
 
@@ -103,7 +104,8 @@ export default class OIAnalyticsRegistrationRepository {
     checkUrl: string,
     expirationDate: Instant,
     publicKey: string,
-    privateKey: string
+    privateKey: string,
+    updatedBy: string
   ): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET host = ?, status = 'PENDING', token = '', activation_code = ?, ` +
@@ -119,7 +121,8 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_south = ?, command_update_south = ?, command_delete_south = ?, command_create_or_update_south_items_from_csv = ?, command_test_south_connection = ?, command_test_south_item = ?, ` +
       `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
       `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
-      `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ? ` +
+      `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ?, ` +
+      `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
@@ -179,7 +182,8 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateHistoryCacheContent,
         +command.commandPermissions.searchNorthCacheContent,
         +command.commandPermissions.getNorthCacheFileContent,
-        +command.commandPermissions.updateNorthCacheContent
+        +command.commandPermissions.updateNorthCacheContent,
+        updatedBy
       );
   }
 
@@ -197,7 +201,7 @@ export default class OIAnalyticsRegistrationRepository {
     this.database.prepare(query).run();
   }
 
-  update(command: Omit<OIAnalyticsRegistrationEditCommand, 'host'>): void {
+  update(command: Omit<OIAnalyticsRegistrationEditCommand, 'host'>, updatedBy: string): void {
     const query =
       `UPDATE ${REGISTRATIONS_TABLE} SET ` +
       `use_proxy = ?, proxy_url = ?, proxy_username = ?, proxy_password = ?, use_api_gateway = ?, api_gateway_header_key = ?, api_gateway_header_value = ?, api_gateway_base_endpoint = ?, ` +
@@ -211,7 +215,8 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_south = ?, command_update_south = ?, command_delete_south = ?, command_create_or_update_south_items_from_csv = ?, command_test_south_connection = ?, command_test_south_item = ?,` +
       `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
       `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
-      `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ? ` +
+      `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ?, ` +
+      `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
       .prepare(query)
@@ -265,7 +270,8 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateHistoryCacheContent,
         +command.commandPermissions.searchNorthCacheContent,
         +command.commandPermissions.getNorthCacheFileContent,
-        +command.commandPermissions.updateNorthCacheContent
+        +command.commandPermissions.updateNorthCacheContent,
+        updatedBy
       );
   }
 
@@ -291,8 +297,9 @@ export default class OIAnalyticsRegistrationRepository {
       `command_test_south_connection, command_test_south_item, ` +
       `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
       `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
-      `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content ` +
-      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content, ` +
+      `created_by, updated_by, created_at, updated_at` +
+      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
@@ -348,17 +355,19 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.updateHistoryCacheContent,
         +command.commandPermissions.searchNorthCacheContent,
         +command.commandPermissions.getNorthCacheFileContent,
-        +command.commandPermissions.updateNorthCacheContent
+        +command.commandPermissions.updateNorthCacheContent,
+        'system',
+        'system'
       );
   }
 
   private toOIAnalyticsRegistration(result: Record<string, string | number>): OIAnalyticsRegistration {
     return {
       id: result.id as string,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: '',
+      createdBy: result.created_by as string,
+      updatedBy: result.updated_by as string,
+      createdAt: result.created_at as string,
+      updatedAt: result.updated_at as string,
       host: result.host as string,
       activationCode: result.activation_code as string,
       token: result.token as string,

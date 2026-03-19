@@ -63,12 +63,12 @@ import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import { EventEmitter } from 'node:events';
 import IPFilterService from '../ip-filter.service';
 import CertificateService from '../certificate.service';
-import HistoryQueryService from '../history-query.service';
+import HistoryQueryService, { toHistoryQueryItemDTO } from '../history-query.service';
 import { HistoryQueryCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { EngineSettingsDTO, OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
-import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemCommandDTO } from '../../../shared/model/south-connector.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -503,7 +503,7 @@ export default class OIAnalyticsCommandService {
 
     const runStart = DateTime.now();
     const engineSettings = this.oIBusService.getEngineSettings()!;
-    const oibusInfo = getOIBusInfo(engineSettings as unknown as EngineSettingsDTO);
+    const oibusInfo = getOIBusInfo(engineSettings);
 
     this.logger.info(
       `Upgrading OIBus from ${oibusInfo.version} to ${command.commandContent.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
@@ -572,7 +572,7 @@ export default class OIAnalyticsCommandService {
     command.commandContent.logParameters.loki.password = command.commandContent.logParameters.loki.password
       ? await encryptionService.decryptTextWithPrivateKey(command.commandContent.logParameters.loki.password, privateKey)
       : '';
-    await this.oIBusService.updateEngineSettings(command.commandContent);
+    await this.oIBusService.updateEngineSettings(command.commandContent, 'oianalytics');
     this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Engine settings updated successfully');
   }
 
@@ -712,7 +712,7 @@ export default class OIAnalyticsCommandService {
           : registration.commandPermissions.updateHistoryCacheContent
       }
     };
-    await this.oIAnalyticsRegistrationService.editRegistrationSettings(registrationCommand);
+    await this.oIAnalyticsRegistrationService.editRegistrationSettings(registrationCommand, 'oianalytics');
 
     this.oIAnalyticsCommandRepository.markAsCompleted(
       command.id,
@@ -836,10 +836,9 @@ export default class OIAnalyticsCommandService {
       southConnector.type,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
-      // Type assertion is safe because checkImportItems accepts the union type
       command.commandContent.deleteItemsNotPresent
         ? []
-        : (southConnector.items.map(i => toSouthConnectorItemDTO(i, southConnector.type)) as unknown as Array<SouthConnectorItemDTO>)
+        : southConnector.items.map(i => toSouthConnectorItemDTO(i, southConnector.type, (id: string) => ({ id, friendlyName: id })))
     );
 
     if (errors.length > 0) {
@@ -1002,7 +1001,9 @@ export default class OIAnalyticsCommandService {
       command.commandContent.csvContent,
       command.commandContent.delimiter,
       // Type assertion is safe because checkImportItems accepts the union type
-      command.commandContent.deleteItemsNotPresent ? [] : (historyQuery.items as unknown as Array<HistoryQueryItemDTO>)
+      command.commandContent.deleteItemsNotPresent
+        ? []
+        : historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, (id: string) => ({ id, friendlyName: id })))
     );
 
     if (errors.length > 0) {

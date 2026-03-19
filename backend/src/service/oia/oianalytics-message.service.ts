@@ -1,5 +1,4 @@
 import { getOIBusInfo } from '../utils';
-import { EngineSettingsDTO } from '../../../shared/model/engine.model';
 import pino from 'pino';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
@@ -37,6 +36,7 @@ import TransformerRepository from '../../repository/config/transformer.repositor
 import { getStandardManifest } from '../transformer.service';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
+import { Language } from '../../../shared/model/types';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -321,7 +321,7 @@ export default class OIAnalyticsMessageService {
 
   private createEngineCommand(): OIAnalyticsEngineCommandDTO {
     const engine = this.engineRepository.get()!;
-    const info = getOIBusInfo(engine as unknown as EngineSettingsDTO);
+    const info = getOIBusInfo(engine);
     return {
       oIBusInternalId: engine.id,
       name: engine.name,
@@ -425,7 +425,7 @@ export default class OIAnalyticsMessageService {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        language: user.language,
+        language: user.language as Language,
         timezone: user.timezone
       }
     }));

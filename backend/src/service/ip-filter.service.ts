@@ -31,7 +31,7 @@ export default class IPFilterService {
 
   async create(command: IPFilterCommandDTO, createdBy: string): Promise<IPFilter> {
     await this.validator.validate(ipFilterSchema, command);
-    const ipFilter = this.ipFilterRepository.create({ ...command, createdBy, updatedBy: createdBy, createdAt: '', updatedAt: '' });
+    const ipFilter = this.ipFilterRepository.create(command, createdBy);
     this.whiteListEvent.emit(
       'update-white-list',
       this.ipFilterRepository.list().map(ip => ip.address)
@@ -43,13 +43,7 @@ export default class IPFilterService {
   async update(ipFilterId: string, command: IPFilterCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(ipFilterSchema, command);
     const ipFilter = this.findById(ipFilterId);
-    this.ipFilterRepository.update(ipFilter.id, {
-      ...command,
-      createdBy: ipFilter.createdBy,
-      updatedBy,
-      createdAt: ipFilter.createdAt,
-      updatedAt: ''
-    });
+    this.ipFilterRepository.update(ipFilter.id, command, updatedBy);
     this.whiteListEvent.emit(
       'update-white-list',
       this.ipFilterRepository.list().map(ip => ip.address)

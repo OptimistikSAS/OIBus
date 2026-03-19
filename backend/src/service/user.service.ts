@@ -2,7 +2,7 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { userSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import UserRepository from '../repository/config/user.repository';
 import { User } from '../model/user.model';
-import { Page, UserInfo } from '../../shared/model/types';
+import { GetUserInfo, Language, Page, UserInfo } from '../../shared/model/types';
 import { UserCommandDTO, UserDTO, UserSearchParam } from '../../shared/model/user.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 
@@ -40,12 +40,12 @@ export default class UserService {
     return this.userRepository.search(searchParams);
   }
 
-  async create(command: UserCommandDTO, password: string | undefined): Promise<User> {
+  async create(command: UserCommandDTO, password: string | undefined, createdBy: string): Promise<User> {
     await this.validator.validate(userSchema, command);
     if (!password) {
       throw new OIBusValidationError('Password is required');
     }
-    return await this.userRepository.create(command, password);
+    return await this.userRepository.create(command, password, createdBy);
   }
 
   async update(userId: string, command: UserCommandDTO): Promise<void> {
@@ -69,6 +69,7 @@ export default class UserService {
 
   getUserInfo(userId: string): UserInfo {
     if (userId === 'oianalytics') return { id: userId, friendlyName: 'OIAnalytics' };
+    if (userId === 'system') return { id: userId, friendlyName: 'System' };
     const user = this.userRepository.findById(userId);
     if (!user) return { id: userId, friendlyName: userId };
     return computeUserInfo(userId, user);
@@ -82,18 +83,18 @@ const computeUserInfo = (id: string, user: User): UserInfo => {
   return { id, friendlyName: `${name} (${user.login})` };
 };
 
-export const toUserDTO = (user: User): UserDTO => {
+export const toUserDTO = (user: User, getUserInfo: GetUserInfo): UserDTO => {
   return {
     id: user.id,
     login: user.login,
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
-    language: user.language,
+    language: user.language as Language,
     timezone: user.timezone,
     friendlyName: computeUserInfo(user.id, user).friendlyName,
-    createdBy: user.createdBy,
-    updatedBy: user.updatedBy,
+    createdBy: getUserInfo(user.createdBy),
+    updatedBy: getUserInfo(user.updatedBy),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt
   };

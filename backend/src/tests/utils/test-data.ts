@@ -36,6 +36,7 @@ import { CustomTransformerCommandDTO } from '../../../shared/model/transformer.m
 import { CustomTransformerDTO } from '../../../shared/model/transformer.model';
 import { Transformer } from '../../model/transformer.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { UserCommandDTO } from '../../../shared/model/user.model';
 
 const constants = {
   dates: {
@@ -215,7 +216,11 @@ const customTransformers: Array<CustomTransformerDTO> = [
         visible: true,
         wrapInBox: false
       }
-    }
+    },
+    createdAt: constants.dates.DATE_1,
+    updatedAt: constants.dates.DATE_2,
+    createdBy: { id: 'admin', friendlyName: 'Admin' },
+    updatedBy: { id: 'admin', friendlyName: 'Admin' }
   },
   {
     id: 'transformerId2',
@@ -238,7 +243,11 @@ const customTransformers: Array<CustomTransformerDTO> = [
         visible: true,
         wrapInBox: false
       }
-    }
+    },
+    createdAt: constants.dates.DATE_1,
+    updatedAt: constants.dates.DATE_2,
+    createdBy: { id: 'admin', friendlyName: 'Admin' },
+    updatedBy: { id: 'admin', friendlyName: 'Admin' }
   }
 ];
 
@@ -289,8 +298,8 @@ const users: Array<User> = [
     email: null,
     language: 'en',
     timezone: 'Europe/Paris',
-    createdBy: { id: '', friendlyName: '' },
-    updatedBy: { id: '', friendlyName: '' },
+    createdBy: '',
+    updatedBy: '',
     createdAt: '',
     updatedAt: ''
   },
@@ -302,23 +311,19 @@ const users: Array<User> = [
     email: 'email',
     language: 'fr',
     timezone: 'Europe/Paris',
-    createdBy: { id: '', friendlyName: '' },
-    updatedBy: { id: '', friendlyName: '' },
+    createdBy: '',
+    updatedBy: '',
     createdAt: '',
     updatedAt: ''
   }
 ];
-const userCommand: Omit<User, 'id'> = {
+const userCommand: UserCommandDTO = {
   login: 'anotherUser',
   firstName: 'first name',
   lastName: 'last name',
   email: 'another-user@mail.com',
   language: 'en',
-  timezone: 'Europe/Paris',
-  createdBy: { id: '', friendlyName: '' },
-  updatedBy: { id: '', friendlyName: '' },
-  createdAt: '',
-  updatedAt: ''
+  timezone: 'Europe/Paris'
 };
 
 const certificates: Array<Certificate> = [
@@ -677,12 +682,6 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         settings: {
           mode: 'da'
         } as SouthItemSettings,
-        scanMode: { id: 'subscription', name: 'subscription', description: '', cron: '' },
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        overlap: 10,
         scanMode: {
           id: 'subscription',
           name: 'subscription',
@@ -693,6 +692,11 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
           createdAt: '',
           updatedAt: ''
         },
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 10,
         createdBy: '',
         updatedBy: '',
         createdAt: '',

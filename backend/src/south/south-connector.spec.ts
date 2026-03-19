@@ -486,6 +486,35 @@ describe('SouthConnector with history and subscription', () => {
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
   });
 
+  it('should use group historian settings when syncWithGroup is true', async () => {
+    const group = {
+      id: 'group1',
+      name: 'Group 1',
+      southId: testData.south.list[2].id,
+      scanMode: testData.scanMode.list[0],
+      maxReadInterval: 1800,
+      readDelay: 100,
+      overlap: 50,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    const itemsWithGroup = [
+      {
+        ...(testData.south.list[2].items[0] as SouthConnectorItemEntity<SouthOPCUAItemSettings>),
+        group,
+        syncWithGroup: true
+      }
+    ];
+
+    (generateIntervals as jest.Mock).mockReturnValueOnce({ intervals: [], numberOfIntervalsDone: 0 });
+
+    await south.historyQueryHandler(itemsWithGroup, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z');
+
+    expect(generateIntervals).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', expect.any(String), '2023-02-02T02:02:02.222Z', 1800);
+  });
+
   it('should update subscriptions', async () => {
     south['connector'].items = south['connector'].items.map(item => ({ ...item, scanMode: { ...item.scanMode, id: 'subscription' } }));
     south['subscribedItems'] = [south['connector'].items[0]];

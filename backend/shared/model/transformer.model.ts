@@ -1,5 +1,5 @@
 import { OIBusObjectAttribute } from './form.model';
-import { GroupLightDTO, ItemLightDTO, SouthConnectorLightDTO } from './south-connector.model';
+import { SouthItemGroupLightDTO, ItemLightDTO, SouthConnectorLightDTO } from './south-connector.model';
 import { Instant, UserInfo } from './types';
 
 export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
@@ -79,28 +79,6 @@ export interface BaseTransformerDTO {
    * The manifest describing the transformer's input/output structure and attributes.
    */
   manifest: OIBusObjectAttribute;
-
-  /**
-   * The user who created the transformer. Only present for custom transformers.
-   */
-  createdBy?: UserInfo;
-
-  /**
-   * The user who last updated the transformer. Only present for custom transformers.
-   */
-  updatedBy?: UserInfo;
-
-  /**
-   * The date and time when the transformer was created.
-   * @example "2023-10-31T12:34:56.789Z"
-   */
-  createdAt?: Instant;
-
-  /**
-   * The date and time when the transformer was last updated.
-   * @example "2023-10-31T13:45:00.123Z"
-   */
-  updatedAt?: Instant;
 }
 
 /**
@@ -142,6 +120,28 @@ export interface CustomTransformerDTO extends BaseTransformerDTO {
    * @example 2000
    */
   timeout: number;
+
+  /**
+   * The user who created the transformer. Only present for custom transformers.
+   */
+  createdBy: UserInfo;
+
+  /**
+   * The user who last updated the transformer. Only present for custom transformers.
+   */
+  updatedBy: UserInfo;
+
+  /**
+   * The date and time when the transformer was created.
+   * @example "2023-10-31T12:34:56.789Z"
+   */
+  createdAt: Instant;
+
+  /**
+   * The date and time when the transformer was last updated.
+   * @example "2023-10-31T13:45:00.123Z"
+   */
+  updatedAt: Instant;
 }
 
 /**
@@ -202,7 +202,7 @@ export interface TransformerDTOWithOptions {
   /**
    * The group associated to the transformer (mutually exclusive with items)
    */
-  group?: GroupLightDTO;
+  group?: SouthItemGroupLightDTO;
 
   /**
    * The list of items associated to the transformer
