@@ -36,7 +36,7 @@ export class UserController extends Controller {
     const pageResult = userService.search(searchParams);
 
     return {
-      content: pageResult.content.map(element => toUserDTO(element)),
+      content: pageResult.content.map(element => toUserDTO(element, id => request.services.userService.getUserInfo(id))),
       totalElements: pageResult.totalElements,
       size: pageResult.size,
       number: pageResult.number,
@@ -52,7 +52,7 @@ export class UserController extends Controller {
   @Get('/{userId}')
   async findById(@Path() userId: string, @Request() request: CustomExpressRequest): Promise<UserDTO> {
     const userService = request.services.userService;
-    return toUserDTO(userService.findById(userId));
+    return toUserDTO(userService.findById(userId), id => request.services.userService.getUserInfo(id));
   }
 
   /**
@@ -64,7 +64,9 @@ export class UserController extends Controller {
   @SuccessResponse(201, 'User created successfully')
   async create(@Body() command: UserWithPassword, @Request() request: CustomExpressRequest): Promise<UserDTO> {
     const userService = request.services.userService;
-    return toUserDTO(await userService.create(command.user, command.password));
+    return toUserDTO(await userService.create(command.user, command.password, request.user.id), id =>
+      request.services.userService.getUserInfo(id)
+    );
   }
 
   /**
@@ -101,6 +103,6 @@ export class UserController extends Controller {
   @SuccessResponse(204, 'User deleted successfully')
   async delete(@Path() userId: string, @Request() request: CustomExpressRequest): Promise<void> {
     const userService = request.services.userService;
-    await userService.delete(userId);
+    userService.delete(userId);
   }
 }

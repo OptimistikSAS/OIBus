@@ -2,6 +2,7 @@ import { encryptionService } from './encryption.service';
 
 // South imports
 import {
+  SouthItemGroupLightDTO,
   OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
@@ -9,8 +10,10 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
+  SouthConnectorItemTypedDTO,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
+  SouthConnectorTypedDTO,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
   SouthItemLastValue
@@ -39,7 +42,8 @@ import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
-  SouthItemGroupEntity
+  SouthItemGroupEntity,
+  SouthItemGroupEntityLight
 } from '../model/south-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -179,13 +183,15 @@ export default class SouthService {
         if (!itemWithGroup) continue;
 
         const scanMode = checkScanMode(scanModes, itemWithGroup.scanModeId, itemWithGroup.scanModeName);
-        const groupEntity: Omit<SouthItemGroupEntity, 'id'> = {
+        const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
           name: groupName,
           southId: southEntity.id,
           scanMode,
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          createdBy: createdBy,
+          updatedBy: createdBy
         };
         group = this.southItemGroupRepository.create(groupEntity);
       }
@@ -215,7 +221,8 @@ export default class SouthService {
       scanModes,
       !!retrieveSecretsFromSouth,
       this.southItemGroupRepository,
-      southEntity.id
+      southEntity.id,
+      createdBy
     );
     southEntity.createdBy = createdBy;
     southEntity.updatedBy = createdBy;
@@ -263,7 +270,8 @@ export default class SouthService {
       this.scanModeRepository.findAll(),
       false,
       this.southItemGroupRepository,
-      southId
+      southId,
+      updatedBy
     );
     southEntity.createdBy = previousSettings.createdBy;
     southEntity.updatedBy = updatedBy;
@@ -391,7 +399,6 @@ export default class SouthService {
       maxReadInterval: null,
       readDelay: 0,
       overlap: null,
-      settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest),
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -488,7 +495,8 @@ export default class SouthService {
       this.scanModeRepository.findAll(),
       false,
       this.southItemGroupRepository,
-      southId
+      southId,
+      createdBy
     );
     southItemEntity.createdBy = createdBy;
     southItemEntity.updatedBy = createdBy;
@@ -516,7 +524,8 @@ export default class SouthService {
       this.scanModeRepository.findAll(),
       false,
       this.southItemGroupRepository,
-      southId
+      southId,
+      updatedBy
     );
     southItemEntity.createdBy = existingItem.createdBy;
     southItemEntity.updatedBy = updatedBy;
@@ -592,13 +601,13 @@ export default class SouthService {
     southType: string,
     fileContent: string,
     delimiter: string,
-    existingItems: Array<SouthConnectorItemDTO>
+    existingItems: Array<{ name: string }>
   ): Promise<{
     items: Array<SouthConnectorItemDTO>;
     errors: Array<{ item: Record<string, string>; error: string }>;
   }> {
     const manifest = this.getManifest(southType);
-    const csvContent = csv.parse(fileContent, { header: true, delimiter, skipEmptyLines: true });
+    const csvContent = csv.parse<Record<string, string>>(fileContent, { header: true, delimiter, skipEmptyLines: true });
     if (csvContent.meta.delimiter !== delimiter) {
       throw new OIBusValidationError(
         `The entered delimiter "${delimiter}" does not correspond to the file delimiter "${csvContent.meta.delimiter}"`
@@ -609,39 +618,33 @@ export default class SouthService {
     const validItems: Array<SouthConnectorItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
     for (const data of csvContent.data) {
-      const foundScanMode = scanModes.find(scanMode => scanMode.name === (data as Record<string, string>).scanMode);
+      const foundScanMode = scanModes.find(scanMode => scanMode.name === data.scanMode);
       if (!foundScanMode) {
         errors.push({
-          item: data as Record<string, string>,
-          error: `Scan mode "${(data as Record<string, string>).scanMode}" not found for item "${(data as Record<string, string>).name}"`
+          item: data,
+          error: `Scan mode "${data.scanMode}" not found for item "${data.name}"`
         });
         continue;
       }
-      const item = {
-        id: '',
-        name: (data as Record<string, string>).name,
-        enabled: stringToBoolean((data as Record<string, string>).enabled),
-        scanMode: foundScanMode,
-        settings: {} as SouthItemSettings,
-        group: null as SouthItemGroupDTO | null
-      } as unknown as SouthConnectorItemDTO;
+      const scanMode = toScanModeDTO(foundScanMode, id => ({ id: id, friendlyName: '' }));
 
-      // Parse group name from CSV
-      const groupName = (data as Record<string, string>).group?.trim();
-      if (groupName) {
-        item.group = {
-          id: '',
-          name: groupName,
-          scanMode: foundScanMode,
-          overlap: null,
-          maxReadInterval: null,
-          readDelay: 0
-        } as SouthItemGroupDTO;
-      }
+      const item: SouthConnectorItemDTO = {
+        id: '',
+        name: data.name,
+        enabled: stringToBoolean(data.enabled),
+        scanMode,
+        settings: {} as SouthItemSettings,
+        group: null,
+        syncWithGroup: stringToBoolean(data.syncWithGroup),
+        maxReadInterval: Number(data.maxReadInterval || '0'),
+        readDelay: Number(data.readDelay || '0'),
+        overlap: Number(data.overlap || '0')
+      } as SouthConnectorItemDTO;
+
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
         errors.push({
-          item: data as Record<string, string>,
-          error: `Item name "${(data as unknown as Record<string, string>).name}" already used`
+          item: data,
+          error: `Item name "${data.name}" already used`
         });
         continue;
       }
@@ -651,20 +654,20 @@ export default class SouthService {
       const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
         attribute => attribute.key === 'settings'
       )! as OIBusObjectAttribute;
-      for (const [key, value] of Object.entries(data as unknown as Record<string, string>)) {
+      for (const [key, value] of Object.entries(data)) {
         if (key.startsWith('settings_')) {
           const settingsKey = key.replace('settings_', '');
           const manifestSettings = itemSettingsManifest.attributes.find(settings => settings.key === settingsKey);
           if (!manifestSettings) {
             hasSettingsError = true;
             errors.push({
-              item: data as Record<string, string>,
+              item: data,
               error: `Settings "${settingsKey}" not accepted in manifest`
             });
             break;
           }
           if ((manifestSettings.type === 'array' || manifestSettings.type === 'object') && value) {
-            settings[settingsKey] = JSON.parse(value as string);
+            settings[settingsKey] = JSON.parse(value);
           } else if (manifestSettings.type === 'boolean') {
             settings[settingsKey] = stringToBoolean(value);
           } else {
@@ -679,7 +682,7 @@ export default class SouthService {
         await this.validator.validateSettings(itemSettingsManifest, item.settings);
         validItems.push(item);
       } catch (itemError: unknown) {
-        errors.push({ item: data as Record<string, string>, error: (itemError as Error).message });
+        errors.push({ item: data, error: (itemError as Error).message });
       }
     }
     return { items: validItems, errors };
@@ -713,13 +716,15 @@ export default class SouthService {
         if (!itemWithGroup) continue;
 
         const scanMode = checkScanMode(scanModes, itemWithGroup.scanModeId, itemWithGroup.scanModeName);
-        const groupEntity: Omit<SouthItemGroupEntity, 'id'> = {
+        const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
           name: groupName,
           southId: southConnector.id,
           scanMode,
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          createdBy: user,
+          updatedBy: user
         };
         group = this.southItemGroupRepository.create(groupEntity);
       }
@@ -748,7 +753,9 @@ export default class SouthService {
         southConnector.type,
         scanModes,
         false,
-        this.southItemGroupRepository
+        this.southItemGroupRepository,
+        null,
+        user
       );
       southItemEntity.createdBy = user;
       southItemEntity.updatedBy = user;
@@ -760,12 +767,12 @@ export default class SouthService {
     await this.engine.reloadSouthItems(southConnector);
   }
 
-  getGroups(southId: string): Array<SouthItemGroupDTO> {
+  getGroups(southId: string): Array<SouthItemGroupEntity> {
     this.findById(southId); // Verify south connector exists
-    return this.southItemGroupRepository.findBySouthId(southId).map(group => toSouthItemGroupDTO(group));
+    return this.southItemGroupRepository.findBySouthId(southId);
   }
 
-  getGroup(southId: string, groupId: string): SouthItemGroupDTO {
+  getGroup(southId: string, groupId: string): SouthItemGroupEntity {
     this.findById(southId); // Verify south connector exists
     const group = this.southItemGroupRepository.findById(groupId);
     if (!group) {
@@ -774,10 +781,10 @@ export default class SouthService {
     if (group.southId !== southId) {
       throw new NotFoundError(`South item group "${groupId}" does not belong to south connector "${southId}"`);
     }
-    return toSouthItemGroupDTO(group);
+    return group;
   }
 
-  createGroup(southId: string, command: SouthItemGroupCommandDTO): SouthItemGroupDTO {
+  createGroup(southId: string, command: SouthItemGroupCommandDTO, user: string): SouthItemGroupEntity {
     this.findById(southId); // Verify south connector exists
     const scanModes = this.scanModeRepository.findAll();
     const scanMode = checkScanMode(scanModes, command.scanModeId, null);
@@ -792,19 +799,20 @@ export default class SouthService {
     const overlap = command.overlap != null ? command.overlap : null;
     const maxReadInterval = command.maxReadInterval != null ? command.maxReadInterval : null;
     const readDelay = command.readDelay != null ? command.readDelay : 0;
-    const groupEntity: Omit<SouthItemGroupEntity, 'id'> = {
+    const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
       name: command.name,
       southId: southConnector.id,
       scanMode,
       overlap,
       maxReadInterval,
-      readDelay
+      readDelay,
+      createdBy: user,
+      updatedBy: user
     };
-    const created = this.southItemGroupRepository.create(groupEntity);
-    return toSouthItemGroupDTO(created);
+    return this.southItemGroupRepository.create(groupEntity);
   }
 
-  updateGroup(southId: string, groupId: string, command: SouthItemGroupCommandDTO): SouthItemGroupDTO {
+  updateGroup(southId: string, groupId: string, user: string, command: SouthItemGroupCommandDTO): SouthItemGroupEntity {
     this.findById(southId); // Verify south connector exists
     const existingGroup = this.southItemGroupRepository.findById(groupId);
     if (!existingGroup) {
@@ -826,19 +834,21 @@ export default class SouthService {
     const overlap = command.overlap != null ? command.overlap : null;
     const maxReadInterval = command.maxReadInterval != null ? command.maxReadInterval : null;
     const readDelay = command.readDelay != null ? command.readDelay : 0;
-    const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'southId'> = {
+    const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'southId' | 'createdAt' | 'updatedAt'> = {
       name: command.name,
       scanMode,
       overlap,
       maxReadInterval,
-      readDelay
+      readDelay,
+      createdBy: user,
+      updatedBy: user
     };
     this.southItemGroupRepository.update(groupId, groupEntity);
     const updated = this.southItemGroupRepository.findById(groupId);
     if (!updated) {
       throw new NotFoundError(`Failed to update south item group "${groupId}"`);
     }
-    return toSouthItemGroupDTO(updated);
+    return updated;
   }
 
   async deleteGroup(southId: string, groupId: string): Promise<void> {
@@ -904,8 +914,9 @@ const copySouthConnectorCommandToSouthEntity = async (
   currentSettings: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null,
   scanModes: Array<ScanMode>,
   retrieveSecretsFromSouth: boolean,
-  southItemGroupRepository?: SouthItemGroupRepository,
-  southId?: string
+  southItemGroupRepository: SouthItemGroupRepository,
+  southId: string | null,
+  user: string
 ): Promise<void> => {
   const manifest = southManifestList.find(element => element.id === command.type)!;
   southEntity.name = command.name;
@@ -928,7 +939,8 @@ const copySouthConnectorCommandToSouthEntity = async (
         scanModes,
         retrieveSecretsFromSouth,
         southItemGroupRepository,
-        southId
+        southId,
+        user
       );
       return itemEntity;
     })
@@ -942,8 +954,9 @@ export const copySouthItemCommandToSouthItemEntity = async (
   southType: string,
   scanModes: Array<ScanMode>,
   retrieveSecretsFromSouth = false,
-  southItemGroupRepository?: SouthItemGroupRepository,
-  southId?: string
+  southItemGroupRepository: SouthItemGroupRepository,
+  southId: string | null,
+  user: string
 ): Promise<void> => {
   const manifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
@@ -972,13 +985,15 @@ export const copySouthItemCommandToSouthItemEntity = async (
       if (!group) {
         // Create group with item's scan mode as default
         const scanMode = checkScanMode(scanModes, command.scanModeId, command.scanModeName);
-        const groupEntity: Omit<SouthItemGroupEntity, 'id'> = {
+        const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
           name: command.groupName.trim(),
           southId,
           scanMode,
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0
+          readDelay: 0,
+          createdBy: user,
+          updatedBy: user
         };
         group = southItemGroupRepository.create(groupEntity);
       }
@@ -1013,10 +1028,10 @@ export const toSouthConnectorLightDTO = (entity: SouthConnectorEntityLight, getU
 export const toSouthConnectorDTO = (
   southEntity: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
   getUserInfo: GetUserInfo
-): SouthConnectorDTO => {
+): SouthConnectorTypedDTO<OIBusSouthType, SouthSettings, SouthItemSettings> => {
   const manifest = southManifestList.find(element => element.id === southEntity.type)!;
   const items = southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type, getUserInfo));
-  const baseDTO = {
+  return {
     id: southEntity.id,
     name: southEntity.name,
     type: southEntity.type,
@@ -1029,15 +1044,13 @@ export const toSouthConnectorDTO = (
     createdAt: southEntity.createdAt,
     updatedAt: southEntity.updatedAt
   };
-  // Type assertion is safe because we know the type field matches the settings and items at runtime
-  return baseDTO as SouthConnectorDTO;
 };
 
 export const toSouthConnectorItemDTO = (
   entity: SouthConnectorItemEntity<SouthItemSettings>,
   southType: string,
   getUserInfo: GetUserInfo
-): SouthConnectorItemDTO => {
+): SouthConnectorItemTypedDTO<SouthItemSettings> => {
   const manifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
     attribute => attribute.key === 'settings'
@@ -1052,21 +1065,36 @@ export const toSouthConnectorItemDTO = (
     updatedBy: getUserInfo(entity.updatedBy),
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
-    group: entity.group ? toSouthItemGroupDTO(entity.group) : null,
+    group: entity.group ? toSouthItemGroupDTO(entity.group, getUserInfo) : null,
     syncWithGroup: entity.syncWithGroup,
     maxReadInterval: entity.maxReadInterval,
     readDelay: entity.readDelay,
     overlap: entity.overlap
-  } as SouthConnectorItemDTO;
+  };
 };
 
-export const toSouthItemGroupDTO = (entity: SouthItemGroupEntity): SouthItemGroupDTO => {
+export const toSouthItemGroupDTO = (entity: SouthItemGroupEntity, getUserInfo: GetUserInfo): SouthItemGroupDTO => {
   return {
     id: entity.id,
     name: entity.name,
-    scanMode: toScanModeDTO(entity.scanMode),
+    scanMode: toScanModeDTO(entity.scanMode, getUserInfo),
     overlap: entity.overlap,
     maxReadInterval: entity.maxReadInterval,
-    readDelay: entity.readDelay
+    readDelay: entity.readDelay,
+    createdBy: getUserInfo(entity.createdBy),
+    updatedBy: getUserInfo(entity.updatedBy),
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt
+  };
+};
+
+export const toSouthItemGroupLightDTO = (entity: SouthItemGroupEntityLight, getUserInfo: GetUserInfo): SouthItemGroupLightDTO => {
+  return {
+    id: entity.id,
+    name: entity.name,
+    createdBy: getUserInfo(entity.createdBy),
+    updatedBy: getUserInfo(entity.updatedBy),
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt
   };
 };

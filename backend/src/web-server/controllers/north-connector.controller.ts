@@ -88,7 +88,7 @@ export class NorthConnectorController extends Controller {
   @Get('/{northId}')
   findById(@Path() northId: string, @Request() request: CustomExpressRequest): NorthConnectorDTO {
     const northService = request.services.northService as NorthService;
-    return toNorthConnectorDTO(northService.findById(northId), id => request.services.userService.getUserInfo(id));
+    return toNorthConnectorDTO(northService.findById(northId), id => request.services.userService.getUserInfo(id)) as NorthConnectorDTO;
   }
 
   /**
@@ -106,7 +106,7 @@ export class NorthConnectorController extends Controller {
     const northService = request.services.northService as NorthService;
     return toNorthConnectorDTO(await northService.create(command, duplicate || null, request.user.id), id =>
       request.services.userService.getUserInfo(id)
-    );
+    ) as NorthConnectorDTO;
   }
 
   /**

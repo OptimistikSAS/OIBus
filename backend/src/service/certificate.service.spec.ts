@@ -87,9 +87,7 @@ describe('Certificate Service', () => {
         .plus(Duration.fromObject({ days: testData.certificates.command.options!.daysBeforeExpiry }))
         .toISO()!,
       createdBy: 'userTest',
-      updatedBy: 'userTest',
-      createdAt: '',
-      updatedAt: ''
+      updatedBy: 'userTest'
     });
     expect(result).toEqual(testData.certificates.list[0]);
   });
@@ -119,10 +117,7 @@ describe('Certificate Service', () => {
         .startOf('day')
         .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
         .toISO()!,
-      createdBy: '',
-      updatedBy: 'userTest',
-      createdAt: '',
-      updatedAt: ''
+      updatedBy: 'userTest'
     });
   });
 

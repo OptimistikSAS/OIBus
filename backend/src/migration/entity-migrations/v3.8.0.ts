@@ -1,7 +1,7 @@
 import { Knex } from 'knex';
 import { generateRandomId } from '../../service/utils';
 import { Timezone } from '../../../shared/model/types';
-import { CustomTransformer } from '../../model/transformer.model';
+import { DateTime } from 'luxon';
 
 const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
@@ -21,6 +21,9 @@ const CERTIFICATES_TABLE = 'certificates';
 const USERS_TABLE = 'users';
 const GROUP_ITEMS_TABLE = 'group_items';
 const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
+const ENGINES_TABLE = 'engines';
+const COMMANDS_TABLE = 'commands';
+const MESSAGES_TABLE = 'oianalytics_messages';
 
 // Connector types that support historian capabilities
 const HISTORIAN_CONNECTOR_TYPES = [
@@ -143,6 +146,19 @@ interface NewSouthMQTTItemSettings {
   topic: string;
 }
 
+interface CustomTransformer {
+  id: string;
+  type: 'custom';
+  inputType: 'any' | 'time-values' | 'setpoint' | 'any-content';
+  outputType: 'any' | 'time-values' | 'opcua' | 'mqtt' | 'modbus' | 'oianalytics';
+  name: string;
+  description: string;
+  customCode: string;
+  language: 'javascript' | 'typescript';
+  customManifest: unknown;
+  timeout: number;
+}
+
 export async function up(knex: Knex): Promise<void> {
   await updateRegistrationSettings(knex);
   await updateTransformersTable(knex);
@@ -166,6 +182,10 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(SCAN_MODES_TABLE, t => {
+    t.datetime('created_at');
+    t.datetime('updated_at');
+  });
   const user: {
     id: string;
     type: string;
@@ -179,15 +199,28 @@ async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
     TRANSFORMERS_TABLE,
     SCAN_MODES_TABLE,
     IP_FILTERS_TABLE,
-    CERTIFICATES_TABLE
+    CERTIFICATES_TABLE,
+    ENGINES_TABLE,
+    USERS_TABLE,
+    REGISTRATIONS_TABLE,
+    COMMANDS_TABLE,
+    MESSAGES_TABLE
   ]) {
     await knex.schema.alterTable(table, t => {
-      t.string('created_by').nullable();
-      t.string('updated_by').nullable();
+      t.string('created_by');
+      t.string('updated_by');
     });
     if (user) {
       await knex(table).update({ created_by: user.id, updated_by: user.id });
     }
+    const now = DateTime.now().toUTC().toISO()!;
+    // Backfill existing rows that have NULL timestamps
+    await knex(table).whereNull('created_at').update({
+      created_at: now
+    });
+    await knex(table).whereNull('updated_at').update({
+      updated_at: now
+    });
   }
 }
 
@@ -768,8 +801,10 @@ async function addGroupIdToNorthTransformers(knex: Knex): Promise<void> {
 async function createSouthItemGroupsTable(knex: Knex): Promise<void> {
   await knex.schema.raw(`CREATE TABLE ${SOUTH_ITEM_GROUPS_TABLE} (
     id char(36) PRIMARY KEY,
-    created_at datetime DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
-    updated_at datetime DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+    created_at datetime NOT NULL,
+    updated_at datetime NOT NULL,
+    created_by varchar(255),
+    updated_by varchar(255),
     name varchar(255) NOT NULL,
     south_id char(36) NOT NULL,
     scan_mode_id char(36) NOT NULL,
@@ -1197,10 +1232,6 @@ const jpGet = (obj: any, path: string) => {
 
   return {
     id: generateRandomId(6),
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: '',
     inputType: 'any-content',
     outputType: 'time-values',
     type: 'custom',

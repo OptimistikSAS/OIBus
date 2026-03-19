@@ -1,5 +1,5 @@
-import SouthMetricsRepositoryMock from '../repository/log/south-metrics-repository.mock';
-import NorthMetricsRepositoryMock from '../repository/log/north-metrics-repository.mock';
+import SouthMetricsRepositoryMock from '../repository/metrics/south-metrics-repository.mock';
+import NorthMetricsRepositoryMock from '../repository/metrics/north-metrics-repository.mock';
 import ScanModeRepositoryMock from '../repository/config/scan-mode-repository.mock';
 import SouthConnectorRepositoryMock from '../repository/config/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../repository/config/north-connector-repository.mock';

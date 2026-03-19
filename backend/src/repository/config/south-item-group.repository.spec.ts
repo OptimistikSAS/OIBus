@@ -28,13 +28,15 @@ describe('South Item Group Repository', () => {
     it('should find a group by id', () => {
       // First create a group to find
       (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId1');
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Test Group 1',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
       repository.create(groupToCreate);
 
@@ -56,22 +58,26 @@ describe('South Item Group Repository', () => {
       // Create multiple groups for the same south connector
       (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId2').mockReturnValueOnce('testGroupId3');
 
-      const group1: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const group1: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Group A',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: 10,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
-      const group2: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const group2: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Group B',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[1],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       repository.create(group1);
@@ -92,13 +98,15 @@ describe('South Item Group Repository', () => {
 
     it('should find a group by name and south id', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('findByNameGroupId');
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Find By Name Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
       repository.create(groupToCreate);
 
@@ -116,13 +124,15 @@ describe('South Item Group Repository', () => {
 
     it('should return null when finding group by name for different south id', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('differentSouthGroupId');
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Group For Different South',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
       repository.create(groupToCreate);
 
@@ -134,13 +144,15 @@ describe('South Item Group Repository', () => {
     it('should create a group with generated id', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('generatedGroupId');
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'New Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: 5,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       const created = repository.create(groupToCreate);
@@ -153,13 +165,15 @@ describe('South Item Group Repository', () => {
 
     it('should create a group with custom id', () => {
       const customId = 'customGroupId';
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Custom Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       const created = repository.create(groupToCreate, customId);
@@ -175,13 +189,15 @@ describe('South Item Group Repository', () => {
       // Mock findById to return null to simulate the error path
       jest.spyOn(repository, 'findById').mockReturnValueOnce(null);
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Group That Will Fail',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       expect(() => {
@@ -195,24 +211,28 @@ describe('South Item Group Repository', () => {
     it('should update a group', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('updateGroupId');
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       repository.create(groupToCreate);
 
       // Update the group
-      const updateCommand: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at' | 'southId'> = {
+      const updateCommand: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt' | 'southId'> = {
         name: 'Updated Name',
         scanMode: testData.scanMode.list[1],
         overlap: 15,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       repository.update('updateGroupId', updateCommand);
@@ -228,24 +248,28 @@ describe('South Item Group Repository', () => {
     it('should update a group with null overlap', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('updateGroupIdNull');
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Group With Overlap',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: 10,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       repository.create(groupToCreate);
 
       // Update with null overlap to test the ?? null branch
-      const updateCommand: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at' | 'southId'> = {
+      const updateCommand: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt' | 'southId'> = {
         name: 'Updated Name Null',
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       repository.update('updateGroupIdNull', updateCommand);
@@ -258,13 +282,15 @@ describe('South Item Group Repository', () => {
     it('should delete a group', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('deleteGroupId');
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'created_at' | 'updated_at'> = {
+      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
         name: 'Group To Delete',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: '',
+        updatedBy: ''
       };
 
       repository.create(groupToCreate);

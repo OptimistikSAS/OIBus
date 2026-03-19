@@ -6,13 +6,14 @@ import { DateTime } from 'luxon';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import EngineRepository from '../../repository/config/engine.repository';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { EngineSettingsDTO, RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
+import { RegistrationSettingsCommandDTO, RegistrationSettingsDTO } from '../../../shared/model/engine.model';
 import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { registrationSchema } from '../../web-server/controllers/validators/oibus-validation-schema';
 import crypto from 'node:crypto';
 import OIAnalyticsClient from './oianalytics-client.service';
 import { EventEmitter } from 'node:events';
 import { NotFoundError } from '../../model/types';
+import { GetUserInfo } from '../../../shared/model/types';
 
 const CHECK_REGISTRATION_INTERVAL = 10_000;
 export default class OIAnalyticsRegistrationService {
@@ -47,7 +48,7 @@ export default class OIAnalyticsRegistrationService {
    * First step, the user wants to register: the service try to reach OIAnalytics to send
    * the activation code. On success, it runs an interval to regularly check if it has been accepted on OIAnalytics
    */
-  async register(command: RegistrationSettingsCommandDTO): Promise<void> {
+  async register(command: RegistrationSettingsCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(registrationSchema, command);
     const engineSettings = this.engineRepository.get()!;
 
@@ -64,7 +65,7 @@ export default class OIAnalyticsRegistrationService {
       command.apiGatewayHeaderValue = await encryptionService.encryptText(command.apiGatewayHeaderValue);
     }
 
-    const oibusInfo = getOIBusInfo(engineSettings as unknown as EngineSettingsDTO);
+    const oibusInfo = getOIBusInfo(engineSettings);
     // Generate an RSA key pair
     const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
       modulusLength: 4096,
@@ -85,7 +86,8 @@ export default class OIAnalyticsRegistrationService {
       result.redirectUrl,
       result.expirationDate,
       publicKey,
-      await encryptionService.encryptText(privateKey)
+      await encryptionService.encryptText(privateKey),
+      updatedBy
     );
     if (!this.intervalCheckRegistration) {
       this.intervalCheckRegistration = setInterval(this.checkRegistration.bind(this), CHECK_REGISTRATION_INTERVAL);
@@ -123,7 +125,7 @@ export default class OIAnalyticsRegistrationService {
     this.ongoingCheckRegistration = false;
   }
 
-  async editRegistrationSettings(command: RegistrationSettingsCommandDTO): Promise<void> {
+  async editRegistrationSettings(command: RegistrationSettingsCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(registrationSchema, command);
 
     const currentRegistration = this.oIAnalyticsRegistrationRepository.get()!;
@@ -138,7 +140,7 @@ export default class OIAnalyticsRegistrationService {
     } else {
       command.apiGatewayHeaderValue = await encryptionService.encryptText(command.apiGatewayHeaderValue);
     }
-    this.oIAnalyticsRegistrationRepository.update(command);
+    this.oIAnalyticsRegistrationRepository.update(command, updatedBy);
     this.registrationEvent.emit('updated');
   }
 
@@ -177,11 +179,11 @@ export default class OIAnalyticsRegistrationService {
   }
 }
 
-export const toOIAnalyticsRegistrationDTO = (registration: OIAnalyticsRegistration): RegistrationSettingsDTO => {
+export const toOIAnalyticsRegistrationDTO = (registration: OIAnalyticsRegistration, getUserInfo: GetUserInfo): RegistrationSettingsDTO => {
   return {
     id: registration.id,
-    createdBy: { id: '', friendlyName: '' },
-    updatedBy: { id: '', friendlyName: '' },
+    createdBy: getUserInfo(registration.createdBy),
+    updatedBy: getUserInfo(registration.updatedBy),
     createdAt: registration.createdAt,
     updatedAt: registration.updatedAt,
     host: registration.host,
