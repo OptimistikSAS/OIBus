@@ -878,7 +878,6 @@
             },
             "proxy": {
               "use-proxy": "Proxy",
-              "use-proxy": "Use proxy",
               "url": "Proxy URL",
               "username": "Proxy username",
               "password": "Proxy password"

@@ -56,11 +56,7 @@ describe('ContentController', () => {
 
     await expect(controller.addFile(northId, mockFile, mockRequest as CustomExpressRequest)).resolves.not.toThrow();
 
-    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith(
-      'northId1',
-      { type: 'any', filePath: 'filePath' },
-      'api'
-    );
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId1', { type: 'any', filePath: 'filePath' });
     expect(fs.unlink).toHaveBeenCalledWith('filePath');
   });
 
