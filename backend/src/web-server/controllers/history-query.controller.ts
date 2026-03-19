@@ -112,7 +112,9 @@ export class HistoryQueryController extends Controller {
   @Get('/{historyId}')
   async findById(@Path() historyId: string, @Request() request: CustomExpressRequest): Promise<HistoryQueryDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    return toHistoryQueryDTO(historyQueryService.findById(historyId), id => request.services.userService.getUserInfo(id));
+    return toHistoryQueryDTO(historyQueryService.findById(historyId), id =>
+      request.services.userService.getUserInfo(id)
+    ) as HistoryQueryDTO;
   }
 
   /**
@@ -132,7 +134,7 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     return toHistoryQueryDTO(await historyQueryService.create(command, fromSouth, fromNorth, duplicate, request.user.id), id =>
       request.services.userService.getUserInfo(id)
-    );
+    ) as HistoryQueryDTO;
   }
 
   /**
@@ -263,7 +265,9 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const items = historyQueryService.listItems(historyId);
-    return items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id)));
+    return items.map(
+      item => toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id)) as HistoryQueryItemDTO
+    );
   }
 
   /**
@@ -288,8 +292,9 @@ export class HistoryQueryController extends Controller {
     };
     const pageResult = await historyQueryService.searchItems(historyId, searchParams);
     return {
-      content: pageResult.content.map(item =>
-        toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id))
+      content: pageResult.content.map(
+        item =>
+          toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id)) as HistoryQueryItemDTO
       ),
       totalElements: pageResult.totalElements,
       size: pageResult.size,
@@ -312,7 +317,9 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const historyQueryItem = historyQueryService.findItemById(historyId, itemId);
-    return toHistoryQueryItemDTO(historyQueryItem, historyQuery.southType, id => request.services.userService.getUserInfo(id));
+    return toHistoryQueryItemDTO(historyQueryItem, historyQuery.southType, id =>
+      request.services.userService.getUserInfo(id)
+    ) as HistoryQueryItemDTO;
   }
 
   /**
@@ -330,7 +337,7 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const item = await historyQueryService.createItem(historyId, command, request.user.id);
-    return toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id));
+    return toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id)) as HistoryQueryItemDTO;
   }
 
   /**
@@ -486,8 +493,9 @@ export class HistoryQueryController extends Controller {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const csv = itemToFlattenedCSV(
-      historyQuery.items.map(item =>
-        toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id))
+      historyQuery.items.map(
+        item =>
+          toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id)) as HistoryQueryItemDTO
       ),
       command.delimiter
     );

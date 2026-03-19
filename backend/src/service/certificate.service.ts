@@ -54,9 +54,7 @@ export default class CertificateService {
         .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
         .toISO()!,
       createdBy,
-      updatedBy: createdBy,
-      createdAt: '',
-      updatedAt: ''
+      updatedBy: createdBy
     });
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     return certificate;
@@ -86,10 +84,7 @@ export default class CertificateService {
           .startOf('day')
           .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
           .toISO()!,
-        createdBy: '',
-        updatedBy,
-        createdAt: '',
-        updatedAt: ''
+        updatedBy
       });
     } else {
       this.certificateRepository.updateNameAndDescription(certificate.id, command.name, command.description, updatedBy);

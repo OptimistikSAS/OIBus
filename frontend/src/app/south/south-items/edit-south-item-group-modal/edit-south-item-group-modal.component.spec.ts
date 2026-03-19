@@ -8,6 +8,13 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { of } from 'rxjs';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+
+const toScanModeDTO = (sm: (typeof testData.scanMode.list)[0]): ScanModeDTO => ({
+  ...sm,
+  createdBy: { id: sm.createdBy, friendlyName: sm.createdBy },
+  updatedBy: { id: sm.updatedBy, friendlyName: sm.updatedBy }
+});
 
 class EditSouthItemGroupModalComponentTester extends ComponentTester<EditSouthItemGroupModalComponent> {
   constructor() {
@@ -46,7 +53,7 @@ describe('EditSouthItemGroupModalComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
 
   const southId = 'southId1';
-  const scanModes = testData.scanMode.list;
+  const scanModes = testData.scanMode.list.map(toScanModeDTO);
   const manifest = testData.south.manifest;
   const existingGroups: Array<SouthItemGroupDTO> = [
     {
@@ -55,7 +62,11 @@ describe('EditSouthItemGroupModalComponent', () => {
       scanMode: scanModes[0],
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
   ];
 
@@ -114,7 +125,11 @@ describe('EditSouthItemGroupModalComponent', () => {
         scanMode: scanModes[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       };
       southConnectorService.createGroup.and.returnValue(of(newGroup));
 
@@ -144,7 +159,11 @@ describe('EditSouthItemGroupModalComponent', () => {
         scanMode: scanModes[0],
         overlap: 100,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       };
       southConnectorService.createGroup.and.returnValue(of(newGroup));
 
@@ -197,7 +216,11 @@ describe('EditSouthItemGroupModalComponent', () => {
       scanMode: scanModes[0],
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     };
 
     beforeEach(async () => {
@@ -223,7 +246,11 @@ describe('EditSouthItemGroupModalComponent', () => {
         scanMode: scanModes[1],
         overlap: 50,
         maxReadInterval: null,
-        readDelay: 0
+        readDelay: 0,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
       };
       southConnectorService.updateGroup.and.returnValue(of(undefined));
       southConnectorService.getGroup.and.returnValue(of(updatedGroup));

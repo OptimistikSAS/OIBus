@@ -303,10 +303,10 @@ export const toTransformer = (result: Record<string, string>): Transformer => {
       language: result.language as TransformerLanguage,
       customManifest: JSON.parse(result.custom_manifest as string) as OIBusObjectAttribute,
       timeout: Number(result.timeout),
-      createdBy: result.created_by ?? '',
-      updatedBy: result.updated_by ?? '',
-      createdAt: result.created_at ?? '',
-      updatedAt: result.updated_at ?? ''
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at
     };
   }
 };

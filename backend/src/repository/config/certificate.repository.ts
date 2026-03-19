@@ -46,9 +46,10 @@ export default class CertificateRepository {
     return result ? this.toCertificate(result as Record<string, string>) : null;
   }
 
-  create(certificate: Certificate): Certificate {
-    const insertQuery = `INSERT INTO ${CERTIFICATES_TABLE} (id, name, description, public_key, private_key, certificate, expiry, created_by, updated_by)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+  create(certificate: Omit<Certificate, 'createdAt' | 'updatedAt'>): Certificate {
+    const insertQuery =
+      `INSERT INTO ${CERTIFICATES_TABLE} (id, name, description, public_key, private_key, certificate, expiry, created_by, updated_by, created_at, updated_at) ` +
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     const result = this.database
       .prepare(insertQuery)
       .run(
@@ -79,7 +80,7 @@ export default class CertificateRepository {
     return this.toCertificate(this.database.prepare(query).get(result.lastInsertRowid) as Record<string, string>);
   }
 
-  update(certificate: Certificate): void {
+  update(certificate: Omit<Certificate, 'createdBy' | 'createdAt' | 'updatedAt'>): void {
     const query =
       `UPDATE ${CERTIFICATES_TABLE} SET name = ?, description = ?, public_key  = ?, private_key = ?, certificate = ?, ` +
       `expiry = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`;
@@ -123,8 +124,8 @@ export default class CertificateRepository {
       privateKey: result.private_key,
       certificate: result.certificate,
       expiry: result.expiry,
-      createdBy: result.created_by ?? '',
-      updatedBy: result.updated_by ?? '',
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };

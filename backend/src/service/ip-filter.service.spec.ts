@@ -70,13 +70,7 @@ describe('IP Filter Service', () => {
     expect(validator.validate).toHaveBeenCalledWith(ipFilterSchema, testData.ipFilters.command);
     expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
     expect(ipFilterRepository.list).toHaveBeenCalled();
-    expect(ipFilterRepository.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, {
-      ...testData.ipFilters.command,
-      createdBy: testData.ipFilters.list[0].createdBy,
-      updatedBy: 'userTest',
-      createdAt: testData.ipFilters.list[0].createdAt,
-      updatedAt: ''
-    });
+    expect(ipFilterRepository.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, testData.ipFilters.command, 'userTest');
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
   });
 

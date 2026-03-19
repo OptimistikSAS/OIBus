@@ -169,7 +169,11 @@ export class EditSouthItemGroupModalComponent {
         scanMode: scanMode!,
         overlap: formValue.overlap ?? null,
         maxReadInterval: formValue.maxReadInterval ?? null,
-        readDelay: formValue.readDelay ?? 0
+        readDelay: formValue.readDelay ?? 0,
+        createdAt: '',
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        updatedAt: ''
       };
       this.modal.close(group);
       return;

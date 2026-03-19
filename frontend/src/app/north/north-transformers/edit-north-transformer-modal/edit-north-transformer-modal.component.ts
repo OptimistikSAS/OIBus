@@ -17,7 +17,7 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
-import { GroupLightDTO, ItemLightDTO, SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthItemGroupLightDTO, ItemLightDTO, SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 import { getAssociatedInputType } from '../../../shared/utils/utils';
@@ -90,7 +90,7 @@ export class EditNorthTransformerModalComponent {
   itemSearchText = '';
   searchInteracted = false;
   availableGroups: Array<SouthItemGroupDTO> = [];
-  selectedGroup: GroupLightDTO | null = null;
+  selectedGroup: SouthItemGroupLightDTO | null = null;
 
   filterItems() {
     const southId = this.form.controls.source.value.south?.id;
@@ -295,7 +295,7 @@ export class EditNorthTransformerModalComponent {
     return t1 && t2 ? t1.id === t2.id : t1 === t2;
   }
 
-  compareGroups(g1: GroupLightDTO | null, g2: GroupLightDTO | null): boolean {
+  compareGroups(g1: SouthItemGroupLightDTO | null, g2: SouthItemGroupLightDTO | null): boolean {
     return g1 && g2 ? g1.id === g2.id : g1 === g2;
   }
 

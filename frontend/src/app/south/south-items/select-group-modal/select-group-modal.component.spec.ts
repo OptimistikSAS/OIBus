@@ -8,7 +8,14 @@ import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { of, throwError, EMPTY } from 'rxjs';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
+import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
+
+const toScanModeDTO = (sm: (typeof testData.scanMode.list)[0]): ScanModeDTO => ({
+  ...sm,
+  createdBy: { id: sm.createdBy, friendlyName: sm.createdBy },
+  updatedBy: { id: sm.updatedBy, friendlyName: sm.updatedBy }
+});
 
 class SelectGroupModalComponentTester extends ComponentTester<SelectGroupModalComponent> {
   constructor() {
@@ -41,18 +48,26 @@ describe('SelectGroupModalComponent', () => {
     {
       id: 'group1',
       name: 'Group 1',
-      scanMode: testData.scanMode.list[0],
+      scanMode: toScanModeDTO(testData.scanMode.list[0]),
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     },
     {
       id: 'group2',
       name: 'Group 2',
-      scanMode: testData.scanMode.list[1],
+      scanMode: toScanModeDTO(testData.scanMode.list[1]),
       overlap: 10,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     }
   ];
 
@@ -71,7 +86,7 @@ describe('SelectGroupModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new SelectGroupModalComponentTester();
-    tester.componentInstance.prepare([...groups], 'southId1', testData.scanMode.list, testData.south.manifest);
+    tester.componentInstance.prepare([...groups], 'southId1', testData.scanMode.list.map(toScanModeDTO), testData.south.manifest);
     await tester.change();
   });
 
@@ -134,7 +149,7 @@ describe('SelectGroupModalComponent', () => {
     expect(modalService.open).toHaveBeenCalledWith(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     expect(mockModalRef.componentInstance.prepareForCreation).toHaveBeenCalledWith(
       'southId1',
-      testData.scanMode.list,
+      testData.scanMode.list.map(toScanModeDTO),
       testData.south.manifest,
       groups,
       false // inMemoryMode
@@ -145,10 +160,14 @@ describe('SelectGroupModalComponent', () => {
     const newGroup: SouthItemGroupDTO = {
       id: 'newGroup',
       name: 'New Group',
-      scanMode: testData.scanMode.list[0],
+      scanMode: toScanModeDTO(testData.scanMode.list[0]),
       overlap: null,
       maxReadInterval: null,
-      readDelay: 0
+      readDelay: 0,
+      createdBy: { id: '', friendlyName: '' },
+      updatedBy: { id: '', friendlyName: '' },
+      createdAt: '',
+      updatedAt: ''
     };
     const mockModalRef = {
       componentInstance: {
