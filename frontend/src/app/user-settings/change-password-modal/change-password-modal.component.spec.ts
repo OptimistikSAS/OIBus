@@ -59,7 +59,12 @@ describe('ChangePasswordModalComponent', () => {
       ]
     });
 
-    userSettings = testData.users.list[0] as UserDTO;
+    userSettings = {
+      ...testData.users.list[0],
+      friendlyName: `${testData.users.list[0].firstName} ${testData.users.list[0].lastName}`,
+      createdBy: { id: 'admin', friendlyName: 'admin' },
+      updatedBy: { id: 'admin', friendlyName: 'admin' }
+    } as UserDTO;
     userSettingsService.currentUser.and.returnValue(of(userSettings));
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();

@@ -27,6 +27,7 @@ import {
   getFilenameWithoutRandomId,
   getOIBusInfo,
   getPlatformFromOsType,
+  groupItemsByGroup,
   injectIndices,
   itemToFlattenedCSV,
   logQuery,
@@ -1674,6 +1675,48 @@ describe('Service utils', () => {
       expect(() => {
         resolveBypassingExports('fs', 'fake-subpath.js');
       }).toThrow(/Cannot find module 'fs\/fake-subpath\.js'/);
+    });
+  });
+
+  describe('groupItemsByGroup', () => {
+    const baseItem = testData.south.list[2].items[0];
+
+    const baseGroup = {
+      id: 'g1',
+      name: 'Group 1',
+      southId: 'south1',
+      scanMode: testData.scanMode.list[0],
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    it('should put each item in its own group when syncWithGroup is false', () => {
+      const item1 = { ...baseItem, id: 'item1', group: null, syncWithGroup: false };
+      const item2 = { ...baseItem, id: 'item2', group: null, syncWithGroup: false };
+      const result = groupItemsByGroup('mssql', [item1, item2]);
+      expect(result).toEqual([[item1], [item2]]);
+    });
+
+    it('should group items by group.id when syncWithGroup is true and southType is in SOUTH_SINGLE_ITEMS', () => {
+      const group = { ...baseGroup, id: 'g1' };
+      const item1 = { ...baseItem, id: 'item1', group, syncWithGroup: true };
+      const item2 = { ...baseItem, id: 'item2', group, syncWithGroup: true };
+      const result = groupItemsByGroup('mssql', [item1, item2]);
+      expect(result).toEqual([[item1, item2]]);
+    });
+
+    it('should create separate sub-arrays for items with different group.ids', () => {
+      const group1 = { ...baseGroup, id: 'g1' };
+      const group2 = { ...baseGroup, id: 'g2' };
+      const item1 = { ...baseItem, id: 'item1', group: group1, syncWithGroup: true };
+      const item2 = { ...baseItem, id: 'item2', group: group2, syncWithGroup: true };
+      const result = groupItemsByGroup('mssql', [item1, item2]);
+      expect(result).toEqual([[item1], [item2]]);
     });
   });
 });

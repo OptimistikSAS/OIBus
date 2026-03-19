@@ -13,6 +13,7 @@ jest.mock('../../service/user.service', () => ({
 describe('UserController', () => {
   let controller: UserController;
   const mockRequest: Partial<CustomExpressRequest> = {
+    user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
     services: {
       userService: new UserServiceMock()
     }
@@ -84,7 +85,7 @@ describe('UserController', () => {
 
     const result = await controller.create(userWithPassword, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.userService.create).toHaveBeenCalledWith(command, 'password');
+    expect(mockRequest.services!.userService.create).toHaveBeenCalledWith(command, 'password', testData.users.list[0].id);
     expect(result).toEqual(createdUser);
   });
 

@@ -25,10 +25,12 @@ import HistoryQueryService from './history-query.service';
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
 import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-service.mock';
+import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 import OIAnalyticsRegistrationService from './oia/oianalytics-registration.service';
 import OIAnalyticsRegistrationServiceMock from '../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import IPFilterService from './ip-filter.service';
 import IpFilterServiceMock from '../tests/__mocks__/service/ip-filter-service.mock';
+import UserService from './user.service';
 
 jest.mock('./utils');
 jest.mock('../web-server/proxy-server');
@@ -46,6 +48,7 @@ const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMess
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
+const userService: UserService = new UserServiceMock();
 const logger: pino.Logger = new PinoLogger();
 const engine: DataStreamEngine = new DataStreamEngineMock(logger);
 
@@ -72,6 +75,7 @@ describe('OIBus Service', () => {
       southService,
       northService,
       historyQueryService,
+      userService,
       engine,
       false
     );
@@ -165,7 +169,7 @@ describe('OIBus Service', () => {
     // Temporarily use real timers for setImmediate
     jest.useRealTimers();
 
-    const result = await service.updateEngineSettings(specificCommand);
+    const result = await service.updateEngineSettings(specificCommand, testData.users.list[0].id);
 
     expect(result).toEqual({
       needsRedirect: true,
@@ -190,9 +194,9 @@ describe('OIBus Service', () => {
   });
 
   it('should throw error if bad port configuration', async () => {
-    await expect(service.updateEngineSettings({ ...testData.engine.command, proxyPort: testData.engine.command.port })).rejects.toThrow(
-      'Web server port and proxy port can not be the same'
-    );
+    await expect(
+      service.updateEngineSettings({ ...testData.engine.command, proxyPort: testData.engine.command.port }, testData.users.list[0].id)
+    ).rejects.toThrow('Web server port and proxy port can not be the same');
 
     expect(engineRepository.update).not.toHaveBeenCalled();
   });
@@ -203,7 +207,7 @@ describe('OIBus Service', () => {
     specificTestCommand.proxyEnabled = false;
 
     (engineRepository.get as jest.Mock).mockReturnValueOnce(testData.engine.settings).mockReturnValueOnce(specificTestCommand);
-    const result = await service.updateEngineSettings(specificTestCommand);
+    const result = await service.updateEngineSettings(specificTestCommand, testData.users.list[0].id);
 
     expect(result).toEqual({
       needsRedirect: false,
@@ -218,7 +222,7 @@ describe('OIBus Service', () => {
     const specificTestCommand: Omit<EngineSettings, 'id' | 'version'> = JSON.parse(JSON.stringify(testData.engine.command));
     specificTestCommand.logParameters = JSON.parse(JSON.stringify(testData.engine.settings.logParameters));
 
-    const result = await service.updateEngineSettings(specificTestCommand);
+    const result = await service.updateEngineSettings(specificTestCommand, testData.users.list[0].id);
 
     expect(result).toEqual({
       needsRedirect: false,
@@ -379,10 +383,10 @@ describe('OIBus Service', () => {
 
   it('should properly convert to DTO', () => {
     const engineSettings = testData.engine.settings;
-    expect(toEngineSettingsDTO(engineSettings)).toEqual({
+    expect(toEngineSettingsDTO(engineSettings, id => ({ id, friendlyName: '' }))).toEqual({
       id: engineSettings.id,
-      createdBy: { id: '', friendlyName: '' },
-      updatedBy: { id: '', friendlyName: '' },
+      createdBy: { id: engineSettings.createdBy, friendlyName: '' },
+      updatedBy: { id: engineSettings.updatedBy, friendlyName: '' },
       createdAt: engineSettings.createdAt,
       updatedAt: engineSettings.updatedAt,
       name: engineSettings.name,

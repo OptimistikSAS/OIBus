@@ -100,7 +100,7 @@ describe('OIAnalytics Registration Service', () => {
 
     service.checkRegistration = jest.fn();
 
-    await service.register(testData.oIAnalytics.registration.command);
+    await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id);
 
     expect(encryptionService.encryptText).toHaveBeenCalledTimes(1);
     expect(engineRepository.get).toHaveBeenCalledTimes(1);
@@ -112,12 +112,13 @@ describe('OIAnalytics Registration Service', () => {
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       testData.constants.dates.FAKE_NOW,
       'public key',
-      'private key'
+      'private key',
+      testData.users.list[0].id
     );
 
     jest.advanceTimersByTime(10_000);
     expect(service.checkRegistration).toHaveBeenCalledTimes(1);
-    await service.register(testData.oIAnalytics.registration.command);
+    await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id);
     jest.advanceTimersByTime(10_000);
     expect(service.checkRegistration).toHaveBeenCalledTimes(2);
   });
@@ -195,7 +196,7 @@ describe('OIAnalytics Registration Service', () => {
     (crypto.generateKeyPairSync as jest.Mock).mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
     (oIAnalyticsClient.register as jest.Mock).mockReturnValueOnce(result);
 
-    await service.register(command);
+    await service.register(command, testData.users.list[0].id);
     expect(encryptionService.encryptText).toHaveBeenCalledTimes(3);
     expect(oIAnalyticsClient.register).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsRegistrationRepository.register).toHaveBeenCalledWith(
@@ -204,16 +205,20 @@ describe('OIAnalytics Registration Service', () => {
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       testData.constants.dates.FAKE_NOW,
       'public key',
-      'private key'
+      'private key',
+      testData.users.list[0].id
     );
   });
 
   it('should edit registration connection settings', async () => {
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
 
-    await service.editRegistrationSettings(testData.oIAnalytics.registration.command);
+    await service.editRegistrationSettings(testData.oIAnalytics.registration.command, testData.users.list[0].id);
 
-    expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(testData.oIAnalytics.registration.command);
+    expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(
+      testData.oIAnalytics.registration.command,
+      testData.users.list[0].id
+    );
   });
 
   it('should update keys', async () => {
@@ -282,9 +287,9 @@ describe('OIAnalytics Registration Service', () => {
     };
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
 
-    await service.editRegistrationSettings(command);
+    await service.editRegistrationSettings(command, testData.users.list[0].id);
 
-    expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(command);
+    expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(command, testData.users.list[0].id);
   });
 
   it('should unregister and not clear interval if it does not exist', () => {
@@ -379,8 +384,10 @@ describe('OIAnalytics Registration Service', () => {
   });
 
   it('should properly convert to DTO', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+
     const registration = testData.oIAnalytics.registration.completed;
-    expect(toOIAnalyticsRegistrationDTO(registration)).toEqual({
+    expect(toOIAnalyticsRegistrationDTO(registration, getUserInfo)).toEqual({
       id: registration.id,
       host: registration.host,
       activationCode: registration.activationCode,

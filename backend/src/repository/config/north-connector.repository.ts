@@ -9,6 +9,7 @@ import { NorthTransformerWithOptions } from '../../model/transformer.model';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
+import { toSouthItemGroup } from './south-item-group.repository';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
@@ -257,23 +258,47 @@ export default class NorthConnectorRepository {
       options: JSON.parse(element.options),
       inputType: element.input_type,
       south: element.south_id ? this.findSouth(element.south_id) : undefined,
-      group: element.group_id ? this.findGroup(element.group_id, element.group_name) : undefined,
+      group: element.group_id ? this.findGroup(element.group_id) : undefined,
       items: element.south_id && !element.group_id ? this.findSouthItems(element.ntId) : []
     }));
   }
 
-  private findGroup(groupId: string, groupName: string): SouthItemGroupEntityLight {
-    return { id: groupId, name: groupName };
+  private findGroup(groupId: string): SouthItemGroupEntityLight {
+    const query = `SELECT
+      g.id,
+      g.created_at,
+      g.updated_at,
+      g.created_by,
+      g.updated_by,
+      g.name,
+      g.south_id,
+      g.scan_mode_id,
+      g.overlap,
+      g.max_read_interval,
+      g.read_delay,
+      s.id as scan_mode_id_full,
+      s.name as scan_mode_name,
+      s.description as scan_mode_description,
+      s.cron as scan_mode_cron,
+      s.created_at as scan_mode_created_at,
+      s.updated_at as scan_mode_updated_at,
+      s.created_by as scan_mode_created_by,
+      s.updated_by as scan_mode_updated_by
+    FROM ${SOUTH_ITEM_GROUPS_TABLE} g
+    JOIN ${SCAN_MODE} s ON g.scan_mode_id = s.id
+    WHERE g.id = ?;`;
+    const result = this.database.prepare(query).get(groupId) as Record<string, string | number>;
+    return toSouthItemGroup(result);
   }
 
   private findScanModeForNorth(scanModeId: string): ScanMode {
-    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE} WHERE id = ?;`;
+    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
   }
 
   private findSouth(southId: string): SouthConnectorEntityLight {
-    const query = `SELECT id, name, type, description, enabled FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, name, type, description, enabled, created_by, updated_by, created_at, updated_at FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(southId) as Record<string, string>;
     return {
       id: result.id,
@@ -281,23 +306,23 @@ export default class NorthConnectorRepository {
       type: result.type as OIBusSouthType,
       description: result.description,
       enabled: Boolean(result.enabled),
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at
     };
   }
 
   private findSouthItems(northTransformerId: string): Array<SouthConnectorItemEntityLight> {
-    const query = `SELECT nt.id, nt.item_id, si.name FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} nt JOIN ${SOUTH_ITEMS_TABLE} si ON nt.item_id = si.id WHERE nt.id = ?;`;
+    const query = `SELECT nt.id, nt.item_id, si.name, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} nt JOIN ${SOUTH_ITEMS_TABLE} si ON nt.item_id = si.id WHERE nt.id = ?;`;
     const results = this.database.prepare(query).all(northTransformerId) as Array<Record<string, string>>;
     return results.map(result => ({
       id: result.item_id as string,
       name: result.name as string,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
+      createdAt: result.created_at,
+      updatedAt: result.updated_at
     }));
   }
 
@@ -308,8 +333,8 @@ export default class NorthConnectorRepository {
       type: result.type as OIBusNorthType,
       description: result.description,
       enabled: Boolean(result.enabled),
-      createdBy: result.created_by ?? '',
-      updatedBy: result.updated_by ?? '',
+      createdBy: result.created_by,
+      updatedBy: result.updated_by,
       createdAt: result.created_at,
       updatedAt: result.updated_at
     };
@@ -345,8 +370,8 @@ export default class NorthConnectorRepository {
         }
       },
       transformers: this.findTransformersForNorth(result.id as string),
-      createdBy: (result.created_by as string) ?? '',
-      updatedBy: (result.updated_by as string) ?? '',
+      createdBy: result.created_by as string,
+      updatedBy: result.updated_by as string,
       createdAt: result.created_at as string,
       updatedAt: result.updated_at as string
     };
