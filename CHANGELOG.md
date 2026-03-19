@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.7.11](https://github.com/OptimistikSAS/OIBus/compare/v3.7.10...v3.7.11) (2026-03-19)
+
+
+### Bug Fixes
+
+* **history-query:** fixed web client history query item test route ([a6ce1ca](https://github.com/OptimistikSAS/OIBus/commit/a6ce1cabf50466eb7dfc565f8d26ee4593470ab2))
+* **north-rest:** fix translations keys ([84c4e81](https://github.com/OptimistikSAS/OIBus/commit/84c4e810c48436f6f934a42f475b1d1147002fb4))
+* **south:** manage null value for convertDateTimeToInstant input ([34f0767](https://github.com/OptimistikSAS/OIBus/commit/34f07678f1088515b1e4e95e7d00cb2ab1631908))
+* update null descriptions with empty string ([063294a](https://github.com/OptimistikSAS/OIBus/commit/063294a25779ec4d0287fee923e28b8316fbd4a5))
+* **web-server:** fixed multer upload file ([32048dd](https://github.com/OptimistikSAS/OIBus/commit/32048dd89dd4b7b9aa4582ac1705ea2cd9f4d213))
+
 ## [3.7.10](https://github.com/OptimistikSAS/OIBus/compare/v3.7.9...v3.7.10) (2026-03-12)
 
 
