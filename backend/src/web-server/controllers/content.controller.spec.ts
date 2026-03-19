@@ -2,6 +2,9 @@ import { ContentController } from './content.controller';
 import { OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import fs from 'node:fs/promises';
+
+jest.mock('node:fs/promises');
 
 describe('ContentController', () => {
   let controller: ContentController;
@@ -44,5 +47,24 @@ describe('ContentController', () => {
       { type: 'any', filePath: 'filePath' },
       'api'
     );
+    expect(fs.unlink).toHaveBeenCalledWith('filePath');
+  });
+
+  it('should add file and not throw if unlink fails', async () => {
+    const northId = 'northId1';
+    const mockFile = {
+      path: 'filePath'
+    } as Express.Multer.File;
+    (fs.unlink as jest.Mock).mockRejectedValueOnce(new Error('unlink error'));
+    (mockRequest.services!.oIBusService.addExternalContent as jest.Mock).mockResolvedValue(undefined);
+
+    await expect(controller.addFile(northId, mockFile, mockRequest as CustomExpressRequest)).resolves.not.toThrow();
+
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith(
+      'northId1',
+      { type: 'any', filePath: 'filePath' },
+      'api'
+    );
+    expect(fs.unlink).toHaveBeenCalledWith('filePath');
   });
 });
