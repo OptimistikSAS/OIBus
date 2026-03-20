@@ -862,6 +862,9 @@ async function removeThrottlingFieldsInConnectorSettings(knex: Knex): Promise<vo
     if (isHistorian) {
       const newSettings = JSON.parse(south.settings);
       delete newSettings.throttling;
+      if (south.type === 'opcua') {
+        delete newSettings.sharedConnection;
+      }
       await knex(SOUTH_CONNECTORS_TABLE)
         .update({ settings: JSON.stringify(newSettings) })
         .where('id', south.id);
