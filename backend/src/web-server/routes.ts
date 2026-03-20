@@ -1992,9 +1992,19 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthRestItemSettingsHeadersDateTimeType": {
+    "SouthRestItemSettingsHeadersDateTimeInputType": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["string"]},{"dataType":"enum","enums":["iso-string"]},{"dataType":"enum","enums":["unix-epoch"]},{"dataType":"enum","enums":["unix-epoch-ms"]}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthRestItemSettingsHeadersDateTimeInput": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsHeadersDateTimeInputType"},{"dataType":"enum","enums":[null]}],"required":true},
+            "timezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
+            "format": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+        },
+        "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthRestItemSettingsHeaders": {
@@ -2002,9 +2012,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "key": {"dataType":"string","required":true},
             "value": {"dataType":"string","required":true},
-            "dateTimeType": {"ref":"SouthRestItemSettingsHeadersDateTimeType"},
-            "dateTimeTimezone": {"dataType":"union","subSchemas":[{"ref":"Timezone"},{"dataType":"enum","enums":[null]}]},
-            "dateTimeFormat": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "dateTimeInput": {"dataType":"union","subSchemas":[{"ref":"SouthRestItemSettingsHeadersDateTimeInput"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
