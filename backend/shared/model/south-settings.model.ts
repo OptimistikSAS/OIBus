@@ -282,8 +282,8 @@ export const SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_INPUT_TYPES = ['iso
 export type SouthRestItemSettingsQueryParamsDateTimeInputType =
   (typeof SOUTH_REST_ITEM_SETTINGS_QUERY_PARAMS_DATE_TIME_INPUT_TYPES)[number];
 
-export const SOUTH_REST_ITEM_SETTINGS_HEADERS_DATE_TIME_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
-export type SouthRestItemSettingsHeadersDateTimeType = (typeof SOUTH_REST_ITEM_SETTINGS_HEADERS_DATE_TIME_TYPES)[number];
+export const SOUTH_REST_ITEM_SETTINGS_HEADERS_DATE_TIME_INPUT_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
+export type SouthRestItemSettingsHeadersDateTimeInputType = (typeof SOUTH_REST_ITEM_SETTINGS_HEADERS_DATE_TIME_INPUT_TYPES)[number];
 
 export const SOUTH_REST_ITEM_SETTINGS_BODY_DATE_TIME_INPUT_TYPES = ['iso-string', 'unix-epoch', 'unix-epoch-ms', 'string'] as const;
 export type SouthRestItemSettingsBodyDateTimeInputType = (typeof SOUTH_REST_ITEM_SETTINGS_BODY_DATE_TIME_INPUT_TYPES)[number];
@@ -810,12 +810,16 @@ export interface SouthRestItemSettingsQueryParams {
   dateTimeInput?: SouthRestItemSettingsQueryParamsDateTimeInput | null;
 }
 
+export interface SouthRestItemSettingsHeadersDateTimeInput {
+  type: SouthRestItemSettingsHeadersDateTimeInputType | null;
+  timezone?: Timezone | null;
+  format?: string | null;
+}
+
 export interface SouthRestItemSettingsHeaders {
   key: string;
   value: string;
-  dateTimeType?: SouthRestItemSettingsHeadersDateTimeType;
-  dateTimeTimezone?: Timezone | null;
-  dateTimeFormat?: string | null;
+  dateTimeInput?: SouthRestItemSettingsHeadersDateTimeInput | null;
 }
 
 export interface SouthRestItemSettingsBodyDateTimeInput {
