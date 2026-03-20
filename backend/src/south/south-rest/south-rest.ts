@@ -176,18 +176,18 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       let headerValue = header.value;
       if (headerValue.includes('@StartTime')) {
         const formattedStartTime = formatInstant(startTime, {
-          type: header.dateTimeType!,
-          timezone: header.dateTimeTimezone || undefined,
-          format: header.dateTimeFormat || undefined,
+          type: header.dateTimeInput!.type!,
+          timezone: header.dateTimeInput!.timezone || undefined,
+          format: header.dateTimeInput!.format || undefined,
           locale: 'en-En'
         });
         headerValue = headerValue.replace(/@StartTime/g, String(formattedStartTime));
       }
       if (headerValue.includes('@EndTime')) {
         const formattedEndTime = formatInstant(endTime, {
-          type: header.dateTimeType!,
-          timezone: header.dateTimeTimezone || undefined,
-          format: header.dateTimeFormat || undefined,
+          type: header.dateTimeInput!.type!,
+          timezone: header.dateTimeInput!.timezone || undefined,
+          format: header.dateTimeInput!.format || undefined,
           locale: 'en-En'
         });
         headerValue = headerValue.replace(/@EndTime/g, String(formattedEndTime));
