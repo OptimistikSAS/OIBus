@@ -5749,7 +5749,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthRestItemSettingsHeadersDateTimeType": {
+			"SouthRestItemSettingsHeadersDateTimeInputType": {
 				"type": "string",
 				"enum": [
 					"string",
@@ -5757,6 +5757,35 @@
 					"unix-epoch",
 					"unix-epoch-ms"
 				]
+			},
+			"SouthRestItemSettingsHeadersDateTimeInput": {
+				"properties": {
+					"type": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthRestItemSettingsHeadersDateTimeInputType"
+							}
+						],
+						"nullable": true
+					},
+					"timezone": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Timezone"
+							}
+						],
+						"nullable": true
+					},
+					"format": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
 			},
 			"SouthRestItemSettingsHeaders": {
 				"properties": {
@@ -5766,19 +5795,12 @@
 					"value": {
 						"type": "string"
 					},
-					"dateTimeType": {
-						"$ref": "#/components/schemas/SouthRestItemSettingsHeadersDateTimeType"
-					},
-					"dateTimeTimezone": {
+					"dateTimeInput": {
 						"allOf": [
 							{
-								"$ref": "#/components/schemas/Timezone"
+								"$ref": "#/components/schemas/SouthRestItemSettingsHeadersDateTimeInput"
 							}
 						],
-						"nullable": true
-					},
-					"dateTimeFormat": {
-						"type": "string",
 						"nullable": true
 					}
 				},
@@ -22447,7 +22469,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.8.11",
+		"version": "3.7.11",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
