@@ -184,8 +184,8 @@ describe('SouthRestAPI connector', () => {
   it('should replace @StartTime and @EndTime in Headers', async () => {
     const item = createItem({
       headers: [
-        { key: 'X-Time-From', value: 'From @StartTime', dateTimeType: 'iso-string' },
-        { key: 'X-Time-To', value: 'From @EndTime', dateTimeType: 'iso-string' }
+        { key: 'X-Time-From', value: 'From @StartTime', dateTimeInput: { type: 'iso-string' } },
+        { key: 'X-Time-To', value: 'From @EndTime', dateTimeInput: { type: 'iso-string' } }
       ]
     });
 
