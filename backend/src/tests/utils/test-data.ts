@@ -881,8 +881,12 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     name: 'my first History Query',
     description: 'description',
     status: 'RUNNING',
-    startTime: '2020-02-01T02:02:59.999Z',
-    endTime: '2020-02-02T02:02:59.999Z',
+    queryTimeRange: {
+      startTime: constants.dates.DATE_1,
+      endTime: constants.dates.DATE_2,
+      maxReadInterval: 3600,
+      readDelay: 200
+    },
     southType: 'mssql',
     northType: 'oianalytics',
     southSettings: {
@@ -901,10 +905,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       useOiaModule: true,
       timeout: 5_000,
       compress: true
-    },
-    throttling: {
-      maxReadInterval: 3600,
-      readDelay: 200
     },
     caching: {
       trigger: {
@@ -984,8 +984,12 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     name: 'My second History Query',
     description: 'description',
     status: 'PENDING',
-    startTime: '2020-02-01T02:02:59.999Z',
-    endTime: '2020-02-02T02:02:59.999Z',
+    queryTimeRange: {
+      startTime: constants.dates.DATE_1,
+      endTime: constants.dates.DATE_2,
+      maxReadInterval: 3600,
+      readDelay: 200
+    },
     southType: 'mssql',
     northType: 'file-writer',
     southSettings: {
@@ -1004,10 +1008,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
       outputFolder: 'output-folder',
       prefix: 'prefix-',
       suffix: '-suffix'
-    },
-    throttling: {
-      maxReadInterval: 3600,
-      readDelay: 200
     },
     caching: {
       trigger: {
@@ -1055,8 +1055,12 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
 const historyQueryCommand: HistoryQueryCommandDTO = {
   name: 'name',
   description: 'description',
-  startTime: '2020-02-01T02:02:59.999Z',
-  endTime: '2020-02-02T02:02:59.999Z',
+  queryTimeRange: {
+    startTime: constants.dates.DATE_1,
+    endTime: constants.dates.DATE_2,
+    maxReadInterval: 3600,
+    readDelay: 200
+  },
   southType: 'mssql',
   northType: 'file-writer',
   southSettings: {

@@ -16038,11 +16038,30 @@
 					"description": {
 						"type": "string"
 					},
-					"startTime": {
-						"type": "string"
-					},
-					"endTime": {
-						"type": "string"
+					"queryTimeRange": {
+						"properties": {
+							"readDelay": {
+								"type": "number",
+								"format": "double"
+							},
+							"maxReadInterval": {
+								"type": "number",
+								"format": "double"
+							},
+							"endTime": {
+								"$ref": "#/components/schemas/Instant"
+							},
+							"startTime": {
+								"$ref": "#/components/schemas/Instant"
+							}
+						},
+						"required": [
+							"readDelay",
+							"maxReadInterval",
+							"endTime",
+							"startTime"
+						],
+						"type": "object"
 					},
 					"caching": {
 						"properties": {
@@ -16151,8 +16170,7 @@
 				"required": [
 					"name",
 					"description",
-					"startTime",
-					"endTime",
+					"queryTimeRange",
 					"caching",
 					"northTransformers"
 				],
@@ -21670,15 +21688,38 @@
 						"description": "Current status of the history query.",
 						"example": "RUNNING"
 					},
-					"startTime": {
-						"type": "string",
-						"description": "Start time for the data to be queried (ISO 8601 format).",
-						"example": "2023-01-01T00:00:00Z"
-					},
-					"endTime": {
-						"type": "string",
-						"description": "End time for the data to be queried (ISO 8601 format).",
-						"example": "2023-01-31T23:59:59Z"
+					"queryTimeRange": {
+						"properties": {
+							"readDelay": {
+								"type": "number",
+								"format": "double",
+								"description": "Delay (in milliseconds) before the next data read.",
+								"example": 200
+							},
+							"maxReadInterval": {
+								"type": "number",
+								"format": "double",
+								"description": "Maximum interval (in seconds) between data reads.",
+								"example": 3600
+							},
+							"endTime": {
+								"$ref": "#/components/schemas/Instant",
+								"description": "End time for the data to be queried (ISO 8601 format).",
+								"example": "2023-01-31T23:59:59Z"
+							},
+							"startTime": {
+								"$ref": "#/components/schemas/Instant",
+								"description": "Start time for the data to be queried (ISO 8601 format).",
+								"example": "2023-01-01T00:00:00Z"
+							}
+						},
+						"required": [
+							"readDelay",
+							"maxReadInterval",
+							"endTime",
+							"startTime"
+						],
+						"type": "object"
 					},
 					"caching": {
 						"properties": {
@@ -21810,8 +21851,7 @@
 					"name",
 					"description",
 					"status",
-					"startTime",
-					"endTime",
+					"queryTimeRange",
 					"caching",
 					"northTransformers"
 				],

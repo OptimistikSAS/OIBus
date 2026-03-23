@@ -77,8 +77,8 @@ describe('HistoryQuery enabled', () => {
         readDelay: 200,
         overlap: null
       })),
-      testData.historyQueries.list[0].startTime,
-      testData.historyQueries.list[0].endTime
+      testData.historyQueries.list[0].queryTimeRange.startTime,
+      testData.historyQueries.list[0].queryTimeRange.endTime
     );
     expect(clearIntervalSpy).not.toHaveBeenCalled();
     mockedSouth1.connectedEvent.emit('connected');
@@ -125,8 +125,8 @@ describe('HistoryQuery enabled', () => {
         readDelay: 200,
         overlap: null
       })),
-      testData.historyQueries.list[0].startTime,
-      testData.historyQueries.list[0].endTime
+      testData.historyQueries.list[0].queryTimeRange.startTime,
+      testData.historyQueries.list[0].queryTimeRange.endTime
     );
 
     expect(mockedSouth1.start).toHaveBeenCalledTimes(2);

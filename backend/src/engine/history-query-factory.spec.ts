@@ -45,8 +45,12 @@ describe('HistoryQueryFactory', () => {
       name: 'History Query 1',
       description: 'Test HQ',
       status: 'RUNNING',
-      startTime: testData.constants.dates.DATE_1,
-      endTime: testData.constants.dates.DATE_2,
+      queryTimeRange: {
+        startTime: testData.constants.dates.DATE_1,
+        endTime: testData.constants.dates.DATE_2,
+        maxReadInterval: 3600,
+        readDelay: 200
+      },
       southType: 'modbus',
       southSettings: { someSouthSetting: true } as unknown as SouthModbusSettings,
       northType: 'file-writer',
