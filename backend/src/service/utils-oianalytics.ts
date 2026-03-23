@@ -181,9 +181,10 @@ export const buildHttpOptions = async (
   registrationSettings: OIAnalyticsRegistration,
   specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null,
   timeout: number,
-  certificateRepository: CertificateRepository | null
+  certificateRepository: CertificateRepository | null,
+  acceptNotRegistered = false
 ): Promise<ReqOptions> => {
-  if (useOIAnalyticsRegistration && registrationSettings.status !== 'REGISTERED') {
+  if (!acceptNotRegistered && useOIAnalyticsRegistration && registrationSettings.status !== 'REGISTERED') {
     throw new Error('OIBus not registered in OIAnalytics');
   }
 
@@ -274,9 +275,17 @@ export const testOIAnalyticsConnection = async (
   specificSettings: SouthOIAnalyticsSettingsSpecificSettings | NorthOIAnalyticsSettingsSpecificSettings | undefined | null,
   timeout: number,
   certificateRepository: CertificateRepository | null,
-  accept401AsSuccess: boolean
+  acceptNotRegistered: boolean
 ): Promise<void> => {
-  const httpOptions = await buildHttpOptions('GET', useOIAnalyticsRegistration, registrationSettings, specificSettings, 30000, null);
+  const httpOptions = await buildHttpOptions(
+    'GET',
+    useOIAnalyticsRegistration,
+    registrationSettings,
+    specificSettings,
+    30000,
+    null,
+    acceptNotRegistered
+  );
 
   const requestUrl = getUrl(
     '/api/oianalytics/oibus/status',
@@ -296,7 +305,7 @@ export const testOIAnalyticsConnection = async (
 
   // During initial registration, a 401 response is expected and considered successful
   // because the token hasn't been retrieved yet
-  if (accept401AsSuccess && response.statusCode === 401) {
+  if (acceptNotRegistered && response.statusCode === 401) {
     return;
   }
 
