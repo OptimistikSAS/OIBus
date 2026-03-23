@@ -23,10 +23,32 @@ export interface CacheMetadata {
 }
 
 export async function up(_knex: Knex): Promise<void> {
-  const rootFolders = await fs.readdir(DATA_FOLDER_PATH);
-  const cacheFolders = await fs.readdir(CACHE_FOLDER_PATH);
-  const errorFolders = await fs.readdir(ERROR_FOLDER_PATH);
-  const archiveFolders = await fs.readdir(ARCHIVE_FOLDER_PATH);
+  let rootFolders: Array<string> = [];
+  try {
+    rootFolders = await fs.readdir(DATA_FOLDER_PATH);
+  } catch (error: unknown) {
+    console.error(`Error while reading root folder: ${(error as Error).message}`);
+  }
+
+  let cacheFolders: Array<string> = [];
+  try {
+    cacheFolders = await fs.readdir(CACHE_FOLDER_PATH);
+  } catch (error: unknown) {
+    console.error(`Error while reading cache folder: ${(error as Error).message}`);
+  }
+  let errorFolders: Array<string> = [];
+  try {
+    errorFolders = await fs.readdir(ERROR_FOLDER_PATH);
+  } catch (error: unknown) {
+    console.error(`Error while reading error folder: ${(error as Error).message}`);
+  }
+  let archiveFolders: Array<string> = [];
+  try {
+    archiveFolders = await fs.readdir(ARCHIVE_FOLDER_PATH);
+  } catch (error: unknown) {
+    console.error(`Error while reading archive folder: ${(error as Error).message}`);
+  }
+
   await removeSouthErrorAndArchiveFolders(
     errorFolders.filter(name => name.startsWith('south-')),
     archiveFolders.filter(name => name.startsWith('south-'))
