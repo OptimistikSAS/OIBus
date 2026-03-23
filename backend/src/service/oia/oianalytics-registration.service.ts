@@ -93,7 +93,7 @@ export default class OIAnalyticsRegistrationService {
   }
 
   /**
-   * Second step of the registration: once the activation code has been sent to OIAnalytics, OIBus
+   * The second step of the registration: once the activation code has been sent to OIAnalytics, OIBus
    * regularly checks if it has been accepted by the user on OIAnalytics
    */
   async checkRegistration(): Promise<void> {
