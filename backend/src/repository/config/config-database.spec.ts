@@ -2391,8 +2391,8 @@ describe('Repository with populated database', () => {
           name: element.name,
           description: element.description,
           status: element.status,
-          startTime: element.startTime,
-          endTime: element.endTime,
+          startTime: element.queryTimeRange.startTime,
+          endTime: element.queryTimeRange.endTime,
           southType: element.southType,
           northType: element.northType
         }))

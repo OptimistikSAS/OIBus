@@ -117,7 +117,11 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   form: FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
-    dateRange: FormControl<DateRange>;
+    queryTimeRange: FormGroup<{
+      dateRange: FormControl<DateRange>;
+      maxReadInterval: FormControl<number>;
+      readDelay: FormControl<number>;
+    }>;
     caching: FormGroup<{
       trigger: FormGroup<{
         scanMode: FormControl<ScanModeDTO | null>;
@@ -271,13 +275,17 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         validators: [Validators.required, this.checkUniqueness()]
       }),
       description: '',
-      dateRange: [
-        {
-          startTime: DateTime.now().minus({ days: 1 }).toUTC().toISO()!,
-          endTime: DateTime.now().toUTC().toISO()!
-        } as DateRange,
-        Validators.required
-      ],
+      queryTimeRange: this.fb.group({
+        dateRange: [
+          {
+            startTime: DateTime.now().minus({ days: 1 }).toUTC().toISO()!,
+            endTime: DateTime.now().toUTC().toISO()!
+          } as DateRange,
+          Validators.required
+        ],
+        maxReadInterval: [3600, Validators.required],
+        readDelay: [200, Validators.required]
+      }),
       caching: this.fb.group({
         trigger: this.fb.group({
           scanMode: this.fb.control<ScanModeDTO | null>(null, Validators.required),
@@ -315,8 +323,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     // if we have a history query, we initialize the values
     if (this.historyQuery) {
       const dateRange: DateRange = {
-        startTime: this.historyQuery.startTime,
-        endTime: this.historyQuery.endTime
+        startTime: this.historyQuery.queryTimeRange.startTime,
+        endTime: this.historyQuery.queryTimeRange.endTime
       };
       // used to have the same ref
       this.historyQuery.caching.trigger.scanMode = this.scanModes.find(
@@ -327,11 +335,15 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         transformer: element.transformer,
         options: element.options,
         inputType: element.inputType,
-        items: []
+        items: [] // TODO: add items with new id
       }));
       this.form.patchValue({
         ...this.historyQuery,
-        dateRange
+        queryTimeRange: {
+          dateRange,
+          maxReadInterval: this.historyQuery.queryTimeRange.maxReadInterval,
+          readDelay: this.historyQuery.queryTimeRange.readDelay
+        }
       });
     } else {
       if (southConnector) {
@@ -352,7 +364,13 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         )!;
         this.form.controls.northSettings.patchValue(northConnector.settings);
         this.form.controls.caching.patchValue(northConnector.caching);
-        this.inMemoryTransformersWithOptions = [...northConnector.transformers];
+        this.inMemoryTransformersWithOptions = northConnector.transformers.map(transformer => ({
+          id: '',
+          transformer: transformer.transformer,
+          options: transformer.options,
+          inputType: transformer.inputType,
+          items: [] // TODO: add items with new id
+        }));
       }
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
@@ -374,15 +392,19 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     }
 
     const formValue = this.form!.value;
-    const dateRange = formValue.dateRange!;
+    const dateRange = formValue.queryTimeRange!.dateRange!;
     const command = {
       name: formValue.name!,
       description: formValue.description!,
-      startTime: dateRange.startTime,
-      endTime: dateRange.endTime,
-      northType: this.northType as OIBusNorthType,
+      queryTimeRange: {
+        startTime: dateRange.startTime,
+        endTime: dateRange.endTime,
+        maxReadInterval: formValue.queryTimeRange!.maxReadInterval!,
+        readDelay: formValue.queryTimeRange!.readDelay!
+      },
       southType: this.southType as OIBusSouthType,
       southSettings: formValue.southSettings,
+      northType: this.northType as OIBusNorthType,
       northSettings: formValue.northSettings,
       caching: {
         trigger: {

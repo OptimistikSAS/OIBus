@@ -811,8 +811,12 @@ describe('History Query service', () => {
       name: historyQuery.name,
       description: historyQuery.description,
       status: historyQuery.status,
-      startTime: historyQuery.startTime,
-      endTime: historyQuery.endTime,
+      queryTimeRange: {
+        startTime: historyQuery.queryTimeRange.startTime,
+        endTime: historyQuery.queryTimeRange.endTime,
+        maxReadInterval: historyQuery.queryTimeRange.maxReadInterval,
+        readDelay: historyQuery.queryTimeRange.readDelay
+      },
       southType: historyQuery.southType,
       northType: historyQuery.northType,
       southSettings: historyQuery.southSettings,
@@ -852,8 +856,8 @@ describe('History Query service', () => {
       name: historyQuery.name,
       description: historyQuery.description,
       status: historyQuery.status,
-      startTime: historyQuery.startTime,
-      endTime: historyQuery.endTime,
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
       southType: historyQuery.southType,
       northType: historyQuery.northType
     };
@@ -862,8 +866,8 @@ describe('History Query service', () => {
       name: historyQuery.name,
       description: historyQuery.description,
       status: historyQuery.status,
-      startTime: historyQuery.startTime,
-      endTime: historyQuery.endTime,
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
       southType: historyQuery.southType,
       northType: historyQuery.northType
     });
