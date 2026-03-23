@@ -144,6 +144,15 @@ describe('North Service', () => {
     expect(engine.startNorth).toHaveBeenCalledTimes(1);
   });
 
+  it('should create a north connector with a transformer group', async () => {
+    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
+    command.transformers = [{ ...command.transformers[0], southId: testData.south.list[0].id, groupId: 'groupId1', items: [] }];
+    await service.create(command, null, 'userTest');
+
+    const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
+    expect(savedEntity.transformers[0].group).toEqual({ id: 'groupId1', name: '' });
+  });
+
   it('should create a north connector and not start it if disabled', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
     command.enabled = false;
@@ -184,6 +193,17 @@ describe('North Service', () => {
     expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.reloadNorth).toHaveBeenCalledTimes(1);
+  });
+
+  it('should update a north connector with a transformer group', async () => {
+    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
+    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
+    command.transformers = [{ ...command.transformers[0], southId: testData.south.list[0].id, groupId: 'groupId1', items: [] }];
+    await service.update(testData.north.list[0].id, command, 'userTest');
+
+    const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
+    expect(savedEntity.transformers[0].group).toEqual({ id: 'groupId1', name: '' });
   });
 
   it('should update a north connector with a new unique name', async () => {
@@ -286,6 +306,7 @@ describe('North Service', () => {
       transformer: testData.transformers.list[0] as TransformerDTO,
       options: {},
       south: undefined,
+      group: undefined,
       items: []
     } as NorthTransformerWithOptions;
     service.addOrEditTransformer(testData.north.list[0].id, transformerWithOptions);
@@ -390,6 +411,7 @@ describe('North Service', () => {
         options: transformerWithOptions.options,
         inputType: transformerWithOptions.inputType,
         south: transformerWithOptions.south,
+        group: transformerWithOptions.group,
         items: transformerWithOptions.items
       }))
     });
@@ -400,5 +422,13 @@ describe('North Service', () => {
       description: northEntity.description,
       enabled: northEntity.enabled
     });
+  });
+
+  it('should include group in toNorthConnectorDTO when group is defined', () => {
+    const northEntity = { ...testData.north.list[0] };
+    const group = { id: 'group1', name: 'Group 1' };
+    northEntity.transformers = [{ ...northEntity.transformers[0], group }];
+    const dto = toNorthConnectorDTO(northEntity);
+    expect(dto.transformers[0].group).toEqual(group);
   });
 });

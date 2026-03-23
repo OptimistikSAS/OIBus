@@ -158,6 +158,7 @@ export async function up(knex: Knex): Promise<void> {
   await migrateSouthMQTTItems(knex, allOldSubscriptions);
   await addCreatedByAndUpdatedBy(knex);
   await createSouthItemGroupsTable(knex);
+  await addGroupIdToNorthTransformers(knex);
   await createGroupItemsTable(knex);
   await addItemHistorianFields(knex);
   await populateItemHistorianFields(knex);
@@ -756,6 +757,12 @@ async function dropUniqueConstraints(knex: Knex): Promise<void> {
     // D. Drop Temp
     await knex.schema.dropTable(historyTempName);
   }
+}
+
+async function addGroupIdToNorthTransformers(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(NORTH_TRANSFORMERS_TABLE, table => {
+    table.string('group_id').nullable().references('id').inTable(SOUTH_ITEM_GROUPS_TABLE).onDelete('SET NULL');
+  });
 }
 
 async function createSouthItemGroupsTable(knex: Knex): Promise<void> {
