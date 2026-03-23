@@ -602,8 +602,12 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
   historyQueryEntity.northType = command.northType;
   historyQueryEntity.description = command.description;
   historyQueryEntity.status = currentSettings?.status || 'PENDING';
-  historyQueryEntity.startTime = command.startTime;
-  historyQueryEntity.endTime = command.endTime;
+  historyQueryEntity.queryTimeRange = {
+    startTime: command.queryTimeRange.startTime,
+    endTime: command.queryTimeRange.endTime,
+    maxReadInterval: command.queryTimeRange.maxReadInterval,
+    readDelay: command.queryTimeRange.readDelay
+  };
   historyQueryEntity.northSettings = await encryptionService.encryptConnectorSecrets(
     command.northSettings,
     currentSettings?.northSettings || null,
@@ -693,11 +697,15 @@ export const toHistoryQueryDTO = (historyQuery: HistoryQueryEntity<SouthSettings
     name: historyQuery.name,
     description: historyQuery.description,
     status: historyQuery.status,
-    startTime: historyQuery.startTime,
-    endTime: historyQuery.endTime,
     southType: historyQuery.southType,
-    northType: historyQuery.northType,
     southSettings: encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
+    queryTimeRange: {
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime,
+      maxReadInterval: historyQuery.queryTimeRange.maxReadInterval,
+      readDelay: historyQuery.queryTimeRange.readDelay
+    },
+    northType: historyQuery.northType,
     northSettings: encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
     caching: {
       trigger: {

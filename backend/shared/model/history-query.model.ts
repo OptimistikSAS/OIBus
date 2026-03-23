@@ -1,4 +1,4 @@
-import { BaseEntity } from './types';
+import { BaseEntity, Instant } from './types';
 import { OIBusNorthType } from './north-connector.model';
 import { OIBusSouthType } from './south-connector.model';
 import {
@@ -150,19 +150,35 @@ export interface HistoryQueryCommonDTO {
    */
   status: HistoryQueryStatus;
 
-  /**
-   * Start time for the data to be queried (ISO 8601 format).
-   *
-   * @example "2023-01-01T00:00:00Z"
-   */
-  startTime: string;
+  queryTimeRange: {
+    /**
+     * Start time for the data to be queried (ISO 8601 format).
+     *
+     * @example "2023-01-01T00:00:00Z"
+     */
+    startTime: Instant;
 
-  /**
-   * End time for the data to be queried (ISO 8601 format).
-   *
-   * @example "2023-01-31T23:59:59Z"
-   */
-  endTime: string;
+    /**
+     * End time for the data to be queried (ISO 8601 format).
+     *
+     * @example "2023-01-31T23:59:59Z"
+     */
+    endTime: Instant;
+
+    /**
+     * Maximum interval (in seconds) between data reads.
+     *
+     * @example 3600
+     */
+    maxReadInterval: number;
+
+    /**
+     * Delay (in milliseconds) before the next data read.
+     *
+     * @example 200
+     */
+    readDelay: number;
+  };
 
   /**
    * Caching configuration for the history query.
@@ -325,8 +341,12 @@ export type HistoryQueryDTO = BaseEntity &
 export interface HistoryQueryCommandCommonDTO {
   name: string;
   description: string;
-  startTime: string;
-  endTime: string;
+  queryTimeRange: {
+    startTime: Instant;
+    endTime: Instant;
+    maxReadInterval: number;
+    readDelay: number;
+  };
   caching: {
     trigger: {
       scanModeId: string;

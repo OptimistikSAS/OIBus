@@ -42,8 +42,12 @@ describe('ExploreHistoryCacheComponent', () => {
     status: 'PAUSED',
     southType: 'opcua',
     northType: 'file-writer',
-    startTime: testData.constants.dates.DATE_1,
-    endTime: testData.constants.dates.DATE_2,
+    queryTimeRange: {
+      startTime: testData.constants.dates.DATE_1,
+      endTime: testData.constants.dates.DATE_2,
+      maxReadInterval: 3600,
+      readDelay: 200
+    },
     name: 'History query 1',
     description: 'My history query description',
     enabled: true,
