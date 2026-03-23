@@ -140,6 +140,7 @@ export default class NorthService {
         south: south
           ? { id: south.id, type: south.type, name: south.name, description: south.description, enabled: south.enabled }
           : undefined,
+        group: transformerIdWithOptions.groupId ? { id: transformerIdWithOptions.groupId, name: '' } : undefined,
         items: transformerIdWithOptions.items
       };
     });
@@ -192,6 +193,7 @@ export default class NorthService {
         south: south
           ? { id: south.id, type: south.type, name: south.name, description: south.description, enabled: south.enabled }
           : undefined,
+        group: transformerIdWithOptions.groupId ? { id: transformerIdWithOptions.groupId, name: '' } : undefined,
         items: transformerIdWithOptions.items
       };
     });
@@ -397,6 +399,7 @@ export const toNorthConnectorDTO = (northEntity: NorthConnectorEntity<NorthSetti
       options: transformerWithOptions.options,
       inputType: transformerWithOptions.inputType,
       south: transformerWithOptions.south,
+      group: transformerWithOptions.group,
       items: transformerWithOptions.items
     }))
   } as NorthConnectorDTO;

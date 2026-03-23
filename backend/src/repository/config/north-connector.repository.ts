@@ -2,7 +2,7 @@ import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { SouthConnectorEntityLight, SouthConnectorItemEntityLight } from '../../model/south-connector.model';
+import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntityLight } from '../../model/south-connector.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { toTransformer } from './transformer.repository';
 import { NorthTransformerWithOptions } from '../../model/transformer.model';
@@ -16,6 +16,7 @@ const SOUTH_ITEMS_TABLE = 'south_items';
 const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
 const NORTH_TRANSFORMERS_ITEMS_TABLE = 'north_transformers_items';
+const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
 const SCAN_MODE = 'scan_modes';
 
 export default class NorthConnectorRepository {
@@ -193,7 +194,7 @@ export default class NorthConnectorRepository {
   addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions): void {
     if (!transformerWithOptions.id) {
       transformerWithOptions.id = generateRandomId(6);
-      const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, input_type, south_id) VALUES (?, ?, ?, ?, ?, ?);`;
+      const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, input_type, south_id, group_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
       this.database
         .prepare(query)
         .run(
@@ -202,10 +203,11 @@ export default class NorthConnectorRepository {
           transformerWithOptions.transformer.id,
           JSON.stringify(transformerWithOptions.options),
           transformerWithOptions.inputType,
-          transformerWithOptions.south?.id
+          transformerWithOptions.south?.id,
+          transformerWithOptions.group?.id ?? null
         );
     } else {
-      const query = `UPDATE ${NORTH_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ?, input_type = ?, south_id = ? WHERE id = ?;`;
+      const query = `UPDATE ${NORTH_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ?, input_type = ?, south_id = ?, group_id = ? WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
@@ -213,6 +215,7 @@ export default class NorthConnectorRepository {
           JSON.stringify(transformerWithOptions.options),
           transformerWithOptions.inputType,
           transformerWithOptions.south?.id,
+          transformerWithOptions.group?.id ?? null,
           transformerWithOptions.id
         );
     }
@@ -246,7 +249,7 @@ export default class NorthConnectorRepository {
   }
 
   private findTransformersForNorth(northId: string): Array<NorthTransformerWithOptions> {
-    const query = `SELECT t.id, t.type, nt.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, t.timeout, nt.options, nt.south_id, nt.id as ntId FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id WHERE nt.north_id = ?;`;
+    const query = `SELECT t.id, t.type, nt.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, t.timeout, nt.options, nt.south_id, nt.group_id, sig.name as group_name, nt.id as ntId FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id LEFT JOIN ${SOUTH_ITEM_GROUPS_TABLE} sig ON nt.group_id = sig.id WHERE nt.north_id = ?;`;
     const result = this.database.prepare(query).all(northId) as Array<Record<string, string>>;
     return result.map(element => ({
       id: element.ntId,
@@ -254,8 +257,13 @@ export default class NorthConnectorRepository {
       options: JSON.parse(element.options),
       inputType: element.input_type,
       south: element.south_id ? this.findSouth(element.south_id) : undefined,
-      items: element.south_id ? this.findSouthItems(element.ntId) : []
+      group: element.group_id ? this.findGroup(element.group_id, element.group_name) : undefined,
+      items: element.south_id && !element.group_id ? this.findSouthItems(element.ntId) : []
     }));
+  }
+
+  private findGroup(groupId: string, groupName: string): SouthItemGroupEntityLight {
+    return { id: groupId, name: groupName };
   }
 
   private findScanModeForNorth(scanModeId: string): ScanMode {
