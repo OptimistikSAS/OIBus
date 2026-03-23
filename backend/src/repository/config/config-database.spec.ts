@@ -1912,6 +1912,7 @@ describe('Repository with populated database', () => {
         transformer: testData.transformers.list[0] as Transformer,
         options: {},
         south: undefined,
+        group: undefined,
         items: []
       });
       const createdConnectorWithTransformer = repository.findNorthById('newIdWithoutTransformer')!;
@@ -1921,6 +1922,50 @@ describe('Repository with populated database', () => {
       repository.removeTransformer('newId');
       const createdConnectorWithRemovedTransformer = repository.findNorthById('newIdWithoutTransformer')!;
       expect(createdConnectorWithRemovedTransformer.transformers).toEqual([]);
+    });
+
+    it('should save a north connector transformer with a group', () => {
+      const groupRepository = new SouthItemGroupRepository(database);
+      (generateRandomId as jest.Mock)
+        .mockReturnValueOnce('groupForTransformerId')
+        .mockReturnValueOnce('northWithGroupId')
+        .mockReturnValueOnce('transformerWithGroupId');
+
+      const group = groupRepository.create({
+        name: 'Transformer Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      });
+
+      const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
+      newNorthConnector.id = '';
+      newNorthConnector.name = 'north with group transformer';
+      newNorthConnector.transformers = [];
+      repository.saveNorth(newNorthConnector);
+
+      repository.addOrEditTransformer(newNorthConnector.id, {
+        id: '',
+        inputType: 'input',
+        transformer: testData.transformers.list[0] as Transformer,
+        options: {},
+        south: {
+          id: testData.south.list[0].id,
+          name: testData.south.list[0].name,
+          type: testData.south.list[0].type,
+          description: testData.south.list[0].description,
+          enabled: testData.south.list[0].enabled
+        },
+        group: { id: group.id, name: group.name },
+        items: []
+      });
+
+      const connector = repository.findNorthById(newNorthConnector.id)!;
+      expect(connector.transformers.length).toEqual(1);
+      expect(connector.transformers[0].group).toEqual({ id: group.id, name: group.name });
+      expect(connector.transformers[0].items).toEqual([]);
     });
 
     it('should remove all transformers for a north connector by transformer id', () => {
@@ -1940,6 +1985,7 @@ describe('Repository with populated database', () => {
         transformer: testData.transformers.list[0] as Transformer,
         options: {},
         south: undefined,
+        group: undefined,
         items: []
       });
       const connectorWithTransformer = repository.findNorthById('newIdWithoutTransformer2')!;
