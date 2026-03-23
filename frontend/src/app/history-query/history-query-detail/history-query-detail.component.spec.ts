@@ -64,8 +64,12 @@ describe('HistoryQueryDetailComponent', () => {
     status: 'PENDING',
     southType: 'opcua',
     northType: 'console',
-    startTime: '2023-01-01T00:00:00.000Z',
-    endTime: '2023-01-01T00:00:00.000Z',
+    queryTimeRange: {
+      startTime: testData.constants.dates.DATE_1,
+      endTime: testData.constants.dates.DATE_2,
+      maxReadInterval: 3600,
+      readDelay: 200
+    },
     southSettings: {
       throttling: {
         maxInstantPerItem: false,

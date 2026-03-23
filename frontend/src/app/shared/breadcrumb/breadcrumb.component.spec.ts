@@ -86,8 +86,12 @@ describe('BreadcrumbComponent', () => {
     southType: 'mqtt',
     northSettings: {},
     southSettings: {},
-    startTime: '2024-01-01T00:00:00Z',
-    endTime: '2024-01-02T00:00:00Z',
+    queryTimeRange: {
+      startTime: '2024-01-01T00:00:00Z',
+      endTime: '2024-01-02T00:00:00Z',
+      maxReadInterval: 3600,
+      readDelay: 200
+    },
     caching: {
       trigger: {
         scanMode: { id: 'scan-mode-1', name: 'scan-mode-1' },
