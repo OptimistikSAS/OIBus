@@ -177,14 +177,17 @@ export class NorthTransformersComponent {
   }
 
   formatTransformerWithSouth(transformer: TransformerDTOWithOptions) {
+    const southLabel = `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)})`;
     const numberOfItems = transformer.items.length;
 
-    if (numberOfItems === 1) {
-      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.one-item-selected')}]`;
+    if (transformer.group) {
+      return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.group-selected', { groupName: transformer.group.name })}]`;
+    } else if (numberOfItems === 1) {
+      return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.one-item-selected')}]`;
     } else if (numberOfItems > 1) {
-      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', { numberOfItems })}]`;
+      return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', { numberOfItems })}]`;
     } else {
-      return `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)}) [${this.translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
+      return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
     }
   }
 }

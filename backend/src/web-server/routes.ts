@@ -3478,6 +3478,7 @@ const models: TsoaRoute.Models = {
             "inputType": {"dataType":"string","required":true},
             "transformerId": {"dataType":"string","required":true},
             "southId": {"dataType":"string"},
+            "groupId": {"dataType":"string"},
             "items": {"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},
             "options": {"ref":"Record_string.unknown_","required":true},
         },
@@ -4019,7 +4020,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Pick_TransformerIdWithOptions.Exclude_keyofTransformerIdWithOptions.southId__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"string","required":true},"inputType":{"dataType":"string","required":true},"transformerId":{"dataType":"string","required":true},"items":{"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},"options":{"ref":"Record_string.unknown_","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"string","required":true},"inputType":{"dataType":"string","required":true},"transformerId":{"dataType":"string","required":true},"groupId":{"dataType":"string"},"items":{"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},"options":{"ref":"Record_string.unknown_","required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Omit_TransformerIdWithOptions.southId_": {
@@ -4861,6 +4862,17 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "GroupLightDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "id": {"dataType":"string","required":true},
+            "creationDate": {"ref":"Instant"},
+            "lastEditInstant": {"ref":"Instant"},
+            "name": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TransformerDTOWithOptions": {
         "dataType": "refObject",
         "properties": {
@@ -4869,6 +4881,7 @@ const models: TsoaRoute.Models = {
             "transformer": {"ref":"TransformerDTO","required":true},
             "options": {"ref":"Record_string.unknown_","required":true},
             "south": {"ref":"SouthConnectorLightDTO"},
+            "group": {"ref":"GroupLightDTO"},
             "items": {"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},
         },
         "additionalProperties": false,
@@ -5170,7 +5183,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Pick_TransformerDTOWithOptions.Exclude_keyofTransformerDTOWithOptions.south__": {
         "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"string","required":true},"inputType":{"dataType":"string","required":true},"items":{"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},"options":{"ref":"Record_string.unknown_","required":true},"transformer":{"ref":"TransformerDTO","required":true}},"validators":{}},
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"id":{"dataType":"string","required":true},"inputType":{"dataType":"string","required":true},"items":{"dataType":"array","array":{"dataType":"refObject","ref":"ItemLightDTO"},"required":true},"options":{"ref":"Record_string.unknown_","required":true},"transformer":{"ref":"TransformerDTO","required":true},"group":{"ref":"GroupLightDTO"}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "Omit_TransformerDTOWithOptions.south_": {

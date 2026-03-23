@@ -17,7 +17,8 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
-import { ItemLightDTO, SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { GroupLightDTO, ItemLightDTO, SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 import { getAssociatedInputType } from '../../../shared/utils/utils';
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -82,12 +83,14 @@ export class EditNorthTransformerModalComponent {
   existingTransformerWithOptions: TransformerDTOWithOptions | null = null;
   inputTypes = INPUT_TYPES;
   selectedItems: Array<ItemLightDTO> = [];
-  selectAllItems = true;
+  selectionType: 'all' | 'group' | 'items' = 'all';
   searchResults: Array<ItemLightDTO> = [];
   filteredItems: Array<ItemLightDTO> = [];
   totalSearchResults = 0;
   itemSearchText = '';
   searchInteracted = false;
+  availableGroups: Array<SouthItemGroupDTO> = [];
+  selectedGroup: GroupLightDTO | null = null;
 
   filterItems() {
     const southId = this.form.controls.source.value.south?.id;
@@ -157,7 +160,14 @@ export class EditNorthTransformerModalComponent {
     this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
     this.selectedItems = transformerWithOptionsToEdit.items;
-    this.selectAllItems = transformerWithOptionsToEdit.items.length === 0;
+    if (transformerWithOptionsToEdit.group) {
+      this.selectionType = 'group';
+      this.selectedGroup = transformerWithOptionsToEdit.group;
+    } else if (transformerWithOptionsToEdit.items.length > 0) {
+      this.selectionType = 'items';
+    } else {
+      this.selectionType = 'all';
+    }
 
     const sourceValue = {
       inputType: transformerWithOptionsToEdit.inputType,
@@ -178,9 +188,12 @@ export class EditNorthTransformerModalComponent {
     );
     this.form.controls.source.disable({ emitEvent: false });
 
-    // Pre-load items if editing with a south connector
+    // Pre-load items and groups if editing with a south connector
     if (sourceValue.south) {
       this.filterItems();
+      this.southConnectorService.getGroups(sourceValue.south.id).subscribe(groups => {
+        this.availableGroups = groups;
+      });
     }
   }
 
@@ -191,9 +204,14 @@ export class EditNorthTransformerModalComponent {
         options: {}
       });
       this.updateSelectableOutput(source);
-      // Pre-load items when a south connector is selected
+      this.selectionType = 'all';
+      this.selectedGroup = null;
+      this.availableGroups = [];
       if (source.south) {
         this.filterItems();
+        this.southConnectorService.getGroups(source.south.id).subscribe(groups => {
+          this.availableGroups = groups;
+        });
       } else {
         this.filteredItems = [];
         this.searchResults = [];
@@ -253,7 +271,9 @@ export class EditNorthTransformerModalComponent {
       options: this.form.value.options,
       south: south,
       inputType: inputType,
-      items: this.selectAllItems ? [] : this.selectedItems
+      group:
+        this.selectionType === 'group' && this.selectedGroup ? { id: this.selectedGroup.id, name: this.selectedGroup.name } : undefined,
+      items: this.selectionType === 'items' ? this.selectedItems.map(item => ({ id: item.id, name: item.name })) : []
     });
   }
 
@@ -273,6 +293,10 @@ export class EditNorthTransformerModalComponent {
 
   compareTransformers(t1: TransformerDTO | null, t2: TransformerDTO | null): boolean {
     return t1 && t2 ? t1.id === t2.id : t1 === t2;
+  }
+
+  compareGroups(g1: GroupLightDTO | null, g2: GroupLightDTO | null): boolean {
+    return g1 && g2 ? g1.id === g2.id : g1 === g2;
   }
 
   private updateSelectableOutput(source: { inputType: InputType | null; south: SouthConnectorLightDTO | null }) {
@@ -316,13 +340,20 @@ export class EditNorthTransformerModalComponent {
     this.selectedItems = this.selectedItems.filter(item => item.id !== itemToRemove.id);
   }
 
-  toggleItemSelection(selectAll: boolean) {
-    this.selectAllItems = selectAll;
-    if (selectAll) {
+  setSelectionType(type: 'all' | 'group' | 'items') {
+    this.selectionType = type;
+    if (type !== 'items') {
       this.selectedItems = [];
+      this.searchInteracted = false;
+      this.searchResults = [];
+      this.filteredItems = [];
+      this.totalSearchResults = 0;
+    } else {
+      this.filterItems();
     }
-    // Reset search interaction flag when toggling
-    this.searchInteracted = false;
+    if (type !== 'group') {
+      this.selectedGroup = null;
+    }
   }
 
   selectAllResults() {

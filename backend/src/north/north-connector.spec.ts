@@ -591,6 +591,58 @@ describe('NorthConnector', () => {
     ).toEqual(north['connector'].transformers[0]);
   });
 
+  it('should find transformer from south metadata at group level', () => {
+    north['connector'].transformers[0].items = [];
+    north['connector'].transformers[0].group = { id: 'groupId1', name: 'Group 1' };
+    north['connector'].transformers[0].south = {
+      id: testData.south.list[0].id,
+      name: testData.south.list[0].name,
+      type: testData.south.list[0].type,
+      description: testData.south.list[0].description,
+      enabled: testData.south.list[0].enabled
+    };
+
+    const itemWithMatchingGroup = {
+      ...testData.south.list[0].items[0],
+      group: {
+        id: 'groupId1',
+        name: 'Group 1',
+        southId: 'southId1',
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: null
+      }
+    };
+
+    expect(
+      north['findTransformer'](
+        { type: 'time-values' } as OIBusContent,
+        { source: 'south', southId: 'southId1', items: [itemWithMatchingGroup] } as CacheMetadataSource
+      )
+    ).toEqual(north['connector'].transformers[0]);
+
+    // Item with non-matching group should not select the group-level transformer
+    const itemWithDifferentGroup = {
+      ...testData.south.list[0].items[0],
+      group: {
+        id: 'groupId2',
+        name: 'Group 2',
+        southId: 'southId1',
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: null
+      }
+    };
+    expect(
+      north['findTransformer'](
+        { type: 'time-values' } as OIBusContent,
+        { source: 'south', southId: 'southId1', items: [itemWithDifferentGroup] } as CacheMetadataSource
+      )
+    ).not.toEqual(north['connector'].transformers[0]);
+  });
+
   it('should handle no transformer when not supporting type', async () => {
     north['cacheWithoutTransformAndTrigger'] = jest.fn();
     await north['handleNoTransformer']({ type: 'bad' } as unknown as OIBusContent);

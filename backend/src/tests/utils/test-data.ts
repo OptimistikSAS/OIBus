@@ -757,6 +757,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
           description: southConnectors[0].description,
           enabled: southConnectors[0].enabled
         },
+        group: undefined,
         items: [
           {
             id: southConnectors[0].items[0].id,
@@ -770,6 +771,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         options: {},
         inputType: transformers[1].inputType,
         south: undefined,
+        group: undefined,
         items: []
       },
       {
@@ -784,6 +786,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
           description: southConnectors[1].description,
           enabled: southConnectors[1].enabled
         },
+        group: undefined,
         items: []
       }
     ]
