@@ -14,6 +14,10 @@ export interface SouthConnectorItemEntityLight extends BaseEntity {
   name: string;
 }
 
+export interface SouthItemGroupEntityLight extends BaseEntity {
+  name: string;
+}
+
 export interface SouthItemGroupEntity extends BaseEntity {
   name: string;
   southId: string;

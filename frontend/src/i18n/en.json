@@ -1328,7 +1328,11 @@
                 "date-time": "Date Time"
               }
             }
-          }
+          },
+          "by-group": "By group",
+          "select-group": "Select a group...",
+          "no-groups": "No groups available",
+          "group-selected": "Group: {{ groupName }}"
         },
         "south": {
           "tooltips": {

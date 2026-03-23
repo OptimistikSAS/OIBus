@@ -1,7 +1,7 @@
 import { BaseEntity } from './types';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { TransformerLanguage } from '../../shared/model/transformer.model';
-import { SouthConnectorEntityLight, SouthConnectorItemEntityLight } from './south-connector.model';
+import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntityLight } from './south-connector.model';
 
 export interface BaseTransformer {
   id: string;
@@ -31,6 +31,7 @@ export interface NorthTransformerWithOptions {
   id: string;
   transformer: Transformer;
   south: SouthConnectorEntityLight | undefined;
+  group: SouthItemGroupEntityLight | undefined;
   items: Array<SouthConnectorItemEntityLight>;
   options: Record<string, unknown>;
   inputType: string;

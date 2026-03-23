@@ -324,12 +324,28 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         );
       });
 
+      // then check input type, south and group
+      if (!transformerWithOptions) {
+        transformerWithOptions = this.connector.transformers.find(element => {
+          return (
+            element.inputType &&
+            element.south &&
+            element.group &&
+            !element.items.length &&
+            element.inputType === data.type &&
+            element.south.id === metadataSource.southId &&
+            metadataSource.items.some(item => 'group' in item && (item as { group: { id: string } | null }).group?.id === element.group!.id)
+          );
+        });
+      }
+
       // then check input type and south
       if (!transformerWithOptions) {
         transformerWithOptions = this.connector.transformers.find(element => {
           return (
             element.inputType &&
             element.south &&
+            !element.group &&
             !element.items.length &&
             element.inputType === data.type &&
             element.south.id === metadataSource.southId
