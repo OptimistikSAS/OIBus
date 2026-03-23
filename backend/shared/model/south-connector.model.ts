@@ -292,6 +292,15 @@ export interface ItemLightDTO extends BaseEntity {
   name: string;
 }
 
+export interface GroupLightDTO extends BaseEntity {
+  /**
+   * The name of the group.
+   *
+   * @example "Production Line A"
+   */
+  name: string;
+}
+
 /**
  * Data Transfer Object for a South item group.
  * Represents a group of items that can share common settings.

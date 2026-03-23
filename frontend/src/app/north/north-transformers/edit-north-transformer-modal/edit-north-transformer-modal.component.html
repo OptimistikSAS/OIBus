@@ -58,24 +58,64 @@
       @if (form.controls.source.value.south) {
         <div class="row">
           <div class="col">
-            <label for="items" class="col-auto col-form-label" translate="configuration.oibus.manifest.transformers.items"></label>
-            <div class="form-check form-switch mb-2">
-              <input
-                type="checkbox"
-                class="form-check-input"
-                [checked]="selectAllItems"
-                (change)="toggleItemSelection($any($event.target).checked)"
-                id="selectAllToggle"
-              />
-              <label class="form-check-label" for="selectAllToggle">
-                @if (selectAllItems) {
-                  <span translate="configuration.oibus.manifest.transformers.all-items"></span>
-                } @else {
-                  <span translate="configuration.oibus.manifest.transformers.specific-items"></span>
-                }
-              </label>
+            <label class="col-auto col-form-label" translate="configuration.oibus.manifest.transformers.items"></label>
+            <div class="d-flex gap-3 mb-2">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  id="selectionAll"
+                  [checked]="selectionType === 'all'"
+                  (change)="setSelectionType('all')"
+                />
+                <label class="form-check-label" for="selectionAll" translate="configuration.oibus.manifest.transformers.all-items"></label>
+              </div>
+              @if (availableGroups.length > 0) {
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    id="selectionGroup"
+                    [checked]="selectionType === 'group'"
+                    (change)="setSelectionType('group')"
+                  />
+                  <label
+                    class="form-check-label"
+                    for="selectionGroup"
+                    translate="configuration.oibus.manifest.transformers.by-group"
+                  ></label>
+                </div>
+              }
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="radio"
+                  id="selectionItems"
+                  [checked]="selectionType === 'items'"
+                  (change)="setSelectionType('items')"
+                />
+                <label
+                  class="form-check-label"
+                  for="selectionItems"
+                  translate="configuration.oibus.manifest.transformers.specific-items"
+                ></label>
+              </div>
             </div>
-            @if (!selectAllItems) {
+            @if (selectionType === 'group') {
+              <select
+                class="form-select mb-2"
+                id="group"
+                [(ngModel)]="selectedGroup"
+                [ngModelOptions]="{ standalone: true }"
+                [compareWith]="compareGroups"
+              >
+                <option [ngValue]="null" translate="configuration.oibus.manifest.transformers.select-group"></option>
+                @for (group of availableGroups; track group.id) {
+                  <option [ngValue]="group">{{ group.name }}</option>
+                }
+              </select>
+            }
+            @if (selectionType === 'items') {
               @if (searchInteracted && (totalSearchResults > 0 || selectedItems.length > 0)) {
                 <div class="mb-2 d-flex align-items-center gap-2">
                   @if (totalSearchResults > 0) {

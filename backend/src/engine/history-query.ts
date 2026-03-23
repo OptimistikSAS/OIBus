@@ -195,6 +195,7 @@ export default class HistoryQuery {
         options: element.options,
         inputType: element.inputType,
         south: undefined,
+        group: undefined,
         items: element.items
       }))
     };
