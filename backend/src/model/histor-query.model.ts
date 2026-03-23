@@ -1,5 +1,5 @@
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
-import { BaseEntity } from './types';
+import { BaseEntity, Instant } from './types';
 import { HistoryQueryStatus } from '../../shared/model/history-query.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
@@ -11,8 +11,8 @@ export interface HistoryQueryEntityLight extends BaseEntity {
   name: string;
   description: string;
   status: HistoryQueryStatus;
-  startTime: string;
-  endTime: string;
+  startTime: Instant;
+  endTime: Instant;
   southType: OIBusSouthType;
   northType: OIBusNorthType;
 }
@@ -21,16 +21,16 @@ export interface HistoryQueryEntity<S extends SouthSettings, N extends NorthSett
   name: string;
   description: string;
   status: HistoryQueryStatus;
-  startTime: string;
-  endTime: string;
   southType: OIBusSouthType;
-  northType: OIBusNorthType;
   southSettings: S;
-  northSettings: N;
-  throttling: {
+  queryTimeRange: {
+    startTime: Instant;
+    endTime: Instant;
     maxReadInterval: number;
     readDelay: number;
   };
+  northType: OIBusNorthType;
+  northSettings: N;
   caching: {
     trigger: {
       scanMode: ScanMode;

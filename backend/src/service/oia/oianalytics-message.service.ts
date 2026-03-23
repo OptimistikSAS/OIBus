@@ -265,12 +265,16 @@ export default class OIAnalyticsMessageService {
             name: historyQuery.name,
             description: historyQuery.description,
             status: historyQuery.status,
-            startTime: historyQuery.startTime,
-            endTime: historyQuery.endTime,
             southType: historyQuery.southType,
+            southSettings: encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
+            queryTimeRange: {
+              startTime: historyQuery.queryTimeRange.startTime,
+              endTime: historyQuery.queryTimeRange.endTime,
+              maxReadInterval: historyQuery.queryTimeRange.maxReadInterval,
+              readDelay: historyQuery.queryTimeRange.readDelay
+            },
             northType: historyQuery.northType,
             northSettings: encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings),
-            southSettings: encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings),
             caching: {
               trigger: {
                 scanModeId: historyQuery.caching.trigger.scanMode.id,

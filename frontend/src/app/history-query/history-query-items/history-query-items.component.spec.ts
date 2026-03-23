@@ -23,8 +23,12 @@ const testHistoryQuery: HistoryQueryDTO = {
   status: 'PENDING',
   southType: 'opcua',
   northType: 'file-writer',
-  startTime: '2023-01-01T00:00:00.000Z',
-  endTime: '2023-01-01T00:00:00.000Z',
+  queryTimeRange: {
+    startTime: testData.constants.dates.DATE_1,
+    endTime: testData.constants.dates.DATE_2,
+    maxReadInterval: 3600,
+    readDelay: 200
+  },
   southSettings: {
     throttling: {
       maxInstantPerItem: false,
@@ -267,7 +271,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
   });
 
   it('should delete one item', () => {
-    // mock API response to delete first item
+    // mock API response to delete the first item
     historyQueryService.findById.and.returnValue(of({ ...testHistoryQuery, items: testHistoryQuery.items.slice(1) }));
 
     tester.southItems[0].button('.delete-south-item')!.click();
@@ -283,7 +287,7 @@ describe('HistoryQueryItemsComponent with saving changes directly', () => {
     tester.sortByNameBtn.click(); // Descending
     expect(tester.tableItemNames).toEqual(['item3', 'item1-copy', 'item1']);
 
-    // mock API response to delete third item
+    // mock API response to delete the third item
     historyQueryService.findById.and.returnValue(
       of({
         ...testHistoryQuery,

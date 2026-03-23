@@ -2558,10 +2558,14 @@
     "description": "Description",
     "status": "Status",
     "interval": "Interval",
+    "query-time-range": {
+      "start": "Start",
+      "end": "End",
+      "max-read-interval": "Max read interval",
+      "read-delay": "Read delay"
+    },
     "started": "History query {{ name }} started",
     "paused": "History query {{ name }} paused",
-    "start": "Start",
-    "end": "End",
     "cache-path-copy": {
       "success": "Cache path copied into clipboard",
       "error": "Error while copying cache path into clipboard"
