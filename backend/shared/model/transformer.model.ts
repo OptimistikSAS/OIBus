@@ -1,5 +1,5 @@
 import { OIBusObjectAttribute } from './form.model';
-import { ItemLightDTO, SouthConnectorLightDTO } from './south-connector.model';
+import { GroupLightDTO, ItemLightDTO, SouthConnectorLightDTO } from './south-connector.model';
 
 export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
 export type InputType = (typeof INPUT_TYPES)[number];
@@ -177,6 +177,11 @@ export interface TransformerDTOWithOptions {
   south?: SouthConnectorLightDTO;
 
   /**
+   * The group associated to the transformer (mutually exclusive with items)
+   */
+  group?: GroupLightDTO;
+
+  /**
    * The list of items associated to the transformer
    */
   items: Array<ItemLightDTO>;
@@ -210,6 +215,12 @@ export interface TransformerIdWithOptions {
    * @example "southId123"
    */
   southId?: string;
+
+  /**
+   * The group associated to the transformer (mutually exclusive with items)
+   * @example "groupId123"
+   */
+  groupId?: string;
 
   /**
    * The list of items associated to the transformer

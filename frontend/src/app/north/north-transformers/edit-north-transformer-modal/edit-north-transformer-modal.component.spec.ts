@@ -137,7 +137,8 @@ describe('EditNorthTransformerModalComponent', () => {
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
-    fakeSouthConnectorService = jasmine.createSpyObj('SouthConnectorService', ['searchItems']);
+    fakeSouthConnectorService = jasmine.createSpyObj('SouthConnectorService', ['searchItems', 'getGroups']);
+    fakeSouthConnectorService.getGroups.and.returnValue(of([]));
 
     TestBed.configureTestingModule({
       providers: [
@@ -202,6 +203,7 @@ describe('EditNorthTransformerModalComponent', () => {
       },
       south: undefined,
       inputType: transformer.inputType,
+      group: undefined,
       items: []
     });
   });
@@ -209,20 +211,20 @@ describe('EditNorthTransformerModalComponent', () => {
   describe('item selection', () => {
     it('should toggle between all items and specific items', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      expect(tester.componentInstance.selectAllItems).toBe(true);
+      expect(tester.componentInstance.selectionType).toBe('all');
       expect(tester.componentInstance.selectedItems).toEqual([]);
 
-      tester.componentInstance.toggleItemSelection(false);
-      expect(tester.componentInstance.selectAllItems).toBe(false);
+      tester.componentInstance.setSelectionType('items');
+      expect(tester.componentInstance.selectionType).toBe('items');
 
-      tester.componentInstance.toggleItemSelection(true);
-      expect(tester.componentInstance.selectAllItems).toBe(true);
+      tester.componentInstance.setSelectionType('all');
+      expect(tester.componentInstance.selectionType).toBe('all');
       expect(tester.componentInstance.selectedItems).toEqual([]);
     });
 
     it('should select all search results and clear them', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      tester.componentInstance.selectAllItems = false;
+      tester.componentInstance.selectionType = 'items';
       tester.componentInstance.searchResults = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' },
@@ -239,7 +241,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
     it('should not add duplicate items when selecting all results', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      tester.componentInstance.selectAllItems = false;
+      tester.componentInstance.selectionType = 'items';
       tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
       tester.componentInstance.searchResults = [
         { id: 'item1', name: 'Item 1' },
@@ -348,7 +350,7 @@ describe('EditNorthTransformerModalComponent', () => {
       tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
       tester.componentInstance.searchInteracted = true;
 
-      tester.componentInstance.toggleItemSelection(true);
+      tester.componentInstance.setSelectionType('all');
 
       expect(tester.componentInstance.searchInteracted).toBe(false);
     });
@@ -380,7 +382,7 @@ describe('EditNorthTransformerModalComponent', () => {
         [transformer],
         ['mqtt']
       );
-      tester.componentInstance.selectAllItems = true;
+      tester.componentInstance.selectionType = 'all';
       tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
       await tester.change();
 
@@ -409,7 +411,7 @@ describe('EditNorthTransformerModalComponent', () => {
         [transformer],
         ['mqtt']
       );
-      tester.componentInstance.selectAllItems = false;
+      tester.componentInstance.selectionType = 'items';
       tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }];
       await tester.change();
 
