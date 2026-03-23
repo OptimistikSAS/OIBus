@@ -78,8 +78,12 @@ describe('EditHistoryQueryComponent', () => {
     name: 'Test',
     description: 'My History query description',
     status: 'PENDING',
-    startTime: '2023-01-01T00:00:00.000Z',
-    endTime: '2023-02-01T00:00:00.000Z',
+    queryTimeRange: {
+      startTime: testData.constants.dates.DATE_1,
+      endTime: testData.constants.dates.DATE_2,
+      maxReadInterval: 3600,
+      readDelay: 200
+    },
     northType: 'console',
     southType: 'mssql',
     northSettings: {
@@ -202,9 +206,9 @@ describe('EditHistoryQueryComponent', () => {
 
   it('should display date range selector', () => {
     expect(tester.dateRangeSelector).toBeDefined();
-    expect(tester.componentInstance.form?.controls.dateRange.value).toEqual({
-      startTime: '2023-01-01T00:00:00.000Z',
-      endTime: '2023-02-01T00:00:00.000Z'
+    expect(tester.componentInstance.form?.controls.queryTimeRange!.controls.dateRange.value).toEqual({
+      startTime: testData.constants.dates.DATE_1,
+      endTime: testData.constants.dates.DATE_2
     });
   });
 
@@ -293,10 +297,10 @@ describe('EditHistoryQueryComponent', () => {
       endTime: '2024-01-01T00:00:00.000Z'
     };
 
-    tester.componentInstance.form?.controls.dateRange.setValue(validDateRange);
+    tester.componentInstance.form?.controls.queryTimeRange!.controls.dateRange.setValue(validDateRange);
     await tester.change();
 
-    expect(tester.componentInstance.form?.controls.dateRange.errors).toBeFalsy();
+    expect(tester.componentInstance.form?.controls.queryTimeRange!.controls.dateRange.errors).toBeFalsy();
   });
 
   it('should save with date range values', () => {
@@ -308,7 +312,11 @@ describe('EditHistoryQueryComponent', () => {
     tester.componentInstance.form?.patchValue({
       name: 'Test Query',
       description: 'Test Description',
-      dateRange: dateRange
+      queryTimeRange: {
+        dateRange: dateRange,
+        maxReadInterval: 3600,
+        readDelay: 200
+      }
     });
 
     historyQueryService.update.and.returnValue(of(undefined));
@@ -322,8 +330,12 @@ describe('EditHistoryQueryComponent', () => {
     expect(historyQueryService.update).toHaveBeenCalledWith(
       'id1',
       jasmine.objectContaining({
-        startTime: dateRange.startTime,
-        endTime: dateRange.endTime
+        queryTimeRange: {
+          startTime: dateRange.startTime,
+          endTime: dateRange.endTime,
+          maxReadInterval: 3600,
+          readDelay: 200
+        }
       }),
       false
     );
@@ -331,26 +343,34 @@ describe('EditHistoryQueryComponent', () => {
 
   it('should convert existing startTime/endTime to DateRange on load', () => {
     const expectedDateRange: DateRange = {
-      startTime: historyQuery.startTime,
-      endTime: historyQuery.endTime
+      startTime: historyQuery.queryTimeRange.startTime,
+      endTime: historyQuery.queryTimeRange.endTime
     };
 
-    expect(tester.componentInstance.form?.controls.dateRange.value).toEqual(expectedDateRange);
+    expect(tester.componentInstance.form?.controls.queryTimeRange.controls.dateRange.value).toEqual(expectedDateRange);
   });
 
   it('should handle form validation correctly', () => {
     tester.componentInstance.form?.patchValue({
       name: '',
-      dateRange: undefined
+      queryTimeRange: {
+        dateRange: undefined,
+        maxReadInterval: 3600,
+        readDelay: 200
+      }
     });
 
     expect(tester.componentInstance.form?.valid).toBeFalsy();
 
     tester.componentInstance.form?.patchValue({
       name: 'Valid Name',
-      dateRange: {
-        startTime: '2023-01-01T00:00:00.000Z',
-        endTime: '2024-01-01T00:00:00.000Z'
+      queryTimeRange: {
+        dateRange: {
+          startTime: '2023-01-01T00:00:00.000Z',
+          endTime: '2024-01-01T00:00:00.000Z'
+        },
+        maxReadInterval: 3600,
+        readDelay: 200
       }
     });
 

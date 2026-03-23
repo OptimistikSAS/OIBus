@@ -32,17 +32,45 @@
                 </div>
               </div>
 
-              <!-- Date Range Selector -->
-              <div class="row">
-                <div class="col-12">
-                  <div class="form-group">
-                    <oib-date-range-selector
-                      formControlName="dateRange"
-                      [startLabel]="'history-query.start'"
-                      [endLabel]="'history-query.end'"
-                      [defaultRange]="'last-day'"
-                    />
-                    <val-errors controlName="dateRange" />
+              <div formGroupName="queryTimeRange">
+                <!-- Date Range Selector -->
+                <div class="row">
+                  <div class="col-6">
+                    <div class="form-group">
+                      <oib-date-range-selector
+                        formControlName="dateRange"
+                        [startLabel]="'history-query.query-time-range.start'"
+                        [endLabel]="'history-query.query-time-range.end'"
+                        [defaultRange]="'last-day'"
+                      />
+                      <val-errors controlName="dateRange" />
+                    </div>
+                  </div>
+                  <!-- Max read interval -->
+                  <div class="col-3">
+                    <div class="form-group">
+                      <label
+                        class="form-label"
+                        for="max-read-interval"
+                        translate="history-query.query-time-range.max-read-interval"
+                      ></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="maxReadInterval" id="max-read-interval" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.s"></span>
+                      </div>
+                      <val-errors controlName="maxReadInterval" />
+                    </div>
+                  </div>
+                  <!-- Read delay -->
+                  <div class="col-3">
+                    <div class="form-group">
+                      <label class="form-label" for="read-delay" translate="history-query.query-time-range.read-delay"></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="readDelay" id="read-delay" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.ms"></span>
+                      </div>
+                      <val-errors controlName="readDelay" />
+                    </div>
                   </div>
                 </div>
               </div>

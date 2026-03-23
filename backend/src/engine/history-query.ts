@@ -70,12 +70,12 @@ export default class HistoryQuery {
               description: '',
               cron: ''
             },
-            maxReadInterval: this.historyConfiguration.throttling.maxReadInterval,
-            readDelay: this.historyConfiguration.throttling.readDelay,
+            maxReadInterval: this.historyConfiguration.queryTimeRange.maxReadInterval,
+            readDelay: this.historyConfiguration.queryTimeRange.readDelay,
             overlap: null
           })),
-        this.historyConfiguration.startTime,
-        this.historyConfiguration.endTime
+        this.historyConfiguration.queryTimeRange.startTime,
+        this.historyConfiguration.queryTimeRange.endTime
       )
         .then(() => {
           this.south!.resolveDeferredPromise();
