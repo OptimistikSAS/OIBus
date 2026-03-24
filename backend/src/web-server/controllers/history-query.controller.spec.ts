@@ -575,17 +575,17 @@ describe('HistoryQueryController', () => {
   it('should import items from CSV', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemsFile = {
-      buffer: Buffer.from(JSON.stringify([testData.historyQueries.itemCommand]))
+      path: 'myFile.json'
     } as Express.Multer.File;
 
     (mockRequest.services!.historyQueryService.importItems as jest.Mock).mockResolvedValue(undefined);
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
 
     await controller.importItems(historyId, itemsFile, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.importItems).toHaveBeenCalledWith(
-      historyId,
-      JSON.parse(itemsFile.buffer.toString('utf8'))
-    );
+    expect(mockRequest.services!.historyQueryService.importItems).toHaveBeenCalledWith(historyId, [
+      { id: '1', name: 'item1', scanModeName: 'scan1' }
+    ]);
   });
 
   it('should throw an error if items file is missing in importItems', async () => {
@@ -594,6 +594,16 @@ describe('HistoryQueryController', () => {
     await expect(controller.importItems(historyId, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow(
       'Missing file "items"'
     );
+  });
+
+  it('should not throw an error if items files unlink fails when importing items', async () => {
+    const itemsFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    (fs.unlink as jest.Mock).mockRejectedValueOnce('unlink error');
+    await expect(controller.importItems('southId', itemsFile, mockRequest as CustomExpressRequest)).resolves.not.toThrow();
   });
 
   it('should add or edit a transformer', async () => {

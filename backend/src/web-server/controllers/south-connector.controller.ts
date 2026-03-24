@@ -451,21 +451,16 @@ export class SouthConnectorController extends Controller {
     }
     try {
       const fileContent = await fs.readFile(itemsFile.path, 'utf8');
-
-      // 2. Parse and map the data exactly as before
       const items: Array<SouthConnectorItemDTO> = JSON.parse(fileContent).map((item: Record<string, string>) => {
         item.scanMode = item.scanModeName;
         delete item.scanModeName;
         return item;
       });
-
-      // 3. Convert to CSV and send the response
       const csv = itemToFlattenedCSV(items, delimiter);
       request.res!.attachment('items.csv');
       request.res!.contentType('text/csv; charset=utf-8');
       request.res!.status(200).send(csv);
     } finally {
-      // 4. Safely delete the temporary uploaded JSON file
       try {
         await fs.unlink(itemsFile.path);
       } catch {
@@ -519,11 +514,8 @@ export class SouthConnectorController extends Controller {
     }
 
     try {
-      // 1. Read both files from the disk
       const itemsToImportContent = await fs.readFile(itemsToImportFile.path, 'utf8');
       const currentItemsContent = await fs.readFile(currentItemsFile.path, 'utf8');
-
-      // 2. Parse and pass the data to your service
       return await southService.checkImportItems(
         southType,
         itemsToImportContent,
@@ -531,7 +523,6 @@ export class SouthConnectorController extends Controller {
         JSON.parse(currentItemsContent) as Array<SouthConnectorItemDTO>
       );
     } finally {
-      // 3. Cleanup BOTH files safely
       try {
         await fs.unlink(itemsToImportFile.path);
       } catch {
@@ -557,10 +548,19 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
-    if (!itemsFile) {
+    if (!itemsFile || !itemsFile.path) {
       throw new OIBusValidationError('Missing file "items"');
     }
-    const items: Array<SouthConnectorItemCommandDTO> = JSON.parse(itemsFile.buffer.toString('utf8'));
-    await southService.importItems(southId, items);
+    try {
+      const fileContent = await fs.readFile(itemsFile.path, 'utf8');
+      const items: Array<SouthConnectorItemCommandDTO> = JSON.parse(fileContent);
+      await southService.importItems(southId, items);
+    } finally {
+      try {
+        await fs.unlink(itemsFile.path);
+      } catch {
+        // catch the error but don't fail the request
+      }
+    }
   }
 }
