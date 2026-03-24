@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.12](https://github.com/OptimistikSAS/OIBus/compare/v3.7.11...v3.7.12) (2026-03-24)
+
+
+### Bug Fixes
+
+* **web-server:** fixed items upload ([56428bb](https://github.com/OptimistikSAS/OIBus/commit/56428bb05d9cd109d978b2090399361ae6823092))
+
 ## [3.7.11](https://github.com/OptimistikSAS/OIBus/compare/v3.7.10...v3.7.11) (2026-03-19)
 
 
