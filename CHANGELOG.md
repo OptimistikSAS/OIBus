@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.13](https://github.com/OptimistikSAS/OIBus/compare/v3.7.12...v3.7.13) (2026-03-24)
+
+
+### Bug Fixes
+
+* **web-server:** fixed items upload for south and history ([14a5570](https://github.com/OptimistikSAS/OIBus/commit/14a55701720ca575a6c426965432fa45b240332f))
+
 ## [3.7.12](https://github.com/OptimistikSAS/OIBus/compare/v3.7.11...v3.7.12) (2026-03-24)
 
 
