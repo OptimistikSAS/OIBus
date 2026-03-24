@@ -2,6 +2,7 @@ import { Body, Controller, Post, Query, Request, Route, SuccessResponse, Tags, U
 import { OIBusSetpointContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import fs from 'node:fs/promises';
+import { OIBusValidationError } from '../../model/types';
 
 @Route('/api/content')
 @Tags('Content')
@@ -22,6 +23,9 @@ export class ContentController extends Controller {
     @UploadedFile() file: Express.Multer.File,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
+    if (!file || !file.path) {
+      throw new OIBusValidationError('Missing file');
+    }
     const oIBusService = request.services.oIBusService;
     try {
       const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
@@ -30,12 +34,10 @@ export class ContentController extends Controller {
       }
     } finally {
       // Cleanup: This block runs NO MATTER WHAT (success or failure)
-      if (file && file.path) {
-        try {
-          await fs.unlink(file.path);
-        } catch {
-          // catch the error but don't fail the request
-        }
+      try {
+        await fs.unlink(file.path);
+      } catch {
+        // catch the error but don't fail the request
       }
     }
   }

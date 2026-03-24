@@ -34,6 +34,7 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import ScanModeService from '../../service/scan-mode.service';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
+import fs from 'node:fs/promises';
 
 /**
  * @interface SouthItemTestRequest
@@ -445,15 +446,32 @@ export class SouthConnectorController extends Controller {
     @UploadedFile('items') itemsFile: Express.Multer.File,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
-    const items: Array<SouthConnectorItemDTO> = JSON.parse(itemsFile.buffer.toString('utf8')).map((item: Record<string, string>) => {
-      item.scanMode = item.scanModeName;
-      delete item.scanModeName;
-      return item;
-    });
-    const csv = itemToFlattenedCSV(items, delimiter);
-    request.res!.attachment('items.csv');
-    request.res!.contentType('text/csv; charset=utf-8');
-    request.res!.status(200).send(csv);
+    if (!itemsFile || !itemsFile.path) {
+      throw new OIBusValidationError('Missing "items" file');
+    }
+    try {
+      const fileContent = await fs.readFile(itemsFile.path, 'utf8');
+
+      // 2. Parse and map the data exactly as before
+      const items: Array<SouthConnectorItemDTO> = JSON.parse(fileContent).map((item: Record<string, string>) => {
+        item.scanMode = item.scanModeName;
+        delete item.scanModeName;
+        return item;
+      });
+
+      // 3. Convert to CSV and send the response
+      const csv = itemToFlattenedCSV(items, delimiter);
+      request.res!.attachment('items.csv');
+      request.res!.contentType('text/csv; charset=utf-8');
+      request.res!.status(200).send(csv);
+    } finally {
+      // 4. Safely delete the temporary uploaded JSON file
+      try {
+        await fs.unlink(itemsFile.path);
+      } catch {
+        // catch the error but don't fail the request
+      }
+    }
   }
 
   /**
@@ -495,15 +513,36 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<SouthCsvImportResponse> {
     const southService = request.services.southService as SouthService;
-    if (!itemsToImportFile || !currentItemsFile) {
+
+    if (!itemsToImportFile || !currentItemsFile || !itemsToImportFile.path || !currentItemsFile.path) {
       throw new OIBusValidationError('Missing "itemsToImport" or "currentItems"');
     }
-    return southService.checkImportItems(
-      southType,
-      itemsToImportFile.buffer.toString('utf8'),
-      delimiter,
-      JSON.parse(currentItemsFile.buffer.toString('utf8')) as Array<SouthConnectorItemDTO>
-    );
+
+    try {
+      // 1. Read both files from the disk
+      const itemsToImportContent = await fs.readFile(itemsToImportFile.path, 'utf8');
+      const currentItemsContent = await fs.readFile(currentItemsFile.path, 'utf8');
+
+      // 2. Parse and pass the data to your service
+      return await southService.checkImportItems(
+        southType,
+        itemsToImportContent,
+        delimiter,
+        JSON.parse(currentItemsContent) as Array<SouthConnectorItemDTO>
+      );
+    } finally {
+      // 3. Cleanup BOTH files safely
+      try {
+        await fs.unlink(itemsToImportFile.path);
+      } catch {
+        // catch the error but don't fail the request
+      }
+      try {
+        await fs.unlink(currentItemsFile.path);
+      } catch {
+        // catch the error but don't fail the request
+      }
+    }
   }
 
   /**

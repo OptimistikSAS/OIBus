@@ -67,4 +67,10 @@ describe('ContentController', () => {
     );
     expect(fs.unlink).toHaveBeenCalledWith('filePath');
   });
+
+  it('should throw an error if file is missing', async () => {
+    const northId = 'northId1';
+
+    await expect(controller.addFile(northId, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow('Missing file');
+  });
 });
