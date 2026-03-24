@@ -7,6 +7,7 @@ import { CacheMetadata, OIBusContent } from '../../../shared/model/engine.model'
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { OIBusTestingError } from '../../model/types';
 import { SouthSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
+import fs from 'node:fs/promises';
 
 interface HistorySouthItemTestRequest {
   southSettings: SouthSettings;
@@ -19,6 +20,7 @@ interface HistorySouthItemTestRequest {
   };
 }
 
+jest.mock('node:fs/promises');
 // Mock the services
 jest.mock('../../service/history-query.service', () => ({
   toHistoryQueryDTO: jest.fn().mockImplementation(query => query),
@@ -465,15 +467,40 @@ describe('HistoryQueryController', () => {
     const southType = testData.historyQueries.list[0].southType;
     const delimiter = ',';
     const itemsFile = {
-      buffer: Buffer.from(JSON.stringify([{ id: '1', name: 'item1' }]))
+      path: 'myFile.csv'
     } as Express.Multer.File;
+
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
 
     await controller.itemsToCsv(southType, delimiter, itemsFile, mockRequest as CustomExpressRequest);
 
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv', 'utf8');
     expect(mockRequest.res!.attachment).toHaveBeenCalledWith('items.csv');
     expect(mockRequest.res!.contentType).toHaveBeenCalledWith('text/csv; charset=utf-8');
     expect(mockRequest.res!.status).toHaveBeenCalledWith(200);
     expect(mockRequest.res!.send).toHaveBeenCalledWith('csv content');
+    expect(fs.unlink).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not throw an error if items files unlink fails', async () => {
+    const southType = testData.south.manifest.id;
+    const delimiter = ',';
+    const itemsFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    (fs.unlink as jest.Mock).mockRejectedValueOnce('unlink error');
+    await expect(controller.itemsToCsv(southType, delimiter, itemsFile, mockRequest as CustomExpressRequest)).resolves.not.toThrow();
+  });
+
+  it('should throw an error if items files is missing', async () => {
+    const southType = testData.south.manifest.id;
+    const delimiter = ',';
+
+    await expect(controller.itemsToCsv(southType, delimiter, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow(
+      'Missing "items" file'
+    );
   });
 
   it('should export items to CSV', async () => {
@@ -496,11 +523,15 @@ describe('HistoryQueryController', () => {
     const southType = testData.historyQueries.list[0].southType;
     const delimiter = ',';
     const itemsToImportFile = {
-      buffer: Buffer.from('id,name\n1,item1')
+      path: 'myFile.csv'
     } as Express.Multer.File;
     const currentItemsFile = {
-      buffer: Buffer.from(JSON.stringify([{ id: '1', name: 'item1' }]))
+      path: 'myFile.json'
     } as Express.Multer.File;
+
+    const csvContent = 'id,name\n1,item1';
+    const jsonContent = JSON.stringify([{ id: '1', name: 'item1' }]);
+    (fs.readFile as jest.Mock).mockReturnValueOnce(csvContent).mockReturnValueOnce(jsonContent);
 
     const mockResult = {
       items: [testData.historyQueries.itemCommand],
@@ -517,13 +548,16 @@ describe('HistoryQueryController', () => {
       mockRequest as CustomExpressRequest
     );
 
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv', 'utf8');
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.json', 'utf8');
     expect(mockRequest.services!.historyQueryService.checkImportItems).toHaveBeenCalledWith(
       southType,
-      itemsToImportFile.buffer.toString('utf8'),
+      csvContent,
       delimiter,
-      JSON.parse(currentItemsFile.buffer.toString('utf8'))
+      JSON.parse(jsonContent)
     );
     expect(result).toEqual(mockResult);
+    expect(fs.unlink).toHaveBeenCalledTimes(2);
   });
 
   it('should throw an error if itemsToImport or currentItems files are missing in checkImportItems', async () => {

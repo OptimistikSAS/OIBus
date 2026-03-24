@@ -33,6 +33,7 @@ import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
 import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
+import fs from 'node:fs/promises';
 
 /**
  * @interface HistorySouthItemTestRequest
@@ -450,11 +451,29 @@ export class HistoryQueryController extends Controller {
     @UploadedFile('items') itemsFile: Express.Multer.File,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
-    const items: Array<HistoryQueryItemDTO> = JSON.parse(itemsFile.buffer.toString('utf8'));
-    const csv = itemToFlattenedCSV(items, delimiter);
-    request.res!.attachment('items.csv');
-    request.res!.contentType('text/csv; charset=utf-8');
-    request.res!.status(200).send(csv);
+    if (!itemsFile || !itemsFile.path) {
+      throw new OIBusValidationError('Missing "items" file');
+    }
+    try {
+      // 1. Read the file content from disk instead of memory buffer
+      const fileContent = await fs.readFile(itemsFile.path, 'utf8');
+
+      // 2. Parse the JSON content
+      const items: Array<HistoryQueryItemDTO> = JSON.parse(fileContent);
+
+      // 3. Convert to CSV and send the response
+      const csv = itemToFlattenedCSV(items, delimiter);
+      request.res!.attachment('items.csv');
+      request.res!.contentType('text/csv; charset=utf-8');
+      request.res!.status(200).send(csv);
+    } finally {
+      // 4. Safely delete the temporary uploaded file
+      try {
+        await fs.unlink(itemsFile.path);
+      } catch {
+        // catch the error but don't fail the request
+      }
+    }
   }
 
   /**
@@ -494,15 +513,37 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<HistoryCsvImportResponse> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    if (!itemsToImportFile || !currentItemsFile) {
+
+    if (!itemsToImportFile || !currentItemsFile || !itemsToImportFile.path || !currentItemsFile.path) {
       throw new OIBusValidationError('Missing "itemsToImport" or "currentItems"');
     }
-    return historyQueryService.checkImportItems(
-      southType,
-      itemsToImportFile.buffer.toString('utf8'),
-      delimiter,
-      JSON.parse(currentItemsFile.buffer.toString('utf8')) as Array<HistoryQueryItemDTO>
-    );
+
+    try {
+      // 1. Read both files from the disk
+      const itemsToImportContent = await fs.readFile(itemsToImportFile.path, 'utf8');
+      const currentItemsContent = await fs.readFile(currentItemsFile.path, 'utf8');
+
+      // 2. Await the service result to ensure processing completes before cleanup
+      return await historyQueryService.checkImportItems(
+        southType,
+        itemsToImportContent,
+        delimiter,
+        JSON.parse(currentItemsContent) as Array<HistoryQueryItemDTO>
+      );
+    } finally {
+      // 3. Cleanup BOTH files safely
+      try {
+        await fs.unlink(itemsToImportFile.path);
+      } catch {
+        // catch the error but don't fail the request
+      }
+
+      try {
+        await fs.unlink(currentItemsFile.path);
+      } catch {
+        // catch the error but don't fail the request
+      }
+    }
   }
 
   /**
