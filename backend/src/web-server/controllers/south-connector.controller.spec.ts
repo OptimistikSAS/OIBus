@@ -537,19 +537,32 @@ describe('SouthConnectorController', () => {
   it('should import items from CSV', async () => {
     const southId = testData.south.list[0].id;
     const itemsFile = {
-      buffer: Buffer.from(JSON.stringify([{ id: '1', name: 'item1' }]))
+      path: 'myFile.json'
     } as Express.Multer.File;
 
     (mockRequest.services!.southService.importItems as jest.Mock).mockResolvedValue(undefined);
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
 
     await controller.importItems(southId, itemsFile, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.southService.importItems).toHaveBeenCalledWith(southId, JSON.parse(itemsFile.buffer.toString('utf8')));
+    expect(mockRequest.services!.southService.importItems).toHaveBeenCalledWith(southId, [
+      { id: '1', name: 'item1', scanModeName: 'scan1' }
+    ]);
   });
 
   it('should throw an error if items file is missing in importItems', async () => {
     const southId = testData.south.list[0].id;
 
     await expect(controller.importItems(southId, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow('Missing file "items"');
+  });
+
+  it('should not throw an error if items files unlink fails when importing items', async () => {
+    const itemsFile = {
+      path: 'myFile.csv'
+    } as Express.Multer.File;
+
+    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    (fs.unlink as jest.Mock).mockRejectedValueOnce('unlink error');
+    await expect(controller.importItems('southId', itemsFile, mockRequest as CustomExpressRequest)).resolves.not.toThrow();
   });
 });

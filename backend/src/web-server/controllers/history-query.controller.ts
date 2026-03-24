@@ -455,19 +455,14 @@ export class HistoryQueryController extends Controller {
       throw new OIBusValidationError('Missing "items" file');
     }
     try {
-      // 1. Read the file content from disk instead of memory buffer
       const fileContent = await fs.readFile(itemsFile.path, 'utf8');
-
-      // 2. Parse the JSON content
       const items: Array<HistoryQueryItemDTO> = JSON.parse(fileContent);
 
-      // 3. Convert to CSV and send the response
       const csv = itemToFlattenedCSV(items, delimiter);
       request.res!.attachment('items.csv');
       request.res!.contentType('text/csv; charset=utf-8');
       request.res!.status(200).send(csv);
     } finally {
-      // 4. Safely delete the temporary uploaded file
       try {
         await fs.unlink(itemsFile.path);
       } catch {
@@ -519,11 +514,8 @@ export class HistoryQueryController extends Controller {
     }
 
     try {
-      // 1. Read both files from the disk
       const itemsToImportContent = await fs.readFile(itemsToImportFile.path, 'utf8');
       const currentItemsContent = await fs.readFile(currentItemsFile.path, 'utf8');
-
-      // 2. Await the service result to ensure processing completes before cleanup
       return await historyQueryService.checkImportItems(
         southType,
         itemsToImportContent,
@@ -531,7 +523,6 @@ export class HistoryQueryController extends Controller {
         JSON.parse(currentItemsContent) as Array<HistoryQueryItemDTO>
       );
     } finally {
-      // 3. Cleanup BOTH files safely
       try {
         await fs.unlink(itemsToImportFile.path);
       } catch {
@@ -558,11 +549,20 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
-    if (!itemsFile) {
+    if (!itemsFile || !itemsFile.path) {
       throw new OIBusValidationError('Missing file "items"');
     }
-    const items: Array<HistoryQueryItemCommandDTO> = JSON.parse(itemsFile.buffer.toString('utf8'));
-    await historyQueryService.importItems(historyId, items);
+    try {
+      const fileContent = await fs.readFile(itemsFile.path, 'utf8');
+      const items: Array<HistoryQueryItemCommandDTO> = JSON.parse(fileContent);
+      await historyQueryService.importItems(historyId, items);
+    } finally {
+      try {
+        await fs.unlink(itemsFile.path);
+      } catch {
+        // catch the error but don't fail the request
+      }
+    }
   }
 
   /**
