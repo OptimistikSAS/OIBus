@@ -87,7 +87,11 @@ export class RegisterOibusModalComponent {
       updateHistoryCacheContent: [true, Validators.required],
       searchNorthCacheContent: [true, Validators.required],
       getNorthCacheFileContent: [true, Validators.required],
-      updateNorthCacheContent: [true, Validators.required]
+      updateNorthCacheContent: [true, Validators.required],
+      createCustomTransformer: [true, Validators.required],
+      updateCustomTransformer: [true, Validators.required],
+      deleteCustomTransformer: [true, Validators.required],
+      testCustomTransformer: [true, Validators.required]
     })
   });
   mode: 'register' | 'edit' = 'register';
@@ -184,7 +188,11 @@ export class RegisterOibusModalComponent {
         updateNorthCacheContent: formValue.commandPermissions!.updateNorthCacheContent!,
         searchHistoryCacheContent: formValue.commandPermissions!.searchHistoryCacheContent!,
         getHistoryCacheFileContent: formValue.commandPermissions!.getHistoryCacheFileContent!,
-        updateHistoryCacheContent: formValue.commandPermissions!.updateHistoryCacheContent!
+        updateHistoryCacheContent: formValue.commandPermissions!.updateHistoryCacheContent!,
+        createCustomTransformer: formValue.commandPermissions!.createCustomTransformer!,
+        updateCustomTransformer: formValue.commandPermissions!.updateCustomTransformer!,
+        deleteCustomTransformer: formValue.commandPermissions!.deleteCustomTransformer!,
+        testCustomTransformer: formValue.commandPermissions!.testCustomTransformer!
       }
     };
 
@@ -269,7 +277,11 @@ export class RegisterOibusModalComponent {
         updateNorthCacheContent: formValue.commandPermissions!.updateNorthCacheContent!,
         searchHistoryCacheContent: formValue.commandPermissions!.searchHistoryCacheContent!,
         getHistoryCacheFileContent: formValue.commandPermissions!.getHistoryCacheFileContent!,
-        updateHistoryCacheContent: formValue.commandPermissions!.updateHistoryCacheContent!
+        updateHistoryCacheContent: formValue.commandPermissions!.updateHistoryCacheContent!,
+        createCustomTransformer: formValue.commandPermissions!.createCustomTransformer!,
+        updateCustomTransformer: formValue.commandPermissions!.updateCustomTransformer!,
+        deleteCustomTransformer: formValue.commandPermissions!.deleteCustomTransformer!,
+        testCustomTransformer: formValue.commandPermissions!.testCustomTransformer!
       }
     };
     if (this.mode === 'register') {

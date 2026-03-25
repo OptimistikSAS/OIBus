@@ -224,7 +224,11 @@
       "get-north-cache-file-content": "Get cache file",
       "get-history-cache-file-content": "Get cache file",
       "update-north-cache-content": "Edit cache",
-      "update-history-cache-content": "Edit cache"
+      "update-history-cache-content": "Edit cache",
+      "create-custom-transformer": "Create transformer",
+      "update-custom-transformer": "Update transformer",
+      "delete-custom-transformer": "Delete transformer",
+      "test-custom-transformer": "Test transformer"
     },
     "oibus-input-data-type": {
       "any": "Files (for all sources)",
@@ -433,6 +437,7 @@
       "ip-filter": "IP filter",
       "certificate": "Certificate",
       "north-connector": "North connector",
+      "transformers": "Custom transformers",
       "south-connector": "South connector",
       "test-connector": "Test connectors",
       "history-query": "History query",
@@ -474,6 +479,10 @@
           "north": {
             "command-content": "JSON content",
             "north-id": "North connector ID: {{ northConnectorId }}"
+          },
+          "transformer": {
+            "command-content": "JSON content",
+            "transformer-id": "Transformer ID: {{ transformerId }}"
           }
         }
       },

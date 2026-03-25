@@ -568,6 +568,47 @@
           </div>
         </div>
         <div class="row mb-2">
+          <label class="form-label" translate="oia-module.commands.transformers"></label>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="createCustomTransformer" id="create-custom-transformer" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="create-custom-transformer">{{
+                  'create-custom-transformer' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="updateCustomTransformer" id="update-custom-transformer" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="update-custom-transformer">{{
+                  'update-custom-transformer' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="deleteCustomTransformer" id="delete-custom-transformer" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="delete-custom-transformer">{{
+                  'delete-custom-transformer' | oibusCommandTypeEnum
+                }}</label>
+              </div>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="form-group">
+              <div class="form-check form-switch">
+                <input formControlName="testCustomTransformer" id="test-custom-transformer" type="checkbox" class="form-check-input" />
+                <label class="form-check-label" for="test-custom-transformer">{{ 'test-custom-transformer' | oibusCommandTypeEnum }}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-2">
           <label class="form-label" translate="oia-module.commands.setpoint"></label>
           <div class="col-3">
             <div class="form-group">

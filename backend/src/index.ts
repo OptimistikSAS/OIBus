@@ -238,6 +238,7 @@ const CERT_FOLDER = 'certs';
     southService,
     northService,
     historyQueryService,
+    transformerService,
     loggerService.logger!,
     binaryFolder,
     ignoreRemoteUpdate,

@@ -113,6 +113,7 @@ import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oi
 import { EngineSettings } from '../../model/engine.model';
 import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
 import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import IPFilterService from '../ip-filter.service';
 import CertificateService from '../certificate.service';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
@@ -124,6 +125,7 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 import { OIAnalyticsFetchSetpointCommandDTO } from './oianalytics.model';
 import { CacheSearchResult, FileCacheContent, OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
+import TransformerService from '../transformer.service';
 
 jest.mock('node:crypto');
 jest.mock('node:fs/promises');
@@ -142,6 +144,7 @@ const certificateService: CertificateService = new CertificateServiceMock();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
+const transformerService: TransformerService = new TransformerServiceMock();
 const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
 
 jest.mock('../encryption.service', () => ({
@@ -176,6 +179,7 @@ describe('OIAnalytics Command Service', () => {
       southService,
       northService,
       historyQueryService,
+      transformerService,
       logger,
       'binaryFolder',
       false,
@@ -623,7 +627,11 @@ describe('OIAnalytics Command Service', () => {
         updateHistoryCacheContent: false,
         searchNorthCacheContent: false,
         getNorthCacheFileContent: false,
-        updateNorthCacheContent: false
+        updateNorthCacheContent: false,
+        createCustomTransformer: false,
+        updateCustomTransformer: false,
+        deleteCustomTransformer: false,
+        testCustomTransformer: false
       }
     };
 
@@ -2119,6 +2127,7 @@ describe('OIAnalytics Command service with update error', () => {
       southService,
       northService,
       historyQueryService,
+      transformerService,
       logger,
       'binaryFolder',
       false,
@@ -2161,6 +2170,7 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
       southService,
       northService,
       historyQueryService,
+      transformerService,
       logger,
       'binaryFolder',
       true,
@@ -2212,6 +2222,7 @@ describe('OIAnalytics Command service with no commands', () => {
       southService,
       northService,
       historyQueryService,
+      transformerService,
       logger,
       'binaryFolder',
       true,
@@ -2252,6 +2263,7 @@ describe('OIAnalytics Command service with no commands and without update', () =
       southService,
       northService,
       historyQueryService,
+      transformerService,
       logger,
       'binaryFolder',
       true,
