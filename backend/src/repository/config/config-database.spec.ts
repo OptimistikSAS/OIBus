@@ -60,7 +60,6 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import CertificateRepository from './certificate.repository';
 import UserRepository from './user.repository';
-import { User } from '../../model/user.model';
 import argon2 from 'argon2';
 import HistoryQueryRepository from './history-query.repository';
 import { HistoryQueryEntity, HistoryQueryItemEntity } from '../../model/histor-query.model';

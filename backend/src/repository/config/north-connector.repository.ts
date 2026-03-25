@@ -195,7 +195,7 @@ export default class NorthConnectorRepository {
   addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions): void {
     if (!transformerWithOptions.id) {
       transformerWithOptions.id = generateRandomId(6);
-      const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, input_type, south_id, group_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+      const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, input_type, south_id) VALUES (?, ?, ?, ?, ?, ?);`;
       this.database
         .prepare(query)
         .run(
@@ -204,11 +204,10 @@ export default class NorthConnectorRepository {
           transformerWithOptions.transformer.id,
           JSON.stringify(transformerWithOptions.options),
           transformerWithOptions.inputType,
-          transformerWithOptions.south?.id,
-          transformerWithOptions.group?.id ?? null
+          transformerWithOptions.south?.id
         );
     } else {
-      const query = `UPDATE ${NORTH_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ?, input_type = ?, south_id = ?, group_id = ? WHERE id = ?;`;
+      const query = `UPDATE ${NORTH_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ?, input_type = ?, south_id = ? WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
@@ -216,16 +215,21 @@ export default class NorthConnectorRepository {
           JSON.stringify(transformerWithOptions.options),
           transformerWithOptions.inputType,
           transformerWithOptions.south?.id,
-          transformerWithOptions.group?.id ?? null,
           transformerWithOptions.id
         );
     }
     this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(transformerWithOptions.id);
-    const items = transformerWithOptions.items.filter(item => item.id);
-    for (const item of items) {
+    if (transformerWithOptions.group?.id) {
       this.database
-        .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, item_id) VALUES (?, ?);`)
-        .run(transformerWithOptions.id, item.id);
+        .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, group_id) VALUES (?, ?);`)
+        .run(transformerWithOptions.id, transformerWithOptions.group.id);
+    } else {
+      const items = transformerWithOptions.items.filter(item => item.id);
+      for (const item of items) {
+        this.database
+          .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, item_id) VALUES (?, ?);`)
+          .run(transformerWithOptions.id, item.id);
+      }
     }
   }
 
@@ -250,7 +254,12 @@ export default class NorthConnectorRepository {
   }
 
   private findTransformersForNorth(northId: string): Array<NorthTransformerWithOptions> {
-    const query = `SELECT t.id, t.type, nt.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, t.timeout, nt.options, nt.south_id, nt.group_id, sig.name as group_name, nt.id as ntId FROM ${NORTH_TRANSFORMERS_TABLE} nt JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id LEFT JOIN ${SOUTH_ITEM_GROUPS_TABLE} sig ON nt.group_id = sig.id WHERE nt.north_id = ?;`;
+    const query =
+      `SELECT t.id, t.type, nt.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, t.timeout, nt.options, nt.south_id, sig.id as group_id, sig.name as group_name, nt.id as ntId ` +
+      `FROM ${NORTH_TRANSFORMERS_TABLE} nt ` +
+      `JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id ` +
+      `LEFT JOIN ${SOUTH_ITEM_GROUPS_TABLE} sig ON nt.south_id = sig.south_id ` +
+      `WHERE nt.north_id = ?;`;
     const result = this.database.prepare(query).all(northId) as Array<Record<string, string>>;
     return result.map(element => ({
       id: element.ntId,
