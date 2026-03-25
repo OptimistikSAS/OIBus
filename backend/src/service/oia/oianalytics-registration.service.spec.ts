@@ -181,7 +181,11 @@ describe('OIAnalytics Registration Service', () => {
         updateNorthCacheContent: true,
         searchHistoryCacheContent: true,
         getHistoryCacheFileContent: true,
-        updateHistoryCacheContent: true
+        updateHistoryCacheContent: true,
+        createCustomTransformer: true,
+        updateCustomTransformer: true,
+        deleteCustomTransformer: true,
+        testCustomTransformer: true
       },
       createdBy: '',
       updatedBy: '',
@@ -282,7 +286,11 @@ describe('OIAnalytics Registration Service', () => {
         updateNorthCacheContent: true,
         searchHistoryCacheContent: true,
         getHistoryCacheFileContent: true,
-        updateHistoryCacheContent: true
+        updateHistoryCacheContent: true,
+        createCustomTransformer: true,
+        updateCustomTransformer: true,
+        deleteCustomTransformer: true,
+        testCustomTransformer: true
       }
     };
     (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);

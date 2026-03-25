@@ -12,6 +12,7 @@ import OIBusService from '../oibus.service';
 import {
   OIBusCommand,
   OIBusCreateCertificateCommand,
+  OIBusCreateCustomTransformerCommand,
   OIBusCreateHistoryQueryCommand,
   OIBusCreateIPFilterCommand,
   OIBusCreateNorthConnectorCommand,
@@ -20,6 +21,7 @@ import {
   OIBusCreateScanModeCommand,
   OIBusCreateSouthConnectorCommand,
   OIBusDeleteCertificateCommand,
+  OIBusDeleteCustomTransformerCommand,
   OIBusDeleteHistoryQueryCommand,
   OIBusDeleteIPFilterCommand,
   OIBusDeleteNorthConnectorCommand,
@@ -32,6 +34,7 @@ import {
   OIBusSearchHistoryCacheContentCommand,
   OIBusSearchNorthCacheContentCommand,
   OIBusSetpointCommand,
+  OIBusTestCustomTransformerCommand,
   OIBusTestHistoryQueryNorthConnectionCommand,
   OIBusTestHistoryQuerySouthConnectionCommand,
   OIBusTestHistoryQuerySouthItemCommand,
@@ -39,6 +42,7 @@ import {
   OIBusTestSouthConnectorCommand,
   OIBusTestSouthConnectorItemCommand,
   OIBusUpdateCertificateCommand,
+  OIBusUpdateCustomTransformerCommand,
   OIBusUpdateEngineSettingsCommand,
   OIBusUpdateHistoryCacheContentCommand,
   OIBusUpdateHistoryQueryCommand,
@@ -64,11 +68,12 @@ import { EventEmitter } from 'node:events';
 import IPFilterService from '../ip-filter.service';
 import CertificateService from '../certificate.service';
 import HistoryQueryService, { toHistoryQueryItemDTO } from '../history-query.service';
-import { HistoryQueryCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
 import { SouthConnectorItemCommandDTO } from '../../../shared/model/south-connector.model';
+import TransformerService from '../transformer.service';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -90,6 +95,7 @@ export default class OIAnalyticsCommandService {
     private southService: SouthService,
     private northService: NorthService,
     private historyQueryService: HistoryQueryService,
+    private transformerService: TransformerService,
     private logger: pino.Logger,
     private binaryFolder: string,
     private ignoreRemoteUpdate: boolean,
@@ -471,6 +477,18 @@ export default class OIAnalyticsCommandService {
         case 'update-history-cache-content':
           await this.executeUpdateHistoryCacheContentCommand(command);
           break;
+        case 'create-custom-transformer':
+          await this.executeCreateCustomTransformerCommand(command);
+          break;
+        case 'update-custom-transformer':
+          await this.executeUpdateCustomTransformerCommand(command);
+          break;
+        case 'delete-custom-transformer':
+          await this.executeDeleteCustomTransformerCommand(command);
+          break;
+        case 'test-custom-transformer':
+          await this.executeTestCustomTransformerConnectionCommand(command);
+          break;
       }
     } catch (error: unknown) {
       this.ongoingExecuteCommand = false;
@@ -709,7 +727,19 @@ export default class OIAnalyticsCommandService {
           : registration.commandPermissions.getHistoryCacheFileContent,
         updateHistoryCacheContent: registration.commandPermissions.updateHistoryCacheContent
           ? command.commandContent.commandPermissions.updateHistoryCacheContent
-          : registration.commandPermissions.updateHistoryCacheContent
+          : registration.commandPermissions.updateHistoryCacheContent,
+        createCustomTransformer: registration.commandPermissions.createCustomTransformer
+          ? command.commandContent.commandPermissions.createCustomTransformer
+          : registration.commandPermissions.createCustomTransformer,
+        updateCustomTransformer: registration.commandPermissions.updateCustomTransformer
+          ? command.commandContent.commandPermissions.updateCustomTransformer
+          : registration.commandPermissions.updateCustomTransformer,
+        deleteCustomTransformer: registration.commandPermissions.deleteCustomTransformer
+          ? command.commandContent.commandPermissions.deleteCustomTransformer
+          : registration.commandPermissions.deleteCustomTransformer,
+        testCustomTransformer: registration.commandPermissions.testCustomTransformer
+          ? command.commandContent.commandPermissions.testCustomTransformer
+          : registration.commandPermissions.testCustomTransformer
       }
     };
     await this.oIAnalyticsRegistrationService.editRegistrationSettings(registrationCommand, 'oianalytics');
@@ -1091,6 +1121,30 @@ export default class OIAnalyticsCommandService {
     });
   }
 
+  private async executeCreateCustomTransformerCommand(command: OIBusCreateCustomTransformerCommand) {
+    await this.transformerService.create(command.commandContent, 'oianalytics');
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Transformer created successfully');
+  }
+
+  private async executeUpdateCustomTransformerCommand(command: OIBusUpdateCustomTransformerCommand) {
+    await this.transformerService.update(command.transformerId, command.commandContent, 'oianalytics');
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Transformer updated successfully');
+  }
+
+  private async executeDeleteCustomTransformerCommand(command: OIBusDeleteCustomTransformerCommand) {
+    await this.transformerService.delete(command.transformerId);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Transformer deleted successfully');
+  }
+
+  private async executeTestCustomTransformerConnectionCommand(command: OIBusTestCustomTransformerCommand) {
+    await this.transformerService.test(command.transformerId, command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(
+      command.id,
+      DateTime.now().toUTC().toISO(),
+      'CustomTransformer connection tested successfully'
+    );
+  }
+
   private completeTestItemCommand(
     command: OIBusTestSouthConnectorItemCommand | OIBusTestHistoryQuerySouthItemCommand,
     result: OIBusContent
@@ -1269,6 +1323,14 @@ export default class OIAnalyticsCommandService {
         return registration.commandPermissions.updateNorthCacheContent;
       case 'update-history-cache-content':
         return registration.commandPermissions.updateHistoryCacheContent;
+      case 'create-custom-transformer':
+        return registration.commandPermissions.createCustomTransformer;
+      case 'update-custom-transformer':
+        return registration.commandPermissions.updateCustomTransformer;
+      case 'delete-custom-transformer':
+        return registration.commandPermissions.deleteCustomTransformer;
+      case 'test-custom-transformer':
+        return registration.commandPermissions.testCustomTransformer;
     }
   }
 }
@@ -1314,6 +1376,10 @@ export const toOIBusCommandDTO = (command: OIBusCommand): OIBusCommandDTO => {
     case 'get-history-cache-file-content':
     case 'update-north-cache-content':
     case 'update-history-cache-content':
+    case 'create-custom-transformer':
+    case 'update-custom-transformer':
+    case 'delete-custom-transformer':
+    case 'test-custom-transformer':
       return command;
   }
 };

@@ -124,7 +124,11 @@ const registrationSchema: Joi.ObjectSchema = Joi.object({
     updateNorthCacheContent: Joi.boolean().required(),
     searchHistoryCacheContent: Joi.boolean().required(),
     getHistoryCacheFileContent: Joi.boolean().required(),
-    updateHistoryCacheContent: Joi.boolean().required()
+    updateHistoryCacheContent: Joi.boolean().required(),
+    createCustomTransformer: Joi.boolean().required(),
+    updateCustomTransformer: Joi.boolean().required(),
+    deleteCustomTransformer: Joi.boolean().required(),
+    testCustomTransformer: Joi.boolean().required()
   }).required()
 });
 

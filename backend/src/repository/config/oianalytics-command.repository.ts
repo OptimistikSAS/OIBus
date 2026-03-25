@@ -2,7 +2,7 @@ import { Database } from 'better-sqlite3';
 import { CommandSearchParam, OIBusCommandStatus, OIBusCommandType } from '../../../shared/model/command.model';
 import { Instant, Page } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { OIBusCommand, OIBusRegenerateCipherKeysCommand, OIBusRestartEngineCommand } from '../../model/oianalytics-command.model';
+import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from '../../service/oia/oianalytics.model';
 
 const COMMANDS_TABLE = 'commands';
@@ -325,6 +325,24 @@ export default class OIAnalyticsCommandRepository {
         queryParams.push(JSON.stringify(command.commandContent));
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, history_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
         break;
+      case 'create-custom-transformer':
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'update-custom-transformer':
+        queryParams.push(command.transformerId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, transformer_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'delete-custom-transformer':
+        queryParams.push(command.transformerId);
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, transformer_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
+        break;
+      case 'test-custom-transformer':
+        queryParams.push(command.transformerId);
+        queryParams.push(JSON.stringify(command.commandContent));
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, transformer_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
   }
@@ -382,412 +400,162 @@ export default class OIAnalyticsCommandRepository {
     switch (command.type as OIBusCommandType) {
       case 'update-version':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-version',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'restart-engine':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
-          type: command.type as OIBusCommandType,
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string
-        } as OIBusRestartEngineCommand;
+          ...baseCommandFields(command),
+          type: 'restart-engine'
+        };
       case 'regenerate-cipher-keys':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
-          type: command.type as OIBusCommandType,
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string
-        } as OIBusRegenerateCipherKeysCommand;
+          ...baseCommandFields(command),
+          type: 'regenerate-cipher-keys'
+        };
       case 'update-engine-settings':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-engine-settings',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-registration-settings':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-registration-settings',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-north':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'create-north',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-north':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-north',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'delete-north':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'delete-north',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string
         };
       case 'test-north-connection':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'test-north-connection',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-south':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'create-south',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           southConnectorId: command.south_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-south':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-south',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           southConnectorId: command.south_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'delete-south':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'delete-south',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           southConnectorId: command.south_connector_id as string
         };
       case 'create-or-update-south-items-from-csv':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'create-or-update-south-items-from-csv',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           southConnectorId: command.south_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'test-south-connection':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'test-south-connection',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           southConnectorId: command.south_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'test-south-item':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'test-south-item',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           southConnectorId: command.south_connector_id as string,
           itemId: command.item_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'create-scan-mode':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'create-scan-mode',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-scan-mode':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-scan-mode',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           scanModeId: command.scan_mode_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'delete-scan-mode':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'delete-scan-mode',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           scanModeId: command.scan_mode_id as string
         };
       case 'create-ip-filter':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'create-ip-filter',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-ip-filter':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-ip-filter',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           ipFilterId: command.ip_filter_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'delete-ip-filter':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'delete-ip-filter',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           ipFilterId: command.ip_filter_id as string
         };
       case 'create-certificate':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'create-certificate',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-certificate':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-certificate',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           certificateId: command.certificate_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'delete-certificate':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'delete-certificate',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           certificateId: command.certificate_id as string
         };
       case 'create-history-query':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'create-history-query',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string,
           southConnectorId: command.south_connector_id as string,
           historyQueryId: command.history_id as string,
@@ -795,104 +563,44 @@ export default class OIAnalyticsCommandRepository {
         };
       case 'update-history-query':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-history-query',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'delete-history-query':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'delete-history-query',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string
         };
       case 'create-or-update-history-query-south-items-from-csv':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'create-or-update-history-query-south-items-from-csv',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'test-history-query-north-connection':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'test-history-query-north-connection',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'test-history-query-south-connection':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'test-history-query-south-connection',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
           southConnectorId: command.south_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'test-history-query-south-item':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'test-history-query-south-item',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
           southConnectorId: command.south_connector_id as string,
           itemId: command.item_id as string,
@@ -900,140 +608,116 @@ export default class OIAnalyticsCommandRepository {
         };
       case 'update-history-query-status':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-history-query-status',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'setpoint':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'setpoint',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'search-north-cache-content':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'search-north-cache-content',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'search-history-cache-content':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'search-history-cache-content',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'get-north-cache-file-content':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'get-north-cache-file-content',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'get-history-cache-file-content':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'get-history-cache-file-content',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-north-cache-content':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-north-cache-content',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           northConnectorId: command.north_connector_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
       case 'update-history-cache-content':
         return {
-          id: command.id as string,
-          createdBy: command.created_by as string,
-          updatedBy: command.updated_by as string,
-          createdAt: command.created_at as string,
-          updatedAt: command.updated_at as string,
+          ...baseCommandFields(command),
           type: 'update-history-cache-content',
-          status: command.status as OIBusCommandStatus,
-          ack: Boolean(command.ack),
-          targetVersion: command.target_version as string,
-          retrievedDate: command.retrieved_date as Instant,
-          completedDate: command.completed_date as Instant,
-          result: command.result as string,
           historyQueryId: command.history_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'create-custom-transformer':
+        return {
+          ...baseCommandFields(command),
+          type: 'create-custom-transformer',
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'update-custom-transformer':
+        return {
+          ...baseCommandFields(command),
+          type: 'update-custom-transformer',
+          transformerId: command.transformer_id as string,
+          commandContent: JSON.parse(command.command_content as string)
+        };
+      case 'delete-custom-transformer':
+        return {
+          ...baseCommandFields(command),
+          type: 'delete-custom-transformer',
+          transformerId: command.transformer_id as string
+        };
+      case 'test-custom-transformer':
+        return {
+          ...baseCommandFields(command),
+          type: 'test-custom-transformer',
+          transformerId: command.transformer_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
     }
   }
 }
+
+const baseCommandFields = (
+  command: Record<string, string | number>
+): {
+  id: string;
+  createdBy: string;
+  updatedBy: string;
+  createdAt: Instant;
+  updatedAt: Instant;
+  status: OIBusCommandStatus;
+  ack: boolean;
+  targetVersion: string;
+  retrievedDate: Instant;
+  completedDate: Instant;
+  result: string;
+} => {
+  return {
+    id: command.id as string,
+    createdBy: command.created_by as string,
+    updatedBy: command.updated_by as string,
+    createdAt: command.created_at as string,
+    updatedAt: command.updated_at as string,
+    status: command.status as OIBusCommandStatus,
+    ack: Boolean(command.ack),
+    targetVersion: command.target_version as string,
+    retrievedDate: command.retrieved_date as Instant,
+    completedDate: command.completed_date as Instant,
+    result: command.result as string
+  };
+};

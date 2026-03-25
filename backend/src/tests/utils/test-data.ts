@@ -1585,7 +1585,11 @@ const oIAnalyticsRegistrationRegistered: OIAnalyticsRegistration = {
     updateHistoryCacheContent: true,
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
-    updateNorthCacheContent: true
+    updateNorthCacheContent: true,
+    createCustomTransformer: true,
+    updateCustomTransformer: true,
+    deleteCustomTransformer: true,
+    testCustomTransformer: true
   },
   createdBy: '',
   updatedBy: '',
@@ -1653,7 +1657,11 @@ const oIAnalyticsRegistrationPending: OIAnalyticsRegistration = {
     updateHistoryCacheContent: true,
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
-    updateNorthCacheContent: true
+    updateNorthCacheContent: true,
+    createCustomTransformer: true,
+    updateCustomTransformer: true,
+    deleteCustomTransformer: true,
+    testCustomTransformer: true
   },
   createdBy: '',
   updatedBy: '',
@@ -1712,7 +1720,11 @@ const oIAnalyticsRegistrationCommand: OIAnalyticsRegistrationEditCommand = {
     updateHistoryCacheContent: true,
     searchNorthCacheContent: true,
     getNorthCacheFileContent: true,
-    updateNorthCacheContent: true
+    updateNorthCacheContent: true,
+    createCustomTransformer: true,
+    updateCustomTransformer: true,
+    deleteCustomTransformer: true,
+    testCustomTransformer: true
   }
 };
 
@@ -2005,7 +2017,11 @@ const oIBusCommands: Array<OIBusCommand> = [
         updateHistoryCacheContent: true,
         searchNorthCacheContent: true,
         getNorthCacheFileContent: true,
-        updateNorthCacheContent: true
+        updateNorthCacheContent: true,
+        createCustomTransformer: true,
+        updateCustomTransformer: true,
+        deleteCustomTransformer: true,
+        testCustomTransformer: true
       }
     },
     createdBy: '',

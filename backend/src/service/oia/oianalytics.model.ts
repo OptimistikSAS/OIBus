@@ -13,7 +13,7 @@ import { UserCommandDTO } from '../../../shared/model/user.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
-import { CustomTransformerCommandDTO } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/transformer.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
 export interface OIAnalyticsScanModeCommandDTO {
@@ -169,7 +169,11 @@ export const OIANALYTICS_FETCH_COMMAND_TYPES = [
   'get-north-cache-file-content',
   'get-history-cache-file-content',
   'update-north-cache-content',
-  'update-history-cache-content'
+  'update-history-cache-content',
+  'create-custom-transformer',
+  'update-custom-transformer',
+  'delete-custom-transformer',
+  'test-custom-transformer'
 ] as const;
 export type OIAnalyticsFetchCommandType = (typeof OIANALYTICS_FETCH_COMMAND_TYPES)[number];
 
@@ -441,6 +445,28 @@ export interface OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO extends Bas
   commandContent: CacheContentUpdateCommand;
 }
 
+export interface OIAnalyticsFetchCreateCustomTransformerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'create-custom-transformer';
+  commandContent: CustomTransformerCommandDTO;
+}
+
+export interface OIAnalyticsFetchUpdateCustomTransformerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'update-custom-transformer';
+  transformerId: string;
+  commandContent: CustomTransformerCommandDTO;
+}
+
+export interface OIAnalyticsFetchDeleteCustomTransformerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'delete-custom-transformer';
+  transformerId: string;
+}
+
+export interface OIAnalyticsFetchTestCustomTransformerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
+  type: 'test-custom-transformer';
+  transformerId: string;
+  commandContent: TransformerTestRequest;
+}
+
 export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchUpdateVersionCommandDTO
   | OIAnalyticsFetchRestartEngineCommandDTO
@@ -480,4 +506,8 @@ export type OIAnalyticsFetchCommandDTO =
   | OIAnalyticsFetchGetNorthCacheFileContentCommandDTO
   | OIAnalyticsFetchGetHistoryCacheFileContentCommandDTO
   | OIAnalyticsFetchUpdateNorthCacheContentCommandDTO
-  | OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO;
+  | OIAnalyticsFetchUpdateHistoryCacheContentCommandDTO
+  | OIAnalyticsFetchCreateCustomTransformerCommandDTO
+  | OIAnalyticsFetchUpdateCustomTransformerCommandDTO
+  | OIAnalyticsFetchDeleteCustomTransformerCommandDTO
+  | OIAnalyticsFetchTestCustomTransformerCommandDTO;
