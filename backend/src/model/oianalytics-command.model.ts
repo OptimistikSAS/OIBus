@@ -12,6 +12,7 @@ import { IPFilterCommandDTO } from '../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from '../../shared/model/history-query.model';
 import { CacheSearchParam } from '../../shared/model/engine.model';
+import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../shared/model/transformer.model';
 
 export interface BaseOIBusCommand extends BaseEntity {
   type: OIBusCommandType;
@@ -91,6 +92,10 @@ export interface OIBusUpdateRegistrationSettingsCommand extends BaseOIBusCommand
       searchHistoryCacheContent: boolean;
       getHistoryCacheFileContent: boolean;
       updateHistoryCacheContent: boolean;
+      createCustomTransformer: boolean;
+      updateCustomTransformer: boolean;
+      deleteCustomTransformer: boolean;
+      testCustomTransformer: boolean;
     };
   };
 }
@@ -330,6 +335,29 @@ export interface OIBusUpdateHistoryCacheContentCommand extends BaseOIBusCommand 
   commandContent: CacheContentUpdateCommand;
 }
 
+export interface OIBusCreateCustomTransformerCommand extends BaseOIBusCommand {
+  type: 'create-custom-transformer';
+  commandContent: CustomTransformerCommandDTO;
+}
+
+export interface OIBusUpdateCustomTransformerCommand extends BaseOIBusCommand {
+  type: 'update-custom-transformer';
+  transformerId: string;
+  commandContent: CustomTransformerCommandDTO;
+}
+
+export interface OIBusDeleteCustomTransformerCommand extends BaseOIBusCommand {
+  type: 'delete-custom-transformer';
+  transformerId: string;
+}
+
+export interface OIBusTestCustomTransformerCommand extends BaseOIBusCommand {
+  type: 'test-custom-transformer';
+  targetVersion: string;
+  transformerId: string;
+  commandContent: TransformerTestRequest;
+}
+
 export type OIBusCommand =
   | OIBusUpdateVersionCommand
   | OIBusRestartEngineCommand
@@ -369,4 +397,8 @@ export type OIBusCommand =
   | OIBusGetNorthCacheFileContentCommand
   | OIBusGetHistoryCacheFileContentCommand
   | OIBusUpdateNorthCacheContentCommand
-  | OIBusUpdateHistoryCacheContentCommand;
+  | OIBusUpdateHistoryCacheContentCommand
+  | OIBusCreateCustomTransformerCommand
+  | OIBusUpdateCustomTransformerCommand
+  | OIBusDeleteCustomTransformerCommand
+  | OIBusTestCustomTransformerCommand;

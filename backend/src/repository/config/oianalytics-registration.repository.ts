@@ -60,7 +60,11 @@ export default class OIAnalyticsRegistrationRepository {
         updateNorthCacheContent: true,
         searchHistoryCacheContent: true,
         getHistoryCacheFileContent: true,
-        updateHistoryCacheContent: true
+        updateHistoryCacheContent: true,
+        createCustomTransformer: true,
+        updateCustomTransformer: true,
+        deleteCustomTransformer: true,
+        testCustomTransformer: true
       }
     });
   }
@@ -80,6 +84,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
       `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
       `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content, ` +
+      `command_create_custom_transformer, command_update_custom_transformer, command_delete_custom_transformer, command_test_custom_transformer, ` +
       `created_by, updated_by, created_at, updated_at ` +
       `FROM ${REGISTRATIONS_TABLE};`;
     const results = this.database.prepare(query).all();
@@ -93,7 +98,7 @@ export default class OIAnalyticsRegistrationRepository {
 
   /**
    * After OIAnalytics confirm the creation of a registration, answering with the activation code, the
-   * check URL and the expiration date, we store these information in OIBus
+   * check URL, and the expiration date, we store this information in OIBus
    * Next step is for the user to enter the activation code in OIAnalytics
    * OIBus regularly checks if the activation code has been entered
    * Once the activation code entered in OIAnalytics, it goes into the activate method
@@ -122,6 +127,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
       `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
       `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ?, ` +
+      `command_create_custom_transformer = ?, command_update_custom_transformer = ?, command_delete_custom_transformer = ?, command_test_custom_transformer = ?, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
@@ -183,6 +189,10 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.searchNorthCacheContent,
         +command.commandPermissions.getNorthCacheFileContent,
         +command.commandPermissions.updateNorthCacheContent,
+        +command.commandPermissions.createCustomTransformer,
+        +command.commandPermissions.updateCustomTransformer,
+        +command.commandPermissions.deleteCustomTransformer,
+        +command.commandPermissions.testCustomTransformer,
         updatedBy
       );
   }
@@ -216,6 +226,7 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_north = ?, command_update_north = ?, command_delete_north = ?, command_test_north_connection = ?, command_setpoint = ?, ` +
       `command_search_history_cache_content = ?, command_get_history_cache_file_content = ?, command_update_history_cache_content = ?, ` +
       `command_search_north_cache_content = ?, command_get_north_cache_file_content = ?, command_update_north_cache_content = ?, ` +
+      `command_create_custom_transformer = ?, command_update_custom_transformer = ?, command_delete_custom_transformer = ?, command_test_custom_transformer = ?, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${REGISTRATIONS_TABLE});`;
     this.database
@@ -271,6 +282,10 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.searchNorthCacheContent,
         +command.commandPermissions.getNorthCacheFileContent,
         +command.commandPermissions.updateNorthCacheContent,
+        +command.commandPermissions.createCustomTransformer,
+        +command.commandPermissions.updateCustomTransformer,
+        +command.commandPermissions.deleteCustomTransformer,
+        +command.commandPermissions.testCustomTransformer,
         updatedBy
       );
   }
@@ -298,8 +313,9 @@ export default class OIAnalyticsRegistrationRepository {
       `command_create_north, command_update_north, command_delete_north, command_test_north_connection, command_setpoint, ` +
       `command_search_history_cache_content, command_get_history_cache_file_content, command_update_history_cache_content, ` +
       `command_search_north_cache_content, command_get_north_cache_file_content, command_update_north_cache_content, ` +
+      `command_create_custom_transformer, command_update_custom_transformer, command_delete_custom_transformer, command_test_custom_transformer, ` +
       `created_by, updated_by, created_at, updated_at` +
-      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
@@ -356,6 +372,10 @@ export default class OIAnalyticsRegistrationRepository {
         +command.commandPermissions.searchNorthCacheContent,
         +command.commandPermissions.getNorthCacheFileContent,
         +command.commandPermissions.updateNorthCacheContent,
+        +command.commandPermissions.createCustomTransformer,
+        +command.commandPermissions.updateCustomTransformer,
+        +command.commandPermissions.deleteCustomTransformer,
+        +command.commandPermissions.testCustomTransformer,
         'system',
         'system'
       );
@@ -427,7 +447,11 @@ export default class OIAnalyticsRegistrationRepository {
         updateHistoryCacheContent: Boolean(result.command_update_history_cache_content),
         searchNorthCacheContent: Boolean(result.command_search_north_cache_content),
         getNorthCacheFileContent: Boolean(result.command_get_north_cache_file_content),
-        updateNorthCacheContent: Boolean(result.command_update_north_cache_content)
+        updateNorthCacheContent: Boolean(result.command_update_north_cache_content),
+        createCustomTransformer: Boolean(result.command_create_custom_transformer),
+        updateCustomTransformer: Boolean(result.command_update_custom_transformer),
+        deleteCustomTransformer: Boolean(result.command_delete_custom_transformer),
+        testCustomTransformer: Boolean(result.command_test_custom_transformer)
       }
     };
   }
