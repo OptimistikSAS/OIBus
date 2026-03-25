@@ -161,6 +161,7 @@ interface CustomTransformer {
 
 export async function up(knex: Knex): Promise<void> {
   await updateRegistrationSettings(knex);
+  await updateOIACommandTable(knex);
   await updateTransformersTable(knex);
   await updateNorthRestConnectors(knex);
   await createDefaultTransformers(knex);
@@ -232,6 +233,10 @@ async function updateRegistrationSettings(knex: Knex): Promise<void> {
     table.boolean('command_search_north_cache_content');
     table.boolean('command_get_north_cache_file_content');
     table.boolean('command_update_north_cache_content');
+    table.boolean('command_create_custom_transformer');
+    table.boolean('command_update_custom_transformer');
+    table.boolean('command_delete_custom_transformer');
+    table.boolean('command_test_custom_transformer');
   });
   await knex(REGISTRATIONS_TABLE).update({
     command_search_history_cache_content: true,
@@ -239,7 +244,17 @@ async function updateRegistrationSettings(knex: Knex): Promise<void> {
     command_update_history_cache_content: true,
     command_search_north_cache_content: true,
     command_get_north_cache_file_content: true,
-    command_update_north_cache_content: true
+    command_update_north_cache_content: true,
+    command_create_custom_transformer: true,
+    command_update_custom_transformer: true,
+    command_delete_custom_transformer: true,
+    command_test_custom_transformer: true
+  });
+}
+
+async function updateOIACommandTable(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(COMMANDS_TABLE, table => {
+    table.string('transformer_id');
   });
 }
 

@@ -6,6 +6,7 @@ import { NorthConnectorCommandDTO } from './north-connector.model';
 import { IPFilterCommandDTO } from './ip-filter.model';
 import { CertificateCommandDTO } from './certificate.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus } from './history-query.model';
+import { CustomTransformerCommandDTO } from './transformer.model';
 
 /**
  * List of possible OIBus command types.
@@ -49,7 +50,11 @@ export const OIBUS_COMMAND_TYPES = [
   'get-north-cache-file-content',
   'get-history-cache-file-content',
   'update-north-cache-content',
-  'update-history-cache-content'
+  'update-history-cache-content',
+  'create-custom-transformer',
+  'update-custom-transformer',
+  'delete-custom-transformer',
+  'test-custom-transformer'
 ] as const;
 
 /**
@@ -1074,6 +1079,98 @@ export interface OIBusUpdateHistoryCacheContentCommandDTO extends BaseOIBusComma
 }
 
 /**
+ * Command DTO for creating a custom transformer.
+ */
+export interface OIBusCreateCustomTransformerCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'create-custom-transformer';
+
+  /**
+   * The target version for the command.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
+
+  /**
+   * The content of the command, including custom transformer details.
+   */
+  commandContent: CustomTransformerCommandDTO;
+}
+
+/**
+ * Command DTO for updating a custom transformer.
+ */
+export interface OIBusUpdateCustomTransformerCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'update-custom-transformer';
+
+  /**
+   * The target version for the command.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
+
+  /**
+   * The ID of the custom transformer to update.
+   * @example "transformer123"
+   */
+  transformerId: string;
+
+  /**
+   * The content of the command, including updated custom transformer details.
+   */
+  commandContent: CustomTransformerCommandDTO;
+}
+
+/**
+ * Command DTO for deleting a custom transformer.
+ */
+export interface OIBusDeleteCustomTransformerCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'delete-custom-transformer';
+
+  /**
+   * The target version for the command.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
+
+  /**
+   * The ID of the custom transformer to delete.
+   * @example "transformer123"
+   */
+  transformerId: string;
+}
+
+/**
+ * Command DTO for testing a custom transformer connection.
+ */
+export interface OIBusTestCustomTransformerCommandDTO extends BaseOIBusCommandDTO {
+  /**
+   * The type of the command.
+   */
+  type: 'test-custom-transformer';
+
+  /**
+   * The target version for the command.
+   * @example "3.7.0"
+   */
+  targetVersion: string;
+
+  /**
+   * The ID of the custom transformer to test.
+   * @example "transformer123"
+   */
+  transformerId: string;
+}
+
+/**
  * Union type representing all possible OIBus command DTOs.
  */
 export type OIBusCommandDTO =
@@ -1115,7 +1212,11 @@ export type OIBusCommandDTO =
   | OIBusGetNorthCacheFileContentCommandDTO
   | OIBusGetHistoryCacheFileContentCommandDTO
   | OIBusUpdateNorthCacheContentCommandDTO
-  | OIBusUpdateHistoryCacheContentCommandDTO;
+  | OIBusUpdateHistoryCacheContentCommandDTO
+  | OIBusCreateCustomTransformerCommandDTO
+  | OIBusUpdateCustomTransformerCommandDTO
+  | OIBusDeleteCustomTransformerCommandDTO
+  | OIBusTestCustomTransformerCommandDTO;
 
 /**
  * Parameters for searching commands.

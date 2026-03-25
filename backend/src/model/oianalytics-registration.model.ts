@@ -62,6 +62,10 @@ export interface OIAnalyticsRegistration extends BaseEntity {
     searchHistoryCacheContent: boolean;
     getHistoryCacheFileContent: boolean;
     updateHistoryCacheContent: boolean;
+    createCustomTransformer: boolean;
+    updateCustomTransformer: boolean;
+    deleteCustomTransformer: boolean;
+    testCustomTransformer: boolean;
   };
 }
 
@@ -118,5 +122,9 @@ export interface OIAnalyticsRegistrationEditCommand {
     searchHistoryCacheContent: boolean;
     getHistoryCacheFileContent: boolean;
     updateHistoryCacheContent: boolean;
+    createCustomTransformer: boolean;
+    updateCustomTransformer: boolean;
+    deleteCustomTransformer: boolean;
+    testCustomTransformer: boolean;
   };
 }
