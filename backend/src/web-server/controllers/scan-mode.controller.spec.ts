@@ -92,4 +92,20 @@ describe('ScanModeController', () => {
     expect(mockRequest.services!.scanModeService.verifyCron).toHaveBeenCalledWith(command);
     expect(result).toEqual(validatedCronExpression);
   });
+
+  it('should return invalid result when cron expression is not valid', async () => {
+    const command = { cron: 'not-a-cron' };
+    const validatedCronExpression: ValidatedCronExpression = {
+      isValid: false,
+      errorMessage: 'Invalid cron expression',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
+    (mockRequest.services!.scanModeService.verifyCron as jest.Mock).mockReturnValue(validatedCronExpression);
+
+    const result = await controller.verifyCron(command, mockRequest as CustomExpressRequest);
+
+    expect(mockRequest.services!.scanModeService.verifyCron).toHaveBeenCalledWith(command);
+    expect(result).toEqual(validatedCronExpression);
+  });
 });
