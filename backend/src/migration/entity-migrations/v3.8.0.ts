@@ -169,13 +169,13 @@ export async function up(knex: Knex): Promise<void> {
     south_connector_id: string;
   }> = await knex(SUBSCRIPTION_TABLE).select('north_connector_id', 'south_connector_id');
   await migrateSubscriptionsToTransformers(knex);
+  await createSouthItemGroupsTable(knex);
+  await createGroupItemsTable(knex);
   await addTransformersItems(knex);
   await updateFileConnectorItems(knex);
   await migrateSouthMQTTItems(knex, allOldSubscriptions);
   await addCreatedByAndUpdatedBy(knex);
-  await createSouthItemGroupsTable(knex);
-  await addGroupIdToNorthTransformers(knex);
-  await createGroupItemsTable(knex);
+
   await addItemHistorianFields(knex);
   await populateItemHistorianFields(knex);
   await removeThrottlingFieldsInConnectorSettings(knex);
@@ -574,7 +574,8 @@ async function addTransformersItems(knex: Knex): Promise<void> {
   await knex.schema.createTable(NORTH_TRANSFORMERS_ITEMS_TABLE, table => {
     table.uuid('id').references('id').inTable(NORTH_TRANSFORMERS_TABLE);
     table.string('item_id').references('id').inTable(SOUTH_ITEMS_TABLE);
-    table.unique(['id', 'item_id']);
+    table.string('group_id').nullable().references('id').inTable(SOUTH_ITEM_GROUPS_TABLE).onDelete('SET NULL');
+    table.unique(['id', 'item_id', 'group_id']);
   });
 
   await knex.schema.createTable(HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE, table => {
@@ -792,12 +793,6 @@ async function dropUniqueConstraints(knex: Knex): Promise<void> {
   }
 }
 
-async function addGroupIdToNorthTransformers(knex: Knex): Promise<void> {
-  await knex.schema.alterTable(NORTH_TRANSFORMERS_TABLE, table => {
-    table.string('group_id').nullable().references('id').inTable(SOUTH_ITEM_GROUPS_TABLE).onDelete('SET NULL');
-  });
-}
-
 async function createSouthItemGroupsTable(knex: Knex): Promise<void> {
   await knex.schema.raw(`CREATE TABLE ${SOUTH_ITEM_GROUPS_TABLE} (
     id char(36) PRIMARY KEY,
@@ -1004,6 +999,7 @@ async function groupItems(knex: Knex, id: string): Promise<void> {
 
       const groupName = groupedItemsArray.length > 1 ? `${baseName} ${groupIndex}` : baseName;
       groupIndex++;
+      const now = DateTime.now().toUTC().toISO()!;
       await trx(SOUTH_ITEM_GROUPS_TABLE).insert({
         id: groupId,
         name: groupName,
@@ -1011,7 +1007,11 @@ async function groupItems(knex: Knex, id: string): Promise<void> {
         scan_mode_id: group[0].scan_mode_id,
         max_read_interval: group[0].max_read_interval,
         read_delay: group[0].read_delay,
-        overlap: group[0].overlap
+        overlap: group[0].overlap,
+        created_at: now,
+        updated_at: now,
+        updated_by: 'system',
+        created_by: 'system'
       });
 
       const groupItemsToInsert = group.map(item => ({
