@@ -73,11 +73,7 @@ export default class ScanModeService {
   }
 
   async verifyCron(command: { cron: string }): Promise<ValidatedCronExpression> {
-    const result = validateCronExpression(command.cron);
-    if (!result.isValid) {
-      throw new OIBusValidationError(result.errorMessage);
-    }
-    return result;
+    return validateCronExpression(command.cron);
   }
 }
 
