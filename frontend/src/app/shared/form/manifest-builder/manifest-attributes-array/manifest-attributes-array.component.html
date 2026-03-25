@@ -26,7 +26,6 @@
         <tr>
           <th translate="configuration.oibus.manifest.transformers.attributes.key"></th>
           <th translate="configuration.oibus.manifest.transformers.attributes.type.title"></th>
-          <th translate="configuration.oibus.manifest.transformers.attributes.translation-key"></th>
           <th></th>
         </tr>
       </thead>
@@ -39,36 +38,31 @@
             <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
               {{ element.key }}
             </td>
-            <td style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap">
-              {{ element.translationKey | translate }}
-            </td>
-            <td class="text-nowrap action-buttons">
-              <div class="pull-right">
-                <button
-                  type="button"
-                  class="btn btn-link edit-button px-1 py-0"
-                  [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
-                  (click)="editItem(element)"
-                >
-                  <span class="fa fa-pencil"></span>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-link copy-button px-1 py-0"
-                  [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
-                  (click)="copyItem(element)"
-                >
-                  <span class="fa fa-copy"></span>
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-link delete-button px-1 py-0"
-                  [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
-                  (click)="deleteItem(element)"
-                >
-                  <span class="fa fa-trash"></span>
-                </button>
-              </div>
+            <td class="text-nowrap text-end">
+              <button
+                type="button"
+                class="btn btn-link edit-button px-1 py-0"
+                [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.edit' | translate"
+                (click)="editItem(element)"
+              >
+                <span class="fa fa-pencil"></span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-link copy-button px-1 py-0"
+                [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.copy' | translate"
+                (click)="copyItem(element)"
+              >
+                <span class="fa fa-copy"></span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-link delete-button px-1 py-0"
+                [ngbTooltip]="'configuration.oibus.edit-array-element-modal.tooltips.delete' | translate"
+                (click)="deleteItem(element)"
+              >
+                <span class="fa fa-trash"></span>
+              </button>
             </td>
           </tr>
         }

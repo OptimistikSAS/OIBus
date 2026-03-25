@@ -2982,7 +2982,11 @@ describe('Repository with empty database', () => {
           updateHistoryCacheContent: true,
           searchNorthCacheContent: true,
           getNorthCacheFileContent: true,
-          updateNorthCacheContent: true
+          updateNorthCacheContent: true,
+          createCustomTransformer: true,
+          updateCustomTransformer: true,
+          deleteCustomTransformer: true,
+          testCustomTransformer: true
         }
       });
     });

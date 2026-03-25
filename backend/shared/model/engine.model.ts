@@ -782,6 +782,30 @@ export interface RegistrationSettingsCommandDTO {
      * @example true
      */
     updateNorthCacheContent: boolean;
+
+    /**
+     * Permission to create a custom transformer.
+     * @example true
+     */
+    createCustomTransformer: boolean;
+
+    /**
+     * Permission to update a custom transformer.
+     * @example true
+     */
+    updateCustomTransformer: boolean;
+
+    /**
+     * Permission to delete a custom transformer.
+     * @example true
+     */
+    deleteCustomTransformer: boolean;
+
+    /**
+     * Permission to test a custom transformer.
+     * @example true
+     */
+    testCustomTransformer: boolean;
   };
 }
 
