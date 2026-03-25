@@ -82,4 +82,19 @@ describe('ScanModeService', () => {
     http.expectOne({ url: '/api/scan-modes/verify', method: 'POST' }).flush(validatedCronExpression);
     expect(expectedValidatedCronExpression!).toEqual(validatedCronExpression);
   });
+
+  it('should return invalid result when cron expression is not valid', () => {
+    let expectedValidatedCronExpression: ValidatedCronExpression | null = null;
+    const validatedCronExpression: ValidatedCronExpression = {
+      isValid: false,
+      errorMessage: 'Invalid cron expression',
+      nextExecutions: [],
+      humanReadableForm: ''
+    };
+
+    service.verifyCron('not-a-cron').subscribe(c => (expectedValidatedCronExpression = c));
+
+    http.expectOne({ url: '/api/scan-modes/verify', method: 'POST' }).flush(validatedCronExpression);
+    expect(expectedValidatedCronExpression!).toEqual(validatedCronExpression);
+  });
 });
