@@ -11353,6 +11353,26 @@
 					},
 					"commandPermissions": {
 						"properties": {
+							"testCustomTransformer": {
+								"type": "boolean",
+								"description": "Permission to test a custom transformer.",
+								"example": true
+							},
+							"deleteCustomTransformer": {
+								"type": "boolean",
+								"description": "Permission to delete a custom transformer.",
+								"example": true
+							},
+							"updateCustomTransformer": {
+								"type": "boolean",
+								"description": "Permission to update a custom transformer.",
+								"example": true
+							},
+							"createCustomTransformer": {
+								"type": "boolean",
+								"description": "Permission to create a custom transformer.",
+								"example": true
+							},
 							"updateNorthCacheContent": {
 								"type": "boolean",
 								"description": "Permission to remove cache content.",
@@ -11545,6 +11565,10 @@
 							}
 						},
 						"required": [
+							"testCustomTransformer",
+							"deleteCustomTransformer",
+							"updateCustomTransformer",
+							"createCustomTransformer",
 							"updateNorthCacheContent",
 							"getNorthCacheFileContent",
 							"searchNorthCacheContent",
@@ -11648,7 +11672,11 @@
 					"get-north-cache-file-content",
 					"get-history-cache-file-content",
 					"update-north-cache-content",
-					"update-history-cache-content"
+					"update-history-cache-content",
+					"create-custom-transformer",
+					"update-custom-transformer",
+					"delete-custom-transformer",
+					"test-custom-transformer"
 				],
 				"description": "Type representing an OIBus command type."
 			},
@@ -19462,6 +19490,314 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"OIBusCreateCustomTransformerCommandDTO": {
+				"description": "Command DTO for creating a custom transformer.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"create-custom-transformer"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The target version for the command.",
+						"example": "3.7.0"
+					},
+					"commandContent": {
+						"$ref": "#/components/schemas/CustomTransformerCommandDTO",
+						"description": "The content of the command, including custom transformer details."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusUpdateCustomTransformerCommandDTO": {
+				"description": "Command DTO for updating a custom transformer.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"update-custom-transformer"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The target version for the command.",
+						"example": "3.7.0"
+					},
+					"transformerId": {
+						"type": "string",
+						"description": "The ID of the custom transformer to update.",
+						"example": "transformer123"
+					},
+					"commandContent": {
+						"$ref": "#/components/schemas/CustomTransformerCommandDTO",
+						"description": "The content of the command, including updated custom transformer details."
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"transformerId",
+					"commandContent"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusDeleteCustomTransformerCommandDTO": {
+				"description": "Command DTO for deleting a custom transformer.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"delete-custom-transformer"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The target version for the command.",
+						"example": "3.7.0"
+					},
+					"transformerId": {
+						"type": "string",
+						"description": "The ID of the custom transformer to delete.",
+						"example": "transformer123"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"transformerId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusTestCustomTransformerCommandDTO": {
+				"description": "Command DTO for testing a custom transformer connection.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the command.",
+						"example": "cmd123"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"test-custom-transformer"
+						],
+						"nullable": false,
+						"description": "The type of the command."
+					},
+					"status": {
+						"$ref": "#/components/schemas/OIBusCommandStatus",
+						"description": "The current status of the command."
+					},
+					"ack": {
+						"type": "boolean",
+						"description": "Whether the command has been acknowledged.",
+						"example": true
+					},
+					"retrievedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was retrieved.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"completedDate": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/Instant"
+							}
+						],
+						"nullable": true,
+						"description": "The date and time when the command was completed.",
+						"example": "2023-10-31T12:35:56.789Z"
+					},
+					"result": {
+						"type": "string",
+						"nullable": true,
+						"description": "The result of the command execution.",
+						"example": "Success"
+					},
+					"targetVersion": {
+						"type": "string",
+						"description": "The target version for the command.",
+						"example": "3.7.0"
+					},
+					"transformerId": {
+						"type": "string",
+						"description": "The ID of the custom transformer to test.",
+						"example": "transformer123"
+					}
+				},
+				"required": [
+					"id",
+					"type",
+					"status",
+					"ack",
+					"retrievedDate",
+					"completedDate",
+					"result",
+					"targetVersion",
+					"transformerId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusCommandDTO": {
 				"anyOf": [
 					{
@@ -19580,6 +19916,18 @@
 					},
 					{
 						"$ref": "#/components/schemas/OIBusUpdateHistoryCacheContentCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusCreateCustomTransformerCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusUpdateCustomTransformerCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusDeleteCustomTransformerCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusTestCustomTransformerCommandDTO"
 					}
 				],
 				"description": "Union type representing all possible OIBus command DTOs."
@@ -19781,7 +20129,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"GroupLightDTO": {
+			"SouthItemGroupLightDTO": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -19853,7 +20201,7 @@
 						"description": "The south associated to the transformer"
 					},
 					"group": {
-						"$ref": "#/components/schemas/GroupLightDTO",
+						"$ref": "#/components/schemas/SouthItemGroupLightDTO",
 						"description": "The group associated to the transformer (mutually exclusive with items)"
 					},
 					"items": {
@@ -22428,7 +22776,7 @@
 						"description": "The transformer to be applied."
 					},
 					"group": {
-						"$ref": "#/components/schemas/GroupLightDTO",
+						"$ref": "#/components/schemas/SouthItemGroupLightDTO",
 						"description": "The group associated to the transformer (mutually exclusive with items)"
 					}
 				},
