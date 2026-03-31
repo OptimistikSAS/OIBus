@@ -2,6 +2,15 @@ import { request, ProxyAgent, Agent } from 'undici';
 import { encryptionService } from './encryption.service';
 import { version } from '../../package.json';
 
+const proxyAgentCache = new Map<string, ProxyAgent>();
+
+export function clearProxyAgentCache(): void {
+  for (const agent of proxyAgentCache.values()) {
+    void agent.destroy?.();
+  }
+  proxyAgentCache.clear();
+}
+
 export type ReqURL = Parameters<typeof request>['0'];
 /**
  * Extended request type.
@@ -172,24 +181,24 @@ async function getAuthorization(options: ReqAuthOptions, url: string) {
   return auth;
 }
 
-async function createProxy(options: NonNullable<ReqOptions['proxy']>, acceptUnauthorized: boolean) {
-  const proxyOptions: ProxyAgent.Options = {
-    uri: options.url
-  };
+async function createProxy(options: NonNullable<ReqOptions['proxy']>, acceptUnauthorized: boolean): Promise<ProxyAgent> {
+  const proxyOptions: ProxyAgent.Options = { uri: options.url };
 
   if (acceptUnauthorized) {
-    proxyOptions.requestTls = {
-      rejectUnauthorized: false
-    };
+    proxyOptions.requestTls = { rejectUnauthorized: false };
   }
 
-  if (!options.auth) {
-    return new ProxyAgent(proxyOptions);
+  if (options.auth) {
+    const { token, url } = await getAuthorization(options.auth, options.url);
+    proxyOptions.token = token;
+    proxyOptions.uri = url;
   }
 
-  const { token, url } = await getAuthorization(options.auth, options.url);
-  proxyOptions.token = token;
-  proxyOptions.uri = url;
+  const cacheKey = `${proxyOptions.uri}|${acceptUnauthorized}|${proxyOptions.token ?? ''}`;
+  const cached = proxyAgentCache.get(cacheKey);
+  if (cached) return cached;
 
-  return new ProxyAgent(proxyOptions);
+  const agent = new ProxyAgent(proxyOptions);
+  proxyAgentCache.set(cacheKey, agent);
+  return agent;
 }
