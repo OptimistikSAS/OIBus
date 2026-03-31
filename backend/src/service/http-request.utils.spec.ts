@@ -1,7 +1,7 @@
 import { request, ProxyAgent, Agent } from 'undici';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import { encryptionService } from './encryption.service';
-import { HTTPRequest, ReqOptions } from './http-request.utils';
+import { clearProxyAgentCache, HTTPRequest, ReqOptions } from './http-request.utils';
 import { createMockResponse } from '../tests/__mocks__/undici.mock';
 import { version } from '../../package.json';
 
@@ -36,6 +36,7 @@ describe('HTTPRequest Service', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    clearProxyAgentCache();
 
     mockUndiciRequest = request as jest.Mock;
     mockUndiciProxyAgent = ProxyAgent as unknown as jest.Mock;
@@ -463,6 +464,26 @@ describe('HTTPRequest Service', () => {
         },
         dispatcher: expect.objectContaining({ isMockProxyAgent: true })
       });
+    });
+
+    it('should reuse ProxyAgent instance for the same proxy config', async () => {
+      const options: ReqOptions = { proxy: { url: testProxyUrl } };
+
+      await HTTPRequest(testUrl, options);
+      await HTTPRequest(testUrl, options);
+
+      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
+      expect(mockUndiciRequest).toHaveBeenCalledTimes(2);
+    });
+
+    it('should create separate ProxyAgent instances for different proxy configs', async () => {
+      const optionsA: ReqOptions = { proxy: { url: testProxyUrl } };
+      const optionsB: ReqOptions = { proxy: { url: 'http://other-proxy.example.com:3128' } };
+
+      await HTTPRequest(testUrl, optionsA);
+      await HTTPRequest(testUrl, optionsB);
+
+      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(2);
     });
 
     it('should configure ProxyAgent with URL auth even if URL has auth', async () => {
