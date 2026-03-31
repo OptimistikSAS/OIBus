@@ -1400,6 +1400,35 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"TransformerTestResponse": {
+				"properties": {
+					"output": {
+						"type": "string"
+					},
+					"metadata": {
+						"properties": {
+							"numberOfElement": {
+								"type": "number",
+								"format": "double"
+							},
+							"contentType": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"numberOfElement",
+							"contentType"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"output",
+					"metadata"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"TransformerTestRequest": {
 				"properties": {
 					"inputData": {
@@ -25716,8 +25745,15 @@
 			"post": {
 				"operationId": "Test",
 				"responses": {
-					"204": {
-						"description": "No Content"
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/TransformerTestResponse"
+								}
+							}
+						}
 					}
 				},
 				"tags": [
