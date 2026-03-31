@@ -110,7 +110,10 @@ function stripAuditFields<T>(obj: T): T {
 let database: Database;
 describe('Repository with populated database', () => {
   beforeAll(async () => {
+    const { generateRandomId: realGenerateRandomId } = jest.requireActual('../../service/utils');
+    (generateRandomId as jest.Mock).mockImplementation(realGenerateRandomId);
     database = await initDatabase('config');
+    jest.resetAllMocks();
   });
 
   afterAll(async () => {
@@ -251,17 +254,16 @@ describe('Repository with populated database', () => {
 
     beforeEach(() => {
       jest.resetAllMocks();
-      // Set up mock return values for standard transformers before creating repository
-      for (const element of standardTransformers) {
-        (generateRandomId as jest.Mock).mockReturnValueOnce(element.id);
-      }
       repository = new TransformerRepository(database);
       jest.resetAllMocks();
     });
 
     it('should properly find all transformers', () => {
       expect(repository.list().map(stripAuditFields)).toEqual(
-        [...testData.transformers.list, ...standardTransformers].map(stripAuditFields).map(t => expect.objectContaining(t))
+        [
+          ...standardTransformers.map(({ id: _id, ...rest }) => expect.objectContaining(rest)),
+          ...testData.transformers.list.map(stripAuditFields).map(t => expect.objectContaining(t))
+        ]
       );
     });
 
@@ -330,9 +332,10 @@ describe('Repository with populated database', () => {
 
     it('should properly search transformers and page them', () => {
       const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-      const expected = createPageFromArray([...testData.transformers.list, ...standardTransformers], 10, 0);
-      expect(result.totalElements).toEqual(expected.totalElements);
-      expect(result.content.map(stripAuditFields)).toEqual(expected.content.map(stripAuditFields).map(t => expect.objectContaining(t)));
+      expect(result.totalElements).toEqual(17);
+      expect(result.content.map(stripAuditFields)).toEqual(
+        standardTransformers.slice(0, 10).map(({ id: _id, ...rest }) => expect.objectContaining(rest))
+      );
     });
   });
 
