@@ -7,7 +7,8 @@ import {
   TransformerDTO,
   TransformerManifest,
   TransformerSearchParam,
-  TransformerTestRequest
+  TransformerTestRequest,
+  TransformerTestResponse
 } from '../../../shared/model/transformer.model';
 import { toTransformerDTO } from '../../service/transformer.service';
 import { Page } from '../../../shared/model/types';
@@ -146,14 +147,13 @@ export class TransformerController extends Controller {
   }
 
   @Post('/{transformerId}/test')
-  @SuccessResponse(204, 'No Content')
   async test(
     @Path() transformerId: string,
     @Body() command: TransformerTestRequest,
     @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  ): Promise<TransformerTestResponse> {
     const transformerService = request.services.transformerService;
-    await transformerService.test(transformerId, command);
+    return transformerService.test(transformerId, command);
   }
 
   @Get('/template/{inputType}')
