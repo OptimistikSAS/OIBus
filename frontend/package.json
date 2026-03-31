@@ -20,16 +20,16 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "21.2.4",
-    "@angular/cdk": "21.2.2",
-    "@angular/common": "21.2.4",
-    "@angular/compiler": "21.2.4",
-    "@angular/core": "21.2.4",
-    "@angular/forms": "21.2.4",
-    "@angular/localize": "21.2.4",
-    "@angular/platform-browser": "21.2.4",
-    "@angular/platform-browser-dynamic": "21.2.4",
-    "@angular/router": "21.2.4",
+    "@angular/animations": "21.2.6",
+    "@angular/cdk": "21.2.4",
+    "@angular/common": "21.2.6",
+    "@angular/compiler": "21.2.6",
+    "@angular/core": "21.2.6",
+    "@angular/forms": "21.2.6",
+    "@angular/localize": "21.2.6",
+    "@angular/platform-browser": "21.2.6",
+    "@angular/platform-browser-dynamic": "21.2.6",
+    "@angular/router": "21.2.6",
     "@ng-bootstrap/ng-bootstrap": "20.0.0",
     "@ngx-translate/core": "17.0.0",
     "@popperjs/core": "2.11.8",
@@ -44,13 +44,13 @@
     "zone.js": "0.16.1"
   },
   "devDependencies": {
-    "@angular/build": "21.2.2",
-    "@angular/cli": "21.2.2",
-    "@angular/compiler-cli": "21.2.4",
+    "@angular/build": "21.2.5",
+    "@angular/cli": "21.2.5",
+    "@angular/compiler-cli": "21.2.6",
     "@types/jasmine": "6.0.0",
     "@types/luxon": "3.7.1",
     "@types/papaparse": "5.5.2",
-    "angular-eslint": "21.3.0",
+    "angular-eslint": "21.3.1",
     "eslint": "9.39.4",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
@@ -64,6 +64,6 @@
     "ngx-speculoos": "15.0.0",
     "prettier": "3.8.1",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.57.0"
+    "typescript-eslint": "8.58.0"
   }
 }
