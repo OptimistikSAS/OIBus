@@ -38,6 +38,7 @@ import HistoryQueryMetricsService from '../service/metrics/history-query-metrics
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
+import { clearProxyAgentCache } from '../service/http-request.utils';
 
 export default class DataStreamEngine {
   private northConnectors = new Map<string, { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService }>();
@@ -129,6 +130,7 @@ export default class DataStreamEngine {
         this._logger.error(`Error while stopping History query "${id}": ${(error as Error).message}`);
       }
     }
+    clearProxyAgentCache();
   }
 
   async createNorth(northId: string): Promise<NorthConnector<NorthSettings>> {
