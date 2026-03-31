@@ -79,7 +79,7 @@ export class TransformerService {
    * @param inputType - the input type to get template for
    */
   getInputTemplate(inputType: string): Observable<InputTemplate> {
-    return this.http.get<InputTemplate>(`/api/transformers/input-template?inputType=${inputType}`);
+    return this.http.get<InputTemplate>(`/api/transformers/template/${inputType}`);
   }
 
   /**
