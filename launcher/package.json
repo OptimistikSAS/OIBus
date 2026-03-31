@@ -52,7 +52,7 @@
     "jest": "30.3.0",
     "ts-jest": "29.4.6",
     "typescript": "5.4.5",
-    "typescript-eslint": "8.57.0"
+    "typescript-eslint": "8.58.0"
   },
   "pkg": {
     "assets": [
