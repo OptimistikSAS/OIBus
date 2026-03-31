@@ -360,8 +360,8 @@ async function updateNorthRestConnectors(knex: Knex): Promise<void> {
 }
 
 async function createDefaultTransformers(knex: Knex): Promise<void> {
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'csv-to-mqtt' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'csv-to-mqtt' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'any',
@@ -369,8 +369,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'csv-to-mqtt'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'csv-to-time-values' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'csv-to-time-values' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'any',
@@ -378,8 +378,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'csv-to-time-values'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'ignore' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'ignore' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'any',
@@ -387,8 +387,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'ignore'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'iso' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'iso' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'any',
@@ -396,8 +396,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'iso'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'json-to-csv' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'json-to-csv' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'any',
@@ -405,8 +405,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'json-to-csv'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-csv' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-csv' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'time-values',
@@ -414,8 +414,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'time-values-to-csv'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-json' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-json' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'time-values',
@@ -423,8 +423,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'time-values-to-json'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-modbus' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-modbus' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'time-values',
@@ -432,8 +432,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'time-values-to-modbus'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-mqtt' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-mqtt' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'time-values',
@@ -441,8 +441,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'time-values-to-mqtt'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-oianalytics' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-oianalytics' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'time-values',
@@ -450,8 +450,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'time-values-to-oianalytics'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-opcua' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-opcua' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'time-values',
@@ -459,8 +459,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'time-values-to-opcua'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-modbus' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-modbus' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'setpoint',
@@ -468,8 +468,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'setpoint-to-modbus'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-mqtt' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-mqtt' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'setpoint',
@@ -477,8 +477,8 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
       function_name: 'setpoint-to-mqtt'
     });
   }
-  if (!knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-opcua' })) {
-    knex(TRANSFORMERS_TABLE).insert({
+  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-opcua' }).first())) {
+    await knex(TRANSFORMERS_TABLE).insert({
       id: generateRandomId(6),
       type: 'standard',
       input_type: 'setpoint',
