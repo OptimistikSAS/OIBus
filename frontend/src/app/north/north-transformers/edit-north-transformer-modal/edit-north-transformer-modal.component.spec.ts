@@ -420,7 +420,7 @@ describe('EditNorthTransformerModalComponent', () => {
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith(
         jasmine.objectContaining({
-          source: jasmine.objectContaining({ items: [{ id: 'item1', name: 'Item 1' }] })
+          source: jasmine.objectContaining({ items: [jasmine.objectContaining({ id: 'item1', name: 'Item 1' })] })
         })
       );
     });
