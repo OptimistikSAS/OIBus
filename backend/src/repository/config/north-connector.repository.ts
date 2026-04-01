@@ -341,11 +341,12 @@ export default class NorthConnectorRepository {
   }
 
   private findSouthItemsByNorthTransformer(northTransformerId: string): Array<SouthConnectorItemEntityLight> {
-    const query = `SELECT nt.id, nt.item_id, si.name, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} nt JOIN ${SOUTH_ITEMS_TABLE} si ON nt.item_id = si.id WHERE nt.id = ?;`;
+    const query = `SELECT nt.id, nt.item_id, si.name, si.enabled, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} nt JOIN ${SOUTH_ITEMS_TABLE} si ON nt.item_id = si.id WHERE nt.id = ?;`;
     const results = this.database.prepare(query).all(northTransformerId) as Array<Record<string, string>>;
     return results.map(result => ({
       id: result.item_id as string,
       name: result.name as string,
+      enabled: Boolean(result.enabled),
       createdBy: result.created_by,
       updatedBy: result.updated_by,
       createdAt: result.created_at,

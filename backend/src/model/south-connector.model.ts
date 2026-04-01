@@ -12,6 +12,7 @@ export interface SouthConnectorEntityLight extends BaseEntity {
 
 export interface SouthConnectorItemEntityLight extends BaseEntity {
   name: string;
+  enabled: boolean;
 }
 
 export interface SouthItemGroupEntityLight extends BaseEntity {
