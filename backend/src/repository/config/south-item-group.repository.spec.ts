@@ -7,14 +7,17 @@ import { SouthItemGroupEntity } from '../../model/south-connector.model';
 
 jest.mock('../../service/utils');
 
+const TEST_DB_PATH = 'src/tests/test-config-south-item-group.db';
+
 let database: Database;
 describe('South Item Group Repository', () => {
   beforeAll(async () => {
-    database = await initDatabase('config');
+    database = await initDatabase('config', true, TEST_DB_PATH);
   });
 
   afterAll(async () => {
-    await emptyDatabase('config');
+    database.close();
+    await emptyDatabase('config', TEST_DB_PATH);
   });
 
   describe('South item group operations', () => {
