@@ -41,52 +41,79 @@ const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
-export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs' | 'metrics', populate = true) => {
+export function stripAuditFields<T>(obj: T): T {
+  if (Array.isArray(obj)) {
+    return obj.map(stripAuditFields) as T;
+  }
+  if (obj !== null && typeof obj === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      if (['createdBy', 'updatedBy', 'createdAt', 'updatedAt'].includes(key)) continue;
+      result[key] = stripAuditFields(value);
+    }
+    return result as T;
+  }
+  return obj;
+}
+
+export const initDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs' | 'metrics', populate = true, dbPath?: string) => {
   switch (database) {
-    case 'crypto':
-      await emptyDatabase('crypto');
-      await migrateCrypto(CRYPTO_TEST_DATABASE);
-      if (populate) await populateCryptoDatabase();
-      return new Database(CRYPTO_TEST_DATABASE);
-    case 'cache':
-      await emptyDatabase('cache');
-      await migrateSouthCache(CACHE_TEST_DATABASE);
-      return new Database(CACHE_TEST_DATABASE);
-    case 'config':
-      await emptyDatabase('config');
-      await migrateEntities(CONFIG_TEST_DATABASE);
-      if (populate) await populateConfigDatabase();
-      return new Database(CONFIG_TEST_DATABASE);
-    case 'logs':
-      await emptyDatabase('logs');
-      await migrateLogs(LOGS_TEST_DATABASE);
-      return new Database(LOGS_TEST_DATABASE);
-    case 'metrics':
-      await emptyDatabase('metrics');
-      await migrateMetrics(METRICS_TEST_DATABASE);
-      if (populate) await populateMetricsDatabase();
-      return new Database(METRICS_TEST_DATABASE);
+    case 'crypto': {
+      const resolvedPath = dbPath ?? CRYPTO_TEST_DATABASE;
+      await emptyDatabase('crypto', resolvedPath);
+      await migrateCrypto(resolvedPath);
+      if (populate) await populateCryptoDatabase(resolvedPath);
+      return new Database(resolvedPath);
+    }
+    case 'cache': {
+      const resolvedPath = dbPath ?? CACHE_TEST_DATABASE;
+      await emptyDatabase('cache', resolvedPath);
+      await migrateSouthCache(resolvedPath);
+      return new Database(resolvedPath);
+    }
+    case 'config': {
+      const resolvedPath = dbPath ?? CONFIG_TEST_DATABASE;
+      await emptyDatabase('config', resolvedPath);
+      await migrateEntities(resolvedPath);
+      if (populate) await populateConfigDatabase(resolvedPath);
+      return new Database(resolvedPath);
+    }
+    case 'logs': {
+      const resolvedPath = dbPath ?? LOGS_TEST_DATABASE;
+      await emptyDatabase('logs', resolvedPath);
+      await migrateLogs(resolvedPath);
+      return new Database(resolvedPath);
+    }
+    case 'metrics': {
+      const resolvedPath = dbPath ?? METRICS_TEST_DATABASE;
+      await emptyDatabase('metrics', resolvedPath);
+      await migrateMetrics(resolvedPath);
+      if (populate) await populateMetricsDatabase(resolvedPath);
+      return new Database(resolvedPath);
+    }
   }
 };
 
-export const emptyDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs' | 'metrics') => {
-  let databasePath = '';
-  switch (database) {
-    case 'crypto':
-      databasePath = CRYPTO_TEST_DATABASE;
-      break;
-    case 'cache':
-      databasePath = CACHE_TEST_DATABASE;
-      break;
-    case 'config':
-      databasePath = CONFIG_TEST_DATABASE;
-      break;
-    case 'logs':
-      databasePath = LOGS_TEST_DATABASE;
-      break;
-    case 'metrics':
-      databasePath = METRICS_TEST_DATABASE;
-      break;
+export const emptyDatabase = async (database: 'config' | 'crypto' | 'cache' | 'logs' | 'metrics', dbPath?: string) => {
+  let databasePath = dbPath ?? '';
+  if (!dbPath) {
+    switch (database) {
+      case 'crypto':
+        databasePath = CRYPTO_TEST_DATABASE;
+        break;
+      case 'cache':
+        databasePath = CACHE_TEST_DATABASE;
+        break;
+      case 'config':
+        databasePath = CONFIG_TEST_DATABASE;
+        break;
+      case 'logs':
+        databasePath = LOGS_TEST_DATABASE;
+        break;
+      case 'metrics':
+        databasePath = METRICS_TEST_DATABASE;
+        break;
+    }
   }
 
   const testDatabase = knex({
@@ -120,11 +147,11 @@ export const mockBaseFolders = (id: string): BaseFolders => ({
   error: path.resolve('error', id)
 });
 
-const populateMetricsDatabase = async () => {
+const populateMetricsDatabase = async (dbPath = METRICS_TEST_DATABASE) => {
   const testDatabase = knex({
     client: 'better-sqlite3',
     connection: {
-      filename: METRICS_TEST_DATABASE
+      filename: dbPath
     },
     useNullAsDefault: true
   });
@@ -230,11 +257,11 @@ const createHistoryQueryMetrics = async (database: knex.Knex, historyQueryId: st
     .into('history_query_metrics');
 };
 
-const populateCryptoDatabase = async () => {
+const populateCryptoDatabase = async (dbPath = CRYPTO_TEST_DATABASE) => {
   const testDatabase = knex({
     client: 'better-sqlite3',
     connection: {
-      filename: CRYPTO_TEST_DATABASE
+      filename: dbPath
     },
     useNullAsDefault: true
   });
@@ -255,11 +282,11 @@ const createCryptoSettings = async (database: knex.Knex, oibusId: string, crypto
     .into('crypto');
 };
 
-const populateConfigDatabase = async () => {
+const populateConfigDatabase = async (dbPath = CONFIG_TEST_DATABASE) => {
   const testDatabase = knex({
     client: 'better-sqlite3',
     connection: {
-      filename: CONFIG_TEST_DATABASE
+      filename: dbPath
     },
     useNullAsDefault: true
   });
