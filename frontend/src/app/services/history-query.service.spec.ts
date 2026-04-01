@@ -10,7 +10,7 @@ import { DownloadService } from './download.service';
 import { SouthFolderScannerItemSettings } from '../../../../backend/shared/model/south-settings.model';
 import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
-import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;
@@ -79,7 +79,7 @@ describe('HistoryQueryService', () => {
 
   it('should add or edit a History query transformer with options', () => {
     let done = false;
-    service.addOrEditTransformer('id1', {} as TransformerDTOWithOptions).subscribe(() => (done = true));
+    service.addOrEditTransformer('id1', {} as HistoryTransformerDTOWithOptions).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/transformers' });
     testRequest.flush({});
     expect(done).toBe(true);

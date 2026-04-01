@@ -282,7 +282,7 @@ export class EditNorthTransformerModalComponent {
           ? (this.existingTransformerWithOptions.source as SourceOriginSouthDTO).south
           : this.form.value.source!.south!,
         group: this.selectionType === 'group' && this.selectedGroup ? this.selectedGroup : undefined,
-        items: this.selectionType === 'items' ? this.selectedItems : []
+        items: this.selectionType === 'items' ? this.selectedItems.map(item => ({ id: item.id, name: item.name, createdBy: item.createdBy, updatedBy: item.updatedBy, createdAt: item.createdAt, updatedAt: item.updatedAt })) : []
       };
     } else if (sourceType === 'oibus-api') {
       source = { type: 'oibus-api', dataSourceId: this.form.value.apiDataSourceId! };
@@ -301,7 +301,7 @@ export class EditNorthTransformerModalComponent {
   compareSource(o1: any, o2: any): boolean {
     if (!o1 || !o2) return o1 === o2;
     // Compare Input Types
-    if (o1.inputType !== o2.inputType) return false;
+    if (o1.dataSourceType !== o2.dataSourceType) return false;
     // Compare South Connectors (handle objects or nulls)
     const southId1 = o1.south?.id || o1.south; // handle if south is just ID or full object
     const southId2 = o2.south?.id || o2.south;
@@ -331,7 +331,7 @@ export class EditNorthTransformerModalComponent {
       }
 
       if (source.dataSourceType === 'south' && source.south) {
-        return element.inputType === getAssociatedInputType(source.south.type);
+        return element.inputType === 'any' || element.inputType === getAssociatedInputType(source.south.type);
       }
 
       if (source.dataSourceType === 'oibus-api') {
