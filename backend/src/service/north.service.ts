@@ -42,8 +42,12 @@ import TransformerService, { toTransformerDTO } from './transformer.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { buildNorth, createNorthOrchestrator } from '../north/north-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import { NorthTransformerWithOptions } from '../model/transformer.model';
-import { toSouthConnectorLightDTO, toSouthItemGroupLightDTO } from './south.service';
+import { NorthTransformerWithOptions, TransformerSource } from '../model/transformer.model';
+import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
+import { TransformerSourceDTO } from '../../shared/model/transformer.model';
+import { SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../model/south-connector.model';
+import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
+import { SouthItemGroupLightDTO } from '../../shared/model/south-connector.model';
 
 export const northManifestList: Array<NorthConnectorManifest> = [
   consoleManifest,
@@ -63,6 +67,7 @@ export default class NorthService {
     protected readonly validator: JoiValidator,
     private northConnectorRepository: NorthConnectorRepository,
     private southConnectorRepository: SouthConnectorRepository,
+    private southItemGroupRepository: SouthItemGroupRepository,
     private northMetricsRepository: NorthConnectorMetricsRepository,
     private scanModeRepository: ScanModeRepository,
     private logRepository: LogRepository,
@@ -121,36 +126,16 @@ export default class NorthService {
     northEntity.createdBy = createdBy;
     northEntity.updatedBy = createdBy;
     const transformers = this.transformerService.findAll();
-    const southConnectors = this.southConnectorRepository.findAllSouth();
-    northEntity.transformers = command.transformers.map(transformerIdWithOptions => {
-      const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    northEntity.transformers = command.transformers.map(transformerWithOptions => {
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformer.id);
       if (!foundTransformer) {
-        throw new NotFoundError(`Could not find OIBus transformer "${transformerIdWithOptions.transformerId}"`);
+        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformer.id}"`);
       }
-      const south = transformerIdWithOptions.southId
-        ? southConnectors.find(southConnector => southConnector.id === transformerIdWithOptions.southId)
-        : undefined;
-      if (!south && transformerIdWithOptions.southId) {
-        throw new NotFoundError(`Could not find South connector "${transformerIdWithOptions.southId}"`);
-      }
-
       return {
         id: '',
         transformer: foundTransformer,
-        options: transformerIdWithOptions.options,
-        inputType: transformerIdWithOptions.inputType,
-        south: south ? south : undefined,
-        group: transformerIdWithOptions.groupId
-          ? { id: transformerIdWithOptions.groupId, name: '', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
-          : undefined,
-        items: transformerIdWithOptions.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          createdBy: item.createdBy.id,
-          updatedBy: item.updatedBy.id,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt
-        }))
+        options: transformerWithOptions.options,
+        source: this.transformerSourceFromCommand(transformerWithOptions.source)
       };
     });
     this.northConnectorRepository.saveNorth(northEntity);
@@ -181,36 +166,16 @@ export default class NorthService {
     northEntity.createdBy = previousSettings.createdBy;
     northEntity.updatedBy = updatedBy;
     const transformers = this.transformerService.findAll();
-    const southConnectors = this.southConnectorRepository.findAllSouth();
-    northEntity.transformers = command.transformers.map(transformerIdWithOptions => {
-      const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    northEntity.transformers = command.transformers.map(transformerWithOptions => {
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformer.id);
       if (!foundTransformer) {
-        throw new NotFoundError(`Could not find OIBus transformer "${transformerIdWithOptions.transformerId}"`);
+        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformer.id}"`);
       }
-      const south = transformerIdWithOptions.southId
-        ? southConnectors.find(southConnector => southConnector.id === transformerIdWithOptions.southId)
-        : undefined;
-      if (!south && transformerIdWithOptions.southId) {
-        throw new NotFoundError(`Could not find South connector "${transformerIdWithOptions.southId}"`);
-      }
-
       return {
-        id: transformerIdWithOptions.id,
+        id: transformerWithOptions.id,
         transformer: foundTransformer,
-        options: transformerIdWithOptions.options,
-        inputType: transformerIdWithOptions.inputType,
-        south: south ? south : undefined,
-        group: transformerIdWithOptions.groupId
-          ? { id: transformerIdWithOptions.groupId, name: '', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
-          : undefined,
-        items: transformerIdWithOptions.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          createdBy: item.createdBy.id,
-          updatedBy: item.updatedBy.id,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt
-        }))
+        options: transformerWithOptions.options,
+        source: this.transformerSourceFromCommand(transformerWithOptions.source)
       };
     });
 
@@ -355,7 +320,7 @@ export default class NorthService {
     };
 
     const source: CacheMetadataSource = {
-      source: 'oianalytics'
+      source: 'oianalytics-setpoints'
     };
     await northConnector.cacheContent(setpointContent, source);
 
@@ -372,6 +337,57 @@ export default class NorthService {
       throw new Error(`North connector "${retrieveSecretsFromNorth}" (type "${source.type}") must be of the type "${manifest.id}"`);
     }
     return source;
+  }
+
+  transformerSourceFromCommand(sourceCommand: TransformerSourceDTO): TransformerSource {
+    switch (sourceCommand.type) {
+      case 'south': {
+        const south = this.southConnectorRepository.findSouthById(sourceCommand.south.id);
+        if (!south) {
+          throw new NotFoundError(`Could not find South connector "${sourceCommand.south.id}"`);
+        }
+        let group: SouthItemGroupEntity | undefined;
+        if (sourceCommand.group) {
+          const result = this.southItemGroupRepository.findById(sourceCommand.group.id);
+          if (!result) {
+            throw new NotFoundError(`Could not find Group "${sourceCommand.group.id}"`);
+          }
+          group = result;
+        }
+        const items: Array<SouthConnectorItemEntityLight> = sourceCommand.items.map(item => {
+          if (!south.items.map(element => element.id).includes(item.id)) {
+            throw new NotFoundError(`Could not find South connector item "${item.name}" (${item.id})`);
+          }
+          return {
+            id: item.id,
+            createdBy: item.createdBy.id,
+            updatedBy: item.updatedBy.id,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+            name: item.name
+          };
+        });
+        return {
+          type: 'south',
+          south: {
+            id: south.id,
+            createdBy: south.createdBy,
+            updatedBy: south.updatedBy,
+            createdAt: south.createdAt,
+            updatedAt: south.updatedAt,
+            name: south.name,
+            type: south.type,
+            description: south.description,
+            enabled: south.enabled
+          },
+          group,
+          items
+        };
+      }
+      case 'oianalytics-setpoint':
+      case 'oibus-api':
+        return sourceCommand;
+    }
   }
 }
 
@@ -428,23 +444,28 @@ export const toNorthConnectorDTO = (
       id: transformerWithOptions.id,
       transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
       options: transformerWithOptions.options,
-      inputType: transformerWithOptions.inputType,
-      south: transformerWithOptions.south ? toSouthConnectorLightDTO(transformerWithOptions.south, getUserInfo) : undefined,
-      group: transformerWithOptions.group ? toSouthItemGroupLightDTO(transformerWithOptions.group, getUserInfo) : undefined,
-      items: transformerWithOptions.items.map(item => ({
-        id: item.id,
-        name: item.name,
-        createdBy: getUserInfo(item.createdBy),
-        updatedBy: getUserInfo(item.updatedBy),
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt
-      }))
+      source: toTransformerSourceDTO(transformerWithOptions.source, getUserInfo)
     })),
     createdBy: getUserInfo(northEntity.createdBy),
     updatedBy: getUserInfo(northEntity.updatedBy),
     createdAt: northEntity.createdAt,
     updatedAt: northEntity.updatedAt
   };
+};
+
+export const toTransformerSourceDTO = (source: TransformerSource, getUserInfo: GetUserInfo): TransformerSourceDTO => {
+  switch (source.type) {
+    case 'south':
+      return {
+        type: 'south',
+        south: toSouthConnectorLightDTO(source.south, getUserInfo),
+        group: source.group ? toSouthItemGroupLightDTO(source.group, getUserInfo) : undefined,
+        items: source.items.map(item => toSouthItemLightDTO(item, getUserInfo))
+      };
+    case 'oibus-api':
+    case 'oianalytics-setpoint':
+      return source;
+  }
 };
 
 export const copyNorthConnectorCommandToNorthEntity = async (
@@ -482,5 +503,16 @@ export const copyNorthConnectorCommandToNorthEntity = async (
       enabled: command.caching.archive.enabled,
       retentionDuration: command.caching.archive.retentionDuration
     }
+  };
+};
+
+export const toSouthItemGroupLightDTO = (entity: SouthConnectorItemEntityLight, getUserInfo: GetUserInfo): SouthItemGroupLightDTO => {
+  return {
+    id: entity.id,
+    name: entity.name,
+    createdBy: getUserInfo(entity.createdBy),
+    updatedBy: getUserInfo(entity.updatedBy),
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt
   };
 };

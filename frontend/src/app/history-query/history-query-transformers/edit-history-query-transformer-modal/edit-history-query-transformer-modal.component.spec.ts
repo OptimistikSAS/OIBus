@@ -182,7 +182,6 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
             { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
           ]
         },
-        inputType: transformer.inputType,
         items: []
       },
       [transformer],
@@ -203,7 +202,6 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
           { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
         ]
       },
-      inputType: transformer.inputType,
       items: []
     });
   });
@@ -363,7 +361,6 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
           id: 'historyTransformerId1',
           transformer,
           options: {},
-          inputType: transformer.inputType,
           items: []
         },
         [transformer],
@@ -392,7 +389,6 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
           id: 'historyTransformerId1',
           transformer,
           options: {},
-          inputType: transformer.inputType,
           items: [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>
         },
         [transformer],

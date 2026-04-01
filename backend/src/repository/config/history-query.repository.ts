@@ -274,26 +274,15 @@ export default class HistoryQueryRepository {
   addOrEditTransformer(historyId: string, transformerWithOptions: HistoryTransformerWithOptions): void {
     if (!transformerWithOptions.id) {
       transformerWithOptions.id = generateRandomId(6);
-      const query = `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (id, history_id, transformer_id, options, input_type) VALUES (?, ?, ?, ?, ?);`;
+      const query = `INSERT INTO ${HISTORY_TRANSFORMERS_TABLE} (id, history_id, transformer_id, options) VALUES (?, ?, ?, ?);`;
       this.database
         .prepare(query)
-        .run(
-          transformerWithOptions.id,
-          historyId,
-          transformerWithOptions.transformer.id,
-          JSON.stringify(transformerWithOptions.options),
-          transformerWithOptions.inputType
-        );
+        .run(transformerWithOptions.id, historyId, transformerWithOptions.transformer.id, JSON.stringify(transformerWithOptions.options));
     } else {
-      const query = `UPDATE ${HISTORY_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ?, input_type = ? WHERE id = ?;`;
+      const query = `UPDATE ${HISTORY_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ? WHERE id = ?;`;
       this.database
         .prepare(query)
-        .run(
-          transformerWithOptions.transformer.id,
-          JSON.stringify(transformerWithOptions.options),
-          transformerWithOptions.inputType,
-          transformerWithOptions.id
-        );
+        .run(transformerWithOptions.transformer.id, JSON.stringify(transformerWithOptions.options), transformerWithOptions.id);
     }
     this.database.prepare(`DELETE FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(transformerWithOptions.id);
     const items = transformerWithOptions.items.filter(item => item.id);
@@ -460,13 +449,12 @@ export default class HistoryQueryRepository {
   }
 
   private findTransformersForHistory(historyId: string): Array<HistoryTransformerWithOptions> {
-    const query = `SELECT t.id, t.type, ht.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, t.timeout, ht.options, ht.id as htId FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
+    const query = `SELECT t.id, t.type, t.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, t.timeout, ht.options, ht.id as htId FROM ${HISTORY_TRANSFORMERS_TABLE} ht JOIN ${TRANSFORMERS_TABLE} t ON ht.transformer_id = t.id WHERE ht.history_id = ?;`;
     const result = this.database.prepare(query).all(historyId) as Array<Record<string, string>>;
     return result.map(element => ({
       id: element.htId,
       transformer: toTransformer(element),
       options: JSON.parse(element.options),
-      inputType: element.input_type,
       items: this.findHistoryItems(element.htId)
     }));
   }

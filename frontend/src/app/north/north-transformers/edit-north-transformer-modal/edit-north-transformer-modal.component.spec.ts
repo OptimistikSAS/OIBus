@@ -20,10 +20,6 @@ class EditNorthTransformerModalComponentTester extends ComponentTester<EditNorth
     return this.element('h4');
   }
 
-  get transformerSelect() {
-    return this.select('#output')!;
-  }
-
   get options() {
     return this.debugElement.query(By.directive(OIBusObjectFormControlComponent))!;
   }
@@ -160,7 +156,7 @@ describe('EditNorthTransformerModalComponent', () => {
   });
 
   it('should display title and form, and validate without transformers', async () => {
-    tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+    tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
     await tester.change();
     expect(tester.title).toContainText('Choose how to handle payloads');
     expect(tester.options).toBeNull();
@@ -169,26 +165,20 @@ describe('EditNorthTransformerModalComponent', () => {
   });
 
   it('should validate with transformers', async () => {
-    tester.componentInstance.prepareForEdition(
-      [],
-      [],
-      [],
-      {
-        id: 'northTransformerId1',
-        transformer,
-        options: {
-          mapping: [
-            { pointId: 'pointId1', nodeId: 'nodeId1', dataType: 'Int32' },
-            { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
-          ]
-        },
-        inputType: transformer.inputType,
-        south: undefined,
-        items: []
+    tester.componentInstance.prepareForEdition([], [], [], [transformer], ['mqtt'], {
+      id: 'northTransformerId1',
+      transformer,
+      options: {
+        mapping: [
+          { pointId: 'pointId1', nodeId: 'nodeId1', dataType: 'Int32' },
+          { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
+        ]
       },
-      [transformer],
-      ['mqtt']
-    );
+      source: {
+        type: 'oibus-api',
+        dataSourceId: 'dataSourceId'
+      }
+    });
     await tester.change();
     expect(tester.options).toBeDefined();
     expect(tester.title).toContainText('Choose how to handle payloads');
@@ -202,16 +192,16 @@ describe('EditNorthTransformerModalComponent', () => {
           { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
         ]
       },
-      south: undefined,
-      inputType: transformer.inputType,
-      group: undefined,
-      items: []
+      source: {
+        type: 'oibus-api',
+        dataSourceId: 'dataSourceId'
+      }
     });
   });
 
   describe('item selection', () => {
     it('should toggle between all items and specific items', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
       expect(tester.componentInstance.selectionType).toBe('all');
       expect(tester.componentInstance.selectedItems).toEqual([]);
 
@@ -224,13 +214,13 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should select all search results and clear them', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
       tester.componentInstance.selectionType = 'items';
       tester.componentInstance.searchResults = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' },
         { id: 'item3', name: 'Item 3' }
-      ] as unknown as Array<ItemLightDTO>;
+      ] as Array<ItemLightDTO>;
       tester.componentInstance.totalSearchResults = 3;
 
       tester.componentInstance.selectAllResults();
@@ -241,13 +231,13 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should not add duplicate items when selecting all results', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
       tester.componentInstance.selectionType = 'items';
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as Array<ItemLightDTO>;
       tester.componentInstance.searchResults = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
-      ] as unknown as Array<ItemLightDTO>;
+      ] as Array<ItemLightDTO>;
       tester.componentInstance.totalSearchResults = 2;
 
       tester.componentInstance.selectAllResults();
@@ -272,17 +262,17 @@ describe('EditNorthTransformerModalComponent', () => {
         createdAt: '',
         updatedAt: ''
       } as SouthConnectorLightDTO;
-      tester.componentInstance.prepareForCreation([southConnector], [], [], [], [transformer], []);
-      tester.componentInstance.form.controls.source.setValue({ inputType: null, south: southConnector });
+      tester.componentInstance.prepareForCreation([southConnector], [], [], [transformer], []);
+      tester.componentInstance.form.controls.source.setValue({ dataSourceType: null, south: southConnector });
       tester.componentInstance.selectedItems = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
-      ] as unknown as Array<ItemLightDTO>;
+      ] as Array<ItemLightDTO>;
 
-      const items: Array<any> = [
+      const items = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' }
-      ];
+      ] as Array<ItemLightDTO>;
       fakeSouthConnectorService.searchItems.and.returnValue(
         of({ content: items, size: 20, number: 0, totalElements: 2, totalPages: 1 } as any)
       );
@@ -295,9 +285,9 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should remove a single item', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      const item1 = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
-      const item2 = { id: 'item2', name: 'Item 2' } as unknown as ItemLightDTO;
+      tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
+      const item1 = { id: 'item1', name: 'Item 1' } as ItemLightDTO;
+      const item2 = { id: 'item2', name: 'Item 2' } as ItemLightDTO;
       tester.componentInstance.selectedItems = [item1, item2];
 
       tester.componentInstance.removeItem(item1);
@@ -306,8 +296,8 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should toggle item selection', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      const item = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
+      tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
+      const item = { id: 'item1', name: 'Item 1' } as ItemLightDTO;
       tester.componentInstance.itemSearchText = '';
       tester.componentInstance.searchResults = [item];
       tester.componentInstance.totalSearchResults = 1;
@@ -326,12 +316,12 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should check if item is selected', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
-      const item = { id: 'item1', name: 'Item 1' } as unknown as ItemLightDTO;
+      tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
+      const item = { id: 'item1', name: 'Item 1' } as ItemLightDTO;
       tester.componentInstance.selectedItems = [item];
 
       expect(tester.componentInstance.isItemSelected(item)).toBe(true);
-      expect(tester.componentInstance.isItemSelected({ id: 'item2', name: 'Item 2' } as unknown as ItemLightDTO)).toBe(false);
+      expect(tester.componentInstance.isItemSelected({ id: 'item2', name: 'Item 2' } as ItemLightDTO)).toBe(false);
     });
 
     it('should filter items based on search text', () => {
@@ -346,8 +336,8 @@ describe('EditNorthTransformerModalComponent', () => {
         createdAt: '',
         updatedAt: ''
       } as SouthConnectorLightDTO;
-      tester.componentInstance.prepareForCreation([southConnector], [], [], [], [transformer], []);
-      tester.componentInstance.form.controls.source.setValue({ inputType: null, south: southConnector });
+      tester.componentInstance.prepareForCreation([southConnector], [], [], [transformer], []);
+      tester.componentInstance.form.controls.source.setValue({ dataSourceType: null, south: southConnector });
       tester.componentInstance.selectedItems = [];
 
       const filteredItems: Array<any> = [
@@ -368,7 +358,7 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should reset searchInteracted flag when toggling item selection', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
       tester.componentInstance.searchInteracted = true;
 
       tester.componentInstance.setSelectionType('all');
@@ -377,7 +367,7 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should set searchInteracted on dropdown open', () => {
-      tester.componentInstance.prepareForCreation([], [], [], [], [transformer], []);
+      tester.componentInstance.prepareForCreation([], [], [], [transformer], []);
       tester.componentInstance.searchInteracted = false;
 
       tester.componentInstance.onDropdownOpenChange(true);
@@ -388,59 +378,49 @@ describe('EditNorthTransformerModalComponent', () => {
     });
 
     it('should save with empty items array when selectAllItems is true', async () => {
-      tester.componentInstance.prepareForEdition(
-        [],
-        [],
-        [],
-        {
-          id: 'northTransformerId1',
-          transformer,
-          options: {},
-          inputType: transformer.inputType,
-          south: undefined,
-          items: []
-        },
-        [transformer],
-        ['mqtt']
-      );
+      tester.componentInstance.prepareForEdition([], [], [], [transformer], ['mqtt'], {
+        id: 'northTransformerId1',
+        transformer,
+        options: {},
+        source: {
+          type: 'south',
+          south: { id: 'southId1', name: 'My South', type: 'opcua' } as SouthConnectorLightDTO,
+          items: [{ id: 'item1', name: 'Item 1' }] as Array<ItemLightDTO>
+        }
+      });
       tester.componentInstance.selectionType = 'all';
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as Array<ItemLightDTO>;
       await tester.change();
 
       await tester.save.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith(
         jasmine.objectContaining({
-          items: []
+          source: jasmine.objectContaining({ items: [] })
         })
       );
     });
 
     it('should save with selected items when selectAllItems is false', async () => {
-      tester.componentInstance.prepareForEdition(
-        [],
-        [],
-        [],
-        {
-          id: 'northTransformerId1',
-          transformer,
-          options: {},
-          inputType: transformer.inputType,
-          south: undefined,
-          items: [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>
-        },
-        [transformer],
-        ['mqtt']
-      );
+      tester.componentInstance.prepareForEdition([], [], [], [transformer], ['mqtt'], {
+        id: 'northTransformerId1',
+        transformer,
+        options: {},
+        source: {
+          type: 'south',
+          south: { id: 'southId1', name: 'My South', type: 'opcua' } as SouthConnectorLightDTO,
+          items: [{ id: 'item1', name: 'Item 1' }] as Array<ItemLightDTO>
+        }
+      });
       tester.componentInstance.selectionType = 'items';
-      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
+      tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as Array<ItemLightDTO>;
       await tester.change();
 
       await tester.save.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith(
         jasmine.objectContaining({
-          items: [{ id: 'item1', name: 'Item 1' }]
+          source: jasmine.objectContaining({ items: [{ id: 'item1', name: 'Item 1' }] })
         })
       );
     });

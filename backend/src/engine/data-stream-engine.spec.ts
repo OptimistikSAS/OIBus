@@ -346,15 +346,15 @@ describe('DataStreamEngine', () => {
     it('should add external content (API)', async () => {
       (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(true);
       const mockContent: OIBusContent = { type: 'any', filePath: 'file' };
-      await engine.addExternalContent(testData.north.list[0].id, mockContent);
+      await engine.addExternalContent(testData.north.list[0].id, 'dataSourceId', mockContent);
 
-      expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(mockContent, { source: 'api' });
+      expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(mockContent, { source: 'oibus-api', dataSourceId: 'dataSourceId' });
     });
 
     it('should not add external content (API) when disabled', async () => {
       (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false);
       const mockContent: OIBusContent = { type: 'any', filePath: 'file' };
-      await engine.addExternalContent(testData.north.list[0].id, mockContent);
+      await engine.addExternalContent(testData.north.list[0].id, 'dataSourceId', mockContent);
 
       expect(mockedNorth1.cacheContent).not.toHaveBeenCalled();
     });
@@ -368,7 +368,7 @@ describe('DataStreamEngine', () => {
       // Setup mock to simulate a north having a transformer linked to this south
       const northConfig = {
         ...testData.north.list[0],
-        transformers: [{ south: { id: 'south-1' } }]
+        transformers: [{ source: { type: 'south', south: { id: 'south-1' } } }]
       } as NorthConnectorEntity<NorthSettings>;
       (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(northConfig);
 

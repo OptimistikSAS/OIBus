@@ -2,10 +2,9 @@ import { encryptionService } from './encryption.service';
 
 // South imports
 import {
-  SouthItemGroupLightDTO,
+  ItemLightDTO,
   OIBusSouthType,
   SouthConnectorCommandDTO,
-  SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
@@ -42,6 +41,8 @@ import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
+  SouthConnectorItemEntityLight,
+  SouthItemGroupCommand,
   SouthItemGroupEntity,
   SouthItemGroupEntityLight
 } from '../model/south-connector.model';
@@ -183,17 +184,15 @@ export default class SouthService {
         if (!itemWithGroup) continue;
 
         const scanMode = checkScanMode(scanModes, itemWithGroup.scanModeId, itemWithGroup.scanModeName);
-        const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+        const groupEntity: SouthItemGroupCommand = {
           name: groupName,
           southId: southEntity.id,
           scanMode,
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0,
-          createdBy: createdBy,
-          updatedBy: createdBy
+          readDelay: 0
         };
-        group = this.southItemGroupRepository.create(groupEntity);
+        group = this.southItemGroupRepository.create(groupEntity, createdBy);
       }
       groupNameToIdMap.set(groupName, group.id);
     }
@@ -716,17 +715,15 @@ export default class SouthService {
         if (!itemWithGroup) continue;
 
         const scanMode = checkScanMode(scanModes, itemWithGroup.scanModeId, itemWithGroup.scanModeName);
-        const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+        const groupEntity: SouthItemGroupCommand = {
           name: groupName,
           southId: southConnector.id,
           scanMode,
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0,
-          createdBy: user,
-          updatedBy: user
+          readDelay: 0
         };
-        group = this.southItemGroupRepository.create(groupEntity);
+        group = this.southItemGroupRepository.create(groupEntity, user);
       }
       groupNameToIdMap.set(groupName, group.id);
     }
@@ -799,17 +796,15 @@ export default class SouthService {
     const overlap = command.overlap != null ? command.overlap : null;
     const maxReadInterval = command.maxReadInterval != null ? command.maxReadInterval : null;
     const readDelay = command.readDelay != null ? command.readDelay : 0;
-    const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+    const groupEntity: SouthItemGroupCommand = {
       name: command.name,
       southId: southConnector.id,
       scanMode,
       overlap,
       maxReadInterval,
-      readDelay,
-      createdBy: user,
-      updatedBy: user
+      readDelay
     };
-    return this.southItemGroupRepository.create(groupEntity);
+    return this.southItemGroupRepository.create(groupEntity, user);
   }
 
   updateGroup(southId: string, groupId: string, user: string, command: SouthItemGroupCommandDTO): SouthItemGroupEntity {
@@ -834,16 +829,14 @@ export default class SouthService {
     const overlap = command.overlap != null ? command.overlap : null;
     const maxReadInterval = command.maxReadInterval != null ? command.maxReadInterval : null;
     const readDelay = command.readDelay != null ? command.readDelay : 0;
-    const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'southId' | 'createdAt' | 'updatedAt'> = {
+    const groupEntity: Omit<SouthItemGroupCommand, 'southId'> = {
       name: command.name,
       scanMode,
       overlap,
       maxReadInterval,
-      readDelay,
-      createdBy: user,
-      updatedBy: user
+      readDelay
     };
-    this.southItemGroupRepository.update(groupId, groupEntity);
+    this.southItemGroupRepository.update(groupId, groupEntity, user);
     const updated = this.southItemGroupRepository.findById(groupId);
     if (!updated) {
       throw new NotFoundError(`Failed to update south item group "${groupId}"`);
@@ -985,17 +978,15 @@ export const copySouthItemCommandToSouthItemEntity = async (
       if (!group) {
         // Create group with item's scan mode as default
         const scanMode = checkScanMode(scanModes, command.scanModeId, command.scanModeName);
-        const groupEntity: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+        const groupEntity: SouthItemGroupCommand = {
           name: command.groupName.trim(),
           southId,
           scanMode,
           overlap: null,
           maxReadInterval: null,
-          readDelay: 0,
-          createdBy: user,
-          updatedBy: user
+          readDelay: 0
         };
-        group = southItemGroupRepository.create(groupEntity);
+        group = southItemGroupRepository.create(groupEntity, user);
       }
       southItemEntity.group = group;
     } else {
@@ -1073,7 +1064,7 @@ export const toSouthConnectorItemDTO = (
   };
 };
 
-export const toSouthItemGroupDTO = (entity: SouthItemGroupEntity, getUserInfo: GetUserInfo): SouthItemGroupDTO => {
+export const toSouthItemGroupDTO = (entity: SouthItemGroupEntityLight, getUserInfo: GetUserInfo): SouthItemGroupDTO => {
   return {
     id: entity.id,
     name: entity.name,
@@ -1088,7 +1079,7 @@ export const toSouthItemGroupDTO = (entity: SouthItemGroupEntity, getUserInfo: G
   };
 };
 
-export const toSouthItemGroupLightDTO = (entity: SouthItemGroupEntityLight, getUserInfo: GetUserInfo): SouthItemGroupLightDTO => {
+export const toSouthItemLightDTO = (entity: SouthConnectorItemEntityLight, getUserInfo: GetUserInfo): ItemLightDTO => {
   return {
     id: entity.id,
     name: entity.name,

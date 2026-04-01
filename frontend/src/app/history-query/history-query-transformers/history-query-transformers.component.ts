@@ -2,7 +2,7 @@ import { Component, effect, inject, input, output } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal/edit-history-query-transformer-modal.component';
@@ -30,17 +30,17 @@ export class HistoryQueryTransformersComponent {
 
   readonly historyQuery = input<HistoryQueryDTO | null>(null);
 
-  readonly inMemoryTransformersWithOptions = output<Array<Omit<TransformerDTOWithOptions, 'south'>> | null>();
+  readonly inMemoryTransformersWithOptions = output<Array<HistoryTransformerDTOWithOptions> | null>();
   readonly saveChangesDirectly = input<boolean>(false);
 
   readonly northManifest = input.required<NorthConnectorManifest>();
   readonly certificates = input.required<Array<CertificateDTO>>();
   readonly scanModes = input.required<Array<ScanModeDTO>>();
   readonly transformers = input.required<Array<TransformerDTO>>();
-  readonly transformersFromNorth = input<Array<Omit<TransformerDTOWithOptions, 'south'>>>([]);
+  readonly transformersFromNorth = input<Array<HistoryTransformerDTOWithOptions>>([]);
   readonly southType = input.required<OIBusSouthType>();
 
-  transformersWithOptions: Array<Omit<TransformerDTOWithOptions, 'south'>> = []; // Array used to store subscription on north connector creation
+  transformersWithOptions: Array<HistoryTransformerDTOWithOptions> = []; // Array used to store subscription on north connector creation
 
   constructor() {
     // Initialize local transformers when editing, and keep them in sync with input
@@ -80,7 +80,7 @@ export class HistoryQueryTransformersComponent {
   private refreshAfterAddModalClosed(modalRef: Modal<EditHistoryQueryTransformerModalComponent>) {
     modalRef.result
       .pipe(
-        switchMap((transformer: TransformerDTOWithOptions) => {
+        switchMap((transformer: HistoryTransformerDTOWithOptions) => {
           const historyQuery = this.historyQuery();
           if (historyQuery && this.saveChangesDirectly()) {
             return this.historyQueryService.addOrEditTransformer(historyQuery.id, transformer).pipe(switchMap(() => of(transformer)));
@@ -97,7 +97,7 @@ export class HistoryQueryTransformersComponent {
       });
   }
 
-  editTransformer(transformer: Omit<TransformerDTOWithOptions, 'south'>) {
+  editTransformer(transformer: HistoryTransformerDTOWithOptions) {
     const modalRef = this.modalService.open(EditHistoryQueryTransformerModalComponent, {
       size: 'xl',
       beforeDismiss: () => {
@@ -122,11 +122,11 @@ export class HistoryQueryTransformersComponent {
 
   private refreshAfterEditModalClosed(
     modalRef: Modal<EditHistoryQueryTransformerModalComponent>,
-    oldTransformer: Omit<TransformerDTOWithOptions, 'south'>
+    oldTransformer: HistoryTransformerDTOWithOptions
   ) {
     modalRef.result
       .pipe(
-        switchMap((transformer: Omit<TransformerDTOWithOptions, 'south'>) => {
+        switchMap((transformer: HistoryTransformerDTOWithOptions) => {
           const historyQuery = this.historyQuery();
 
           if (historyQuery && this.saveChangesDirectly()) {
@@ -145,7 +145,7 @@ export class HistoryQueryTransformersComponent {
       });
   }
 
-  deleteTransformer(transformer: Omit<TransformerDTOWithOptions, 'south'>) {
+  deleteTransformer(transformer: HistoryTransformerDTOWithOptions) {
     this.confirmationService
       .confirm({
         messageKey: `history-query.transformers.confirm-deletion`
@@ -160,7 +160,7 @@ export class HistoryQueryTransformersComponent {
               if (transformer.id) {
                 return element.id !== transformer.id;
               } else {
-                return !(element.inputType === transformer.inputType && element.transformer.id === transformer.transformer.id);
+                return element.transformer.id !== transformer.transformer.id;
               }
             });
           }

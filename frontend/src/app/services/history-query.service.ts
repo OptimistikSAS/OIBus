@@ -316,9 +316,9 @@ export class HistoryQueryService {
    */
   addOrEditTransformer(
     historyId: string,
-    transformerWithOptions: Omit<TransformerDTOWithOptions, 'south'>
-  ): Observable<Omit<TransformerDTOWithOptions, 'south'>> {
-    return this.http.post<Omit<TransformerDTOWithOptions, 'south'>>(`/api/history/${historyId}/transformers`, transformerWithOptions);
+    transformerWithOptions: Omit<TransformerDTOWithOptions, 'source'>
+  ): Observable<Omit<TransformerDTOWithOptions, 'source'>> {
+    return this.http.post<Omit<TransformerDTOWithOptions, 'source'>>(`/api/history/${historyId}/transformers`, transformerWithOptions);
   }
 
   /**

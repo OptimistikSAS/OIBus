@@ -32,8 +32,7 @@ import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { CustomTransformerCommandDTO } from '../../../shared/model/transformer.model';
-import { CustomTransformerDTO } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommandDTO, CustomTransformerDTO, TransformerDTO } from '../../../shared/model/transformer.model';
 import { Transformer } from '../../model/transformer.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { UserCommandDTO } from '../../../shared/model/user.model';
@@ -863,57 +862,61 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
         id: 'northTransformerId1',
         transformer: transformers[0],
         options: {},
-        inputType: transformers[0].inputType,
-        south: {
-          id: southConnectors[0].id,
-          name: southConnectors[0].name,
-          type: southConnectors[0].type,
-          description: southConnectors[0].description,
-          enabled: southConnectors[0].enabled,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        group: undefined,
-        items: [
-          {
-            id: southConnectors[0].items[0].id,
-            name: southConnectors[0].items[0].name,
+        source: {
+          type: 'south',
+          south: {
+            id: southConnectors[0].id,
+            name: southConnectors[0].name,
+            type: southConnectors[0].type,
+            description: southConnectors[0].description,
+            enabled: southConnectors[0].enabled,
             createdBy: '',
             updatedBy: '',
             createdAt: '',
             updatedAt: ''
-          }
-        ]
+          },
+          group: undefined,
+          items: [
+            {
+              id: southConnectors[0].items[0].id,
+              name: southConnectors[0].items[0].name,
+              createdBy: '',
+              updatedBy: '',
+              createdAt: '',
+              updatedAt: ''
+            }
+          ]
+        }
       },
       {
         id: 'northTransformerId2',
         transformer: transformers[1],
         options: {},
-        inputType: transformers[1].inputType,
-        south: undefined,
-        group: undefined,
-        items: []
+        source: {
+          type: 'oibus-api',
+          dataSourceId: 'dataSourceId1'
+        }
       },
       {
         id: 'northTransformerId3',
         transformer: transformers[2],
         options: {},
-        inputType: transformers[2].inputType,
-        south: {
-          id: southConnectors[1].id,
-          name: southConnectors[1].name,
-          type: southConnectors[1].type,
-          description: southConnectors[1].description,
-          enabled: southConnectors[1].enabled,
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
-        group: undefined,
-        items: []
+        source: {
+          type: 'south',
+          south: {
+            id: southConnectors[1].id,
+            name: southConnectors[1].name,
+            type: southConnectors[1].type,
+            description: southConnectors[1].description,
+            enabled: southConnectors[1].enabled,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          group: undefined,
+          items: []
+        }
       }
     ]
   },
@@ -991,28 +994,41 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
   transformers: [
     {
       id: 'northTransformerId4',
-      transformerId: transformers[0].id,
+      transformer: transformers[0] as TransformerDTO,
       options: {},
-      inputType: transformers[0].inputType,
-      southId: southConnectors[0].id,
-      items: [
-        {
-          id: southConnectors[0].items[0].id,
-          name: southConnectors[0].items[0].name,
-          createdBy: { id: '', friendlyName: '' },
-          updatedBy: { id: '', friendlyName: '' },
-          createdAt: '',
-          updatedAt: ''
-        }
-      ]
+      source: {
+        type: 'south',
+        south: {
+          id: southConnectors[0].id,
+          name: southConnectors[0].name,
+          type: southConnectors[0].type,
+          description: southConnectors[0].description,
+          enabled: southConnectors[0].enabled,
+          createdBy: { id: southConnectors[0].createdBy, friendlyName: southConnectors[0].createdBy },
+          updatedBy: { id: southConnectors[0].updatedBy, friendlyName: southConnectors[0].updatedBy },
+          createdAt: southConnectors[0].createdAt,
+          updatedAt: southConnectors[0].updatedAt
+        },
+        items: [
+          {
+            id: southConnectors[0].items[0].id,
+            name: southConnectors[0].items[0].name,
+            createdBy: { id: '', friendlyName: '' },
+            updatedBy: { id: '', friendlyName: '' },
+            createdAt: '',
+            updatedAt: ''
+          }
+        ]
+      }
     },
     {
       id: 'northTransformerId5',
-      transformerId: transformers[1].id,
+      transformer: transformers[1] as TransformerDTO,
       options: {},
-      inputType: transformers[1].inputType,
-      southId: undefined,
-      items: []
+      source: {
+        type: 'oibus-api',
+        dataSourceId: 'dataSourceId'
+      }
     }
   ]
 };
@@ -1122,7 +1138,6 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
         id: 'historyTransformerId1',
         transformer: transformers[0],
         options: {},
-        inputType: transformers[0].inputType,
         items: [
           {
             id: 'historyQueryItem2',
@@ -1134,7 +1149,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
           }
         ]
       },
-      { id: 'historyTransformerId2', transformer: transformers[1], options: {}, inputType: transformers[1].inputType, items: [] }
+      { id: 'historyTransformerId2', transformer: transformers[1], options: {}, items: [] }
     ]
   },
   {
@@ -1290,9 +1305,8 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   northTransformers: [
     {
       id: 'historyTransformerId3',
-      transformerId: transformers[0].id,
+      transformer: transformers[0] as TransformerDTO,
       options: {},
-      inputType: transformers[0].inputType,
       items: [
         {
           id: '',
@@ -1304,7 +1318,12 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
         }
       ]
     },
-    { id: 'historyTransformerId4', transformerId: transformers[1].id, options: {}, inputType: transformers[1].inputType, items: [] }
+    {
+      id: 'historyTransformerId4',
+      transformer: transformers[1] as TransformerDTO,
+      options: {},
+      items: []
+    }
   ]
 };
 const historyQueryItemCommand: HistoryQueryItemCommandDTO = {

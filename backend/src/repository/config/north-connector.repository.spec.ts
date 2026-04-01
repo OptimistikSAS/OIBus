@@ -6,7 +6,7 @@ import NorthConnectorRepository from './north-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { Transformer } from '../../model/transformer.model';
+import { SourceOriginSouth, Transformer } from '../../model/transformer.model';
 import TransformerRepository from './transformer.repository';
 
 jest.mock('../../service/utils');
@@ -106,12 +106,11 @@ describe('NorthConnectorRepository', () => {
     (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
     repository.addOrEditTransformer(newNorthConnectorWithoutTransformer.id, {
       id: '',
-      inputType: 'input',
       transformer: testData.transformers.list[0] as Transformer,
       options: {},
-      south: undefined,
-      group: undefined,
-      items: []
+      source: {
+        type: 'oianalytics-setpoint'
+      }
     });
     const createdConnectorWithTransformer = repository.findNorthById('newIdWithoutTransformer')!;
     expect(createdConnectorWithTransformer.transformers.length).toEqual(1);
@@ -129,16 +128,17 @@ describe('NorthConnectorRepository', () => {
       .mockReturnValueOnce('northWithGroupId')
       .mockReturnValueOnce('transformerWithGroupId');
 
-    const group = groupRepository.create({
-      name: 'Transformer Group',
-      southId: testData.south.list[0].id,
-      scanMode: testData.scanMode.list[0],
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      createdBy: '',
-      updatedBy: ''
-    });
+    const group = groupRepository.create(
+      {
+        name: 'Transformer Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
 
     const newNorthConnector: NorthConnectorEntity<NorthSettings> = JSON.parse(JSON.stringify(testData.north.list[0]));
     newNorthConnector.id = '';
@@ -148,28 +148,45 @@ describe('NorthConnectorRepository', () => {
 
     repository.addOrEditTransformer(newNorthConnector.id, {
       id: '',
-      inputType: 'input',
       transformer: testData.transformers.list[0] as Transformer,
       options: {},
-      south: {
-        id: testData.south.list[0].id,
-        name: testData.south.list[0].name,
-        type: testData.south.list[0].type,
-        description: testData.south.list[0].description,
-        enabled: testData.south.list[0].enabled,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      group: { id: group.id, name: group.name, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
-      items: []
+      source: {
+        type: 'south',
+        south: {
+          id: testData.south.list[0].id,
+          name: testData.south.list[0].name,
+          type: testData.south.list[0].type,
+          description: testData.south.list[0].description,
+          enabled: testData.south.list[0].enabled,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        group: {
+          id: group.id,
+          name: group.name,
+          southId: testData.south.list[0].id,
+          scanMode: testData.scanMode.list[0],
+          overlap: 0,
+          maxReadInterval: 3600,
+          readDelay: 200,
+          items: [],
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        items: []
+      }
     });
 
     const connector = repository.findNorthById(newNorthConnector.id)!;
     expect(connector.transformers.length).toEqual(1);
-    expect(connector.transformers[0].group).toEqual(expect.objectContaining({ id: group.id, name: group.name }));
-    expect(connector.transformers[0].items).toEqual([]);
+    expect((connector.transformers[0].source as SourceOriginSouth).group).toEqual(
+      expect.objectContaining({ id: group.id, name: group.name })
+    );
+    expect((connector.transformers[0].source as SourceOriginSouth).items).toEqual([]);
   });
 
   it('should remove all transformers for a north connector by transformer id', () => {
@@ -185,12 +202,11 @@ describe('NorthConnectorRepository', () => {
     (generateRandomId as jest.Mock).mockReturnValueOnce('newId2');
     repository.addOrEditTransformer(newNorthConnectorWithoutTransformer2.id, {
       id: '',
-      inputType: 'input',
       transformer: testData.transformers.list[0] as Transformer,
       options: {},
-      south: undefined,
-      group: undefined,
-      items: []
+      source: {
+        type: 'oianalytics-setpoint'
+      }
     });
     const connectorWithTransformer = repository.findNorthById('newIdWithoutTransformer2')!;
     expect(connectorWithTransformer.transformers.length).toEqual(1);

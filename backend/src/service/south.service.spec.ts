@@ -158,6 +158,7 @@ describe('South Service', () => {
       name: 'New Group',
       southId: 'newSouthId',
       scanMode: testData.scanMode.list[0],
+      items: [],
       overlap: null,
       maxReadInterval: null,
       readDelay: 0,
@@ -210,6 +211,7 @@ describe('South Service', () => {
       name: 'Existing Group',
       southId: 'newSouthId',
       scanMode: testData.scanMode.list[0],
+      items: [],
       overlap: null,
       maxReadInterval: null,
       readDelay: 0,
@@ -540,6 +542,7 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
+      items: [],
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -611,6 +614,7 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
+      items: [],
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -1005,6 +1009,7 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
+      items: [],
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -1047,6 +1052,7 @@ describe('South Service', () => {
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
+      items: [],
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -1137,6 +1143,7 @@ describe('South Service', () => {
           overlap: null,
           maxReadInterval: null,
           readDelay: 0,
+          items: [],
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -1150,6 +1157,7 @@ describe('South Service', () => {
           overlap: 10,
           maxReadInterval: null,
           readDelay: 0,
+          items: [],
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -1175,6 +1183,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1207,6 +1216,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1237,6 +1247,7 @@ describe('South Service', () => {
         overlap: 5,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1269,6 +1280,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1280,7 +1292,7 @@ describe('South Service', () => {
 
       const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
       expect(result.overlap).toBeNull();
-      expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ overlap: null }));
+      expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ overlap: null }), 'testUser');
     });
 
     it('should create a group with undefined readDelay and default to 0', () => {
@@ -1300,6 +1312,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1311,7 +1324,7 @@ describe('South Service', () => {
 
       const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
       expect(result.readDelay).toEqual(0);
-      expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ readDelay: 0 }));
+      expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ readDelay: 0 }), 'testUser');
     });
 
     it('should create a group with maxReadInterval and readDelay', () => {
@@ -1331,6 +1344,7 @@ describe('South Service', () => {
         overlap: 5,
         maxReadInterval: 3600,
         readDelay: 200,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1349,7 +1363,8 @@ describe('South Service', () => {
           name: 'Group With Throttling',
           maxReadInterval: 3600,
           readDelay: 200
-        })
+        }),
+        'testUser'
       );
     });
 
@@ -1370,6 +1385,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1400,6 +1416,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1445,6 +1462,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1473,7 +1491,8 @@ describe('South Service', () => {
           name: 'Updated Name Only',
           maxReadInterval: null,
           readDelay: 0
-        })
+        }),
+        'testUser'
       );
     });
 
@@ -1494,6 +1513,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1511,7 +1531,11 @@ describe('South Service', () => {
 
       const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdateUndefDelay', 'testUser', command);
       expect(result.readDelay).toEqual(0);
-      expect(southItemGroupRepository.update).toHaveBeenCalledWith('groupToUpdateUndefDelay', expect.objectContaining({ readDelay: 0 }));
+      expect(southItemGroupRepository.update).toHaveBeenCalledWith(
+        'groupToUpdateUndefDelay',
+        expect.objectContaining({ readDelay: 0 }),
+        'testUser'
+      );
     });
 
     it('should throw error when updating non-existent group', () => {
@@ -1547,6 +1571,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1577,6 +1602,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1610,6 +1636,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1624,6 +1651,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1647,6 +1675,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1678,6 +1707,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1700,6 +1730,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1728,6 +1759,7 @@ describe('South Service', () => {
         overlap: null,
         maxReadInterval: null,
         readDelay: 0,
+        items: [],
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -1785,6 +1817,7 @@ describe('South Service', () => {
           overlap: 10,
           maxReadInterval: null,
           readDelay: 0,
+          items: [],
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -1807,6 +1840,7 @@ describe('South Service', () => {
           overlap: null,
           maxReadInterval: null,
           readDelay: 0,
+          items: [],
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -1826,6 +1860,7 @@ describe('South Service', () => {
           overlap: null,
           maxReadInterval: null,
           readDelay: 0,
+          items: [],
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -1999,6 +2034,7 @@ describe('South Service', () => {
             overlap: null,
             maxReadInterval: null,
             readDelay: 0,
+            items: [],
             createdBy: '',
             updatedBy: '',
             createdAt: '',
@@ -2040,6 +2076,7 @@ describe('South Service', () => {
             overlap: null,
             maxReadInterval: null,
             readDelay: 0,
+            items: [],
             createdBy: '',
             updatedBy: '',
             createdAt: '',
@@ -2082,6 +2119,7 @@ describe('South Service', () => {
             overlap: null,
             maxReadInterval: null,
             readDelay: 0,
+            items: [],
             createdBy: '',
             updatedBy: '',
             createdAt: '',
