@@ -58,7 +58,7 @@
     "express-rate-limit": "8.3.2",
     "form-data": "4.0.5",
     "http-proxy": "1.18.1",
-    "https-proxy-agent": "7.0.6",
+    "https-proxy-agent": "9.0.0",
     "joi": "18.1.2",
     "jsmodbus": "4.0.10",
     "jsonwebtoken": "9.0.3",
