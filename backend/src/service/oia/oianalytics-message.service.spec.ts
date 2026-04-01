@@ -212,7 +212,8 @@ describe('OIAnalytics Message Service', () => {
     (oIAnalyticsClient.sendConfiguration as jest.Mock) = jest.fn().mockImplementationOnce(() => {
       throw new Error('fetch error');
     });
-    service['retryMessageInterval'] = 1 as unknown as NodeJS.Timeout;
+    service['retryMessageInterval'] = setTimeout(() => null, 1);
+    setTimeoutSpy.mockClear();
 
     service.start();
     await flushPromises();
