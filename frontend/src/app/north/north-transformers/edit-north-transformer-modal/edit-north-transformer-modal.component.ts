@@ -282,7 +282,17 @@ export class EditNorthTransformerModalComponent {
           ? (this.existingTransformerWithOptions.source as SourceOriginSouthDTO).south
           : this.form.value.source!.south!,
         group: this.selectionType === 'group' && this.selectedGroup ? this.selectedGroup : undefined,
-        items: this.selectionType === 'items' ? this.selectedItems.map(item => ({ id: item.id, name: item.name, createdBy: item.createdBy, updatedBy: item.updatedBy, createdAt: item.createdAt, updatedAt: item.updatedAt })) : []
+        items:
+          this.selectionType === 'items'
+            ? this.selectedItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                createdBy: item.createdBy,
+                updatedBy: item.updatedBy,
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt
+              }))
+            : []
       };
     } else if (sourceType === 'oibus-api') {
       source = { type: 'oibus-api', dataSourceId: this.form.value.apiDataSourceId! };

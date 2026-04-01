@@ -184,7 +184,16 @@ export class EditHistoryQueryTransformerModalComponent {
       id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : '',
       transformer: this.form.value.transformer!,
       options: this.form!.value.options,
-      items: this.selectAllItems ? [] : this.selectedItems.map(item => ({ id: item.id, name: item.name, createdBy: item.createdBy, updatedBy: item.updatedBy, createdAt: item.createdAt, updatedAt: item.updatedAt }))
+      items: this.selectAllItems
+        ? []
+        : this.selectedItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            createdBy: item.createdBy,
+            updatedBy: item.updatedBy,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt
+          }))
     };
     this.modal.close(result);
   }
