@@ -88,7 +88,8 @@
               <div ngbDropdownMenu class="item-dropdown-menu">
                 @for (item of filteredItems; track item.id) {
                   <button type="button" ngbDropdownItem (click)="toggleItem(item)" [class.selected]="isItemSelected(item)">
-                    <div class="d-flex">
+                    <div class="d-flex align-items-center">
+                      <div [class]="item.enabled ? 'green-dot me-2' : 'grey-dot me-2'"></div>
                       <div class="flex-grow-1 me-3">{{ item.name }}</div>
                       <div class="fa-fw">
                         @if (isItemSelected(item)) {

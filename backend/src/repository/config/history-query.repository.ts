@@ -460,11 +460,12 @@ export default class HistoryQueryRepository {
   }
 
   private findHistoryItems(historyTransformerId: string): Array<SouthConnectorItemEntityLight> {
-    const query = `SELECT ht.id, ht.item_id, hi.name, hi.created_by, hi.updated_by, hi.created_at, hi.updated_at FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} ht JOIN ${HISTORY_ITEMS_TABLE} hi ON ht.item_id = hi.id WHERE ht.id = ?;`;
+    const query = `SELECT ht.id, ht.item_id, hi.name, hi.enabled, hi.created_by, hi.updated_by, hi.created_at, hi.updated_at FROM ${HISTORY_QUERY_TRANSFORMERS_ITEMS_TABLE} ht JOIN ${HISTORY_ITEMS_TABLE} hi ON ht.item_id = hi.id WHERE ht.id = ?;`;
     const results = this.database.prepare(query).all(historyTransformerId) as Array<Record<string, string>>;
     return results.map(result => ({
       id: result.item_id as string,
       name: result.name as string,
+      enabled: Boolean(result.enabled),
       createdBy: result.created_by,
       updatedBy: result.updated_by,
       createdAt: result.created_at,

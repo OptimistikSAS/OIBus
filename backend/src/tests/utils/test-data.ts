@@ -880,6 +880,7 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
             {
               id: southConnectors[0].items[0].id,
               name: southConnectors[0].items[0].name,
+              enabled: southConnectors[0].items[0].enabled,
               createdBy: '',
               updatedBy: '',
               createdAt: '',
@@ -1013,6 +1014,7 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
           {
             id: southConnectors[0].items[0].id,
             name: southConnectors[0].items[0].name,
+            enabled: southConnectors[0].items[0].enabled,
             createdBy: { id: '', friendlyName: '' },
             updatedBy: { id: '', friendlyName: '' },
             createdAt: '',
@@ -1142,6 +1144,7 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
           {
             id: 'historyQueryItem2',
             name: 'item2',
+            enabled: true,
             createdBy: '',
             updatedBy: '',
             createdAt: '',
@@ -1311,6 +1314,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
         {
           id: '',
           name: 'item4',
+          enabled: true,
           createdBy: { id: '', friendlyName: '' },
           updatedBy: { id: '', friendlyName: '' },
           createdAt: '',

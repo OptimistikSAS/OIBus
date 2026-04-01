@@ -425,4 +425,70 @@ describe('EditNorthTransformerModalComponent', () => {
       );
     });
   });
+
+  describe('enabled/disabled UI indicators', () => {
+    it('should render disabled indicator for disabled south connector option', async () => {
+      const southConnectorEnabled = {
+        id: 'south1',
+        name: 'South Enabled',
+        type: 'opcua',
+        enabled: true
+      } as SouthConnectorLightDTO;
+      const southConnectorDisabled = {
+        id: 'south2',
+        name: 'South Disabled',
+        type: 'opcua',
+        enabled: false
+      } as SouthConnectorLightDTO;
+      tester.componentInstance.prepareForCreation([southConnectorEnabled, southConnectorDisabled], [], [], [transformer], []);
+      await tester.fixture.whenStable();
+      tester.detectChanges();
+
+      // Index 0 = empty option, 1 = first south connector (enabled), 2 = second south connector (disabled)
+      const options = tester.element('#source')!.elements('option');
+      const enabledOptionText = options[1]!.textContent;
+      const disabledOptionText = options[2]!.textContent;
+
+      expect(enabledOptionText).toContain('South Enabled');
+      expect(enabledOptionText).not.toContain('disabled');
+
+      expect(disabledOptionText).toContain('South Disabled');
+      expect(disabledOptionText).toContain('— paused');
+    });
+
+    it('should render green/grey dots for items in dropdown and pills', async () => {
+      const southConnector = {
+        id: 'south1',
+        name: 'South 1',
+        type: 'opcua',
+        enabled: true
+      } as SouthConnectorLightDTO;
+      tester.componentInstance.prepareForCreation([southConnector], [], [], [transformer], []);
+      tester.componentInstance.form.controls.source.setValue({ dataSourceType: 'south', south: southConnector });
+      tester.componentInstance.selectionType = 'items';
+
+      const enabledItem = { id: 'item1', name: 'Enabled Item', enabled: true } as ItemLightDTO;
+      const disabledItem = { id: 'item2', name: 'Disabled Item', enabled: false } as ItemLightDTO;
+
+      tester.componentInstance.selectedItems = [enabledItem, disabledItem];
+      tester.componentInstance.filteredItems = [enabledItem, disabledItem];
+
+      await tester.fixture.whenStable();
+      tester.detectChanges();
+
+      tester.input('#items')!.dispatchEventOfType('focus');
+      tester.detectChanges();
+
+      const dropdownButtons = tester.elements('.item-dropdown-menu button');
+      if (dropdownButtons.length > 0) {
+        expect(dropdownButtons[0]!.element('.green-dot')).not.toBeNull();
+        expect(dropdownButtons[1]!.element('.grey-dot')).not.toBeNull();
+      }
+
+      const pills = tester.elements('oib-pill');
+      expect(pills.length).toBe(2);
+      expect(pills[0]!.element('.green-dot')).not.toBeNull();
+      expect(pills[1]!.element('.grey-dot')).not.toBeNull();
+    });
+  });
 });

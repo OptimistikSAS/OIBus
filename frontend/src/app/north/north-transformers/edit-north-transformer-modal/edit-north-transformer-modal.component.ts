@@ -287,6 +287,7 @@ export class EditNorthTransformerModalComponent {
             ? this.selectedItems.map(item => ({
                 id: item.id,
                 name: item.name,
+                enabled: item.enabled,
                 createdBy: item.createdBy,
                 updatedBy: item.updatedBy,
                 createdAt: item.createdAt,

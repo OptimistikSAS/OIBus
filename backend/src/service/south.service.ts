@@ -1083,6 +1083,7 @@ export const toSouthItemLightDTO = (entity: SouthConnectorItemEntityLight, getUs
   return {
     id: entity.id,
     name: entity.name,
+    enabled: entity.enabled,
     createdBy: getUserInfo(entity.createdBy),
     updatedBy: getUserInfo(entity.updatedBy),
     createdAt: entity.createdAt,
