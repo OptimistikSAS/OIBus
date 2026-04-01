@@ -5,7 +5,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { Component, inject } from '@angular/core';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';
 import { FormControl, NonNullableFormBuilder } from '@angular/forms';
 import { HistoryQueryService } from '../../services/history-query.service';
 
@@ -23,7 +23,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
 class TestComponent {
   private fb = inject(NonNullableFormBuilder);
 
-  control: FormControl<Array<TransformerDTOWithOptions>> = this.fb.control([]);
+  control: FormControl<Array<HistoryTransformerDTOWithOptions>> = this.fb.control([]);
   transformers: Array<TransformerDTO> = [];
   northManifest: NorthConnectorManifest = { id: 'console', types: ['any', 'time-values'] } as NorthConnectorManifest;
 }

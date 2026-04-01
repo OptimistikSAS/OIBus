@@ -68,6 +68,7 @@ export default class UserService {
   }
 
   getUserInfo(userId: string): UserInfo {
+    if (!userId) return { id: '', friendlyName: '' };
     if (userId === 'oianalytics') return { id: userId, friendlyName: 'OIAnalytics' };
     if (userId === 'system') return { id: userId, friendlyName: 'System' };
     const user = this.userRepository.findById(userId);

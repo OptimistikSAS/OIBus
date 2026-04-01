@@ -214,6 +214,10 @@ describe('User Service', () => {
     });
   });
 
+  it('should return empty info for null userId', () => {
+    expect(service.getUserInfo(null as unknown as string)).toEqual({ id: '', friendlyName: '' });
+  });
+
   it('should return OIAnalytics info for "oianalytics" userId', () => {
     expect(service.getUserInfo('oianalytics')).toEqual({ id: 'oianalytics', friendlyName: 'OIAnalytics' });
   });

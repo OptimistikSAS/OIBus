@@ -24,7 +24,7 @@ import {
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
 import { OIBusNorthType } from '../../../../backend/shared/model/north-connector.model';
-import { TransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions } from '../../../../backend/shared/model/transformer.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries
@@ -316,9 +316,9 @@ export class HistoryQueryService {
    */
   addOrEditTransformer(
     historyId: string,
-    transformerWithOptions: Omit<TransformerDTOWithOptions, 'source'>
-  ): Observable<Omit<TransformerDTOWithOptions, 'source'>> {
-    return this.http.post<Omit<TransformerDTOWithOptions, 'source'>>(`/api/history/${historyId}/transformers`, transformerWithOptions);
+    transformerWithOptions: HistoryTransformerDTOWithOptions
+  ): Observable<HistoryTransformerDTOWithOptions> {
+    return this.http.post<HistoryTransformerDTOWithOptions>(`/api/history/${historyId}/transformers`, transformerWithOptions);
   }
 
   /**

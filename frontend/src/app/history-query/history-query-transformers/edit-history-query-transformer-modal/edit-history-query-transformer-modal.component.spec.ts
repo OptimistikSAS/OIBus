@@ -403,7 +403,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith(
         jasmine.objectContaining({
-          items: [{ id: 'item1', name: 'Item 1' }]
+          items: [jasmine.objectContaining({ id: 'item1', name: 'Item 1' })]
         })
       );
     });
