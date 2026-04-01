@@ -88,6 +88,12 @@ describe('SouthCacheRepository', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
       expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('UPDATE'));
     });
+
+    it('should store null when value is null', () => {
+      (mockDatabase.get as jest.Mock).mockReturnValueOnce(undefined); // getItemLastValue returns null → INSERT path
+      repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: null, trackedInstant: 'now', queryTime: 'now' });
+      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'item1', 'now', null, 'now');
+    });
   });
 
   describe('deleteItemValue', () => {
