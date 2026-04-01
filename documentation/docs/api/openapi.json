@@ -13630,6 +13630,11 @@
 						"type": "string",
 						"description": "The name of the item.",
 						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled.",
+						"example": true
 					}
 				},
 				"required": [
@@ -13638,7 +13643,8 @@
 					"updatedBy",
 					"createdAt",
 					"updatedAt",
-					"name"
+					"name",
+					"enabled"
 				],
 				"type": "object",
 				"additionalProperties": false

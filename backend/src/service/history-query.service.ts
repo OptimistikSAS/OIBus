@@ -125,6 +125,7 @@ export default class HistoryQueryService {
         items: transformerWithOptions.items.map(item => ({
           id: item.id,
           name: item.name,
+          enabled: item.enabled,
           createdBy: item.createdBy.id,
           updatedBy: item.updatedBy.id,
           createdAt: item.createdAt,
@@ -186,6 +187,7 @@ export default class HistoryQueryService {
         items: transformerWithOptions.items.map(item => ({
           id: item.id,
           name: item.name,
+          enabled: item.enabled,
           createdBy: item.createdBy.id,
           updatedBy: item.updatedBy.id,
           createdAt: item.createdAt,
@@ -759,6 +761,7 @@ export const toHistoryQueryDTO = (
       items: transformerWithOptions.items.map(item => ({
         id: item.id,
         name: item.name,
+        enabled: item.enabled,
         createdBy: getUserInfo(item.createdBy),
         updatedBy: getUserInfo(item.updatedBy),
         createdAt: item.createdAt,

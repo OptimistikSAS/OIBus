@@ -45,7 +45,7 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import { NorthTransformerWithOptions, TransformerSource } from '../model/transformer.model';
 import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
 import { TransformerSourceDTO } from '../../shared/model/transformer.model';
-import { SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../model/south-connector.model';
+import { SouthConnectorItemEntityLight, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import { SouthItemGroupLightDTO } from '../../shared/model/south-connector.model';
 
@@ -360,6 +360,7 @@ export default class NorthService {
           }
           return {
             id: item.id,
+            enabled: item.enabled,
             createdBy: item.createdBy.id,
             updatedBy: item.updatedBy.id,
             createdAt: item.createdAt,
@@ -506,7 +507,7 @@ export const copyNorthConnectorCommandToNorthEntity = async (
   };
 };
 
-export const toSouthItemGroupLightDTO = (entity: SouthConnectorItemEntityLight, getUserInfo: GetUserInfo): SouthItemGroupLightDTO => {
+export const toSouthItemGroupLightDTO = (entity: SouthItemGroupEntityLight, getUserInfo: GetUserInfo): SouthItemGroupLightDTO => {
   return {
     id: entity.id,
     name: entity.name,

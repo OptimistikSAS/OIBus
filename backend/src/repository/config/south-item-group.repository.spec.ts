@@ -316,6 +316,7 @@ describe('South Item Group Repository', () => {
         {
           id: 'itemId',
           name: 'itemName',
+          enabled: false,
           createdAt: '2024-01-01 00:00:00',
           updatedAt: '2024-01-01 00:00:00',
           createdBy: 'userTest',
