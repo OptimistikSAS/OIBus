@@ -862,6 +862,7 @@ describe('History Query service', () => {
         items: transformerWithOptions.items.map(item => ({
           id: item.id,
           name: item.name,
+          enabled: item.enabled,
           createdBy: getUserInfo(item.createdBy),
           updatedBy: getUserInfo(item.updatedBy),
           createdAt: item.createdAt,

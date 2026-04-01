@@ -169,8 +169,8 @@ describe('HistoryQueryRepository', () => {
         transformer: testData.transformers.list[0],
         options: {},
         items: [
-          { id: '', name: 'new item', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
-          { id: '', name: 'bad item', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
+          { id: '', name: 'new item', enabled: true, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
+          { id: '', name: 'bad item', enabled: true, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
         ]
       }
     ];
