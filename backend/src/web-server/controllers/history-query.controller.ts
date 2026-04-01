@@ -38,7 +38,7 @@ import {
   OIBusConnectionTestResult,
   OIBusContent
 } from '../../../shared/model/engine.model';
-import { TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import { HistoryTransformerWithOptions } from '../../model/transformer.model';
 import fs from 'node:fs/promises';
@@ -583,7 +583,7 @@ export class HistoryQueryController extends Controller {
   @SuccessResponse(204, 'No Content')
   async addOrEditTransformer(
     @Path() historyId: string,
-    @Body() command: Omit<TransformerDTOWithOptions, 'south'>,
+    @Body() command: HistoryTransformerDTOWithOptions,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;

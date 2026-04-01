@@ -3,7 +3,7 @@ import SouthItemGroupRepository, { toSouthItemGroup } from './south-item-group.r
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import { generateRandomId } from '../../service/utils';
-import { SouthItemGroupEntity } from '../../model/south-connector.model';
+import { SouthItemGroupCommand } from '../../model/south-connector.model';
 
 jest.mock('../../service/utils');
 
@@ -31,17 +31,15 @@ describe('South Item Group Repository', () => {
     it('should find a group by id', () => {
       // First create a group to find
       (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId1');
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'Test Group 1',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
-      repository.create(groupToCreate);
+      repository.create(groupToCreate, 'userTest');
 
       const found = repository.findById('testGroupId1');
       expect(found).toBeDefined();
@@ -61,30 +59,26 @@ describe('South Item Group Repository', () => {
       // Create multiple groups for the same south connector
       (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId2').mockReturnValueOnce('testGroupId3');
 
-      const group1: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const group1: SouthItemGroupCommand = {
         name: 'Group A',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: 10,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      const group2: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const group2: SouthItemGroupCommand = {
         name: 'Group B',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[1],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      repository.create(group1);
-      repository.create(group2);
+      repository.create(group1, 'userTest');
+      repository.create(group2, 'userTest');
 
       const groups = repository.findBySouthId(testData.south.list[0].id);
       expect(groups.length).toBeGreaterThanOrEqual(2);
@@ -101,17 +95,15 @@ describe('South Item Group Repository', () => {
 
     it('should find a group by name and south id', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('findByNameGroupId');
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'Find By Name Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
-      repository.create(groupToCreate);
+      repository.create(groupToCreate, 'userTest');
 
       const found = repository.findByNameAndSouthId('Find By Name Group', testData.south.list[0].id);
       expect(found).toBeDefined();
@@ -127,17 +119,15 @@ describe('South Item Group Repository', () => {
 
     it('should return null when finding group by name for different south id', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('differentSouthGroupId');
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'Group For Different South',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
-      repository.create(groupToCreate);
+      repository.create(groupToCreate, 'userTest');
 
       // Try to find with a different south id
       const found = repository.findByNameAndSouthId('Group For Different South', 'differentSouthId');
@@ -147,18 +137,16 @@ describe('South Item Group Repository', () => {
     it('should create a group with generated id', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('generatedGroupId');
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'New Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: 5,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      const created = repository.create(groupToCreate);
+      const created = repository.create(groupToCreate, 'userTest');
       expect(created.id).toEqual('generatedGroupId');
       expect(created.name).toEqual('New Group');
       expect(created.southId).toEqual(testData.south.list[0].id);
@@ -168,18 +156,16 @@ describe('South Item Group Repository', () => {
 
     it('should create a group with custom id', () => {
       const customId = 'customGroupId';
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'Custom Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      const created = repository.create(groupToCreate, customId);
+      const created = repository.create(groupToCreate, 'userTest', customId);
       expect(created.id).toEqual(customId);
       expect(created.name).toEqual('Custom Group');
 
@@ -192,19 +178,17 @@ describe('South Item Group Repository', () => {
       // Mock findById to return null to simulate the error path
       jest.spyOn(repository, 'findById').mockReturnValueOnce(null);
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'Group That Will Fail',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
       expect(() => {
-        repository.create(groupToCreate, 'failingGroupId');
+        repository.create(groupToCreate, 'userTest', 'failingGroupId');
       }).toThrow('Failed to create south item group with id failingGroupId');
 
       // Restore original method
@@ -214,31 +198,27 @@ describe('South Item Group Repository', () => {
     it('should update a group', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('updateGroupId');
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      repository.create(groupToCreate);
+      repository.create(groupToCreate, 'userTest');
 
       // Update the group
-      const updateCommand: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt' | 'southId'> = {
+      const updateCommand: Omit<SouthItemGroupCommand, 'southId'> = {
         name: 'Updated Name',
         scanMode: testData.scanMode.list[1],
         overlap: 15,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      repository.update('updateGroupId', updateCommand);
+      repository.update('updateGroupId', updateCommand, 'userTest');
 
       const updated = repository.findById('updateGroupId');
       expect(updated).toBeDefined();
@@ -251,31 +231,27 @@ describe('South Item Group Repository', () => {
     it('should update a group with null overlap', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('updateGroupIdNull');
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'Group With Overlap',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: 10,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      repository.create(groupToCreate);
+      repository.create(groupToCreate, 'userTest');
 
       // Update with null overlap to test the ?? null branch
-      const updateCommand: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt' | 'southId'> = {
+      const updateCommand: Omit<SouthItemGroupCommand, 'southId'> = {
         name: 'Updated Name Null',
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      repository.update('updateGroupIdNull', updateCommand);
+      repository.update('updateGroupIdNull', updateCommand, 'userTest');
 
       const updated = repository.findById('updateGroupIdNull');
       expect(updated).toBeDefined();
@@ -285,18 +261,16 @@ describe('South Item Group Repository', () => {
     it('should delete a group', () => {
       (generateRandomId as jest.Mock).mockReturnValueOnce('deleteGroupId');
 
-      const groupToCreate: Omit<SouthItemGroupEntity, 'id' | 'createdAt' | 'updatedAt'> = {
+      const groupToCreate: SouthItemGroupCommand = {
         name: 'Group To Delete',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
-        readDelay: 0,
-        createdBy: '',
-        updatedBy: ''
+        readDelay: 0
       };
 
-      repository.create(groupToCreate);
+      repository.create(groupToCreate, 'userTest');
       expect(repository.findById('deleteGroupId')).toBeDefined();
 
       repository.delete('deleteGroupId');
@@ -320,7 +294,16 @@ describe('South Item Group Repository', () => {
         scan_mode_cron: testData.scanMode.list[0].cron
       };
 
-      const converted = toSouthItemGroup(dbResult);
+      const converted = toSouthItemGroup(dbResult, [
+        {
+          id: 'itemId',
+          name: 'itemName',
+          created_at: '2024-01-01 00:00:00',
+          updated_at: '2024-01-01 00:00:00',
+          created_by: 'userTest',
+          updated_by: 'userTest'
+        }
+      ]);
       expect(converted.id).toEqual('testId');
       expect(converted.name).toEqual('Test Group');
       expect(converted.southId).toEqual('southId1');
@@ -329,6 +312,16 @@ describe('South Item Group Repository', () => {
       expect(converted.overlap).toEqual(20);
       expect(converted.maxReadInterval).toEqual(3600);
       expect(converted.readDelay).toEqual(200);
+      expect(converted.items).toEqual([
+        {
+          id: 'itemId',
+          name: 'itemName',
+          createdAt: '2024-01-01 00:00:00',
+          updatedAt: '2024-01-01 00:00:00',
+          createdBy: 'userTest',
+          updatedBy: 'userTest'
+        }
+      ]);
     });
 
     it('should convert database result with null overlap', () => {
@@ -346,7 +339,7 @@ describe('South Item Group Repository', () => {
         scan_mode_cron: testData.scanMode.list[0].cron
       };
 
-      const converted = toSouthItemGroup(dbResult as Record<string, string | number>);
+      const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
       expect(converted.overlap).toBeNull();
     });
 
@@ -365,7 +358,7 @@ describe('South Item Group Repository', () => {
         scan_mode_cron: testData.scanMode.list[0].cron
       };
 
-      const converted = toSouthItemGroup(dbResult as Record<string, string | number>);
+      const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
       expect(converted.overlap).toBeNull();
     });
 
@@ -386,7 +379,7 @@ describe('South Item Group Repository', () => {
         scan_mode_cron: testData.scanMode.list[0].cron
       };
 
-      const converted = toSouthItemGroup(dbResult as Record<string, string | number>);
+      const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
       expect(converted.maxReadInterval).toBeNull();
       expect(converted.readDelay).toEqual(0);
     });

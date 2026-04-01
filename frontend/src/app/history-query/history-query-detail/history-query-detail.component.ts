@@ -36,7 +36,7 @@ import { CertificateService } from '../../services/certificate.service';
 import { isDisplayableAttribute } from '../../shared/form/dynamic-form.builder';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TransformerService } from '../../services/transformer.service';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 
 @Component({
@@ -186,7 +186,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  updateInMemoryTransformers(_transformers: Array<Omit<TransformerDTOWithOptions, 'south'>> | null) {
+  updateInMemoryTransformers(_transformers: Array<HistoryTransformerDTOWithOptions> | null) {
     this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
       this.historyQuery = JSON.parse(JSON.stringify(historyQuery)); // Used to force a refresh in history query item list
     });

@@ -24,11 +24,7 @@
           @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.id) {
             <tr>
               <td>
-                @if (transformerWithOptions.south) {
-                  <span>{{ this.formatTransformerWithSouth(transformerWithOptions) }}</span>
-                } @else {
-                  <span>{{ 'enums.oibus-input-data-type.' + transformerWithOptions.inputType | translate }}</span>
-                }
+                <span>{{ this.formatTransformerName(transformerWithOptions) }}</span>
               </td>
               <td>
                 @if (transformerWithOptions.transformer.type === 'standard') {
