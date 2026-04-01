@@ -143,8 +143,8 @@ describe('OIBus Service', () => {
   });
 
   it('should add content', async () => {
-    await service.addExternalContent('northId', { type: 'time-values', content: [] });
-    expect(engine.addExternalContent).toHaveBeenCalledWith('northId', { type: 'time-values', content: [] });
+    await service.addExternalContent('northId', 'dataSourceId', { type: 'time-values', content: [] });
+    expect(engine.addExternalContent).toHaveBeenCalledWith('northId', 'dataSourceId', { type: 'time-values', content: [] });
   });
 
   it('should set logger', () => {

@@ -90,7 +90,6 @@ describe('HistoryQueryRepository', () => {
     (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
     repository.addOrEditTransformer(newHistoryWithoutTransformer.id, {
       id: '',
-      inputType: 'input',
       transformer: testData.transformers.list[0] as Transformer,
       options: {},
       items: []
@@ -120,7 +119,6 @@ describe('HistoryQueryRepository', () => {
     (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryTransformerId2');
     repository.addOrEditTransformer(newHistoryWithoutTransformer2.id, {
       id: '',
-      inputType: 'input',
       transformer: testData.transformers.list[0] as Transformer,
       options: {},
       items: []
@@ -170,7 +168,6 @@ describe('HistoryQueryRepository', () => {
         id: '',
         transformer: testData.transformers.list[0],
         options: {},
-        inputType: testData.transformers.list[0].inputType,
         items: [
           { id: '', name: 'new item', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
           { id: '', name: 'bad item', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }

@@ -30,7 +30,7 @@ import {
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
 import { BaseFolders } from 'src/model/types';
-import { Transformer } from '../../model/transformer.model';
+import { Transformer, TransformerSource } from '../../model/transformer.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
@@ -521,12 +521,8 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
       north.id,
       transformerWithOptions.transformer.id,
       transformerWithOptions.options,
-      transformerWithOptions.transformer.inputType,
-      transformerWithOptions.south?.id
+      transformerWithOptions.source
     );
-    for (const item of transformerWithOptions.items) {
-      await createNorthTransformerItem(database, transformerWithOptions.id, item.id);
-    }
   }
 };
 
@@ -672,8 +668,7 @@ const createHistoryQuery = async (
       transformerWithOptions.id,
       historyQuery.id,
       transformerWithOptions.transformer.id,
-      transformerWithOptions.options,
-      transformerWithOptions.transformer.inputType
+      transformerWithOptions.options
     );
     for (const item of transformerWithOptions.items) {
       await createHistoryTransformerItem(database, transformerWithOptions.id, item.id);
@@ -730,8 +725,7 @@ const createNorthTransformer = async (
   northId: string,
   transformerId: string,
   options: object,
-  inputType: string,
-  southId: string | undefined
+  source: TransformerSource
 ) => {
   await database
     .insert({
@@ -739,10 +733,18 @@ const createNorthTransformer = async (
       north_id: northId,
       transformer_id: transformerId,
       options: JSON.stringify(options),
-      input_type: inputType,
-      south_id: southId
+      source_type: source.type,
+      source_api_data_source_id: source.type === 'oibus-api' ? source.dataSourceId : undefined,
+      source_south_south_id: source.type === 'south' ? source.south.id : undefined,
+      source_south_group_id: source.type === 'south' ? (source.group?.id ?? undefined) : undefined
     })
     .into('north_transformers');
+
+  if (source.type === 'south') {
+    for (const item of source.items) {
+      await createNorthTransformerItem(database, northTransformerId, item.id);
+    }
+  }
 };
 
 const createNorthTransformerItem = async (database: knex.Knex, northTransformerId: string, itemId: string) => {
@@ -768,16 +770,14 @@ const createHistoryQueryTransformer = async (
   historyTransformerId: string,
   historyId: string,
   transformerId: string,
-  options: object,
-  inputType: string
+  options: object
 ) => {
   await database
     .insert({
       id: historyTransformerId,
       history_id: historyId,
       transformer_id: transformerId,
-      options: JSON.stringify(options),
-      input_type: inputType
+      options: JSON.stringify(options)
     })
     .into('history_query_transformers');
 };

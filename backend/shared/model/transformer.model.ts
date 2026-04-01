@@ -1,9 +1,12 @@
 import { OIBusObjectAttribute } from './form.model';
-import { SouthItemGroupLightDTO, ItemLightDTO, SouthConnectorLightDTO } from './south-connector.model';
+import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from './south-connector.model';
 import { Instant, UserInfo } from './types';
 
 export const INPUT_TYPES = ['any', 'time-values', 'setpoint'];
 export type InputType = (typeof INPUT_TYPES)[number];
+
+export const DATA_SOURCE_TYPES = ['south', 'oibus-api', 'oianalytics-setpoint'];
+export type DataSourceType = (typeof DATA_SOURCE_TYPES)[number];
 
 export const OUTPUT_TYPES = ['any', 'time-values', 'opcua', 'mqtt', 'modbus', 'oianalytics'];
 export type OutputType = (typeof OUTPUT_TYPES)[number];
@@ -166,38 +169,17 @@ export interface StandardTransformerDTO extends BaseTransformerDTO {
  */
 export type TransformerDTO = CustomTransformerDTO | StandardTransformerDTO;
 
-/**
- * Data Transfer Object for a transformer with its options.
- * Used when a transformer needs to be applied with specific configuration options.
- */
-export interface TransformerDTOWithOptions {
-  /**
-   * The id used to match a transformer with options
-   * @example "id"
-   */
-  id: string;
+interface BaseSourceOrigin {
+  type: DataSourceType;
+}
 
-  /**
-   * The input data type that the transformer accepts.
-   * @example "string"
-   */
-  inputType: InputType;
-
-  /**
-   * The transformer to be applied.
-   */
-  transformer: TransformerDTO;
-
-  /**
-   * Configuration options for the transformer.
-   * @example { "precision": 2, "defaultValue": 0 }
-   */
-  options: Record<string, unknown>;
+export interface SourceOriginSouthDTO extends BaseSourceOrigin {
+  type: 'south';
 
   /**
    * The south associated to the transformer
    */
-  south?: SouthConnectorLightDTO;
+  south: SouthConnectorLightDTO;
 
   /**
    * The group associated to the transformer (mutually exclusive with items)
@@ -210,11 +192,22 @@ export interface TransformerDTOWithOptions {
   items: Array<ItemLightDTO>;
 }
 
+export interface SourceOriginOIAnalyticsDTO extends BaseSourceOrigin {
+  type: 'oianalytics-setpoint';
+}
+
+export interface SourceOriginAPIDTO extends BaseSourceOrigin {
+  type: 'oibus-api';
+  dataSourceId: string;
+}
+
+export type TransformerSourceDTO = SourceOriginSouthDTO | SourceOriginOIAnalyticsDTO | SourceOriginAPIDTO;
+
 /**
- * Data Transfer Object for referencing a transformer by ID with its options.
- * Used when only the transformer ID is needed along with configuration options.
+ * Data Transfer Object for a transformer with its options.
+ * Used when a transformer needs to be applied with specific configuration options.
  */
-export interface TransformerIdWithOptions {
+export interface TransformerDTOWithOptions {
   /**
    * The id used to match a transformer with options
    * @example "id"
@@ -222,33 +215,42 @@ export interface TransformerIdWithOptions {
   id: string;
 
   /**
-   * The input data type that the transformer accepts.
-   * @example "time-values"
+   * From which source the data comes from
    */
-  inputType: string;
+  source: TransformerSourceDTO;
 
   /**
-   * The unique identifier of the transformer to be applied.
-   * @example "customTransformer123"
+   * The transformer to be applied.
    */
-  transformerId: string;
+  transformer: TransformerDTO;
 
   /**
-   * The south associated to the transformer
-   * @example "southId123"
+   * Configuration options for the transformer.
+   * @example { "precision": 2, "defaultValue": 0 }
    */
-  southId?: string;
+  options: Record<string, unknown>;
+}
 
+/**
+ * Data Transfer Object for a transformer with its options.
+ * Used when a transformer needs to be applied with specific configuration options.
+ */
+export interface HistoryTransformerDTOWithOptions {
   /**
-   * The group associated to the transformer (mutually exclusive with items)
-   * @example "groupId123"
+   * The id used to match a transformer with options
+   * @example "id"
    */
-  groupId?: string;
+  id: string;
 
   /**
    * The list of items associated to the transformer
    */
   items: Array<ItemLightDTO>;
+
+  /**
+   * The transformer to be applied.
+   */
+  transformer: TransformerDTO;
 
   /**
    * Configuration options for the transformer.

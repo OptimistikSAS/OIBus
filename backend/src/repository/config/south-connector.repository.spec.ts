@@ -252,16 +252,17 @@ describe('SouthConnectorRepository', () => {
     const groupRepository = new SouthItemGroupRepository(database);
     (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId1').mockReturnValueOnce('newItemWithGroupId');
 
-    const group = groupRepository.create({
-      name: 'Test Group',
-      southId: testData.south.list[0].id,
-      scanMode: testData.scanMode.list[0],
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      createdBy: '',
-      updatedBy: ''
-    });
+    const group = groupRepository.create(
+      {
+        name: 'Test Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
 
     const southWithGroups: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
     southWithGroups.items = [
@@ -294,16 +295,17 @@ describe('SouthConnectorRepository', () => {
     const groupRepository = new SouthItemGroupRepository(database);
     (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId2').mockReturnValueOnce('newItemIdWithGroup');
 
-    const group = groupRepository.create({
-      name: 'Test Group 2',
-      southId: testData.south.list[0].id,
-      scanMode: testData.scanMode.list[0],
-      overlap: 10,
-      maxReadInterval: null,
-      readDelay: 0,
-      createdBy: '',
-      updatedBy: ''
-    });
+    const group = groupRepository.create(
+      {
+        name: 'Test Group 2',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: 10,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
 
     const itemWithGroup: SouthConnectorItemEntity<SouthItemSettings> = {
       id: '',
@@ -389,16 +391,17 @@ describe('SouthConnectorRepository', () => {
     const groupRepository = new SouthItemGroupRepository(database);
     (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId3');
 
-    groupRepository.create({
-      name: 'Move Group',
-      southId: testData.south.list[0].id,
-      scanMode: testData.scanMode.list[0],
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      createdBy: '',
-      updatedBy: ''
-    });
+    groupRepository.create(
+      {
+        name: 'Move Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
 
     const existingItems = repository.findAllItemsForSouth(testData.south.list[0].id);
     expect(existingItems.length).toBeGreaterThan(0);
@@ -417,16 +420,17 @@ describe('SouthConnectorRepository', () => {
     const groupRepository = new SouthItemGroupRepository(database);
     (generateRandomId as jest.Mock).mockReturnValueOnce('testGroupId4');
 
-    groupRepository.create({
-      name: 'Remove Group',
-      southId: testData.south.list[0].id,
-      scanMode: testData.scanMode.list[0],
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
-      createdBy: '',
-      updatedBy: ''
-    });
+    groupRepository.create(
+      {
+        name: 'Remove Group',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
 
     const existingItems = repository.findAllItemsForSouth(testData.south.list[0].id);
     expect(existingItems.length).toBeGreaterThan(0);

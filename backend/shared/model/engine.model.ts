@@ -1679,11 +1679,12 @@ export interface CacheMetadataSourceOriginSouth {
 }
 
 export interface CacheMetadataSourceOriginOIAnalytics {
-  source: 'oianalytics';
+  source: 'oianalytics-setpoints';
 }
 
 export interface CacheMetadataSourceOriginAPI {
-  source: 'api';
+  source: 'oibus-api';
+  dataSourceId: string;
 }
 
 export interface CacheMetadataSourceOriginTest {
