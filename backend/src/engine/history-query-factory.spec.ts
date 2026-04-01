@@ -121,7 +121,7 @@ describe('HistoryQueryFactory', () => {
           type: mockSettings.northType,
           settings: mockSettings.northSettings,
           caching: mockSettings.caching,
-          transformers: expect.arrayContaining([expect.objectContaining({ id: 't1', inputType: 'time-values' })])
+          transformers: expect.arrayContaining([expect.objectContaining({ id: 't1' })])
         }),
         mockLogger,
         mockCertificateRepository,

@@ -152,6 +152,7 @@ const CERT_FOLDER = 'certs';
     new JoiValidator(),
     repositoryService.northConnectorRepository,
     repositoryService.southConnectorRepository,
+    repositoryService.southItemGroupRepository,
     repositoryService.northMetricsRepository,
     repositoryService.scanModeRepository,
     repositoryService.logRepository,

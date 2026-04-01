@@ -25,7 +25,7 @@ import { Readable } from 'node:stream';
 import { createTransformer } from '../service/transformer.service';
 import IgnoreTransformer from '../transformers/ignore-transformer';
 import IsoTransformer from '../transformers/iso-transformer';
-import { NorthTransformerWithOptions } from '../model/transformer.model';
+import { NorthTransformerWithOptions, SourceOriginSouth } from '../model/transformer.model';
 import { CONTENT_FOLDER } from '../model/engine.model';
 
 /**
@@ -279,7 +279,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       return;
     }
 
-    const transformerConfig = this.findTransformer(data, source);
+    const transformerConfig = this.findTransformer(source);
     if (!transformerConfig) {
       return this.handleNoTransformer(data);
     }
@@ -308,65 +308,55 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     await this.triggerRunIfNecessary(0);
   }
 
-  private findTransformer(data: OIBusContent, metadataSource: CacheMetadataSource): NorthTransformerWithOptions | undefined {
-    // First check with south id (most specific)
-    let transformerWithOptions: NorthTransformerWithOptions | undefined;
+  private findTransformer(metadataSource: CacheMetadataSource): NorthTransformerWithOptions | undefined {
     if (metadataSource.source === 'south') {
-      transformerWithOptions = this.connector.transformers.find(element => {
-        // first check input type, south and items
-        return (
-          element.inputType &&
-          element.south &&
-          element.items.length &&
-          element.inputType === data.type &&
-          element.south.id === metadataSource.southId &&
-          metadataSource.items.some(itemMetadata => element.items.find(item => item.id === itemMetadata.id))
+      // First, find transformer based on items (most specific)
+      let transformer = this.connector.transformers.find(
+        element =>
+          element.source.type === 'south' &&
+          element.source.south.id === metadataSource.southId &&
+          metadataSource.items
+            .map(item => item.id)
+            .some(itemId => (element.source as SourceOriginSouth).items.map(item => item.id).includes(itemId))
+      );
+
+      // Second, find transformer by group of items (i.e. if one item from source is included in the transformer group items list
+      if (!transformer) {
+        transformer = this.connector.transformers.find(
+          element =>
+            element.source.type === 'south' &&
+            element.source.south.id === metadataSource.southId &&
+            element.source.group &&
+            metadataSource.items
+              .map(item => item.id)
+              .some(itemId => (element.source as SourceOriginSouth).group!.items.map(item => item.id).includes(itemId))
         );
-      });
-
-      // then check input type, south and group
-      if (!transformerWithOptions) {
-        transformerWithOptions = this.connector.transformers.find(element => {
-          return (
-            element.inputType &&
-            element.south &&
-            element.group &&
-            !element.items.length &&
-            element.inputType === data.type &&
-            element.south.id === metadataSource.southId &&
-            metadataSource.items.some(item => 'group' in item && (item as { group: { id: string } | null }).group?.id === element.group!.id)
-          );
-        });
       }
 
-      // then check input type and south
-      if (!transformerWithOptions) {
-        transformerWithOptions = this.connector.transformers.find(element => {
-          return (
-            element.inputType &&
-            element.south &&
-            !element.group &&
-            !element.items.length &&
-            element.inputType === data.type &&
-            element.south.id === metadataSource.southId
-          );
-        });
+      // Last, find transformer by south without group nor items
+      if (!transformer) {
+        transformer = this.connector.transformers.find(
+          element =>
+            element.source.type === 'south' &&
+            element.source.south.id === metadataSource.southId &&
+            !element.source.group &&
+            element.source.items.length === 0
+        );
       }
-
-      // last check input type
-      if (!transformerWithOptions) {
-        transformerWithOptions = this.connector.transformers.find(element => {
-          return element.inputType && !element.south && !element.items.length && element.inputType === data.type;
-        });
-      }
-    } else {
-      // case oianalytics, api or test
-      transformerWithOptions = this.connector.transformers.find(element => {
-        return element.inputType === data.type && !element.south && !element.items.length;
-      });
+      return transformer;
     }
 
-    return transformerWithOptions;
+    if (metadataSource.source === 'oibus-api') {
+      return this.connector.transformers.find(
+        element => element.source.type === 'oibus-api' && element.source.dataSourceId === metadataSource.dataSourceId
+      );
+    }
+
+    if (metadataSource.source === 'oianalytics-setpoints') {
+      return this.connector.transformers.find(element => element.source.type === 'oianalytics-setpoint');
+    }
+
+    return undefined;
   }
 
   private async handleNoTransformer(data: OIBusContent): Promise<void> {

@@ -210,7 +210,7 @@ describe('History Query service', () => {
   it('should not update a history query with not found transformer', async () => {
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.name = 'New Name';
-    command.northTransformers = [{ inputType: 'any', transformerId: 'bad-id' }];
+    command.northTransformers = [{ transformer: { id: 'bad-id' } }];
 
     await expect(service.update(testData.historyQueries.list[0].id, command, false, 'userTest')).rejects.toThrow(
       new NotFoundError(`Could not find OIBus transformer "bad-id"`)
@@ -859,7 +859,6 @@ describe('History Query service', () => {
         id: transformerWithOptions.id,
         transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
-        inputType: transformerWithOptions.inputType,
         items: transformerWithOptions.items.map(item => ({
           id: item.id,
           name: item.name,

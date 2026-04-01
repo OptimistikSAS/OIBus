@@ -12,7 +12,8 @@ const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
 const NORTH_TRANSFORMERS_ITEMS_TABLE = 'north_transformers_items';
-const SCAN_MODE = 'scan_modes';
+const SCAN_MODE_TABLE = 'scan_modes';
+const GROUP_ITEMS_TABLE = 'group_items';
 const PAGE_SIZE = 50;
 
 export default class SouthConnectorRepository {
@@ -72,7 +73,7 @@ export default class SouthConnectorRepository {
           .prepare(
             `DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE}
                      WHERE id IN (
-                       SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE south_id = ?
+                       SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE source_south_south_id = ?
                      ) AND item_id NOT IN (${south.items
                        .filter(item => item.id)
                        .map(() => '?')
@@ -100,8 +101,8 @@ export default class SouthConnectorRepository {
         const update = this.database.prepare(
           `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ?, sync_with_group = ?, max_read_interval = ?, read_delay = ?, overlap = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
         );
-        const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);
-        const deleteGroups = this.database.prepare(`DELETE FROM group_items WHERE item_id = ?;`);
+        const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
+        const deleteGroups = this.database.prepare(`DELETE FROM ${GROUP_ITEMS_TABLE} WHERE item_id = ?;`);
 
         for (const item of south.items) {
           if (!item.id) {
@@ -145,7 +146,7 @@ export default class SouthConnectorRepository {
           .prepare(
             `DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE}
                      WHERE id IN (
-                       SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE south_id = ?
+                       SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE source_south_south_id = ?
                      );`
           )
           .run(south.id);
@@ -167,16 +168,8 @@ export default class SouthConnectorRepository {
 
   deleteSouth(id: string): void {
     const transaction = this.database.transaction(() => {
-      this.database
-        .prepare(
-          `DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE}
-         WHERE id IN (
-           SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE south_id = ?
-         );`
-        )
-        .run(id);
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(id);
-      this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE south_id = ?;`).run(id);
+      this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE source_south_south_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
     });
     transaction();
@@ -303,9 +296,9 @@ export default class SouthConnectorRepository {
         );
     }
 
-    this.database.prepare(`DELETE FROM group_items WHERE item_id = ?;`).run(southItem.id);
+    this.database.prepare(`DELETE FROM ${GROUP_ITEMS_TABLE} WHERE item_id = ?;`).run(southItem.id);
     if (southItem.group) {
-      const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);
+      const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
       insertGroup.run(southItem.group.id, southItem.id);
     }
   }
@@ -332,7 +325,7 @@ export default class SouthConnectorRepository {
         .prepare(
           `DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE}
                      WHERE id IN (
-                       SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE south_id = ?
+                       SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE source_south_south_id = ?
                      ) AND item_id = ?;`
         )
         .run(southId, id);
@@ -347,7 +340,7 @@ export default class SouthConnectorRepository {
         .prepare(
           `DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE}
          WHERE id IN (
-           SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE south_id = ?
+           SELECT id FROM ${NORTH_TRANSFORMERS_TABLE} WHERE source_south_south_id = ?
          );`
         )
         .run(southId);
@@ -370,10 +363,10 @@ export default class SouthConnectorRepository {
     const placeholders = itemIds.map(() => '?').join(', ');
     const transaction = this.database.transaction(() => {
       // Remove items from all groups (enforcing single-group behavior for "Move to")
-      this.database.prepare(`DELETE FROM group_items WHERE item_id IN (${placeholders});`).run(...itemIds);
+      this.database.prepare(`DELETE FROM ${GROUP_ITEMS_TABLE} WHERE item_id IN (${placeholders});`).run(...itemIds);
 
       if (groupId) {
-        const insertGroup = this.database.prepare(`INSERT INTO group_items (group_id, item_id) VALUES (?, ?);`);
+        const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
         const setSyncWithGroup = this.database.prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET sync_with_group = 1 WHERE id = ?;`);
         for (const itemId of itemIds) {
           insertGroup.run(groupId, itemId);
@@ -388,13 +381,13 @@ export default class SouthConnectorRepository {
   }
 
   findScanModeForSouth(scanModeId: string): ScanMode {
-    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE} WHERE id = ?;`;
+    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
   }
 
   private findGroupForItem(itemId: string) {
-    const query = `SELECT group_id FROM group_items WHERE item_id = ?;`;
+    const query = `SELECT group_id FROM ${GROUP_ITEMS_TABLE} WHERE item_id = ?;`;
     const result = this.database.prepare(query).get(itemId) as { group_id: string } | null;
     if (!result) return null;
     return this.groupRepository.findById(result.group_id);

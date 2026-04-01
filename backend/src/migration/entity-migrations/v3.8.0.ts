@@ -169,8 +169,8 @@ export async function up(knex: Knex): Promise<void> {
     north_connector_id: string;
     south_connector_id: string;
   }> = await knex(SUBSCRIPTION_TABLE).select('north_connector_id', 'south_connector_id');
-  await migrateSubscriptionsToTransformers(knex);
   await createSouthItemGroupsTable(knex);
+  await migrateSubscriptionsToTransformers(knex);
   await createGroupItemsTable(knex);
   await addTransformersItems(knex);
   await updateFileConnectorItems(knex);
@@ -489,100 +489,85 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
 }
 
 async function migrateSubscriptionsToTransformers(knex: Knex): Promise<void> {
-  const subscriptions: Array<{
-    north_connector_id: string;
-    south_connector_id: string;
-  }> = await knex(SUBSCRIPTION_TABLE).select('north_connector_id', 'south_connector_id');
+  await knex.transaction(async trx => {
+    // 1. Fetch all old data into memory
+    const subscriptions = await trx(SUBSCRIPTION_TABLE).select('*');
+    const southConnectors = await trx(SOUTH_CONNECTORS_TABLE).select('id', 'type');
+    const oldNorthTransformers = await trx(NORTH_TRANSFORMERS_TABLE).select('*');
+    const oldHistoryTransformers = await trx(HISTORY_QUERY_TRANSFORMERS_TABLE).select('*');
+    const isoTransformer = await trx(TRANSFORMERS_TABLE).where('function_name', 'iso').first();
 
-  const northConnectors: Array<{
-    id: string;
-    type: string;
-  }> = await knex(NORTH_CONNECTORS_TABLE).select('id', 'type');
-
-  const transformers: Array<{
-    id: string;
-    type: string;
-    input_type: string;
-    output_type: string;
-    function_name: string;
-  }> = await knex(TRANSFORMERS_TABLE).select('id', 'type', 'input_type', 'output_type', 'function_name');
-
-  const northTransformers: Array<{
-    north_id: string;
-    transformer_id: string;
-    options: string;
-    input_type: string;
-  }> = await knex(NORTH_TRANSFORMERS_TABLE).select('north_id', 'transformer_id', 'options', 'input_type');
-
-  const southConnectors: Array<{
-    id: string;
-    type: string;
-  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type');
-
-  await knex.schema.alterTable(NORTH_TRANSFORMERS_TABLE, table => {
-    table.uuid('id');
-    table.string('south_id').nullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('SET NULL');
-  });
-  const northRows = (await knex(NORTH_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'))) as Array<{ rid: string }>;
-  // Update rows one by one (or use Promise.all for parallel batches)
-  for (const row of northRows) {
-    await knex(NORTH_TRANSFORMERS_TABLE)
-      .where('rowid', row.rid)
-      .update({ id: generateRandomId(6) });
-  }
-  await knex.schema.alterTable(NORTH_TRANSFORMERS_TABLE, table => {
-    table.uuid('id').notNullable().primary().alter();
-  });
-
-  await knex.schema.alterTable(HISTORY_QUERY_TRANSFORMERS_TABLE, table => {
-    table.uuid('id');
-  });
-  const historyRows = (await knex(HISTORY_QUERY_TRANSFORMERS_TABLE).select(knex.raw('rowid as rid'))) as Array<{ rid: string }>;
-  // Update rows one by one (or use Promise.all for parallel batches)
-  for (const row of historyRows) {
-    await knex(HISTORY_QUERY_TRANSFORMERS_TABLE)
-      .where('rowid', row.rid)
-      .update({ id: generateRandomId(6) });
-  }
-  await knex.schema.alterTable(HISTORY_QUERY_TRANSFORMERS_TABLE, table => {
-    table.uuid('id').notNullable().primary().alter();
-  });
-
-  await dropUniqueConstraints(knex);
-
-  const isoTransformer = transformers.find(transformer => transformer.function_name === 'iso')!;
-  for (const subscription of subscriptions) {
-    const north = northConnectors.find(connector => connector.id === subscription.north_connector_id);
-    const south = southConnectors.find(connector => connector.id === subscription.south_connector_id);
-    if (south && north) {
-      const inputType = ['ads', 'modbus', 'mqtt', 'oianalytics', 'opc', 'opcua', 'osisoft-pi'].includes(south.type) ? 'time-values' : 'any';
-      const transformer = northTransformers.find(transformer => transformer.north_id === north.id && transformer.input_type === inputType);
-      // In this case, the north is subscribed to the south. We need to check if there is already transformers depending on the connector type
-      if (!transformer) {
-        // The north is subscribed so we need to create a transformer for this specific case ("iso" standard transformer)
-        await knex(NORTH_TRANSFORMERS_TABLE).insert({
-          id: generateRandomId(6),
-          north_id: north.id,
-          south_id: south.id,
-          transformer_id: isoTransformer.id
-        });
-      } else {
-        await knex(NORTH_TRANSFORMERS_TABLE)
-          .delete()
-          .where({ north_id: north.id, south_id: '', transformer_id: isoTransformer.id, input_type: inputType });
-        await knex(NORTH_TRANSFORMERS_TABLE).insert({
-          id: generateRandomId(6),
-          north_id: north.id,
-          south_id: south.id,
-          transformer_id: transformer.transformer_id,
-          options: transformer.options,
-          input_type: inputType
-        });
-      }
+    if (!isoTransformer) {
+      throw new Error('ISO transformer not found in database.');
     }
-  }
 
-  await knex.schema.dropTableIfExists(SUBSCRIPTION_TABLE);
+    // 2. Map History Transformers (Simply generate new IDs for existing rows)
+    const newHistoryTransformers = oldHistoryTransformers.map(ht => ({
+      id: generateRandomId(6),
+      history_id: ht.history_id,
+      transformer_id: ht.transformer_id,
+      options: ht.options
+    }));
+
+    // 3. Map North Transformers strictly based on Subscriptions
+    const newNorthTransformers = [];
+    for (const sub of subscriptions) {
+      const south = southConnectors.find(c => c.id === sub.south_connector_id);
+      if (!south) continue; // Ignore orphaned subscriptions
+
+      // Determine the expected input type for this south connector
+      const inputType = ['ads', 'modbus', 'mqtt', 'oianalytics', 'opc', 'opcua', 'osisoft-pi'].includes(south.type) ? 'time-values' : 'any';
+
+      // Check if the north connector already had a specific transformation rule for this input type
+      const existingConfig = oldNorthTransformers.find(t => t.north_id === sub.north_connector_id && t.input_type === inputType);
+
+      // Create the new mapped row linking the North to the South source
+      newNorthTransformers.push({
+        id: generateRandomId(6),
+        north_id: sub.north_connector_id,
+        transformer_id: existingConfig ? existingConfig.transformer_id : isoTransformer.id,
+        options: existingConfig ? existingConfig.options : null,
+        source_type: 'south',
+        source_api_data_source_id: null,
+        source_south_south_id: south.id,
+        source_south_group_id: null
+      });
+    }
+
+    // 4. Drop the old tables (This instantly removes old schemas, data, and constraints safely)
+    await trx.schema.dropTableIfExists(NORTH_TRANSFORMERS_TABLE);
+    await trx.schema.dropTableIfExists(HISTORY_QUERY_TRANSFORMERS_TABLE);
+    await trx.schema.dropTableIfExists(SUBSCRIPTION_TABLE);
+
+    // 5. Recreate History Transformers table with the new schema
+    await trx.schema.createTable(HISTORY_QUERY_TRANSFORMERS_TABLE, table => {
+      table.uuid('id').primary().notNullable();
+      table.uuid('history_id').notNullable().references('id').inTable('history_queries').onDelete('CASCADE');
+      table.uuid('transformer_id').notNullable().references('id').inTable(TRANSFORMERS_TABLE).onDelete('CASCADE');
+      table.string('options');
+    });
+
+    // 6. Recreate North Transformers table with the new schema (input_type is naturally gone)
+    await trx.schema.createTable(NORTH_TRANSFORMERS_TABLE, table => {
+      table.uuid('id').primary().notNullable();
+      table.uuid('north_id').notNullable().references('id').inTable(NORTH_CONNECTORS_TABLE).onDelete('CASCADE');
+      table.uuid('transformer_id').notNullable().references('id').inTable(TRANSFORMERS_TABLE).onDelete('CASCADE');
+      table.string('source_type');
+      table.string('source_api_data_source_id');
+      table.string('source_south_south_id').nullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('SET NULL');
+      table.string('source_south_group_id').nullable().references('id').inTable(SOUTH_ITEM_GROUPS_TABLE).onDelete('SET NULL');
+      table.string('options');
+    });
+
+    // 7. Batch insert the clean, mapped data
+    if (newHistoryTransformers.length > 0) {
+      await trx.batchInsert(HISTORY_QUERY_TRANSFORMERS_TABLE, newHistoryTransformers, 100);
+    }
+
+    if (newNorthTransformers.length > 0) {
+      await trx.batchInsert(NORTH_TRANSFORMERS_TABLE, newNorthTransformers, 100);
+    }
+  });
 }
 
 async function addTransformersItems(knex: Knex): Promise<void> {
@@ -713,9 +698,9 @@ async function migrateSouthMQTTItems(
         await knex(NORTH_TRANSFORMERS_TABLE).insert({
           id: northTransformerInstanceId,
           north_id: northId,
-          south_id: southId,
+          source_type: 'south',
+          source_south_south_id: southId,
           transformer_id: customTransformer.id,
-          input_type: customTransformer.inputType,
           options: JSON.stringify(group.settings) // Old settings become options
         });
 
@@ -748,63 +733,6 @@ async function migrateSouthMQTTItems(
         .update({ settings: JSON.stringify(newSettings) })
         .where('id', item.id);
     }
-  }
-}
-
-/**
- * Helper to drop unique constraints in SQLite by recreating the tables.
- * SQLite cannot drop constraints defined in CREATE TABLE without table recreation.
- */
-async function dropUniqueConstraints(knex: Knex): Promise<void> {
-  const northTempName = `${NORTH_TRANSFORMERS_TABLE}_old`;
-  if (await knex.schema.hasTable(NORTH_TRANSFORMERS_TABLE)) {
-    // A. Rename existing
-    await knex.schema.renameTable(NORTH_TRANSFORMERS_TABLE, northTempName);
-
-    // B. Recreate without UNIQUE constraint
-    await knex.schema.createTable(NORTH_TRANSFORMERS_TABLE, table => {
-      table.uuid('id').primary().notNullable();
-      table.uuid('north_id').notNullable().references('id').inTable(NORTH_CONNECTORS_TABLE).onDelete('CASCADE');
-      table.uuid('transformer_id').notNullable().references('id').inTable(TRANSFORMERS_TABLE).onDelete('CASCADE');
-      table.string('south_id');
-      table.string('input_type');
-      table.string('options');
-    });
-
-    // C. Copy Data
-    await knex.raw(`
-      INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, south_id, input_type, options)
-      SELECT id, north_id, transformer_id, south_id, input_type, options
-      FROM ${northTempName}
-    `);
-
-    // D. Drop Temp
-    await knex.schema.dropTable(northTempName);
-  }
-
-  const historyTempName = `${HISTORY_QUERY_TRANSFORMERS_TABLE}_old`;
-  if (await knex.schema.hasTable(HISTORY_QUERY_TRANSFORMERS_TABLE)) {
-    // A. Rename existing
-    await knex.schema.renameTable(HISTORY_QUERY_TRANSFORMERS_TABLE, historyTempName);
-
-    // B. Recreate without UNIQUE constraint
-    await knex.schema.createTable(HISTORY_QUERY_TRANSFORMERS_TABLE, table => {
-      table.uuid('id').primary().notNullable();
-      table.uuid('history_id').notNullable().references('id').inTable('history_queries').onDelete('CASCADE');
-      table.uuid('transformer_id').notNullable().references('id').inTable(TRANSFORMERS_TABLE).onDelete('CASCADE');
-      table.string('input_type');
-      table.string('options');
-    });
-
-    // C. Copy Data
-    await knex.raw(`
-      INSERT INTO ${HISTORY_QUERY_TRANSFORMERS_TABLE} (id, history_id, transformer_id, input_type, options)
-      SELECT id, history_id, transformer_id, input_type, options
-      FROM ${historyTempName}
-    `);
-
-    // D. Drop Temp
-    await knex.schema.dropTable(historyTempName);
   }
 }
 
