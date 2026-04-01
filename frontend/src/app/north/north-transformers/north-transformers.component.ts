@@ -72,7 +72,6 @@ export class NorthTransformersComponent {
       this.southConnectors,
       this.scanModes(),
       this.certificates(),
-      this.transformersWithOptions.map(t => ({ inputType: t.inputType, south: t.south?.id || null })),
       this.transformers(),
       this.northManifest().types
     );
@@ -114,9 +113,9 @@ export class NorthTransformersComponent {
       this.southConnectors,
       this.scanModes(),
       this.certificates(),
-      transformer,
       this.transformers(),
-      this.northManifest().types
+      this.northManifest().types,
+      transformer
     );
     this.refreshAfterEditModalClosed(modalRef, transformer);
   }
@@ -158,8 +157,11 @@ export class NorthTransformersComponent {
                 return element.id !== transformer.id;
               } else {
                 return !(
-                  element.inputType === transformer.inputType &&
-                  element.south === transformer.south &&
+                  element.source.type === transformer.source.type &&
+                  ((element.source.type === 'south' &&
+                    transformer.source.type === 'south' &&
+                    element.source.south.id === transformer.source.south.id) ||
+                    element.source.type !== 'south') &&
                   element.transformer.id === transformer.transformer.id
                 );
               }
@@ -176,18 +178,24 @@ export class NorthTransformersComponent {
       });
   }
 
-  formatTransformerWithSouth(transformer: TransformerDTOWithOptions) {
-    const southLabel = `${transformer.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.south!.type)})`;
-    const numberOfItems = transformer.items.length;
+  formatTransformerName(transformer: TransformerDTOWithOptions) {
+    if (transformer.source.type === 'south') {
+      const southLabel = `${transformer.source.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.source.south!.type)})`;
+      const numberOfItems = transformer.source.items.length;
 
-    if (transformer.group) {
-      return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.group-selected', { groupName: transformer.group.name })}]`;
-    } else if (numberOfItems === 1) {
-      return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.one-item-selected')}]`;
-    } else if (numberOfItems > 1) {
-      return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', { numberOfItems })}]`;
+      if (transformer.source.group) {
+        return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.group-selected', { groupName: transformer.source.group.name })}]`;
+      } else if (numberOfItems === 1) {
+        return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.one-item-selected')}]`;
+      } else if (numberOfItems > 1) {
+        return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', { numberOfItems })}]`;
+      } else {
+        return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
+      }
+    } else if (transformer.source.type === 'oibus-api') {
+      return `${this.translateService.instant('configuration.oibus.manifest.transformers.oibus-api-selected', { dataSourceId: transformer.source.dataSourceId })} `;
     } else {
-      return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.all-items-selected')}]`;
+      return `${this.translateService.instant('configuration.oibus.manifest.transformers.oianalytics-setpoint-selected')}`;
     }
   }
 }

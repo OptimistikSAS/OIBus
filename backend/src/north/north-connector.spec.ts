@@ -8,6 +8,7 @@ import {
   CacheContentUpdateCommand,
   CacheMetadata,
   CacheMetadataSource,
+  CacheMetadataSourceOriginSouth,
   OIBusContent,
   OIBusFileContent
 } from '../../shared/model/engine.model';
@@ -25,7 +26,15 @@ import { Readable } from 'node:stream';
 import { createTransformer } from '../service/transformer.service';
 import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import OIBusTransformer from '../transformers/oibus-transformer';
-import { NorthTransformerWithOptions } from '../model/transformer.model';
+import { NorthTransformerWithOptions, SourceOriginSouth } from '../model/transformer.model';
+import {
+  SouthConnectorEntityLight,
+  SouthConnectorItemEntity,
+  SouthConnectorItemEntityLight,
+  SouthItemGroupEntity
+} from '../model/south-connector.model';
+import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import { HistoryQueryItemEntity } from '../model/histor-query.model';
 
 // Mock fs
 jest.mock('node:stream');
@@ -414,7 +423,6 @@ describe('NorthConnector', () => {
 
   it('should cache json content without maxSendCount', async () => {
     north['connector'].caching.throttling.maxNumberOfElements = 0;
-    north['connector'].transformers[1].inputType = 'time-values';
 
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
     (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce((testData.oibusContent[0].content as Array<object>).length);
@@ -430,13 +438,25 @@ describe('NorthConnector', () => {
     const outputStream = 'outputStream';
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: outputStream });
 
-    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
+    await north.cacheContent(testData.oibusContent[0], {
+      source: 'south',
+      southId: testData.south.list[1].id,
+      items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
+    } as CacheMetadataSourceOriginSouth);
 
     // Verify stream creation from content
     expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
 
     // Verify transformer call with stream
-    expect(oiBusTransformer.transform).toHaveBeenCalledWith(expect.anything(), { source: 'test' }, null);
+    expect(oiBusTransformer.transform).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        source: 'south',
+        southId: testData.south.list[1].id,
+        items: []
+      },
+      null
+    );
 
     // Verify CacheService call with output stream
     expect(cacheService.addCacheContent).toHaveBeenCalledWith(outputStream, {
@@ -465,7 +485,11 @@ describe('NorthConnector', () => {
       .mockReturnValueOnce({ metadata, output: outputStream1 })
       .mockReturnValueOnce({ metadata, output: outputStream2 });
 
-    await north.cacheContent(testData.oibusContent[0], { source: 'test' });
+    await north.cacheContent(testData.oibusContent[0], {
+      source: 'south',
+      southId: testData.south.list[1].id,
+      items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
+    } as CacheMetadataSourceOriginSouth);
 
     // Verify chunking logic
     expect(Readable.from).toHaveBeenCalledTimes(2);
@@ -515,7 +539,6 @@ describe('NorthConnector', () => {
   });
 
   it('should cache file content', async () => {
-    north['connector'].transformers[1].inputType = 'any';
     (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
 
     const metadata: CacheMetadata = {
@@ -528,13 +551,21 @@ describe('NorthConnector', () => {
     const outputStream = 'outputStream';
     (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: outputStream });
 
-    await north.cacheContent(testData.oibusContent[1], { source: 'test' });
+    await north.cacheContent(testData.oibusContent[1], {
+      source: 'south',
+      southId: testData.south.list[1].id,
+      items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
+    } as CacheMetadataSourceOriginSouth);
 
     expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusFileContent).filePath);
 
     expect(oiBusTransformer.transform).toHaveBeenCalledWith(
       expect.anything(),
-      { source: 'test' },
+      {
+        source: 'south',
+        southId: testData.south.list[1].id,
+        items: []
+      },
       expect.stringContaining('1234567890') // cacheFilename generated inside
     );
 
@@ -562,95 +593,65 @@ describe('NorthConnector', () => {
 
   it('should find transformer from south metadata', () => {
     expect(
-      north['findTransformer'](
-        {
-          type: 'time-values'
-        } as OIBusContent,
-        { source: 'south', southId: 'southId1', items: [testData.south.list[0].items[0]] } as CacheMetadataSource
-      )
+      north['findTransformer']({
+        source: 'south',
+        southId: testData.south.list[0].id,
+        items: [testData.south.list[0].items[0]]
+      } as CacheMetadataSource)
     ).toEqual(north['connector'].transformers[0]);
 
-    north['connector'].transformers[0].items = [];
+    (north['connector'].transformers[0].source as SourceOriginSouth).items = [];
     expect(
-      north['findTransformer'](
-        {
-          type: 'time-values'
-        } as OIBusContent,
-        { source: 'south', southId: 'southId1', items: [testData.south.list[0].items[0]] } as CacheMetadataSource
-      )
+      north['findTransformer']({
+        source: 'south',
+        southId: testData.south.list[0].id,
+        items: [testData.south.list[0].items[0]]
+      } as CacheMetadataSource)
     ).toEqual(north['connector'].transformers[0]);
 
-    north['connector'].transformers[0].south = undefined;
+    north['connector'].transformers[0].source = { type: 'oibus-api', dataSourceId: 'id' };
     expect(
-      north['findTransformer'](
-        {
-          type: 'time-values'
-        } as OIBusContent,
-        { source: 'south', southId: 'southId1', items: [testData.south.list[0].items[0]] } as CacheMetadataSource
-      )
+      north['findTransformer']({
+        source: 'oibus-api',
+        dataSourceId: 'id'
+      } as CacheMetadataSource)
     ).toEqual(north['connector'].transformers[0]);
   });
 
   it('should find transformer from south metadata at group level', () => {
-    north['connector'].transformers[0].items = [];
-    north['connector'].transformers[0].group = {
-      id: 'groupId1',
-      name: 'Group 1',
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-    north['connector'].transformers[0].south = {
-      id: testData.south.list[0].id,
-      name: testData.south.list[0].name,
-      type: testData.south.list[0].type,
-      description: testData.south.list[0].description,
-      enabled: testData.south.list[0].enabled,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-
     const itemWithMatchingGroup = {
       ...testData.south.list[0].items[0],
       group: {
         id: 'groupId1',
         name: 'Group 1',
-        southId: 'southId1',
         scanMode: testData.scanMode.list[0],
         overlap: null,
         maxReadInterval: null,
         readDelay: null
       }
     };
+    (north['connector'].transformers[0].source as SourceOriginSouth) = {
+      type: 'south',
+      south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
+      group: {
+        id: 'groupId1',
+        name: 'Group 1',
+        southId: testData.south.list[0].id,
+        items: [{ id: testData.south.list[0].items[0].id }] as Array<SouthConnectorItemEntityLight>
+      } as SouthItemGroupEntity,
+      items: []
+    };
 
     expect(
-      north['findTransformer'](
-        { type: 'time-values' } as OIBusContent,
-        { source: 'south', southId: 'southId1', items: [itemWithMatchingGroup] } as CacheMetadataSource
-      )
+      north['findTransformer']({
+        source: 'south',
+        southId: testData.south.list[0].id,
+        items: [{ id: testData.south.list[0].items[0].id }]
+      } as CacheMetadataSource)
     ).toEqual(north['connector'].transformers[0]);
 
-    // Item with non-matching group should not select the group-level transformer
-    const itemWithDifferentGroup = {
-      ...testData.south.list[0].items[0],
-      group: {
-        id: 'groupId2',
-        name: 'Group 2',
-        southId: 'southId1',
-        scanMode: testData.scanMode.list[0],
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: null
-      }
-    };
     expect(
-      north['findTransformer'](
-        { type: 'time-values' } as OIBusContent,
-        { source: 'south', southId: 'southId1', items: [itemWithDifferentGroup] } as CacheMetadataSource
-      )
+      north['findTransformer']({ source: 'south', southId: 'southId1', items: [{ id: 'anotherId' }] } as CacheMetadataSource)
     ).not.toEqual(north['connector'].transformers[0]);
   });
 
@@ -681,8 +682,8 @@ describe('NorthConnector', () => {
       }
     });
     (createTransformer as jest.Mock).mockReturnValueOnce({ transform });
-    await north['executeTransformation']({ type: 'any-content', content: '' }, options, { source: 'oianalytics' });
-    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics' }, null);
+    await north['executeTransformation']({ type: 'any-content', content: '' }, options, { source: 'oianalytics-setpoints' });
+    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics-setpoints' }, null);
     expect(cacheService.addCacheContent).toHaveBeenCalledWith('output', {
       contentType: 'opcua',
       numberOfElement: 1
@@ -701,8 +702,8 @@ describe('NorthConnector', () => {
       }
     });
     (createTransformer as jest.Mock).mockReturnValueOnce({ transform });
-    await north['executeTransformation']({ type: 'setpoint', content: [] }, options, { source: 'oianalytics' });
-    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics' }, null);
+    await north['executeTransformation']({ type: 'setpoint', content: [] }, options, { source: 'oianalytics-setpoints' });
+    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics-setpoints' }, null);
     expect(cacheService.addCacheContent).toHaveBeenCalledWith('output', {
       contentType: 'opcua',
       numberOfElement: 1

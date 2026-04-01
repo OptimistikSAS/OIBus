@@ -184,10 +184,10 @@ export default class HistoryQuery {
       type: historyQueryConfiguration.southType,
       settings: historyQueryConfiguration.southSettings,
       items: [],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
+      createdBy: historyQueryConfiguration.createdBy,
+      updatedBy: historyQueryConfiguration.updatedBy,
+      createdAt: historyQueryConfiguration.createdAt,
+      updatedAt: historyQueryConfiguration.updatedAt
     };
     this.north.connectorConfiguration = {
       id: historyQueryConfiguration.id,
@@ -201,15 +201,28 @@ export default class HistoryQuery {
         id: element.id,
         transformer: element.transformer,
         options: element.options,
-        inputType: element.inputType,
-        south: undefined,
-        group: undefined,
-        items: element.items
+        items: element.items,
+        source: {
+          type: 'south',
+          south: {
+            id: historyQueryConfiguration.id,
+            name: historyQueryConfiguration.name,
+            type: historyQueryConfiguration.southType,
+            description: historyQueryConfiguration.description,
+            enabled: historyQueryConfiguration.status === 'RUNNING',
+            createdBy: historyQueryConfiguration.createdBy,
+            updatedBy: historyQueryConfiguration.updatedBy,
+            createdAt: historyQueryConfiguration.createdAt,
+            updatedAt: historyQueryConfiguration.updatedAt
+          },
+          items: element.items,
+          group: undefined
+        }
       })),
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
+      createdBy: historyQueryConfiguration.createdBy,
+      updatedBy: historyQueryConfiguration.updatedBy,
+      createdAt: historyQueryConfiguration.createdAt,
+      updatedAt: historyQueryConfiguration.updatedAt
     };
   }
 

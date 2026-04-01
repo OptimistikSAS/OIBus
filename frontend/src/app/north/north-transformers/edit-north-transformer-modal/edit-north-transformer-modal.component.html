@@ -5,39 +5,55 @@
   @if (form) {
     <form [formGroup]="form" (ngSubmit)="save()" id="choose-transformer-form">
       <div class="row">
-        <div class="col-6">
-          <div class="form-group">
-            @if (form.controls.source.enabled) {
+        @if (mode === 'create') {
+          <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-4' : 'col-6'">
+            <div class="form-group">
               <label class="form-label" for="source" translate="configuration.oibus.manifest.transformers.source"></label>
               <select formControlName="source" class="form-select mb-2 mr-sm-2" id="source" [compareWith]="compareSource">
-                @for (inputType of inputTypes; track inputType) {
-                  @if (!inputTypeIsSelected(inputType)) {
-                    <option [ngValue]="{ inputType, south: null }">
-                      {{ 'enums.oibus-input-data-type.' + inputType | translate }}
-                    </option>
-                  }
-                }
+                <option [ngValue]="{ dataSourceType: null, south: null }"></option>
+
                 @for (southConnector of southConnectors; track southConnector.id) {
-                  <option [ngValue]="{ inputType: null, south: southConnector }">
+                  <option [ngValue]="{ dataSourceType: 'south', south: southConnector }">
                     {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})
                   </option>
                 }
+                <option [ngValue]="{ dataSourceType: 'oibus-api', south: null }">
+                  {{ 'enums.oibus-data-source-type.oibus-api' | translate }}
+                </option>
+                <option [ngValue]="{ dataSourceType: 'oianalytics-setpoint', south: null }">
+                  {{ 'enums.oibus-data-source-type.oianalytics-setpoint' | translate }}
+                </option>
               </select>
-            } @else {
-              <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
-              <div>
-                @if (form.controls.source.value.south) {
-                  <span
-                    >{{ form.controls.source.value.south.name }} ({{ form.controls.source.value.south.type | oIBusSouthTypeEnum }})</span
-                  >
-                } @else {
-                  <span>{{ 'enums.oibus-input-data-type.' + form.controls.source.value.inputType | translate }}</span>
-                }
-              </div>
-            }
+            </div>
           </div>
-        </div>
-        <div class="col-6">
+        } @else {
+          @if (form.controls.source.value.south) {
+            <div class="col-6">
+              <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
+              <span>{{ form.controls.source.value.south.name }} ({{ form.controls.source.value.south.type | oIBusSouthTypeEnum }})</span>
+            </div>
+          } @else if (form.controls.source.value.dataSourceType === 'oianalytics') {
+            <div class="col-6">
+              <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
+              <span>{{ 'enums.oibus-data-source-type.oianalytics-setpoint' }}</span>
+            </div>
+          } @else {
+            <div class="col-4">
+              <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
+              <span>{{ 'enums.oibus-data-source-type.' + form.controls.source.value.dataSourceType | translate }}</span>
+            </div>
+          }
+        }
+        @if (form.controls.source.value.dataSourceType === 'oibus-api') {
+          <div class="col-4">
+            <div class="form-group">
+              <label class="form-label" for="api-data-source" translate="configuration.oibus.manifest.transformers.api-data-source"></label>
+              <input formControlName="apiDataSourceId" id="api-data-source" class="form-control" />
+              <val-errors controlName="apiDataSourceId" />
+            </div>
+          </div>
+        }
+        <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-4' : 'col-6'">
           <div class="form-group">
             <label class="form-label" for="output" translate="configuration.oibus.manifest.transformers.output"></label>
             <select class="form-select" id="output" formControlName="transformer" [compareWith]="compareTransformers">

@@ -308,7 +308,6 @@ export default class OIAnalyticsMessageService {
               id: transformerWithOptions.id,
               transformerId: transformerWithOptions.transformer.id,
               options: transformerWithOptions.options,
-              inputType: transformerWithOptions.inputType,
               items: transformerWithOptions.items
             }))
           }
@@ -500,11 +499,8 @@ export default class OIAnalyticsMessageService {
             }
           },
           transformers: north.transformers.map(transformerWithOptions => ({
-            inputType: transformerWithOptions.inputType,
             transformerId: transformerWithOptions.transformer.id,
-            southId: transformerWithOptions.south?.id || undefined,
-            options: transformerWithOptions.options,
-            items: transformerWithOptions.items
+            source: transformerWithOptions.source
           }))
         }
       };

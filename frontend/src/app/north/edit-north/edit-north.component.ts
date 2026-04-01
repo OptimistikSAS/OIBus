@@ -350,11 +350,9 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       },
       transformers: this.inMemoryTransformersWithOptions.map(element => ({
         id: element.id,
-        transformerId: element.transformer.id,
+        transformer: element.transformer,
         options: element.options,
-        inputType: element.inputType,
-        southId: element.south?.id,
-        items: element.items
+        source: element.source
       }))
     };
   }

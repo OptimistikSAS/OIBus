@@ -20,6 +20,7 @@ export class ContentController extends Controller {
   @SuccessResponse(204, 'No Content')
   async addFile(
     @Query() northId: string,
+    @Query() dataSourceId: string,
     @UploadedFile() file: Express.Multer.File,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
@@ -30,7 +31,7 @@ export class ContentController extends Controller {
     try {
       const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
       for (const id of normalizedNorthIds) {
-        await oIBusService.addExternalContent(id, { type: 'any', filePath: file.path });
+        await oIBusService.addExternalContent(id, dataSourceId, { type: 'any', filePath: file.path });
       }
     } finally {
       // Cleanup: This block runs NO MATTER WHAT (success or failure)
@@ -51,13 +52,14 @@ export class ContentController extends Controller {
   @SuccessResponse(204, 'No Content')
   async addContent(
     @Query() northId: string,
+    @Query() dataSourceId: string,
     @Body() content: OIBusTimeValueContent | OIBusSetpointContent,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const oIBusService = request.services.oIBusService;
     const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
     for (const id of normalizedNorthIds) {
-      await oIBusService.addExternalContent(id, content);
+      await oIBusService.addExternalContent(id, dataSourceId, content);
     }
   }
 }

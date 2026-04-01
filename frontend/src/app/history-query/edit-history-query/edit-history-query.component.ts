@@ -1,7 +1,16 @@
 import { Component, forwardRef, inject, OnInit } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -38,7 +47,11 @@ import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { ResetCacheHistoryQueryModalComponent } from '../reset-cache-history-query-modal/reset-cache-history-query-modal.component';
 import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
+import {
+  HistoryTransformerDTOWithOptions,
+  SourceOriginSouthDTO,
+  TransformerDTO
+} from '../../../../../backend/shared/model/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
@@ -51,7 +64,6 @@ import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
-import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
 
 @Component({
@@ -147,7 +159,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     southSettings: FormGroup;
   }> | null = null;
 
-  inMemoryTransformersWithOptions: Array<Omit<TransformerDTOWithOptions, 'south'>> = [];
+  inMemoryTransformersWithOptions: Array<HistoryTransformerDTOWithOptions> = [];
   inMemoryItems: Array<HistoryQueryItemCommandDTO> = [];
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
@@ -334,8 +346,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         id: element.id,
         transformer: element.transformer,
         options: element.options,
-        inputType: element.inputType,
-        items: [] // TODO: add items with new id
+        items: element.items
       }));
       this.form.patchValue({
         ...this.historyQuery,
@@ -364,13 +375,14 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         )!;
         this.form.controls.northSettings.patchValue(northConnector.settings);
         this.form.controls.caching.patchValue(northConnector.caching);
-        this.inMemoryTransformersWithOptions = northConnector.transformers.map(transformer => ({
-          id: '',
-          transformer: transformer.transformer,
-          options: transformer.options,
-          inputType: transformer.inputType,
-          items: [] // TODO: add items with new id
-        }));
+        this.inMemoryTransformersWithOptions = northConnector.transformers
+          .filter(transformer => transformer.source.type === 'south')
+          .map(transformer => ({
+            id: '',
+            transformer: transformer.transformer,
+            options: transformer.options,
+            items: (transformer.source as SourceOriginSouthDTO).items
+          }));
       }
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
@@ -428,19 +440,19 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
-      items: (this.saveItemChangesDirectly && this.historyQuery
-        ? this.historyQuery.items.map(item => ({
-            id: item.id,
-            name: item.name,
-            enabled: item.enabled,
-            settings: item.settings
-          }))
-        : this.inMemoryItems) as any,
+      items:
+        this.saveItemChangesDirectly && this.historyQuery
+          ? this.historyQuery.items.map(item => ({
+              id: item.id,
+              name: item.name,
+              enabled: item.enabled,
+              settings: item.settings
+            }))
+          : this.inMemoryItems,
       northTransformers: this.inMemoryTransformersWithOptions.map(element => ({
         id: element.id,
-        transformerId: element.transformer.id,
+        transformer: element.transformer,
         options: element.options,
-        inputType: element.inputType,
         items: element.items
       }))
     } as HistoryQueryCommandDTO;
@@ -483,7 +495,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     });
   }
 
-  updateInMemoryTransformers(transformersWithOptions: Array<Omit<TransformerDTOWithOptions, 'south'>> | null) {
+  updateInMemoryTransformers(transformersWithOptions: Array<HistoryTransformerDTOWithOptions> | null) {
     if (transformersWithOptions) {
       this.inMemoryTransformersWithOptions = transformersWithOptions;
     } else {

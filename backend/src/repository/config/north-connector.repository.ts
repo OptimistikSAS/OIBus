@@ -2,10 +2,10 @@ import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntityLight } from '../../model/south-connector.model';
+import { SouthConnectorEntityLight, SouthConnectorItemEntityLight, SouthItemGroupEntity } from '../../model/south-connector.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { toTransformer } from './transformer.repository';
-import { NorthTransformerWithOptions } from '../../model/transformer.model';
+import { NorthTransformerWithOptions, TransformerSource } from '../../model/transformer.model';
 import { ScanMode } from '../../model/scan-mode.model';
 import { toScanMode } from './scan-mode.repository';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';
@@ -18,7 +18,8 @@ const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_TRANSFORMERS_TABLE = 'north_transformers';
 const NORTH_TRANSFORMERS_ITEMS_TABLE = 'north_transformers_items';
 const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
-const SCAN_MODE = 'scan_modes';
+const GROUP_ITEMS_TABLE = 'group_items';
+const SCAN_MODE_TABLE = 'scan_modes';
 
 export default class NorthConnectorRepository {
   constructor(private readonly database: Database) {}
@@ -195,7 +196,7 @@ export default class NorthConnectorRepository {
   addOrEditTransformer(northId: string, transformerWithOptions: NorthTransformerWithOptions): void {
     if (!transformerWithOptions.id) {
       transformerWithOptions.id = generateRandomId(6);
-      const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, input_type, south_id) VALUES (?, ?, ?, ?, ?, ?);`;
+      const query = `INSERT INTO ${NORTH_TRANSFORMERS_TABLE} (id, north_id, transformer_id, options, source_type, source_api_data_source_id, source_south_south_id, source_south_group_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
       this.database
         .prepare(query)
         .run(
@@ -203,32 +204,41 @@ export default class NorthConnectorRepository {
           northId,
           transformerWithOptions.transformer.id,
           JSON.stringify(transformerWithOptions.options),
-          transformerWithOptions.inputType,
-          transformerWithOptions.south?.id
+          transformerWithOptions.source.type,
+          transformerWithOptions.source.type === 'oibus-api' ? transformerWithOptions.source.dataSourceId : null,
+          transformerWithOptions.source.type === 'south' ? transformerWithOptions.source.south.id : null,
+          transformerWithOptions.source.type === 'south' && transformerWithOptions.source.group
+            ? transformerWithOptions.source.group.id
+            : null
         );
     } else {
-      const query = `UPDATE ${NORTH_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ?, input_type = ?, south_id = ? WHERE id = ?;`;
+      const query = `UPDATE ${NORTH_TRANSFORMERS_TABLE} SET transformer_id = ?, options = ?, source_api_data_source_id = ?, source_south_south_id = ?, source_south_group_id = ? WHERE id = ?;`;
       this.database
         .prepare(query)
         .run(
           transformerWithOptions.transformer.id,
           JSON.stringify(transformerWithOptions.options),
-          transformerWithOptions.inputType,
-          transformerWithOptions.south?.id,
+          transformerWithOptions.source.type === 'oibus-api' ? transformerWithOptions.source.dataSourceId : null,
+          transformerWithOptions.source.type === 'south' ? transformerWithOptions.source.south.id : null,
+          transformerWithOptions.source.type === 'south' && transformerWithOptions.source.group
+            ? transformerWithOptions.source.group.id
+            : null,
           transformerWithOptions.id
         );
     }
     this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} WHERE id = ?;`).run(transformerWithOptions.id);
-    if (transformerWithOptions.group?.id) {
-      this.database
-        .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, group_id) VALUES (?, ?);`)
-        .run(transformerWithOptions.id, transformerWithOptions.group.id);
-    } else {
-      const items = transformerWithOptions.items.filter(item => item.id);
-      for (const item of items) {
+    if (transformerWithOptions.source.type === 'south') {
+      if (transformerWithOptions.source.group?.id) {
         this.database
-          .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, item_id) VALUES (?, ?);`)
-          .run(transformerWithOptions.id, item.id);
+          .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, group_id) VALUES (?, ?);`)
+          .run(transformerWithOptions.id, transformerWithOptions.source.group.id);
+      } else {
+        const items = transformerWithOptions.source.items.filter(item => item.id);
+        for (const item of items) {
+          this.database
+            .prepare(`INSERT INTO ${NORTH_TRANSFORMERS_ITEMS_TABLE} (id, item_id) VALUES (?, ?);`)
+            .run(transformerWithOptions.id, item.id);
+        }
       }
     }
   }
@@ -255,53 +265,61 @@ export default class NorthConnectorRepository {
 
   private findTransformersForNorth(northId: string): Array<NorthTransformerWithOptions> {
     const query =
-      `SELECT t.id, t.type, nt.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, t.custom_code, t.language, t.timeout, nt.options, nt.south_id, sig.id as group_id, sig.name as group_name, nt.id as ntId ` +
+      `SELECT t.id, t.type, t.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, ` +
+      `t.custom_code, t.language, t.timeout, nt.options, nt.source_type, nt.source_api_data_source_id, nt.source_south_south_id, ` +
+      `nt.source_south_group_id, sig.name as group_name, nt.id as ntId ` +
       `FROM ${NORTH_TRANSFORMERS_TABLE} nt ` +
       `JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id ` +
-      `LEFT JOIN ${SOUTH_ITEM_GROUPS_TABLE} sig ON nt.south_id = sig.south_id ` +
+      `LEFT JOIN ${SOUTH_ITEM_GROUPS_TABLE} sig ON nt.source_south_group_id = sig.south_id ` +
       `WHERE nt.north_id = ?;`;
     const result = this.database.prepare(query).all(northId) as Array<Record<string, string>>;
     return result.map(element => ({
       id: element.ntId,
       transformer: toTransformer(element),
       options: JSON.parse(element.options),
-      inputType: element.input_type,
-      south: element.south_id ? this.findSouth(element.south_id) : undefined,
-      group: element.group_id ? this.findGroup(element.group_id) : undefined,
-      items: element.south_id && !element.group_id ? this.findSouthItems(element.ntId) : []
+      source: this.transformerSourceFromCommand(element)
     }));
   }
 
-  private findGroup(groupId: string): SouthItemGroupEntityLight {
-    const query = `SELECT
-      g.id,
-      g.created_at,
-      g.updated_at,
-      g.created_by,
-      g.updated_by,
-      g.name,
-      g.south_id,
-      g.scan_mode_id,
-      g.overlap,
-      g.max_read_interval,
-      g.read_delay,
-      s.id as scan_mode_id_full,
-      s.name as scan_mode_name,
-      s.description as scan_mode_description,
-      s.cron as scan_mode_cron,
-      s.created_at as scan_mode_created_at,
-      s.updated_at as scan_mode_updated_at,
-      s.created_by as scan_mode_created_by,
-      s.updated_by as scan_mode_updated_by
-    FROM ${SOUTH_ITEM_GROUPS_TABLE} g
-    JOIN ${SCAN_MODE} s ON g.scan_mode_id = s.id
-    WHERE g.id = ?;`;
-    const result = this.database.prepare(query).get(groupId) as Record<string, string | number>;
-    return toSouthItemGroup(result);
+  private transformerSourceFromCommand(sourceCommand: Record<string, string>): TransformerSource {
+    switch (sourceCommand.source_type) {
+      case 'oibus-api':
+        return {
+          type: 'oibus-api',
+          dataSourceId: sourceCommand.source_api_data_source_id
+        };
+      case 'south':
+        return {
+          type: 'south',
+          south: this.findSouth(sourceCommand.source_south_south_id),
+          group: sourceCommand.source_south_group_id ? this.findGroup(sourceCommand.source_south_group_id) : undefined,
+          items: !sourceCommand.source_south_group_id ? this.findSouthItemsByNorthTransformer(sourceCommand.ntId) : []
+        };
+      default:
+        return {
+          type: 'oianalytics-setpoint'
+        };
+    }
+  }
+
+  private findGroup(groupId: string): SouthItemGroupEntity {
+    const query =
+      `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
+      `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, s.id as scan_mode_id_full, ` +
+      `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
+      `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
+      `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.id = ?;`;
+    const result = this.database.prepare<[string], Record<string, string | number>>(query).get(groupId)!;
+    return toSouthItemGroup(result, this.findAllItemsForGroup(result.id as string));
+  }
+
+  findAllItemsForGroup(groupId: string): Array<Record<string, string>> {
+    const query = `SELECT si.id, si.name, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${GROUP_ITEMS_TABLE} gi JOIN ${SOUTH_ITEMS_TABLE} si ON si.id = gi.item_id  WHERE gi.group_id = ?;`;
+    return this.database.prepare<[string], Record<string, string>>(query).all(groupId);
   }
 
   private findScanModeForNorth(scanModeId: string): ScanMode {
-    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE} WHERE id = ?;`;
+    const query = `SELECT id, name, description, cron, created_by, updated_by, created_at, updated_at FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(scanModeId) as Record<string, string>;
     return toScanMode(result);
   }
@@ -322,7 +340,7 @@ export default class NorthConnectorRepository {
     };
   }
 
-  private findSouthItems(northTransformerId: string): Array<SouthConnectorItemEntityLight> {
+  private findSouthItemsByNorthTransformer(northTransformerId: string): Array<SouthConnectorItemEntityLight> {
     const query = `SELECT nt.id, nt.item_id, si.name, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${NORTH_TRANSFORMERS_ITEMS_TABLE} nt JOIN ${SOUTH_ITEMS_TABLE} si ON nt.item_id = si.id WHERE nt.id = ?;`;
     const results = this.database.prepare(query).all(northTransformerId) as Array<Record<string, string>>;
     return results.map(result => ({

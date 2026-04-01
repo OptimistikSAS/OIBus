@@ -4,9 +4,9 @@ import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import { CacheContentUpdateCommand, CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../shared/model/transformer.model';
 import { OIBusTestingError } from '../../model/types';
-import { SouthSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import fs from 'node:fs/promises';
 import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserService from 'src/service/user.service';
@@ -627,10 +627,9 @@ describe('HistoryQueryController', () => {
 
   it('should add or edit a transformer', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    const command: Omit<TransformerDTOWithOptions, 'south'> = {
+    const command: HistoryTransformerDTOWithOptions = {
       id: 'historyTransformerId1',
       transformer: testData.transformers.list[0] as TransformerDTO,
-      inputType: 'any',
       options: {},
       items: []
     };
