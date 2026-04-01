@@ -100,25 +100,6 @@ interface NewNorthRESTSettings {
   };
 }
 
-interface OldSouthFileItemSettings {
-  remoteFolder: string;
-  regex: string;
-  minAge: number;
-  preserveFiles: boolean;
-  ignoreModifiedDate?: boolean;
-}
-
-interface NewSouthFileItemSettings {
-  remoteFolder: string;
-  regex: string;
-  minAge: number;
-  preserveFiles: boolean;
-  ignoreModifiedDate?: boolean;
-  maxFiles: number;
-  maxSize: number;
-  recursive: boolean;
-}
-
 interface OldSouthMQTTItemSettings {
   topic: string;
   valueType: 'number' | 'string' | 'json';
@@ -187,11 +168,9 @@ async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
     t.datetime('created_at');
     t.datetime('updated_at');
   });
-  const user: {
-    id: string;
-    type: string;
-  } = await knex(USERS_TABLE).select('id', 'login').where('login', 'admin').first();
-  for (const table of [
+  const user = await knex(USERS_TABLE).select('id', 'login').where('login', 'admin').first();
+  const now = DateTime.now().toUTC().toISO()!;
+  const tables = [
     SOUTH_CONNECTORS_TABLE,
     SOUTH_ITEMS_TABLE,
     NORTH_CONNECTORS_TABLE,
@@ -206,22 +185,24 @@ async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
     REGISTRATIONS_TABLE,
     COMMANDS_TABLE,
     MESSAGES_TABLE
-  ]) {
+  ];
+  for (const table of tables) {
     await knex.schema.alterTable(table, t => {
       t.string('created_by');
       t.string('updated_by');
     });
+    // Merge 3 update queries into exactly 1 using COALESCE
+    const updatePayload: Record<string, string | Knex.Raw> = {
+      created_at: knex.raw('COALESCE(created_at, ?)', [now]),
+      updated_at: knex.raw('COALESCE(updated_at, ?)', [now])
+    };
+
     if (user) {
-      await knex(table).update({ created_by: user.id, updated_by: user.id });
+      updatePayload.created_by = user.id;
+      updatePayload.updated_by = user.id;
     }
-    const now = DateTime.now().toUTC().toISO()!;
-    // Backfill existing rows that have NULL timestamps
-    await knex(table).whereNull('created_at').update({
-      created_at: now
-    });
-    await knex(table).whereNull('updated_at').update({
-      updated_at: now
-    });
+
+    await knex(table).update(updatePayload);
   }
 }
 
@@ -360,131 +341,35 @@ async function updateNorthRestConnectors(knex: Knex): Promise<void> {
 }
 
 async function createDefaultTransformers(knex: Knex): Promise<void> {
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'csv-to-mqtt' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
+  const defaults = [
+    { function_name: 'csv-to-mqtt', output_type: 'mqtt', input_type: 'any' },
+    { function_name: 'csv-to-time-values', output_type: 'time-values', input_type: 'any' },
+    { function_name: 'ignore', output_type: 'any', input_type: 'any' },
+    { function_name: 'iso', output_type: 'any', input_type: 'any' },
+    { function_name: 'json-to-csv', output_type: 'any', input_type: 'any' },
+    { function_name: 'time-values-to-csv', output_type: 'any', input_type: 'time-values' },
+    { function_name: 'time-values-to-json', output_type: 'any', input_type: 'time-values' },
+    { function_name: 'time-values-to-modbus', output_type: 'modbus', input_type: 'time-values' },
+    { function_name: 'time-values-to-mqtt', output_type: 'mqtt', input_type: 'time-values' },
+    { function_name: 'time-values-to-oianalytics', output_type: 'oianalytics', input_type: 'time-values' },
+    { function_name: 'time-values-to-opcua', output_type: 'opcua', input_type: 'time-values' },
+    { function_name: 'setpoint-to-modbus', output_type: 'modbus', input_type: 'setpoint' },
+    { function_name: 'setpoint-to-mqtt', output_type: 'mqtt', input_type: 'setpoint' },
+    { function_name: 'setpoint-to-opcua', output_type: 'opcua', input_type: 'setpoint' }
+  ];
+
+  const existing = await knex(TRANSFORMERS_TABLE).select('function_name');
+  const existingNames = new Set(existing.map(t => t.function_name));
+  const toInsert = defaults
+    .filter(t => !existingNames.has(t.function_name))
+    .map(t => ({
       id: generateRandomId(6),
       type: 'standard',
-      input_type: 'any',
-      output_type: 'mqtt',
-      function_name: 'csv-to-mqtt'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'csv-to-time-values' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'any',
-      output_type: 'time-values',
-      function_name: 'csv-to-time-values'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'ignore' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'any',
-      output_type: 'any',
-      function_name: 'ignore'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'iso' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'any',
-      output_type: 'any',
-      function_name: 'iso'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'json-to-csv' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'any',
-      output_type: 'any',
-      function_name: 'json-to-csv'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-csv' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'time-values',
-      output_type: 'any',
-      function_name: 'time-values-to-csv'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-json' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'time-values',
-      output_type: 'any',
-      function_name: 'time-values-to-json'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-modbus' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'time-values',
-      output_type: 'modbus',
-      function_name: 'time-values-to-modbus'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-mqtt' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'time-values',
-      output_type: 'mqtt',
-      function_name: 'time-values-to-mqtt'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-oianalytics' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'time-values',
-      output_type: 'oianalytics',
-      function_name: 'time-values-to-oianalytics'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'time-values-to-opcua' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'time-values',
-      output_type: 'opcua',
-      function_name: 'time-values-to-opcua'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-modbus' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'setpoint',
-      output_type: 'modbus',
-      function_name: 'setpoint-to-modbus'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-mqtt' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'setpoint',
-      output_type: 'mqtt',
-      function_name: 'setpoint-to-mqtt'
-    });
-  }
-  if (!(await knex(TRANSFORMERS_TABLE).select('id').where({ function_name: 'setpoint-to-opcua' }).first())) {
-    await knex(TRANSFORMERS_TABLE).insert({
-      id: generateRandomId(6),
-      type: 'standard',
-      input_type: 'setpoint',
-      output_type: 'opcua',
-      function_name: 'setpoint-to-opcua'
-    });
+      ...t
+    }));
+
+  if (toInsert.length > 0) {
+    await knex.batchInsert(TRANSFORMERS_TABLE, toInsert);
   }
 }
 
@@ -586,29 +471,26 @@ async function addTransformersItems(knex: Knex): Promise<void> {
 }
 
 async function updateFileConnectorItems(knex: Knex): Promise<void> {
-  const oldSouth: Array<{
-    id: string;
-    type: string;
-  }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings').whereIn('type', ['folder-scanner', 'sftp', 'ftp']);
-  for (const connector of oldSouth) {
-    const oldItems: Array<{
-      id: string;
-      settings: string;
-    }> = await knex(SOUTH_ITEMS_TABLE).select('id', 'settings').where('connector_id', connector.id);
-    for (const item of oldItems) {
-      const oldSettings = JSON.parse(item.settings) as OldSouthFileItemSettings;
+  await knex.transaction(async trx => {
+    const oldSouth = await trx(SOUTH_CONNECTORS_TABLE).select('id').whereIn('type', ['folder-scanner', 'sftp', 'ftp']);
 
-      const newSettings: NewSouthFileItemSettings = {
-        ...oldSettings,
-        recursive: false,
-        maxFiles: 0,
-        maxSize: 0
-      };
-      await knex(SOUTH_ITEMS_TABLE)
-        .update({ settings: JSON.stringify(newSettings) })
-        .where('id', item.id);
+    if (oldSouth.length === 0) return;
+
+    // Use whereIn instead of a nested loop
+    const southIds = oldSouth.map(c => c.id);
+    const oldItems = await trx(SOUTH_ITEMS_TABLE).select('id', 'settings').whereIn('connector_id', southIds);
+
+    for (const item of oldItems) {
+      const settings = JSON.parse(item.settings);
+      settings.recursive = false;
+      settings.maxFiles = 0;
+      settings.maxSize = 0;
+
+      await trx(SOUTH_ITEMS_TABLE)
+        .where('id', item.id)
+        .update({ settings: JSON.stringify(settings) });
     }
-  }
+  });
 }
 
 async function migrateSouthMQTTItems(
@@ -797,43 +679,45 @@ async function addItemHistorianFields(knex: Knex): Promise<void> {
 }
 
 async function populateItemHistorianFields(knex: Knex): Promise<void> {
-  // Get all items with their connector information
-  const items = await knex
-    .select('si.id as item_id', 'sc.type as connector_type', 'sc.settings as connector_settings')
-    .from(`${SOUTH_ITEMS_TABLE} as si`)
-    .join(`${SOUTH_CONNECTORS_TABLE} as sc`, 'si.connector_id', 'sc.id');
+  await knex.transaction(async trx => {
+    // Get all items with their connector information
+    const items = await trx
+      .select('si.id as item_id', 'sc.type as connector_type', 'sc.settings as connector_settings')
+      .from(`${SOUTH_ITEMS_TABLE} as si`)
+      .join(`${SOUTH_CONNECTORS_TABLE} as sc`, 'si.connector_id', 'sc.id');
 
-  for (const item of items) {
-    const isHistorian = HISTORIAN_CONNECTOR_TYPES.includes(item.connector_type);
+    for (const item of items) {
+      const isHistorian = HISTORIAN_CONNECTOR_TYPES.includes(item.connector_type);
 
-    let maxReadInterval = null;
-    let readDelay = null;
-    let overlap = null;
+      let maxReadInterval = null;
+      let readDelay = null;
+      let overlap = null;
 
-    // Only populate historian fields for items NOT in a group
-    if (isHistorian) {
-      try {
-        const settings = JSON.parse(item.connector_settings);
+      // Only populate historian fields for items NOT in a group
+      if (isHistorian) {
+        try {
+          const settings = JSON.parse(item.connector_settings);
 
-        if (settings.throttling) {
-          maxReadInterval = settings.throttling.maxReadInterval;
-          readDelay = settings.throttling.readDelay;
-          overlap = settings.throttling.overlap;
+          if (settings.throttling) {
+            maxReadInterval = settings.throttling.maxReadInterval;
+            readDelay = settings.throttling.readDelay;
+            overlap = settings.throttling.overlap;
+          }
+        } catch (error) {
+          // If parsing fails, use default values
+          console.warn(`Failed to parse settings for item ${item.item_id}:`, error);
         }
-      } catch (error) {
-        // If parsing fails, use default values
-        console.warn(`Failed to parse settings for item ${item.item_id}:`, error);
       }
-    }
 
-    // Items in groups get NULL values to inherit from group and sync_with_group = 1
-    await knex(SOUTH_ITEMS_TABLE).where('id', item.item_id).update({
-      max_read_interval: maxReadInterval,
-      read_delay: readDelay,
-      overlap: overlap,
-      sync_with_group: 0
-    });
-  }
+      // Items in groups get NULL values to inherit from group and sync_with_group = 1
+      await trx(SOUTH_ITEMS_TABLE).where('id', item.item_id).update({
+        max_read_interval: maxReadInterval,
+        read_delay: readDelay,
+        overlap: overlap,
+        sync_with_group: 0
+      });
+    }
+  });
 }
 
 async function removeThrottlingFieldsInConnectorSettings(knex: Knex): Promise<void> {
