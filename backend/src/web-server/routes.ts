@@ -3581,6 +3581,7 @@ const models: TsoaRoute.Models = {
             "createdAt": {"ref":"Instant","required":true},
             "updatedAt": {"ref":"Instant","required":true},
             "name": {"dataType":"string","required":true},
+            "enabled": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
     },

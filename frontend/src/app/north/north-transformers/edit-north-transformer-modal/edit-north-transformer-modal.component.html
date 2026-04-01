@@ -14,7 +14,9 @@
 
                 @for (southConnector of southConnectors; track southConnector.id) {
                   <option [ngValue]="{ dataSourceType: 'south', south: southConnector }">
-                    {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }})
+                    {{ southConnector.name }} ({{ southConnector.type | oIBusSouthTypeEnum }}){{
+                      !southConnector.enabled ? ' — ' + ('disabled' | translate) : ''
+                    }}
                   </option>
                 }
                 <option [ngValue]="{ dataSourceType: 'oibus-api', south: null }">
@@ -30,7 +32,11 @@
           @if (form.controls.source.value.south) {
             <div class="col-6">
               <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
-              <span>{{ form.controls.source.value.south.name }} ({{ form.controls.source.value.south.type | oIBusSouthTypeEnum }})</span>
+              <span
+                >{{ form.controls.source.value.south.name }} ({{ form.controls.source.value.south.type | oIBusSouthTypeEnum }}){{
+                  !form.controls.source.value.south.enabled ? ' — ' + ('disabled' | translate) : ''
+                }}</span
+              >
             </div>
           } @else if (form.controls.source.value.dataSourceType === 'oianalytics-setpoint') {
             <div class="col-6">
@@ -180,7 +186,8 @@
                 <div ngbDropdownMenu class="item-dropdown-menu">
                   @for (item of filteredItems; track item.id) {
                     <button type="button" ngbDropdownItem (click)="toggleItem(item)" [class.selected]="isItemSelected(item)">
-                      <div class="d-flex">
+                      <div class="d-flex align-items-center">
+                        <div [class]="item.enabled ? 'green-dot me-2' : 'grey-dot me-2'"></div>
                         <div class="flex-grow-1 me-3">{{ item.name }}</div>
                         <div class="fa-fw">
                           @if (isItemSelected(item)) {
@@ -198,7 +205,12 @@
               @if (selectedItems.length > 0) {
                 <div [style.margin-top.rem]="selectedItems.length ? 0.5 : 0">
                   @for (item of selectedItems; track item.id) {
-                    <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)"> {{ item.name }} </oib-pill>
+                    <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)">
+                      <div class="d-inline-flex align-items-center">
+                        <div [class]="item.enabled ? 'green-dot me-1' : 'grey-dot me-1'"></div>
+                        {{ item.name }}
+                      </div>
+                    </oib-pill>
                   }
                 </div>
               }

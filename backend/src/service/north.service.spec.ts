@@ -1,6 +1,6 @@
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import NorthService, { northManifestList, toNorthConnectorDTO, toNorthConnectorLightDTO, toTransformerSourceDTO } from './north.service';
+import NorthService, { northManifestList, toNorthConnectorDTO, toNorthConnectorLightDTO } from './north.service';
 import pino from 'pino';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
@@ -15,6 +15,7 @@ import NorthConnectorRepository from '../repository/config/north-connector.repos
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
 import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
+import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import testData from '../tests/utils/test-data';
 import CertificateRepository from '../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
@@ -32,9 +33,6 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import { encryptionService } from './encryption.service';
 import { toScanModeDTO } from './scan-mode.service';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
-import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
-import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
-import { SouthConnectorLightDTO, SouthItemGroupLightDTO } from '../../shared/model/south-connector.model';
 
 jest.mock('./encryption.service');
 jest.mock('./utils');
@@ -50,10 +48,10 @@ const validator = new JoiValidator();
 const logger: pino.Logger = new PinoLogger();
 const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
 const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const southItemGroupRepository: SouthItemGroupRepository = new SouthItemGroupRepositoryMock();
 const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
 const logRepository: LogRepository = new LogRepositoryMock();
+const southItemGroupRepository: SouthItemGroupRepository = { findById: jest.fn() } as unknown as SouthItemGroupRepository;
 const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
 const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
 const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
@@ -151,24 +149,45 @@ describe('North Service', () => {
 
   it('should create a north connector with a transformer group', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
+    if (command.transformers[0].source.type !== 'south') {
+      throw new Error('Expected south source in test data');
+    }
+    (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce({
+      id: 'groupId1',
+      name: '',
+      southId: command.transformers[0].source.south.id,
+      scanMode: testData.scanMode.list[0],
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
+      items: []
+    });
     command.transformers = [
       {
         ...command.transformers[0],
         source: {
           type: 'south',
-          south: { id: testData.south.list[0].id } as SouthConnectorLightDTO,
-          group: { id: 'groupId1' } as SouthItemGroupLightDTO,
+          south: command.transformers[0].source.south,
+          group: { id: 'groupId1', name: '', createdBy: { id: '', friendlyName: '' }, updatedBy: { id: '', friendlyName: '' }, createdAt: '', updatedAt: '' },
           items: []
         }
       }
     ];
-    (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce({ id: 'groupId1' }).mockReturnValueOnce({ id: 'groupId1' });
     await service.create(command, null, 'userTest');
 
     const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.transformers[0].source.group).toEqual({
-      id: 'groupId1'
-    });
+    expect(savedEntity.transformers[0].source.group).toEqual(expect.objectContaining({
+      id: 'groupId1',
+      name: '',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    }));
   });
 
   it('should create a north connector and not start it if disabled', async () => {
@@ -189,18 +208,6 @@ describe('North Service', () => {
   });
 
   it('should not create a north connector if south is not found', async () => {
-    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
-    command.transformers = [
-      {
-        ...command.transformers[0],
-        source: {
-          type: 'south',
-          south: { id: testData.south.list[0].id } as SouthConnectorLightDTO,
-          group: { id: 'groupId1' } as SouthItemGroupLightDTO,
-          items: []
-        }
-      }
-    ];
     (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
     await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
       `Could not find South connector "${testData.south.list[0].id}"`
@@ -228,15 +235,31 @@ describe('North Service', () => {
   it('should update a north connector with a transformer group', async () => {
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
-    (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce({ id: 'groupId1' }).mockReturnValueOnce({ id: 'groupId1' });
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
+    if (command.transformers[0].source.type !== 'south') {
+      throw new Error('Expected south source in test data');
+    }
+    (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce({
+      id: 'groupId1',
+      name: '',
+      southId: command.transformers[0].source.south.id,
+      scanMode: testData.scanMode.list[0],
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
+      items: []
+    });
     command.transformers = [
       {
         ...command.transformers[0],
         source: {
           type: 'south',
-          south: { id: testData.south.list[0].id } as SouthConnectorLightDTO,
-          group: { id: 'groupId1' } as SouthItemGroupLightDTO,
+          south: command.transformers[0].source.south,
+          group: { id: 'groupId1', name: '', createdBy: { id: '', friendlyName: '' }, updatedBy: { id: '', friendlyName: '' }, createdAt: '', updatedAt: '' },
           items: []
         }
       }
@@ -244,9 +267,14 @@ describe('North Service', () => {
     await service.update(testData.north.list[0].id, command, 'userTest');
 
     const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.transformers[0].source.group).toEqual({
-      id: 'groupId1'
-    });
+    expect(savedEntity.transformers[0].source.group).toEqual(expect.objectContaining({
+      id: 'groupId1',
+      name: '',
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    }));
   });
 
   it('should update a north connector with a new unique name', async () => {
@@ -283,21 +311,11 @@ describe('North Service', () => {
   });
 
   it('should not update a north connector if south not found', async () => {
-    const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
-    command.transformers = [
-      {
-        ...command.transformers[0],
-        source: {
-          type: 'south',
-          south: { id: testData.south.list[0].id } as SouthConnectorLightDTO,
-          group: { id: 'groupId1' } as SouthItemGroupLightDTO,
-          items: []
-        }
-      }
-    ];
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+    const command = JSON.parse(JSON.stringify(testData.north.command));
+    command.name = 'New Name';
     (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
     (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
 
     await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
       `Could not find South connector "${testData.south.list[0].id}"`
@@ -357,9 +375,7 @@ describe('North Service', () => {
       id: 'northTransformerId1',
       transformer: testData.transformers.list[0] as TransformerDTO,
       options: {},
-      source: {
-        type: 'oianalytics-setpoint'
-      }
+      source: { type: 'oianalytics-setpoint' }
     } as NorthTransformerWithOptions;
     service.addOrEditTransformer(testData.north.list[0].id, transformerWithOptions);
 
@@ -462,7 +478,41 @@ describe('North Service', () => {
         id: transformerWithOptions.id,
         transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
-        source: toTransformerSourceDTO(transformerWithOptions.source, getUserInfo)
+        source: transformerWithOptions.source.type === 'south'
+          ? {
+              type: 'south',
+              south: {
+                id: transformerWithOptions.source.south.id,
+                name: transformerWithOptions.source.south.name,
+                type: transformerWithOptions.source.south.type,
+                description: transformerWithOptions.source.south.description,
+                enabled: transformerWithOptions.source.south.enabled,
+                createdBy: getUserInfo(transformerWithOptions.source.south.createdBy),
+                updatedBy: getUserInfo(transformerWithOptions.source.south.updatedBy),
+                createdAt: transformerWithOptions.source.south.createdAt,
+                updatedAt: transformerWithOptions.source.south.updatedAt
+              },
+              group: transformerWithOptions.source.group
+                ? {
+                    id: transformerWithOptions.source.group.id,
+                    name: transformerWithOptions.source.group.name,
+                    createdBy: getUserInfo(transformerWithOptions.source.group.createdBy),
+                    updatedBy: getUserInfo(transformerWithOptions.source.group.updatedBy),
+                    createdAt: transformerWithOptions.source.group.createdAt,
+                    updatedAt: transformerWithOptions.source.group.updatedAt
+                  }
+                : undefined,
+              items: transformerWithOptions.source.items.map(item => ({
+                id: item.id,
+                name: item.name,
+                enabled: item.enabled,
+                createdBy: getUserInfo(item.createdBy),
+                updatedBy: getUserInfo(item.updatedBy),
+                createdAt: item.createdAt,
+                updatedAt: item.updatedAt
+              }))
+            }
+          : transformerWithOptions.source
       })),
       createdBy: getUserInfo(northEntity.createdBy),
       updatedBy: getUserInfo(northEntity.updatedBy),
@@ -479,6 +529,50 @@ describe('North Service', () => {
       updatedBy: getUserInfo(northEntity.updatedBy),
       createdAt: northEntity.createdAt,
       updatedAt: northEntity.updatedAt
+    });
+  });
+
+  it('should include group in toNorthConnectorDTO when group is defined', () => {
+    const northEntity = { ...testData.north.list[0] };
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    if (northEntity.transformers[0].source.type !== 'south') {
+      throw new Error('Expected south source in test data');
+    }
+    const group = {
+      id: 'group1',
+      name: 'Group 1',
+      southId: northEntity.transformers[0].source.south.id,
+      scanMode: testData.scanMode.list[0],
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: '',
+      items: []
+    };
+    northEntity.transformers = [
+      {
+        ...northEntity.transformers[0],
+        source: {
+          ...northEntity.transformers[0].source,
+          group
+        }
+      }
+    ];
+    const dto = toNorthConnectorDTO(northEntity, id => ({ id, friendlyName: id }));
+    expect(dto.transformers[0].source.type).toEqual('south');
+    if (dto.transformers[0].source.type !== 'south') {
+      throw new Error('Expected south source');
+    }
+    expect(dto.transformers[0].source.group).toEqual({
+      id: group.id,
+      name: group.name,
+      createdBy: getUserInfo(group.createdBy),
+      updatedBy: getUserInfo(group.updatedBy),
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt
     });
   });
 });

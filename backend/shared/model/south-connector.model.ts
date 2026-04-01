@@ -290,6 +290,13 @@ export interface ItemLightDTO extends BaseEntity {
    * @example "Temperature Logs"
    */
   name: string;
+
+  /**
+   * Whether this item is enabled.
+   *
+   * @example true
+   */
+  enabled: boolean;
 }
 
 export interface SouthItemGroupLightDTO extends BaseEntity {

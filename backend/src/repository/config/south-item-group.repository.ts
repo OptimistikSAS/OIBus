@@ -86,7 +86,7 @@ export default class SouthItemGroupRepository {
   }
 
   findAllItemsForGroup(groupId: string): Array<Record<string, string>> {
-    const query = `SELECT si.id, si.name, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${GROUP_ITEMS_TABLE} gi JOIN ${SOUTH_ITEMS_TABLE} si ON si.id = gi.item_id  WHERE gi.group_id = ?;`;
+    const query = `SELECT si.id, si.name, si.enabled, si.created_by, si.updated_by, si.created_at, si.updated_at FROM ${GROUP_ITEMS_TABLE} gi JOIN ${SOUTH_ITEMS_TABLE} si ON si.id = gi.item_id  WHERE gi.group_id = ?;`;
     return this.database.prepare<[string], Record<string, string>>(query).all(groupId);
   }
 }
@@ -121,6 +121,7 @@ export const toSouthItemGroup = (
     items: items.map(item => ({
       id: item.id as string,
       name: item.name as string,
+      enabled: Boolean(item.enabled),
       createdBy: item.created_by as string,
       updatedBy: item.updated_by as string,
       createdAt: item.created_at as string,
