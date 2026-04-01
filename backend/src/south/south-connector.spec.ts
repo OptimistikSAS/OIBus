@@ -490,7 +490,6 @@ describe('SouthConnector with history and subscription', () => {
     const group = {
       id: 'group1',
       name: 'Group 1',
-      southId: testData.south.list[2].id,
       scanMode: testData.scanMode.list[0],
       maxReadInterval: 1800,
       readDelay: 100,

@@ -4,7 +4,7 @@ import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFo
 import { Observable } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
-import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../../backend/shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
@@ -63,7 +63,7 @@ export class EditHistoryQueryTransformerModalComponent {
   manifest: OIBusObjectAttribute | null = null;
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
-  existingTransformerWithOptions: TransformerDTOWithOptions | null = null;
+  existingTransformerWithOptions: HistoryTransformerDTOWithOptions | null = null;
   southType: OIBusSouthType | null = null;
   selectedItems: Array<ItemLightDTO> = [];
   selectableItems: Array<ItemLightDTO> = [];
@@ -115,7 +115,7 @@ export class EditHistoryQueryTransformerModalComponent {
     southType: OIBusSouthType,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    transformerWithOptionsToEdit: Omit<TransformerDTOWithOptions, 'south'>,
+    transformerWithOptionsToEdit: HistoryTransformerDTOWithOptions,
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>,
     selectableItems: Array<ItemLightDTO>
@@ -180,13 +180,13 @@ export class EditHistoryQueryTransformerModalComponent {
       return;
     }
 
-    this.modal.close({
+    const result: HistoryTransformerDTOWithOptions = {
       id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : '',
-      transformer: this.form.value.transformer,
+      transformer: this.form.value.transformer!,
       options: this.form!.value.options,
-      inputType: getAssociatedInputType(this.southType!),
       items: this.selectAllItems ? [] : this.selectedItems
-    });
+    };
+    this.modal.close(result);
   }
 
   compareTransformers(t1: TransformerDTO | null, t2: TransformerDTO | null): boolean {

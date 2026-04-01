@@ -47,15 +47,28 @@ export const buildHistoryQuery = (
         id: element.id,
         transformer: element.transformer,
         options: element.options,
-        inputType: element.inputType,
-        south: undefined,
-        group: undefined,
-        items: element.items
+        items: element.items,
+        source: {
+          type: 'south',
+          south: {
+            id: settings.id,
+            name: settings.name,
+            type: settings.southType,
+            description: settings.description,
+            enabled: settings.status === 'RUNNING',
+            createdBy: settings.createdBy,
+            updatedBy: settings.updatedBy,
+            createdAt: settings.createdAt,
+            updatedAt: settings.updatedAt
+          },
+          items: element.items,
+          group: undefined
+        }
       })),
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
+      createdBy: settings.createdBy,
+      updatedBy: settings.updatedBy,
+      createdAt: settings.createdAt,
+      updatedAt: settings.updatedAt
     },
     logger,
     certificateRepository,
@@ -71,10 +84,10 @@ export const buildHistoryQuery = (
       type: settings.southType,
       settings: settings.southSettings,
       items: [],
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
+      createdBy: settings.createdBy,
+      updatedBy: settings.updatedBy,
+      createdAt: settings.createdAt,
+      updatedAt: settings.updatedAt
     },
     async (historyId: string, data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
       await north.cacheContent(data, { source: 'south', southId: settings.id, queryTime, items }),

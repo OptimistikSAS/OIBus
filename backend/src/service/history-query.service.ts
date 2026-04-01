@@ -113,17 +113,16 @@ export default class HistoryQueryService {
       item.updatedBy = createdBy;
     }
     const transformers = this.transformerService.findAll();
-    historyQuery.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
-      const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    historyQuery.northTransformers = command.northTransformers.map(transformerWithOptions => {
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformer.id);
       if (!foundTransformer) {
-        throw new Error(`Could not find OIBus transformer "${transformerIdWithOptions.transformerId}"`);
+        throw new Error(`Could not find OIBus transformer "${transformerWithOptions.transformer.id}"`);
       }
       return {
         id: '',
         transformer: foundTransformer,
-        options: transformerIdWithOptions.options,
-        inputType: transformerIdWithOptions.inputType,
-        items: transformerIdWithOptions.items.map(item => ({
+        options: transformerWithOptions.options,
+        items: transformerWithOptions.items.map(item => ({
           id: item.id,
           name: item.name,
           createdBy: item.createdBy.id,
@@ -174,18 +173,17 @@ export default class HistoryQueryService {
       item.updatedBy = updatedBy;
     }
     const transformers = this.transformerService.findAll();
-    historyQuery.northTransformers = command.northTransformers.map(transformerIdWithOptions => {
-      const foundTransformer = transformers.find(transformer => transformer.id === transformerIdWithOptions.transformerId);
+    historyQuery.northTransformers = command.northTransformers.map(transformerWithOptions => {
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformer.id);
       if (!foundTransformer) {
-        throw new NotFoundError(`Could not find OIBus transformer "${transformerIdWithOptions.transformerId}"`);
+        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformer.id}"`);
       }
 
       return {
-        id: transformerIdWithOptions.id,
+        id: transformerWithOptions.id,
         transformer: foundTransformer,
-        options: transformerIdWithOptions.options,
-        inputType: transformerIdWithOptions.inputType,
-        items: transformerIdWithOptions.items.map(item => ({
+        options: transformerWithOptions.options,
+        items: transformerWithOptions.items.map(item => ({
           id: item.id,
           name: item.name,
           createdBy: item.createdBy.id,
@@ -758,7 +756,6 @@ export const toHistoryQueryDTO = (
       id: transformerWithOptions.id,
       transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
       options: transformerWithOptions.options,
-      inputType: transformerWithOptions.inputType,
       items: transformerWithOptions.items.map(item => ({
         id: item.id,
         name: item.name,

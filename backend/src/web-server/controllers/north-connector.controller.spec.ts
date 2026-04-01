@@ -181,11 +181,11 @@ describe('NorthConnectorController', () => {
     const northId = testData.north.list[0].id;
     const transformer: TransformerDTOWithOptions = {
       id: 'northTransformerId1',
-      inputType: 'any',
       transformer: testData.transformers.list[0] as StandardTransformerDTO,
       options: {},
-      south: undefined,
-      items: []
+      source: {
+        type: 'oianalytics-setpoint'
+      }
     };
 
     (mockRequest.services!.northService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);

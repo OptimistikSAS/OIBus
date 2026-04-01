@@ -465,10 +465,10 @@ export default class DataStreamEngine {
   /**
    * Add content to a north connector from the OIBus API endpoints
    */
-  async addExternalContent(northId: string, data: OIBusContent): Promise<void> {
+  async addExternalContent(northId: string, dataSourceId: string, data: OIBusContent): Promise<void> {
     const north = this.northConnectors.get(northId);
     if (north && north.north.isEnabled()) {
-      await north.north.cacheContent(data, { source: 'api' });
+      await north.north.cacheContent(data, { source: 'oibus-api', dataSourceId });
     }
   }
 
@@ -517,7 +517,11 @@ export default class DataStreamEngine {
    */
   updateNorthTransformerBySouth(southId: string) {
     for (const north of this.northConnectors.values()) {
-      if (north.north.connectorConfiguration.transformers.find(element => element.south?.id === southId)) {
+      if (
+        north.north.connectorConfiguration.transformers.find(
+          element => element.source.type === 'south' && element.source.south.id === southId
+        )
+      ) {
         north.north.connectorConfiguration = this.northConnectorRepository.findNorthById(north.north.connectorConfiguration.id)!;
       }
     }

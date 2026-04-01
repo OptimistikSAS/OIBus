@@ -5,10 +5,11 @@ import { Observable } from 'rxjs';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import {
-  INPUT_TYPES,
-  InputType,
+  DataSourceType,
+  SourceOriginSouthDTO,
   TransformerDTO,
-  TransformerDTOWithOptions
+  TransformerDTOWithOptions,
+  TransformerSourceDTO
 } from '../../../../../../backend/shared/model/transformer.model';
 import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
@@ -17,13 +18,19 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
-import { SouthItemGroupLightDTO, ItemLightDTO, SouthConnectorLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
-import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import {
+  ItemLightDTO,
+  SouthConnectorLightDTO,
+  SouthItemGroupDTO,
+  SouthItemGroupLightDTO
+} from '../../../../../../backend/shared/model/south-connector.model';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 import { getAssociatedInputType } from '../../../shared/utils/utils';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
 import { PillComponent } from '../../../shared/pill/pill.component';
+import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
+import { ValidationErrorsComponent } from 'ngx-valdemort';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
@@ -42,7 +49,9 @@ import { PillComponent } from '../../../shared/pill/pill.component';
     NgbDropdownAnchor,
     NgbDropdownMenu,
     NgbDropdownItem,
-    PillComponent
+    PillComponent,
+    ValErrorDelayDirective,
+    ValidationErrorsComponent
   ],
   viewProviders: [
     {
@@ -61,27 +70,37 @@ export class EditNorthTransformerModalComponent {
   state = new ObservableState();
   mode: 'create' | 'edit' = 'create';
   form: FormGroup<{
-    source: FormControl<{ inputType: InputType | null; south: SouthConnectorLightDTO | null }>;
+    source: FormControl<{
+      dataSourceType: DataSourceType | null;
+      south: SouthConnectorLightDTO | null;
+    }>;
+    apiDataSourceId: FormControl<string | null>;
     transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;
   }> = this.fb.group({
     source: this.fb.control<{
-      inputType: InputType | null;
+      dataSourceType: DataSourceType | null;
       south: SouthConnectorLightDTO | null;
-    }>({ inputType: null, south: null }, Validators.required),
+    }>(
+      {
+        dataSourceType: null,
+        south: null
+      },
+      Validators.required
+    ),
+    apiDataSourceId: this.fb.control<string | null>(null),
     transformer: this.fb.control<TransformerDTO | null>(null, Validators.required),
     options: this.fb.group({})
   });
   allTransformers: Array<TransformerDTO> = [];
   selectableOutputs: Array<TransformerDTO> = [];
-  selectedInputs: Array<{ inputType: InputType | null; south: string | null }> = [];
   supportedOutputTypes: Array<string> = [];
   manifest: OIBusObjectAttribute | null = null;
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
   southConnectors: Array<SouthConnectorLightDTO> = [];
   existingTransformerWithOptions: TransformerDTOWithOptions | null = null;
-  inputTypes = INPUT_TYPES;
+
   selectedItems: Array<ItemLightDTO> = [];
   selectionType: 'all' | 'group' | 'items' = 'all';
   searchResults: Array<ItemLightDTO> = [];
@@ -130,7 +149,6 @@ export class EditNorthTransformerModalComponent {
     southConnectors: Array<SouthConnectorLightDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    selectedInputs: Array<{ inputType: InputType; south: string | null }>,
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>
   ) {
@@ -138,7 +156,6 @@ export class EditNorthTransformerModalComponent {
     this.southConnectors = southConnectors;
     this.scanModes = scanModes;
     this.certificates = certificates;
-    this.selectedInputs = selectedInputs;
     this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
     this.buildForm();
@@ -148,30 +165,38 @@ export class EditNorthTransformerModalComponent {
     southConnectors: Array<SouthConnectorLightDTO>,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    transformerWithOptionsToEdit: TransformerDTOWithOptions,
     transformers: Array<TransformerDTO>,
-    supportedOutputTypes: Array<string>
+    supportedOutputTypes: Array<string>,
+    transformerWithOptionsToEdit: TransformerDTOWithOptions
   ) {
     this.mode = 'edit';
     this.southConnectors = southConnectors;
     this.scanModes = scanModes;
     this.certificates = certificates;
-    this.existingTransformerWithOptions = transformerWithOptionsToEdit;
     this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
-    this.selectedItems = transformerWithOptionsToEdit.items;
-    if (transformerWithOptionsToEdit.group) {
-      this.selectionType = 'group';
-      this.selectedGroup = transformerWithOptionsToEdit.group;
-    } else if (transformerWithOptionsToEdit.items.length > 0) {
-      this.selectionType = 'items';
-    } else {
-      this.selectionType = 'all';
+    this.existingTransformerWithOptions = transformerWithOptionsToEdit;
+    this.selectedItems = [];
+    if (transformerWithOptionsToEdit.source.type === 'south') {
+      this.filterItems();
+      // Pre-load items and groups if editing with a south connector
+      this.southConnectorService.getGroups(transformerWithOptionsToEdit.source.south.id).subscribe(groups => {
+        this.availableGroups = groups;
+      });
+      this.selectedItems = transformerWithOptionsToEdit.source.items;
+      if (transformerWithOptionsToEdit.source.group) {
+        this.selectionType = 'group';
+        this.selectedGroup = transformerWithOptionsToEdit.source.group;
+      } else if (this.selectedItems.length > 0) {
+        this.selectionType = 'items';
+      } else {
+        this.selectionType = 'all';
+      }
     }
 
     const sourceValue = {
-      inputType: transformerWithOptionsToEdit.inputType,
-      south: transformerWithOptionsToEdit.south || null
+      dataSourceType: transformerWithOptionsToEdit.source.type,
+      south: transformerWithOptionsToEdit.source.type === 'south' ? (transformerWithOptionsToEdit.source.south ?? null) : null
     };
     this.buildForm();
     this.updateSelectableOutput(sourceValue);
@@ -181,20 +206,13 @@ export class EditNorthTransformerModalComponent {
     this.form.patchValue(
       {
         source: sourceValue,
+        apiDataSourceId: transformerWithOptionsToEdit.source.type === 'oibus-api' ? transformerWithOptionsToEdit.source.dataSourceId : null,
         transformer: transformerWithOptionsToEdit.transformer,
         options: transformerWithOptionsToEdit.options
       },
       { emitEvent: false }
     );
     this.form.controls.source.disable({ emitEvent: false });
-
-    // Pre-load items and groups if editing with a south connector
-    if (sourceValue.south) {
-      this.filterItems();
-      this.southConnectorService.getGroups(sourceValue.south.id).subscribe(groups => {
-        this.availableGroups = groups;
-      });
-    }
   }
 
   buildForm() {
@@ -253,32 +271,31 @@ export class EditNorthTransformerModalComponent {
       return;
     }
 
-    let south: SouthConnectorLightDTO | undefined;
-    let inputType: InputType;
-    if (this.existingTransformerWithOptions) {
-      south = this.existingTransformerWithOptions.south || undefined;
-      inputType = this.existingTransformerWithOptions.inputType;
-    } else if (this.form.value.source?.south) {
-      south = this.form.value.source!.south!;
-      inputType = getAssociatedInputType(south.type);
+    const sourceType: DataSourceType = (
+      this.existingTransformerWithOptions ? this.existingTransformerWithOptions.source.type : this.form.value.source!.dataSourceType!
+    ) as DataSourceType;
+    let source: TransformerSourceDTO;
+    if (sourceType === 'south') {
+      source = {
+        type: 'south',
+        south: this.existingTransformerWithOptions
+          ? (this.existingTransformerWithOptions.source as SourceOriginSouthDTO).south
+          : this.form.value.source!.south!,
+        group: this.selectionType === 'group' && this.selectedGroup ? this.selectedGroup : undefined,
+        items: this.selectionType === 'items' ? this.selectedItems : []
+      };
+    } else if (sourceType === 'oibus-api') {
+      source = { type: 'oibus-api', dataSourceId: this.form.value.apiDataSourceId! };
     } else {
-      south = undefined;
-      inputType = this.form.value.source!.inputType!;
+      source = { type: 'oianalytics-setpoint' };
     }
+
     this.modal.close({
       id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : '',
+      source,
       transformer: this.form.value.transformer,
-      options: this.form.value.options,
-      south: south,
-      inputType: inputType,
-      group:
-        this.selectionType === 'group' && this.selectedGroup ? { id: this.selectedGroup.id, name: this.selectedGroup.name } : undefined,
-      items: this.selectionType === 'items' ? this.selectedItems.map(item => ({ id: item.id, name: item.name })) : []
+      options: this.form.value.options
     });
-  }
-
-  inputTypeIsSelected(inputType: string) {
-    return this.selectedInputs.map(input => input.inputType).includes(inputType);
   }
 
   compareSource(o1: any, o2: any): boolean {
@@ -299,7 +316,7 @@ export class EditNorthTransformerModalComponent {
     return g1 && g2 ? g1.id === g2.id : g1 === g2;
   }
 
-  private updateSelectableOutput(source: { inputType: InputType | null; south: SouthConnectorLightDTO | null }) {
+  private updateSelectableOutput(source: { dataSourceType: DataSourceType | null; south: SouthConnectorLightDTO | null }) {
     this.selectableOutputs = this.allTransformers.filter(element => {
       if (!this.supportedOutputTypes.includes(element.outputType)) {
         return false;
@@ -309,12 +326,17 @@ export class EditNorthTransformerModalComponent {
       if (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes.includes(element.inputType))
         return true;
 
-      if (source.inputType) {
-        return element.inputType === source.inputType;
-      } else if (source.south) {
+      if (source.dataSourceType === 'oianalytics-setpoint') {
+        return element.inputType === 'setpoint';
+      }
+
+      if (source.dataSourceType === 'south' && source.south) {
         return element.inputType === getAssociatedInputType(source.south.type);
       }
 
+      if (source.dataSourceType === 'oibus-api') {
+        return element.inputType === 'any';
+      }
       return true;
     });
   }

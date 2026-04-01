@@ -230,6 +230,11 @@
       "delete-custom-transformer": "Delete transformer",
       "test-custom-transformer": "Test transformer"
     },
+    "oibus-data-source-type": {
+      "oianalytics-setpoint": "OIAnalytics setpoints",
+      "oibus-api": "OIBus API data source",
+      "oibus-south": "South connector"
+    },
     "oibus-input-data-type": {
       "any": "Files (for all sources)",
       "setpoint": "Setpoints (for all sources)",
@@ -951,10 +956,13 @@
           "title": "Transform payloads",
           "source": "Source",
           "output": "Output",
+          "api-data-source": "API data source",
           "items": "Items",
           "one-item-selected": "1 item",
           "several-items-selected": "{{ numberOfItems }} items",
           "all-items-selected": "All items",
+          "oibus-api-selected": "OIBus API (dataSourceId: {{ dataSourceId }})",
+          "oianalytics-setpoint-selected": "OIAnalytic setpoints",
           "all-items": "All items",
           "specific-items": "Specific items",
           "search-items": "Search items...",
