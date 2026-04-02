@@ -266,8 +266,8 @@ export default class NorthConnectorRepository {
   private findTransformersForNorth(northId: string): Array<NorthTransformerWithOptions> {
     const query =
       `SELECT t.id, t.type, t.input_type, t.output_type, t.function_name, t.name, t.description, t.custom_manifest, ` +
-      `t.custom_code, t.language, t.timeout, nt.options, nt.source_type, nt.source_api_data_source_id, nt.source_south_south_id, ` +
-      `nt.source_south_group_id, sig.name as group_name, nt.id as ntId ` +
+      `t.custom_code, t.language, t.timeout, t.created_by, t.updated_by, t.created_at, t.updated_at, nt.options, nt.source_type, ` +
+      `nt.source_api_data_source_id, nt.source_south_south_id, nt.source_south_group_id, sig.name as group_name, nt.id as ntId ` +
       `FROM ${NORTH_TRANSFORMERS_TABLE} nt ` +
       `JOIN ${TRANSFORMERS_TABLE} t ON nt.transformer_id = t.id ` +
       `LEFT JOIN ${SOUTH_ITEM_GROUPS_TABLE} sig ON nt.source_south_group_id = sig.south_id ` +
