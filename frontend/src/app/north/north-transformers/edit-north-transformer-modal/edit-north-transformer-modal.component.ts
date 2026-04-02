@@ -342,11 +342,15 @@ export class EditNorthTransformerModalComponent {
       }
 
       if (source.dataSourceType === 'south' && source.south) {
-        return element.inputType === 'any' || element.inputType === getAssociatedInputType(source.south.type);
+        return (
+          element.inputType === 'any-content' ||
+          element.inputType === 'any' ||
+          element.inputType === getAssociatedInputType(source.south.type)
+        );
       }
 
       if (source.dataSourceType === 'oibus-api') {
-        return element.inputType === 'any';
+        return element.inputType === 'any-content' || element.inputType === 'any';
       }
       return true;
     });
