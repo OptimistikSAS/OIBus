@@ -31,12 +31,25 @@
         } @else {
           @if (form.controls.source.value.south) {
             <div class="col-6">
-              <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
-              <span
-                >{{ form.controls.source.value.south.name }} ({{ form.controls.source.value.south.type | oIBusSouthTypeEnum }}){{
-                  !form.controls.source.value.south.enabled ? ' — ' + ('disabled' | translate) : ''
-                }}</span
-              >
+              @if (form.controls.source.value.south.enabled) {
+                <span
+                  class="form-label"
+                  translate="configuration.oibus.manifest.transformers.source"
+                  [translateParams]="{
+                    name: form.controls.source.value.south.name,
+                    type: form.controls.source.value.south.type | oIBusSouthTypeEnum
+                  }"
+                ></span>
+              } @else {
+                <span
+                  class="form-label"
+                  translate="configuration.oibus.manifest.transformers.source-disabled"
+                  [translateParams]="{
+                    name: form.controls.source.value.south.name,
+                    type: form.controls.source.value.south.type | oIBusSouthTypeEnum
+                  }"
+                ></span>
+              }
             </div>
           } @else if (form.controls.source.value.dataSourceType === 'oianalytics-setpoint') {
             <div class="col-6">

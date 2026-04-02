@@ -269,7 +269,7 @@ describe('SandboxService', () => {
 
       await sandboxService.execute('', defaultSource, 'metrics.txt', transformer, {}, logger);
 
-      expect(logger.info).toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
+      expect(logger.trace).toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
     });
   });
 
@@ -460,7 +460,7 @@ describe('SandboxService', () => {
       await expect(sandboxService.execute('', { source: 'test' }, 'heap-fail.txt', transformer, {}, logger)).rejects.toThrow(
         '[RUNTIME_ERROR] Sandbox execution failed: createContext failed'
       );
-      expect(logger.info).not.toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
+      expect(logger.trace).not.toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
     });
   });
 
