@@ -155,8 +155,8 @@ export async function up(knex: Knex): Promise<void> {
   await createGroupItemsTable(knex);
   await addTransformersItems(knex);
   await updateFileConnectorItems(knex);
-  await migrateSouthMQTTItems(knex, allOldSubscriptions);
   await addCreatedByAndUpdatedBy(knex);
+  await migrateSouthMQTTItems(knex, allOldSubscriptions);
 
   await addItemHistorianFields(knex);
   await populateItemHistorianFields(knex);
@@ -513,8 +513,13 @@ async function migrateSouthMQTTItems(
 
   // 2. Create Custom Transformer
   const customTransformer = createCustomTransformer();
+  const now = DateTime.now().toUTC().toISO()!;
   await knex(TRANSFORMERS_TABLE).insert({
     id: customTransformer.id,
+    created_by: 'system',
+    updated_by: 'system',
+    created_at: now,
+    updated_at: now,
     type: customTransformer.type,
     name: customTransformer.name,
     input_type: customTransformer.inputType,
@@ -522,6 +527,7 @@ async function migrateSouthMQTTItems(
     description: customTransformer.description,
     custom_code: customTransformer.customCode,
     language: customTransformer.language,
+    timeout: 2000,
     custom_manifest: JSON.stringify(customTransformer.customManifest)
   });
 
