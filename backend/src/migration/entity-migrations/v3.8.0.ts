@@ -141,6 +141,7 @@ interface CustomTransformer {
 }
 
 export async function up(knex: Knex): Promise<void> {
+  await addCreatedByAndUpdatedBy(knex);
   await updateRegistrationSettings(knex);
   await updateOIACommandTable(knex);
   await updateTransformersTable(knex);
@@ -155,7 +156,6 @@ export async function up(knex: Knex): Promise<void> {
   await createGroupItemsTable(knex);
   await addTransformersItems(knex);
   await updateFileConnectorItems(knex);
-  await addCreatedByAndUpdatedBy(knex);
   await migrateSouthMQTTItems(knex, allOldSubscriptions);
 
   await addItemHistorianFields(knex);
@@ -360,11 +360,16 @@ async function createDefaultTransformers(knex: Knex): Promise<void> {
 
   const existing = await knex(TRANSFORMERS_TABLE).select('function_name');
   const existingNames = new Set(existing.map(t => t.function_name));
+  const now = DateTime.now().toUTC().toISO()!;
   const toInsert = defaults
     .filter(t => !existingNames.has(t.function_name))
     .map(t => ({
       id: generateRandomId(6),
       type: 'standard',
+      created_by: 'system',
+      updated_by: 'system',
+      created_at: now,
+      updated_at: now,
       ...t
     }));
 
