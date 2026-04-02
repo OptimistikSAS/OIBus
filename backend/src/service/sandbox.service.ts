@@ -200,13 +200,16 @@ export default class SandboxService {
           const cpuTimeNs = isolate.cpuTime;
           const totalDurationMs = Number(process.hrtime.bigint() - startTime) / 1e6;
 
-          logger.info({
-            msg: `Sandbox Execution Metrics for ${filename}`,
-            metrics: {
-              cpuTimeMs: Number(cpuTimeNs) / 1e6,
-              totalDurationMs: totalDurationMs,
-              heapUsedMb: (heapStats.used_heap_size / (1024 * 1024)).toFixed(2)
-            }
+          logger.trace({
+            msg: `Sandbox Execution Metrics for ${filename}: ${JSON.stringify(
+              {
+                cpuTimeMs: Number(cpuTimeNs) / 1e6,
+                totalDurationMs: totalDurationMs,
+                heapUsedMb: (heapStats.used_heap_size / (1024 * 1024)).toFixed(2)
+              },
+              null,
+              2
+            )}`
           });
         } catch {
           /* ignore */
