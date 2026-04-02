@@ -214,7 +214,7 @@ export class EditHistoryQueryTransformerModalComponent {
       if (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes.includes(element.inputType))
         return true;
 
-      return element.inputType === 'any' || element.inputType === inputType;
+      return element.inputType === 'any-content' || element.inputType === 'any' || element.inputType === inputType;
     });
   }
 
