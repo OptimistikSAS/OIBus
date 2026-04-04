@@ -77,6 +77,7 @@ const baseConfiguration: SouthConnectorEntity<SouthRestSettings, SouthRestItemSe
       useProxy: false
     }
   },
+  groups: [],
   items: [],
   createdBy: '',
   updatedBy: '',

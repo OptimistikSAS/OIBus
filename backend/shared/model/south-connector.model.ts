@@ -215,6 +215,11 @@ export interface SouthConnectorTypedDTO<T extends OIBusSouthType, S, IS> extends
    * List of items (data points) configured for this connector.
    */
   items: Array<SouthConnectorItemTypedDTO<IS>>;
+
+  /**
+   * List of groups attached to this connector
+   */
+  groups: Array<SouthItemGroupDTO>;
 }
 
 export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
@@ -355,6 +360,13 @@ export interface SouthItemGroupDTO extends BaseEntity {
  */
 export interface SouthItemGroupCommandDTO {
   /**
+   * The ID of the group (null when creating a new group).
+   *
+   * @example null
+   */
+  id: string | null;
+
+  /**
    * The name of the group.
    *
    * @example "Production Line A"
@@ -387,7 +399,7 @@ export interface SouthItemGroupCommandDTO {
    *
    * @example 200
    */
-  readDelay: number;
+  readDelay: number | null;
 }
 
 /**
@@ -452,6 +464,11 @@ export interface SouthConnectorCommandTypedDTO<T extends OIBusSouthType, S, IS> 
    * List of items (data points) to configure for this connector.
    */
   items: Array<SouthConnectorItemCommandTypedDTO<IS>>;
+
+  /**
+   * List of groups used to gather items
+   */
+  groups: Array<SouthItemGroupCommandDTO>;
 }
 
 export interface SouthConnectorItemCommandTypedDTO<IS> {

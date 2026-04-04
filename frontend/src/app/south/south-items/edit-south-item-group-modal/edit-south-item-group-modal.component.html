@@ -6,29 +6,29 @@
     <form [formGroup]="form" (ngSubmit)="save()" id="group-form">
       <!-- Name -->
       <div class="form-group">
-        <label class="form-label" for="name" translate="south.groups.name"></label>
-        <input formControlName="name" id="name" class="form-control" />
+        <label class="form-label" for="group-name" translate="south.groups.name"></label>
+        <input formControlName="name" id="group-name" class="form-control" />
         <val-errors controlName="name" />
       </div>
 
       <!-- Scan Mode (Schedule) -->
       <div class="form-group">
-        <label for="scan-mode" class="form-label" translate="south.groups.schedule"></label>
-        <select class="form-select" id="scan-mode" formControlName="scanMode">
-          <option [ngValue]="null" disabled>Select a schedule...</option>
+        <label for="group-scan-mode" class="form-label" translate="south.items.scan-mode"></label>
+        <select class="form-select" id="group-scan-mode" formControlName="scanModeId">
+          <option [ngValue]="null" disabled translate="south.items.select-scan-mode"></option>
           @for (scanMode of scanModes; track scanMode.id) {
             <option [value]="scanMode.id">{{ scanMode.name }}</option>
           }
         </select>
-        <val-errors controlName="scanMode" />
+        <val-errors controlName="scanModeId" />
       </div>
 
       <!-- Overlap (only for historian connectors) -->
       @if (hasHistorianCapabilities) {
         <div class="form-group">
-          <label class="form-label" for="overlap" translate="south.groups.overlap"></label>
+          <label class="form-label" for="group-overlap" translate="south.groups.overlap"></label>
           <div class="input-group">
-            <input formControlName="overlap" id="overlap" type="number" class="form-control" min="0" />
+            <input formControlName="overlap" id="group-overlap" type="number" class="form-control" min="0" />
             <span class="input-group-text" translate="common.unit.ms"></span>
           </div>
           <val-errors controlName="overlap" />
@@ -38,9 +38,9 @@
       <!-- Max Read Interval (only for historian connectors) -->
       @if (hasHistorianCapabilities) {
         <div class="form-group">
-          <label class="form-label" for="max-read-interval" translate="south.groups.max-read-interval"></label>
+          <label class="form-label" for="group-max-read-interval" translate="south.groups.max-read-interval"></label>
           <div class="input-group">
-            <input formControlName="maxReadInterval" id="max-read-interval" type="number" class="form-control" min="0" />
+            <input formControlName="maxReadInterval" id="group-max-read-interval" type="number" class="form-control" min="0" />
             <span class="input-group-text" translate="common.unit.s"></span>
           </div>
           <val-errors controlName="maxReadInterval" />
@@ -50,9 +50,9 @@
       <!-- Read Delay (only for historian connectors) -->
       @if (hasHistorianCapabilities) {
         <div class="form-group">
-          <label class="form-label" for="read-delay" translate="south.groups.read-delay"></label>
+          <label class="form-label" for="group-read-delay" translate="south.groups.read-delay"></label>
           <div class="input-group">
-            <input formControlName="readDelay" id="read-delay" type="number" class="form-control" min="0" />
+            <input formControlName="readDelay" id="group-read-delay" type="number" class="form-control" min="0" />
             <span class="input-group-text" translate="common.unit.ms"></span>
           </div>
           <val-errors controlName="readDelay" />

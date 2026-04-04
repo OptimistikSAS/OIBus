@@ -27,10 +27,10 @@
                 <span class="text-truncate">{{ getSelectedGroupName() }}</span>
               </button>
               <div ngbDropdownMenu aria-labelledby="group" class="w-100">
-                <button type="button" ngbDropdownItem (click)="selectGroup(null)" translate="south.items.group-none"></button>
+                <button type="button" ngbDropdownItem (click)="onSelectGroup(null)" translate="south.items.group-none"></button>
                 @for (group of groups; track group.id) {
                   <div class="d-flex align-items-center justify-content-between px-2 group-row">
-                    <button type="button" ngbDropdownItem (click)="selectGroup(group.id)" class="flex-grow-1 text-start ps-2">
+                    <button type="button" ngbDropdownItem (click)="onSelectGroup(group.id)" class="flex-grow-1 text-start ps-2">
                       {{ group.name }}
                     </button>
                     <div class="d-flex gap-1 pe-2">
@@ -44,12 +44,7 @@
                   </div>
                 }
                 <div class="dropdown-divider"></div>
-                <button
-                  type="button"
-                  ngbDropdownItem
-                  (click)="selectGroup('__create_new__')"
-                  translate="south.items.create-new-group"
-                ></button>
+                <button type="button" ngbDropdownItem (click)="onAddGroup()" translate="south.items.create-new-group"></button>
               </div>
             </div>
             <input type="hidden" formControlName="groupId" />
@@ -57,17 +52,17 @@
           </div>
         </div>
         <!-- Scan mode (only shown when item has no group) -->
-        @if (form.controls.scanMode.enabled && form.controls.groupId.value === null) {
+        @if (form.controls.scanModeId.enabled && form.controls.groupId.value === null) {
           <div class="col-3">
             <div class="form-group">
               <label for="scan-mode" class="form-label" translate="configuration.oibus.manifest.south.items.scan-mode"></label>
-              <select class="form-select" id="scan-mode" formControlName="scanMode">
-                <option [ngValue]="null"></option>
+              <select class="form-select" id="scan-mode" formControlName="scanModeId">
+                <option [ngValue]="null" disabled translate="south.items.select-scan-mode"></option>
                 @for (scanMode of scanModes; track scanMode.id) {
-                  <option [ngValue]="scanMode">{{ scanMode.name }}</option>
+                  <option [ngValue]="scanMode.id">{{ scanMode.name }}</option>
                 }
               </select>
-              <val-errors controlName="scanMode" />
+              <val-errors controlName="scanModeId" />
             </div>
           </div>
         }
@@ -143,7 +138,7 @@
           [scanModes]="scanModes"
           [certificates]="certificates"
           [group]="form.controls.settings"
-          [objectAttribute]="getItemSettingsAttribute()"
+          [objectAttribute]="getItemSettingsAttribute(manifest)"
           [southId]="southId"
         />
       </ng-container>

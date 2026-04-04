@@ -1,7 +1,7 @@
 import { AfterContentInit, Component, effect, inject, input, OnInit, viewChild } from '@angular/core';
 import {
   SouthConnectorCommandDTO,
-  SouthConnectorItemDTO,
+  SouthConnectorItemCommandDTO,
   SouthConnectorItemTestingSettings,
   SouthConnectorManifest
 } from '../../../../../../backend/shared/model/south-connector.model';
@@ -14,7 +14,7 @@ import { getMessageFromHttpErrorResponse } from '../../../shared/error-intercept
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DateTime } from 'luxon';
 import { HistoryQueryService } from '../../../services/history-query.service';
-import { HistoryQueryItemDTO } from '../../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryItemCommandDTO } from '../../../../../../backend/shared/model/history-query.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ContentDisplayMode, ItemTestResultComponent } from './item-test-result/item-test-result.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
@@ -47,7 +47,7 @@ class SouthItemTestComponent implements AfterContentInit, OnInit {
   readonly entityId = input.required<string>();
   readonly fromSouth = input<string | null>(null);
 
-  readonly item = input.required<SouthConnectorItemDTO | HistoryQueryItemDTO>();
+  readonly item = input.required<SouthConnectorItemCommandDTO | HistoryQueryItemCommandDTO>();
 
   readonly connectorCommand = input.required<SouthConnectorCommandDTO>();
   readonly manifest = input.required<SouthConnectorManifest>();

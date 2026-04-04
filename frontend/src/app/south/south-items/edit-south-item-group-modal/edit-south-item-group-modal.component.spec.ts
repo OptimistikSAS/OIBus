@@ -5,7 +5,6 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { EditSouthItemGroupModalComponent } from './edit-south-item-group-modal.component';
 import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
-import { SouthConnectorService } from '../../../services/south-connector.service';
 import { of } from 'rxjs';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
@@ -22,15 +21,15 @@ class EditSouthItemGroupModalComponentTester extends ComponentTester<EditSouthIt
   }
 
   get name() {
-    return this.input('#name')!;
+    return this.input('#group-name')!;
   }
 
   get scanMode() {
-    return this.select('#scan-mode')!;
+    return this.select('#group-scan-mode')!;
   }
 
   get overlap() {
-    return this.input('#overlap')!;
+    return this.input('#group-overlap')!;
   }
 
   get validationErrors() {
@@ -50,9 +49,7 @@ describe('EditSouthItemGroupModalComponent', () => {
   let tester: EditSouthItemGroupModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
   let unsavedChangesConfirmationService: jasmine.SpyObj<UnsavedChangesConfirmationService>;
-  let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
 
-  const southId = 'southId1';
   const scanModes = testData.scanMode.list.map(toScanModeDTO);
   const manifest = testData.south.manifest;
   const existingGroups: Array<SouthItemGroupDTO> = [
@@ -73,14 +70,12 @@ describe('EditSouthItemGroupModalComponent', () => {
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
     unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
-    southConnectorService = createMock(SouthConnectorService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
-        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService },
-        { provide: SouthConnectorService, useValue: southConnectorService }
+        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
       ]
     });
 
@@ -89,83 +84,58 @@ describe('EditSouthItemGroupModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(async () => {
-      tester.componentInstance.prepareForCreation(southId, scanModes, manifest, existingGroups);
+      tester.componentInstance.prepareForCreation(scanModes, existingGroups, manifest);
       await tester.change();
     });
 
     it('should initialize form with empty values', () => {
       expect(tester.name).toHaveValue('');
-      expect(tester.componentInstance.form!.controls.scanMode.value).toBeNull();
+      expect(tester.componentInstance.form!.controls.scanModeId.value).toBeNull();
     });
 
     it('should require name', async () => {
-      tester.name.fillWith('');
+      await tester.name.fillWith('');
       await tester.change();
-      tester.save.click();
+      await tester.save.click();
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
     });
 
     it('should require scan mode', async () => {
-      tester.name.fillWith('New Group');
+      await tester.name.fillWith('New Group');
       await tester.change();
-      tester.save.click();
+      await tester.save.click();
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
     });
 
     it('should validate name uniqueness', async () => {
-      tester.name.fillWith('Existing Group');
+      await tester.name.fillWith('Existing Group');
       await tester.change();
       expect(tester.componentInstance.form!.controls.name.hasError('mustBeUnique')).toBe(true);
     });
 
     it('should create group successfully', fakeAsync(async () => {
-      const newGroup: SouthItemGroupDTO = {
-        id: 'newGroup',
-        name: 'New Group',
-        scanMode: scanModes[0],
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
-      };
-      southConnectorService.createGroup.and.returnValue(of(newGroup));
-
-      tester.name.fillWith('New Group');
-      tester.scanMode.selectLabel(scanModes[0].name);
+      await tester.name.fillWith('New Group');
+      await tester.scanMode.selectLabel(scanModes[0].name);
       await tester.change();
-      tester.save.click();
+      await tester.save.click();
 
-      expect(southConnectorService.createGroup).toHaveBeenCalledWith(southId, {
-        name: 'New Group',
-        scanModeId: scanModes[0].id,
-        overlap: 0,
-        maxReadInterval: 3600,
-        readDelay: 200
+      expect(fakeActiveModal.close).toHaveBeenCalledWith({
+        mode: 'create',
+        group: {
+          id: '',
+          name: 'New Group',
+          scanModeId: scanModes[0].id,
+          overlap: 0,
+          maxReadInterval: 3600,
+          readDelay: 200
+        }
       });
-      expect(fakeActiveModal.close).toHaveBeenCalledWith(newGroup);
     }));
 
     it('should create group with historian capabilities', fakeAsync(async () => {
       const manifestWithHistory = { ...manifest, modes: { ...manifest.modes, history: true } };
-      tester.componentInstance.prepareForCreation(southId, scanModes, manifestWithHistory, existingGroups);
+      tester.componentInstance.prepareForCreation(scanModes, existingGroups, manifestWithHistory);
       await tester.change();
-
-      const newGroup: SouthItemGroupDTO = {
-        id: 'newGroup',
-        name: 'New Group',
-        scanMode: scanModes[0],
-        overlap: 100,
-        maxReadInterval: null,
-        readDelay: 0,
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
-      };
-      southConnectorService.createGroup.and.returnValue(of(newGroup));
 
       tester.name.fillWith('New Group');
       tester.scanMode.selectLabel(scanModes[0].name);
@@ -173,18 +143,22 @@ describe('EditSouthItemGroupModalComponent', () => {
       await tester.change();
       tester.save.click();
 
-      expect(southConnectorService.createGroup).toHaveBeenCalledWith(southId, {
-        name: 'New Group',
-        scanModeId: scanModes[0].id,
-        overlap: 100,
-        maxReadInterval: 3600,
-        readDelay: 200
+      expect(fakeActiveModal.close).toHaveBeenCalledWith({
+        mode: 'create',
+        group: {
+          id: '',
+          name: 'New Group',
+          scanModeId: scanModes[0].id,
+          overlap: 100,
+          maxReadInterval: 3600,
+          readDelay: 200
+        }
       });
     }));
 
     it('should validate overlap is non-negative', async () => {
       const manifestWithHistory = { ...manifest, modes: { ...manifest.modes, history: true } };
-      tester.componentInstance.prepareForCreation(southId, scanModes, manifestWithHistory, existingGroups);
+      tester.componentInstance.prepareForCreation(scanModes, existingGroups, manifestWithHistory);
       await tester.change();
 
       tester.name.fillWith('New Group');
@@ -224,13 +198,13 @@ describe('EditSouthItemGroupModalComponent', () => {
     };
 
     beforeEach(async () => {
-      tester.componentInstance.prepareForEdition(southId, scanModes, manifest, groupToEdit, existingGroups);
+      tester.componentInstance.prepareForEdition(scanModes, existingGroups, manifest, groupToEdit);
       await tester.change();
     });
 
     it('should initialize form with group values', () => {
       expect(tester.name).toHaveValue('Group to Edit');
-      expect(tester.componentInstance.form!.controls.scanMode.value).toBe(scanModes[0].id);
+      expect(tester.componentInstance.form!.controls.scanModeId.value).toBe(scanModes[0].id);
     });
 
     it('should allow editing same group name', async () => {
@@ -252,23 +226,23 @@ describe('EditSouthItemGroupModalComponent', () => {
         createdAt: '',
         updatedAt: ''
       };
-      southConnectorService.updateGroup.and.returnValue(of(undefined));
-      southConnectorService.getGroup.and.returnValue(of(updatedGroup));
 
       tester.name.fillWith('Updated Group');
       tester.scanMode.selectLabel(scanModes[1].name);
       await tester.change();
       tester.save.click();
 
-      expect(southConnectorService.updateGroup).toHaveBeenCalledWith(southId, 'group1', {
-        name: 'Updated Group',
-        scanModeId: scanModes[1].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+      expect(fakeActiveModal.close).toHaveBeenCalledWith({
+        mode: 'edit',
+        group: {
+          id: updatedGroup.id,
+          name: 'Updated Group',
+          scanModeId: scanModes[1].id,
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       });
-      expect(southConnectorService.getGroup).toHaveBeenCalledWith(southId, 'group1');
-      expect(fakeActiveModal.close).toHaveBeenCalledWith(updatedGroup);
     }));
 
     it('should not require confirmation if form is not dirty', () => {

@@ -94,6 +94,7 @@ describe('South Modbus', () => {
       retryInterval: 10000,
       connectTimeout: 30000
     },
+    groups: [],
     items: [
       {
         id: 'id1',

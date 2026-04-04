@@ -573,7 +573,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdAt: '',
         updatedAt: ''
       }
-    ]
+    ],
+    groups: []
   },
   {
     id: 'southId2',
@@ -630,7 +631,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         readDelay: 200,
         overlap: 0
       }
-    ]
+    ],
+    groups: []
   },
   {
     id: 'southId3',
@@ -737,7 +739,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         createdAt: '',
         updatedAt: ''
       }
-    ]
+    ],
+    groups: []
   }
 ];
 const southConnectorCommand: SouthConnectorCommandDTO = {
@@ -772,7 +775,8 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
       readDelay: null,
       overlap: null
     }
-  ]
+  ],
+  groups: []
 };
 const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
   id: 'newSouthItemId',
