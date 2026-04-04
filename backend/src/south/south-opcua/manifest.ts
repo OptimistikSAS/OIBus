@@ -86,7 +86,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 1,
-          columns: 4,
+          columns: 6,
           displayInViewMode: true
         }
       },
@@ -112,7 +112,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 1,
-          columns: 4,
+          columns: 6,
           displayInViewMode: true
         }
       },
@@ -138,7 +138,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 2,
-          columns: 4,
+          columns: 6,
           displayInViewMode: true
         }
       },
@@ -164,7 +164,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 2,
-          columns: 4,
+          columns: 6,
           displayInViewMode: true
         }
       },

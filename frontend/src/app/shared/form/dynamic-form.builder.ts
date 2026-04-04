@@ -90,6 +90,8 @@ const checkCondition = (value: any, condition: OIBusEnablingCondition): boolean 
       return condition.values.some(conditionValue => value.includes(String(conditionValue)));
     }
     return false;
+  } else if (operator === 'NOT_EQUAL') {
+    return !condition.values.includes(value);
   } else {
     // Default EQUALS behavior
     return condition.values.includes(value);
