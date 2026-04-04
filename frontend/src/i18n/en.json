@@ -1401,10 +1401,7 @@
           },
           "folder-scanner": {
             "input-folder": "Input folder",
-            "compression": "Enable compression",
-            "max-files": "Max files per scan (0 = no limit)",
-            "max-size": "Max size per scan (0 = no limit)",
-            "recursive": "Scan sub-folders"
+            "compression": "Enable compression"
           },
           "modbus": {
             "host": "Host",
@@ -1649,10 +1646,7 @@
             "password": "Password",
             "private-key": "Private key",
             "passphrase": "Passphrase",
-            "compression": "Compress files",
-            "max-files": "Max files per scan (0 = no limit)",
-            "max-size": "Max size per scan (0 = no limit)",
-            "recursive": "Scan sub-folders"
+            "compression": "Compress files"
           },
           "ftp": {
             "host": "Host",
@@ -1664,10 +1658,7 @@
             },
             "username": "Username",
             "password": "Password",
-            "compression": "Compress files",
-            "max-files": "Max files per scan (0 = no limit)",
-            "max-size": "Max size per scan (0 = no limit)",
-            "recursive": "Scan sub-folders"
+            "compression": "Compress files"
           },
           "sqlite": {
             "database-path": "Database path"
@@ -1688,7 +1679,10 @@
               "regex": "Regex to pick up files",
               "min-age": "Min age",
               "preserve-files": "Preserve files",
-              "ignore-modified-date": "Ignorer modification date"
+              "ignore-modified-date": "Ignorer modification date",
+              "max-files": "Max files per scan (0 = no limit)",
+              "max-size": "Max size per scan (0 = no limit)",
+              "recursive": "Scan sub-folders"
             },
             "modbus": {
               "address": "Address",
@@ -1717,48 +1711,7 @@
               }
             },
             "mqtt": {
-              "topic": "Topic",
-              "value-type": {
-                "title": "Value type",
-                "number": "Number",
-                "string": "String",
-                "json": "JSON object"
-              },
-              "json-payload": {
-                "title": "JSON payload",
-                "use-array": "Payload in array?",
-                "data-array-path": "Array path",
-                "value-path": "Value path",
-                "point-id-origin": {
-                  "title": "Point ID origin",
-                  "oibus": "OIBus",
-                  "payload": "Payload"
-                },
-                "point-id-path": "Point ID path",
-                "timestamp-origin": {
-                  "title": "Timestamp origin",
-                  "oibus": "OIBus",
-                  "payload": "Payload"
-                },
-                "timestamp-payload": {
-                  "title": "Timestamp",
-                  "timestamp-path": "Timestamp path",
-                  "timestamp-type": {
-                    "title": "Type",
-                    "string": "String",
-                    "iso-string": "ISO string",
-                    "unix-epoch": "Unix epoch (s)",
-                    "unix-epoch-ms": "Unix epoch (ms)"
-                  },
-                  "timestamp-format": "Timestamp format",
-                  "timezone": "Timezone"
-                },
-                "other-fields": {
-                  "title": "Additional fields",
-                  "name": "Field name in output",
-                  "path": "Path in the retrieved payload"
-                }
-              }
+              "topic": "Topic"
             },
             "mssql": {
               "query": "Query",
@@ -2180,14 +2133,20 @@
               "regex": "Regex to pick up files",
               "min-age": "Min age",
               "preserve-files": "Preserve files",
-              "ignore-modified-date": "Ignorer modification date"
+              "ignore-modified-date": "Ignorer modification date",
+              "max-files": "Max files per scan (0 = no limit)",
+              "max-size": "Max size per scan (0 = no limit)",
+              "recursive": "Scan sub-folders"
             },
             "ftp": {
               "remote-folder": "Remote folder",
               "regex": "Regex to pick up files",
               "min-age": "Min age",
               "preserve-files": "Preserve files",
-              "ignore-modified-date": "Ignore modification date"
+              "ignore-modified-date": "Ignore modification date",
+              "max-files": "Max files per scan (0 = no limit)",
+              "max-size": "Max size per scan (0 = no limit)",
+              "recursive": "Scan sub-folders"
             },
             "sqlite": {
               "query": "Query",
