@@ -116,6 +116,7 @@ describe('SouthOPCUA', () => {
       securityPolicy: 'none',
       keepSessionAlive: false
     },
+    groups: [],
     items: [
       {
         id: 'id1',

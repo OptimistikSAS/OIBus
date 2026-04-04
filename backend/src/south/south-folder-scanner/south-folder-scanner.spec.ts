@@ -47,6 +47,7 @@ describe('SouthFolderScanner', () => {
         inputFolder: 'inputFolder',
         compression: false
       },
+      groups: [],
       items: [
         {
           id: 'id1',

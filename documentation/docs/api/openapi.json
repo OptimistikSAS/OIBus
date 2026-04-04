@@ -2069,6 +2069,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -2082,7 +2089,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2298,6 +2306,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -2311,7 +2326,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2555,6 +2571,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -2568,7 +2591,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2860,6 +2884,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -2873,7 +2904,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3138,6 +3170,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -3151,7 +3190,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3486,6 +3526,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -3499,7 +3546,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3817,6 +3865,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -3830,7 +3885,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4144,6 +4200,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -4157,7 +4220,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4500,6 +4564,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -4513,7 +4584,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4825,6 +4897,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -4838,7 +4917,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5097,6 +5177,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -5110,7 +5197,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5450,6 +5538,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -5463,7 +5558,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5788,6 +5884,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -5801,7 +5904,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6005,6 +6109,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -6018,7 +6129,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6341,6 +6453,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -6354,7 +6473,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6957,6 +7077,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -6970,7 +7097,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7221,6 +7349,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -7234,7 +7369,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7522,6 +7658,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
 					}
 				},
 				"required": [
@@ -7535,7 +7678,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7689,6 +7833,58 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthItemGroupCommandDTO": {
+				"description": "Command Data Transfer Object for creating or updating a South item group.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group (null when creating a new group).",
+						"example": null
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the group.",
+						"example": "Production Line A"
+					},
+					"scanModeId": {
+						"type": "string",
+						"description": "The ID of the scan mode to use for this group.",
+						"example": "periodic-5min"
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.",
+						"example": 1000
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.",
+						"example": 200
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"scanModeId",
+					"overlap",
+					"maxReadInterval",
+					"readDelay"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthConnectorCommandTypedDTO_ads.SouthADSSettings.SouthADSItemSettings_": {
 				"properties": {
 					"name": {
@@ -7725,6 +7921,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -7733,7 +7936,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7864,6 +8068,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -7872,7 +8083,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8003,6 +8215,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -8011,7 +8230,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8142,6 +8362,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -8150,7 +8377,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8281,6 +8509,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -8289,7 +8524,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8420,6 +8656,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -8428,7 +8671,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8559,6 +8803,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -8567,7 +8818,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8698,6 +8950,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -8706,7 +8965,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8837,6 +9097,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -8845,7 +9112,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8976,6 +9244,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -8984,7 +9259,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9115,6 +9391,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -9123,7 +9406,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9254,6 +9538,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -9262,7 +9553,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9393,6 +9685,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -9401,7 +9700,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9532,6 +9832,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -9540,7 +9847,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9671,6 +9979,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -9679,7 +9994,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9810,6 +10126,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -9818,7 +10141,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9949,6 +10273,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -9957,7 +10288,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10088,6 +10420,13 @@
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
 					}
 				},
 				"required": [
@@ -10096,7 +10435,8 @@
 					"description",
 					"enabled",
 					"settings",
-					"items"
+					"items",
+					"groups"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10837,50 +11177,6 @@
 				"required": [
 					"items",
 					"errors"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"SouthItemGroupCommandDTO": {
-				"description": "Command Data Transfer Object for creating or updating a South item group.",
-				"properties": {
-					"name": {
-						"type": "string",
-						"description": "The name of the group.",
-						"example": "Production Line A"
-					},
-					"scanModeId": {
-						"type": "string",
-						"description": "The ID of the scan mode to use for this group.",
-						"example": "periodic-5min"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.",
-						"example": 1000
-					},
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Maximum read interval in seconds for historical queries.",
-						"example": 3600
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double",
-						"description": "Read delay in milliseconds before querying historical data.",
-						"example": 200
-					}
-				},
-				"required": [
-					"name",
-					"scanModeId",
-					"overlap",
-					"maxReadInterval",
-					"readDelay"
 				],
 				"type": "object",
 				"additionalProperties": false

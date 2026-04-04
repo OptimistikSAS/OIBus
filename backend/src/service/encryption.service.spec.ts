@@ -314,6 +314,7 @@ describe('Encryption Service', () => {
       description: 'my connector',
       enabled: true,
       items: [],
+      groups: [],
       settings: {
         field1: 'not a secret',
         field2: 'secret',
@@ -361,6 +362,7 @@ describe('Encryption Service', () => {
       description: 'my connector',
       enabled: true,
       items: [],
+      groups: [],
       settings: {
         field1: 'not a secret',
         field2: '',
@@ -509,6 +511,7 @@ describe('Encryption Service', () => {
       description: 'my connector',
       enabled: true,
       items: [],
+      groups: [],
       settings: {
         field1: 'not a secret',
         field2: 'secret',

@@ -154,6 +154,7 @@ describe('SouthFTP', () => {
         updatedAt: ''
       }
     ],
+    groups: [],
     createdBy: '',
     updatedBy: '',
     createdAt: '',

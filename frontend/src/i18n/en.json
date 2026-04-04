@@ -2361,6 +2361,7 @@
       "none": "No items has been defined on this connector yet",
       "none-match": "No items match the search criteria",
       "scan-mode": "Schedule",
+      "select-scan-mode": "Select a schedule",
       "enabled": "South item {{name}} enabled",
       "disabled": "South item {{name}} disabled",
       "enabled-label": "Enabled",

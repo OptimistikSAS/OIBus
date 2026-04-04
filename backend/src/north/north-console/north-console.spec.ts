@@ -12,7 +12,7 @@ import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { streamToString } from '../../service/utils';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // Mock dependencies
 jest.mock('../../service/transformer.service');
@@ -53,7 +53,7 @@ describe('NorthConsole', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    configuration = buildNorthConfiguration<NorthConsoleSettings>('console', {
+    configuration = buildNorthEntity<NorthConsoleSettings>('console', {
       verbose: true
     });
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
@@ -124,7 +124,7 @@ describe('NorthConsole', () => {
   it('should properly handle values in non verbose mode', async () => {
     (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(timeValues));
     const readStream = {} as ReadStream;
-    north.connectorConfiguration = buildNorthConfiguration<NorthConsoleSettings>('console', {
+    north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', {
       verbose: false
     });
 
@@ -144,7 +144,7 @@ describe('NorthConsole', () => {
   it('should properly handle setpoints in non verbose mode', async () => {
     (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(setpoints));
     const readStream = {} as ReadStream;
-    north.connectorConfiguration = buildNorthConfiguration<NorthConsoleSettings>('console', {
+    north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', {
       verbose: false
     });
 
@@ -163,7 +163,7 @@ describe('NorthConsole', () => {
 
   it('should properly handle file in non verbose mode', async () => {
     const readStream = {} as ReadStream;
-    north.connectorConfiguration = buildNorthConfiguration<NorthConsoleSettings>('console', {
+    north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', {
       verbose: false
     });
 

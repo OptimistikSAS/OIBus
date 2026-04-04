@@ -48,6 +48,7 @@ describe('SouthOIAnalytics', () => {
         useProxy: false
       }
     },
+    groups: [],
     items: [
       {
         id: 'id1',

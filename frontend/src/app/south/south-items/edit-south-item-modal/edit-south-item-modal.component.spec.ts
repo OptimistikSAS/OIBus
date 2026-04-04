@@ -1,9 +1,13 @@
-import { EditSouthItemModalComponent } from './edit-south-item-modal.component';
+import EditSouthItemModalComponent from './edit-south-item-modal.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
-import { SouthConnectorItemDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import {
+  SouthConnectorItemDTO,
+  SouthItemGroupCommandDTO,
+  SouthItemGroupDTO
+} from '../../../../../../backend/shared/model/south-connector.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthFolderScannerItemSettings } from '../../../../../../backend/shared/model/south-settings.model';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
@@ -87,6 +91,10 @@ describe('EditSouthItemModalComponent', () => {
     }
   ] as unknown as Array<SouthConnectorItemDTO>;
   const scanModes = testData.scanMode.list as unknown as Array<ScanModeDTO>;
+  const addOrEditGroup = (_command: { mode: 'create' | 'edit'; group: SouthItemGroupCommandDTO }) => {
+    return of({} as SouthItemGroupDTO | SouthItemGroupCommandDTO);
+  };
+  const deleteGroup = () => of();
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
@@ -112,7 +120,17 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(async () => {
-      tester.componentInstance.prepareForCreation(allItems, scanModes, [], southId, southConnectorCommand, manifest, [], false);
+      tester.componentInstance.prepareForCreation(
+        allItems,
+        scanModes,
+        [],
+        [],
+        manifest,
+        southId,
+        southConnectorCommand,
+        addOrEditGroup,
+        deleteGroup
+      );
       await tester.change();
     });
 
@@ -140,21 +158,19 @@ describe('EditSouthItemModalComponent', () => {
         id: '',
         enabled: true,
         name: 'MyName',
-        scanMode: testData.scanMode.list[1],
+        scanModeId: testData.scanMode.list[1].id,
+        scanModeName: testData.scanMode.list[1].name,
         settings: {
           objectArray: [],
           objectSettings: {},
           objectValue: 1
         },
-        group: null,
+        groupId: null,
+        groupName: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
+        overlap: null
       });
     }));
 
@@ -248,7 +264,18 @@ describe('EditSouthItemModalComponent', () => {
     } as unknown as SouthConnectorItemDTO;
 
     it('should duplicate item', async () => {
-      tester.componentInstance.prepareForCopy(allItems, scanModes, [], southItem, southId, southConnectorCommand, manifest, [], false);
+      tester.componentInstance.prepareForCopy(
+        allItems,
+        scanModes,
+        [],
+        [],
+        manifest,
+        southItem,
+        southId,
+        southConnectorCommand,
+        addOrEditGroup,
+        deleteGroup
+      );
       await tester.change();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -262,21 +289,19 @@ describe('EditSouthItemModalComponent', () => {
         id: '',
         enabled: true,
         name: 'MyName-2',
-        scanMode: testData.scanMode.list[1],
+        scanModeId: testData.scanMode.list[1].id,
+        scanModeName: testData.scanMode.list[1].name,
         settings: {
           objectArray: [],
           objectSettings: {},
           objectValue: 1
         },
-        group: null,
+        groupId: null,
+        groupName: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
+        overlap: null
       });
     });
   });
@@ -304,13 +329,14 @@ describe('EditSouthItemModalComponent', () => {
         allItems,
         scanModes,
         [],
+        [],
+        manifest,
         southItem,
         southId,
         southConnectorCommand,
-        manifest,
         0,
-        [],
-        false
+        addOrEditGroup,
+        deleteGroup
       );
       await tester.change();
     });
@@ -354,30 +380,19 @@ describe('EditSouthItemModalComponent', () => {
         id: 'id1',
         enabled: false,
         name: 'South Item 1 (updated)',
-        scanMode: {
-          id: 'scanModeId2',
-          name: 'scanMode2',
-          description: 'my second scanMode',
-          cron: '0 * * * * *',
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
+        scanModeId: 'scanModeId2',
+        scanModeName: 'scanMode2',
         settings: {
           objectArray: [],
           objectSettings: {},
           objectValue: 1
         },
-        group: null,
+        groupId: null,
+        groupName: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
+        overlap: null
       });
     }));
 

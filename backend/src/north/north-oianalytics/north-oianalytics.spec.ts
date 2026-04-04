@@ -15,7 +15,7 @@ import zlib from 'node:zlib';
 import CacheService from '../../service/cache/cache.service';
 import testData from '../../tests/utils/test-data';
 import { ReadStream } from 'node:fs';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // Mock dependencies
 jest.mock('node:fs');
@@ -51,7 +51,7 @@ describe('NorthOIAnalytics', () => {
     cacheService = new CacheServiceMock();
 
     configuration = JSON.parse(JSON.stringify(testData.north.list[0]));
-    configuration = buildNorthConfiguration<NorthOIAnalyticsSettings>('oianalytics', {
+    configuration = buildNorthEntity<NorthOIAnalyticsSettings>('oianalytics', {
       useOiaModule: false,
       timeout: 30,
       compress: false,

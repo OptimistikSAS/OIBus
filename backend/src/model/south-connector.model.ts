@@ -49,6 +49,7 @@ export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthIt
   enabled: boolean;
   settings: S;
   items: Array<SouthConnectorItemEntity<I>>;
+  groups: Array<SouthItemGroupEntityLight>;
 }
 
 export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends BaseEntity {

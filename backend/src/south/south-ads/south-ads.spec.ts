@@ -73,6 +73,7 @@ describe('South ADS', () => {
         }
       ]
     },
+    groups: [],
     items: [
       {
         id: 'id1',

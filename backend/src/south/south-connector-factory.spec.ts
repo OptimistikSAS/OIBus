@@ -104,6 +104,7 @@ describe('South Connector Factory', () => {
     description: 'test-description',
     enabled: true,
     items: [],
+    groups: [],
     createdBy: '',
     updatedBy: '',
     createdAt: '',

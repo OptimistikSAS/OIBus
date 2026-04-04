@@ -44,7 +44,7 @@ export default class SouthItemGroupRepository {
       `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, s.id as scan_mode_id_full, ` +
       `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
       `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
-      `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN scan_modes s ON g.scan_mode_id = s.id WHERE g.name = ? AND g.south_id = ?;`;
+      `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.name = ? AND g.south_id = ?;`;
     const result = this.database.prepare(query).get(name, southId) as Record<string, string | number> | undefined;
     return result ? toSouthItemGroup(result, this.findAllItemsForGroup(result.id as string)) : null;
   }
