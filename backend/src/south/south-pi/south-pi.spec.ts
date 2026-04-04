@@ -40,6 +40,7 @@ describe('South PI', () => {
       agentUrl: 'http://localhost:2224',
       retryInterval: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',

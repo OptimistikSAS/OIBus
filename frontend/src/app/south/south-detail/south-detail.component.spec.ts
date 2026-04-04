@@ -131,22 +131,15 @@ describe('SouthDetailComponent', () => {
 
   it('should stop south', async () => {
     await tester.change();
-    tester.toggleButton.click();
+    await tester.toggleButton.click();
     expect(southConnectorService.stop).toHaveBeenCalledWith(southConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('south.stopped', { name: southConnector.name });
   });
 
   it('should start south', async () => {
-    southConnectorService.findById.and.returnValue(
-      of({
-        ...southConnector,
-        items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })),
-        enabled: false
-      } as any)
-    );
-    southConnectorService.getGroups.and.returnValue(of([]));
     await tester.change();
-    tester.toggleButton.click();
+    tester.componentInstance.southConnector!.enabled = false;
+    await tester.toggleButton.click();
     expect(southConnectorService.start).toHaveBeenCalledWith(southConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnector.name });
   });

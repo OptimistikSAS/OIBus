@@ -17,7 +17,7 @@ import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // Mocks
 jest.mock('node-opcua', () => ({
@@ -71,7 +71,7 @@ describe('NorthOPCUA', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    configuration = buildNorthConfiguration<NorthOPCUASettings>('opcua', {
+    configuration = buildNorthEntity<NorthOPCUASettings>('opcua', {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
       retryInterval: 10000,
       authentication: { type: 'none', password: null },

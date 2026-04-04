@@ -55,6 +55,7 @@ describe('SouthOLEDB', () => {
       retryInterval: 1000,
       requestTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',

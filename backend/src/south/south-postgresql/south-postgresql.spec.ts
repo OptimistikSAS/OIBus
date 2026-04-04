@@ -173,6 +173,7 @@ describe('SouthPostgreSQL with authentication', () => {
         updatedAt: ''
       }
     ],
+    groups: [],
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -395,6 +396,7 @@ describe('SouthPostgreSQL without authentication', () => {
       connectionTimeout: 1000,
       requestTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -569,6 +571,7 @@ describe('SouthPostgreSQL test connection', () => {
       connectionTimeout: 1000,
       requestTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',

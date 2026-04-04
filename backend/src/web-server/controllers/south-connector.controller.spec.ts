@@ -667,6 +667,7 @@ describe('SouthConnectorController', () => {
   it('should create a group', async () => {
     const southId = testData.south.list[0].id;
     const command: SouthItemGroupCommandDTO = {
+      id: null,
       name: 'New Group',
       scanModeId: testData.scanMode.list[0].id,
       overlap: 5,
@@ -698,6 +699,7 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const groupId = 'group1';
     const command: SouthItemGroupCommandDTO = {
+      id: null,
       name: 'Updated Group',
       scanModeId: testData.scanMode.list[1].id,
       overlap: 10,

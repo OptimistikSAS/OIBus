@@ -13,7 +13,7 @@
               class="btn btn-primary pull-right me-2"
               id="south-enabled"
               [ngbTooltip]="(southConnector.enabled ? 'south.tooltips.stop' : 'south.tooltips.start') | translate"
-              (click)="toggleConnector(!southConnector!.enabled)"
+              (click)="toggleConnector(!southConnector.enabled)"
             >
               <i [class]="southConnector.enabled ? 'fa fa-pause' : 'fa fa-play'"></i>
             </button>
@@ -71,16 +71,226 @@
           </table>
         </oib-box>
         <!-- Items -->
-        <oib-south-items
-          [southId]="southConnector!.id"
-          [southConnector]="southConnector"
-          [southConnectorCommand]="southConnectorCommand"
-          [southManifest]="manifest"
-          [scanModes]="scanModes"
-          [certificates]="certificates"
-          [saveChangesDirectly]="true"
-          (inMemoryItems)="updateInMemoryItems($event)"
-        />
+        <oib-box class="oib-south-items">
+          <ng-template oibBoxTitle>
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center">
+                <div>
+                  <span translate="south.items.title"></span>
+                  @if (filteredItems.length) {
+                    <span class="mx-1">({{ filteredItems.length }})</span>
+                  }
+                </div>
+                <input
+                  class="ms-4 form form-control oib-box-input-header"
+                  [formControl]="searchControl"
+                  [placeholder]="'south.items.search-placeholder' | translate"
+                  type="text"
+                />
+              </div>
+              <div class="ms-3">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm oib-box-btn"
+                  [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.create' | translate"
+                  (click)="addItem()"
+                >
+                  <span class="fa fa-plus"></span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm oib-box-btn"
+                  id="export-items"
+                  (click)="exportItems()"
+                  translate="south.items.export.button"
+                ></button>
+                <button type="button" class="btn btn-secondary btn-sm oib-box-btn" (click)="importItems()" id="import-button">
+                  <span translate="south.items.import.button"></span>
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm oib-box-btn"
+                  (click)="deleteAllItems()"
+                  [disabled]="southConnector.items.length === 0"
+                  translate="south.items.delete-all"
+                  id="delete-all"
+                ></button>
+                <oib-help url="https://oibus.optimistik.com/docs/guide/south-connectors/common-settings#item-section" />
+              </div>
+            </div>
+          </ng-template>
+
+          <div class="mb-3">
+            @if (displayedItems.content.length > 0) {
+              <!-- Selection Controls - Between box header and table header -->
+              <div class="d-flex justify-content-between align-items-center my-2">
+                <div class="d-flex align-items-center selection-controls">
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    (click)="selectAll()"
+                    [disabled]="getSelectedItemsCount() === filteredItems.length"
+                    id="select-all-button"
+                  >
+                    <span class="fa fa-check-square me-1"></span>
+                    <span translate="south.items.select-all"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    (click)="unselectAll()"
+                    [disabled]="getSelectedItemsCount() === 0"
+                    id="unselect-all-button"
+                  >
+                    <span class="fa fa-square-o me-1"></span>
+                    <span translate="south.items.unselect-all"></span>
+                  </button>
+                  @if (getSelectedItemsCount() > 0) {
+                    <div ngbDropdown class="mass-actions-dropdown-container" [autoClose]="'outside'" [placement]="['bottom-end']">
+                      <button type="button" class="badge counter-badge mass-actions-button" ngbDropdownToggle id="mass-actions-dropdown">
+                        <span translate="south.items.mass-actions" [translateParams]="{ count: selectedItems.size }"></span>
+                        <span class="fa fa-caret-down ms-1"></span>
+                      </button>
+                      <div ngbDropdownMenu>
+                        <button type="button" ngbDropdownItem (click)="enableSelectedItems()">
+                          <span class="fa fa-check me-2"></span>
+                          <span translate="south.items.enable"></span>
+                        </button>
+                        <button type="button" ngbDropdownItem (click)="disableSelectedItems()">
+                          <span class="fa fa-times me-2"></span>
+                          <span translate="south.items.disable"></span>
+                        </button>
+                        <button type="button" ngbDropdownItem (click)="moveSelectedItemsToGroup()">
+                          <span class="fa fa-folder me-2"></span>
+                          <span translate="south.items.move-to-group"></span>
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button type="button" ngbDropdownItem (click)="deleteSelectedItems()" class="text-danger">
+                          <span class="fa fa-trash me-2"></span>
+                          <span translate="south.items.delete"></span>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <table class="mb-2 table table-sm table-hover oib-table">
+                <thead class="light">
+                  <tr>
+                    <th></th>
+                    <th style="width: 8rem; text-align: center">
+                      <span translate="south.items.status"></span>
+                    </th>
+                    <th class="w-25">
+                      <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
+                        <span translate="south.items.name" class="me-2"></span>
+                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+                      </button>
+                    </th>
+                    <th style="width: 10rem">
+                      <span translate="south.items.group"></span>
+                    </th>
+                    <th style="width: 8rem">
+                      <button
+                        type="button"
+                        style="background: none; border: none; font-weight: bold"
+                        (click)="toggleColumnSort('scanMode')"
+                      >
+                        <span translate="south.items.scan-mode" class="me-2"></span>
+                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.scanMode] }}"></span>
+                      </button>
+                    </th>
+                    <th style="width: 8rem"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of displayedItems.content; track item.name) {
+                    <tr class="south-item">
+                      <td style="text-align: center">
+                        <input
+                          type="checkbox"
+                          class="form-check-input"
+                          [checked]="selectedItems.has(item.name!)"
+                          (change)="toggleItemSelection(item)"
+                          style="width: 16px; height: 16px; cursor: pointer"
+                        />
+                      </td>
+                      <td class="text-center">
+                        @if (item.enabled) {
+                          <span translate="south.items.enabled-label"></span>
+                        } @else {
+                          <span translate="south.items.disabled-label"></span>
+                        }
+                      </td>
+                      <td>{{ item.name }}</td>
+                      <td>{{ getGroupName(item) }}</td>
+                      @if (item.scanMode.id === 'subscription') {
+                        <td translate="scan-mode.subscription"></td>
+                      } @else {
+                        <td>{{ item.scanMode.name }}</td>
+                      }
+                      <td class="text-nowrap action-buttons">
+                        <div class="pull-right">
+                          <!-- Edit button -->
+                          <button
+                            type="button"
+                            class="btn btn-link edit-south-item px-1 py-0"
+                            [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.edit' | translate"
+                            (click)="editItem(item)"
+                          >
+                            <span class="fa fa-pencil"></span>
+                          </button>
+                          <!-- View Last Value button -->
+                          <button
+                            type="button"
+                            class="btn btn-link view-item-last-value px-1 py-0"
+                            [ngbTooltip]="'south.items.view-last-value' | translate"
+                            (click)="viewItemLastValue(item)"
+                          >
+                            <span class="fa fa-search"></span>
+                          </button>
+                          <!-- Duplicate button -->
+                          <button
+                            type="button"
+                            class="btn btn-link duplicate-south-item px-1 py-0"
+                            [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.copy' | translate"
+                            (click)="duplicateItem(item)"
+                          >
+                            <span class="fa fa-copy"></span>
+                          </button>
+                          <!-- Delete button -->
+                          <button
+                            type="button"
+                            class="btn btn-link delete-south-item px-1 py-0"
+                            [ngbTooltip]="'configuration.oibus.manifest.south.tooltips.delete' | translate"
+                            (click)="deleteItem(item)"
+                          >
+                            <span class="fa fa-trash"></span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              @if (southConnector.items.length !== 0) {
+                <div class="oib-grey-container" translate="south.items.none-match"></div>
+              } @else {
+                <div class="oib-grey-container" translate="south.items.none"></div>
+              }
+            }
+            @if (displayedItems.totalElements) {
+              <div class="d-flex flex-row-reverse">
+                <div [class]="displayedItems.totalPages > 1 ? 'ms-2' : ''">
+                  <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)" />
+                </div>
+              </div>
+            }
+          </div>
+        </oib-box>
+
         <!-- Logs -->
         <oib-box>
           <ng-template oibBoxTitle>
@@ -91,7 +301,7 @@
             </div>
           </ng-template>
         </oib-box>
-        <oib-logs [scopeId]="southId" scopeType="south" [embedded]="true" />
+        <oib-logs [scopeId]="southConnector.id" scopeType="south" [embedded]="true" />
       </div>
     </div>
   </div>

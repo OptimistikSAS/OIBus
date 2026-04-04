@@ -137,6 +137,7 @@ describe('SouthSFTP', () => {
         updatedAt: ''
       }
     ],
+    groups: [],
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -450,6 +451,7 @@ describe('SouthFTP with preserve file and compression', () => {
       password: 'pass',
       compression: true
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -633,6 +635,7 @@ describe('SouthSFTP test connection with private key', () => {
       username: '',
       compression: false
     },
+    groups: [],
     items: [
       {
         id: 'id1',

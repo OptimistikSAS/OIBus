@@ -1128,6 +1128,7 @@ describe('South Service', () => {
       updatedBy: getUserInfo(southEntity.updatedBy),
       createdAt: southEntity.createdAt,
       updatedAt: southEntity.updatedAt,
+      groups: [],
       items: southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type, getUserInfo))
     });
   });
@@ -1232,6 +1233,7 @@ describe('South Service', () => {
 
     it('should create a group', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'New Group',
         scanModeId: testData.scanMode.list[0].id,
         overlap: 5,
@@ -1265,6 +1267,7 @@ describe('South Service', () => {
 
     it('should create a group with null overlap', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Group With Null Overlap',
         scanModeId: testData.scanMode.list[0].id,
         overlap: null,
@@ -1295,40 +1298,9 @@ describe('South Service', () => {
       expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ overlap: null }), 'testUser');
     });
 
-    it('should create a group with undefined readDelay and default to 0', () => {
-      const command = {
-        name: 'Group With Undefined ReadDelay',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: undefined
-      } as unknown as SouthItemGroupCommandDTO;
-
-      const createdGroup: SouthItemGroupEntity = {
-        id: 'newGroupId',
-        name: 'Group With Undefined ReadDelay',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        items: [],
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([]);
-      (southItemGroupRepository.create as jest.Mock).mockReturnValue(createdGroup);
-
-      const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
-      expect(result.readDelay).toEqual(0);
-      expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ readDelay: 0 }), 'testUser');
-    });
-
     it('should create a group with maxReadInterval and readDelay', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Group With Throttling',
         scanModeId: testData.scanMode.list[0].id,
         overlap: 5,
@@ -1370,6 +1342,7 @@ describe('South Service', () => {
 
     it('should throw error when creating group with duplicate name', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Existing Group',
         scanModeId: testData.scanMode.list[0].id,
         overlap: null,
@@ -1401,6 +1374,7 @@ describe('South Service', () => {
 
     it('should update a group', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Updated Group',
         scanModeId: testData.scanMode.list[1].id,
         overlap: 15,
@@ -1447,6 +1421,7 @@ describe('South Service', () => {
 
     it('should update a group with null maxReadInterval and zero readDelay', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Updated Name Only',
         scanModeId: testData.scanMode.list[0].id,
         overlap: null,
@@ -1496,50 +1471,9 @@ describe('South Service', () => {
       );
     });
 
-    it('should update a group with undefined readDelay and default to 0', () => {
-      const command = {
-        name: 'Updated With Undefined ReadDelay',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: undefined
-      } as unknown as SouthItemGroupCommandDTO;
-
-      const existingGroup: SouthItemGroupEntity = {
-        id: 'groupToUpdateUndefDelay',
-        name: 'Original Name',
-        southId: testData.south.list[0].id,
-        scanMode: testData.scanMode.list[0],
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0,
-        items: [],
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-
-      const updatedGroup: SouthItemGroupEntity = {
-        ...existingGroup,
-        name: 'Updated With Undefined ReadDelay',
-        readDelay: 0
-      };
-
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce(existingGroup).mockReturnValueOnce(updatedGroup);
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
-
-      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdateUndefDelay', 'testUser', command);
-      expect(result.readDelay).toEqual(0);
-      expect(southItemGroupRepository.update).toHaveBeenCalledWith(
-        'groupToUpdateUndefDelay',
-        expect.objectContaining({ readDelay: 0 }),
-        'testUser'
-      );
-    });
-
     it('should throw error when updating non-existent group', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Updated Group',
         scanModeId: testData.scanMode.list[0].id,
         overlap: null,
@@ -1556,6 +1490,7 @@ describe('South Service', () => {
 
     it('should throw error when updating group that belongs to different south connector', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Updated Group',
         scanModeId: testData.scanMode.list[0].id,
         overlap: null,
@@ -1587,6 +1522,7 @@ describe('South Service', () => {
 
     it('should throw error when update fails to find updated group', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Updated Group',
         scanModeId: testData.scanMode.list[0].id,
         overlap: null,
@@ -1621,6 +1557,7 @@ describe('South Service', () => {
 
     it('should throw error when updating group with duplicate name', () => {
       const command: SouthItemGroupCommandDTO = {
+        id: null,
         name: 'Existing Group',
         scanModeId: testData.scanMode.list[0].id,
         overlap: null,

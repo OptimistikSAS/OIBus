@@ -300,7 +300,8 @@ describe('EditHistoryQueryComponent', () => {
       description: historyQuery.description,
       enabled: true,
       settings: historyQuery.southSettings as SouthMSSQLSettings,
-      items: []
+      items: [],
+      groups: []
     };
     spyOnProperty(tester.componentInstance, 'southConnectorCommand', 'get').and.returnValue(southCommand as SouthConnectorCommandDTO);
 

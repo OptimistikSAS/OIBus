@@ -16,7 +16,7 @@ import { OIBusModbusValue } from '../../transformers/connector-types.model';
 import { connectSocket } from '../../service/utils-modbus';
 import { streamToString } from '../../service/utils';
 import { ReadStream } from 'node:fs';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // Mocks
 jest.mock('node:fs/promises');
@@ -70,7 +70,7 @@ describe('NorthModbus', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    configuration = buildNorthConfiguration<NorthModbusSettings>('modbus', {
+    configuration = buildNorthEntity<NorthModbusSettings>('modbus', {
       port: 502,
       host: '127.0.0.1',
       slaveId: 1,

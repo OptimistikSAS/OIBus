@@ -15,7 +15,7 @@ import { OIBusMQTTValue } from '../../transformers/connector-types.model';
 import { createConnectionOptions } from '../../service/utils-mqtt';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // Mocks
 jest.mock('node:fs/promises');
@@ -52,7 +52,7 @@ describe('NorthMQTT', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    configuration = buildNorthConfiguration<NorthMQTTSettings>('mqtt', {
+    configuration = buildNorthEntity<NorthMQTTSettings>('mqtt', {
       url: 'mqtt://localhost:1883',
       qos: '1',
       persistent: true,

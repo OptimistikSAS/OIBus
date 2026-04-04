@@ -55,6 +55,7 @@ describe('SouthOracle with authentication', () => {
       password: 'password',
       connectionTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -406,6 +407,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
       thickMode: true,
       oracleClient: 'path'
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -585,6 +587,7 @@ describe('SouthOracle test connection', () => {
       connectionTimeout: 1000,
       thickMode: false
     },
+    groups: [],
     items: [
       {
         id: 'id1',

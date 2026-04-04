@@ -120,7 +120,8 @@ describe('EditSouthComponent', () => {
         trustServerCertificate: true,
         requestTimeout: 5_000
       } as SouthMSSQLSettings,
-      items: []
+      items: [],
+      groups: []
     } as unknown as SouthConnectorDTO;
 
     beforeEach(async () => {

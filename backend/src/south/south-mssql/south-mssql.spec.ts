@@ -64,6 +64,7 @@ describe('SouthMSSQL with authentication', () => {
       requestTimeout: 1000,
       trustServerCertificate: true
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -350,6 +351,7 @@ describe('SouthMSSQL without authentication', () => {
       requestTimeout: 1000,
       trustServerCertificate: true
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -535,6 +537,7 @@ describe('SouthMSSQL test connection', () => {
       requestTimeout: 1000,
       trustServerCertificate: true
     },
+    groups: [],
     items: [
       {
         id: 'id1',

@@ -12,7 +12,7 @@ import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import { ReadStream } from 'node:fs';
 import { CacheMetadata } from '../../../shared/model/engine.model';
@@ -47,7 +47,7 @@ describe('NorthAzureBlob', () => {
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
     (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    configuration = buildNorthConfiguration<NorthAzureBlobSettings>('azure-blob', {
+    configuration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', {
       useCustomUrl: false,
       useADLS: false,
       account: 'account',
@@ -122,7 +122,7 @@ describe('NorthAzureBlob', () => {
       clientSecret: '',
       useProxy: false
     };
-    north.connectorConfiguration = buildNorthConfiguration<NorthAzureBlobSettings>('azure-blob', settings);
+    north.connectorConfiguration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', settings);
     const fileClient = {
       createIfNotExists: jest.fn(),
       exists: jest.fn().mockReturnValue(false),
@@ -161,7 +161,7 @@ describe('NorthAzureBlob', () => {
       clientSecret: '',
       useProxy: false
     };
-    north.connectorConfiguration = buildNorthConfiguration<NorthAzureBlobSettings>('azure-blob', settings);
+    north.connectorConfiguration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', settings);
     const fileClient = {
       createIfNotExists: jest.fn(),
       exists: jest.fn().mockReturnValue(true),
@@ -475,7 +475,7 @@ describe('NorthAzureBlob', () => {
       clientSecret: '',
       useProxy: false
     };
-    north.connectorConfiguration = buildNorthConfiguration<NorthAzureBlobSettings>('azure-blob', settings);
+    north.connectorConfiguration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', settings);
     const fileClient = {
       createIfNotExists: jest.fn().mockReturnValueOnce({ requestId: 'requestId1' }),
       append: jest.fn(),
@@ -516,7 +516,7 @@ describe('NorthAzureBlob', () => {
       clientSecret: '',
       useProxy: false
     };
-    north.connectorConfiguration = buildNorthConfiguration<NorthAzureBlobSettings>('azure-blob', settings);
+    north.connectorConfiguration = buildNorthEntity<NorthAzureBlobSettings>('azure-blob', settings);
     const fileClient = {
       createIfNotExists: jest.fn().mockReturnValueOnce({ requestId: 'requestId1' }),
       append: jest.fn(),

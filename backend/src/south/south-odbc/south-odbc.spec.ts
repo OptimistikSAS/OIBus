@@ -58,6 +58,7 @@ describe('SouthODBC odbc driver with authentication', () => {
       retryInterval: 1000,
       requestTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -440,6 +441,7 @@ describe('SouthODBC odbc driver without authentication', () => {
       retryInterval: 1000,
       requestTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -655,6 +657,7 @@ describe('SouthODBC odbc driver test connection', () => {
       retryInterval: 1000,
       requestTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -953,6 +956,7 @@ describe('SouthODBC odbc remote with authentication', () => {
       retryInterval: 1000,
       requestTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -1368,6 +1372,7 @@ describe('SouthODBC odbc remote test connection', () => {
       retryInterval: 1000,
       requestTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',

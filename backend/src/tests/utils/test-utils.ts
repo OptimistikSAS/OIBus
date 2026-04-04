@@ -32,6 +32,7 @@ import {
 import { BaseFolders } from 'src/model/types';
 import { Transformer, TransformerSource } from '../../model/transformer.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
+import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 
 const CONFIG_TEST_DATABASE = path.resolve('src', 'tests', 'test-config.db');
 const CRYPTO_TEST_DATABASE = path.resolve('src', 'tests', 'test-crypto.db');
@@ -782,17 +783,17 @@ const createHistoryQueryTransformer = async (
     .into('history_query_transformers');
 };
 
-export const buildNorthConfiguration = <T extends NorthSettings>(type: OIBusNorthType, settings: T): NorthConnectorEntity<T> => ({
-  id: 'northTest',
-  name: 'My north',
+export const buildNorthEntity = <T extends NorthSettings>(type: OIBusNorthType, settings: T): NorthConnectorEntity<T> => ({
+  id: 'northId',
+  createdBy: 'system',
+  updatedBy: 'system',
+  createdAt: testData.constants.dates.DATE_1,
+  updatedAt: testData.constants.dates.DATE_2,
+  name: 'myNorth',
+  description: 'desc',
   type: type,
-  description: 'my north connector',
   enabled: true,
   settings,
-  createdBy: testData.users.list[0].id,
-  updatedBy: testData.users.list[0].id,
-  createdAt: testData.constants.dates.FAKE_NOW,
-  updatedAt: testData.constants.dates.FAKE_NOW,
   caching: {
     trigger: {
       scanMode: testData.scanMode.list[0],
@@ -816,3 +817,44 @@ export const buildNorthConfiguration = <T extends NorthSettings>(type: OIBusNort
   },
   transformers: []
 });
+
+export const buildSouthEntity = <T extends SouthSettings, I extends SouthItemSettings>(
+  type: OIBusSouthType,
+  settings: T,
+  itemSettings: Array<I>
+): SouthConnectorEntity<T, I> => {
+  const index = 0;
+  const items: Array<SouthConnectorItemEntity<I>> = [];
+  for (const element of itemSettings) {
+    items.push({
+      id: `id${index}`,
+      createdBy: 'system',
+      updatedBy: 'system',
+      createdAt: testData.constants.dates.DATE_1,
+      updatedAt: testData.constants.dates.DATE_2,
+      name: `item${index}`,
+      enabled: true,
+      settings: element,
+      scanMode: testData.scanMode.list[0],
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      overlap: 0
+    });
+  }
+  return {
+    id: 'southId',
+    createdBy: 'system',
+    updatedBy: 'system',
+    createdAt: testData.constants.dates.DATE_1,
+    updatedAt: testData.constants.dates.DATE_2,
+    name: 'mySouth',
+    description: 'desc',
+    type,
+    enabled: true,
+    settings,
+    items,
+    groups: []
+  };
+};

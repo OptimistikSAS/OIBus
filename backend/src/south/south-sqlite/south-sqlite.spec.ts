@@ -13,8 +13,8 @@ import {
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
 import testData from '../../tests/utils/test-data';
+import { buildSouthEntity } from '../../tests/utils/test-utils';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
@@ -49,139 +49,85 @@ jest.mock(
 const logger: pino.Logger = new PinoLogger();
 const addContentCallback = jest.fn();
 
-describe('SouthSQLite', () => {
-  let south: SouthSQLite;
-  const configuration: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'sqlite',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      databasePath: './database.db'
-    },
-    items: [
+const connectorSettings: SouthSQLiteSettings = {
+  databasePath: './database.db'
+};
+const itemSettings: Array<SouthSQLiteItemSettings> = [
+  {
+    query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
+    dateTimeFields: [
       {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthSQLiteItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
+        fieldName: 'anotherTimestamp',
+        useAsReference: false,
+        type: 'unix-epoch-ms',
+        timezone: null,
+        format: null,
+        locale: null
+      } as unknown as SouthSQLiteItemSettingsDateTimeFields,
       {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query 2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query 3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthSQLiteItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
+        fieldName: 'timestamp',
+        useAsReference: true,
+        type: 'string',
+        timezone: 'Europe/Paris',
+        format: 'yyyy-MM-dd HH:mm:ss.SSS',
+        locale: 'en-US'
       }
     ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
+    serialization: {
+      type: 'csv',
+      filename: 'sql-@CurrentDate.csv',
+      delimiter: 'COMMA',
+      compression: true,
+      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      outputTimezone: 'Europe/Paris'
+    }
+  },
+  {
+    query: 'query 2',
+    dateTimeFields: null,
+    serialization: {
+      type: 'csv',
+      filename: 'sql-@CurrentDate.csv',
+      delimiter: 'COMMA',
+      compression: true,
+      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      outputTimezone: 'Europe/Paris'
+    }
+  },
+  {
+    query: 'query 3',
+    dateTimeFields: [
+      {
+        fieldName: 'anotherTimestamp',
+        useAsReference: false,
+        type: 'unix-epoch-ms',
+        timezone: null,
+        format: null,
+        locale: null
+      } as unknown as SouthSQLiteItemSettingsDateTimeFields,
+      {
+        fieldName: 'timestamp',
+        useAsReference: true,
+        type: 'string',
+        timezone: 'Europe/Paris',
+        format: 'yyyy-MM-dd HH:mm:ss.SSS',
+        locale: 'en-US'
+      }
+    ],
+    serialization: {
+      type: 'csv',
+      filename: 'sql-@CurrentDate.csv',
+      delimiter: 'COMMA',
+      compression: true,
+      outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      outputTimezone: 'Europe/Paris'
+    }
+  }
+];
+
+describe('SouthSQLite', () => {
+  let south: SouthSQLite;
+  const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', connectorSettings, itemSettings);
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -326,137 +272,7 @@ describe('SouthSQLite', () => {
 
 describe('SouthSQLite test connection', () => {
   let south: SouthSQLite;
-  const configuration: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'sqlite',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      databasePath: './database.db'
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthSQLiteItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthSQLiteItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
+  const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', connectorSettings, itemSettings);
 
   beforeEach(async () => {
     jest.clearAllMocks();

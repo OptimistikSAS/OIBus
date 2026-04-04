@@ -67,17 +67,16 @@
                 <td class="text-truncate" style="max-width: 200px">
                   <span [ngbTooltip]="item.name">{{ item.name }}</span>
                 </td>
-                @if (item.scanMode.id !== 'subscription' && scanModes.length > 0) {
+                @if (item.scanModeId !== 'subscription') {
                   <td class="text-truncate" style="max-width: 120px">
-                    <span [ngbTooltip]="item.scanMode.name">{{ item.scanMode.name }}</span>
+                    <span [ngbTooltip]="item.scanModeName">{{ item.scanModeName }}</span>
                   </td>
-                }
-                @if (item.scanMode.id === 'subscription' && scanModes.length > 0) {
+                } @else {
                   <td translate="scan-mode.subscription"></td>
                 }
                 <td class="text-truncate" style="max-width: 150px">
-                  <span [ngbTooltip]="item.group?.name || getGroupNoneText()">
-                    {{ item.group?.name || getGroupNoneText() }}
+                  <span [ngbTooltip]="item.groupName || getGroupNoneText()">
+                    {{ item.groupName || getGroupNoneText() }}
                   </span>
                 </td>
                 @for (setting of displaySettings; track setting) {

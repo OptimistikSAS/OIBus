@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
-import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
@@ -19,11 +19,9 @@ export class SelectGroupModalComponent {
   private fb = inject(NonNullableFormBuilder);
   private modalService = inject(ModalService);
 
-  groups: Array<SouthItemGroupDTO> = [];
-  southId!: string;
+  groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
   scanModes: Array<ScanModeDTO> = [];
   manifest!: SouthConnectorManifest;
-  inMemoryMode = false;
 
   form: FormGroup<{
     groupId: FormControl<string | null>;
@@ -48,26 +46,22 @@ export class SelectGroupModalComponent {
   }
 
   prepare(
-    groups: Array<SouthItemGroupDTO>,
-    southId: string,
+    groups: Array<SouthItemGroupDTO> | Array<SouthItemGroupCommandDTO>,
     scanModes: Array<ScanModeDTO>,
-    manifest: SouthConnectorManifest,
-    inMemoryMode = false
+    manifest: SouthConnectorManifest
   ) {
     this.groups = groups;
-    this.southId = southId;
     this.scanModes = scanModes;
     this.manifest = manifest;
-    this.inMemoryMode = inMemoryMode;
   }
 
   onCreateNewGroup() {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southId, this.scanModes, this.manifest, this.groups, this.inMemoryMode);
+    component.prepareForCreation(this.scanModes, this.groups, this.manifest);
 
     modalRef.result.subscribe({
-      next: (group: SouthItemGroupDTO) => {
+      next: (group: SouthItemGroupCommandDTO) => {
         if (group) {
           // Check if group already exists to avoid duplicates
           if (!this.groups.find(g => g.id === group.id)) {
