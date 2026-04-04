@@ -317,7 +317,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'number',
               key: 'maxFiles',
-              translationKey: 'configuration.oibus.manifest.south.ftp.max-files',
+              translationKey: 'configuration.oibus.manifest.south.items.ftp.max-files',
               defaultValue: 0,
               unit: null,
               validators: [
@@ -339,7 +339,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'number',
               key: 'maxSize',
-              translationKey: 'configuration.oibus.manifest.south.ftp.max-size',
+              translationKey: 'configuration.oibus.manifest.south.items.ftp.max-size',
               defaultValue: 0,
               unit: 'MB',
               validators: [
@@ -361,7 +361,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'boolean',
               key: 'recursive',
-              translationKey: 'configuration.oibus.manifest.south.ftp.recursive',
+              translationKey: 'configuration.oibus.manifest.south.items.ftp.recursive',
               defaultValue: false,
               validators: [
                 {
