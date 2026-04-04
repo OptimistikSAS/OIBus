@@ -43,6 +43,7 @@ describe('South OPC', () => {
       serverName: 'Matrikon.OPC.Simulation',
       mode: 'hda'
     },
+    groups: [],
     items: [
       {
         id: 'id1',

@@ -86,7 +86,7 @@ describe('SelectGroupModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new SelectGroupModalComponentTester();
-    tester.componentInstance.prepare([...groups], 'southId1', testData.scanMode.list.map(toScanModeDTO), testData.south.manifest);
+    tester.componentInstance.prepare([...groups], testData.scanMode.list.map(toScanModeDTO), testData.south.manifest);
     await tester.change();
   });
 
@@ -148,11 +148,9 @@ describe('SelectGroupModalComponent', () => {
 
     expect(modalService.open).toHaveBeenCalledWith(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     expect(mockModalRef.componentInstance.prepareForCreation).toHaveBeenCalledWith(
-      'southId1',
       testData.scanMode.list.map(toScanModeDTO),
-      testData.south.manifest,
       groups,
-      false // inMemoryMode
+      testData.south.manifest
     );
   });
 

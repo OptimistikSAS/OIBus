@@ -14,7 +14,7 @@ import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import { DateTime } from 'luxon';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // Mock Node modules
 jest.mock('node:fs/promises');
@@ -50,7 +50,7 @@ describe('NorthFileWriter', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    configuration = buildNorthConfiguration<NorthFileWriterSettings>('file-writer', {
+    configuration = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
       outputFolder: 'outputFolder',
       prefix: 'prefix_',
       suffix: '_suffix'
@@ -144,7 +144,7 @@ describe('NorthFileWriter', () => {
       contentType: 'any'
     };
 
-    north.connectorConfiguration = buildNorthConfiguration<NorthFileWriterSettings>('file-writer', {
+    north.connectorConfiguration = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
       outputFolder: 'outputFolder',
       prefix: '',
       suffix: ''

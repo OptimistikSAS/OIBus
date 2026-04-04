@@ -14,7 +14,7 @@ import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
 import fs from 'node:fs/promises';
 import { ReadStream } from 'node:fs';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // Mock dependencies
 jest.mock('node:fs/promises');
@@ -54,7 +54,7 @@ describe('NorthSFTP', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
 
-    configuration = buildNorthConfiguration<NorthSFTPSettings>('sftp', {
+    configuration = buildNorthEntity<NorthSFTPSettings>('sftp', {
       host: '127.0.0.1',
       port: 2222,
       remoteFolder: 'remoteFolder',

@@ -332,6 +332,7 @@ export default class SouthService {
       settings: await encryptionService.encryptConnectorSecrets(settingsToTest, southConnector?.settings || null, manifest.settings),
       name: southConnector ? southConnector.name : `${southType}:test-connection`,
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>>,
+      groups: [] as Array<SouthItemGroupEntityLight>,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -411,6 +412,7 @@ export default class SouthService {
       settings: await encryptionService.encryptConnectorSecrets(southSettings, southConnector?.settings || null, manifest.settings),
       name: `${southType}:test-connection`,
       items: [testItemToRun],
+      groups: [] as Array<SouthItemGroupEntityLight>,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -793,16 +795,14 @@ export default class SouthService {
     }
 
     const southConnector = this.findById(southId);
-    const overlap = command.overlap != null ? command.overlap : null;
-    const maxReadInterval = command.maxReadInterval != null ? command.maxReadInterval : null;
-    const readDelay = command.readDelay != null ? command.readDelay : 0;
+
     const groupEntity: SouthItemGroupCommand = {
       name: command.name,
       southId: southConnector.id,
       scanMode,
-      overlap,
-      maxReadInterval,
-      readDelay
+      overlap: command.overlap,
+      maxReadInterval: command.maxReadInterval,
+      readDelay: command.readDelay
     };
     return this.southItemGroupRepository.create(groupEntity, user);
   }
@@ -1030,6 +1030,18 @@ export const toSouthConnectorDTO = (
     enabled: southEntity.enabled,
     settings: encryptionService.filterSecrets(southEntity.settings, manifest.settings),
     items,
+    groups: southEntity.groups.map(group => ({
+      id: group.id,
+      name: group.name,
+      scanMode: toScanModeDTO(group.scanMode, getUserInfo),
+      maxReadInterval: group.maxReadInterval,
+      readDelay: group.readDelay,
+      overlap: group.overlap,
+      createdBy: getUserInfo(group.createdBy),
+      updatedBy: getUserInfo(group.updatedBy),
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt
+    })),
     createdBy: getUserInfo(southEntity.createdBy),
     updatedBy: getUserInfo(southEntity.updatedBy),
     createdAt: southEntity.createdAt,

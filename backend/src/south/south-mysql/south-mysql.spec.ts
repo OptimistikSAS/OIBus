@@ -52,6 +52,7 @@ describe('SouthMySQL with authentication', () => {
       password: 'password',
       connectionTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -392,6 +393,7 @@ describe('SouthMySQL without authentication', () => {
       password: null,
       connectionTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
@@ -573,6 +575,7 @@ describe('SouthMySQL test connection', () => {
       password: 'password',
       connectionTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',

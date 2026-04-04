@@ -454,6 +454,14 @@ export default class OIAnalyticsMessageService {
             scanModeId: item.scanMode.id,
             scanModeName: null,
             settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
+          })),
+          groups: south.groups.map(group => ({
+            id: group.id,
+            name: group.name,
+            scanModeId: group.scanMode.id,
+            overlap: group.overlap,
+            maxReadInterval: group.maxReadInterval,
+            readDelay: group.readDelay
           }))
         }
       };

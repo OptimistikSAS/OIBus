@@ -13,7 +13,7 @@ import CacheService from '../../service/cache/cache.service';
 import { createTransformer } from '../../service/transformer.service';
 import OIBusTransformer from '../../transformers/oibus-transformer';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 const mockSend = jest.fn();
 jest.mock('@aws-sdk/client-s3', () => {
@@ -62,7 +62,7 @@ describe('NorthAmazonS3', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    configuration = buildNorthConfiguration<NorthAmazonS3Settings>('aws-s3', {
+    configuration = buildNorthEntity<NorthAmazonS3Settings>('aws-s3', {
       region: 'eu-west-1',
       bucket: 'oibus',
       folder: 'myFolder',

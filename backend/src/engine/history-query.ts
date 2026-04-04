@@ -184,6 +184,7 @@ export default class HistoryQuery {
       type: historyQueryConfiguration.southType,
       settings: historyQueryConfiguration.southSettings,
       items: [],
+      groups: [],
       createdBy: historyQueryConfiguration.createdBy,
       updatedBy: historyQueryConfiguration.updatedBy,
       createdAt: historyQueryConfiguration.createdAt,

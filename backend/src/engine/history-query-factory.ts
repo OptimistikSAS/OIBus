@@ -84,6 +84,7 @@ export const buildHistoryQuery = (
       type: settings.southType,
       settings: settings.southSettings,
       items: [],
+      groups: [],
       createdBy: settings.createdBy,
       updatedBy: settings.updatedBy,
       createdAt: settings.createdAt,

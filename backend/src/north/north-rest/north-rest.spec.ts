@@ -11,7 +11,7 @@ import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import FormData from 'form-data';
 import EventEmitter from 'node:events';
-import { buildNorthConfiguration } from '../../tests/utils/test-utils';
+import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // --- Mocks ---
 jest.mock('../../service/http-request.utils');
@@ -54,7 +54,7 @@ describe('NorthREST', () => {
   beforeEach(() => {
     jest.clearAllMocks();
 
-    configuration = buildNorthConfiguration<NorthRESTSettings>('rest', {
+    configuration = buildNorthEntity<NorthRESTSettings>('rest', {
       host: 'https://api.example.com/',
       endpoint: '/upload',
       method: 'POST',

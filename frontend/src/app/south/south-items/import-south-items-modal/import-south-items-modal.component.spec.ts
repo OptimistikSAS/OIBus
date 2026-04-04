@@ -53,16 +53,14 @@ describe('ImportSouthItemsModalComponent', () => {
           name: 'item999',
           enabled: true,
           settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
-          scanMode: toScanModeDTO(testData.scanMode.list[0]),
-          group: null,
+          scanModeId: testData.scanMode.list[0].id,
+          scanModeName: testData.scanMode.list[0].name,
+          groupId: null,
+          groupName: null,
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null,
-          createdBy: { id: '', friendlyName: '' },
-          updatedBy: { id: '', friendlyName: '' },
-          createdAt: '',
-          updatedAt: ''
+          overlap: null
         }
       ],
       [{ item: { name: 'item2' }, error: '' }],
@@ -79,16 +77,14 @@ describe('ImportSouthItemsModalComponent', () => {
         name: 'item999',
         enabled: true,
         settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
-        scanMode: toScanModeDTO(testData.scanMode.list[0]),
-        group: null,
+        scanModeId: testData.scanMode.list[0].id,
+        scanModeName: testData.scanMode.list[0].name,
+        groupId: null,
+        groupName: null,
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
+        overlap: null
       }
     ]);
   }));

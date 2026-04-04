@@ -75,6 +75,7 @@ describe('SouthMQTT', () => {
       maxNumberOfMessages: 1,
       flushMessageTimeout: 1000
     },
+    groups: [],
     items: [
       {
         id: 'id1',
