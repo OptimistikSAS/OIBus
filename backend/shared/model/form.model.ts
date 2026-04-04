@@ -149,7 +149,7 @@ export interface OIBusEnablingCondition {
    *
    * @example "EQUALS"
    */
-  operator?: 'EQUALS' | 'CONTAINS';
+  operator?: 'EQUALS' | 'CONTAINS' | 'NOT_EQUAL';
 }
 
 /**
