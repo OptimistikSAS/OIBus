@@ -48,7 +48,7 @@
     "ads-client": "2.2.0",
     "argon2": "0.44.0",
     "basic-auth": "2.0.1",
-    "basic-ftp": "5.2.0",
+    "basic-ftp": "5.2.1",
     "better-sqlite3": "12.8.0",
     "cors": "2.8.6",
     "cron": "4.4.0",
