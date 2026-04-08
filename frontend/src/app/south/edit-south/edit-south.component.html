@@ -79,19 +79,11 @@
           <oib-box class="oib-south-items">
             <ng-template oibBoxTitle>
               <div class="d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center">
-                  <div>
-                    <span translate="south.items.title"></span>
-                    @if (filteredItems.length) {
-                      <span class="mx-1">({{ filteredItems.length }})</span>
-                    }
-                  </div>
-                  <input
-                    class="ms-4 form form-control oib-box-input-header"
-                    [formControl]="searchControl"
-                    [placeholder]="'south.items.search-placeholder' | translate"
-                    type="text"
-                  />
+                <div>
+                  <span translate="south.items.title"></span>
+                  @if (filteredItems.length) {
+                    <span class="mx-1">({{ filteredItems.length }})</span>
+                  }
                 </div>
                 <div class="ms-3">
                   <button
@@ -126,8 +118,36 @@
             </ng-template>
 
             <div class="mb-3">
+              <!-- Filter row -->
+              <div class="d-flex align-items-center gap-2 my-2">
+                <input
+                  class="form-control form-control-sm flex-grow-1"
+                  [formControl]="searchControl"
+                  [placeholder]="'south.items.search-placeholder' | translate"
+                  type="text"
+                />
+                <select class="form-select form-select-sm w-auto" [formControl]="groupFilterControl">
+                  <option [ngValue]="null" translate="south.items.all-groups"></option>
+                  <option value="none" translate="south.items.group-none"></option>
+                  @for (group of inMemoryGroups; track group.id) {
+                    <option [value]="group.id">{{ group.name }}</option>
+                  }
+                </select>
+                <select class="form-select form-select-sm w-auto" [formControl]="scanModeFilterControl">
+                  <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
+                  @for (scanMode of scanModes; track scanMode.id) {
+                    <option [value]="scanMode.id">{{ scanMode.name }}</option>
+                  }
+                </select>
+                <select class="form-select form-select-sm w-auto" [formControl]="statusFilterControl">
+                  <option [ngValue]="null" translate="south.items.all-statuses"></option>
+                  <option value="enabled" translate="south.items.enabled-label"></option>
+                  <option value="disabled" translate="south.items.disabled-label"></option>
+                </select>
+              </div>
+
               @if (displayedItems.content.length > 0) {
-                <!-- Selection Controls - Between box header and table header -->
+                <!-- Selection Controls -->
                 <div class="d-flex justify-content-between align-items-center my-2">
                   <div class="d-flex align-items-center selection-controls">
                     <button
@@ -184,17 +204,27 @@
                   <thead class="light">
                     <tr>
                       <th style="width: 50px; text-align: center"></th>
-                      <th style="width: 8rem; text-align: center">
-                        <span translate="south.items.status"></span>
+                      <th style="width: 6rem; text-align: center">
+                        <button
+                          type="button"
+                          style="background: none; border: none; font-weight: bold"
+                          (click)="toggleColumnSort('enabled')"
+                        >
+                          <span translate="south.items.status" class="me-2"></span>
+                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.enabled] }}"></span>
+                        </button>
                       </th>
-                      <th class="w-25">
+                      <th>
                         <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
                           <span translate="south.items.name" class="me-2"></span>
                           <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
                         </button>
                       </th>
-                      <th style="width: 10rem">
-                        <span translate="south.items.group"></span>
+                      <th style="width: 8rem">
+                        <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('group')">
+                          <span translate="south.items.group" class="me-2"></span>
+                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.group] }}"></span>
+                        </button>
                       </th>
                       <th style="width: 8rem">
                         <button

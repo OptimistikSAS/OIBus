@@ -332,7 +332,7 @@ const models: TsoaRoute.Models = {
             "targetPathFromRoot": {"dataType":"string","required":true},
             "referralPathFromRoot": {"dataType":"string","required":true},
             "values": {"dataType":"array","array":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"},{"dataType":"boolean"}]},"required":true},
-            "operator": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["EQUALS"]},{"dataType":"enum","enums":["CONTAINS"]}]},
+            "operator": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["EQUALS"]},{"dataType":"enum","enums":["CONTAINS"]},{"dataType":"enum","enums":["NOT_EQUAL"]}]},
         },
         "additionalProperties": false,
     },
