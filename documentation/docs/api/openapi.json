@@ -1058,7 +1058,8 @@
 						"type": "string",
 						"enum": [
 							"EQUALS",
-							"CONTAINS"
+							"CONTAINS",
+							"NOT_EQUAL"
 						],
 						"description": "Operator to use for the condition.\nEQUALS: The referral attribute value must be equal to one of the values.\nCONTAINS: The referral attribute value must contain one of the values (string only).",
 						"example": "EQUALS"

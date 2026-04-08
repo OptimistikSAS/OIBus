@@ -12,7 +12,9 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { EngineService } from '../../services/engine.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { CertificateService } from '../../services/certificate.service';
-import { SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorTypedDTO, SouthItemGroupDTO } from '../../../../../backend/shared/model/south-connector.model';
+import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../../backend/shared/model/south-settings.model';
+import { UserInfo } from '../../../../../backend/shared/model/types';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
@@ -58,6 +60,42 @@ describe('SouthDetailComponent', () => {
     items: testData.south.list[0].items.map(item => ({ ...item, group: null }))
   } as unknown as SouthConnectorDTO;
   const engineInfo = testData.engine.oIBusInfo;
+
+  const mockUser: UserInfo = { id: 'user1', friendlyName: 'Test User' };
+  const mockGroupScanMode: ScanModeDTO = {
+    id: 'scanModeId1',
+    name: 'scanMode1',
+    description: 'test',
+    cron: '* * * * *',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    createdBy: mockUser,
+    updatedBy: mockUser
+  };
+  const mockGroupA: SouthItemGroupDTO = {
+    id: 'g1',
+    name: 'GroupA',
+    scanMode: mockGroupScanMode,
+    overlap: null,
+    maxReadInterval: null,
+    readDelay: null,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    createdBy: mockUser,
+    updatedBy: mockUser
+  };
+  const mockGroupZ: SouthItemGroupDTO = {
+    id: 'g2',
+    name: 'Zebra',
+    scanMode: mockGroupScanMode,
+    overlap: null,
+    maxReadInterval: null,
+    readDelay: null,
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
+    createdBy: mockUser,
+    updatedBy: mockUser
+  };
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
@@ -142,5 +180,204 @@ describe('SouthDetailComponent', () => {
     await tester.toggleButton.click();
     expect(southConnectorService.start).toHaveBeenCalledWith(southConnector.id);
     expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnector.name });
+  });
+
+  it('should filter items by name', async () => {
+    await tester.change();
+    expect(tester.southItems.length).toBe(2);
+
+    tester.componentInstance.searchControl.setValue('item2');
+    await tester.change();
+
+    expect(tester.southItems.length).toBe(1);
+    expect(tester.southItems[0].elements('td')[2]).toContainText('item2');
+  });
+
+  it('should filter items by status', async () => {
+    await tester.change();
+    tester.componentInstance.statusFilterControl.setValue('disabled');
+    await tester.change();
+
+    expect(tester.southItems.length).toBe(0);
+
+    tester.componentInstance.statusFilterControl.setValue('enabled');
+    await tester.change();
+
+    expect(tester.southItems.length).toBe(2);
+  });
+
+  it('should sort items by name ascending then descending', async () => {
+    await tester.change();
+    const names = () => tester.southItems.map(row => row.elements('td')[2].nativeElement.textContent?.trim() ?? '');
+
+    tester.componentInstance.toggleColumnSort('name');
+    await tester.change();
+    expect(names()).toEqual(['item1', 'item2']);
+
+    tester.componentInstance.toggleColumnSort('name');
+    await tester.change();
+    expect(names()).toEqual(['item2', 'item1']);
+  });
+
+  it('should filter items by group id', async () => {
+    await tester.change();
+    const connector = tester.componentInstance.southConnector as SouthConnectorTypedDTO<
+      'folder-scanner',
+      SouthFolderScannerSettings,
+      SouthFolderScannerItemSettings
+    >;
+    connector.items = [
+      { ...connector.items[0], group: mockGroupA },
+      { ...connector.items[1], group: null }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+
+    tester.componentInstance.groupFilterControl.setValue('g1');
+    await tester.change();
+    expect(tester.southItems.length).toBe(1);
+    expect(tester.southItems[0].elements('td')[2]).toContainText('item1');
+  });
+
+  it('should filter items with no group using "none"', async () => {
+    await tester.change();
+    const connector = tester.componentInstance.southConnector as SouthConnectorTypedDTO<
+      'folder-scanner',
+      SouthFolderScannerSettings,
+      SouthFolderScannerItemSettings
+    >;
+    connector.items = [
+      { ...connector.items[0], group: mockGroupA },
+      { ...connector.items[1], group: null }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+
+    tester.componentInstance.groupFilterControl.setValue('none');
+    await tester.change();
+    expect(tester.southItems.length).toBe(1);
+    expect(tester.southItems[0].elements('td')[2]).toContainText('item2');
+  });
+
+  it('should filter items by scan mode', async () => {
+    await tester.change();
+    // item1 uses scanModeId1, item2 uses scanModeId2 (from testData)
+    tester.componentInstance.scanModeFilterControl.setValue('scanModeId1');
+    await tester.change();
+
+    expect(tester.southItems.length).toBe(1);
+    expect(tester.southItems[0].elements('td')[2]).toContainText('item1');
+  });
+
+  it('should sort items by enabled status', async () => {
+    await tester.change();
+    const connector = tester.componentInstance.southConnector as SouthConnectorTypedDTO<
+      'folder-scanner',
+      SouthFolderScannerSettings,
+      SouthFolderScannerItemSettings
+    >;
+    connector.items = [
+      { ...connector.items[0], enabled: false },
+      { ...connector.items[1], enabled: true }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+    const names = () => tester.southItems.map(row => row.elements('td')[2].nativeElement.textContent?.trim() ?? '');
+
+    tester.componentInstance.toggleColumnSort('enabled');
+    await tester.change();
+    // ascending: disabled first (0), then enabled (1)
+    expect(names()).toEqual(['item1', 'item2']);
+
+    tester.componentInstance.toggleColumnSort('enabled');
+    await tester.change();
+    // descending: enabled first (1), then disabled (0)
+    expect(names()).toEqual(['item2', 'item1']);
+  });
+
+  it('should sort items by createdAt', async () => {
+    await tester.change();
+    const connector = tester.componentInstance.southConnector as SouthConnectorTypedDTO<
+      'folder-scanner',
+      SouthFolderScannerSettings,
+      SouthFolderScannerItemSettings
+    >;
+    connector.items = [
+      { ...connector.items[0], createdAt: '2024-02-01T00:00:00.000Z' },
+      { ...connector.items[1], createdAt: '2024-01-01T00:00:00.000Z' }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+    const names = () => tester.southItems.map(row => row.elements('td')[2].nativeElement.textContent?.trim() ?? '');
+
+    tester.componentInstance.toggleColumnSort('createdAt');
+    await tester.change();
+    expect(names()).toEqual(['item2', 'item1']); // item2 has earlier date
+
+    tester.componentInstance.toggleColumnSort('createdAt');
+    await tester.change();
+    expect(names()).toEqual(['item1', 'item2']);
+  });
+
+  it('should sort items by updatedAt', async () => {
+    await tester.change();
+    const connector = tester.componentInstance.southConnector as SouthConnectorTypedDTO<
+      'folder-scanner',
+      SouthFolderScannerSettings,
+      SouthFolderScannerItemSettings
+    >;
+    connector.items = [
+      { ...connector.items[0], updatedAt: '2024-01-01T00:00:00.000Z' },
+      { ...connector.items[1], updatedAt: '2024-02-01T00:00:00.000Z' }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+    const names = () => tester.southItems.map(row => row.elements('td')[2].nativeElement.textContent?.trim() ?? '');
+
+    tester.componentInstance.toggleColumnSort('updatedAt');
+    await tester.change();
+    expect(names()).toEqual(['item1', 'item2']);
+
+    tester.componentInstance.toggleColumnSort('updatedAt');
+    await tester.change();
+    expect(names()).toEqual(['item2', 'item1']);
+  });
+
+  it('should sort items by group name', async () => {
+    await tester.change();
+    const connector = tester.componentInstance.southConnector as SouthConnectorTypedDTO<
+      'folder-scanner',
+      SouthFolderScannerSettings,
+      SouthFolderScannerItemSettings
+    >;
+    connector.items = [
+      { ...connector.items[0], group: mockGroupZ },
+      { ...connector.items[1], group: mockGroupA }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+    const names = () => tester.southItems.map(row => row.elements('td')[2].nativeElement.textContent?.trim() ?? '');
+
+    tester.componentInstance.toggleColumnSort('group');
+    await tester.change();
+    expect(names()).toEqual(['item2', 'item1']); // Alpha before Zebra
+
+    tester.componentInstance.toggleColumnSort('group');
+    await tester.change();
+    expect(names()).toEqual(['item1', 'item2']);
+  });
+
+  it('should sort items by scan mode name', async () => {
+    await tester.change();
+    // item1 uses scanMode1, item2 uses scanMode2 (alphabetically item1 < item2 for scan mode names)
+    const names = () => tester.southItems.map(row => row.elements('td')[2].nativeElement.textContent?.trim() ?? '');
+
+    tester.componentInstance.toggleColumnSort('scanMode');
+    await tester.change();
+    expect(names()).toEqual(['item1', 'item2']); // scanMode1 < scanMode2
+
+    tester.componentInstance.toggleColumnSort('scanMode');
+    await tester.change();
+    expect(names()).toEqual(['item2', 'item1']);
   });
 });

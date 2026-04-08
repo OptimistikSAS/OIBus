@@ -237,7 +237,7 @@ export default class SouthService {
     if (southEntity.enabled) {
       await this.engine.startSouth(southEntity.id);
     }
-    return southEntity;
+    return this.findById(southEntity.id);
   }
 
   async update(southId: string, command: SouthConnectorCommandDTO, updatedBy: string) {
