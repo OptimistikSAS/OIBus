@@ -36,7 +36,16 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
     if (this.connector.settings.thickMode && this.connector.settings.oracleClient) {
-      oracledb.initOracleClient({ libDir: path.resolve(this.connector.settings.oracleClient) });
+      try {
+        if (!oracledb.oracleClientVersion) {
+          oracledb.initOracleClient({ libDir: path.resolve(this.connector.settings.oracleClient) });
+          this.logger.info(`Successfully loaded Oracle Thick mode from ${path.resolve(this.connector.settings.oracleClient)}`);
+        }
+      } catch (err) {
+        this.logger.error(
+          `FATAL: Failed to initialize Oracle Thick mode. Falling back to Thin mode. Error details: ${(err as Error).message}`
+        );
+      }
     }
   }
 
