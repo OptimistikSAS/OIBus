@@ -7,11 +7,23 @@ import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../backend/shared/model/south-connector.model';
-import { SouthMSSQLSettings } from '../../../../../backend/shared/model/south-settings.model';
+import {
+  SouthConnectorDTO,
+  SouthConnectorItemCommandTypedDTO,
+  SouthConnectorManifest,
+  SouthConnectorTypedDTO
+} from '../../../../../backend/shared/model/south-connector.model';
+import {
+  SouthFolderScannerItemSettings,
+  SouthFolderScannerSettings,
+  SouthMSSQLSettings
+} from '../../../../../backend/shared/model/south-settings.model';
+import { UserInfo } from '../../../../../backend/shared/model/types';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CertificateService } from '../../services/certificate.service';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { NotificationService } from '../../shared/notification.service';
 
 class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   constructor() {
@@ -52,18 +64,24 @@ describe('EditSouthComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let certificateService: jasmine.SpyObj<CertificateService>;
+  let confirmationService: jasmine.SpyObj<ConfirmationService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     scanModeService = createMock(ScanModeService);
     certificateService = createMock(CertificateService);
+    confirmationService = createMock(ConfirmationService);
+    notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
-        { provide: CertificateService, useValue: certificateService }
+        { provide: CertificateService, useValue: certificateService },
+        { provide: ConfirmationService, useValue: confirmationService },
+        { provide: NotificationService, useValue: notificationService }
       ]
     });
 
@@ -925,6 +943,173 @@ describe('EditSouthComponent', () => {
 
       expect(tester.specificForm).toBeDefined();
       expect(tester.specificTitle).toContainText('MQTT settings');
+    });
+  });
+
+  describe('item filter and sort', () => {
+    const mockUser: UserInfo = { id: 'user1', friendlyName: 'Test User' };
+    const baseItem: SouthConnectorItemCommandTypedDTO<SouthFolderScannerItemSettings> = {
+      id: 'item1',
+      name: 'item1',
+      enabled: true,
+      scanModeId: 'scanModeId1',
+      scanModeName: 'scanMode1',
+      groupId: null,
+      groupName: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null,
+      settings: { regex: '.*', minAge: 0, preserveFiles: true, maxFiles: 1000, maxSize: 0, recursive: true }
+    };
+    const mockConnector: SouthConnectorTypedDTO<'folder-scanner', SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
+      id: 'id1',
+      type: 'folder-scanner',
+      name: 'Connector',
+      description: '',
+      enabled: true,
+      settings: { inputFolder: '/tmp', compression: false },
+      items: [],
+      groups: [],
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+      createdBy: mockUser,
+      updatedBy: mockUser
+    };
+
+    beforeEach(async () => {
+      TestBed.overrideProvider(ActivatedRoute, {
+        useValue: stubRoute({ queryParams: { type: 'SQL' } })
+      });
+
+      southConnectorService.findById.and.returnValue(of(mockConnector));
+
+      tester = new EditSouthComponentTester();
+      await tester.change();
+    });
+
+    it('should filter items by group id', async () => {
+      tester.componentInstance.inMemoryItems = [
+        { ...baseItem, name: 'item1', groupId: 'g1', groupName: 'GroupA' },
+        { ...baseItem, name: 'item2', groupId: null, groupName: null }
+      ];
+      tester.componentInstance.resetPage();
+      await tester.change();
+
+      tester.componentInstance.groupFilterControl.setValue('g1');
+      await tester.change();
+
+      const filtered = tester.componentInstance.filteredItems;
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].name).toBe('item1');
+    });
+
+    it('should filter items with no group using "none"', async () => {
+      tester.componentInstance.inMemoryItems = [
+        { ...baseItem, name: 'item1', groupId: 'g1', groupName: 'GroupA' },
+        { ...baseItem, name: 'item2', groupId: null, groupName: null }
+      ];
+      tester.componentInstance.resetPage();
+      await tester.change();
+
+      tester.componentInstance.groupFilterControl.setValue('none');
+      await tester.change();
+
+      const filtered = tester.componentInstance.filteredItems;
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].name).toBe('item2');
+    });
+
+    it('should filter items by scan mode id', async () => {
+      tester.componentInstance.inMemoryItems = [
+        { ...baseItem, name: 'item1', scanModeId: 'scanModeId1', scanModeName: 'scanMode1' },
+        { ...baseItem, name: 'item2', scanModeId: 'scanModeId2', scanModeName: 'scanMode2' }
+      ];
+      tester.componentInstance.resetPage();
+      await tester.change();
+
+      tester.componentInstance.scanModeFilterControl.setValue('scanModeId1');
+      await tester.change();
+
+      const filtered = tester.componentInstance.filteredItems;
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].name).toBe('item1');
+    });
+
+    it('should filter items by status', async () => {
+      tester.componentInstance.inMemoryItems = [
+        { ...baseItem, name: 'item1', enabled: true },
+        { ...baseItem, name: 'item2', enabled: false }
+      ];
+      tester.componentInstance.resetPage();
+      await tester.change();
+
+      tester.componentInstance.statusFilterControl.setValue('enabled');
+      await tester.change();
+
+      let filtered = tester.componentInstance.filteredItems;
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].name).toBe('item1');
+
+      tester.componentInstance.statusFilterControl.setValue('disabled');
+      await tester.change();
+
+      filtered = tester.componentInstance.filteredItems;
+      expect(filtered.length).toBe(1);
+      expect(filtered[0].name).toBe('item2');
+    });
+
+    it('should sort items by enabled status', async () => {
+      tester.componentInstance.inMemoryItems = [
+        { ...baseItem, name: 'item1', enabled: true },
+        { ...baseItem, name: 'item2', enabled: false }
+      ];
+      tester.componentInstance.resetPage();
+      await tester.change();
+
+      tester.componentInstance.toggleColumnSort('enabled');
+      await tester.change();
+      // ascending: disabled (0) first
+      expect(tester.componentInstance.filteredItems.map(i => i.name)).toEqual(['item2', 'item1']);
+
+      tester.componentInstance.toggleColumnSort('enabled');
+      await tester.change();
+      // descending: enabled (1) first
+      expect(tester.componentInstance.filteredItems.map(i => i.name)).toEqual(['item1', 'item2']);
+    });
+
+    it('should sort items by group name', async () => {
+      tester.componentInstance.inMemoryItems = [
+        { ...baseItem, name: 'item1', groupId: 'g2', groupName: 'Zebra' },
+        { ...baseItem, name: 'item2', groupId: 'g1', groupName: 'Alpha' }
+      ];
+      tester.componentInstance.resetPage();
+      await tester.change();
+
+      tester.componentInstance.toggleColumnSort('group');
+      await tester.change();
+      expect(tester.componentInstance.filteredItems.map(i => i.name)).toEqual(['item2', 'item1']); // Alpha < Zebra
+
+      tester.componentInstance.toggleColumnSort('group');
+      await tester.change();
+      expect(tester.componentInstance.filteredItems.map(i => i.name)).toEqual(['item1', 'item2']);
+    });
+
+    it('should sort items by scan mode name', async () => {
+      tester.componentInstance.inMemoryItems = [
+        { ...baseItem, name: 'item1', scanModeId: 'scanModeId2', scanModeName: 'scanMode2' },
+        { ...baseItem, name: 'item2', scanModeId: 'scanModeId1', scanModeName: 'scanMode1' }
+      ];
+      tester.componentInstance.resetPage();
+      await tester.change();
+
+      tester.componentInstance.toggleColumnSort('scanMode');
+      await tester.change();
+      expect(tester.componentInstance.filteredItems.map(i => i.name)).toEqual(['item2', 'item1']); // scanMode1 < scanMode2
+
+      tester.componentInstance.toggleColumnSort('scanMode');
+      await tester.change();
+      expect(tester.componentInstance.filteredItems.map(i => i.name)).toEqual(['item1', 'item2']);
     });
   });
 });

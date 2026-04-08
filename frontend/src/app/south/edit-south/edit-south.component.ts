@@ -16,7 +16,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, firstValueFrom, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, merge, Observable, of, switchMap, tap } from 'rxjs';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
@@ -56,6 +56,8 @@ const enum ColumnSortState {
 export interface TableData {
   name: string;
   scanMode: ScanModeDTO;
+  group: string;
+  enabled: boolean;
 }
 
 @Component({
@@ -122,6 +124,9 @@ export class EditSouthComponent implements CanComponentDeactivate {
   filteredItems: Array<SouthConnectorItemCommandDTO> = [];
   displayedItems: Page<SouthConnectorItemCommandDTO> = emptyPage();
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
+  groupFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
+  scanModeFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
+  statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
 
   inMemoryGroups: Array<SouthItemGroupCommandDTO> = [];
 
@@ -132,7 +137,9 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
     name: ColumnSortState.INDETERMINATE,
-    scanMode: ColumnSortState.INDETERMINATE
+    scanMode: ColumnSortState.INDETERMINATE,
+    group: ColumnSortState.INDETERMINATE,
+    enabled: ColumnSortState.INDETERMINATE
   };
   currentColumnSort: keyof TableData | null = 'name';
 
@@ -210,6 +217,16 @@ export class EditSouthComponent implements CanComponentDeactivate {
         this.resetPage();
         this.buildForm();
       });
+
+    // Subscribe to filter control changes
+    merge(
+      this.searchControl.valueChanges,
+      this.groupFilterControl.valueChanges,
+      this.scanModeFilterControl.valueChanges,
+      this.statusFilterControl.valueChanges
+    ).subscribe(() => {
+      this.resetPage();
+    });
   }
 
   canDeactivate(): Observable<boolean> | boolean {
@@ -519,7 +536,19 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   filter(): Array<SouthConnectorItemCommandDTO> {
     const searchText = this.searchControl.value || '';
-    return this.inMemoryItems.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
+    const groupFilter = this.groupFilterControl.value;
+    const scanModeFilter = this.scanModeFilterControl.value;
+    const statusFilter = this.statusFilterControl.value;
+
+    return this.inMemoryItems.filter(item => {
+      if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
+      if (groupFilter === 'none' && item.groupId) return false;
+      if (groupFilter && groupFilter !== 'none' && item.groupId !== groupFilter) return false;
+      if (scanModeFilter && item.scanModeId !== scanModeFilter) return false;
+      if (statusFilter === 'enabled' && !item.enabled) return false;
+      if (statusFilter === 'disabled' && item.enabled) return false;
+      return true;
+    });
   }
 
   getFieldValue(element: any, field: string): string {
@@ -563,6 +592,20 @@ export class EditSouthComponent implements CanComponentDeactivate {
               ? (a.scanModeName || '').localeCompare(b.scanModeName || '')
               : (b.scanModeName || '').localeCompare(a.scanModeName || '')
           );
+          break;
+        case 'group':
+          this.filteredItems.sort((a, b) => {
+            const aGroup = a.groupName || '';
+            const bGroup = b.groupName || '';
+            return ascending ? aGroup.localeCompare(bGroup) : bGroup.localeCompare(aGroup);
+          });
+          break;
+        case 'enabled':
+          this.filteredItems.sort((a, b) => {
+            const aVal = a.enabled ? 1 : 0;
+            const bVal = b.enabled ? 1 : 0;
+            return ascending ? aVal - bVal : bVal - aVal;
+          });
           break;
       }
     }
