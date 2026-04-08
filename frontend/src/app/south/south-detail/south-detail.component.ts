@@ -12,7 +12,7 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, firstValueFrom, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, merge, Observable, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -42,6 +42,7 @@ import { ImportItemModalComponent } from '../../shared/import-item-modal/import-
 import { OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { emptyPage } from '../../shared/test-utils';
+import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
@@ -57,6 +58,10 @@ const enum ColumnSortState {
 export interface TableData {
   name: string;
   scanMode: ScanModeDTO;
+  group: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 @Component({
@@ -80,7 +85,8 @@ export interface TableData {
     OibHelpComponent,
     PaginationComponent,
     ReactiveFormsModule,
-    NgbDropdownItem
+    NgbDropdownItem,
+    DatetimePipe
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
@@ -107,6 +113,9 @@ export class SouthDetailComponent implements OnDestroy {
   filteredItems: Array<SouthConnectorItemDTO> = [];
   displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   searchControl = inject(NonNullableFormBuilder).control(null as string | null);
+  groupFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
+  scanModeFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
+  statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
 
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
@@ -123,7 +132,11 @@ export class SouthDetailComponent implements OnDestroy {
 
   columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
     name: ColumnSortState.INDETERMINATE,
-    scanMode: ColumnSortState.INDETERMINATE
+    scanMode: ColumnSortState.INDETERMINATE,
+    group: ColumnSortState.INDETERMINATE,
+    enabled: ColumnSortState.INDETERMINATE,
+    createdAt: ColumnSortState.INDETERMINATE,
+    updatedAt: ColumnSortState.INDETERMINATE
   };
   currentColumnSort: keyof TableData | null = 'name';
 
@@ -189,6 +202,16 @@ export class SouthDetailComponent implements OnDestroy {
           }
         });
       });
+
+    // Subscribe to filter control changes
+    merge(
+      this.searchControl.valueChanges,
+      this.groupFilterControl.valueChanges,
+      this.scanModeFilterControl.valueChanges,
+      this.statusFilterControl.valueChanges
+    ).subscribe(() => {
+      this.resetPage();
+    });
   }
 
   addItem() {
@@ -544,7 +567,19 @@ export class SouthDetailComponent implements OnDestroy {
 
   filter(): Array<SouthConnectorItemDTO> {
     const searchText = this.searchControl.value || '';
-    return this.southConnector!.items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
+    const groupFilter = this.groupFilterControl.value;
+    const scanModeFilter = this.scanModeFilterControl.value;
+    const statusFilter = this.statusFilterControl.value;
+
+    return this.southConnector!.items.filter(item => {
+      if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
+      if (groupFilter === 'none' && item.group) return false;
+      if (groupFilter && groupFilter !== 'none' && item.group?.id !== groupFilter) return false;
+      if (scanModeFilter && item.scanMode.id !== scanModeFilter) return false;
+      if (statusFilter === 'enabled' && !item.enabled) return false;
+      if (statusFilter === 'disabled' && item.enabled) return false;
+      return true;
+    });
   }
 
   toggleColumnSort(columnName: keyof TableData) {
@@ -575,6 +610,30 @@ export class SouthDetailComponent implements OnDestroy {
             ascending
               ? (a as SouthConnectorItemDTO).scanMode.name.localeCompare((b as SouthConnectorItemDTO).scanMode.name)
               : (b as SouthConnectorItemDTO).scanMode.name.localeCompare((a as SouthConnectorItemDTO).scanMode.name)
+          );
+          break;
+        case 'group':
+          this.filteredItems.sort((a, b) => {
+            const aGroup = a.group?.name || '';
+            const bGroup = b.group?.name || '';
+            return ascending ? aGroup.localeCompare(bGroup) : bGroup.localeCompare(aGroup);
+          });
+          break;
+        case 'enabled':
+          this.filteredItems.sort((a, b) => {
+            const aVal = a.enabled ? 1 : 0;
+            const bVal = b.enabled ? 1 : 0;
+            return ascending ? aVal - bVal : bVal - aVal;
+          });
+          break;
+        case 'createdAt':
+          this.filteredItems.sort((a, b) =>
+            ascending ? (a.createdAt || '').localeCompare(b.createdAt || '') : (b.createdAt || '').localeCompare(a.createdAt || '')
+          );
+          break;
+        case 'updatedAt':
+          this.filteredItems.sort((a, b) =>
+            ascending ? (a.updatedAt || '').localeCompare(b.updatedAt || '') : (b.updatedAt || '').localeCompare(a.updatedAt || '')
           );
           break;
       }

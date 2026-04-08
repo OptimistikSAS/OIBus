@@ -21,6 +21,8 @@ import testData from '../../../../../backend/src/tests/utils/test-data';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { DateRange } from '../../shared/date-range-selector/date-range-selector.component';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { NotificationService } from '../../shared/notification.service';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -62,6 +64,22 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
   get sharedConnection() {
     return this.input('#south-shared-connection');
   }
+
+  get items() {
+    return this.elements('tbody tr.south-item');
+  }
+
+  get tableItemNames() {
+    return this.elements<HTMLTableCellElement>('tbody tr.south-item td:nth-child(3)').map(e => e.nativeElement.textContent?.trim() ?? '');
+  }
+
+  get sortByNameBtn() {
+    return this.button('button:has( > span[translate="history-query.items.name"])')!;
+  }
+
+  get deleteAllButton() {
+    return this.button('#delete-all')!;
+  }
 }
 
 describe('EditHistoryQueryComponent', () => {
@@ -73,6 +91,8 @@ describe('EditHistoryQueryComponent', () => {
   let certificateService: jasmine.SpyObj<CertificateService>;
   let transformerService: jasmine.SpyObj<TransformerService>;
   let modalService: jasmine.SpyObj<ModalService>;
+  let confirmationService: jasmine.SpyObj<ConfirmationService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
 
   const historyQuery: HistoryQueryDTO = {
     id: 'id1',
@@ -176,6 +196,8 @@ describe('EditHistoryQueryComponent', () => {
     certificateService = createMock(CertificateService);
     transformerService = createMock(TransformerService);
     modalService = createMock(ModalService);
+    confirmationService = createMock(ConfirmationService);
+    notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -195,7 +217,9 @@ describe('EditHistoryQueryComponent', () => {
             }
           })
         },
-        { provide: ModalService, useValue: modalService }
+        { provide: ModalService, useValue: modalService },
+        { provide: ConfirmationService, useValue: confirmationService },
+        { provide: NotificationService, useValue: notificationService }
       ]
     });
 
@@ -207,6 +231,7 @@ describe('EditHistoryQueryComponent', () => {
     historyQueryService.findById.and.returnValue(of(historyQuery));
     northConnectorService.getNorthManifest.and.returnValue(of(testData.north.manifest));
     southConnectorService.getSouthManifest.and.returnValue(of(testData.south.manifest));
+    confirmationService.confirm.and.returnValue(of(undefined));
 
     tester = new EditHistoryQueryComponentTester();
     await tester.change();
@@ -394,5 +419,99 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     expect(tester.componentInstance.form?.valid).toBeTruthy();
+  });
+
+  it('should display items from history query', async () => {
+    await tester.change();
+    expect(tester.items.length).toBe(1);
+    expect(tester.tableItemNames).toEqual(['item1']);
+  });
+
+  it('should delete item in memory without calling API', async () => {
+    tester.items[0].button('.delete-south-item')!.click();
+    await tester.change();
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    expect(tester.items.length).toBe(0);
+    expect(historyQueryService.deleteItem).not.toHaveBeenCalled();
+  });
+
+  it('should sort items by name', async () => {
+    // Add a second item in memory to test sort
+    tester.componentInstance.inMemoryItems = [
+      ...tester.componentInstance.inMemoryItems,
+      { id: null, name: 'aaa-item', enabled: true, settings: {} as SouthMSSQLItemSettings }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+
+    expect(tester.tableItemNames).toEqual(['item1', 'aaa-item']);
+
+    tester.sortByNameBtn.click();
+    expect(tester.tableItemNames).toEqual(['aaa-item', 'item1']);
+
+    tester.sortByNameBtn.click();
+    expect(tester.tableItemNames).toEqual(['item1', 'aaa-item']);
+  });
+
+  it('should filter items by name', async () => {
+    tester.componentInstance.inMemoryItems = [
+      ...tester.componentInstance.inMemoryItems,
+      { id: null, name: 'other-item', enabled: true, settings: {} as SouthMSSQLItemSettings }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+
+    expect(tester.items.length).toBe(2);
+
+    tester.componentInstance.searchControl.setValue('other');
+    await tester.change();
+
+    expect(tester.tableItemNames).toEqual(['other-item']);
+  });
+
+  it('should filter items by status', async () => {
+    tester.componentInstance.inMemoryItems = [
+      ...tester.componentInstance.inMemoryItems,
+      { id: null, name: 'disabled-item', enabled: false, settings: {} as SouthMSSQLItemSettings }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+
+    tester.componentInstance.statusFilterControl.setValue('enabled');
+    await tester.change();
+    expect(tester.tableItemNames).toEqual(['item1']);
+
+    tester.componentInstance.statusFilterControl.setValue('disabled');
+    await tester.change();
+    expect(tester.tableItemNames).toEqual(['disabled-item']);
+  });
+
+  it('should delete all items in memory without calling API', async () => {
+    tester.deleteAllButton.click();
+    await tester.change();
+
+    expect(confirmationService.confirm).toHaveBeenCalledTimes(1);
+    expect(tester.items.length).toBe(0);
+    expect(historyQueryService.deleteAllItems).not.toHaveBeenCalled();
+  });
+
+  it('should sort items by enabled status', async () => {
+    tester.componentInstance.inMemoryItems = [
+      ...tester.componentInstance.inMemoryItems,
+      { id: null, name: 'disabled-item', enabled: false, settings: {} as SouthMSSQLItemSettings }
+    ];
+    tester.componentInstance.resetPage();
+    await tester.change();
+
+    tester.componentInstance.toggleColumnSort('enabled');
+    await tester.change();
+    // ascending: disabled (0) first
+    expect(tester.tableItemNames).toEqual(['disabled-item', 'item1']);
+
+    tester.componentInstance.toggleColumnSort('enabled');
+    await tester.change();
+    // descending: enabled (1) first
+    expect(tester.tableItemNames).toEqual(['item1', 'disabled-item']);
   });
 });

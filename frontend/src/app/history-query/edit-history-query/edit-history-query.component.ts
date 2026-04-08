@@ -1,5 +1,5 @@
 import { Component, forwardRef, inject, OnInit } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import {
   AbstractControl,
@@ -13,7 +13,7 @@ import {
 } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, merge, Observable, of, switchMap, tap } from 'rxjs';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import {
@@ -39,7 +39,6 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { HistoryQueryItemsComponent } from '../history-query-items/history-query-items.component';
 import { DateTime } from 'luxon';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
@@ -58,13 +57,35 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
 import { addAttributeToForm, addEnablingConditions } from '../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { OIBusScanModeFormControlComponent } from '../../shared/form/oibus-scan-mode-form-control/oibus-scan-mode-form-control.component';
-import { OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
+import { OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { DateRange, DateRangeSelectorComponent } from '../../shared/date-range-selector/date-range-selector.component';
 import { HistoryQueryTransformersComponent } from '../history-query-transformers/history-query-transformers.component';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
+import { emptyPage } from '../../shared/test-utils';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
+import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
+import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
+import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
+
+const PAGE_SIZE = 20;
+
+const enum ColumnSortState {
+  INDETERMINATE = 0,
+  ASCENDING = 1,
+  DESCENDING = 2
+}
+
+export interface TableData {
+  name: string;
+  enabled: boolean;
+}
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -75,7 +96,6 @@ import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
     BackNavigationDirective,
     BoxComponent,
     BoxTitleDirective,
-    HistoryQueryItemsComponent,
     OibHelpComponent,
     OIBusNorthTypeEnumPipe,
     OIBusSouthTypeEnumPipe,
@@ -83,7 +103,14 @@ import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
     OI_FORM_VALIDATION_DIRECTIVES,
     OIBusScanModeFormControlComponent,
     OIBusObjectFormControlComponent,
-    HistoryQueryTransformersComponent
+    HistoryQueryTransformersComponent,
+    TranslatePipe,
+    NgbTooltip,
+    NgbDropdown,
+    NgbDropdownMenu,
+    NgbDropdownToggle,
+    NgbDropdownItem,
+    PaginationComponent
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss',
@@ -108,6 +135,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
+  private confirmationService = inject(ConfirmationService);
+  private translateService = inject(TranslateService);
 
   mode: 'create' | 'edit' = 'create';
   historyId!: string;
@@ -123,7 +152,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   northType: OIBusNorthType | null = null;
   fromNorthId = '';
   duplicateId = '';
-  saveItemChangesDirectly!: boolean;
   existingHistoryQueries: Array<HistoryQueryLightDTO> = [];
 
   form: FormGroup<{
@@ -161,6 +189,22 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
 
   inMemoryTransformersWithOptions: Array<HistoryTransformerDTOWithOptions> = [];
   inMemoryItems: Array<HistoryQueryItemCommandDTO> = [];
+
+  // Item list management
+  filteredItems: Array<HistoryQueryItemCommandDTO> = [];
+  displayedItems: Page<HistoryQueryItemCommandDTO> = emptyPage();
+  searchControl = inject(NonNullableFormBuilder).control(null as string | null);
+  statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
+
+  selectedItems = new Map<string, HistoryQueryItemCommandDTO>();
+  isAllSelected = false;
+  isIndeterminate = false;
+
+  columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
+    name: ColumnSortState.INDETERMINATE,
+    enabled: ColumnSortState.INDETERMINATE
+  };
+  currentColumnSort: keyof TableData | null = 'name';
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
     key: 'scanMode',
@@ -260,7 +304,13 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         this.northManifest = northManifest;
         this.southManifest = southManifest;
         this.buildForm(northConnector, southConnector);
+        this.resetPage();
       });
+
+    // Subscribe to filter control changes
+    merge(this.searchControl.valueChanges, this.statusFilterControl.valueChanges).subscribe(() => {
+      this.resetPage();
+    });
   }
 
   private checkUniqueness(): ValidatorFn {
@@ -440,15 +490,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
           retentionDuration: formValue.caching!.archive!.retentionDuration!
         }
       },
-      items:
-        this.saveItemChangesDirectly && this.historyQuery
-          ? this.historyQuery.items.map(item => ({
-              id: item.id,
-              name: item.name,
-              enabled: item.enabled,
-              settings: item.settings
-            }))
-          : this.inMemoryItems,
+      items: this.inMemoryItems,
       northTransformers: this.inMemoryTransformersWithOptions.map(element => ({
         id: element.id,
         transformer: element.transformer,
@@ -507,17 +549,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     }
   }
 
-  updateInMemoryItems(items: Array<HistoryQueryItemCommandDTO> | null) {
-    if (items) {
-      this.inMemoryItems = items;
-    } else {
-      this.historyQueryService.findById(this.historyQuery!.id).subscribe(historyQuery => {
-        this.historyQuery!.items = historyQuery.items;
-        this.historyQuery = JSON.parse(JSON.stringify(this.historyQuery)); // Used to force a refresh in a history query item list
-      });
-    }
-  }
-
   test(type: 'south' | 'north') {
     // Only validate the relevant settings group depending on type
     if (type === 'south') {
@@ -562,5 +593,254 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       settings: formValue.northSettings,
       caching: formValue.caching
     } as NorthConnectorCommandDTO;
+  }
+
+  // Item management methods (in-memory)
+
+  addItem() {
+    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, {
+      size: 'xl',
+      beforeDismiss: () => {
+        const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
+    const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+    component.prepareForCreation(this.inMemoryItems, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
+    modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
+      this.inMemoryItems = [
+        ...this.inMemoryItems,
+        { id: command.id ?? null, name: command.name, enabled: command.enabled, settings: command.settings } as any
+      ];
+      this.resetPage();
+    });
+  }
+
+  editItem(item: HistoryQueryItemCommandDTO) {
+    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, {
+      size: 'xl',
+      beforeDismiss: () => {
+        const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+        const result = component.canDismiss();
+        return typeof result === 'boolean' ? result : firstValueFrom(result);
+      }
+    });
+    const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+    const tableIndex = this.inMemoryItems.findIndex(i => i.id === item.id || i.name === item.name);
+    component.prepareForEdition(
+      this.inMemoryItems,
+      item,
+      this.historyId,
+      this.fromSouthId,
+      this.southConnectorCommand,
+      this.southManifest!,
+      tableIndex
+    );
+    modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
+      const updated = this.inMemoryItems.filter(i => i.name !== item.name);
+      updated.splice(tableIndex, 0, { ...item, ...command });
+      this.inMemoryItems = updated;
+      this.resetPage();
+    });
+  }
+
+  duplicateItem(item: HistoryQueryItemCommandDTO) {
+    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
+    const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+    component.prepareForCopy(this.inMemoryItems, item, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
+    modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
+      this.inMemoryItems = [
+        ...this.inMemoryItems,
+        { id: command.id ?? null, name: command.name, enabled: command.enabled, settings: command.settings } as any
+      ];
+      this.resetPage();
+    });
+  }
+
+  deleteItem(item: HistoryQueryItemCommandDTO) {
+    this.confirmationService.confirm({ messageKey: 'history-query.items.confirm-deletion' }).subscribe(() => {
+      this.inMemoryItems = this.inMemoryItems.filter(i => i.name !== item.name);
+      this.resetPage();
+    });
+  }
+
+  deleteAllItems() {
+    this.confirmationService.confirm({ messageKey: 'history-query.items.confirm-delete-all' }).subscribe(() => {
+      this.inMemoryItems = [];
+      this.resetPage();
+    });
+  }
+
+  exportItems() {
+    const modalRef = this.modalService.open(ExportItemModalComponent, { backdrop: 'static' });
+    const filename = `${this.historyQuery?.name || 'items'}`;
+    modalRef.componentInstance.prepare(filename);
+    modalRef.result.subscribe(response => {
+      if (!response) return;
+      if (this.historyId === 'create') {
+        this.historyQueryService.itemsToCsv(this.southManifest!.id, this.inMemoryItems, response.filename, response.delimiter).subscribe();
+      } else {
+        this.historyQueryService.exportItems(this.historyId, response.filename, response.delimiter).subscribe();
+      }
+    });
+  }
+
+  importItems() {
+    const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
+    const expectedHeaders = ['name', 'enabled'];
+    const optionalHeaders: Array<string> = ['scanMode'];
+    const settingsAttribute = this.southManifest!.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+    settingsAttribute.attributes.forEach(setting => {
+      if (settingsAttribute.enablingConditions.find(element => element.targetPathFromRoot === setting.key)) {
+        optionalHeaders.push(`settings_${setting.key}`);
+      } else {
+        expectedHeaders.push(`settings_${setting.key}`);
+      }
+    });
+    modalRef.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false);
+    modalRef.result.subscribe(response => {
+      if (!response) return;
+      this.checkImportItems(response.file, response.delimiter);
+    });
+  }
+
+  checkImportItems(file: File, delimiter: string) {
+    this.historyQueryService.checkImportItems(this.southManifest!.id, this.inMemoryItems, file, delimiter).subscribe(result => {
+      const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
+      const component: ImportHistoryQueryItemsModalComponent = modalRef.componentInstance;
+      component.prepare(this.southManifest!, this.inMemoryItems, result.items, result.errors);
+      modalRef.result.subscribe((newItems: Array<HistoryQueryItemCommandDTO>) => {
+        this.inMemoryItems = [...this.inMemoryItems, ...newItems];
+        this.resetPage();
+      });
+    });
+  }
+
+  getFieldValue(element: any, field: string): string {
+    const settingsAttribute = this.southManifest!.items.rootAttribute.attributes.find(
+      attribute => attribute.key === 'settings'
+    )! as OIBusObjectAttribute;
+
+    const foundFormControl = settingsAttribute.attributes.find(formControl => formControl.key === field);
+    if (foundFormControl && element[field] && foundFormControl.type === 'string-select') {
+      return this.translateService.instant(foundFormControl.translationKey + '.' + element[field]);
+    }
+    return element[field];
+  }
+
+  // Filter, sort, pagination
+
+  resetPage() {
+    this.filteredItems = this.filter();
+    this.changePage(0);
+  }
+
+  changePage(pageNumber: number) {
+    this.sortTable();
+    this.displayedItems = createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
+  }
+
+  filter(): Array<HistoryQueryItemCommandDTO> {
+    const searchText = this.searchControl.value || '';
+    const statusFilter = this.statusFilterControl.value;
+
+    return this.inMemoryItems.filter(item => {
+      if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
+      if (statusFilter === 'enabled' && !item.enabled) return false;
+      if (statusFilter === 'disabled' && item.enabled) return false;
+      return true;
+    });
+  }
+
+  toggleColumnSort(columnName: keyof TableData) {
+    this.currentColumnSort = columnName;
+    this.columnSortStates[this.currentColumnSort] = (this.columnSortStates[this.currentColumnSort] + 1) % 3;
+    Object.keys(this.columnSortStates).forEach(key => {
+      if (this.currentColumnSort !== key) {
+        this.columnSortStates[key as keyof typeof this.columnSortStates] = 0;
+      }
+    });
+    this.changePage(0);
+  }
+
+  private sortTable() {
+    if (this.currentColumnSort && this.columnSortStates[this.currentColumnSort] !== ColumnSortState.INDETERMINATE) {
+      const ascending = this.columnSortStates[this.currentColumnSort] === ColumnSortState.ASCENDING;
+      switch (this.currentColumnSort) {
+        case 'name':
+          this.filteredItems.sort((a, b) => (ascending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)));
+          break;
+        case 'enabled':
+          this.filteredItems.sort((a, b) => {
+            const aVal = a.enabled ? 1 : 0;
+            const bVal = b.enabled ? 1 : 0;
+            return ascending ? aVal - bVal : bVal - aVal;
+          });
+          break;
+      }
+    }
+  }
+
+  // Mass action methods
+
+  toggleItemSelection(item: HistoryQueryItemCommandDTO) {
+    if (this.selectedItems.has(item.name)) {
+      this.selectedItems.delete(item.name);
+    } else {
+      this.selectedItems.set(item.name, item);
+    }
+    this.updateSelectionState();
+  }
+
+  selectAll() {
+    this.filteredItems.forEach(item => this.selectedItems.set(item.name, item));
+    this.updateSelectionState();
+  }
+
+  unselectAll() {
+    this.selectedItems.clear();
+    this.updateSelectionState();
+  }
+
+  updateSelectionState() {
+    const totalItems = this.filteredItems.length;
+    const selectedCount = this.selectedItems.size;
+    this.isAllSelected = selectedCount === totalItems && totalItems > 0;
+    this.isIndeterminate = selectedCount > 0 && selectedCount < totalItems;
+  }
+
+  getSelectedItemsCount(): number {
+    return this.selectedItems.size;
+  }
+
+  enableSelectedItems() {
+    this.inMemoryItems = this.inMemoryItems.map(item => (this.selectedItems.has(item.name) ? { ...item, enabled: true } : item));
+    this.selectedItems.clear();
+    this.updateSelectionState();
+    this.resetPage();
+  }
+
+  disableSelectedItems() {
+    this.inMemoryItems = this.inMemoryItems.map(item => (this.selectedItems.has(item.name) ? { ...item, enabled: false } : item));
+    this.selectedItems.clear();
+    this.updateSelectionState();
+    this.resetPage();
+  }
+
+  deleteSelectedItems() {
+    this.confirmationService
+      .confirm({
+        messageKey: 'history-query.items.delete-multiple-message',
+        interpolateParams: { count: this.selectedItems.size.toString() }
+      })
+      .subscribe(() => {
+        this.inMemoryItems = this.inMemoryItems.filter(item => !this.selectedItems.has(item.name));
+        this.selectedItems.clear();
+        this.updateSelectionState();
+        this.resetPage();
+      });
   }
 }
