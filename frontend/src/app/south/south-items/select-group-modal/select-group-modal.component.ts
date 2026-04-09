@@ -7,6 +7,7 @@ import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { Observable, switchMap } from 'rxjs';
 
 @Component({
   selector: 'oib-select-group-modal',
@@ -22,6 +23,10 @@ export class SelectGroupModalComponent {
   groups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
   scanModes: Array<ScanModeDTO> = [];
   manifest!: SouthConnectorManifest;
+  private addOrEditGroupFn!: (command: {
+    mode: 'create' | 'edit';
+    group: SouthItemGroupCommandDTO;
+  }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>;
 
   form: FormGroup<{
     groupId: FormControl<string | null>;
@@ -48,11 +53,16 @@ export class SelectGroupModalComponent {
   prepare(
     groups: Array<SouthItemGroupDTO> | Array<SouthItemGroupCommandDTO>,
     scanModes: Array<ScanModeDTO>,
-    manifest: SouthConnectorManifest
+    manifest: SouthConnectorManifest,
+    addOrEditGroup: (command: {
+      mode: 'create' | 'edit';
+      group: SouthItemGroupCommandDTO;
+    }) => Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO>
   ) {
     this.groups = groups;
     this.scanModes = scanModes;
     this.manifest = manifest;
+    this.addOrEditGroupFn = addOrEditGroup;
   }
 
   onCreateNewGroup() {
@@ -60,18 +70,21 @@ export class SelectGroupModalComponent {
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
     component.prepareForCreation(this.scanModes, this.groups, this.manifest);
 
-    modalRef.result.subscribe({
-      next: (group: SouthItemGroupCommandDTO) => {
-        if (group) {
-          // Check if group already exists to avoid duplicates
+    modalRef.result
+      .pipe(
+        switchMap((result: { mode: 'create' | 'edit'; group: SouthItemGroupCommandDTO }) => {
+          return this.addOrEditGroupFn(result);
+        })
+      )
+      .subscribe({
+        next: (group: SouthItemGroupDTO | SouthItemGroupCommandDTO) => {
           if (!this.groups.find(g => g.id === group.id)) {
             this.groups.push(group);
           }
           this.form.controls.groupId.setValue(group.id);
-        }
-      },
-      error: () => {}
-    });
+        },
+        error: () => {}
+      });
   }
 
   cancel() {

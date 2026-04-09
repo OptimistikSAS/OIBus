@@ -709,7 +709,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
     const modalRef = this.modalService.open(SelectGroupModalComponent, { backdrop: 'static' });
     const component: SelectGroupModalComponent = modalRef.componentInstance;
-    component.prepare(this.inMemoryGroups, this.scanModes, this.manifest!);
+    component.prepare(this.inMemoryGroups, this.scanModes, this.manifest!, command => this.addOrEditGroup(command));
 
     modalRef.result.subscribe((groupId: string) => {
       // Update groups list from the modal in case a new one was created
