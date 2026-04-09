@@ -82,11 +82,26 @@ describe('SouthCacheRepository', () => {
       expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO'));
     });
 
-    it('should update if exists', () => {
-      // Mock getItemLastValue to return something (requires mocking .get for the SELECT inside getItemLastValue)
+    it('should update if exists with group id', () => {
       (mockDatabase.get as jest.Mock).mockReturnValueOnce({});
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('UPDATE'));
+      expect(mockDatabase.prepare).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'UPDATE "south_item_cache_south1" SET query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ? AND group_id = ?'
+        )
+      );
+      expect(mockDatabase.run).toHaveBeenCalledWith('now', '1', 'now', 'item1', 'group1');
+    });
+
+    it('should update with IS NULL when group id is null', () => {
+      (mockDatabase.get as jest.Mock).mockReturnValueOnce({});
+      repository.saveItemLastValue('south1', { itemId: 'item1', groupId: null, value: 1, trackedInstant: 'now', queryTime: 'now' });
+      expect(mockDatabase.prepare).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'UPDATE "south_item_cache_south1" SET query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ? AND group_id IS NULL'
+        )
+      );
+      expect(mockDatabase.run).toHaveBeenCalledWith('now', '1', 'now', 'item1');
     });
 
     it('should store null when value is null', () => {
@@ -97,9 +112,20 @@ describe('SouthCacheRepository', () => {
   });
 
   describe('deleteItemValue', () => {
-    it('should delete item', () => {
+    it('should delete item with group id', () => {
       repository.deleteItemValue('south1', 'group1', 'item1');
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('DELETE FROM'));
+      expect(mockDatabase.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM "south_item_cache_south1" WHERE item_id = ? AND group_id = ?')
+      );
+      expect(mockDatabase.run).toHaveBeenCalledWith('item1', 'group1');
+    });
+
+    it('should delete item without group id using IS NULL', () => {
+      repository.deleteItemValue('south1', null, 'item1');
+      expect(mockDatabase.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('DELETE FROM "south_item_cache_south1" WHERE item_id = ? AND group_id IS NULL')
+      );
+      expect(mockDatabase.run).toHaveBeenCalledWith('item1');
     });
 
     it('should catch error', () => {
