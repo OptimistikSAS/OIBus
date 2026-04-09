@@ -971,7 +971,7 @@ describe('South Service', () => {
             preserveFiles: true,
             regex: '*'
           },
-          group: null,
+          group: { id: '', name: 'Test Group' },
           maxReadInterval: 0,
           overlap: 0,
           readDelay: 0,
