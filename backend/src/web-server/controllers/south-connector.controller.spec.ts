@@ -620,15 +620,19 @@ describe('SouthConnectorController', () => {
     const mockGroups: Array<SouthItemGroupDTO> = [
       {
         id: 'group1',
-        name: 'Group 1',
-        scanMode: toScanModeDTO(testData.scanMode.list[0]),
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0,
         createdBy: { id: '', friendlyName: '' },
         updatedBy: { id: '', friendlyName: '' },
         createdAt: '2024-01-01T00:00:00.000Z',
-        updatedAt: '2024-01-01T00:00:00.000Z'
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        standardSettings: {
+          name: 'Group 1',
+          scanMode: toScanModeDTO(testData.scanMode.list[0])
+        },
+        historySettings: {
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       }
     ];
 
@@ -645,15 +649,19 @@ describe('SouthConnectorController', () => {
     const groupId = 'group1';
     const mockGroup: SouthItemGroupDTO = {
       id: 'group1',
-      name: 'Group 1',
-      scanMode: toScanModeDTO(testData.scanMode.list[0]),
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },
       createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-01T00:00:00.000Z'
+      updatedAt: '2024-01-01T00:00:00.000Z',
+      standardSettings: {
+        name: 'Group 1',
+        scanMode: toScanModeDTO(testData.scanMode.list[0])
+      },
+      historySettings: {
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     };
 
     (mockRequest.services!.southService.getGroup as jest.Mock).mockReturnValue(mockGroup);
@@ -668,23 +676,31 @@ describe('SouthConnectorController', () => {
     const southId = testData.south.list[0].id;
     const command: SouthItemGroupCommandDTO = {
       id: null,
-      name: 'New Group',
-      scanModeId: testData.scanMode.list[0].id,
-      overlap: 5,
-      maxReadInterval: null,
-      readDelay: 0
+      standardSettings: {
+        name: 'New Group',
+        scanModeId: testData.scanMode.list[0].id
+      },
+      historySettings: {
+        overlap: 5,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     };
     const mockCreatedGroup: SouthItemGroupDTO = {
       id: 'newGroupId',
-      name: 'New Group',
-      scanMode: toScanModeDTO(testData.scanMode.list[0]),
-      overlap: 5,
-      maxReadInterval: null,
-      readDelay: 0,
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },
       createdAt: '2024-01-01T00:00:00.000Z',
-      updatedAt: '2024-01-01T00:00:00.000Z'
+      updatedAt: '2024-01-01T00:00:00.000Z',
+      standardSettings: {
+        name: 'New Group',
+        scanMode: toScanModeDTO(testData.scanMode.list[0])
+      },
+      historySettings: {
+        overlap: 5,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     };
 
     (mockRequest.services!.southService.createGroup as jest.Mock).mockReturnValue(mockCreatedGroup);
@@ -700,11 +716,15 @@ describe('SouthConnectorController', () => {
     const groupId = 'group1';
     const command: SouthItemGroupCommandDTO = {
       id: null,
-      name: 'Updated Group',
-      scanModeId: testData.scanMode.list[1].id,
-      overlap: 10,
-      maxReadInterval: null,
-      readDelay: 0
+      standardSettings: {
+        name: 'Updated Group',
+        scanModeId: testData.scanMode.list[1].id
+      },
+      historySettings: {
+        overlap: 10,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     };
 
     (mockRequest.services!.southService.updateGroup as jest.Mock).mockResolvedValue(undefined);

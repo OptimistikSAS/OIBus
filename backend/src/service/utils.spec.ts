@@ -1291,11 +1291,15 @@ describe('Service utils', () => {
       };
       const mockGroup = {
         id: 'group1',
-        name: 'My Group',
-        scanMode: mockScanModeDTO,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        overlap: 5,
+        standardSettings: {
+          name: 'My Group',
+          scanMode: mockScanModeDTO
+        },
+        historySettings: {
+          maxReadInterval: 3600,
+          readDelay: 200,
+          overlap: 5
+        },
         createdBy: { id: '', friendlyName: '' },
         updatedBy: { id: '', friendlyName: '' },
         createdAt: '',

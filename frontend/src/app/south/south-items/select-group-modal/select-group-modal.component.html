@@ -24,7 +24,7 @@
           <div ngbDropdownMenu aria-labelledby="group-select" class="w-100">
             <button type="button" ngbDropdownItem (click)="selectGroup(null)" translate="south.items.group-none"></button>
             @for (group of groups; track group.id) {
-              <button type="button" ngbDropdownItem (click)="selectGroup(group.id)">{{ group.name }}</button>
+              <button type="button" ngbDropdownItem (click)="selectGroup(group.id)">{{ group.standardSettings.name }}</button>
             }
             <div class="dropdown-divider"></div>
             <button type="button" ngbDropdownItem (click)="onCreateNewGroup()" translate="south.items.create-new-group"></button>

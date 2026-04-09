@@ -84,7 +84,9 @@ export class EditSouthItemGroupModalComponent {
       if (!control.value || !this.existingGroups) {
         return null;
       }
-      const isDuplicate = this.existingGroups.some(g => g.name.toLowerCase() === control.value.toLowerCase() && g.id !== this.group?.id);
+      const isDuplicate = this.existingGroups.some(
+        g => g.standardSettings.name.toLowerCase() === control.value.toLowerCase() && g.id !== this.group?.id
+      );
       return isDuplicate ? { mustBeUnique: true } : null;
     };
   }
@@ -100,11 +102,13 @@ export class EditSouthItemGroupModalComponent {
 
     if (this.group) {
       this.form.patchValue({
-        name: this.group.name,
-        scanModeId: (this.group as SouthItemGroupCommandDTO).scanModeId || (this.group as SouthItemGroupDTO).scanMode.id,
-        overlap: this.group.overlap!,
-        maxReadInterval: this.group.maxReadInterval!,
-        readDelay: this.group.readDelay!
+        name: this.group.standardSettings.name,
+        scanModeId:
+          (this.group as SouthItemGroupCommandDTO).standardSettings.scanModeId ||
+          (this.group as SouthItemGroupDTO).standardSettings.scanMode.id,
+        overlap: this.group.historySettings.overlap!,
+        maxReadInterval: this.group.historySettings.maxReadInterval!,
+        readDelay: this.group.historySettings.readDelay!
       });
     }
   }
@@ -128,11 +132,15 @@ export class EditSouthItemGroupModalComponent {
     const formValue = this.form.getRawValue();
     const command: SouthItemGroupCommandDTO = {
       id: this.group?.id || '',
-      name: formValue.name!,
-      scanModeId: formValue.scanModeId!,
-      overlap: formValue.overlap! ?? null,
-      maxReadInterval: formValue.maxReadInterval! ?? null,
-      readDelay: formValue.readDelay! ?? null
+      standardSettings: {
+        name: formValue.name!,
+        scanModeId: formValue.scanModeId!
+      },
+      historySettings: {
+        overlap: formValue.overlap! ?? null,
+        maxReadInterval: formValue.maxReadInterval! ?? null,
+        readDelay: formValue.readDelay! ?? null
+      }
     };
     this.modal.close({ mode: this.mode, group: command });
   }

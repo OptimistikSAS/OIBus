@@ -31,7 +31,7 @@
                 @for (group of groups; track group.id) {
                   <div class="d-flex align-items-center justify-content-between px-2 group-row">
                     <button type="button" ngbDropdownItem (click)="onSelectGroup(group.id)" class="flex-grow-1 text-start ps-2">
-                      {{ group.name }}
+                      {{ group.standardSettings.name }}
                     </button>
                     <div class="d-flex gap-1 pe-2">
                       <button type="button" class="btn btn-sm btn-link p-0 text-primary" (click)="onEditGroup(group, $event)">
