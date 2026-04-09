@@ -1281,6 +1281,48 @@ describe('Service utils', () => {
         )
       ).toEqual('csv content');
     });
+
+    it('should fall back to group historian values when item values are null', () => {
+      const scanModeEntry = testData.scanMode.list[0];
+      const mockScanModeDTO = {
+        ...scanModeEntry,
+        createdBy: { id: scanModeEntry.createdBy, friendlyName: scanModeEntry.createdBy },
+        updatedBy: { id: scanModeEntry.updatedBy, friendlyName: scanModeEntry.updatedBy }
+      };
+      const mockGroup = {
+        id: 'group1',
+        name: 'My Group',
+        scanMode: mockScanModeDTO,
+        maxReadInterval: 3600,
+        readDelay: 200,
+        overlap: 5,
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      };
+      const item = {
+        ...testData.south.list[2].items[0],
+        group: mockGroup,
+        syncWithGroup: true,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null
+      } as unknown as SouthConnectorItemDTO;
+
+      let capturedData: Array<Record<string, unknown>> | null = null;
+      (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+        capturedData = data;
+        return 'csv content';
+      });
+
+      itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', testData.scanMode.list);
+
+      expect(capturedData).not.toBeNull();
+      expect(capturedData![0].maxReadInterval).toEqual(3600);
+      expect(capturedData![0].readDelay).toEqual(200);
+      expect(capturedData![0].overlap).toEqual(5);
+    });
   });
 
   describe('stringToBoolean', () => {
