@@ -164,49 +164,67 @@ export default class SouthService {
     // Save to get the ID
     this.southConnectorRepository.saveSouth(southEntity);
 
-    // Create groups for unique groupNames
+    // Create groups, preserving historian values
     const scanModes = this.scanModeRepository.findAll();
     const groupNameToIdMap = new Map<string, string>();
-    const uniqueGroupNames = new Set<string>();
+    const oldGroupIdToNewIdMap = new Map<string, string>();
 
-    for (const item of command.items) {
-      if (item.groupName && item.groupName.trim()) {
-        uniqueGroupNames.add(item.groupName.trim());
-      }
-    }
-
-    // Create or find groups for each unique group name
-    for (const groupName of uniqueGroupNames) {
-      let group = this.southItemGroupRepository.findByNameAndSouthId(groupName, southEntity.id);
-      if (!group) {
-        // Find the scan mode to use - use the first item's scan mode that has this group
-        const itemWithGroup = command.items.find(item => item.groupName === groupName);
-        if (!itemWithGroup) continue;
-
-        const scanMode = checkScanMode(scanModes, itemWithGroup.scanModeId, itemWithGroup.scanModeName);
+    if (command.groups && command.groups.length > 0) {
+      // Duplication path: command.groups carries the full group config with historian values
+      for (const groupCommand of command.groups) {
+        const scanMode = checkScanMode(scanModes, groupCommand.scanModeId, null);
         const groupEntity: SouthItemGroupCommand = {
-          name: groupName,
+          name: groupCommand.name,
           southId: southEntity.id,
           scanMode,
-          overlap: null,
-          maxReadInterval: null,
-          readDelay: 0
+          overlap: groupCommand.overlap ?? null,
+          maxReadInterval: groupCommand.maxReadInterval ?? null,
+          readDelay: groupCommand.readDelay ?? 0
         };
-        group = this.southItemGroupRepository.create(groupEntity, createdBy);
+        const newGroup = this.southItemGroupRepository.create(groupEntity, createdBy);
+        if (groupCommand.id) {
+          oldGroupIdToNewIdMap.set(groupCommand.id, newGroup.id);
+        }
+        groupNameToIdMap.set(groupCommand.name, newGroup.id);
       }
-      groupNameToIdMap.set(groupName, group.id);
+    } else {
+      // CSV import / manual creation path: create groups from item groupNames
+      const uniqueGroupNames = new Set<string>();
+      for (const item of command.items) {
+        if (item.groupName && item.groupName.trim()) {
+          uniqueGroupNames.add(item.groupName.trim());
+        }
+      }
+
+      for (const groupName of uniqueGroupNames) {
+        let group = this.southItemGroupRepository.findByNameAndSouthId(groupName, southEntity.id);
+        if (!group) {
+          const itemWithGroup = command.items.find(item => item.groupName === groupName);
+          if (!itemWithGroup) continue;
+          const scanMode = checkScanMode(scanModes, itemWithGroup.scanModeId, itemWithGroup.scanModeName);
+          const groupEntity: SouthItemGroupCommand = {
+            name: groupName,
+            southId: southEntity.id,
+            scanMode,
+            overlap: null,
+            maxReadInterval: null,
+            readDelay: 0
+          };
+          group = this.southItemGroupRepository.create(groupEntity, createdBy);
+        }
+        groupNameToIdMap.set(groupName, group.id);
+      }
     }
 
-    // Update item commands to use groupId instead of groupName
+    // Remap item groupIds to new group IDs
     const updatedCommand = {
       ...command,
       items: command.items.map(item => {
+        if (item.groupId && oldGroupIdToNewIdMap.has(item.groupId)) {
+          return { ...item, groupId: oldGroupIdToNewIdMap.get(item.groupId)!, groupName: null };
+        }
         if (item.groupName && groupNameToIdMap.has(item.groupName)) {
-          return {
-            ...item,
-            groupId: groupNameToIdMap.get(item.groupName)!,
-            groupName: null
-          };
+          return { ...item, groupId: groupNameToIdMap.get(item.groupName)!, groupName: null };
         }
         return item;
       })
@@ -982,9 +1000,9 @@ export const copySouthItemCommandToSouthItemEntity = async (
           name: command.groupName.trim(),
           southId,
           scanMode,
-          overlap: null,
-          maxReadInterval: null,
-          readDelay: 0
+          overlap: command.overlap ?? null,
+          maxReadInterval: command.maxReadInterval ?? null,
+          readDelay: command.readDelay ?? 0
         };
         group = southItemGroupRepository.create(groupEntity, user);
       }
