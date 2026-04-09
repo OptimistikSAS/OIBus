@@ -453,6 +453,8 @@ export default class OIAnalyticsMessageService {
             enabled: item.enabled,
             scanModeId: item.scanMode.id,
             scanModeName: null,
+            groupId: item.group?.id || null,
+            groupName: null,
             settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
           })),
           groups: south.groups.map(group => ({
