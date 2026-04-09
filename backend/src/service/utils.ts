@@ -687,6 +687,12 @@ export const itemToFlattenedCSV = (
       }
       // Add group name to CSV
       flattenedItem.group = group?.name || '';
+      // Fall back to group settings for null item-level historian fields
+      if (group) {
+        if (flattenedItem.maxReadInterval === null) flattenedItem.maxReadInterval = group.maxReadInterval;
+        if (flattenedItem.readDelay === null) flattenedItem.readDelay = group.readDelay;
+        if (flattenedItem.overlap === null) flattenedItem.overlap = group.overlap;
+      }
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         columns.add(`settings_${itemSettingsKey}`);
         if (typeof itemSettingsValue === 'object') {
