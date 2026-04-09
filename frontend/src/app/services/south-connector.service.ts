@@ -274,7 +274,7 @@ export class SouthConnectorService {
     file: File,
     delimiter: string
   ): Observable<{
-    items: Array<SouthConnectorItemCommandDTO>;
+    items: Array<SouthConnectorItemDTO>;
     errors: Array<{
       item: Record<string, string>;
       error: string;
@@ -286,7 +286,7 @@ export class SouthConnectorService {
     formData.set('currentItems', new Blob([JSON.stringify(currentItems)], { type: 'application/json' }), 'currentItems.json');
     formData.set('delimiter', delimiter);
     return this.http.post<{
-      items: Array<SouthConnectorItemCommandDTO>;
+      items: Array<SouthConnectorItemDTO>;
       errors: Array<{ item: Record<string, string>; error: string }>;
     }>(`/api/south/${southType}/items/import/check`, formData);
   }
