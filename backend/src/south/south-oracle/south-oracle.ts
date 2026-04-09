@@ -50,10 +50,15 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
   }
 
   override async testConnection(): Promise<void> {
+    let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
+    if (this.connector.settings.connectionTimeout) {
+      connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
+    }
+
     const config: ConnectionAttributes = {
       user: this.connector.settings.username || undefined,
       password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
-      connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}?connect_timeout=${this.connector.settings.connectionTimeout}ms`
+      connectString: connectString
     };
 
     let connection;

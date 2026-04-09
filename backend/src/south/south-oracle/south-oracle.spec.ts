@@ -373,7 +373,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
       database: 'db',
       username: null,
       password: null,
-      connectionTimeout: 1000,
+      connectionTimeout: 0,
       thickMode: true,
       oracleClient: 'path'
     },
