@@ -665,7 +665,16 @@ export const itemToFlattenedCSV = (
   delimiter: string,
   scanModes?: Array<ScanMode>
 ): string => {
-  const columns: Set<string> = new Set<string>(['name', 'enabled', 'scanMode', 'group']);
+  const columns: Set<string> = new Set<string>([
+    'name',
+    'enabled',
+    'scanMode',
+    'group',
+    'maxReadInterval',
+    'readDelay',
+    'overlap',
+    'syncWithGroup'
+  ]);
 
   return csv.unparse(
     items.map(item => {
