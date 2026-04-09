@@ -471,7 +471,7 @@ export class SouthDetailComponent implements OnDestroy {
                     scanModeId: item.scanMode.id,
                     scanModeName: null,
                     groupId: item.group?.id || null,
-                    groupName: null,
+                    groupName: item.group?.name ?? null,
                     syncWithGroup: item.syncWithGroup,
                     maxReadInterval: item.maxReadInterval,
                     readDelay: item.readDelay,

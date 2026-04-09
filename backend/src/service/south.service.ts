@@ -635,7 +635,7 @@ export default class SouthService {
         enabled: stringToBoolean(data.enabled),
         scanMode,
         settings: {} as SouthItemSettings,
-        group: null,
+        group: data.group ? ({ id: '', name: data.group } as SouthItemGroupDTO) : null,
         syncWithGroup: stringToBoolean(data.syncWithGroup),
         maxReadInterval: Number(data.maxReadInterval || '0'),
         readDelay: Number(data.readDelay || '0'),
