@@ -465,7 +465,7 @@ export class SouthDetailComponent implements OnDestroy {
             scanModeId: item.scanMode.id,
             scanModeName: item.scanMode.name,
             groupId: item.group?.id || null,
-            groupName: item.group?.name ?? null,
+            groupName: item.group?.standardSettings.name ?? null,
             syncWithGroup: item.syncWithGroup,
             maxReadInterval: item.maxReadInterval,
             readDelay: item.readDelay,
@@ -520,7 +520,7 @@ export class SouthDetailComponent implements OnDestroy {
     return this.confirmationService
       .confirm({
         messageKey: 'south.groups.confirm-deletion',
-        interpolateParams: { name: group.name }
+        interpolateParams: { name: group.standardSettings.name }
       })
       .pipe(
         switchMap(() => {
@@ -612,8 +612,8 @@ export class SouthDetailComponent implements OnDestroy {
           break;
         case 'group':
           this.filteredItems.sort((a, b) => {
-            const aGroup = a.group?.name || '';
-            const bGroup = b.group?.name || '';
+            const aGroup = a.group?.standardSettings.name || '';
+            const bGroup = b.group?.standardSettings.name || '';
             return ascending ? aGroup.localeCompare(bGroup) : bGroup.localeCompare(aGroup);
           });
           break;
@@ -766,7 +766,7 @@ export class SouthDetailComponent implements OnDestroy {
   }
 
   getGroupName(item: SouthConnectorItemDTO): string {
-    return item.group?.name || this.translateService.instant('south.items.group-none');
+    return item.group?.standardSettings.name || this.translateService.instant('south.items.group-none');
   }
 
   getScanMode(scanModeId: string | undefined) {
@@ -855,11 +855,15 @@ export class SouthDetailComponent implements OnDestroy {
       })),
       groups: this.southConnector!.groups.map(group => ({
         id: group.id,
-        name: group.name,
-        scanModeId: group.scanMode.id,
-        maxReadInterval: group.maxReadInterval,
-        readDelay: group.readDelay,
-        overlap: group.overlap
+        standardSettings: {
+          name: group.standardSettings.name,
+          scanModeId: group.standardSettings.scanMode.id
+        },
+        historySettings: {
+          maxReadInterval: group.historySettings.maxReadInterval,
+          readDelay: group.historySettings.readDelay,
+          overlap: group.historySettings.overlap
+        }
       }))
     } as SouthConnectorCommandDTO;
   }

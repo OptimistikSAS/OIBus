@@ -459,11 +459,15 @@ export default class OIAnalyticsMessageService {
           })),
           groups: south.groups.map(group => ({
             id: group.id,
-            name: group.name,
-            scanModeId: group.scanMode.id,
-            overlap: group.overlap,
-            maxReadInterval: group.maxReadInterval,
-            readDelay: group.readDelay
+            standardSettings: {
+              name: group.name,
+              scanModeId: group.scanMode.id
+            },
+            historySettings: {
+              overlap: group.overlap,
+              maxReadInterval: group.maxReadInterval,
+              readDelay: group.readDelay
+            }
           }))
         }
       };

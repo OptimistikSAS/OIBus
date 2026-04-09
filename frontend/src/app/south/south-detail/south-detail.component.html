@@ -125,7 +125,7 @@
                 <option [ngValue]="null" translate="south.items.all-groups"></option>
                 <option value="none" translate="south.items.group-none"></option>
                 @for (group of southConnector.groups; track group.id) {
-                  <option [value]="group.id">{{ group.name }}</option>
+                  <option [value]="group.id">{{ group.standardSettings.name }}</option>
                 }
               </select>
               <select class="form-select form-select-sm w-auto" [formControl]="scanModeFilterControl">

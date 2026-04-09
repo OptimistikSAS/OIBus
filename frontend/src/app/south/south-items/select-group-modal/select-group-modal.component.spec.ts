@@ -47,27 +47,35 @@ describe('SelectGroupModalComponent', () => {
   const groups: Array<SouthItemGroupDTO> = [
     {
       id: 'group1',
-      name: 'Group 1',
-      scanMode: toScanModeDTO(testData.scanMode.list[0]),
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      standardSettings: {
+        name: 'Group 1',
+        scanMode: toScanModeDTO(testData.scanMode.list[0])
+      },
+      historySettings: {
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     },
     {
       id: 'group2',
-      name: 'Group 2',
-      scanMode: toScanModeDTO(testData.scanMode.list[1]),
-      overlap: 10,
-      maxReadInterval: null,
-      readDelay: 0,
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      standardSettings: {
+        name: 'Group 2',
+        scanMode: toScanModeDTO(testData.scanMode.list[1])
+      },
+      historySettings: {
+        overlap: 10,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     }
   ];
 
@@ -159,23 +167,31 @@ describe('SelectGroupModalComponent', () => {
   it('should add new group to list when created', fakeAsync(async () => {
     const newGroup: SouthItemGroupDTO = {
       id: 'newGroup',
-      name: 'New Group',
-      scanMode: toScanModeDTO(testData.scanMode.list[0]),
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      standardSettings: {
+        name: 'New Group',
+        scanMode: toScanModeDTO(testData.scanMode.list[0])
+      },
+      historySettings: {
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     };
     const groupCommand: SouthItemGroupCommandDTO = {
       id: null,
-      name: 'New Group',
-      scanModeId: testData.scanMode.list[0].id,
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0
+      standardSettings: {
+        name: 'New Group',
+        scanModeId: testData.scanMode.list[0].id
+      },
+      historySettings: {
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     };
     const mockModalRef = {
       componentInstance: {
