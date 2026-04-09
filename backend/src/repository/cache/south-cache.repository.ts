@@ -74,16 +74,32 @@ export default class SouthCacheRepository {
       const insertQuery = `INSERT INTO "${tableName}" (group_id, item_id, query_time, value, tracked_instant) VALUES (?, ?, ?, ?, ?);`;
       this._database.prepare(insertQuery).run(command.groupId, command.itemId, command.queryTime, valueStr, command.trackedInstant);
     } else {
-      const updateQuery = `UPDATE "${tableName}" SET query_time = ?, value = ?, tracked_instant = ? WHERE group_id = ? AND item_id = ?;`;
-      this._database.prepare(updateQuery).run(command.queryTime, valueStr, command.trackedInstant, command.groupId, command.itemId);
+      let whereClause = 'WHERE item_id = ?';
+      const updateParams: Array<string | null> = [command.queryTime, valueStr, command.trackedInstant, command.itemId];
+      if (command.groupId) {
+        whereClause += ' AND group_id = ?';
+        updateParams.push(command.groupId);
+      } else {
+        whereClause += ' AND group_id IS NULL';
+      }
+      const updateQuery = `UPDATE "${tableName}" SET query_time = ?, value = ?, tracked_instant = ? ${whereClause};`;
+      this._database.prepare(updateQuery).run(...updateParams);
     }
   }
 
   deleteItemValue(connectorId: string, groupId: string | null, itemId: string | null): void {
     const tableName = `south_item_cache_${connectorId}`;
-    const query = `DELETE FROM "${tableName}" WHERE group_id = ? AND item_id = ?;`;
+    let whereClause = 'WHERE item_id = ?';
+    const queryParams: Array<string | null> = [itemId];
+    if (groupId) {
+      whereClause += ' AND group_id = ?';
+      queryParams.push(groupId);
+    } else {
+      whereClause += ' AND group_id IS NULL';
+    }
+    const query = `DELETE FROM "${tableName}" ${whereClause};`;
     try {
-      this._database.prepare(query).run(itemId);
+      this._database.prepare(query).run(...queryParams);
     } catch {
       // Ignore if table/item fails
     }
