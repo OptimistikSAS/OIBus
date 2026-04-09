@@ -455,30 +455,28 @@ export class SouthDetailComponent implements OnDestroy {
     this.southConnectorService.checkImportItems(this.manifest!.id, this.southConnector!.items, file, delimiter).subscribe(result => {
       const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
       const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
-      component.prepare(this.manifest!, this.southConnector!.items, result.items, result.errors, this.scanModes);
+      const commandItems: Array<SouthConnectorItemCommandDTO> = result.items.map(
+        item =>
+          ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            settings: item.settings,
+            scanModeId: item.scanMode.id,
+            scanModeName: item.scanMode.name,
+            groupId: item.group?.id || null,
+            groupName: item.group?.name ?? null,
+            syncWithGroup: item.syncWithGroup,
+            maxReadInterval: item.maxReadInterval,
+            readDelay: item.readDelay,
+            overlap: item.overlap
+          }) as SouthConnectorItemCommandDTO
+      );
+      component.prepare(this.manifest!, this.southConnector!.items, commandItems, result.errors, this.scanModes);
       modalRef.result
         .pipe(
-          switchMap((newItems: Array<SouthConnectorItemDTO>) => {
-            return this.southConnectorService.importItems(
-              this.southConnector!.id,
-              newItems.map(
-                item =>
-                  ({
-                    id: item.id,
-                    enabled: item.enabled,
-                    name: item.name,
-                    settings: item.settings,
-                    scanModeId: item.scanMode.id,
-                    scanModeName: null,
-                    groupId: item.group?.id || null,
-                    groupName: item.group?.name ?? null,
-                    syncWithGroup: item.syncWithGroup,
-                    maxReadInterval: item.maxReadInterval,
-                    readDelay: item.readDelay,
-                    overlap: item.overlap
-                  }) as SouthConnectorItemCommandDTO
-              )
-            );
+          switchMap((newItems: Array<SouthConnectorItemCommandDTO>) => {
+            return this.southConnectorService.importItems(this.southConnector!.id, newItems);
           }),
           switchMap(() => {
             return this.southConnectorService.findById(this.southConnector!.id);

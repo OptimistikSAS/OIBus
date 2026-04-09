@@ -436,7 +436,24 @@ export class EditSouthComponent implements CanComponentDeactivate {
     this.southConnectorService.checkImportItems(this.manifest!.id, this.inMemoryItems, file, delimiter).subscribe(result => {
       const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
       const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
-      component.prepare(this.manifest!, this.inMemoryItems, result.items, result.errors, this.scanModes);
+      const commandItems: Array<SouthConnectorItemCommandDTO> = result.items.map(
+        item =>
+          ({
+            id: item.id,
+            name: item.name,
+            enabled: item.enabled,
+            settings: item.settings,
+            scanModeId: item.scanMode.id,
+            scanModeName: item.scanMode.name,
+            groupId: item.group?.id || null,
+            groupName: item.group?.name ?? null,
+            syncWithGroup: item.syncWithGroup,
+            maxReadInterval: item.maxReadInterval,
+            readDelay: item.readDelay,
+            overlap: item.overlap
+          }) as SouthConnectorItemCommandDTO
+      );
+      component.prepare(this.manifest!, this.inMemoryItems, commandItems, result.errors, this.scanModes);
       modalRef.result.subscribe((newItems: Array<SouthConnectorItemCommandDTO>) => {
         for (const item of newItems) {
           this.inMemoryItems.push(item);
