@@ -126,6 +126,11 @@ export default class SouthFolderScanner
     if (itemValue && Array.isArray(itemValue.value)) {
       filesPreserved = itemValue.value as Array<{ filename: string; modifiedTime: number }>;
     }
+    // Migration fallback: if filesPreserved is empty AND trackedInstant is set (migrated from v3.7),
+    // use trackedInstant as a cutoff to avoid re-processing files that were already processed before the migration.
+    // After the first successful scan with preserveFiles=true, the file list is populated and this fallback is inactive.
+    const legacyMigrationCutoffMs =
+      filesPreserved.length === 0 && itemValue?.trackedInstant ? DateTime.fromISO(itemValue.trackedInstant).toMillis() : null;
 
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
     this.logger.debug(`Reading "${inputFolder}" directory with regex "${item.settings.regex}" and minAge ${item.settings.minAge}`);
@@ -146,6 +151,10 @@ export default class SouthFolderScanner
     const matchedFiles: Array<{ filename: string; stats: Stats }> = [];
     for (const file of filteredFiles) {
       const stats = await fs.stat(path.join(inputFolder, file));
+      if (legacyMigrationCutoffMs !== null && stats.mtimeMs <= legacyMigrationCutoffMs) {
+        this.logger.trace(`Skipping "${file}" — modified before v3.7 migration cutoff`);
+        continue;
+      }
       if (checkAge(item, file, stats.mtimeMs, filesPreserved, this.logger)) {
         matchedFiles.push({ filename: file, stats });
       }
