@@ -190,7 +190,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   scanModeId: item.scanMode.id,
                   scanModeName: item.scanMode.name,
                   groupId: item.group?.id || null,
-                  groupName: item.group?.name || null,
+                  groupName: item.group?.standardSettings.name || null,
                   syncWithGroup: item.syncWithGroup,
                   maxReadInterval: item.maxReadInterval,
                   readDelay: item.readDelay,
@@ -199,11 +199,15 @@ export class EditSouthComponent implements CanComponentDeactivate {
             );
             this.inMemoryGroups = southConnector.groups.map(group => ({
               id: group.id,
-              name: group.name,
-              scanModeId: group.scanMode.id,
-              overlap: group.overlap,
-              maxReadInterval: group.maxReadInterval,
-              readDelay: group.readDelay
+              standardSettings: {
+                name: group.standardSettings.name,
+                scanModeId: group.standardSettings.scanMode.id
+              },
+              historySettings: {
+                overlap: group.historySettings.overlap,
+                maxReadInterval: group.historySettings.maxReadInterval,
+                readDelay: group.historySettings.readDelay
+              }
             }));
           }
           return this.southConnectorService.getSouthManifest(this.southType!);
@@ -446,7 +450,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
             scanModeId: item.scanMode.id,
             scanModeName: item.scanMode.name,
             groupId: item.group?.id || null,
-            groupName: item.group?.name ?? null,
+            groupName: item.group?.standardSettings.name ?? null,
             syncWithGroup: item.syncWithGroup,
             maxReadInterval: item.maxReadInterval,
             readDelay: item.readDelay,
@@ -473,11 +477,11 @@ export class EditSouthComponent implements CanComponentDeactivate {
       return of(createdGroup);
     } else {
       const foundGroup = this.inMemoryGroups.find(element => element.id === command.group.id)!;
-      foundGroup.name = command.group.name;
-      foundGroup.scanModeId = command.group.scanModeId;
-      foundGroup.maxReadInterval = command.group.maxReadInterval;
-      foundGroup.readDelay = command.group.readDelay;
-      foundGroup.overlap = command.group.overlap;
+      foundGroup.standardSettings.name = command.group.standardSettings.name;
+      foundGroup.standardSettings.scanModeId = command.group.standardSettings.scanModeId;
+      foundGroup.historySettings.maxReadInterval = command.group.historySettings.maxReadInterval;
+      foundGroup.historySettings.readDelay = command.group.historySettings.readDelay;
+      foundGroup.historySettings.overlap = command.group.historySettings.overlap;
       return of(foundGroup);
     }
   }
@@ -716,7 +720,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       const group = this.inMemoryGroups.find(element => element.id === groupId);
       this.inMemoryItems = this.inMemoryItems.map(item => {
         if (this.selectedItems.has(item.name)) {
-          return { ...item, groupId: group?.id || null, groupName: group?.name || null };
+          return { ...item, groupId: group?.id || null, groupName: group?.standardSettings.name || null };
         }
         return item;
       });

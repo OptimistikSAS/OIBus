@@ -55,15 +55,19 @@ describe('EditSouthItemGroupModalComponent', () => {
   const existingGroups: Array<SouthItemGroupDTO> = [
     {
       id: 'group1',
-      name: 'Existing Group',
-      scanMode: scanModes[0],
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      standardSettings: {
+        name: 'Existing Group',
+        scanMode: scanModes[0]
+      },
+      historySettings: {
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     }
   ];
 
@@ -123,11 +127,15 @@ describe('EditSouthItemGroupModalComponent', () => {
         mode: 'create',
         group: {
           id: '',
-          name: 'New Group',
-          scanModeId: scanModes[0].id,
-          overlap: 0,
-          maxReadInterval: 3600,
-          readDelay: 200
+          standardSettings: {
+            name: 'New Group',
+            scanModeId: scanModes[0].id
+          },
+          historySettings: {
+            overlap: 0,
+            maxReadInterval: 3600,
+            readDelay: 200
+          }
         }
       });
     }));
@@ -147,11 +155,15 @@ describe('EditSouthItemGroupModalComponent', () => {
         mode: 'create',
         group: {
           id: '',
-          name: 'New Group',
-          scanModeId: scanModes[0].id,
-          overlap: 100,
-          maxReadInterval: 3600,
-          readDelay: 200
+          standardSettings: {
+            name: 'New Group',
+            scanModeId: scanModes[0].id
+          },
+          historySettings: {
+            overlap: 100,
+            maxReadInterval: 3600,
+            readDelay: 200
+          }
         }
       });
     }));
@@ -186,15 +198,19 @@ describe('EditSouthItemGroupModalComponent', () => {
   describe('edit mode', () => {
     const groupToEdit: SouthItemGroupDTO = {
       id: 'group1',
-      name: 'Group to Edit',
-      scanMode: scanModes[0],
-      overlap: null,
-      maxReadInterval: null,
-      readDelay: 0,
       createdBy: { id: '', friendlyName: '' },
       updatedBy: { id: '', friendlyName: '' },
       createdAt: '',
-      updatedAt: ''
+      updatedAt: '',
+      standardSettings: {
+        name: 'Group to Edit',
+        scanMode: scanModes[0]
+      },
+      historySettings: {
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      }
     };
 
     beforeEach(async () => {
@@ -216,15 +232,19 @@ describe('EditSouthItemGroupModalComponent', () => {
     it('should update group successfully', fakeAsync(async () => {
       const updatedGroup: SouthItemGroupDTO = {
         id: 'group1',
-        name: 'Updated Group',
-        scanMode: scanModes[1],
-        overlap: 50,
-        maxReadInterval: null,
-        readDelay: 0,
         createdBy: { id: '', friendlyName: '' },
         updatedBy: { id: '', friendlyName: '' },
         createdAt: '',
-        updatedAt: ''
+        updatedAt: '',
+        standardSettings: {
+          name: 'Updated Group',
+          scanMode: scanModes[1]
+        },
+        historySettings: {
+          overlap: 50,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       tester.name.fillWith('Updated Group');
@@ -236,11 +256,15 @@ describe('EditSouthItemGroupModalComponent', () => {
         mode: 'edit',
         group: {
           id: updatedGroup.id,
-          name: 'Updated Group',
-          scanModeId: scanModes[1].id,
-          overlap: null,
-          maxReadInterval: null,
-          readDelay: 0
+          standardSettings: {
+            name: 'Updated Group',
+            scanModeId: scanModes[1].id
+          },
+          historySettings: {
+            overlap: null,
+            maxReadInterval: null,
+            readDelay: 0
+          }
         }
       });
     }));

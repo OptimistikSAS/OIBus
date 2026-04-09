@@ -74,27 +74,35 @@ describe('SouthDetailComponent', () => {
   };
   const mockGroupA: SouthItemGroupDTO = {
     id: 'g1',
-    name: 'GroupA',
-    scanMode: mockGroupScanMode,
-    overlap: null,
-    maxReadInterval: null,
-    readDelay: null,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     createdBy: mockUser,
-    updatedBy: mockUser
+    updatedBy: mockUser,
+    standardSettings: {
+      name: 'GroupA',
+      scanMode: mockGroupScanMode
+    },
+    historySettings: {
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: null
+    }
   };
   const mockGroupZ: SouthItemGroupDTO = {
     id: 'g2',
-    name: 'Zebra',
-    scanMode: mockGroupScanMode,
-    overlap: null,
-    maxReadInterval: null,
-    readDelay: null,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
     createdBy: mockUser,
-    updatedBy: mockUser
+    updatedBy: mockUser,
+    standardSettings: {
+      name: 'Zebra',
+      scanMode: mockGroupScanMode
+    },
+    historySettings: {
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: null
+    }
   };
 
   beforeEach(() => {

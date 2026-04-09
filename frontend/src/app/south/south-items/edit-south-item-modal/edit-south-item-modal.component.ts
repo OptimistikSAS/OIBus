@@ -264,7 +264,7 @@ class EditSouthItemModalComponent {
           : this.scanModes.find(scanMode => scanMode.id === formValue.scanModeId!)!.name,
       settings: formValue.settings!,
       groupId: formValue.groupId!,
-      groupName: formValue.groupId! ? this.groups.find(group => group.id === formValue.groupId!)!.name : null,
+      groupName: formValue.groupId! ? this.groups.find(group => group.id === formValue.groupId!)!.standardSettings.name : null,
       syncWithGroup,
       maxReadInterval: syncWithGroup ? null : (rawHistorianValues.maxReadInterval ?? null),
       readDelay: syncWithGroup ? null : (rawHistorianValues.readDelay ?? null),
@@ -435,7 +435,9 @@ class EditSouthItemModalComponent {
   private applySyncLogicWhenSelectingGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO) {
     // Set scan mode from the group (scan mode field is hidden when a group is selected)
     const groupScanMode = this.scanModes.find(
-      s => s.id === ((group as SouthItemGroupCommandDTO).scanModeId || (group as SouthItemGroupDTO).scanMode.id)
+      s =>
+        s.id ===
+        ((group as SouthItemGroupCommandDTO).standardSettings.scanModeId || (group as SouthItemGroupDTO).standardSettings.scanMode.id)
     );
     if (groupScanMode) {
       this.form!.controls.scanModeId.setValue(groupScanMode.id);
@@ -447,9 +449,9 @@ class EditSouthItemModalComponent {
 
     // Check if user has entered any non-null, non-default values
     const hasCustomValues =
-      (currentMaxReadInterval !== null && currentMaxReadInterval !== group.maxReadInterval) ||
-      (currentReadDelay !== null && currentReadDelay !== group.readDelay) ||
-      (currentOverlap !== null && currentOverlap !== group.overlap);
+      (currentMaxReadInterval !== null && currentMaxReadInterval !== group.historySettings.maxReadInterval) ||
+      (currentReadDelay !== null && currentReadDelay !== group.historySettings.readDelay) ||
+      (currentOverlap !== null && currentOverlap !== group.historySettings.overlap);
 
     if (hasCustomValues) {
       // User has custom values - preserve them and don't sync with group
@@ -503,16 +505,16 @@ class EditSouthItemModalComponent {
     const groupId = this.form?.controls.groupId.value;
     const group = groupId ? this.groups.find(g => g.id === groupId) : null;
     return {
-      maxReadInterval: group?.maxReadInterval ?? null,
-      readDelay: group?.readDelay ?? null,
-      overlap: group?.overlap ?? null
+      maxReadInterval: group?.historySettings.maxReadInterval ?? null,
+      readDelay: group?.historySettings.readDelay ?? null,
+      overlap: group?.historySettings.overlap ?? null
     };
   }
 
   getSelectedGroupName(): string {
     const groupId = this.form?.controls.groupId.value;
     if (!groupId) return this.translateService.instant('south.items.group-none');
-    return this.groups.find(g => g.id === groupId)!.name;
+    return this.groups.find(g => g.id === groupId)!.standardSettings.name;
   }
 
   getScanModeAttribute(manifest: SouthConnectorManifest): OIBusScanModeAttribute {

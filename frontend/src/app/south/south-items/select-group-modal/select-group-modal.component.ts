@@ -43,7 +43,7 @@ export class SelectGroupModalComponent {
     if (!groupId) {
       return 'south.items.group-none'; // Will be translated in template
     }
-    return this.groups.find(g => g.id === groupId)?.name || '';
+    return this.groups.find(g => g.id === groupId)?.standardSettings.name || '';
   }
 
   selectGroup(groupId: string | null) {

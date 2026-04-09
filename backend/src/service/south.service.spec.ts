@@ -332,11 +332,15 @@ describe('South Service', () => {
     command.groups = [
       {
         id: oldGroupId,
-        name: 'My Group',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: 5,
-        maxReadInterval: 3600,
-        readDelay: 200
+        standardSettings: {
+          name: 'My Group',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: 5,
+          maxReadInterval: 3600,
+          readDelay: 200
+        }
       } as SouthItemGroupCommandDTO
     ];
     command.items[0].groupId = oldGroupId;
@@ -1033,7 +1037,7 @@ describe('South Service', () => {
             preserveFiles: true,
             regex: '*'
           },
-          group: { id: '', name: 'Test Group' },
+          group: { id: '', standardSettings: { name: 'Test Group' } },
           maxReadInterval: 0,
           overlap: 0,
           readDelay: 0,
@@ -1218,11 +1222,15 @@ describe('South Service', () => {
     expect(result.groups).toHaveLength(1);
     expect(result.groups[0]).toEqual({
       id: group.id,
-      name: group.name,
-      scanMode: toScanModeDTO(group.scanMode, getUserInfo),
-      maxReadInterval: group.maxReadInterval,
-      readDelay: group.readDelay,
-      overlap: group.overlap,
+      standardSettings: {
+        name: group.name,
+        scanMode: toScanModeDTO(group.scanMode, getUserInfo)
+      },
+      historySettings: {
+        maxReadInterval: group.maxReadInterval,
+        readDelay: group.readDelay,
+        overlap: group.overlap
+      },
       createdBy: getUserInfo(group.createdBy),
       updatedBy: getUserInfo(group.updatedBy),
       createdAt: group.createdAt,
@@ -1331,11 +1339,15 @@ describe('South Service', () => {
     it('should create a group', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'New Group',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: 5,
-        maxReadInterval: null,
-        readDelay: 0
+        standardSettings: {
+          name: 'New Group',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: 5,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       const createdGroup: SouthItemGroupEntity = {
@@ -1365,11 +1377,15 @@ describe('South Service', () => {
     it('should create a group with null overlap', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Group With Null Overlap',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+        standardSettings: {
+          name: 'Group With Null Overlap',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       const createdGroup: SouthItemGroupEntity = {
@@ -1398,11 +1414,15 @@ describe('South Service', () => {
     it('should create a group with maxReadInterval and readDelay', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Group With Throttling',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: 5,
-        maxReadInterval: 3600,
-        readDelay: 200
+        standardSettings: {
+          name: 'Group With Throttling',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: 5,
+          maxReadInterval: 3600,
+          readDelay: 200
+        }
       };
 
       const createdGroup: SouthItemGroupEntity = {
@@ -1440,11 +1460,15 @@ describe('South Service', () => {
     it('should throw error when creating group with duplicate name', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Existing Group',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+        standardSettings: {
+          name: 'Existing Group',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       const existingGroup: SouthItemGroupEntity = {
@@ -1472,11 +1496,15 @@ describe('South Service', () => {
     it('should update a group', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Updated Group',
-        scanModeId: testData.scanMode.list[1].id,
-        overlap: 15,
-        maxReadInterval: 3600,
-        readDelay: 200
+        standardSettings: {
+          name: 'Updated Group',
+          scanModeId: testData.scanMode.list[1].id
+        },
+        historySettings: {
+          overlap: 15,
+          maxReadInterval: 3600,
+          readDelay: 200
+        }
       };
 
       const existingGroup: SouthItemGroupEntity = {
@@ -1519,11 +1547,15 @@ describe('South Service', () => {
     it('should update a group with null maxReadInterval and zero readDelay', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Updated Name Only',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+        standardSettings: {
+          name: 'Updated Name Only',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       const existingGroup: SouthItemGroupEntity = {
@@ -1571,11 +1603,15 @@ describe('South Service', () => {
     it('should throw error when updating non-existent group', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Updated Group',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+        standardSettings: {
+          name: 'Updated Group',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       (southItemGroupRepository.findById as jest.Mock).mockReturnValue(null);
@@ -1588,11 +1624,15 @@ describe('South Service', () => {
     it('should throw error when updating group that belongs to different south connector', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Updated Group',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+        standardSettings: {
+          name: 'Updated Group',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       const groupFromDifferentSouth: SouthItemGroupEntity = {
@@ -1620,11 +1660,15 @@ describe('South Service', () => {
     it('should throw error when update fails to find updated group', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Updated Group',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+        standardSettings: {
+          name: 'Updated Group',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       const existingGroup: SouthItemGroupEntity = {
@@ -1655,11 +1699,15 @@ describe('South Service', () => {
     it('should throw error when updating group with duplicate name', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
-        name: 'Existing Group',
-        scanModeId: testData.scanMode.list[0].id,
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
+        standardSettings: {
+          name: 'Existing Group',
+          scanModeId: testData.scanMode.list[0].id
+        },
+        historySettings: {
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: 0
+        }
       };
 
       const existingGroup: SouthItemGroupEntity = {
@@ -1860,9 +1908,9 @@ describe('South Service', () => {
 
         const dto = toSouthItemGroupDTO(entity, id => ({ id, friendlyName: id }));
         expect(dto.id).toEqual('group1');
-        expect(dto.name).toEqual('Test Group');
-        expect(dto.scanMode.id).toEqual(testData.scanMode.list[0].id);
-        expect(dto.overlap).toEqual(10);
+        expect(dto.standardSettings.name).toEqual('Test Group');
+        expect(dto.standardSettings.scanMode.id).toEqual(testData.scanMode.list[0].id);
+        expect(dto.historySettings.overlap).toEqual(10);
       });
 
       it('should convert SouthItemGroupEntity with null overlap to DTO', () => {
@@ -1882,7 +1930,7 @@ describe('South Service', () => {
         };
 
         const dto = toSouthItemGroupDTO(entity, id => ({ id, friendlyName: id }));
-        expect(dto.overlap).toBeNull();
+        expect(dto.historySettings.overlap).toBeNull();
       });
 
       it('should convert item with group to DTO using toSouthConnectorItemCommandDTO', async () => {
@@ -1924,7 +1972,7 @@ describe('South Service', () => {
         const itemDTO = toSouthConnectorItemDTO(itemWithGroup, testData.south.list[0].type, id => ({ id, friendlyName: id }));
         expect(itemDTO.group).toBeDefined();
         expect(itemDTO.group!.id).toEqual('group1');
-        expect(itemDTO.group!.name).toEqual('Test Group');
+        expect(itemDTO.group!.standardSettings.name).toEqual('Test Group');
       });
 
       it('should convert item without group to DTO', () => {

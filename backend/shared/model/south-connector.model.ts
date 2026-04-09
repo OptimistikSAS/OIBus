@@ -318,41 +318,45 @@ export interface SouthItemGroupLightDTO extends BaseEntity {
  * Represents a group of items that can share common settings.
  */
 export interface SouthItemGroupDTO extends BaseEntity {
-  /**
-   * The name of the group.
-   *
-   * @example "Production Line A"
-   */
-  name: string;
+  standardSettings: {
+    /**
+     * The name of the group.
+     *
+     * @example "Production Line A"
+     */
+    name: string;
 
-  /**
-   * The scan mode configuration for this group (default schedule).
-   */
-  scanMode: ScanModeDTO;
+    /**
+     * The scan mode configuration for this group (default schedule).
+     */
+    scanMode: ScanModeDTO;
+  };
 
-  /**
-   * Default overlap in milliseconds for historical queries.
-   * Only applicable for connectors with historian capabilities.
-   *
-   * @example 1000
-   */
-  overlap: number | null;
+  historySettings: {
+    /**
+     * Default overlap in milliseconds for historical queries.
+     * Only applicable for connectors with historian capabilities.
+     *
+     * @example 1000
+     */
+    overlap: number | null;
 
-  /**
-   * Maximum read interval in seconds for historical queries.
-   * Only applicable for connectors with historian capabilities.
-   *
-   * @example 3600
-   */
-  maxReadInterval: number | null;
+    /**
+     * Maximum read interval in seconds for historical queries.
+     * Only applicable for connectors with historian capabilities.
+     *
+     * @example 3600
+     */
+    maxReadInterval: number | null;
 
-  /**
-   * Read delay in milliseconds before querying historical data.
-   * Only applicable for connectors with historian capabilities.
-   *
-   * @example 200
-   */
-  readDelay: number | null;
+    /**
+     * Read delay in milliseconds before querying historical data.
+     * Only applicable for connectors with historian capabilities.
+     *
+     * @example 200
+     */
+    readDelay: number | null;
+  };
 }
 
 /**
@@ -366,40 +370,44 @@ export interface SouthItemGroupCommandDTO {
    */
   id: string | null;
 
-  /**
-   * The name of the group.
-   *
-   * @example "Production Line A"
-   */
-  name: string;
+  standardSettings: {
+    /**
+     * The name of the group.
+     *
+     * @example "Production Line A"
+     */
+    name: string;
 
-  /**
-   * The ID of the scan mode to use for this group.
-   *
-   * @example "periodic-5min"
-   */
-  scanModeId: string;
+    /**
+     * The ID of the scan mode to use for this group.
+     *
+     * @example "periodic-5min"
+     */
+    scanModeId: string;
+  };
 
-  /**
-   * Default overlap in milliseconds for historical queries.
-   *
-   * @example 1000
-   */
-  overlap: number | null;
+  historySettings: {
+    /**
+     * Default overlap in milliseconds for historical queries.
+     *
+     * @example 1000
+     */
+    overlap: number | null;
 
-  /**
-   * Maximum read interval in seconds for historical queries.
-   *
-   * @example 3600
-   */
-  maxReadInterval: number | null;
+    /**
+     * Maximum read interval in seconds for historical queries.
+     *
+     * @example 3600
+     */
+    maxReadInterval: number | null;
 
-  /**
-   * Read delay in milliseconds before querying historical data.
-   *
-   * @example 200
-   */
-  readDelay: number | null;
+    /**
+     * Read delay in milliseconds before querying historical data.
+     *
+     * @example 200
+     */
+    readDelay: number | null;
+  };
 }
 
 /**
