@@ -116,14 +116,10 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        id: '',
+        id: null,
         enabled: true,
         name: 'MyName',
-        settings: { objectArray: [], objectSettings: {}, objectValue: 1 },
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
+        settings: { objectArray: [], objectSettings: {}, objectValue: 1 }
       });
     }));
 
@@ -163,11 +159,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
         id: '',
         enabled: true,
         name: 'MyName-2',
-        settings: { objectArray: [], objectSettings: {}, objectValue: 1 },
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
+        settings: { objectArray: [], objectSettings: {}, objectValue: 1 }
       });
     });
   });
@@ -230,11 +222,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
         id: 'id1',
         enabled: false,
         name: 'South Item 1 (updated)',
-        settings: { objectArray: [], objectSettings: {}, objectValue: 1 },
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: '',
-        updatedAt: ''
+        settings: { objectArray: [], objectSettings: {}, objectValue: 1 }
       });
     }));
 

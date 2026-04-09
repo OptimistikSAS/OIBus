@@ -297,6 +297,68 @@ describe('South Service', () => {
     }
   });
 
+  it('should create a south connector from command.groups (duplication path) preserving historian values', async () => {
+    service.retrieveSecretsFromSouth = jest.fn().mockReturnValue(testData.south.list[0]);
+
+    const oldGroupId = 'old-group-id';
+    const newGroup: SouthItemGroupEntity = {
+      id: 'new-group-id',
+      name: 'My Group',
+      southId: 'newSouthId',
+      scanMode: testData.scanMode.list[0],
+      items: [],
+      overlap: 5,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    (southItemGroupRepository.create as jest.Mock).mockReturnValue(newGroup);
+    (southItemGroupRepository.findById as jest.Mock).mockImplementation((id: string) => (id === 'new-group-id' ? newGroup : null));
+
+    let callCount = 0;
+    (southConnectorRepository.saveSouth as jest.Mock).mockImplementation((south: Record<string, unknown>) => {
+      if (callCount === 0 && !south.id) {
+        south.id = 'newSouthId';
+      }
+      callCount++;
+      return south;
+    });
+
+    const command = JSON.parse(JSON.stringify(testData.south.command)) as typeof testData.south.command;
+    command.groups = [
+      {
+        id: oldGroupId,
+        name: 'My Group',
+        scanModeId: testData.scanMode.list[0].id,
+        overlap: 5,
+        maxReadInterval: 3600,
+        readDelay: 200
+      } as SouthItemGroupCommandDTO
+    ];
+    command.items[0].groupId = oldGroupId;
+    command.items[0].groupName = null;
+
+    await service.create(command, testData.south.list[0].id, 'userTest');
+
+    // The group should be created with historian values
+    expect(southItemGroupRepository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'My Group',
+        overlap: 5,
+        maxReadInterval: 3600,
+        readDelay: 200
+      }),
+      'userTest'
+    );
+    // The old groupId should have been remapped to the new group's id
+    const savedSouth = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[1][0];
+    expect(savedSouth.items[0].group).toEqual(newGroup);
+  });
+
   it('should not create a south connector with duplicate name', async () => {
     service.retrieveSecretsFromSouth = jest.fn();
     (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([{ id: 'existing-id', name: testData.south.command.name }]);
@@ -1130,6 +1192,41 @@ describe('South Service', () => {
       updatedAt: southEntity.updatedAt,
       groups: [],
       items: southEntity.items.map(item => toSouthConnectorItemDTO(item, southEntity.type, getUserInfo))
+    });
+  });
+
+  it('should properly convert to DTO with non-empty groups', () => {
+    const getUserInfo = (id: string) => ({ id, friendlyName: id });
+    const group: SouthItemGroupEntity = {
+      id: 'group1',
+      name: 'Group 1',
+      southId: testData.south.list[0].id,
+      scanMode: testData.scanMode.list[0],
+      overlap: 5,
+      maxReadInterval: 3600,
+      readDelay: 200,
+      items: [],
+      createdBy: 'user1',
+      updatedBy: 'user1',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z'
+    };
+    const southEntity = { ...testData.south.list[0], groups: [group] };
+
+    const result = toSouthConnectorDTO(southEntity, getUserInfo);
+
+    expect(result.groups).toHaveLength(1);
+    expect(result.groups[0]).toEqual({
+      id: group.id,
+      name: group.name,
+      scanMode: toScanModeDTO(group.scanMode, getUserInfo),
+      maxReadInterval: group.maxReadInterval,
+      readDelay: group.readDelay,
+      overlap: group.overlap,
+      createdBy: getUserInfo(group.createdBy),
+      updatedBy: getUserInfo(group.updatedBy),
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt
     });
   });
 
