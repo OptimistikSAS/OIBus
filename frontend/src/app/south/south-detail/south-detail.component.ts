@@ -744,7 +744,7 @@ export class SouthDetailComponent implements OnDestroy {
 
     const modalRef = this.modalService.open(SelectGroupModalComponent, { backdrop: 'static' });
     const component: SelectGroupModalComponent = modalRef.componentInstance;
-    component.prepare(this.southConnector!.groups, this.scanModes, this.manifest!);
+    component.prepare(this.southConnector!.groups, this.scanModes, this.manifest!, command => this.addOrEditGroup(command));
 
     modalRef.result
       .pipe(
