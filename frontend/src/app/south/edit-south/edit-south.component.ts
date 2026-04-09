@@ -403,7 +403,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   importItems() {
     const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
-    const optionalHeaders: Array<string> = ['group'];
+    const optionalHeaders: Array<string> = ['group', 'maxReadInterval', 'readDelay', 'overlap', 'syncWithGroup'];
     const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
