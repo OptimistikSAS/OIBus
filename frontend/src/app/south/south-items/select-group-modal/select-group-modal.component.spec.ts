@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SelectGroupModalComponent } from './select-group-modal.component';
-import { SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
+import { SouthItemGroupCommandDTO, SouthItemGroupDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { ModalService } from '../../../shared/modal.service';
 import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal/edit-south-item-group-modal.component';
 import { of, throwError, EMPTY } from 'rxjs';
@@ -71,6 +71,8 @@ describe('SelectGroupModalComponent', () => {
     }
   ];
 
+  const noopAddOrEditGroup = () => EMPTY;
+
   beforeEach(async () => {
     fakeActiveModal = createMock(NgbActiveModal);
     modalService = createMock(ModalService);
@@ -86,7 +88,7 @@ describe('SelectGroupModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new SelectGroupModalComponentTester();
-    tester.componentInstance.prepare([...groups], testData.scanMode.list.map(toScanModeDTO), testData.south.manifest);
+    tester.componentInstance.prepare([...groups], testData.scanMode.list.map(toScanModeDTO), testData.south.manifest, noopAddOrEditGroup);
     await tester.change();
   });
 
@@ -149,7 +151,7 @@ describe('SelectGroupModalComponent', () => {
     expect(modalService.open).toHaveBeenCalledWith(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     expect(mockModalRef.componentInstance.prepareForCreation).toHaveBeenCalledWith(
       testData.scanMode.list.map(toScanModeDTO),
-      groups,
+      [...groups],
       testData.south.manifest
     );
   });
@@ -167,13 +169,24 @@ describe('SelectGroupModalComponent', () => {
       createdAt: '',
       updatedAt: ''
     };
+    const groupCommand: SouthItemGroupCommandDTO = {
+      id: null,
+      name: 'New Group',
+      scanModeId: testData.scanMode.list[0].id,
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: 0
+    };
     const mockModalRef = {
       componentInstance: {
         prepareForCreation: jasmine.createSpy('prepareForCreation')
       },
-      result: of(newGroup)
+      result: of({ mode: 'create' as const, group: groupCommand })
     };
     modalService.open.and.returnValue(mockModalRef as any);
+
+    // Override addOrEditGroup to return the new group
+    tester.componentInstance.prepare([...groups], testData.scanMode.list.map(toScanModeDTO), testData.south.manifest, () => of(newGroup));
 
     const initialGroupsCount = tester.componentInstance.groups.length;
     tester.componentInstance.onCreateNewGroup();
