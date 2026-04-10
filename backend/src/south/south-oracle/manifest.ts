@@ -200,7 +200,7 @@ const manifest: SouthConnectorManifest = {
           },
           {
             type: 'MINIMUM',
-            arguments: ['1']
+            arguments: ['0']
           },
           {
             type: 'MAXIMUM',
