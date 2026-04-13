@@ -1,3 +1,5 @@
+import { describe, it, afterEach } from 'node:test';
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -28,10 +30,10 @@ describe('replaceConfigArgumentWithAbsolutePath', () => {
     const absolutePath = '/absolute/path/to/data-folder';
     const result = replaceConfigArgumentWithAbsolutePath(args, absolutePath);
 
-    expect(result).toContain('--config');
-    expect(result).toContain(absolutePath);
+    assert.ok(result.includes('--config'));
+    assert.ok(result.includes(absolutePath));
     const configIndex = result.indexOf('--config');
-    expect(result[configIndex + 1]).toBe(absolutePath);
+    assert.strictEqual(result[configIndex + 1], absolutePath);
   });
 
   it('adds --launcherVersion when --config is present', () => {
@@ -39,7 +41,7 @@ describe('replaceConfigArgumentWithAbsolutePath', () => {
     const absolutePath = '/absolute/path/to/data-folder';
     const result = replaceConfigArgumentWithAbsolutePath(args, absolutePath);
 
-    expect(result).toContain('--launcherVersion');
+    assert.ok(result.includes('--launcherVersion'));
   });
 
   it('does not modify args when --config is not present', () => {
@@ -47,8 +49,8 @@ describe('replaceConfigArgumentWithAbsolutePath', () => {
     const absolutePath = '/absolute/path/to/data-folder';
     const result = replaceConfigArgumentWithAbsolutePath(args, absolutePath);
 
-    expect(result).toContain('--launcherVersion');
-    expect(result).not.toContain('--config');
+    assert.ok(result.includes('--launcherVersion'));
+    assert.ok(!result.includes('--config'));
   });
 
   it('handles multiple --config occurrences by replacing the first one', () => {
@@ -57,7 +59,7 @@ describe('replaceConfigArgumentWithAbsolutePath', () => {
     const result = replaceConfigArgumentWithAbsolutePath(args, absolutePath);
 
     const firstConfigIndex = result.indexOf('--config');
-    expect(result[firstConfigIndex + 1]).toBe(absolutePath);
+    assert.strictEqual(result[firstConfigIndex + 1], absolutePath);
   });
 });
 
@@ -66,50 +68,50 @@ describe('removeLauncherOnlyArguments', () => {
     const args = ['node', 'script.js', '--config', './data', '--reset-password', 'true'];
     const result = removeLauncherOnlyArguments(args);
 
-    expect(result).not.toContain('--reset-password');
-    expect(result).toContain('--config');
+    assert.ok(!result.includes('--reset-password'));
+    assert.ok(result.includes('--config'));
   });
 
   it('removes --reset-password=value format', () => {
     const args = ['node', 'script.js', '--config', './data', '--reset-password=true'];
     const result = removeLauncherOnlyArguments(args);
 
-    expect(result).not.toContain('--reset-password=true');
-    expect(result).toContain('--config');
+    assert.ok(!result.includes('--reset-password=true'));
+    assert.ok(result.includes('--config'));
   });
 
   it('removes --reset-password and its value when separate', () => {
     const args = ['node', 'script.js', '--reset-password', 'true', '--config', './data'];
     const result = removeLauncherOnlyArguments(args);
 
-    expect(result).not.toContain('--reset-password');
-    expect(result).not.toContain('true');
-    expect(result).toContain('--config');
+    assert.ok(!result.includes('--reset-password'));
+    assert.ok(!result.includes('true'));
+    assert.ok(result.includes('--config'));
   });
 
   it('does not remove value if it looks like another flag', () => {
     const args = ['node', 'script.js', '--reset-password', '--other-flag'];
     const result = removeLauncherOnlyArguments(args);
 
-    expect(result).not.toContain('--reset-password');
-    expect(result).toContain('--other-flag');
+    assert.ok(!result.includes('--reset-password'));
+    assert.ok(result.includes('--other-flag'));
   });
 
   it('preserves other arguments', () => {
     const args = ['node', 'script.js', '--config', './data', '--check', '--other', 'value'];
     const result = removeLauncherOnlyArguments(args);
 
-    expect(result).toContain('--config');
-    expect(result).toContain('--check');
-    expect(result).toContain('--other');
-    expect(result).toContain('value');
+    assert.ok(result.includes('--config'));
+    assert.ok(result.includes('--check'));
+    assert.ok(result.includes('--other'));
+    assert.ok(result.includes('value'));
   });
 
   it('handles empty array', () => {
     const args: Array<string> = [];
     const result = removeLauncherOnlyArguments(args);
 
-    expect(result).toEqual([]);
+    assert.deepStrictEqual(result, []);
   });
 });
 
@@ -119,8 +121,8 @@ describe('delay', () => {
     await delay(50);
     const elapsed = Date.now() - start;
 
-    expect(elapsed).toBeGreaterThanOrEqual(45);
-    expect(elapsed).toBeLessThan(100);
+    assert.ok(elapsed >= 45);
+    assert.ok(elapsed < 100);
   });
 });
 
@@ -132,8 +134,8 @@ describe('createFolder', () => {
 
     await createFolder(folderPath);
 
-    expect(fs.existsSync(folderPath)).toBe(true);
-    expect(fs.statSync(folderPath).isDirectory()).toBe(true);
+    assert.ok(fs.existsSync(folderPath));
+    assert.ok(fs.statSync(folderPath).isDirectory());
   });
 
   it('does not throw if folder already exists', async () => {
@@ -142,8 +144,8 @@ describe('createFolder', () => {
     const folderPath = path.join(tempDir, 'existing-folder');
     fs.mkdirSync(folderPath, { recursive: true });
 
-    await expect(createFolder(folderPath)).resolves.not.toThrow();
-    expect(fs.existsSync(folderPath)).toBe(true);
+    await assert.doesNotReject(createFolder(folderPath));
+    assert.ok(fs.existsSync(folderPath));
   });
 
   it('creates nested folders recursively', async () => {
@@ -153,8 +155,8 @@ describe('createFolder', () => {
 
     await createFolder(folderPath);
 
-    expect(fs.existsSync(folderPath)).toBe(true);
-    expect(fs.statSync(folderPath).isDirectory()).toBe(true);
+    assert.ok(fs.existsSync(folderPath));
+    assert.ok(fs.statSync(folderPath).isDirectory());
   });
 });
 
@@ -167,7 +169,7 @@ describe('filesExists', () => {
 
     const exists = await filesExists(filePath);
 
-    expect(exists).toBe(true);
+    assert.strictEqual(exists, true);
   });
 
   it('returns false if file does not exist', async () => {
@@ -177,7 +179,7 @@ describe('filesExists', () => {
 
     const exists = await filesExists(filePath);
 
-    expect(exists).toBe(false);
+    assert.strictEqual(exists, false);
   });
 
   it('returns true if directory exists', async () => {
@@ -188,92 +190,92 @@ describe('filesExists', () => {
 
     const exists = await filesExists(dirPath);
 
-    expect(exists).toBe(true);
+    assert.strictEqual(exists, true);
   });
 });
 
 describe('parseBooleanOption', () => {
   it('returns true for boolean true', () => {
-    expect(parseBooleanOption(true)).toBe(true);
+    assert.strictEqual(parseBooleanOption(true), true);
   });
 
   it('returns false for boolean false', () => {
-    expect(parseBooleanOption(false)).toBe(false);
+    assert.strictEqual(parseBooleanOption(false), false);
   });
 
   it('returns true for string "true"', () => {
-    expect(parseBooleanOption('true')).toBe(true);
+    assert.strictEqual(parseBooleanOption('true'), true);
   });
 
   it('returns true for string "TRUE" (case insensitive)', () => {
-    expect(parseBooleanOption('TRUE')).toBe(true);
+    assert.strictEqual(parseBooleanOption('TRUE'), true);
   });
 
   it('returns true for string "True"', () => {
-    expect(parseBooleanOption('True')).toBe(true);
+    assert.strictEqual(parseBooleanOption('True'), true);
   });
 
   it('returns true for string "1"', () => {
-    expect(parseBooleanOption('1')).toBe(true);
+    assert.strictEqual(parseBooleanOption('1'), true);
   });
 
   it('returns true for string "yes"', () => {
-    expect(parseBooleanOption('yes')).toBe(true);
+    assert.strictEqual(parseBooleanOption('yes'), true);
   });
 
   it('returns true for string "YES"', () => {
-    expect(parseBooleanOption('YES')).toBe(true);
+    assert.strictEqual(parseBooleanOption('YES'), true);
   });
 
   it('returns true for string "y"', () => {
-    expect(parseBooleanOption('y')).toBe(true);
+    assert.strictEqual(parseBooleanOption('y'), true);
   });
 
   it('returns true for string "Y"', () => {
-    expect(parseBooleanOption('Y')).toBe(true);
+    assert.strictEqual(parseBooleanOption('Y'), true);
   });
 
   it('returns false for string "false"', () => {
-    expect(parseBooleanOption('false')).toBe(false);
+    assert.strictEqual(parseBooleanOption('false'), false);
   });
 
   it('returns false for string "0"', () => {
-    expect(parseBooleanOption('0')).toBe(false);
+    assert.strictEqual(parseBooleanOption('0'), false);
   });
 
   it('returns false for string "no"', () => {
-    expect(parseBooleanOption('no')).toBe(false);
+    assert.strictEqual(parseBooleanOption('no'), false);
   });
 
   it('returns true for number 1', () => {
-    expect(parseBooleanOption(1)).toBe(true);
+    assert.strictEqual(parseBooleanOption(1), true);
   });
 
   it('returns false for number 0', () => {
-    expect(parseBooleanOption(0)).toBe(false);
+    assert.strictEqual(parseBooleanOption(0), false);
   });
 
   it('returns false for number 2', () => {
-    expect(parseBooleanOption(2)).toBe(false);
+    assert.strictEqual(parseBooleanOption(2), false);
   });
 
   it('returns false for null', () => {
-    expect(parseBooleanOption(null)).toBe(false);
+    assert.strictEqual(parseBooleanOption(null), false);
   });
 
   it('returns false for undefined', () => {
-    expect(parseBooleanOption(undefined)).toBe(false);
+    assert.strictEqual(parseBooleanOption(undefined), false);
   });
 
   it('returns false for empty string', () => {
-    expect(parseBooleanOption('')).toBe(false);
+    assert.strictEqual(parseBooleanOption(''), false);
   });
 
   it('returns false for object', () => {
-    expect(parseBooleanOption({})).toBe(false);
+    assert.strictEqual(parseBooleanOption({}), false);
   });
 
   it('returns false for array', () => {
-    expect(parseBooleanOption([])).toBe(false);
+    assert.strictEqual(parseBooleanOption([]), false);
   });
 });
