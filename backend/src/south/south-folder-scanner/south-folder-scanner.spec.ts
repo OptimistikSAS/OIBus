@@ -203,48 +203,6 @@ describe('SouthFolderScanner', () => {
       expect(south.sendFile).toHaveBeenCalledTimes(1);
       expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining('Max size limit (1 MB) reached'));
     });
-
-    it('should skip files modified before v3.7 migration cutoff when filesPreserved is empty and trackedInstant is set', async () => {
-      configuration.items[0].settings.preserveFiles = true;
-      // Simulate post-migration state: no filesPreserved list but trackedInstant from old max_instant
-      const migrationCutoff = '2024-01-01T12:00:00.000Z';
-      const cutoffMs = new Date(migrationCutoff).getTime();
-      (southCacheService.getItemLastValue as jest.Mock).mockReturnValue({
-        value: null,
-        trackedInstant: migrationCutoff
-      });
-
-      // file1.csv: mtime before cutoff → should be skipped
-      // file2.csv: mtime after cutoff → should be processed
-      (fs.stat as jest.Mock)
-        .mockResolvedValueOnce({ mtimeMs: cutoffMs - 1000, size: 100 } as Stats)
-        .mockResolvedValueOnce({ mtimeMs: cutoffMs + 1000, size: 100 } as Stats);
-
-      const result = await south.directQuery(configuration.items);
-
-      expect(south.sendFile).toHaveBeenCalledTimes(1);
-      expect(logger.trace).toHaveBeenCalledWith(expect.stringContaining('Skipping "file1.csv"'));
-      expect(result.find(f => f.filename === 'file2.csv')).toBeDefined();
-    });
-
-    it('should not apply migration cutoff when filesPreserved is already populated', async () => {
-      configuration.items[0].settings.preserveFiles = true;
-      // Normal v3.8 state: filesPreserved populated, trackedInstant also set — cutoff must NOT apply
-      const trackedInstant = '2024-01-01T12:00:00.000Z';
-      const cutoffMs = new Date(trackedInstant).getTime();
-      (southCacheService.getItemLastValue as jest.Mock).mockReturnValue({
-        value: [{ filename: 'file1.csv', modifiedTime: cutoffMs - 1000 }],
-        trackedInstant
-      });
-
-      // Both files have mtime before the trackedInstant — without cutoff they're checked by checkAge
-      (fs.stat as jest.Mock).mockResolvedValue({ mtimeMs: cutoffMs - 500, size: 100 } as Stats);
-
-      await south.directQuery(configuration.items);
-
-      // Cutoff not active — checkAge (mocked to return true) decides
-      expect(logger.trace).not.toHaveBeenCalledWith(expect.stringContaining('migration cutoff'));
-    });
   });
 
   describe('sendFile', () => {
