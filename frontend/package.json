@@ -20,16 +20,16 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "21.2.7",
-    "@angular/cdk": "21.2.5",
-    "@angular/common": "21.2.7",
-    "@angular/compiler": "21.2.7",
-    "@angular/core": "21.2.7",
-    "@angular/forms": "21.2.7",
-    "@angular/localize": "21.2.7",
-    "@angular/platform-browser": "21.2.7",
-    "@angular/platform-browser-dynamic": "21.2.7",
-    "@angular/router": "21.2.7",
+    "@angular/animations": "21.2.8",
+    "@angular/cdk": "21.2.6",
+    "@angular/common": "21.2.8",
+    "@angular/compiler": "21.2.8",
+    "@angular/core": "21.2.8",
+    "@angular/forms": "21.2.8",
+    "@angular/localize": "21.2.8",
+    "@angular/platform-browser": "21.2.8",
+    "@angular/platform-browser-dynamic": "21.2.8",
+    "@angular/router": "21.2.8",
     "@ng-bootstrap/ng-bootstrap": "20.0.0",
     "@ngx-translate/core": "17.0.0",
     "@popperjs/core": "2.11.8",
@@ -45,8 +45,8 @@
   },
   "devDependencies": {
     "@angular/build": "21.2.7",
-    "@angular/cli": "21.2.6",
-    "@angular/compiler-cli": "21.2.7",
+    "@angular/cli": "21.2.7",
+    "@angular/compiler-cli": "21.2.8",
     "@types/jasmine": "6.0.0",
     "@types/luxon": "3.7.1",
     "@types/papaparse": "5.5.2",
@@ -62,8 +62,8 @@
     "karma-jasmine-html-reporter": "2.2.0",
     "karma-mocha-reporter": "2.2.5",
     "ngx-speculoos": "15.0.0",
-    "prettier": "3.8.1",
+    "prettier": "3.8.2",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.58.0"
+    "typescript-eslint": "8.58.1"
   }
 }
