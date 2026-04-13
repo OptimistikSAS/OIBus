@@ -237,12 +237,15 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
     startTime: Instant,
     endTime: Instant
   ): Promise<Array<Record<string, string | number>>> {
+    let connectString = `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`;
+    if (this.connector.settings.connectionTimeout) {
+      connectString += `?connect_timeout=${this.connector.settings.connectionTimeout}ms`;
+    }
     const config: ConnectionAttributes = {
       user: this.connector.settings.username || undefined,
       password: this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : undefined,
-      connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}?connect_timeout=${this.connector.settings.connectionTimeout}ms`
+      connectString
     };
-
     const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
     const oracleStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
     const oracleEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;

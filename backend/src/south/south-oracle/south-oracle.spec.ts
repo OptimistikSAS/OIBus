@@ -498,7 +498,7 @@ describe('SouthOracle without authentication but with thick mode', () => {
     }
 
     expect(oracledb.getConnection).toHaveBeenCalledWith({
-      connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}?connect_timeout=${configuration.settings.connectionTimeout}ms`
+      connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}`
     });
     expect(error).toEqual(new Error('connection error'));
   });
