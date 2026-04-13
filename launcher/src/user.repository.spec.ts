@@ -1,3 +1,5 @@
+import { describe, it, afterEach } from 'node:test';
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -46,6 +48,7 @@ afterEach(() => {
     }
   }
 });
+
 describe('UserRepository', () => {
   it('resets an existing admin user with default parameters', async () => {
     const databasePath = createTemporaryDatabase();
@@ -78,14 +81,14 @@ describe('UserRepository', () => {
     } | null;
     verificationDatabase.close();
 
-    expect(admin).not.toBeNull();
-    expect(admin?.login).toBe('admin');
-    expect(admin?.firstName).toBeNull();
-    expect(admin?.lastName).toBeNull();
-    expect(admin?.email).toBeNull();
-    expect(admin?.language).toBe('en');
-    expect(admin?.timezone).toBe('Europe/Paris');
-    expect(await argon2.verify(admin!.password, 'pass')).toBe(true);
+    assert.notStrictEqual(admin, null);
+    assert.strictEqual(admin?.login, 'admin');
+    assert.strictEqual(admin?.firstName, null);
+    assert.strictEqual(admin?.lastName, null);
+    assert.strictEqual(admin?.email, null);
+    assert.strictEqual(admin?.language, 'en');
+    assert.strictEqual(admin?.timezone, 'Europe/Paris');
+    assert.strictEqual(await argon2.verify(admin!.password, 'pass'), true);
   });
 
   it('creates an admin user when it does not exist', async () => {
@@ -113,24 +116,24 @@ describe('UserRepository', () => {
     } | null;
     database.close();
 
-    expect(userCount?.count).toBe(1);
-    expect(admin).not.toBeNull();
-    expect(await argon2.verify(admin!.password, 'pass')).toBe(true);
-    expect(admin?.language).toBe('en');
-    expect(admin?.timezone).toBe('Europe/Paris');
+    assert.strictEqual(userCount?.count, 1);
+    assert.notStrictEqual(admin, null);
+    assert.strictEqual(await argon2.verify(admin!.password, 'pass'), true);
+    assert.strictEqual(admin?.language, 'en');
+    assert.strictEqual(admin?.timezone, 'Europe/Paris');
   });
 });
 
 describe('generateRandomId', () => {
   it('generates random ID with default size', () => {
     const id = generateRandomId();
-    expect(id).toHaveLength(16);
-    expect(id).toMatch(/^[0-9a-zA-Z]{16}$/);
+    assert.strictEqual(id.length, 16);
+    assert.match(id, /^[0-9a-zA-Z]{16}$/);
   });
 
   it('generates random ID with custom size', () => {
     const id = generateRandomId(6);
-    expect(id).toHaveLength(6);
-    expect(id).toMatch(/^[0-9a-zA-Z]{6}$/);
+    assert.strictEqual(id.length, 6);
+    assert.match(id, /^[0-9a-zA-Z]{6}$/);
   });
 });

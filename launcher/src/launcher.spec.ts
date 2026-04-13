@@ -1,46 +1,59 @@
-import { spawn } from 'node:child_process';
-import { ChildProcessWithoutNullStreams } from 'child_process';
-import { Readable } from 'node:stream';
+import { describe, it, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import cp from 'node:child_process';
+import type { ChildProcessWithoutNullStreams } from 'child_process';
+import { EventEmitter } from 'node:events';
+import { PassThrough } from 'node:stream';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import Launcher from './launcher';
-import * as utils from './utils';
 
-jest.mock('node:child_process', () => ({
-  spawn: jest.fn()
-}));
+type MockFn = ReturnType<typeof mock.fn>;
 
-// Helper function to create a mock child process
-const createMockChildProcess = (): MockChildProcess => {
-  const killMock = jest.fn(() => true);
-  const onMock = jest.fn();
-  const stdoutOnMock = jest.fn();
-  const stderrOnMock = jest.fn();
+// A minimal ChildProcess stand-in that extends EventEmitter (gives proper `on` return type)
+// and provides all non-EventEmitter required fields of ChildProcessWithoutNullStreams.
+class MockChildProcess extends EventEmitter {
+  stdin = new PassThrough();
+  stdout = new PassThrough();
+  stderr = new PassThrough();
+  stdio: ChildProcessWithoutNullStreams['stdio'];
+  killed = false;
+  pid: number | undefined = undefined;
+  connected = false;
+  exitCode: number | null = null;
+  signalCode: NodeJS.Signals | null = null;
+  spawnargs: Array<string> = [];
+  spawnfile = '';
+  readonly killMock: MockFn = mock.fn(() => true);
 
-  return {
-    kill: killMock as (signal?: NodeJS.Signals | number) => boolean,
-    stdout: { on: stdoutOnMock } as Readable & { on: typeof stdoutOnMock },
-    stderr: { on: stderrOnMock } as Readable & { on: typeof stderrOnMock },
-    on: onMock as unknown as ChildProcessWithoutNullStreams['on'],
-    killMock,
-    onMock,
-    stdoutOnMock,
-    stderrOnMock
-  } as MockChildProcess;
-};
+  constructor() {
+    super();
+    this.stdio = [this.stdin, this.stdout, this.stderr, undefined, undefined];
+  }
 
-type MockChildProcess = Partial<ChildProcessWithoutNullStreams> & {
-  kill: (signal?: NodeJS.Signals | number) => boolean;
-  stdout: Readable & { on: (event: string, listener: (...args: Array<unknown>) => void) => Readable };
-  stderr: Readable & { on: (event: string, listener: (...args: Array<unknown>) => void) => Readable };
-  on: (event: string, listener: (...args: Array<unknown>) => void) => ChildProcessWithoutNullStreams;
-  killMock: ReturnType<typeof jest.fn>;
-  onMock: ReturnType<typeof jest.fn>;
-  stdoutOnMock: ReturnType<typeof jest.fn>;
-  stderrOnMock: ReturnType<typeof jest.fn>;
-};
+  kill(signal?: NodeJS.Signals | number): boolean {
+    this.killMock(signal);
+    return true;
+  }
+
+  send(): boolean {
+    return false;
+  }
+
+  disconnect(): void {
+    // noop
+  }
+
+  unref(): void {
+    // noop
+  }
+
+  ref(): void {
+    // noop
+  }
+}
 
 const createdDirectories: Array<string> = [];
 
@@ -57,8 +70,7 @@ afterEach(() => {
       fs.rmSync(directory, { recursive: true, force: true });
     }
   }
-  jest.clearAllMocks();
-  jest.clearAllTimers();
+  mock.reset();
 });
 
 describe('Launcher', () => {
@@ -67,144 +79,146 @@ describe('Launcher', () => {
   let backupDir: string;
   let configDir: string;
 
+  const launcherInstances: Array<Launcher> = [];
+
+  const createAndTrackLauncher = (
+    wd: string,
+    ud: string,
+    bd: string,
+    cd: string,
+    version: boolean,
+    processArgs: Array<string>
+  ): Launcher => {
+    const launcher = new Launcher(wd, ud, bd, cd, version, processArgs);
+    launcherInstances.push(launcher);
+    return launcher;
+  };
+
   beforeEach(() => {
     workDir = createTempDir();
     updateDir = createTempDir();
     backupDir = createTempDir();
     configDir = createTempDir();
-    jest.useFakeTimers();
+    mock.timers.enable();
   });
 
   afterEach(() => {
-    // Stop all launcher instances to clear their timeouts
     launcherInstances.forEach(launcher => {
       launcher.stop();
     });
     launcherInstances.length = 0;
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    mock.timers.reset();
   });
-
-  // Track all launcher instances for cleanup
-  const launcherInstances: Array<Launcher> = [];
-
-  // Helper to track and start launcher
-  const createAndTrackLauncher = (
-    workDir: string,
-    updateDir: string,
-    backupDir: string,
-    configDir: string,
-    version: boolean,
-    processArgs: Array<string>
-  ): Launcher => {
-    const launcher = new Launcher(workDir, updateDir, backupDir, configDir, version, processArgs);
-    launcherInstances.push(launcher);
-    return launcher;
-  };
 
   describe('constructor', () => {
     it('initializes with provided directories', () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, ['node', 'script.js', '--config', './data']);
 
-      expect(launcher).toBeInstanceOf(Launcher);
+      assert.ok(launcher instanceof Launcher);
     });
 
-    it('processes arguments with replaceConfigArgumentWithAbsolutePath', () => {
-      const replaceSpy = jest.spyOn(utils, 'replaceConfigArgumentWithAbsolutePath');
-      createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, ['node', 'script.js', '--config', './data']);
+    it('passes the absolute config path to spawn when starting', async () => {
+      mock.method(os, 'type', () => 'Linux');
+      const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, ['node', 'script.js', '--config', './data']);
+      const oibusPath = path.resolve(workDir, 'oibus');
+      fs.mkdirSync(workDir, { recursive: true });
+      fs.writeFileSync(oibusPath, 'binary');
 
-      expect(replaceSpy).toHaveBeenCalledWith(['node', 'script.js', '--config', './data'], configDir);
+      const spawnMock = mock.method(cp, 'spawn', () => new MockChildProcess());
+
+      await launcher.start();
+      launcher.stop();
+
+      assert.ok(spawnMock.mock.calls.length > 0);
+      const spawnArgs = spawnMock.mock.calls[0].arguments[1] as Array<string>;
+      assert.ok(spawnArgs.includes(configDir));
+      assert.ok(spawnArgs.includes('--launcherVersion'));
     });
   });
 
   describe('getOibusExecutable', () => {
     it('returns oibus.exe on Windows', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Windows_NT' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Windows_NT');
 
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const executable = launcher.getOibusExecutable();
 
-      expect(executable).toBe('oibus.exe');
-      jest.mocked(os.type).mockRestore();
+      assert.strictEqual(executable, 'oibus.exe');
     });
 
     it('returns oibus on non-Windows', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
 
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const executable = launcher.getOibusExecutable();
 
-      expect(executable).toBe('oibus');
-      jest.mocked(os.type).mockRestore();
+      assert.strictEqual(executable, 'oibus');
     });
   });
 
   describe('getOibusLauncherExecutable', () => {
     it('returns oibus-launcher_backup.exe on Windows', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Windows_NT' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Windows_NT');
 
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const executable = launcher.getOibusLauncherExecutable();
 
-      expect(executable).toBe('oibus-launcher_backup.exe');
-      jest.mocked(os.type).mockRestore();
+      assert.strictEqual(executable, 'oibus-launcher_backup.exe');
     });
 
     it('returns oibus-launcher_backup on non-Windows', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
 
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const executable = launcher.getOibusLauncherExecutable();
 
-      expect(executable).toBe('oibus-launcher_backup');
-      jest.mocked(os.type).mockRestore();
+      assert.strictEqual(executable, 'oibus-launcher_backup');
     });
   });
 
   describe('getOibusPath', () => {
     it('returns resolved path to oibus executable in workDir', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = launcher.getOibusPath();
 
-      expect(oibusPath).toBe(path.resolve(workDir, 'oibus'));
+      assert.strictEqual(oibusPath, path.resolve(workDir, 'oibus'));
     });
   });
 
   describe('getOibusUpdatePath', () => {
     it('returns resolved path to oibus executable in updateDir/binaries', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const updatePath = launcher.getOibusUpdatePath();
 
-      expect(updatePath).toBe(path.resolve(updateDir, 'binaries', 'oibus'));
+      assert.strictEqual(updatePath, path.resolve(updateDir, 'binaries', 'oibus'));
     });
   });
 
   describe('getOibusBackupPath', () => {
     it('returns resolved path to oibus executable in backupDir', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const backupPath = launcher.getOibusBackupPath();
 
-      expect(backupPath).toBe(path.resolve(backupDir, 'oibus'));
+      assert.strictEqual(backupPath, path.resolve(backupDir, 'oibus'));
     });
   });
 
   describe('getOibusLauncherBackupPath', () => {
     it('returns resolved path to launcher backup in current working directory', () => {
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const launcherBackupPath = launcher.getOibusLauncherBackupPath();
 
-      expect(launcherBackupPath).toBe(path.resolve(process.cwd(), 'oibus-launcher_backup'));
+      assert.strictEqual(launcherBackupPath, path.resolve(process.cwd(), 'oibus-launcher_backup'));
     });
   });
 
   describe('checkForUpdate', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
     });
 
     it('returns true when update file exists', async () => {
@@ -215,7 +229,7 @@ describe('Launcher', () => {
 
       const hasUpdate = await launcher.checkForUpdate();
 
-      expect(hasUpdate).toBe(true);
+      assert.strictEqual(hasUpdate, true);
     });
 
     it('returns false when update file does not exist', async () => {
@@ -223,14 +237,13 @@ describe('Launcher', () => {
 
       const hasUpdate = await launcher.checkForUpdate();
 
-      expect(hasUpdate).toBe(false);
+      assert.strictEqual(hasUpdate, false);
     });
   });
 
   describe('stop', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
     });
 
     it('kills child process when it exists', async () => {
@@ -238,27 +251,26 @@ describe('Launcher', () => {
       const oibusPath = path.resolve(workDir, 'oibus');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
-      const mockChild = createMockChildProcess();
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      mock.method(cp, 'spawn', () => mockChild);
 
-      // Start to create a child
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
       launcher.stop();
 
-      expect(mockChild.killMock).toHaveBeenCalledWith('SIGINT');
+      assert.ok(mockChild.killMock.mock.calls.length > 0);
+      assert.deepStrictEqual(mockChild.killMock.mock.calls[0].arguments, ['SIGINT']);
     });
 
     it('handles stop when no child exists', () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
-      expect(() => launcher.stop()).not.toThrow();
+      assert.doesNotThrow(() => launcher.stop());
     });
   });
 
   describe('start', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
     });
 
     it('starts OIBus without update when no update exists', async () => {
@@ -267,75 +279,55 @@ describe('Launcher', () => {
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      const mockChild = createMockChildProcess();
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      const spawnMock = mock.method(cp, 'spawn', () => mockChild);
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      expect(spawn).toHaveBeenCalledWith(oibusPath, expect.arrayContaining<string>([]), { cwd: workDir });
-      expect(mockChild.stdoutOnMock).toHaveBeenCalledWith('data', expect.any(Function));
-      expect(mockChild.stderrOnMock).toHaveBeenCalledWith('data', expect.any(Function));
-      expect(mockChild.onMock).toHaveBeenCalledWith('close', expect.any(Function));
-      expect(mockChild.onMock).toHaveBeenCalledWith('error', expect.any(Function));
+      assert.ok(spawnMock.mock.calls.length > 0);
+      assert.strictEqual(spawnMock.mock.calls[0].arguments[0], oibusPath);
+      assert.deepStrictEqual(spawnMock.mock.calls[0].arguments[2], { cwd: workDir });
+      assert.ok(mockChild.stdout.listenerCount('data') > 0);
+      assert.ok(mockChild.stderr.listenerCount('data') > 0);
+      assert.ok(mockChild.listenerCount('close') > 0);
+      assert.ok(mockChild.listenerCount('error') > 0);
     });
 
     it('handles stdout data events', async () => {
-      const consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+      const consoleInfoMock = mock.method(console, 'info', () => undefined);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let stdoutHandler: ((data: Buffer) => void) | undefined;
-      const mockChild = createMockChildProcess();
-      mockChild.stdoutOnMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'data') {
-          stdoutHandler = handler as (data: Buffer) => void;
-        }
-        return mockChild.stdout;
-      }) as ReturnType<typeof jest.fn>;
-      mockChild.stdout = { on: mockChild.stdoutOnMock } as Readable & { on: typeof mockChild.stdoutOnMock };
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      mock.method(cp, 'spawn', () => mockChild);
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      if (stdoutHandler) {
-        stdoutHandler(Buffer.from('test stdout output'));
-      }
+      mockChild.stdout.write(Buffer.from('test stdout output'));
 
-      expect(consoleInfoSpy).toHaveBeenCalledWith('OIBus stdout: test stdout output');
-      consoleInfoSpy.mockRestore();
+      assert.ok(consoleInfoMock.mock.calls.some(c => c.arguments[0] === 'OIBus stdout: test stdout output'));
     });
 
     it('handles stderr data events', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const consoleErrorMock = mock.method(console, 'error', () => undefined);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let stderrHandler: ((data: Buffer) => void) | undefined;
-      const mockChild = createMockChildProcess();
-      mockChild.stderrOnMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'data') {
-          stderrHandler = handler as (data: Buffer) => void;
-        }
-        return mockChild.stderr;
-      }) as ReturnType<typeof jest.fn>;
-      mockChild.stderr = { on: mockChild.stderrOnMock } as Readable & { on: typeof mockChild.stderrOnMock };
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      mock.method(cp, 'spawn', () => mockChild);
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      if (stderrHandler) {
-        stderrHandler(Buffer.from('test stderr output'));
-      }
+      mockChild.stderr.write(Buffer.from('test stderr output'));
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('OIBus stderr: test stderr output');
-      consoleErrorSpy.mockRestore();
+      assert.ok(consoleErrorMock.mock.calls.some(c => c.arguments[0] === 'OIBus stderr: test stderr output'));
     });
 
     it('performs update when update exists and version is false', async () => {
@@ -347,13 +339,12 @@ describe('Launcher', () => {
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'old binary');
 
-      const mockChild = createMockChildProcess();
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      mock.method(cp, 'spawn', () => new MockChildProcess());
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      expect(fs.existsSync(path.resolve(backupDir, 'oibus'))).toBe(true);
+      assert.ok(fs.existsSync(path.resolve(backupDir, 'oibus')));
     });
 
     it('skips update when version is true even if update exists', async () => {
@@ -365,13 +356,12 @@ describe('Launcher', () => {
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'old binary');
 
-      const mockChild = createMockChildProcess();
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      mock.method(cp, 'spawn', () => new MockChildProcess());
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      expect(fs.existsSync(path.resolve(backupDir, 'oibus'))).toBe(false);
+      assert.strictEqual(fs.existsSync(path.resolve(backupDir, 'oibus')), false);
     });
 
     it('handles child process close event with updated flag', async () => {
@@ -380,29 +370,20 @@ describe('Launcher', () => {
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let closeHandler: ((code: number | null) => void) | undefined;
-      const mockChild = createMockChildProcess();
-      mockChild.onMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'close') {
-          closeHandler = handler as (code: number | null) => void;
-        }
-        return mockChild as ChildProcessWithoutNullStreams;
-      }) as unknown as ReturnType<typeof jest.fn>;
-      mockChild.on = mockChild.onMock as unknown as ChildProcessWithoutNullStreams['on'];
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      mock.method(cp, 'spawn', () => mockChild);
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
-      // Simulate updated flag by calling update first
+      launcher.stop();
       const updatePath = path.resolve(updateDir, 'binaries', 'oibus');
       fs.mkdirSync(path.dirname(updatePath), { recursive: true });
       fs.writeFileSync(updatePath, 'new binary');
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      // Trigger close event
-      if (closeHandler!) {
-        await closeHandler(0);
+      const closeListeners = mockChild.rawListeners('close');
+      if (closeListeners.length > 0) {
+        await (closeListeners[closeListeners.length - 1] as (code: number | null) => Promise<void>)(0);
       }
     });
 
@@ -412,36 +393,23 @@ describe('Launcher', () => {
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let closeHandler: ((code: number | null) => void) | undefined;
+      const mockChild = new MockChildProcess();
       let spawnCallCount = 0;
-      const mockChild = createMockChildProcess();
-      mockChild.onMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'close') {
-          closeHandler = handler as (code: number | null) => void;
-        }
-        return mockChild as ChildProcessWithoutNullStreams;
-      }) as unknown as ReturnType<typeof jest.fn>;
-      mockChild.on = mockChild.onMock as unknown as ChildProcessWithoutNullStreams['on'];
-
-      // Mock spawn to track all calls
-      jest.mocked(spawn).mockImplementation(() => {
+      mock.method(cp, 'spawn', () => {
         spawnCallCount += 1;
-        return mockChild as ChildProcessWithoutNullStreams;
+        return mockChild;
       });
 
       await launcher.start();
       const initialCallCount = spawnCallCount;
 
-      // Trigger close event when not stopping and not in version mode
-      // Don't call launcher.stop() here as that would set stopping=true and prevent restart
-      if (closeHandler!) {
-        await closeHandler(0);
+      const [closeListener] = mockChild.rawListeners('close') as Array<(code: number | null) => Promise<void>>;
+      if (closeListener) {
+        await closeListener(0);
       }
 
-      // Verify that spawn was called again (restart behavior)
-      expect(spawnCallCount).toBeGreaterThan(initialCallCount);
+      assert.ok(spawnCallCount > initialCallCount);
 
-      // Clean up after test
       launcher.stop();
     });
 
@@ -451,97 +419,66 @@ describe('Launcher', () => {
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let closeHandler: ((code: number | null) => void) | undefined;
+      const mockChild = new MockChildProcess();
       let secondStartCallCount = 0;
-      const mockChild = createMockChildProcess();
-      mockChild.onMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'close') {
-          closeHandler = handler as (code: number | null) => void;
-        }
-        return mockChild as ChildProcessWithoutNullStreams;
-      }) as unknown as ReturnType<typeof jest.fn>;
-      mockChild.on = mockChild.onMock as unknown as ChildProcessWithoutNullStreams['on'];
-
-      // Mock spawn to track calls
-      jest.mocked(spawn).mockImplementation(() => {
+      mock.method(cp, 'spawn', () => {
         secondStartCallCount += 1;
-        return mockChild as ChildProcessWithoutNullStreams;
+        return mockChild;
       });
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
-
-      // Stop the launcher to set stopping flag
       launcher.stop();
 
-      // Reset counter to track restart calls
       secondStartCallCount = 0;
 
-      // Trigger close event when stopping is true
-      if (closeHandler!) {
-        await closeHandler(0);
+      const [closeListener] = mockChild.rawListeners('close') as Array<(code: number | null) => Promise<void>>;
+      if (closeListener) {
+        await closeListener(0);
       }
 
-      // Verify that spawn was NOT called again (no restart when stopping)
-      expect(secondStartCallCount).toBe(0);
+      assert.strictEqual(secondStartCallCount, 0);
     });
 
     it('handles child process close event in version mode with non-zero code', async () => {
-      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+      const exitMock = mock.method(process, 'exit', (_code?: number | string | null) => undefined as never);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, true, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let closeHandler: ((code: number | null) => void) | undefined;
-      const mockChild = createMockChildProcess();
-      mockChild.onMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'close') {
-          closeHandler = handler as (code: number | null) => void;
-        }
-        return mockChild as ChildProcessWithoutNullStreams;
-      }) as unknown as ReturnType<typeof jest.fn>;
-      mockChild.on = mockChild.onMock as unknown as ChildProcessWithoutNullStreams['on'];
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      mock.method(cp, 'spawn', () => mockChild);
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      if (closeHandler!) {
-        await closeHandler(1);
+      const [closeListener] = mockChild.rawListeners('close') as Array<(code: number | null) => Promise<void>>;
+      if (closeListener) {
+        await closeListener(1);
       }
 
-      expect(exitSpy).toHaveBeenCalledWith(1);
-      exitSpy.mockRestore();
+      assert.ok(exitMock.mock.calls.some(c => c.arguments[0] === 1));
     });
 
     it('handles child process close event in version mode with zero code', async () => {
-      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+      const exitMock = mock.method(process, 'exit', (_code?: number | string | null) => undefined as never);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, true, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let closeHandler: ((code: number | null) => void) | undefined;
-      const mockChild = createMockChildProcess();
-      mockChild.onMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'close') {
-          closeHandler = handler as (code: number | null) => void;
-        }
-        return mockChild as ChildProcessWithoutNullStreams;
-      }) as unknown as ReturnType<typeof jest.fn>;
-      mockChild.on = mockChild.onMock as unknown as ChildProcessWithoutNullStreams['on'];
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      mock.method(cp, 'spawn', () => mockChild);
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      if (closeHandler!) {
-        await closeHandler(0);
+      const [closeListener] = mockChild.rawListeners('close') as Array<(code: number | null) => Promise<void>>;
+      if (closeListener) {
+        await closeListener(0);
       }
 
-      expect(exitSpy).toHaveBeenCalledWith(0);
-      exitSpy.mockRestore();
+      assert.ok(exitMock.mock.calls.some(c => c.arguments[0] === 0));
     });
 
     it('handles child process error event', async () => {
@@ -550,55 +487,39 @@ describe('Launcher', () => {
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let errorHandler: ((error: Error) => void) | undefined;
-      const mockChild = createMockChildProcess();
-      mockChild.onMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'error') {
-          errorHandler = handler as (error: Error) => void;
-        }
-        return mockChild as ChildProcessWithoutNullStreams;
-      });
-      mockChild.on = mockChild.onMock as unknown as ChildProcessWithoutNullStreams['on'];
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      mock.method(cp, 'spawn', () => mockChild);
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      if (errorHandler!) {
-        errorHandler(new Error('Spawn failed'));
+      const [errorListener] = mockChild.rawListeners('error') as Array<(error: Error) => void>;
+      if (errorListener) {
+        errorListener(new Error('Spawn failed'));
       }
     });
 
     it('handles child process error event in version mode', async () => {
-      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-      const consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+      const exitMock = mock.method(process, 'exit', (_code?: number | string | null) => undefined as never);
+      const consoleInfoMock = mock.method(console, 'info', () => undefined);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, true, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      let errorHandler: ((error: Error) => void) | undefined;
-      const mockChild = createMockChildProcess();
-      mockChild.onMock = jest.fn((event: string, handler: (...args: Array<unknown>) => void) => {
-        if (event === 'error') {
-          errorHandler = handler as (error: Error) => void;
-        }
-        return mockChild as ChildProcessWithoutNullStreams;
-      });
-      mockChild.on = mockChild.onMock as unknown as ChildProcessWithoutNullStreams['on'];
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      const mockChild = new MockChildProcess();
+      mock.method(cp, 'spawn', () => mockChild);
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      if (errorHandler!) {
-        errorHandler(new Error('Spawn failed'));
+      const [errorListener] = mockChild.rawListeners('error') as Array<(error: Error) => void>;
+      if (errorListener) {
+        errorListener(new Error('Spawn failed'));
       }
 
-      expect(consoleInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Launcher version:'));
-      expect(exitSpy).toHaveBeenCalledWith(1);
-      exitSpy.mockRestore();
-      consoleInfoSpy.mockRestore();
+      assert.ok(consoleInfoMock.mock.calls.some(c => (c.arguments[0] as string).includes('Launcher version:')));
+      assert.ok(exitMock.mock.calls.some(c => c.arguments[0] === 1));
     });
 
     it('handles spawn exception', async () => {
@@ -608,57 +529,48 @@ describe('Launcher', () => {
       const dataFolderBackup = path.resolve(backupDir, 'data-folder');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'old binary');
-      // Create backup files as if an update was attempted
       fs.mkdirSync(path.dirname(backupPath), { recursive: true });
       fs.writeFileSync(backupPath, 'old binary');
       fs.mkdirSync(dataFolderBackup, { recursive: true });
-      // Simulate that update was attempted by creating the updated binary
       fs.writeFileSync(oibusPath, 'new binary');
 
       let callCount = 0;
-      jest.mocked(spawn).mockImplementation(() => {
+      mock.method(cp, 'spawn', () => {
         callCount += 1;
         if (callCount === 1) {
           throw new Error('Spawn error');
         }
-        // On retry, return a mock child process to prevent infinite loop
-        return createMockChildProcess() as ChildProcessWithoutNullStreams;
+        return new MockChildProcess();
       });
 
-      // The spawn exception will trigger rollback and retry
-      // The test verifies the exception is caught and handled
       await launcher.start();
-      launcher.stop(); // Clean up timeout
-      expect(callCount).toBeGreaterThan(0);
+      launcher.stop();
+      assert.ok(callCount > 0);
     });
 
     it('handles spawn exception in version mode', async () => {
-      const exitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-      const consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation(() => undefined);
+      const exitMock = mock.method(process, 'exit', (_code?: number | string | null) => undefined as never);
+      const consoleInfoMock = mock.method(console, 'info', () => undefined);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, true, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'binary');
 
-      jest.mocked(spawn).mockImplementation(() => {
+      mock.method(cp, 'spawn', () => {
         throw new Error('Spawn error');
       });
 
-      // The spawn exception in version mode should exit with version info
       await launcher.start();
-      launcher.stop(); // Clean up timeout
+      launcher.stop();
 
-      expect(consoleInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Launcher version:'));
-      expect(exitSpy).toHaveBeenCalledWith(1);
-      exitSpy.mockRestore();
-      consoleInfoSpy.mockRestore();
+      assert.ok(consoleInfoMock.mock.calls.some(c => (c.arguments[0] as string).includes('Launcher version:')));
+      assert.ok(exitMock.mock.calls.some(c => c.arguments[0] === 1));
     });
   });
 
   describe('update', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
     });
 
     it('performs update with default backup folders', async () => {
@@ -672,8 +584,8 @@ describe('Launcher', () => {
 
       await launcher.update();
 
-      expect(fs.existsSync(path.resolve(backupDir, 'oibus'))).toBe(true);
-      expect(fs.existsSync(oibusPath)).toBe(true);
+      assert.ok(fs.existsSync(path.resolve(backupDir, 'oibus')));
+      assert.ok(fs.existsSync(oibusPath));
     });
 
     it('performs update with custom backup folders from update.json', async () => {
@@ -689,7 +601,7 @@ describe('Launcher', () => {
 
       await launcher.update();
 
-      expect(fs.existsSync(path.resolve(backupDir, 'oibus'))).toBe(true);
+      assert.ok(fs.existsSync(path.resolve(backupDir, 'oibus')));
       fs.unlinkSync(updateSettingsPath);
     });
 
@@ -702,12 +614,11 @@ describe('Launcher', () => {
       fs.writeFileSync(updatePath, 'new binary');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'old binary');
-      // Create update.json without backupFolders property
       fs.writeFileSync(updateSettingsPath, JSON.stringify({}));
 
       await launcher.update();
 
-      expect(fs.existsSync(path.resolve(backupDir, 'oibus'))).toBe(true);
+      assert.ok(fs.existsSync(path.resolve(backupDir, 'oibus')));
       fs.unlinkSync(updateSettingsPath);
     });
 
@@ -722,7 +633,7 @@ describe('Launcher', () => {
 
       await launcher.update();
 
-      expect(fs.existsSync(path.resolve(backupDir, 'oibus'))).toBe(true);
+      assert.ok(fs.existsSync(path.resolve(backupDir, 'oibus')));
     });
 
     it('cleans up update directory after update', async () => {
@@ -738,11 +649,11 @@ describe('Launcher', () => {
 
       await launcher.update();
 
-      expect(fs.existsSync(otherFile)).toBe(false);
+      assert.strictEqual(fs.existsSync(otherFile), false);
     });
 
     it('handles errors when cleaning up update directory', async () => {
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      const consoleErrorMock = mock.method(console, 'error', () => undefined);
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       const updatePath = path.resolve(updateDir, 'binaries', 'oibus');
@@ -753,33 +664,30 @@ describe('Launcher', () => {
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'old binary');
 
-      // Mock fs.rm to throw an error when cleaning up files in updateDir
-      const originalRm = fs.promises.rm;
-      jest.spyOn(fs.promises, 'rm').mockImplementation(async (target, options) => {
-        const targetPath = typeof target === 'string' ? target : String(target);
-        // Check if this is a call to remove a file in updateDir (not the binaries subdirectory)
-        if (targetPath.includes(updateDir) && !targetPath.includes('binaries')) {
-          // Throw error when trying to remove the problematic file
-          if (targetPath === problematicFile) {
-            throw new Error('Permission denied');
+      const originalRm = fs.promises.rm.bind(fs.promises);
+      mock.method(
+        fs.promises,
+        'rm',
+        async (target: Parameters<typeof fs.promises.rm>[0], options?: Parameters<typeof fs.promises.rm>[1]) => {
+          const targetPath = typeof target === 'string' ? target : String(target);
+          if (targetPath.includes(updateDir) && !targetPath.includes('binaries')) {
+            if (targetPath === problematicFile) {
+              throw new Error('Permission denied');
+            }
           }
+          return originalRm(target, options!);
         }
-        return originalRm(target, options);
-      });
+      );
 
       await launcher.update();
 
-      // Verify that the error was logged (line 150)
-      expect(consoleErrorSpy).toHaveBeenCalled();
-      consoleErrorSpy.mockRestore();
-      jest.clearAllMocks();
+      assert.ok(consoleErrorMock.mock.calls.length > 0);
     });
   });
 
   describe('rollback', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
     });
 
     it('rolls back binary and data folder', async () => {
@@ -796,16 +704,15 @@ describe('Launcher', () => {
 
       await launcher.rollback();
 
-      expect(fs.existsSync(oibusPath)).toBe(true);
-      expect(fs.existsSync(path.join(configDir, 'test.txt'))).toBe(true);
-      expect(fs.existsSync(dataFolderBackup)).toBe(false);
+      assert.ok(fs.existsSync(oibusPath));
+      assert.ok(fs.existsSync(path.join(configDir, 'test.txt')));
+      assert.strictEqual(fs.existsSync(dataFolderBackup), false);
     });
   });
 
   describe('handleOibusStarted', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
     });
 
     it('cleans up backup files and settings', async () => {
@@ -823,18 +730,16 @@ describe('Launcher', () => {
       fs.mkdirSync(dataFolderBackup, { recursive: true });
       fs.writeFileSync(updateSettingsPath, '{}');
 
-      const mockChild = createMockChildProcess();
-      jest.mocked(spawn).mockReturnValue(mockChild as ChildProcessWithoutNullStreams);
+      mock.method(cp, 'spawn', () => new MockChildProcess());
 
       await launcher.start();
-      launcher.stop(); // Clean up timeout
-      // Manually trigger handleOibusStarted to test cleanup
+      launcher.stop();
       await launcher.handleOibusStarted();
 
-      expect(fs.existsSync(backupPath)).toBe(false);
-      expect(fs.existsSync(launcherBackupPath)).toBe(false);
-      expect(fs.existsSync(dataFolderBackup)).toBe(false);
-      expect(fs.existsSync(updateSettingsPath)).toBe(false);
+      assert.strictEqual(fs.existsSync(backupPath), false);
+      assert.strictEqual(fs.existsSync(launcherBackupPath), false);
+      assert.strictEqual(fs.existsSync(dataFolderBackup), false);
+      assert.strictEqual(fs.existsSync(updateSettingsPath), false);
     });
 
     it('handles handleOibusStarted when startedTimeout is null', async () => {
@@ -849,21 +754,18 @@ describe('Launcher', () => {
       fs.mkdirSync(dataFolderBackup, { recursive: true });
       fs.writeFileSync(updateSettingsPath, '{}');
 
-      // Call handleOibusStarted when startedTimeout is null (not set)
-      // This tests the branch where if (this.startedTimeout) is false (line 170)
       await launcher.handleOibusStarted();
 
-      expect(fs.existsSync(backupPath)).toBe(false);
-      expect(fs.existsSync(launcherBackupPath)).toBe(false);
-      expect(fs.existsSync(dataFolderBackup)).toBe(false);
-      expect(fs.existsSync(updateSettingsPath)).toBe(false);
+      assert.strictEqual(fs.existsSync(backupPath), false);
+      assert.strictEqual(fs.existsSync(launcherBackupPath), false);
+      assert.strictEqual(fs.existsSync(dataFolderBackup), false);
+      assert.strictEqual(fs.existsSync(updateSettingsPath), false);
     });
   });
 
   describe('backupDataFolder', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
-      jest.spyOn(os, 'type').mockReturnValue('Linux' as NodeJS.Platform);
+      mock.method(os, 'type', () => 'Linux');
     });
 
     it('backs up data folder matching pattern', async () => {
@@ -883,8 +785,8 @@ describe('Launcher', () => {
 
       const backupCacheFile = path.resolve(backupDir, 'data-folder', 'cache', 'file.txt');
       const backupOtherFile = path.resolve(backupDir, 'data-folder', 'other', 'file.txt');
-      expect(fs.existsSync(backupCacheFile)).toBe(true);
-      expect(fs.existsSync(backupOtherFile)).toBe(false);
+      assert.ok(fs.existsSync(backupCacheFile));
+      assert.strictEqual(fs.existsSync(backupOtherFile), false);
     });
   });
 
@@ -904,7 +806,7 @@ describe('Launcher', () => {
       await launcher.copyFilesAndDirectoriesRecursively(srcDir, destDir, pattern);
 
       const destFile = path.join(destDir, 'cache', 'subdir', 'file.txt');
-      expect(fs.existsSync(destFile)).toBe(true);
+      assert.ok(fs.existsSync(destFile));
     });
 
     it('copies matching files', async () => {
@@ -920,7 +822,7 @@ describe('Launcher', () => {
       await launcher.copyFilesAndDirectoriesRecursively(srcDir, destDir, pattern);
 
       const destFile = path.join(destDir, 'logs', 'app.log');
-      expect(fs.existsSync(destFile)).toBe(true);
+      assert.ok(fs.existsSync(destFile));
     });
 
     it('skips non-matching entries', async () => {
@@ -942,8 +844,8 @@ describe('Launcher', () => {
 
       const destCacheFile = path.join(destDir, 'cache', 'file.txt');
       const destOtherFile = path.join(destDir, 'other', 'file.txt');
-      expect(fs.existsSync(destCacheFile)).toBe(true);
-      expect(fs.existsSync(destOtherFile)).toBe(false);
+      assert.ok(fs.existsSync(destCacheFile));
+      assert.strictEqual(fs.existsSync(destOtherFile), false);
     });
   });
 });
