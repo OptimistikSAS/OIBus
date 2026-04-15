@@ -64,7 +64,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         const itemsToRun = this.connector.items.filter(
           item =>
             item.enabled &&
-            ((item.scanMode.id === scanMode.id && (!item.syncWithGroup || !item.group)) ||
+            (((!item.syncWithGroup || !item.group) && item.scanMode!.id === scanMode.id) ||
               (item.syncWithGroup && item.group && item.group.scanMode.id === scanMode.id))
         );
         if (itemsToRun.length > 0) {
@@ -105,8 +105,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // Collect all unique scan modes from enabled items (excluding 'subscription')
     const scanModes = new Map<string, ScanMode>();
     this.connector.items
-      .filter(item => item.scanMode.id && item.scanMode.id !== 'subscription' && item.enabled)
-      .forEach(item => scanModes.set(item.scanMode.id!, item.scanMode));
+      .filter(item => item.scanMode && item.scanMode.id && item.scanMode.id !== 'subscription' && item.enabled)
+      .forEach(item => scanModes.set(item.scanMode!.id!, item.scanMode!));
 
     // Create cron jobs for new scan modes
     scanModes.forEach(scanMode => {
@@ -160,7 +160,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       return;
     }
     // Get all subscription items
-    const subscriptionItems = this.connector.items.filter(item => item.scanMode.id === 'subscription' && item.enabled);
+    const subscriptionItems = this.connector.items.filter(item => item.scanMode && item.scanMode.id === 'subscription' && item.enabled);
     // Get the IDs of currently subscribed items
     const subscribedIds = new Set(this.subscribedItems.map(item => item.id));
 

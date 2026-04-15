@@ -55,7 +55,7 @@ export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthIt
 export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends BaseEntity {
   name: string;
   enabled: boolean;
-  scanMode: ScanMode;
+  scanMode: ScanMode | null;
   settings: I;
   group: SouthItemGroupEntityLight | null;
   syncWithGroup: boolean;

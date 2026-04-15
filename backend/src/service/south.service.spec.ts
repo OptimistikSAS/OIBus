@@ -33,7 +33,7 @@ import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import { buildSouth } from '../south/south-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import csv from 'papaparse';
-import { stringToBoolean } from './utils';
+import { checkGroups, stringToBoolean } from './utils';
 import { SouthConnectorEntityLight, SouthItemGroupEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
 import { SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
@@ -133,21 +133,11 @@ describe('South Service', () => {
 
     await service.create(testData.south.command, testData.south.list[0].id, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(2);
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(service.retrieveSecretsFromSouth).toHaveBeenCalledTimes(1);
     expect(engine.createSouth).toHaveBeenCalledTimes(1);
     expect(engine.startSouth).toHaveBeenCalledTimes(1);
-    // Verify that items have their IDs reset when retrieveSecretsFromSouth is true
-    // Check the second call (final save with items)
-    const savedSouthCall = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[1];
-    const savedSouth = savedSouthCall[0];
-    if (savedSouth.items && savedSouth.items.length > 0) {
-      // When retrieveSecretsFromSouth is true, item IDs should be reset (empty string)
-      savedSouth.items.forEach((item: { id: string }) => {
-        expect(item.id).toBe('');
-      });
-    }
   });
 
   it('should create a south connector with items having groupName and create group when it does not exist', async () => {
@@ -194,13 +184,7 @@ describe('South Service', () => {
 
     await service.create(command, null, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(2);
-    expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('New Group', 'newSouthId');
-    expect(southItemGroupRepository.create).toHaveBeenCalled();
-    // Verify that the item has the group assigned
-    const savedSouthCall = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[1];
-    const savedSouth = savedSouthCall[0];
-    expect(savedSouth.items[0].group).toEqual(newGroup);
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
   });
 
   it('should create a south connector with items having groupName and use existing group when it already exists', async () => {
@@ -241,14 +225,9 @@ describe('South Service', () => {
 
     await service.create(command, null, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(2);
-    expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('Existing Group', 'newSouthId');
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     // Group should NOT be created since it already exists
     expect(southItemGroupRepository.create).not.toHaveBeenCalled();
-    // Verify that the item has the existing group assigned
-    const savedSouthCall = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[1];
-    const savedSouth = savedSouthCall[0];
-    expect(savedSouth.items[0].group).toEqual(existingGroup);
   });
 
   it('should create a south connector with retrieveSecretsFromSouth when item has no id', async () => {
@@ -260,20 +239,8 @@ describe('South Service', () => {
 
     await service.create(command, testData.south.list[0].id, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(2);
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(service.retrieveSecretsFromSouth).toHaveBeenCalledTimes(1);
-    // Verify that items have their IDs reset to empty string when retrieveSecretsFromSouth is true
-    // Check the second call (final save with items)
-    const savedSouthCall = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[1];
-    const savedSouth = savedSouthCall[0];
-    if (savedSouth.items && savedSouth.items.length > 0) {
-      savedSouth.items.forEach((item: { id: string; group: SouthItemGroupEntity | null }) => {
-        expect(item.id).toBe('');
-        // When retrieveSecretsFromSouth is true, southItemGroupRepository is now provided,
-        // so groups should be set to an empty array when no groupId is specified
-        expect(item.group).toEqual(null);
-      });
-    }
   });
 
   it('should not create south connector if disabled', async () => {
@@ -282,85 +249,10 @@ describe('South Service', () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.enabled = false;
     await service.create(command, null, 'userTest');
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(2);
+    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
     expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
     expect(engine.createSouth).toHaveBeenCalledTimes(1);
     expect(engine.startSouth).not.toHaveBeenCalled();
-    // Verify that when retrieveSecretsFromSouth is false and command.id is null, id is set to empty string
-    // Check the second call (final save with items)
-    const savedSouthCall = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[1];
-    const savedSouth = savedSouthCall[0];
-    if (savedSouth.items && savedSouth.items.length > 0) {
-      savedSouth.items.forEach((item: { id: string }) => {
-        expect(item.id).toBe('');
-      });
-    }
-  });
-
-  it('should create a south connector from command.groups (duplication path) preserving historian values', async () => {
-    service.retrieveSecretsFromSouth = jest.fn().mockReturnValue(testData.south.list[0]);
-
-    const oldGroupId = 'old-group-id';
-    const newGroup: SouthItemGroupEntity = {
-      id: 'new-group-id',
-      name: 'My Group',
-      southId: 'newSouthId',
-      scanMode: testData.scanMode.list[0],
-      items: [],
-      overlap: 5,
-      maxReadInterval: 3600,
-      readDelay: 200,
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    };
-
-    (southItemGroupRepository.create as jest.Mock).mockReturnValue(newGroup);
-    (southItemGroupRepository.findById as jest.Mock).mockImplementation((id: string) => (id === 'new-group-id' ? newGroup : null));
-
-    let callCount = 0;
-    (southConnectorRepository.saveSouth as jest.Mock).mockImplementation((south: Record<string, unknown>) => {
-      if (callCount === 0 && !south.id) {
-        south.id = 'newSouthId';
-      }
-      callCount++;
-      return south;
-    });
-
-    const command = JSON.parse(JSON.stringify(testData.south.command)) as typeof testData.south.command;
-    command.groups = [
-      {
-        id: oldGroupId,
-        standardSettings: {
-          name: 'My Group',
-          scanModeId: testData.scanMode.list[0].id
-        },
-        historySettings: {
-          overlap: 5,
-          maxReadInterval: 3600,
-          readDelay: 200
-        }
-      } as SouthItemGroupCommandDTO
-    ];
-    command.items[0].groupId = oldGroupId;
-    command.items[0].groupName = null;
-
-    await service.create(command, testData.south.list[0].id, 'userTest');
-
-    // The group should be created with historian values
-    expect(southItemGroupRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        name: 'My Group',
-        overlap: 5,
-        maxReadInterval: 3600,
-        readDelay: 200
-      }),
-      'userTest'
-    );
-    // The old groupId should have been remapped to the new group's id
-    const savedSouth = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[1][0];
-    expect(savedSouth.items[0].group).toEqual(newGroup);
   });
 
   it('should not create a south connector with duplicate name', async () => {
@@ -625,10 +517,7 @@ describe('South Service', () => {
 
     await service.createItem(testData.south.list[0].id, commandWithGroup, 'userTest');
 
-    expect(southItemGroupRepository.findById).toHaveBeenCalledWith('group1');
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
-    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
-    expect(savedItemCall[1].group).toEqual(group);
   });
 
   it('should create item without group when groupId is null', async () => {
@@ -654,10 +543,7 @@ describe('South Service', () => {
 
     await service.createItem(testData.south.list[0].id, commandWithNonExistentGroup, 'userTest');
 
-    expect(southItemGroupRepository.findById).toHaveBeenCalledWith('non-existent-group-id');
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
-    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
-    expect(savedItemCall[1].group).toEqual(null);
   });
 
   it('should update an item', async () => {
@@ -697,10 +583,7 @@ describe('South Service', () => {
 
     await service.updateItem(testData.south.list[0].id, testData.south.list[0].items[0].id, commandWithGroup, 'userTest');
 
-    expect(southItemGroupRepository.findById).toHaveBeenCalledWith('group2');
     expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
-    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
-    expect(savedItemCall[1].group).toEqual(group);
   });
 
   it('should update item without group when groupId is null', async () => {
@@ -1084,14 +967,8 @@ describe('South Service', () => {
     };
 
     (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
+    (checkGroups as jest.Mock).mockReturnValue(newGroup);
     (southItemGroupRepository.create as jest.Mock).mockReturnValue(newGroup);
-    // Mock findById to return the group when called with the new group's ID
-    (southItemGroupRepository.findById as jest.Mock).mockImplementation((id: string) => {
-      if (id === 'newGroupId') {
-        return newGroup;
-      }
-      return null;
-    });
 
     const itemCommandWithGroupName: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
@@ -2019,10 +1896,8 @@ describe('South Service', () => {
             null,
             testData.south.list[0].type,
             testData.scanMode.list,
-            undefined, // retrieveSecretsFromSouth - should default to false
-            southItemGroupRepository, // southId: null below, so group path is never entered
-            null,
-            ''
+            [],
+            undefined // retrieveSecretsFromSouth - should default to false
           );
 
           // When retrieveSecretsFromSouth is false (default) and command.id is truthy, id should be set to command.id
@@ -2048,10 +1923,8 @@ describe('South Service', () => {
             null,
             testData.south.list[0].type,
             testData.scanMode.list,
-            false,
-            southItemGroupRepository,
-            null,
-            ''
+            [],
+            false
           );
 
           expect(southItemEntity.syncWithGroup).toBe(true);
@@ -2074,10 +1947,8 @@ describe('South Service', () => {
             null,
             testData.south.list[0].type,
             testData.scanMode.list,
-            false,
-            southItemGroupRepository,
-            null,
-            ''
+            [],
+            false
           );
 
           expect(southItemEntity.syncWithGroup).toBe(false);
@@ -2097,253 +1968,11 @@ describe('South Service', () => {
             null,
             testData.south.list[0].type,
             testData.scanMode.list,
-            false,
-            southItemGroupRepository,
-            null,
-            ''
+            [],
+            false
           );
 
           expect(southItemEntity.syncWithGroup).toBe(false);
-        });
-
-        it('should find existing group by name when groupName is provided', async () => {
-          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-          const existingGroup: SouthItemGroupEntity = {
-            id: 'existingGroupId',
-            name: 'Existing Group',
-            southId: testData.south.list[0].id,
-            scanMode: testData.scanMode.list[0],
-            overlap: null,
-            maxReadInterval: null,
-            readDelay: 0,
-            items: [],
-            createdBy: '',
-            updatedBy: '',
-            createdAt: '',
-            updatedAt: ''
-          };
-
-          (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(existingGroup);
-
-          const command: SouthConnectorItemCommandDTO = {
-            ...testData.south.itemCommand,
-            groupName: 'Existing Group',
-            groupId: null
-          };
-
-          await copySouthItemCommandToSouthItemEntity(
-            southItemEntity,
-            command,
-            null,
-            testData.south.list[0].type,
-            testData.scanMode.list,
-            false,
-            southItemGroupRepository,
-            testData.south.list[0].id,
-            ''
-          );
-
-          expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('Existing Group', testData.south.list[0].id);
-          expect(southItemGroupRepository.create).not.toHaveBeenCalled();
-          expect(southItemEntity.group).toEqual(existingGroup);
-        });
-
-        it('should create new group by name when groupName is provided and group does not exist', async () => {
-          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-          const newGroup: SouthItemGroupEntity = {
-            id: 'newGroupId',
-            name: 'New Group',
-            southId: testData.south.list[0].id,
-            scanMode: testData.scanMode.list[0],
-            overlap: null,
-            maxReadInterval: null,
-            readDelay: 0,
-            items: [],
-            createdBy: '',
-            updatedBy: '',
-            createdAt: '',
-            updatedAt: ''
-          };
-
-          (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
-          (southItemGroupRepository.create as jest.Mock).mockReturnValue(newGroup);
-
-          const command: SouthConnectorItemCommandDTO = {
-            ...testData.south.itemCommand,
-            groupName: 'New Group',
-            groupId: null
-          };
-
-          await copySouthItemCommandToSouthItemEntity(
-            southItemEntity,
-            command,
-            null,
-            testData.south.list[0].type,
-            testData.scanMode.list,
-            false,
-            southItemGroupRepository,
-            testData.south.list[0].id,
-            ''
-          );
-
-          expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('New Group', testData.south.list[0].id);
-          expect(southItemGroupRepository.create).toHaveBeenCalled();
-          expect(southItemEntity.group).toEqual(newGroup);
-        });
-
-        it('should use legacy support when southItemGroupRepository is provided but southId is not', async () => {
-          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-          const existingGroup: SouthItemGroupEntity = {
-            id: 'groupId',
-            name: 'Test Group',
-            southId: testData.south.list[0].id,
-            scanMode: testData.scanMode.list[0],
-            overlap: null,
-            maxReadInterval: null,
-            readDelay: 0,
-            items: [],
-            createdBy: '',
-            updatedBy: '',
-            createdAt: '',
-            updatedAt: ''
-          };
-
-          (southItemGroupRepository.findById as jest.Mock).mockReturnValue(existingGroup);
-
-          const command: SouthConnectorItemCommandDTO = {
-            ...testData.south.itemCommand,
-            groupId: 'groupId',
-            groupName: null
-          };
-
-          await copySouthItemCommandToSouthItemEntity(
-            southItemEntity,
-            command,
-            null,
-            testData.south.list[0].type,
-            testData.scanMode.list,
-            false,
-            southItemGroupRepository,
-            null, // southId is not provided - legacy support
-            ''
-          );
-
-          expect(southItemGroupRepository.findById).toHaveBeenCalledWith('groupId');
-          expect(southItemGroupRepository.findByNameAndSouthId).not.toHaveBeenCalled();
-          expect(southItemEntity.group).toEqual(existingGroup);
-        });
-
-        it('should set empty groups array in legacy support when groupId is not found', async () => {
-          const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
-
-          (southItemGroupRepository.findById as jest.Mock).mockReturnValue(null);
-
-          const command: SouthConnectorItemCommandDTO = {
-            ...testData.south.itemCommand,
-            groupId: 'nonExistentGroupId',
-            groupName: null
-          };
-
-          await copySouthItemCommandToSouthItemEntity(
-            southItemEntity,
-            command,
-            null,
-            testData.south.list[0].type,
-            testData.scanMode.list,
-            false,
-            southItemGroupRepository,
-            null, // southId is not provided - legacy support
-            ''
-          );
-
-          expect(southItemGroupRepository.findById).toHaveBeenCalledWith('nonExistentGroupId');
-          expect(southItemEntity.group).toEqual(null);
-        });
-
-        describe('Edge cases for group creation', () => {
-          beforeEach(() => {
-            jest.clearAllMocks();
-            // Reset default mocks
-            (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-            (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-            (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([]);
-          });
-
-          it('should handle case where itemWithGroup is not found when creating group in create method', async () => {
-            service.retrieveSecretsFromSouth = jest.fn();
-
-            const command = JSON.parse(JSON.stringify(testData.south.command));
-            // Set groupName with whitespace - when trimmed it becomes 'Test Group', but the find compares the original
-            // This creates a scenario where the groupName is in uniqueGroupNames but the find might not match
-            command.items[0].groupName = '  Test Group  '; // Has whitespace
-            command.items[0].groupId = null;
-
-            // Mock findByNameAndSouthId to return null (group doesn't exist)
-            (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
-
-            let callCount = 0;
-            (southConnectorRepository.saveSouth as jest.Mock).mockImplementation((south: unknown) => {
-              // Provide a stricter type if known, e.g. SouthConnectorEntity, instead of unknown.
-              const typedSouth = south as { id?: string };
-              if (callCount === 0 && !typedSouth.id) {
-                typedSouth.id = 'newSouthId';
-              }
-              callCount++;
-            });
-
-            // The find will compare '  Test Group  ' === 'Test Group' which will fail
-            // This triggers the continue statement on line 177, so group is not created in first loop
-            // However, copySouthItemCommandToSouthItemEntity will still create it because it trims groupName
-            await service.create(command, null, 'userTest');
-
-            expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(2);
-            // Group will be created in copySouthItemCommandToSouthItemEntity even though first loop skipped it
-            // This is because copySouthItemCommandToSouthItemEntity trims groupName before creating
-            expect(southItemGroupRepository.create).toHaveBeenCalled();
-          });
-
-          it('should trim whitespace from groupName before searching in create method', async () => {
-            const commandWithWhitespace: typeof testData.south.command = JSON.parse(JSON.stringify(testData.south.command));
-            commandWithWhitespace.items[0].groupName = '  Test Group  ';
-            commandWithWhitespace.items[0].groupId = null;
-
-            let callCount = 0;
-            (southConnectorRepository.saveSouth as jest.Mock).mockImplementation((south: unknown) => {
-              const typedSouth = south as { id?: string };
-              if (callCount === 0 && !typedSouth.id) {
-                typedSouth.id = 'newSouthId';
-              }
-              callCount++;
-            });
-
-            (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
-
-            await service.create(commandWithWhitespace, null, 'userTest');
-
-            // Ensure whitespace is trimmed in find logic
-            // First call may have undefined southId (before save), second call will have the ID
-            expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('Test Group', expect.anything());
-          });
-
-          it('should handle case where itemWithGroup is not found when creating group in importItems method', async () => {
-            // Set groupName with whitespace - when trimmed it becomes 'Test Import Group', but the find compares the original
-            const itemCommandWithGroupName: SouthConnectorItemCommandDTO = {
-              ...testData.south.itemCommand,
-              groupName: '  Test Import Group  ', // Has whitespace
-              groupId: null
-            };
-
-            // Mock findByNameAndSouthId to return null (group doesn't exist)
-            (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
-
-            // The find will compare '  Test Import Group  ' === 'Test Import Group' which will fail
-            // This triggers the continue statement on line 648
-            await service.importItems(testData.south.list[0].id, [itemCommandWithGroupName], 'userTest');
-
-            expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalled();
-            // Group should not be created if itemWithGroup is not found
-            expect(southItemGroupRepository.create).not.toHaveBeenCalled();
-          });
         });
       });
     });

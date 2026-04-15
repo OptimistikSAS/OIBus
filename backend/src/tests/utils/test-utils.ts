@@ -553,7 +553,7 @@ const createSouthConnectorItem = async (
     .insert({
       id: item.id,
       connector_id: southConnectorId,
-      scan_mode_id: item.scanMode.id,
+      scan_mode_id: item.scanMode?.id || null,
       name: item.name,
       enabled: item.enabled,
       settings: JSON.stringify(item.settings)

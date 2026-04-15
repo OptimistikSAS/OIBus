@@ -102,7 +102,7 @@ describe('SouthConnector with file query', () => {
     south.addToQueue(testData.scanMode.list[0]);
     expect(south.run).toHaveBeenCalledWith(
       testData.scanMode.list[0].id,
-      testData.south.list[0].items.filter(element => element.scanMode.id === testData.scanMode.list[0].id)
+      testData.south.list[0].items.filter(element => element.scanMode?.id === testData.scanMode.list[0].id)
     );
     expect(south.run).toHaveBeenCalledTimes(1);
 
@@ -515,7 +515,10 @@ describe('SouthConnector with history and subscription', () => {
   });
 
   it('should update subscriptions', async () => {
-    south['connector'].items = south['connector'].items.map(item => ({ ...item, scanMode: { ...item.scanMode, id: 'subscription' } }));
+    south['connector'].items = south['connector'].items.map(item => ({
+      ...item,
+      scanMode: { ...item.scanMode!, id: 'subscription' }
+    }));
     south['subscribedItems'] = [south['connector'].items[0]];
     south.unsubscribe = jest.fn();
     south.subscribe = jest.fn();

@@ -74,6 +74,27 @@ export default class SouthConnectorRepository {
           .run(south.name, south.description, +south.enabled, JSON.stringify(south.settings), south.updatedBy, south.id);
       }
 
+      const groupsToCreate = south.groups.filter(group => group.id?.startsWith('temp_'));
+      for (const groupToCreate of groupsToCreate) {
+        const newGroup = this.groupRepository.create(
+          {
+            name: groupToCreate.name,
+            southId: south.id,
+            scanMode: groupToCreate.scanMode,
+            overlap: groupToCreate.overlap,
+            maxReadInterval: groupToCreate.maxReadInterval,
+            readDelay: groupToCreate.readDelay
+          },
+          south.updatedBy
+        );
+        for (const item of south.items) {
+          if (item.group?.id === groupToCreate.id) {
+            item.group.id = newGroup.id;
+          }
+        }
+        south.groups[south.groups.findIndex(group => group.id === groupToCreate.id)] = newGroup;
+      }
+
       if (south.items.length > 0) {
         this.database
           .prepare(
@@ -118,7 +139,7 @@ export default class SouthConnectorRepository {
               item.name,
               +item.enabled,
               south.id,
-              item.scanMode.id,
+              item.scanMode?.id ?? null,
               JSON.stringify(item.settings),
               +item.syncWithGroup,
               item.maxReadInterval ?? null,
@@ -131,7 +152,7 @@ export default class SouthConnectorRepository {
             update.run(
               item.name,
               +item.enabled,
-              item.scanMode.id,
+              item.scanMode?.id ?? null,
               JSON.stringify(item.settings),
               +item.syncWithGroup,
               item.maxReadInterval ?? null,
@@ -157,6 +178,21 @@ export default class SouthConnectorRepository {
           )
           .run(south.id);
         this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(south.id);
+      }
+      if (south.groups.length > 0) {
+        this.database
+          .prepare(
+            `DELETE FROM ${SOUTH_ITEM_GROUPS_TABLE} WHERE south_id = ? AND id NOT IN (${south.groups
+              .filter(group => group.id)
+              .map(() => '?')
+              .join(', ')});`
+          )
+          .run(
+            south.id,
+            south.groups.filter(group => group.id).map(group => group.id)
+          );
+      } else {
+        this.database.prepare(`DELETE FROM ${SOUTH_ITEM_GROUPS_TABLE} WHERE south_id = ?;`).run(south.id);
       }
     });
     transaction();
@@ -275,7 +311,7 @@ export default class SouthConnectorRepository {
           southItem.name,
           +southItem.enabled,
           southConnectorId,
-          southItem.scanMode.id,
+          southItem.scanMode?.id ?? null,
           JSON.stringify(southItem.settings),
           +southItem.syncWithGroup,
           southItem.maxReadInterval ?? null,
@@ -291,7 +327,7 @@ export default class SouthConnectorRepository {
         .run(
           southItem.name,
           +southItem.enabled,
-          southItem.scanMode.id,
+          southItem.scanMode?.id ?? null,
           JSON.stringify(southItem.settings),
           +southItem.syncWithGroup,
           southItem.maxReadInterval ?? null,
@@ -417,7 +453,7 @@ export default class SouthConnectorRepository {
       id: result.id,
       name: result.name,
       enabled: Boolean(result.enabled),
-      scanMode: this.findScanModeForSouth(result.scan_mode_id as string),
+      scanMode: result.scan_mode_id ? this.findScanModeForSouth(result.scan_mode_id as string) : null,
       settings: JSON.parse(result.settings) as SouthItemSettings,
       group: this.findGroupForItem(result.id),
       syncWithGroup: Boolean(result.sync_with_group),
