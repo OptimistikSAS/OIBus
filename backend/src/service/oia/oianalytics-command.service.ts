@@ -817,7 +817,13 @@ export default class OIAnalyticsCommandService {
         name: item.name,
         settings: await encryptionService.decryptSecretsWithPrivateKey(item.settings, itemSettingsManifest, privateKey),
         scanModeId: item.scanModeId,
-        scanModeName: item.scanModeName
+        scanModeName: item.scanModeName,
+        groupId: item.groupId,
+        groupName: item.groupName,
+        syncWithGroup: item.syncWithGroup,
+        maxReadInterval: item.maxReadInterval,
+        readDelay: item.readDelay,
+        overlap: item.overlap
       }))
     )) as typeof command.commandContent.items;
   }
@@ -886,7 +892,7 @@ export default class OIAnalyticsCommandService {
         enabled: item.enabled,
         name: item.name,
         settings: item.settings,
-        scanModeId: item.scanMode.id,
+        scanModeId: item.scanMode?.id || null,
         scanModeName: null
       })) as Array<SouthConnectorItemCommandDTO>,
       'oianalytics',

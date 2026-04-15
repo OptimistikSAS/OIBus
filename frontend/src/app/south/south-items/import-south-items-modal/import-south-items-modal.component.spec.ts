@@ -46,7 +46,7 @@ describe('ImportSouthItemsModalComponent', () => {
     tester = new ImportSouthItemsModalComponentTester();
     tester.componentInstance.prepare(
       testData.south.manifest,
-      southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id })),
+      southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode?.id || null })),
       [
         {
           id: '',

@@ -271,10 +271,10 @@
                       </td>
                       <td>{{ item.name }}</td>
                       <td>{{ getGroupName(item) }}</td>
-                      @if (item.scanMode.id === 'subscription') {
+                      @if (item.scanMode?.id === 'subscription') {
                         <td translate="scan-mode.subscription"></td>
                       } @else {
-                        <td>{{ item.scanMode.name }}</td>
+                        <td>{{ item.scanMode?.name || '' }}</td>
                       }
                       <td>{{ item.createdAt | datetime: 'ff' }}</td>
                       <td>{{ item.updatedAt | datetime: 'ff' }}</td>

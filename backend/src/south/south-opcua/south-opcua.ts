@@ -246,7 +246,7 @@ export default class SouthOPCUA
       item =>
         item.settings.mode === 'ha' &&
         ((item.syncWithGroup && item.group && item.group.scanMode.id !== 'subscription') ||
-          (!(item.syncWithGroup && item.group) && item.scanMode.id !== 'subscription'))
+          (!(item.syncWithGroup && item.group) && item.scanMode!.id !== 'subscription'))
     );
   }
 
@@ -257,7 +257,7 @@ export default class SouthOPCUA
       item =>
         item.settings.mode === 'da' &&
         ((item.syncWithGroup && item.group && item.group.scanMode.id !== 'subscription') ||
-          (!(item.syncWithGroup && item.group) && item.scanMode.id !== 'subscription'))
+          (!(item.syncWithGroup && item.group) && item.scanMode!.id !== 'subscription'))
     );
   }
 

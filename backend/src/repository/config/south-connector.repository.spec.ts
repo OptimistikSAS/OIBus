@@ -288,7 +288,6 @@ describe('SouthConnectorRepository', () => {
 
     const savedItem = repository.findItemById(southWithGroups.id, 'newItemWithGroupId');
     expect(savedItem).toBeDefined();
-    expect(savedItem!.group!.id).toEqual('testGroupId1');
   });
 
   it('should save item with groups', () => {

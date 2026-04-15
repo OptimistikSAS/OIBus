@@ -1867,35 +1867,54 @@
 						"description": "The date and time when the entity was last updated.",
 						"example": "2023-10-31T13:45:00.123Z"
 					},
-					"name": {
-						"type": "string",
-						"description": "The name of the group.",
-						"example": "Production Line A"
+					"standardSettings": {
+						"properties": {
+							"scanMode": {
+								"$ref": "#/components/schemas/ScanModeDTO",
+								"description": "The scan mode configuration for this group (default schedule)."
+							},
+							"name": {
+								"type": "string",
+								"description": "The name of the group.",
+								"example": "Production Line A"
+							}
+						},
+						"required": [
+							"scanMode",
+							"name"
+						],
+						"type": "object"
 					},
-					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
-						"description": "The scan mode configuration for this group (default schedule)."
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.",
-						"example": 1000
-					},
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.",
-						"example": 3600
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.",
-						"example": 200
+					"historySettings": {
+						"properties": {
+							"readDelay": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.",
+								"example": 200
+							},
+							"maxReadInterval": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.",
+								"example": 3600
+							},
+							"overlap": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.",
+								"example": 1000
+							}
+						},
+						"required": [
+							"readDelay",
+							"maxReadInterval",
+							"overlap"
+						],
+						"type": "object"
 					}
 				},
 				"required": [
@@ -1904,11 +1923,8 @@
 					"updatedBy",
 					"createdAt",
 					"updatedAt",
-					"name",
-					"scanMode",
-					"overlap",
-					"maxReadInterval",
-					"readDelay"
+					"standardSettings",
+					"historySettings"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -1953,7 +1969,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -2190,7 +2211,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -2455,7 +2481,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -2768,7 +2799,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -3054,7 +3090,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -3410,7 +3451,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -3749,7 +3795,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -4084,7 +4135,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -4448,7 +4504,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -4781,7 +4842,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -5061,7 +5127,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -5422,7 +5493,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -5768,7 +5844,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -5993,7 +6074,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -6337,7 +6423,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -6961,7 +7052,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -7233,7 +7329,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -7542,7 +7643,12 @@
 						"description": "Item-specific settings for data collection."
 					},
 					"scanMode": {
-						"$ref": "#/components/schemas/ScanModeDTO",
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
 						"description": "The scan mode configuration for this item."
 					},
 					"group": {
@@ -7843,45 +7949,61 @@
 						"description": "The ID of the group (null when creating a new group).",
 						"example": null
 					},
-					"name": {
-						"type": "string",
-						"description": "The name of the group.",
-						"example": "Production Line A"
+					"standardSettings": {
+						"properties": {
+							"scanModeId": {
+								"type": "string",
+								"description": "The ID of the scan mode to use for this group.",
+								"example": "periodic-5min"
+							},
+							"name": {
+								"type": "string",
+								"description": "The name of the group.",
+								"example": "Production Line A"
+							}
+						},
+						"required": [
+							"scanModeId",
+							"name"
+						],
+						"type": "object"
 					},
-					"scanModeId": {
-						"type": "string",
-						"description": "The ID of the scan mode to use for this group.",
-						"example": "periodic-5min"
-					},
-					"overlap": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.",
-						"example": 1000
-					},
-					"maxReadInterval": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Maximum read interval in seconds for historical queries.",
-						"example": 3600
-					},
-					"readDelay": {
-						"type": "number",
-						"format": "double",
-						"nullable": true,
-						"description": "Read delay in milliseconds before querying historical data.",
-						"example": 200
+					"historySettings": {
+						"properties": {
+							"readDelay": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "Read delay in milliseconds before querying historical data.",
+								"example": 200
+							},
+							"maxReadInterval": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "Maximum read interval in seconds for historical queries.",
+								"example": 3600
+							},
+							"overlap": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "Default overlap in milliseconds for historical queries.",
+								"example": 1000
+							}
+						},
+						"required": [
+							"readDelay",
+							"maxReadInterval",
+							"overlap"
+						],
+						"type": "object"
 					}
 				},
 				"required": [
 					"id",
-					"name",
-					"scanModeId",
-					"overlap",
-					"maxReadInterval",
-					"readDelay"
+					"standardSettings",
+					"historySettings"
 				],
 				"type": "object",
 				"additionalProperties": false

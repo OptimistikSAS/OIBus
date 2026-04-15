@@ -21,7 +21,7 @@ import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { OIBusError } from '../model/engine.model';
 import Stream from 'node:stream';
-import { SouthConnectorItemEntity } from '../model/south-connector.model';
+import { SouthConnectorItemEntity, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import { SouthFolderScannerItemSettings, SouthItemSettings } from '../../shared/model/south-settings.model';
 
 const COMPRESSION_LEVEL = 9;
@@ -660,6 +660,28 @@ export const checkScanMode = (scanModes: Array<ScanMode>, scanModeId: string | n
   return scanMode;
 };
 
+export const checkGroups = (
+  groups: Array<SouthItemGroupEntity>,
+  groupId: string | null,
+  groupName: string | null
+): SouthItemGroupEntityLight => {
+  if (!groupId && !groupName) {
+    throw new OIBusValidationError(`Group not specified`);
+  }
+
+  if (groupId?.startsWith('temp_')) {
+    return {
+      id: groupId
+    } as SouthItemGroupEntityLight;
+  }
+
+  const group = groupId ? groups.find(element => element.id === groupId) : groups.find(element => element.name === groupName);
+  if (!group) {
+    throw new NotFoundError(`Group "${groupName}" not found`);
+  }
+  return group;
+};
+
 export const itemToFlattenedCSV = (
   items: Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
   delimiter: string,
@@ -683,7 +705,7 @@ export const itemToFlattenedCSV = (
         ...itemWithoutGroup
       };
       if (scanModes) {
-        flattenedItem.scanMode = (item as SouthConnectorItemDTO).scanMode.name;
+        flattenedItem.scanMode = (item as SouthConnectorItemDTO).scanMode?.name || '';
       }
       // Add group name to CSV
       flattenedItem.group = group?.standardSettings.name || '';

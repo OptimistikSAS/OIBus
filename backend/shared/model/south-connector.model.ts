@@ -245,7 +245,7 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
   /**
    * The scan mode configuration for this item.
    */
-  scanMode: ScanModeDTO;
+  scanMode: ScanModeDTO | null;
 
   /**
    * The group this item belongs to, if any.

@@ -8,7 +8,7 @@
         @if (mode === 'create') {
           <div [class]="form.controls.source.value.dataSourceType === 'oibus-api' ? 'col-4' : 'col-6'">
             <div class="form-group">
-              <label class="form-label" for="source" translate="configuration.oibus.manifest.transformers.source"></label>
+              <label class="form-label" for="source" translate="north.transformers.source"></label>
               <select formControlName="source" class="form-select mb-2 mr-sm-2" id="source" [compareWith]="compareSource">
                 <option [ngValue]="{ dataSourceType: null, south: null }"></option>
 

@@ -187,8 +187,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   name: item.name,
                   enabled: item.enabled,
                   settings: item.settings,
-                  scanModeId: item.scanMode.id,
-                  scanModeName: item.scanMode.name,
+                  scanModeId: item.scanMode?.id || null,
+                  scanModeName: item.scanMode?.name || null,
                   groupId: item.group?.id || null,
                   groupName: item.group?.standardSettings.name || null,
                   syncWithGroup: item.syncWithGroup,
@@ -447,8 +447,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
             name: item.name,
             enabled: item.enabled,
             settings: item.settings,
-            scanModeId: item.scanMode.id,
-            scanModeName: item.scanMode.name,
+            scanModeId: item.scanMode?.id || null,
+            scanModeName: item.scanMode?.name || null,
             groupId: item.group?.id || null,
             groupName: item.group?.standardSettings.name ?? null,
             syncWithGroup: item.syncWithGroup,
@@ -487,7 +487,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   }
 
   deleteGroup(_group: SouthItemGroupDTO | SouthItemGroupCommandDTO): Observable<void> {
-    return of();
+    return of(undefined);
   }
 
   private checkUniqueness(): ValidatorFn {

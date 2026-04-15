@@ -451,11 +451,15 @@ export default class OIAnalyticsMessageService {
             id: item.id,
             name: item.name,
             enabled: item.enabled,
-            scanModeId: item.scanMode.id,
+            scanModeId: item.scanMode?.id || null,
             scanModeName: null,
             groupId: item.group?.id || null,
             groupName: null,
-            settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
+            settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest),
+            syncWithGroup: item.syncWithGroup,
+            maxReadInterval: item.maxReadInterval,
+            readDelay: item.readDelay,
+            overlap: item.overlap
           })),
           groups: south.groups.map(group => ({
             id: group.id,

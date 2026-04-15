@@ -142,7 +142,7 @@ describe('SouthDetailComponent', () => {
     southConnectorService.findById.and.returnValue(
       of({
         ...southConnector,
-        items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode.id }))
+        items: southConnector.items.map(element => ({ ...element, scanModeId: element.scanMode?.id || null }))
       } as any)
     );
     southConnectorService.getGroups.and.returnValue(of([]));

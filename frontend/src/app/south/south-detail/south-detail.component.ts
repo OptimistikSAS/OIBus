@@ -462,8 +462,8 @@ export class SouthDetailComponent implements OnDestroy {
             name: item.name,
             enabled: item.enabled,
             settings: item.settings,
-            scanModeId: item.scanMode.id,
-            scanModeName: item.scanMode.name,
+            scanModeId: item.scanMode?.id || null,
+            scanModeName: item.scanMode?.name || null,
             groupId: item.group?.id || null,
             groupName: item.group?.standardSettings.name ?? null,
             syncWithGroup: item.syncWithGroup,
@@ -573,7 +573,7 @@ export class SouthDetailComponent implements OnDestroy {
       if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
       if (groupFilter === 'none' && item.group) return false;
       if (groupFilter && groupFilter !== 'none' && item.group?.id !== groupFilter) return false;
-      if (scanModeFilter && item.scanMode.id !== scanModeFilter) return false;
+      if (scanModeFilter && item.scanMode?.id !== scanModeFilter) return false;
       if (statusFilter === 'enabled' && !item.enabled) return false;
       if (statusFilter === 'disabled' && item.enabled) return false;
       return true;
@@ -606,8 +606,8 @@ export class SouthDetailComponent implements OnDestroy {
         case 'scanMode':
           this.filteredItems.sort((a, b) =>
             ascending
-              ? (a as SouthConnectorItemDTO).scanMode.name.localeCompare((b as SouthConnectorItemDTO).scanMode.name)
-              : (b as SouthConnectorItemDTO).scanMode.name.localeCompare((a as SouthConnectorItemDTO).scanMode.name)
+              ? (a.scanMode?.name || '').localeCompare(b.scanMode?.name || '')
+              : (b.scanMode?.name || '').localeCompare(a.scanMode?.name || '')
           );
           break;
         case 'group':
@@ -844,7 +844,7 @@ export class SouthDetailComponent implements OnDestroy {
         enabled: item.enabled,
         name: item.name,
         settings: item.settings,
-        scanModeId: item.scanMode.id,
+        scanModeId: item.scanMode?.id || null,
         scanModeName: null,
         groupId: item.group?.id || null,
         groupName: null,
