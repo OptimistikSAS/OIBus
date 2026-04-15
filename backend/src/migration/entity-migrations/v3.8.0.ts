@@ -24,6 +24,7 @@ const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
 const ENGINES_TABLE = 'engines';
 const COMMANDS_TABLE = 'commands';
 const MESSAGES_TABLE = 'oianalytics_messages';
+const MIGRATION_HINTS_TABLE = '_migration_v380_file_connector_hints';
 
 // Connector types that support historian capabilities
 const HISTORIAN_CONNECTOR_TYPES = [
@@ -141,6 +142,8 @@ interface CustomTransformer {
 }
 
 export async function up(knex: Knex): Promise<void> {
+  await makeSouthItemScanModeIdNullable(knex);
+  await createFileCacheMigrationHints(knex);
   await addCreatedByAndUpdatedBy(knex);
   await updateRegistrationSettings(knex);
   await updateOIACommandTable(knex);
@@ -248,6 +251,41 @@ async function updateTransformersTable(knex: Knex): Promise<void> {
   await knex(TRANSFORMERS_TABLE).update({ language: 'javascript' }).where('type', 'custom');
 }
 
+function convertNorthRestSettings(oldSettings: OldNorthRESTSettings): NewNorthRESTSettings {
+  return {
+    host: oldSettings.host,
+    acceptUnauthorized: oldSettings.acceptUnauthorized,
+    method: 'POST',
+    endpoint: oldSettings.endpoint,
+    timeout: oldSettings.timeout,
+    sendAs: 'file',
+    successCode: 201,
+    authentication: {
+      type: oldSettings.authType,
+      username: oldSettings.basicAuthUsername,
+      password: oldSettings.basicAuthPassword,
+      token: oldSettings.bearerAuthToken,
+      addTo: undefined,
+      apiKey: undefined,
+      apiValue: undefined
+    },
+    queryParams: oldSettings.queryParams || [],
+    headers: [],
+    proxy: {
+      useProxy: oldSettings.useProxy,
+      proxyUrl: oldSettings.proxyUrl,
+      proxyUsername: oldSettings.proxyUsername,
+      proxyPassword: oldSettings.proxyPassword
+    },
+    test: {
+      testMethod: 'GET',
+      testEndpoint: oldSettings.testPath,
+      body: undefined,
+      testSuccessCode: 200
+    }
+  };
+}
+
 async function updateNorthRestConnectors(knex: Knex): Promise<void> {
   const oldNorth: Array<{
     id: string;
@@ -256,39 +294,7 @@ async function updateNorthRestConnectors(knex: Knex): Promise<void> {
   }> = await knex(NORTH_CONNECTORS_TABLE).select('id', 'type', 'settings').where('type', 'rest');
 
   for (const connector of oldNorth) {
-    const oldSettings = JSON.parse(connector.settings) as OldNorthRESTSettings;
-    const newSettings: NewNorthRESTSettings = {
-      host: oldSettings.host,
-      acceptUnauthorized: oldSettings.acceptUnauthorized,
-      method: 'POST',
-      endpoint: oldSettings.endpoint,
-      timeout: oldSettings.timeout,
-      sendAs: 'file',
-      successCode: 201,
-      authentication: {
-        type: oldSettings.authType,
-        username: oldSettings.basicAuthUsername,
-        password: oldSettings.basicAuthPassword,
-        token: oldSettings.bearerAuthToken,
-        addTo: undefined,
-        apiKey: undefined,
-        apiValue: undefined
-      },
-      queryParams: oldSettings.queryParams || [],
-      headers: [],
-      proxy: {
-        useProxy: oldSettings.useProxy,
-        proxyUrl: oldSettings.proxyUrl,
-        proxyUsername: oldSettings.proxyUsername,
-        proxyPassword: oldSettings.proxyPassword
-      },
-      test: {
-        testMethod: 'GET',
-        testEndpoint: oldSettings.testPath,
-        body: undefined,
-        testSuccessCode: 200
-      }
-    };
+    const newSettings = convertNorthRestSettings(JSON.parse(connector.settings) as OldNorthRESTSettings);
     await knex(NORTH_CONNECTORS_TABLE)
       .update({ settings: JSON.stringify(newSettings) })
       .where('id', connector.id);
@@ -301,39 +307,7 @@ async function updateNorthRestConnectors(knex: Knex): Promise<void> {
   }> = await knex(HISTORY_QUERIES_TABLE).select('id', 'north_type', 'north_settings').where('north_type', 'rest');
 
   for (const history of oldHistories) {
-    const oldSettings = JSON.parse(history.north_settings) as OldNorthRESTSettings;
-    const newSettings: NewNorthRESTSettings = {
-      host: oldSettings.host,
-      acceptUnauthorized: oldSettings.acceptUnauthorized,
-      method: 'POST',
-      endpoint: oldSettings.endpoint,
-      timeout: oldSettings.timeout,
-      sendAs: 'file',
-      successCode: 201,
-      authentication: {
-        type: oldSettings.authType,
-        username: oldSettings.basicAuthUsername,
-        password: oldSettings.basicAuthPassword,
-        token: oldSettings.bearerAuthToken,
-        addTo: undefined,
-        apiKey: undefined,
-        apiValue: undefined
-      },
-      queryParams: oldSettings.queryParams || [],
-      headers: [],
-      proxy: {
-        useProxy: oldSettings.useProxy,
-        proxyUrl: oldSettings.proxyUrl,
-        proxyUsername: oldSettings.proxyUsername,
-        proxyPassword: oldSettings.proxyPassword
-      },
-      test: {
-        testMethod: 'GET',
-        testEndpoint: oldSettings.testPath,
-        body: undefined,
-        testSuccessCode: 200
-      }
-    };
+    const newSettings = convertNorthRestSettings(JSON.parse(history.north_settings) as OldNorthRESTSettings);
     await knex(HISTORY_QUERIES_TABLE)
       .update({ north_settings: JSON.stringify(newSettings) })
       .where('id', history.id);
@@ -509,10 +483,12 @@ async function migrateSouthMQTTItems(
   const allNorth: Array<{
     id: string;
     type: string;
+    settings: string;
   }> = await knex(NORTH_CONNECTORS_TABLE).select('id', 'type', 'settings');
   const oldSouth: Array<{
     id: string;
     type: string;
+    settings: string;
   }> = await knex(SOUTH_CONNECTORS_TABLE).select('id', 'type', 'settings').where('type', 'mqtt');
   if (oldSouth.length === 0) return;
 
@@ -630,22 +606,20 @@ async function migrateSouthMQTTItems(
 }
 
 async function createSouthItemGroupsTable(knex: Knex): Promise<void> {
-  await knex.schema.raw(`CREATE TABLE ${SOUTH_ITEM_GROUPS_TABLE} (
-    id char(36) PRIMARY KEY,
-    created_at datetime NOT NULL,
-    updated_at datetime NOT NULL,
-    created_by varchar(255),
-    updated_by varchar(255),
-    name varchar(255) NOT NULL,
-    south_id char(36) NOT NULL,
-    scan_mode_id char(36) NOT NULL,
-    max_read_interval integer,
-    read_delay integer,
-    overlap integer,
-    UNIQUE (name, south_id),
-    FOREIGN KEY (south_id) REFERENCES ${SOUTH_CONNECTORS_TABLE}(id) ON DELETE CASCADE,
-    FOREIGN KEY (scan_mode_id) REFERENCES ${SCAN_MODES_TABLE}(id)
-  );`);
+  await knex.schema.createTable(SOUTH_ITEM_GROUPS_TABLE, table => {
+    table.string('id', 36).primary();
+    table.datetime('created_at').notNullable();
+    table.datetime('updated_at').notNullable();
+    table.string('created_by');
+    table.string('updated_by');
+    table.string('name').notNullable();
+    table.string('south_id', 36).notNullable().references('id').inTable(SOUTH_CONNECTORS_TABLE).onDelete('CASCADE');
+    table.string('scan_mode_id', 36).notNullable().references('id').inTable(SCAN_MODES_TABLE);
+    table.integer('max_read_interval');
+    table.integer('read_delay');
+    table.integer('overlap');
+    table.unique(['name', 'south_id']);
+  });
 }
 
 async function createGroupItemsTable(knex: Knex): Promise<void> {
@@ -720,7 +694,7 @@ async function populateItemHistorianFields(knex: Knex): Promise<void> {
         }
       }
 
-      // Items in groups get NULL values to inherit from group and sync_with_group = 1
+      // Non-historian items get NULL values; grouping and sync_with_group flag are set later in groupItems()
       await trx(SOUTH_ITEMS_TABLE).where('id', item.item_id).update({
         max_read_interval: maxReadInterval,
         read_delay: readDelay,
@@ -862,9 +836,75 @@ async function groupItems(knex: Knex, id: string): Promise<void> {
       await trx(GROUP_ITEMS_TABLE).insert(groupItemsToInsert);
 
       // Bulk Update all associated items in a single query
-      await trx(SOUTH_ITEMS_TABLE).update({ sync_with_group: true }).whereIn('id', itemIdsToUpdate);
+      await trx(SOUTH_ITEMS_TABLE).update({ sync_with_group: 1 }).whereIn('id', itemIdsToUpdate);
     }
   });
+}
+
+async function makeSouthItemScanModeIdNullable(knex: Knex): Promise<void> {
+  await knex.transaction(async trx => {
+    await trx.raw('PRAGMA foreign_keys = OFF;');
+
+    await trx.schema.raw(`CREATE TABLE ${SOUTH_ITEMS_TABLE}_dg_tmp (
+      id char(36) PRIMARY KEY,
+      created_at datetime DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+      updated_at datetime DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) NOT NULL,
+      connector_id char(36) NOT NULL,
+      scan_mode_id char(36),
+      name varchar(255) NOT NULL,
+      enabled boolean NOT NULL,
+      settings json NOT NULL,
+      FOREIGN KEY (connector_id) REFERENCES ${SOUTH_CONNECTORS_TABLE}(id),
+      FOREIGN KEY (scan_mode_id) REFERENCES ${SCAN_MODES_TABLE}(id)
+    );`);
+
+    await trx.schema.raw(`INSERT INTO ${SOUTH_ITEMS_TABLE}_dg_tmp
+      SELECT id, created_at, updated_at, connector_id, scan_mode_id, name, enabled, settings
+      FROM ${SOUTH_ITEMS_TABLE};`);
+
+    await trx.schema.raw(`DROP TABLE ${SOUTH_ITEMS_TABLE};`);
+
+    await trx.schema.raw(`ALTER TABLE ${SOUTH_ITEMS_TABLE}_dg_tmp RENAME TO ${SOUTH_ITEMS_TABLE};`);
+
+    await trx.schema.raw(`CREATE UNIQUE INDEX ${SOUTH_ITEMS_TABLE}_connector_id_name_unique ON ${SOUTH_ITEMS_TABLE} (connector_id, name);`);
+
+    await trx.raw('PRAGMA foreign_keys = ON;');
+  });
+}
+
+async function createFileCacheMigrationHints(knex: Knex): Promise<void> {
+  // Snapshot file-connector item settings before any transformation for the cache migration to consume
+  await knex.schema.createTable(MIGRATION_HINTS_TABLE, table => {
+    table.string('connector_id').notNullable();
+    table.string('item_id').notNullable();
+    table.integer('preserve_files').notNullable();
+    table.string('regex').notNullable();
+  });
+
+  const fileConnectors: Array<{ id: string }> = await knex(SOUTH_CONNECTORS_TABLE)
+    .select('id')
+    .whereIn('type', ['folder-scanner', 'sftp', 'ftp']);
+
+  const hints: Array<{ connector_id: string; item_id: string; preserve_files: number; regex: string }> = [];
+  for (const connector of fileConnectors) {
+    const items: Array<{ id: string; settings: string }> = await knex(SOUTH_ITEMS_TABLE)
+      .select('id', 'settings')
+      .where('connector_id', connector.id);
+
+    for (const item of items) {
+      const itemSettings: { preserveFiles?: boolean; regex?: string } = JSON.parse(item.settings);
+      hints.push({
+        connector_id: connector.id,
+        item_id: item.id,
+        preserve_files: itemSettings.preserveFiles ? 1 : 0,
+        regex: itemSettings.regex ?? '.*'
+      });
+    }
+  }
+
+  if (hints.length > 0) {
+    await knex.batchInsert(MIGRATION_HINTS_TABLE, hints);
+  }
 }
 
 export async function down(_knex: Knex): Promise<void> {

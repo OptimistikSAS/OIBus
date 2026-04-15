@@ -78,8 +78,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   async start(): Promise<void> {
-    this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
     if (this.isEnabled()) {
+      this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
       // Create an item value table for this connector
       this.cacheService!.createItemValueTable(this.connector.id);
       await this.connect();
@@ -107,6 +107,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.connector.items
       .filter(item => item.scanMode && item.scanMode.id && item.scanMode.id !== 'subscription' && item.enabled)
       .forEach(item => scanModes.set(item.scanMode!.id!, item.scanMode!));
+
+    this.connector.groups
+      .filter(
+        group =>
+          group.scanMode &&
+          group.scanMode.id &&
+          group.scanMode.id !== 'subscription' &&
+          this.connector.items.some(item => item.enabled && item.group?.id === group.id)
+      )
+      .forEach(group => scanModes.set(group.scanMode.id!, group.scanMode!));
 
     // Create cron jobs for new scan modes
     scanModes.forEach(scanMode => {
