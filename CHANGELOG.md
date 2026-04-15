@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.7.14](https://github.com/OptimistikSAS/OIBus/compare/v3.7.13...v3.7.14) (2026-04-15)
+
+
+### Bug Fixes
+
+* **south-oracle:** allow 0ms connection timeout ([9072302](https://github.com/OptimistikSAS/OIBus/commit/90723029d5cace5a6a4fd8df59d9951e3961487d))
+* **south-oracle:** do not set connection timeout if set to zero ([b9b4fcd](https://github.com/OptimistikSAS/OIBus/commit/b9b4fcd8447bab325e19edde36644d9b1508e375))
+* **south-oracle:** properly log oracle client error at init ([8d866ba](https://github.com/OptimistikSAS/OIBus/commit/8d866bab22463e887efa738c0f360766e7b9a622))
+* **south-oracle:** remove connection timeout when using query data ([e6d405f](https://github.com/OptimistikSAS/OIBus/commit/e6d405f90d314cfa403378c44729819e2c7a8812))
+
 ## [3.7.13](https://github.com/OptimistikSAS/OIBus/compare/v3.7.12...v3.7.13) (2026-03-24)
 
 
