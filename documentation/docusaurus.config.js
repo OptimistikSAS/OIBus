@@ -28,6 +28,20 @@ export default {
     locales: ['en']
   },
 
+  plugins: [
+    function noWebpackBarPlugin() {
+      return {
+        name: 'no-webpackbar-plugin',
+        configureWebpack(config) {
+          // webpackbar 6.x is incompatible with webpack 5.106+ (ValidationError on ProgressPlugin options).
+          // Remove it here until the dependency is updated.
+          config.plugins = (config.plugins || []).filter(p => p.constructor?.name !== 'WebpackBarPlugin');
+          return {};
+        }
+      };
+    }
+  ],
+
   presets: [
     [
       '@docusaurus/preset-classic',

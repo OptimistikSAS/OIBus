@@ -17,56 +17,91 @@ OIBus transmits data to target applications using two primary methods:
 
 ## CSV Format Estimations
 
+Byte sizes below use the following representative field widths:
+
+| Field                        | Example                    |  Bytes |
+| ---------------------------- | -------------------------- | -----: |
+| Timestamp                    | `2020-02-01T20:04:00.000Z` |     24 |
+| Point name                   | `Data001`                  |      7 |
+| Numeric value                | `12.0`                     |      4 |
+| Separator (comma or newline) | `,` / `\n`                 | 1 each |
+
 ### 1. Row Format
+
+One data point per row.
 
 ```
 Timestamp,Reference,Value
 2020-02-01T20:04:00.000Z,Data001,12.0
-2020-02-01T20:04:00.000Z,Data002,10.0
 ```
 
-**Size Calculation**:
+**Size per row**:
 
 - Timestamp: 24 bytes
 - Reference: 7 bytes
 - Value: 4 bytes
-- Separators: 3 bytes
-  - **Total per row**: 38 bytes
-  - **Hourly estimate**: 60 points × 38 bytes = 2,280 bytes
-  - **With 2 files/hour**: ~4,560 bytes/hour
+- 2 commas + newline: 3 bytes
+- **Total per row = per data point: 38 bytes**
+- **Hourly estimate** (60 data points at 1/min): 60 × 38 = **2,280 bytes**
+
+|              |                                                                                                               |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| **Use when** | Points have different timestamps, come from heterogeneous sources, or are collected at irregular intervals    |
+| **Pros**     | Simplest structure; each row is self-contained; easy to stream or append; no header needed to interpret a row |
+| **Cons**     | Most verbose — timestamp is repeated for every data point; highest cost per data point                        |
 
 ### 2. Column Format
+
+K data points share one timestamp row. Point names appear in the header.
 
 ```
 Timestamp,Data001,Data002,Data003
 2020-02-01T20:04:00.000Z,12.0,10.0,10.0
 ```
 
-**Size Calculation**:
+**Size per data row** (K points per row):
 
 - Timestamp: 24 bytes
-- Values: 3 × 4 bytes = 12 bytes
-- Separators: 4 bytes
-  - **Total per row**: 40 bytes
-  - **Hourly estimate**: 60 points × 40 bytes = 2,400 bytes
-  - **With 2 files/hour**: ~4,800 bytes/hour
+- K values: K × 4 bytes
+- K commas + newline: K + 1 bytes
+- **Total per row: (25 + 5K) bytes → (25 + 5K) / K bytes per data point**
+
+For K = 3: 40 bytes / row → **≈ 13.3 bytes per data point**
+
+- **Hourly estimate** (60 data points at 1/min, K = 3): 20 rows × 40 bytes = **800 bytes**
+
+|              |                                                                                                                                             |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Use when** | Multiple points are sampled simultaneously at the same scan rate (e.g. a SCADA scan group)                                                  |
+| **Pros**     | Timestamp shared across K points — very space-efficient as K grows; natural fit for synchronous polling                                     |
+| **Cons**     | All points in a row must share the same timestamp; schema is in the header — harder to process without it; missing values leave empty cells |
 
 ### 3. Column-Row Format
+
+Each row holds one timestamp, a shared reference name, and K values. Point sub-IDs appear in the header.
 
 ```
 Timestamp,Reference,001,002,003
 2020-02-01T20:04:00.000Z,Data,12.0,10.0,10.0
 ```
 
-**Size Calculation**:
+**Size per data row** (K points per row, 4-byte reference):
 
 - Timestamp: 24 bytes
 - Reference: 4 bytes
-- Values: 3 × 4 bytes = 12 bytes
-- Separators: 5 bytes
-  - **Total per row**: 45 bytes
-  - **Hourly estimate**: 60 points × 45 bytes = 2,700 bytes
-  - **With 2 files/hour**: ~5,400 bytes/hour
+- K values: K × 4 bytes
+- (K + 1) commas + newline: K + 2 bytes
+- **Total per row: (30 + 5K) bytes → (30 + 5K) / K bytes per data point**
+
+For K = 3: 45 bytes / row → **15 bytes per data point**
+
+- **Hourly estimate** (60 data points at 1/min, K = 3): 20 rows × 45 bytes = **900 bytes**
+
+|              |                                                                                                                                                                                |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Use when** | Data has a natural grouping structure — e.g. the same measurement across multiple instances of the same equipment, as seen in historian connectors with group/reference arrays |
+| **Pros**     | Combines timestamp sharing with an extra grouping dimension; readable when the reference name is meaningful                                                                    |
+| **Cons**     | Same timestamp constraint as Column; slightly less efficient due to the reference column overhead; less widely supported by downstream tools                                   |
 
 ## JSON Payload Estimation
 
@@ -85,30 +120,49 @@ Timestamp,Reference,001,002,003
 ]
 ```
 
-**Size Breakdown**:
-| Component | Size (bytes) |
-|---------------|-------------|
-| Timestamp | 39 |
-| pointId | 20 ("Data001") |
-| Data object | 10 |
-| Value field | 15 ("12.0") |
-| Quality field | 16 ("192") |
-| Separators | 6 |
-| **Total** | **106** |
+**Size Breakdown** (compact serialisation, no whitespace):
+
+| Component             | Content                                  |   Bytes |
+| --------------------- | ---------------------------------------- | ------: |
+| `timestamp` field     | `"timestamp":"2020-02-01T20:04:00.000Z"` |      38 |
+| `pointId` field       | `"pointId":"Data001"`                    |      19 |
+| `data` wrapper        | `"data":{…}` (key + both braces)         |       9 |
+| `value` field         | `"value":"12.0"`                         |      14 |
+| `quality` field       | `"quality":"192"`                        |      15 |
+| Structural characters | `[{`, 3× `,`, `}]`                       |       7 |
+| **Total**             |                                          | **102** |
 
 **Transmission Example**:
 
-- 3 points/minute × 106 bytes = 318 bytes
-- **Daily estimate**: 318 × 60 × 24 = 457,920 bytes (~447KB)
+- 3 points/minute × 102 bytes = 306 bytes/min
+- **Daily estimate**: 306 × 60 × 24 = 440,640 bytes (~430 KB)
+
+|              |                                                                                                                                                     |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Use when** | Sending data to REST APIs or modern platforms that consume JSON natively                                                                            |
+| **Pros**     | Self-describing; carries quality codes alongside values; no schema knowledge required by the receiver; native format for most cloud and API targets |
+| **Cons**     | Most verbose format — roughly 2.7× larger than Row CSV, ~7× larger than Column CSV at K = 3; higher serialisation overhead                          |
 
 ## Data Flow Comparison
 
+### Format Efficiency Comparison
+
+Bytes per data point at various points-per-row values (Column-Row assumes a 4-byte reference):
+
+| Format         | Formula       | K = 1 | K = 3 | K = 10 |
+| -------------- | ------------- | ----: | ----: | -----: |
+| Row CSV        | 38            |    38 |    38 |     38 |
+| Column CSV     | (25 + 5K) / K |    30 |  13.3 |    7.5 |
+| Column-Row CSV | (30 + 5K) / K |    35 |    15 |      8 |
+| JSON           | 102           |   102 |   102 |    102 |
+
+Column formats amortise the timestamp across K data points, becoming significantly more space-efficient as K grows.
+
 :::info How to Use
 
-1. Select your data format
-2. Enter your system parameters
-3. View estimated sizes and recommendations
-4. Adjust buffers based on your network reliability
+1. Enter your data points per second and points per row (K)
+2. Adjust safety and network buffers to match your environment
+3. View throughput and cache requirements for all formats side by side
 
 :::
 
