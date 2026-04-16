@@ -1121,12 +1121,12 @@ const jpGet = (obj: any, path: string) => {
     customManifest: {
       type: 'object',
       key: 'options',
-      translationKey: 'configuration.oibus.manifest.transformers.options',
+      translationKey: 'Options',
       attributes: [
         {
           type: 'string-select',
           key: 'valueType',
-          translationKey: 'configuration.oibus.manifest.south.items.mqtt.value-type',
+          translationKey: 'Value type',
           defaultValue: 'number',
           selectableValues: ['number', 'string', 'json'],
           validators: [
@@ -1144,7 +1144,7 @@ const jpGet = (obj: any, path: string) => {
         {
           type: 'object',
           key: 'jsonPayload',
-          translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.title',
+          translationKey: 'JSON payload',
           displayProperties: {
             visible: true,
             wrapInBox: true
@@ -1171,7 +1171,7 @@ const jpGet = (obj: any, path: string) => {
             {
               type: 'boolean',
               key: 'useArray',
-              translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.use-array',
+              translationKey: 'Payload in array?',
               defaultValue: false,
               validators: [
                 {
@@ -1188,7 +1188,7 @@ const jpGet = (obj: any, path: string) => {
             {
               type: 'string',
               key: 'dataArrayPath',
-              translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.data-array-path',
+              translationKey: 'Array path',
               defaultValue: null,
               validators: [
                 {
@@ -1205,7 +1205,7 @@ const jpGet = (obj: any, path: string) => {
             {
               type: 'string',
               key: 'valuePath',
-              translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.value-path',
+              translationKey: 'Value path',
               defaultValue: null,
               validators: [
                 {
@@ -1222,7 +1222,7 @@ const jpGet = (obj: any, path: string) => {
             {
               type: 'string-select',
               key: 'pointIdOrigin',
-              translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.point-id-origin',
+              translationKey: 'Point ID origin',
               defaultValue: 'oibus',
               selectableValues: ['oibus', 'payload'],
               validators: [
@@ -1240,7 +1240,7 @@ const jpGet = (obj: any, path: string) => {
             {
               type: 'string',
               key: 'pointIdPath',
-              translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.point-id-path',
+              translationKey: 'Point ID path',
               defaultValue: null,
               validators: [
                 {
@@ -1257,7 +1257,7 @@ const jpGet = (obj: any, path: string) => {
             {
               type: 'string-select',
               key: 'timestampOrigin',
-              translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-origin',
+              translationKey: 'Timestamp origin',
               defaultValue: 'oibus',
               selectableValues: ['oibus', 'payload'],
               validators: [
@@ -1275,7 +1275,7 @@ const jpGet = (obj: any, path: string) => {
             {
               type: 'object',
               key: 'timestampPayload',
-              translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.title',
+              translationKey: 'Timestamp',
               displayProperties: {
                 visible: true,
                 wrapInBox: false
@@ -1297,7 +1297,7 @@ const jpGet = (obj: any, path: string) => {
                 {
                   type: 'string',
                   key: 'timestampPath',
-                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.timestamp-path',
+                  translationKey: 'Timestamp path',
                   defaultValue: null,
                   validators: [
                     {
@@ -1314,7 +1314,7 @@ const jpGet = (obj: any, path: string) => {
                 {
                   type: 'string-select',
                   key: 'timestampType',
-                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.timestamp-type',
+                  translationKey: 'Type',
                   defaultValue: 'string',
                   selectableValues: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
                   validators: [
@@ -1332,7 +1332,7 @@ const jpGet = (obj: any, path: string) => {
                 {
                   type: 'string',
                   key: 'timestampFormat',
-                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.timestamp-format',
+                  translationKey: 'Timestamp format',
                   defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
                   validators: [
                     {
@@ -1349,7 +1349,7 @@ const jpGet = (obj: any, path: string) => {
                 {
                   type: 'timezone',
                   key: 'timezone',
-                  translationKey: 'configuration.oibus.manifest.south.items.mqtt.json-payload.timestamp-payload.timezone',
+                  translationKey: 'Timezone',
                   defaultValue: 'UTC',
                   validators: [
                     {
