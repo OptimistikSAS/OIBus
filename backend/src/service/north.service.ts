@@ -44,7 +44,7 @@ import { buildNorth, createNorthOrchestrator } from '../north/north-connector-fa
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { NorthTransformerWithOptions, TransformerSource } from '../model/transformer.model';
 import { toSouthConnectorLightDTO, toSouthItemLightDTO } from './south.service';
-import { TransformerSourceDTO } from '../../shared/model/transformer.model';
+import { TransformerSourceCommandDTO, TransformerSourceDTO } from '../../shared/model/transformer.model';
 import { SouthConnectorItemEntityLight, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import { SouthItemGroupLightDTO } from '../../shared/model/south-connector.model';
@@ -127,9 +127,9 @@ export default class NorthService {
     northEntity.updatedBy = createdBy;
     const transformers = this.transformerService.findAll();
     northEntity.transformers = command.transformers.map(transformerWithOptions => {
-      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformer.id);
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformerId);
       if (!foundTransformer) {
-        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformer.id}"`);
+        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformerId}"`);
       }
       return {
         id: '',
@@ -167,12 +167,12 @@ export default class NorthService {
     northEntity.updatedBy = updatedBy;
     const transformers = this.transformerService.findAll();
     northEntity.transformers = command.transformers.map(transformerWithOptions => {
-      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformer.id);
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformerId);
       if (!foundTransformer) {
-        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformer.id}"`);
+        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformerId}"`);
       }
       return {
-        id: transformerWithOptions.id,
+        id: transformerWithOptions.id.startsWith('temp_') ? '' : transformerWithOptions.id,
         transformer: foundTransformer,
         options: transformerWithOptions.options,
         source: this.transformerSourceFromCommand(transformerWithOptions.source)
@@ -339,30 +339,31 @@ export default class NorthService {
     return source;
   }
 
-  transformerSourceFromCommand(sourceCommand: TransformerSourceDTO): TransformerSource {
+  transformerSourceFromCommand(sourceCommand: TransformerSourceCommandDTO): TransformerSource {
     switch (sourceCommand.type) {
       case 'south': {
-        const south = this.southConnectorRepository.findSouthById(sourceCommand.south.id);
+        const south = this.southConnectorRepository.findSouthById(sourceCommand.southId);
         if (!south) {
-          throw new NotFoundError(`Could not find South connector "${sourceCommand.south.id}"`);
+          throw new NotFoundError(`Could not find South connector "${sourceCommand.southId}"`);
         }
         let group: SouthItemGroupEntity | undefined;
-        if (sourceCommand.group) {
-          const result = this.southItemGroupRepository.findById(sourceCommand.group.id);
+        if (sourceCommand.groupId) {
+          const result = this.southItemGroupRepository.findById(sourceCommand.groupId);
           if (!result) {
-            throw new NotFoundError(`Could not find Group "${sourceCommand.group.id}"`);
+            throw new NotFoundError(`Could not find Group "${sourceCommand.groupId}"`);
           }
           group = result;
         }
-        const items: Array<SouthConnectorItemEntityLight> = sourceCommand.items.map(item => {
-          if (!south.items.map(element => element.id).includes(item.id)) {
-            throw new NotFoundError(`Could not find South connector item "${item.name}" (${item.id})`);
+        const items: Array<SouthConnectorItemEntityLight> = sourceCommand.items.map(itemLight => {
+          const item = south.items.find(element => element.id === itemLight.id);
+          if (!item) {
+            throw new NotFoundError(`Could not find South connector item "${itemLight.name}" (${itemLight.id})`);
           }
           return {
             id: item.id,
             enabled: item.enabled,
-            createdBy: item.createdBy.id,
-            updatedBy: item.updatedBy.id,
+            createdBy: item.createdBy,
+            updatedBy: item.updatedBy,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt,
             name: item.name
@@ -460,7 +461,7 @@ export const toTransformerSourceDTO = (source: TransformerSource, getUserInfo: G
       return {
         type: 'south',
         south: toSouthConnectorLightDTO(source.south, getUserInfo),
-        group: source.group ? toSouthItemGroupLightDTO(source.group, getUserInfo) : undefined,
+        group: source.group ? toSouthItemGroupLightDTO(source.group) : undefined,
         items: source.items.map(item => toSouthItemLightDTO(item, getUserInfo))
       };
     case 'oibus-api':
@@ -507,13 +508,9 @@ export const copyNorthConnectorCommandToNorthEntity = async (
   };
 };
 
-export const toSouthItemGroupLightDTO = (entity: SouthItemGroupEntityLight, getUserInfo: GetUserInfo): SouthItemGroupLightDTO => {
+export const toSouthItemGroupLightDTO = (entity: SouthItemGroupEntityLight): SouthItemGroupLightDTO => {
   return {
     id: entity.id,
-    name: entity.name,
-    createdBy: getUserInfo(entity.createdBy),
-    updatedBy: getUserInfo(entity.updatedBy),
-    createdAt: entity.createdAt,
-    updatedAt: entity.updatedAt
+    name: entity.name
   };
 };

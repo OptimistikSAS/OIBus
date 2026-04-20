@@ -32,7 +32,7 @@ import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
 import { OIBusLog } from '../../model/logs.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { CustomTransformerCommandDTO, CustomTransformerDTO, TransformerDTO } from '../../../shared/model/transformer.model';
+import { CustomTransformerCommandDTO, CustomTransformerDTO } from '../../../shared/model/transformer.model';
 import { Transformer } from '../../model/transformer.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { UserCommandDTO } from '../../../shared/model/user.model';
@@ -999,37 +999,23 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
   transformers: [
     {
       id: 'northTransformerId4',
-      transformer: transformers[0] as TransformerDTO,
+      transformerId: transformers[0].id,
       options: {},
       source: {
         type: 'south',
-        south: {
-          id: southConnectors[0].id,
-          name: southConnectors[0].name,
-          type: southConnectors[0].type,
-          description: southConnectors[0].description,
-          enabled: southConnectors[0].enabled,
-          createdBy: { id: southConnectors[0].createdBy, friendlyName: southConnectors[0].createdBy },
-          updatedBy: { id: southConnectors[0].updatedBy, friendlyName: southConnectors[0].updatedBy },
-          createdAt: southConnectors[0].createdAt,
-          updatedAt: southConnectors[0].updatedAt
-        },
+        southId: southConnectors[0].id,
         items: [
           {
             id: southConnectors[0].items[0].id,
             name: southConnectors[0].items[0].name,
-            enabled: southConnectors[0].items[0].enabled,
-            createdBy: { id: '', friendlyName: '' },
-            updatedBy: { id: '', friendlyName: '' },
-            createdAt: '',
-            updatedAt: ''
+            enabled: southConnectors[0].items[0].enabled
           }
         ]
       }
     },
     {
       id: 'northTransformerId5',
-      transformer: transformers[1] as TransformerDTO,
+      transformerId: transformers[1].id,
       options: {},
       source: {
         type: 'oibus-api',
@@ -1292,7 +1278,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   },
   items: [
     {
-      id: '',
+      id: 'temp_',
       name: 'item4',
       enabled: true,
       settings: {
@@ -1312,23 +1298,19 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   northTransformers: [
     {
       id: 'historyTransformerId3',
-      transformer: transformers[0] as TransformerDTO,
+      transformerId: transformers[0].id,
       options: {},
       items: [
         {
-          id: '',
+          id: 'temp_',
           name: 'item4',
-          enabled: true,
-          createdBy: { id: '', friendlyName: '' },
-          updatedBy: { id: '', friendlyName: '' },
-          createdAt: '',
-          updatedAt: ''
+          enabled: true
         }
       ]
     },
     {
       id: 'historyTransformerId4',
-      transformer: transformers[1] as TransformerDTO,
+      transformerId: transformers[1].id,
       options: {},
       items: []
     }

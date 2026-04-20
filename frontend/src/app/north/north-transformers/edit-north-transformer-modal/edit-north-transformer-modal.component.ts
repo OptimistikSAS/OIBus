@@ -18,12 +18,7 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
-import {
-  ItemLightDTO,
-  SouthConnectorLightDTO,
-  SouthItemGroupDTO,
-  SouthItemGroupLightDTO
-} from '../../../../../../backend/shared/model/south-connector.model';
+import { ItemLightDTO, SouthConnectorLightDTO, SouthItemGroupLightDTO } from '../../../../../../backend/shared/model/south-connector.model';
 import { OIBusSouthTypeEnumPipe } from '../../../shared/oibus-south-type-enum.pipe';
 import { getAssociatedInputType } from '../../../shared/utils/utils';
 import { SouthConnectorService } from '../../../services/south-connector.service';
@@ -108,7 +103,7 @@ export class EditNorthTransformerModalComponent {
   totalSearchResults = 0;
   itemSearchText = '';
   searchInteracted = false;
-  availableGroups: Array<SouthItemGroupDTO> = [];
+  availableGroups: Array<SouthItemGroupLightDTO> = [];
   selectedGroup: SouthItemGroupLightDTO | null = null;
 
   filterItems() {
@@ -181,7 +176,7 @@ export class EditNorthTransformerModalComponent {
       this.filterItems();
       // Pre-load items and groups if editing with a south connector
       this.southConnectorService.getGroups(transformerWithOptionsToEdit.source.south.id).subscribe(groups => {
-        this.availableGroups = groups;
+        this.availableGroups = groups.map(group => ({ id: group.id, name: group.standardSettings.name }));
       });
       this.selectedItems = transformerWithOptionsToEdit.source.items;
       if (transformerWithOptionsToEdit.source.group) {
@@ -228,7 +223,7 @@ export class EditNorthTransformerModalComponent {
       if (source.south) {
         this.filterItems();
         this.southConnectorService.getGroups(source.south.id).subscribe(groups => {
-          this.availableGroups = groups;
+          this.availableGroups = groups.map(group => ({ id: group.id, name: group.standardSettings.name }));
         });
       } else {
         this.filteredItems = [];
@@ -281,7 +276,13 @@ export class EditNorthTransformerModalComponent {
         south: this.existingTransformerWithOptions
           ? (this.existingTransformerWithOptions.source as SourceOriginSouthDTO).south
           : this.form.value.source!.south!,
-        group: this.selectionType === 'group' && this.selectedGroup ? this.selectedGroup : undefined,
+        group:
+          this.selectionType === 'group' && this.selectedGroup
+            ? {
+                id: this.selectedGroup.id,
+                name: this.selectedGroup.name
+              }
+            : undefined,
         items:
           this.selectionType === 'items'
             ? this.selectedItems.map(item => ({
@@ -302,7 +303,7 @@ export class EditNorthTransformerModalComponent {
     }
 
     this.modal.close({
-      id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : '',
+      id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : `temp_${Date.now()}`,
       source,
       transformer: this.form.value.transformer,
       options: this.form.value.options

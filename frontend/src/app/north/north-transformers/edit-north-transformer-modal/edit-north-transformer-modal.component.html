@@ -146,7 +146,7 @@
               >
                 <option [ngValue]="null" translate="configuration.oibus.manifest.transformers.select-group"></option>
                 @for (group of availableGroups; track group.id) {
-                  <option [ngValue]="group">{{ group.standardSettings.name }}</option>
+                  <option [ngValue]="group">{{ group.name }}</option>
                 }
               </select>
             }

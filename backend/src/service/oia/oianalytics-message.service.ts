@@ -517,8 +517,22 @@ export default class OIAnalyticsMessageService {
             }
           },
           transformers: north.transformers.map(transformerWithOptions => ({
+            id: transformerWithOptions.id,
             transformerId: transformerWithOptions.transformer.id,
-            source: transformerWithOptions.source
+            source: {
+              type: transformerWithOptions.source.type,
+              southId: transformerWithOptions.source.type === 'south' ? transformerWithOptions.source.south.id : undefined,
+              groupId:
+                transformerWithOptions.source.type === 'south' && transformerWithOptions.source.group
+                  ? transformerWithOptions.source.group.id
+                  : undefined,
+              items:
+                transformerWithOptions.source.type === 'south'
+                  ? transformerWithOptions.source.items.map(item => ({ id: item.id, name: item.name, enabled: item.enabled }))
+                  : undefined,
+              dataSourceId: transformerWithOptions.source.type === 'oibus-api' ? transformerWithOptions.source.dataSourceId : undefined
+            },
+            options: transformerWithOptions.options
           }))
         }
       };
@@ -549,6 +563,8 @@ export default class OIAnalyticsMessageService {
             name: transformer.name,
             description: transformer.description,
             inputType: transformer.inputType,
+            language: transformer.language,
+            timeout: transformer.timeout,
             outputType: transformer.outputType,
             customCode: transformer.customCode
           },

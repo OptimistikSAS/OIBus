@@ -155,6 +155,9 @@ export default class NorthConnectorRepository {
       }
 
       for (const transformerWithOptions of north.transformers) {
+        if (transformerWithOptions.id.startsWith('temp_')) {
+          transformerWithOptions.id = '';
+        }
         this.addOrEditTransformer(north.id, transformerWithOptions);
       }
     });

@@ -84,6 +84,7 @@ export class NorthTransformersComponent {
         switchMap((transformer: TransformerDTOWithOptions) => {
           const northConnector = this.northConnector();
           if (northConnector && this.saveChangesDirectly()) {
+            transformer.id = ''; // remove temp_ id when creating directly
             return this.northConnectorService.addOrEditTransformer(northConnector.id, transformer).pipe(switchMap(() => of(transformer)));
           }
           this.transformersWithOptions = [...this.transformersWithOptions, transformer];
@@ -153,18 +154,7 @@ export class NorthTransformersComponent {
             return this.northConnectorService.removeTransformer(this.northConnector()!.id, transformer.id);
           } else {
             this.transformersWithOptions = this.transformersWithOptions.filter(element => {
-              if (transformer.id) {
-                return element.id !== transformer.id;
-              } else {
-                return !(
-                  element.source.type === transformer.source.type &&
-                  ((element.source.type === 'south' &&
-                    transformer.source.type === 'south' &&
-                    element.source.south.id === transformer.source.south.id) ||
-                    element.source.type !== 'south') &&
-                  element.transformer.id === transformer.transformer.id
-                );
-              }
+              return element.id !== transformer.id;
             });
           }
           return of(null);
@@ -178,7 +168,7 @@ export class NorthTransformersComponent {
       });
   }
 
-  formatTransformerName(transformer: TransformerDTOWithOptions) {
+  formatTransformerSource(transformer: TransformerDTOWithOptions) {
     if (transformer.source.type === 'south') {
       const southLabel = `${transformer.source.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.source.south!.type)})`;
       const numberOfItems = transformer.source.items.length;

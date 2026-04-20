@@ -304,7 +304,9 @@ export interface ItemLightDTO extends BaseEntity {
   enabled: boolean;
 }
 
-export interface SouthItemGroupLightDTO extends BaseEntity {
+export interface SouthItemGroupLightDTO {
+  id: string;
+
   /**
    * The name of the group.
    *

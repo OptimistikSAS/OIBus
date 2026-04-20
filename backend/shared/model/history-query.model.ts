@@ -52,7 +52,7 @@ import {
   NorthSFTPSettings
 } from './north-settings.model';
 import { ScanModeDTO } from './scan-mode.model';
-import { HistoryTransformerDTOWithOptions } from './transformer.model';
+import { HistoryTransformerCommandDTOWithOptions, HistoryTransformerDTOWithOptions } from './transformer.model';
 
 /**
  * List of possible statuses for a history query.
@@ -369,7 +369,7 @@ export interface HistoryQueryCommandCommonDTO {
       retentionDuration: number;
     };
   };
-  northTransformers: Array<HistoryTransformerDTOWithOptions>;
+  northTransformers: Array<HistoryTransformerCommandDTOWithOptions>;
 }
 
 export interface HistoryQuerySouthCommandTypedDTO<T extends OIBusSouthType, S, IS> {

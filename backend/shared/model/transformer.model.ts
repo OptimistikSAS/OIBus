@@ -203,6 +203,55 @@ export interface SourceOriginAPIDTO extends BaseSourceOrigin {
 
 export type TransformerSourceDTO = SourceOriginSouthDTO | SourceOriginOIAnalyticsDTO | SourceOriginAPIDTO;
 
+export interface SourceOriginSouthCommandDTO extends BaseSourceOrigin {
+  type: 'south';
+
+  /**
+   * The south ID associated to the transformer
+   */
+  southId: string;
+
+  /**
+   * The group ID associated to the transformer (mutually exclusive with items)
+   */
+  groupId?: string;
+
+  /**
+   * The list of items associated to the transformer
+   */
+  items: Array<{
+    /**
+     * The item ID
+     */
+    id: string;
+
+    /**
+     * The name of the item.
+     *
+     * @example "Temperature Logs"
+     */
+    name: string;
+
+    /**
+     * Whether this item is enabled.
+     *
+     * @example true
+     */
+    enabled: boolean;
+  }>;
+}
+
+export interface SourceOriginOIAnalyticsCommandDTO extends BaseSourceOrigin {
+  type: 'oianalytics-setpoint';
+}
+
+export interface SourceOriginAPICommandDTO extends BaseSourceOrigin {
+  type: 'oibus-api';
+  dataSourceId: string;
+}
+
+export type TransformerSourceCommandDTO = SourceOriginSouthCommandDTO | SourceOriginOIAnalyticsCommandDTO | SourceOriginAPICommandDTO;
+
 /**
  * Data Transfer Object for a transformer with its options.
  * Used when a transformer needs to be applied with specific configuration options.
@@ -235,6 +284,34 @@ export interface TransformerDTOWithOptions {
  * Data Transfer Object for a transformer with its options.
  * Used when a transformer needs to be applied with specific configuration options.
  */
+export interface TransformerCommandDTOWithOptions {
+  /**
+   * The id used to match a transformer with options
+   * @example "id"
+   */
+  id: string;
+
+  /**
+   * From which source the data comes from
+   */
+  source: TransformerSourceCommandDTO;
+
+  /**
+   * The transformer to be applied.
+   */
+  transformerId: string;
+
+  /**
+   * Configuration options for the transformer.
+   * @example { "precision": 2, "defaultValue": 0 }
+   */
+  options: Record<string, unknown>;
+}
+
+/**
+ * Data Transfer Object for a transformer with its options.
+ * Used when a transformer needs to be applied with specific configuration options.
+ */
 export interface HistoryTransformerDTOWithOptions {
   /**
    * The id used to match a transformer with options
@@ -251,6 +328,49 @@ export interface HistoryTransformerDTOWithOptions {
    * The transformer to be applied.
    */
   transformer: TransformerDTO;
+
+  /**
+   * Configuration options for the transformer.
+   * @example { "precision": 2, "defaultValue": 0 }
+   */
+  options: Record<string, unknown>;
+}
+
+export interface HistoryTransformerCommandDTOWithOptions {
+  /**
+   * The id used to match a transformer with options
+   * @example "id"
+   */
+  id: string;
+
+  /**
+   * The list of items associated to the transformer
+   */
+  items: Array<{
+    /**
+     * The item ID
+     */
+    id: string;
+
+    /**
+     * The name of the item.
+     *
+     * @example "Temperature Logs"
+     */
+    name: string;
+
+    /**
+     * Whether this item is enabled.
+     *
+     * @example true
+     */
+    enabled: boolean;
+  }>;
+
+  /**
+   * The transformer to be applied.
+   */
+  transformerId: string;
 
   /**
    * Configuration options for the transformer.

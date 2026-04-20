@@ -963,7 +963,7 @@
           "several-items-selected": "{{ numberOfItems }} items",
           "all-items-selected": "All items",
           "oibus-api-selected": "OIBus API (dataSourceId: {{ dataSourceId }})",
-          "oianalytics-setpoint-selected": "OIAnalytic setpoints",
+          "oianalytics-setpoint-selected": "OIAnalytics setpoints",
           "all-items": "All items",
           "specific-items": "Specific items",
           "search-items": "Search items...",
