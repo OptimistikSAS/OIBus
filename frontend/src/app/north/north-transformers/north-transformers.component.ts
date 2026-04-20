@@ -15,10 +15,11 @@ import { firstValueFrom, of, switchMap } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorLightDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-north-transformers',
-  imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent, NgbTooltip],
   templateUrl: './north-transformers.component.html',
   styleUrl: './north-transformers.component.scss'
 })
@@ -176,7 +177,7 @@ export class NorthTransformersComponent {
       if (transformer.source.group) {
         return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.group-selected', { groupName: transformer.source.group.name })}]`;
       } else if (numberOfItems === 1) {
-        return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.one-item-selected')}]`;
+        return `${southLabel} [${transformer.source.items[0].name}]`;
       } else if (numberOfItems > 1) {
         return `${southLabel} [${this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', { numberOfItems })}]`;
       } else {
@@ -187,5 +188,33 @@ export class NorthTransformersComponent {
     } else {
       return `${this.translateService.instant('configuration.oibus.manifest.transformers.oianalytics-setpoint-selected')}`;
     }
+  }
+
+  getSourceTooltip(transformer: TransformerDTOWithOptions): string | null {
+    if (transformer.source.type !== 'south') return null;
+    const { items, group } = transformer.source;
+    if (group || items.length === 0) return null;
+    if (items.length === 1) return items[0].name;
+    const names = items
+      .slice(0, 5)
+      .map(i => i.name)
+      .join('\n');
+    return items.length > 5
+      ? `${names}\n${this.translateService.instant('configuration.oibus.manifest.transformers.tooltip-overflow', { count: items.length - 5 })}`
+      : names;
+  }
+
+  getSourceParts(transformer: TransformerDTOWithOptions): { prefix: string; itemLabel: string } | null {
+    if (transformer.source.type !== 'south') return null;
+    const { items, group } = transformer.source;
+    if (group || items.length === 0) return null;
+    const southLabel = `${transformer.source.south!.name} (${this.translateService.instant('enums.oibus-south-type.' + transformer.source.south!.type)})`;
+    const itemLabel =
+      items.length === 1
+        ? items[0].name
+        : this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', {
+            numberOfItems: items.length
+          });
+    return { prefix: `${southLabel} `, itemLabel };
   }
 }

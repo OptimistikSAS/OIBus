@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output } from '@angular/core';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';
@@ -15,10 +15,11 @@ import { firstValueFrom, of, switchMap } from 'rxjs';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'oib-history-query-transformers',
-  imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent],
+  imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent, NgbTooltip],
   templateUrl: './history-query-transformers.component.html',
   styleUrl: './history-query-transformers.component.scss'
 })
@@ -27,6 +28,7 @@ export class HistoryQueryTransformersComponent {
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
   private historyQueryService = inject(HistoryQueryService);
+  private translateService = inject(TranslateService);
 
   readonly historyQuery = input<HistoryQueryDTO | null>(null);
 
@@ -143,6 +145,28 @@ export class HistoryQueryTransformersComponent {
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });
+  }
+
+  getHistorySourceItemLabel(transformer: HistoryTransformerDTOWithOptions): string | null {
+    const count = transformer.items.length;
+    if (count === 0) return null;
+    if (count === 1) return transformer.items[0].name;
+    return this.translateService.instant('configuration.oibus.manifest.transformers.several-items-selected', {
+      numberOfItems: count
+    });
+  }
+
+  getHistorySourceTooltip(transformer: HistoryTransformerDTOWithOptions): string | null {
+    const { items } = transformer;
+    if (items.length === 0) return null;
+    if (items.length === 1) return items[0].name;
+    const names = items
+      .slice(0, 5)
+      .map(i => i.name)
+      .join('\n');
+    return items.length > 5
+      ? `${names}\n${this.translateService.instant('configuration.oibus.manifest.transformers.tooltip-overflow', { count: items.length - 5 })}`
+      : names;
   }
 
   deleteTransformer(transformer: HistoryTransformerDTOWithOptions) {
