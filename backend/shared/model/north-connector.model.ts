@@ -13,7 +13,7 @@ import {
   NorthSFTPSettings
 } from './north-settings.model';
 import { ScanModeDTO } from './scan-mode.model';
-import { TransformerDTOWithOptions } from './transformer.model';
+import { TransformerCommandDTOWithOptions, TransformerDTOWithOptions } from './transformer.model';
 import { OIBusObjectAttribute } from './form.model';
 
 /**
@@ -378,7 +378,7 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
    *
    * @example []
    */
-  transformers: Array<TransformerDTOWithOptions>;
+  transformers: Array<TransformerCommandDTOWithOptions>;
 }
 
 /**

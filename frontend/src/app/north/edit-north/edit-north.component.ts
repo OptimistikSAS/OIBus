@@ -36,6 +36,7 @@ import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { OIBUS_FORM_MODE } from '../../shared/form/oibus-form-mode.token';
+import { toSourceCommand } from '../../shared/utils/utils';
 
 @Component({
   selector: 'oib-edit-north',
@@ -350,9 +351,9 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
       },
       transformers: this.inMemoryTransformersWithOptions.map(element => ({
         id: element.id,
-        transformer: element.transformer,
+        transformerId: element.transformer.id,
         options: element.options,
-        source: element.source
+        source: toSourceCommand(element.source)
       }))
     };
   }

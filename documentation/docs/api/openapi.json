@@ -13978,100 +13978,10 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SouthItemGroupLightDTO": {
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier of the entity.",
-						"example": "entity123"
-					},
-					"createdBy": {
-						"$ref": "#/components/schemas/UserInfo",
-						"description": "The user who created the entity."
-					},
-					"updatedBy": {
-						"$ref": "#/components/schemas/UserInfo",
-						"description": "The user who last updated the entity."
-					},
-					"createdAt": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was created.",
-						"example": "2023-10-31T12:34:56.789Z"
-					},
-					"updatedAt": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last updated.",
-						"example": "2023-10-31T13:45:00.123Z"
-					},
-					"name": {
-						"type": "string",
-						"description": "The name of the group.",
-						"example": "Production Line A"
-					}
-				},
-				"required": [
-					"id",
-					"createdBy",
-					"updatedBy",
-					"createdAt",
-					"updatedAt",
-					"name"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"ItemLightDTO": {
-				"properties": {
-					"id": {
-						"type": "string",
-						"description": "The unique identifier of the entity.",
-						"example": "entity123"
-					},
-					"createdBy": {
-						"$ref": "#/components/schemas/UserInfo",
-						"description": "The user who created the entity."
-					},
-					"updatedBy": {
-						"$ref": "#/components/schemas/UserInfo",
-						"description": "The user who last updated the entity."
-					},
-					"createdAt": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was created.",
-						"example": "2023-10-31T12:34:56.789Z"
-					},
-					"updatedAt": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The date and time when the entity was last updated.",
-						"example": "2023-10-31T13:45:00.123Z"
-					},
-					"name": {
-						"type": "string",
-						"description": "The name of the item.",
-						"example": "Temperature Logs"
-					},
-					"enabled": {
-						"type": "boolean",
-						"description": "Whether this item is enabled.",
-						"example": true
-					}
-				},
-				"required": [
-					"id",
-					"createdBy",
-					"updatedBy",
-					"createdAt",
-					"updatedAt",
-					"name",
-					"enabled"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
 			"DataSourceType": {
 				"type": "string"
 			},
-			"SourceOriginSouthDTO": {
+			"SourceOriginSouthCommandDTO": {
 				"properties": {
 					"type": {
 						"type": "string",
@@ -14080,17 +13990,38 @@
 						],
 						"nullable": false
 					},
-					"south": {
-						"$ref": "#/components/schemas/SouthConnectorLightDTO",
-						"description": "The south associated to the transformer"
+					"southId": {
+						"type": "string",
+						"description": "The south ID associated to the transformer"
 					},
-					"group": {
-						"$ref": "#/components/schemas/SouthItemGroupLightDTO",
-						"description": "The group associated to the transformer (mutually exclusive with items)"
+					"groupId": {
+						"type": "string",
+						"description": "The group ID associated to the transformer (mutually exclusive with items)"
 					},
 					"items": {
 						"items": {
-							"$ref": "#/components/schemas/ItemLightDTO"
+							"properties": {
+								"enabled": {
+									"type": "boolean",
+									"description": "Whether this item is enabled.",
+									"example": true
+								},
+								"name": {
+									"type": "string",
+									"description": "The name of the item.",
+									"example": "Temperature Logs"
+								},
+								"id": {
+									"type": "string",
+									"description": "The item ID"
+								}
+							},
+							"required": [
+								"enabled",
+								"name",
+								"id"
+							],
+							"type": "object"
 						},
 						"type": "array",
 						"description": "The list of items associated to the transformer"
@@ -14098,13 +14029,13 @@
 				},
 				"required": [
 					"type",
-					"south",
+					"southId",
 					"items"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SourceOriginOIAnalyticsDTO": {
+			"SourceOriginOIAnalyticsCommandDTO": {
 				"properties": {
 					"type": {
 						"type": "string",
@@ -14120,7 +14051,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"SourceOriginAPIDTO": {
+			"SourceOriginAPICommandDTO": {
 				"properties": {
 					"type": {
 						"type": "string",
@@ -14140,16 +14071,16 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"TransformerSourceDTO": {
+			"TransformerSourceCommandDTO": {
 				"anyOf": [
 					{
-						"$ref": "#/components/schemas/SourceOriginSouthDTO"
+						"$ref": "#/components/schemas/SourceOriginSouthCommandDTO"
 					},
 					{
-						"$ref": "#/components/schemas/SourceOriginOIAnalyticsDTO"
+						"$ref": "#/components/schemas/SourceOriginOIAnalyticsCommandDTO"
 					},
 					{
-						"$ref": "#/components/schemas/SourceOriginAPIDTO"
+						"$ref": "#/components/schemas/SourceOriginAPICommandDTO"
 					}
 				]
 			},
@@ -14159,7 +14090,7 @@
 				"type": "object",
 				"description": "Construct a type with a set of properties K of type T"
 			},
-			"TransformerDTOWithOptions": {
+			"TransformerCommandDTOWithOptions": {
 				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
 				"properties": {
 					"id": {
@@ -14168,11 +14099,11 @@
 						"example": "id"
 					},
 					"source": {
-						"$ref": "#/components/schemas/TransformerSourceDTO",
+						"$ref": "#/components/schemas/TransformerSourceCommandDTO",
 						"description": "From which source the data comes from"
 					},
-					"transformer": {
-						"$ref": "#/components/schemas/TransformerDTO",
+					"transformerId": {
+						"type": "string",
 						"description": "The transformer to be applied."
 					},
 					"options": {
@@ -14187,7 +14118,7 @@
 				"required": [
 					"id",
 					"source",
-					"transformer",
+					"transformerId",
 					"options"
 				],
 				"type": "object",
@@ -14351,7 +14282,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -14606,7 +14537,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -14795,7 +14726,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -14994,7 +14925,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -15233,7 +15164,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -15491,7 +15422,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -15766,7 +15697,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -16032,7 +15963,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -16425,7 +16356,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -16659,7 +16590,7 @@
 					},
 					"transformers": {
 						"items": {
-							"$ref": "#/components/schemas/TransformerDTOWithOptions"
+							"$ref": "#/components/schemas/TransformerCommandDTOWithOptions"
 						},
 						"type": "array",
 						"description": "The list of transformers to apply to the data.",
@@ -17124,8 +17055,7 @@
 				"type": "object",
 				"additionalProperties": false
 			},
-			"HistoryTransformerDTOWithOptions": {
-				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
+			"HistoryTransformerCommandDTOWithOptions": {
 				"properties": {
 					"id": {
 						"type": "string",
@@ -17134,13 +17064,34 @@
 					},
 					"items": {
 						"items": {
-							"$ref": "#/components/schemas/ItemLightDTO"
+							"properties": {
+								"enabled": {
+									"type": "boolean",
+									"description": "Whether this item is enabled.",
+									"example": true
+								},
+								"name": {
+									"type": "string",
+									"description": "The name of the item.",
+									"example": "Temperature Logs"
+								},
+								"id": {
+									"type": "string",
+									"description": "The item ID"
+								}
+							},
+							"required": [
+								"enabled",
+								"name",
+								"id"
+							],
+							"type": "object"
 						},
 						"type": "array",
 						"description": "The list of items associated to the transformer"
 					},
-					"transformer": {
-						"$ref": "#/components/schemas/TransformerDTO",
+					"transformerId": {
+						"type": "string",
 						"description": "The transformer to be applied."
 					},
 					"options": {
@@ -17155,7 +17106,7 @@
 				"required": [
 					"id",
 					"items",
-					"transformer",
+					"transformerId",
 					"options"
 				],
 				"type": "object",
@@ -17293,7 +17244,7 @@
 					},
 					"northTransformers": {
 						"items": {
-							"$ref": "#/components/schemas/HistoryTransformerDTOWithOptions"
+							"$ref": "#/components/schemas/HistoryTransformerCommandDTOWithOptions"
 						},
 						"type": "array"
 					}
@@ -20675,6 +20626,188 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthItemGroupLightDTO": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the group.",
+						"example": "Production Line A"
+					}
+				},
+				"required": [
+					"id",
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ItemLightDTO": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled.",
+						"example": true
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SourceOriginSouthDTO": {
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"south"
+						],
+						"nullable": false
+					},
+					"south": {
+						"$ref": "#/components/schemas/SouthConnectorLightDTO",
+						"description": "The south associated to the transformer"
+					},
+					"group": {
+						"$ref": "#/components/schemas/SouthItemGroupLightDTO",
+						"description": "The group associated to the transformer (mutually exclusive with items)"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
+					}
+				},
+				"required": [
+					"type",
+					"south",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SourceOriginOIAnalyticsDTO": {
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"oianalytics-setpoint"
+						],
+						"nullable": false
+					}
+				},
+				"required": [
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SourceOriginAPIDTO": {
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"oibus-api"
+						],
+						"nullable": false
+					},
+					"dataSourceId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"type",
+					"dataSourceId"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"TransformerSourceDTO": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/SourceOriginSouthDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SourceOriginOIAnalyticsDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SourceOriginAPIDTO"
+					}
+				]
+			},
+			"TransformerDTOWithOptions": {
+				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
+					"source": {
+						"$ref": "#/components/schemas/TransformerSourceDTO",
+						"description": "From which source the data comes from"
+					},
+					"transformer": {
+						"$ref": "#/components/schemas/TransformerDTO",
+						"description": "The transformer to be applied."
+					},
+					"options": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Configuration options for the transformer.",
+						"example": {
+							"precision": 2,
+							"defaultValue": 0
+						}
+					}
+				},
+				"required": [
+					"id",
+					"source",
+					"transformer",
+					"options"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"NorthConnectorTypedDTO_aws-s3.NorthAmazonS3Settings_": {
 				"properties": {
 					"id": {
@@ -23197,6 +23330,43 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryTransformerDTOWithOptions": {
+				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The id used to match a transformer with options",
+						"example": "id"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/ItemLightDTO"
+						},
+						"type": "array",
+						"description": "The list of items associated to the transformer"
+					},
+					"transformer": {
+						"$ref": "#/components/schemas/TransformerDTO",
+						"description": "The transformer to be applied."
+					},
+					"options": {
+						"$ref": "#/components/schemas/Record_string.unknown_",
+						"description": "Configuration options for the transformer.",
+						"example": {
+							"precision": 2,
+							"defaultValue": 0
+						}
+					}
+				},
+				"required": [
+					"id",
+					"items",
+					"transformer",
+					"options"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryCommonDTO": {
 				"properties": {
 					"name": {
@@ -25611,7 +25781,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.7.14",
+		"version": "3.8.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"

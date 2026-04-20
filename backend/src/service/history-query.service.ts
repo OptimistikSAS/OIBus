@@ -37,6 +37,7 @@ import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { HistoryTransformerWithOptions } from '../model/transformer.model';
+import { SouthConnectorItemEntityLight } from '../model/south-connector.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -114,23 +115,42 @@ export default class HistoryQueryService {
     }
     const transformers = this.transformerService.findAll();
     historyQuery.northTransformers = command.northTransformers.map(transformerWithOptions => {
-      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformer.id);
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformerId);
       if (!foundTransformer) {
-        throw new Error(`Could not find OIBus transformer "${transformerWithOptions.transformer.id}"`);
+        throw new Error(`Could not find OIBus transformer "${transformerWithOptions.transformerId}"`);
       }
+      const items: Array<SouthConnectorItemEntityLight> = transformerWithOptions.items.map(itemLight => {
+        if (itemLight.id.startsWith('temp_')) {
+          return {
+            id: itemLight.id,
+            enabled: itemLight.enabled,
+            createdBy: createdBy,
+            updatedBy: createdBy,
+            createdAt: '',
+            updatedAt: '',
+            name: itemLight.name
+          };
+        }
+        const item = historyQuery.items.find(element => element.id === itemLight.id);
+        if (!item) {
+          throw new NotFoundError(`Could not find History item "${itemLight.name}" (${itemLight.id})`);
+        }
+        return {
+          id: item.id,
+          enabled: item.enabled,
+          createdBy: item.createdBy,
+          updatedBy: item.updatedBy,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          name: item.name
+        };
+      });
+
       return {
         id: '',
         transformer: foundTransformer,
         options: transformerWithOptions.options,
-        items: transformerWithOptions.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          enabled: item.enabled,
-          createdBy: item.createdBy.id,
-          updatedBy: item.updatedBy.id,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt
-        }))
+        items: items
       };
     });
 
@@ -175,24 +195,44 @@ export default class HistoryQueryService {
     }
     const transformers = this.transformerService.findAll();
     historyQuery.northTransformers = command.northTransformers.map(transformerWithOptions => {
-      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformer.id);
+      const foundTransformer = transformers.find(transformer => transformer.id === transformerWithOptions.transformerId);
       if (!foundTransformer) {
-        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformer.id}"`);
+        throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformerId}"`);
       }
+
+      const items: Array<SouthConnectorItemEntityLight> = transformerWithOptions.items.map(itemLight => {
+        if (itemLight.id.startsWith('temp_')) {
+          return {
+            id: itemLight.id,
+            enabled: itemLight.enabled,
+            createdBy: updatedBy,
+            updatedBy: updatedBy,
+            createdAt: '',
+            updatedAt: '',
+            name: itemLight.name
+          };
+        }
+
+        const item = historyQuery.items.find(element => element.id === itemLight.id);
+        if (!item) {
+          throw new NotFoundError(`Could not find History item "${itemLight.name}" (${itemLight.id})`);
+        }
+        return {
+          id: item.id,
+          enabled: item.enabled,
+          createdBy: item.createdBy,
+          updatedBy: item.updatedBy,
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt,
+          name: item.name
+        };
+      });
 
       return {
         id: transformerWithOptions.id,
         transformer: foundTransformer,
         options: transformerWithOptions.options,
-        items: transformerWithOptions.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          enabled: item.enabled,
-          createdBy: item.createdBy.id,
-          updatedBy: item.updatedBy.id,
-          createdAt: item.createdAt,
-          updatedAt: item.updatedAt
-        }))
+        items
       };
     });
 

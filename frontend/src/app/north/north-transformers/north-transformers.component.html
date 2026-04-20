@@ -24,7 +24,7 @@
           @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.id) {
             <tr>
               <td>
-                <span>{{ this.formatTransformerName(transformerWithOptions) }}</span>
+                <span>{{ this.formatTransformerSource(transformerWithOptions) }}</span>
               </td>
               <td>
                 @if (transformerWithOptions.transformer.type === 'standard') {

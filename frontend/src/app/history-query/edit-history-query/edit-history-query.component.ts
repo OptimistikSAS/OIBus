@@ -493,7 +493,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       items: this.inMemoryItems,
       northTransformers: this.inMemoryTransformersWithOptions.map(element => ({
         id: element.id,
-        transformer: element.transformer,
+        transformerId: element.transformer.id,
         options: element.options,
         items: element.items
       }))

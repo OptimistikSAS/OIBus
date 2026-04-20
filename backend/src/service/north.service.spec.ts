@@ -155,7 +155,7 @@ describe('North Service', () => {
     (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce({
       id: 'groupId1',
       name: '',
-      southId: command.transformers[0].source.south.id,
+      southId: command.transformers[0].source.southId,
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
@@ -171,8 +171,8 @@ describe('North Service', () => {
         ...command.transformers[0],
         source: {
           type: 'south',
-          south: command.transformers[0].source.south,
-          group: { id: 'groupId1', name: '', createdBy: { id: '', friendlyName: '' }, updatedBy: { id: '', friendlyName: '' }, createdAt: '', updatedAt: '' },
+          southId: command.transformers[0].source.southId,
+          groupId: 'groupId1',
           items: []
         }
       }
@@ -180,14 +180,16 @@ describe('North Service', () => {
     await service.create(command, null, 'userTest');
 
     const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.transformers[0].source.group).toEqual(expect.objectContaining({
-      id: 'groupId1',
-      name: '',
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    }));
+    expect(savedEntity.transformers[0].source.group).toEqual(
+      expect.objectContaining({
+        id: 'groupId1',
+        name: '',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      })
+    );
   });
 
   it('should create a north connector and not start it if disabled', async () => {
@@ -242,7 +244,7 @@ describe('North Service', () => {
     (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce({
       id: 'groupId1',
       name: '',
-      southId: command.transformers[0].source.south.id,
+      southId: command.transformers[0].source.southId,
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
@@ -258,8 +260,8 @@ describe('North Service', () => {
         ...command.transformers[0],
         source: {
           type: 'south',
-          south: command.transformers[0].source.south,
-          group: { id: 'groupId1', name: '', createdBy: { id: '', friendlyName: '' }, updatedBy: { id: '', friendlyName: '' }, createdAt: '', updatedAt: '' },
+          southId: command.transformers[0].source.southId,
+          groupId: 'groupId1',
           items: []
         }
       }
@@ -267,14 +269,16 @@ describe('North Service', () => {
     await service.update(testData.north.list[0].id, command, 'userTest');
 
     const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.transformers[0].source.group).toEqual(expect.objectContaining({
-      id: 'groupId1',
-      name: '',
-      createdBy: '',
-      updatedBy: '',
-      createdAt: '',
-      updatedAt: ''
-    }));
+    expect(savedEntity.transformers[0].source.group).toEqual(
+      expect.objectContaining({
+        id: 'groupId1',
+        name: '',
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      })
+    );
   });
 
   it('should update a north connector with a new unique name', async () => {
@@ -478,41 +482,42 @@ describe('North Service', () => {
         id: transformerWithOptions.id,
         transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
-        source: transformerWithOptions.source.type === 'south'
-          ? {
-              type: 'south',
-              south: {
-                id: transformerWithOptions.source.south.id,
-                name: transformerWithOptions.source.south.name,
-                type: transformerWithOptions.source.south.type,
-                description: transformerWithOptions.source.south.description,
-                enabled: transformerWithOptions.source.south.enabled,
-                createdBy: getUserInfo(transformerWithOptions.source.south.createdBy),
-                updatedBy: getUserInfo(transformerWithOptions.source.south.updatedBy),
-                createdAt: transformerWithOptions.source.south.createdAt,
-                updatedAt: transformerWithOptions.source.south.updatedAt
-              },
-              group: transformerWithOptions.source.group
-                ? {
-                    id: transformerWithOptions.source.group.id,
-                    name: transformerWithOptions.source.group.name,
-                    createdBy: getUserInfo(transformerWithOptions.source.group.createdBy),
-                    updatedBy: getUserInfo(transformerWithOptions.source.group.updatedBy),
-                    createdAt: transformerWithOptions.source.group.createdAt,
-                    updatedAt: transformerWithOptions.source.group.updatedAt
-                  }
-                : undefined,
-              items: transformerWithOptions.source.items.map(item => ({
-                id: item.id,
-                name: item.name,
-                enabled: item.enabled,
-                createdBy: getUserInfo(item.createdBy),
-                updatedBy: getUserInfo(item.updatedBy),
-                createdAt: item.createdAt,
-                updatedAt: item.updatedAt
-              }))
-            }
-          : transformerWithOptions.source
+        source:
+          transformerWithOptions.source.type === 'south'
+            ? {
+                type: 'south',
+                south: {
+                  id: transformerWithOptions.source.south.id,
+                  name: transformerWithOptions.source.south.name,
+                  type: transformerWithOptions.source.south.type,
+                  description: transformerWithOptions.source.south.description,
+                  enabled: transformerWithOptions.source.south.enabled,
+                  createdBy: getUserInfo(transformerWithOptions.source.south.createdBy),
+                  updatedBy: getUserInfo(transformerWithOptions.source.south.updatedBy),
+                  createdAt: transformerWithOptions.source.south.createdAt,
+                  updatedAt: transformerWithOptions.source.south.updatedAt
+                },
+                group: transformerWithOptions.source.group
+                  ? {
+                      id: transformerWithOptions.source.group.id,
+                      name: transformerWithOptions.source.group.name,
+                      createdBy: getUserInfo(transformerWithOptions.source.group.createdBy),
+                      updatedBy: getUserInfo(transformerWithOptions.source.group.updatedBy),
+                      createdAt: transformerWithOptions.source.group.createdAt,
+                      updatedAt: transformerWithOptions.source.group.updatedAt
+                    }
+                  : undefined,
+                items: transformerWithOptions.source.items.map(item => ({
+                  id: item.id,
+                  name: item.name,
+                  enabled: item.enabled,
+                  createdBy: getUserInfo(item.createdBy),
+                  updatedBy: getUserInfo(item.updatedBy),
+                  createdAt: item.createdAt,
+                  updatedAt: item.updatedAt
+                }))
+              }
+            : transformerWithOptions.source
       })),
       createdBy: getUserInfo(northEntity.createdBy),
       updatedBy: getUserInfo(northEntity.updatedBy),
@@ -534,7 +539,6 @@ describe('North Service', () => {
 
   it('should include group in toNorthConnectorDTO when group is defined', () => {
     const northEntity = { ...testData.north.list[0] };
-    const getUserInfo = (id: string) => ({ id, friendlyName: id });
     if (northEntity.transformers[0].source.type !== 'south') {
       throw new Error('Expected south source in test data');
     }
@@ -568,11 +572,7 @@ describe('North Service', () => {
     }
     expect(dto.transformers[0].source.group).toEqual({
       id: group.id,
-      name: group.name,
-      createdBy: getUserInfo(group.createdBy),
-      updatedBy: getUserInfo(group.updatedBy),
-      createdAt: group.createdAt,
-      updatedAt: group.updatedAt
+      name: group.name
     });
   });
 });
