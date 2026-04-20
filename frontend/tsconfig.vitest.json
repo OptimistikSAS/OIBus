@@ -3,17 +3,14 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./out-tsc/spec",
+    "strictNullChecks": true,
+    "outDir": "./out-tsc/vitest",
     "types": [
-      "jasmine",
       "@angular/localize"
     ]
   },
   "include": [
-    "src/**/*.spec.ts",
-    "src/test.ts"
-  ],
-  "exclude": [
+    "src/test/*.ts",
     "src/**/*.vitest.spec.ts"
   ]
 }

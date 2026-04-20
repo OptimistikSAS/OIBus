@@ -16,7 +16,18 @@ Run `ng build` to build the project. The build artifacts will be stored in the `
 
 ## Running unit tests
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+The frontend currently supports 2 unit test setups:
+
+- Legacy tests in `*.spec.ts` run with [Karma](https://karma-runner.github.io):
+  `npm test`
+- New tests in `*.vitest.spec.ts` run with [Vitest](https://vitest.dev/):
+  `npm run vitest`
+
+Vitest uses browser mode with Playwright. If Chromium is not installed yet, run:
+
+```bash
+npx playwright install chromium
+```
 
 ## Running end-to-end tests
 

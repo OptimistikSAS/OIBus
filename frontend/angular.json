@@ -71,6 +71,15 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
+            },
+            "vitest": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true,
+              "polyfills": [
+                "@angular/localize/init"
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -128,7 +137,27 @@
                 ]
               }
             },
+            "exclude": [
+              "src/**/*.vitest.spec.ts"
+            ],
             "karmaConfig": "karma.conf.cjs"
+          }
+        },
+        "vitest": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "tsconfig.vitest.json",
+            "buildTarget": "::vitest",
+            "browsers": [
+              "chromiumHeadless"
+            ],
+            "runnerConfig": true,
+            "include": [
+              "src/**/*.vitest.spec.ts"
+            ],
+            "setupFiles": [
+              "src/test/test.ts"
+            ]
           }
         }
       }

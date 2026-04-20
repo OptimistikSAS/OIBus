@@ -34,6 +34,9 @@
     },
     {
       "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./tsconfig.vitest.json"
     }
   ]
 }
