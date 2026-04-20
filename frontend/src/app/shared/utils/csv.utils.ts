@@ -115,7 +115,9 @@ const unflattenObject = (
 
     switch (subAttribute.type) {
       case 'object': {
-        result[key] = JSON.parse(value as string);
+        if (value !== undefined && value !== null && value !== '') {
+          result[key] = JSON.parse(value as string);
+        }
         break;
       }
       case 'array':
