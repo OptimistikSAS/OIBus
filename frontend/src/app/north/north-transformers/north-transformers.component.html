@@ -24,7 +24,17 @@
           @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.id) {
             <tr>
               <td>
-                <span>{{ this.formatTransformerSource(transformerWithOptions) }}</span>
+                @let parts = getSourceParts(transformerWithOptions);
+                @if (parts) {
+                  {{ parts.prefix }}[<span
+                    [ngbTooltip]="getSourceTooltip(transformerWithOptions)"
+                    tooltipClass="items-tooltip"
+                    container="body"
+                    >{{ parts.itemLabel }}</span
+                  >]
+                } @else {
+                  {{ formatTransformerSource(transformerWithOptions) }}
+                }
               </td>
               <td>
                 @if (transformerWithOptions.transformer.type === 'standard') {

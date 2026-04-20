@@ -848,6 +848,11 @@ val-errors > div {
   }
 }
 
+.items-tooltip .tooltip-inner {
+  white-space: pre-line;
+  text-align: left;
+}
+
 .oib-south-items {
   .form-check-input {
     opacity: 1 !important;

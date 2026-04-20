@@ -19,6 +19,7 @@
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
+            <th translate="north.transformers.source"></th>
             <th translate="history-query.transformers.transformer"></th>
             <th></th>
           </tr>
@@ -26,6 +27,16 @@
         <tbody>
           @for (transformerWithOptions of transformersWithOptions; track transformerWithOptions.id) {
             <tr>
+              <td>
+                @let itemLabel = getHistorySourceItemLabel(transformerWithOptions);
+                @if (itemLabel) {
+                  <span [ngbTooltip]="getHistorySourceTooltip(transformerWithOptions)" tooltipClass="items-tooltip" container="body">{{
+                    itemLabel
+                  }}</span>
+                } @else {
+                  {{ 'configuration.oibus.manifest.transformers.all-items-selected' | translate }}
+                }
+              </td>
               <td>
                 @if (transformerWithOptions.transformer.type === 'standard') {
                   <span>{{
