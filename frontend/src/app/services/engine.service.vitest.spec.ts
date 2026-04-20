@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EngineService } from './engine.service';
@@ -19,7 +20,7 @@ describe('EngineService', () => {
 
   afterEach(() => http.verify());
 
-  it('should get engine settings', () => {
+  test('should get engine settings', () => {
     let expectedSettings: EngineSettingsDTO | null = null;
     const engine = { id: 'id1' } as EngineSettingsDTO;
 
@@ -29,7 +30,7 @@ describe('EngineService', () => {
     expect(expectedSettings!).toEqual(engine);
   });
 
-  it('should update engine settings', () => {
+  test('should update engine settings', () => {
     let done = false;
     const command = testData.engine.command;
 
@@ -40,7 +41,7 @@ describe('EngineService', () => {
     expect(done).toBe(true);
   });
 
-  it('should get info', () => {
+  test('should get info', () => {
     let expectedInfo: OIBusInfo | null = null;
     const engineInfo = testData.engine.oIBusInfo;
 
@@ -50,7 +51,7 @@ describe('EngineService', () => {
     expect(expectedInfo!).toEqual(engineInfo);
   });
 
-  it('should restart', () => {
+  test('should restart', () => {
     let done = false;
 
     service.restart().subscribe(() => (done = true));
@@ -59,7 +60,7 @@ describe('EngineService', () => {
     expect(done).toBe(true);
   });
 
-  it('should reset metrics', () => {
+  test('should reset metrics', () => {
     let done = false;
 
     service.resetEngineMetrics().subscribe(() => (done = true));
@@ -69,7 +70,7 @@ describe('EngineService', () => {
     expect(done).toBe(true);
   });
 
-  it('should register', () => {
+  test('should register', () => {
     let done = false;
     const command = testData.oIAnalytics.registration.command;
     service.register(command).subscribe(() => (done = true));
@@ -78,7 +79,7 @@ describe('EngineService', () => {
     expect(done).toBe(true);
   });
 
-  it('should edit registration', () => {
+  test('should edit registration', () => {
     let done = false;
     const command = testData.oIAnalytics.registration.command;
     service.editRegistrationSettings(command).subscribe(() => (done = true));
@@ -87,7 +88,7 @@ describe('EngineService', () => {
     expect(done).toBe(true);
   });
 
-  it('should test registration connection', () => {
+  test('should test registration connection', () => {
     let done = false;
     const command = testData.oIAnalytics.registration.command;
     service.testOIAnalyticsConnection(command).subscribe(() => (done = true));

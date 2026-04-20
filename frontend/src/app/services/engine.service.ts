@@ -49,7 +49,7 @@ export class EngineService {
   readonly info$: Observable<OIBusInfo> = this.http.get<OIBusInfo>('/api/engine/info').pipe(shareReplay(1));
 
   getInfo(): Observable<OIBusInfo> {
-    return this.http.get<OIBusInfo>('/api/engine/info');
+    return this.info$;
   }
 
   getRegistrationSettings(): Observable<RegistrationSettingsDTO> {
