@@ -141,17 +141,18 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   mode: 'create' | 'edit' = 'create';
   historyId!: string;
   historyQuery: HistoryQueryDTO | null = null;
+  southType: OIBusSouthType | null = null;
+  northType: OIBusNorthType | null = null;
+  duplicateId = '';
+  fromSouthId = '';
+  fromNorthId = '';
   state = new ObservableState();
+  loading = true;
   scanModes: Array<ScanModeDTO> = [];
   transformers: Array<TransformerDTO> = [];
   certificates: Array<CertificateDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
-  southType: OIBusSouthType | null = null;
-  fromSouthId = '';
-  northType: OIBusNorthType | null = null;
-  fromNorthId = '';
-  duplicateId = '';
   existingHistoryQueries: Array<HistoryQueryLightDTO> = [];
 
   form: FormGroup<{
@@ -188,23 +189,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   }> | null = null;
 
   inMemoryTransformersWithOptions: Array<HistoryTransformerDTOWithOptions> = [];
-  inMemoryItems: Array<HistoryQueryItemCommandDTO> = [];
-
-  // Item list management
-  filteredItems: Array<HistoryQueryItemCommandDTO> = [];
-  displayedItems: Page<HistoryQueryItemCommandDTO> = emptyPage();
-  searchControl = inject(NonNullableFormBuilder).control(null as string | null);
-  statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
-
-  selectedItems = new Map<string, HistoryQueryItemCommandDTO>();
-  isAllSelected = false;
-  isIndeterminate = false;
-
-  columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
-    name: ColumnSortState.INDETERMINATE,
-    enabled: ColumnSortState.INDETERMINATE
-  };
-  currentColumnSort: keyof TableData | null = 'name';
   scanModeAttribute: OIBusScanModeAttribute = {
     type: 'scan-mode',
     key: 'scanMode',
@@ -217,6 +201,23 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       displayInViewMode: true
     }
   };
+
+  inMemoryItems: Array<HistoryQueryItemCommandDTO> = [];
+  filteredItems: Array<HistoryQueryItemCommandDTO> = [];
+  displayedItems: Page<HistoryQueryItemCommandDTO> = emptyPage();
+  searchControl = inject(NonNullableFormBuilder).control(null as string | null);
+  statusFilterControl = inject(NonNullableFormBuilder).control(null as string | null);
+
+  // Mass action properties
+  selectedItems = new Map<string, HistoryQueryItemCommandDTO>();
+  isAllSelected = false;
+  isIndeterminate = false;
+
+  columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
+    name: ColumnSortState.INDETERMINATE,
+    enabled: ColumnSortState.INDETERMINATE
+  };
+  currentColumnSort: keyof TableData | null = 'name';
 
   ngOnInit() {
     combineLatest([
@@ -274,19 +275,60 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
 
           // creating/duplicating a history query
           if (historyQuery) {
+            if (this.duplicateId) {
+              this.historyQuery!.name = `${historyQuery.name}-copy`;
+            }
             this.southType = historyQuery.southType;
             this.northType = historyQuery.northType;
-            this.inMemoryItems = historyQuery.items;
+            this.inMemoryItems = historyQuery.items.map(
+              item =>
+                ({
+                  id: this.duplicateId ? `temp_${item.id}` : item.id, // temp id id used to create items and use this id to reference them from transformers
+                  name: item.name,
+                  enabled: item.enabled,
+                  settings: item.settings
+                }) as HistoryQueryItemCommandDTO
+            );
+            this.inMemoryTransformersWithOptions = historyQuery.northTransformers.map(element => ({
+              id: this.duplicateId ? `temp_${element.id}` : element.id, // temp id is used to create new transformers and manage through the id transformer from list
+              items: element.items.map(item => ({
+                ...item,
+                id: this.duplicateId ? `temp_${item.id}` : item.id // use temp id that should match item id with temp from previous map loop
+              })),
+              transformer: element.transformer,
+              options: element.options
+            }));
           }
           // creating new from an existing south and north connector
           else {
             if (southConnector) {
               this.southType = southConnector.type;
               this.fromSouthId = southConnector.id;
+              this.inMemoryItems = southConnector.items.map(
+                item =>
+                  ({
+                    id: `temp_${item.id}`,
+                    name: item.name,
+                    enabled: item.enabled,
+                    settings: item.settings
+                  }) as HistoryQueryItemCommandDTO
+              );
             }
             if (northConnector) {
               this.northType = northConnector.type;
               this.fromNorthId = northConnector.id;
+              this.inMemoryTransformersWithOptions = northConnector.transformers
+                // only keep transformers attached to the south used to create the history query. Otherwise, the transformers are not useful for this history
+                .filter(element => element.source.type === 'south' && element.source.south.id === this.fromSouthId)
+                .map(element => ({
+                  id: `temp_${element.id}`,
+                  transformer: element.transformer,
+                  options: element.options,
+                  items: (element.source as SourceOriginSouthDTO).items.map(item => ({
+                    ...item,
+                    id: `temp_${item.id}` // use temp id that should match item id with temp from previous map loop
+                  }))
+                }));
             }
           }
           return combineLatest([
@@ -384,55 +426,31 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
 
     // if we have a history query, we initialize the values
     if (this.historyQuery) {
-      const dateRange: DateRange = {
-        startTime: this.historyQuery.queryTimeRange.startTime,
-        endTime: this.historyQuery.queryTimeRange.endTime
-      };
       // used to have the same ref
       this.historyQuery.caching.trigger.scanMode = this.scanModes.find(
         element => element.id === this.historyQuery!.caching.trigger.scanMode.id
       )!;
-      this.inMemoryTransformersWithOptions = this.historyQuery.northTransformers.map(element => ({
-        id: element.id,
-        transformer: element.transformer,
-        options: element.options,
-        items: element.items
-      }));
       this.form.patchValue({
         ...this.historyQuery,
         queryTimeRange: {
-          dateRange,
+          dateRange: {
+            startTime: this.historyQuery.queryTimeRange.startTime,
+            endTime: this.historyQuery.queryTimeRange.endTime
+          },
           maxReadInterval: this.historyQuery.queryTimeRange.maxReadInterval,
           readDelay: this.historyQuery.queryTimeRange.readDelay
         }
       });
     } else {
       if (southConnector) {
-        this.form.controls.southSettings.patchValue(southConnector.settings);
-        this.inMemoryItems = southConnector.items.map(
-          item =>
-            ({
-              id: null,
-              name: item.name,
-              enabled: item.enabled,
-              settings: item.settings
-            }) as any
-        );
+        this.form.patchValue({ southSettings: southConnector.settings });
       }
       if (northConnector) {
+        // used to have the same ref
         northConnector.caching.trigger.scanMode = this.scanModes.find(
           element => element.id === northConnector.caching.trigger.scanMode.id
         )!;
-        this.form.controls.northSettings.patchValue(northConnector.settings);
-        this.form.controls.caching.patchValue(northConnector.caching);
-        this.inMemoryTransformersWithOptions = northConnector.transformers
-          .filter(transformer => transformer.source.type === 'south')
-          .map(transformer => ({
-            id: '',
-            transformer: transformer.transformer,
-            options: transformer.options,
-            items: (transformer.source as SourceOriginSouthDTO).items
-          }));
+        this.form.patchValue({ northSettings: northConnector.settings, caching: northConnector.caching });
       }
       // we should provoke all value changes to make sure fields are properly hidden and disabled
       this.form.setValue(this.form.getRawValue());
@@ -448,19 +466,46 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     return true;
   }
 
+  createOrUpdateHistoryQuery(command: HistoryQueryCommandDTO, resetCache: boolean): void {
+    let createOrUpdate: Observable<HistoryQueryDTO>;
+    // if we are editing
+    if (this.mode === 'edit') {
+      createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, resetCache).pipe(
+        tap(() => {
+          this.notificationService.success('history-query.updated', {
+            name: command.name
+          });
+          this.form?.markAsPristine();
+        }),
+        switchMap(() => this.historyQueryService.findById(this.historyQuery!.id))
+      );
+    } else {
+      createOrUpdate = this.historyQueryService.create(command, this.fromSouthId, this.fromNorthId, this.duplicateId).pipe(
+        tap(() => {
+          this.notificationService.success('history-query.created', {
+            name: command.name
+          });
+          this.form?.markAsPristine();
+        })
+      );
+    }
+    createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(historyQuery => {
+      this.router.navigate(['/history-queries', historyQuery.id]);
+    });
+  }
+
   save() {
     if (!this.form?.valid) {
       return;
     }
 
     const formValue = this.form!.value;
-    const dateRange = formValue.queryTimeRange!.dateRange!;
     const command = {
       name: formValue.name!,
       description: formValue.description!,
       queryTimeRange: {
-        startTime: dateRange.startTime,
-        endTime: dateRange.endTime,
+        startTime: formValue.queryTimeRange!.dateRange!.startTime,
+        endTime: formValue.queryTimeRange!.dateRange!.endTime,
         maxReadInterval: formValue.queryTimeRange!.maxReadInterval!,
         readDelay: formValue.queryTimeRange!.readDelay!
       },
@@ -507,34 +552,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     } else {
       this.createOrUpdateHistoryQuery(command, false);
     }
-  }
-
-  createOrUpdateHistoryQuery(command: HistoryQueryCommandDTO, resetCache: boolean): void {
-    let createOrUpdate: Observable<HistoryQueryDTO>;
-    // if we are editing
-    if (this.mode === 'edit') {
-      createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, resetCache).pipe(
-        tap(() => {
-          this.notificationService.success('history-query.updated', {
-            name: command.name
-          });
-          this.form?.markAsPristine();
-        }),
-        switchMap(() => this.historyQueryService.findById(this.historyQuery!.id))
-      );
-    } else {
-      createOrUpdate = this.historyQueryService.create(command, this.fromSouthId, this.fromNorthId, this.duplicateId).pipe(
-        tap(() => {
-          this.notificationService.success('history-query.created', {
-            name: command.name
-          });
-          this.form?.markAsPristine();
-        })
-      );
-    }
-    createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(historyQuery => {
-      this.router.navigate(['/history-queries', historyQuery.id]);
-    });
   }
 
   updateInMemoryTransformers(transformersWithOptions: Array<HistoryTransformerDTOWithOptions> | null) {
@@ -595,8 +612,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     } as NorthConnectorCommandDTO;
   }
 
-  // Item management methods (in-memory)
-
   addItem() {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, {
       size: 'xl',
@@ -609,11 +624,20 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
     component.prepareForCreation(this.inMemoryItems, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
-      this.inMemoryItems = [
-        ...this.inMemoryItems,
-        { id: command.id ?? null, name: command.name, enabled: command.enabled, settings: command.settings } as any
-      ];
-      this.resetPage();
+      this.inMemoryItems = [...this.inMemoryItems, command];
+      this.filteredItems = this.filter();
+      this.changePage(this.displayedItems.number);
+    });
+  }
+
+  duplicateItem(item: HistoryQueryItemCommandDTO) {
+    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
+    const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+    component.prepareForCopy(this.inMemoryItems, item, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
+    modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
+      this.inMemoryItems = [...this.inMemoryItems, command];
+      this.filteredItems = this.filter();
+      this.changePage(this.displayedItems.number);
     });
   }
 
@@ -638,30 +662,18 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       tableIndex
     );
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
-      const updated = this.inMemoryItems.filter(i => i.name !== item.name);
-      updated.splice(tableIndex, 0, { ...item, ...command });
-      this.inMemoryItems = updated;
-      this.resetPage();
-    });
-  }
-
-  duplicateItem(item: HistoryQueryItemCommandDTO) {
-    const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
-    const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.inMemoryItems, item, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
-    modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
-      this.inMemoryItems = [
-        ...this.inMemoryItems,
-        { id: command.id ?? null, name: command.name, enabled: command.enabled, settings: command.settings } as any
-      ];
-      this.resetPage();
+      this.inMemoryItems[tableIndex] = command;
+      this.inMemoryItems = [...this.inMemoryItems];
+      this.filteredItems = this.filter();
+      this.changePage(this.displayedItems.number);
     });
   }
 
   deleteItem(item: HistoryQueryItemCommandDTO) {
     this.confirmationService.confirm({ messageKey: 'history-query.items.confirm-deletion' }).subscribe(() => {
-      this.inMemoryItems = this.inMemoryItems.filter(i => i.name !== item.name);
-      this.resetPage();
+      this.inMemoryItems = [...this.inMemoryItems.filter(i => i.name !== item.name)];
+      this.filteredItems = this.filter();
+      this.changePage(this.displayedItems.number);
     });
   }
 
@@ -731,8 +743,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     return element[field];
   }
 
-  // Filter, sort, pagination
-
   resetPage() {
     this.filteredItems = this.filter();
     this.changePage(0);
@@ -785,7 +795,6 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   }
 
   // Mass action methods
-
   toggleItemSelection(item: HistoryQueryItemCommandDTO) {
     if (this.selectedItems.has(item.name)) {
       this.selectedItems.delete(item.name);
@@ -820,14 +829,17 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
     this.inMemoryItems = this.inMemoryItems.map(item => (this.selectedItems.has(item.name) ? { ...item, enabled: true } : item));
     this.selectedItems.clear();
     this.updateSelectionState();
-    this.resetPage();
+    this.filteredItems = this.filter();
+    this.changePage(this.displayedItems.number);
   }
 
   disableSelectedItems() {
     this.inMemoryItems = this.inMemoryItems.map(item => (this.selectedItems.has(item.name) ? { ...item, enabled: false } : item));
     this.selectedItems.clear();
     this.updateSelectionState();
-    this.resetPage();
+    this.filteredItems = this.filter();
+    this.filteredItems = this.filter();
+    this.changePage(this.displayedItems.number);
   }
 
   deleteSelectedItems() {
@@ -840,7 +852,8 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
         this.inMemoryItems = this.inMemoryItems.filter(item => !this.selectedItems.has(item.name));
         this.selectedItems.clear();
         this.updateSelectionState();
-        this.resetPage();
+        this.filteredItems = this.filter();
+        this.changePage(this.displayedItems.number);
       });
   }
 }

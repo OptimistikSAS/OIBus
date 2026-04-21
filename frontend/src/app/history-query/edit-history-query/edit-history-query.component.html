@@ -208,13 +208,14 @@
               </div>
             </oib-box>
             <oib-history-query-transformers
-              [southType]="southType!"
-              [historyQuery]="historyQuery"
               [scanModes]="scanModes"
               [certificates]="certificates"
               [northManifest]="northManifest"
+              [historyQuery]="historyQuery"
               [transformers]="transformers"
+              [southType]="southType!"
               [transformersFromNorth]="inMemoryTransformersWithOptions"
+              [items]="inMemoryItems"
               (inMemoryTransformersWithOptions)="updateInMemoryTransformers($event)"
             />
 
@@ -281,7 +282,7 @@
             </oib-box>
           </div>
           <!-- Items -->
-          <oib-box>
+          <oib-box class="oib-south-items">
             <ng-template oibBoxTitle>
               <div class="d-flex justify-content-between align-items-center">
                 <div>

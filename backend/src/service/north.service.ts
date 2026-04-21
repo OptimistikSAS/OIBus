@@ -172,7 +172,7 @@ export default class NorthService {
         throw new NotFoundError(`Could not find OIBus transformer "${transformerWithOptions.transformerId}"`);
       }
       return {
-        id: transformerWithOptions.id.startsWith('temp_') ? '' : transformerWithOptions.id,
+        id: transformerWithOptions.id,
         transformer: foundTransformer,
         options: transformerWithOptions.options,
         source: this.transformerSourceFromCommand(transformerWithOptions.source)
@@ -361,26 +361,26 @@ export default class NorthService {
           }
           return {
             id: item.id,
+            name: item.name,
             enabled: item.enabled,
             createdBy: item.createdBy,
             updatedBy: item.updatedBy,
             createdAt: item.createdAt,
-            updatedAt: item.updatedAt,
-            name: item.name
+            updatedAt: item.updatedAt
           };
         });
         return {
           type: 'south',
           south: {
             id: south.id,
-            createdBy: south.createdBy,
-            updatedBy: south.updatedBy,
-            createdAt: south.createdAt,
-            updatedAt: south.updatedAt,
             name: south.name,
             type: south.type,
             description: south.description,
-            enabled: south.enabled
+            enabled: south.enabled,
+            createdBy: south.createdBy,
+            updatedBy: south.updatedBy,
+            createdAt: south.createdAt,
+            updatedAt: south.updatedAt
           },
           group,
           items

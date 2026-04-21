@@ -143,7 +143,7 @@ describe('HistoryQueryRepository', () => {
     newHistoryQuery.items = [
       ...testData.historyQueries.list[1].items,
       {
-        id: '',
+        id: 'temp_1',
         name: 'new item',
         enabled: true,
         settings: {} as SouthItemSettings,
@@ -153,7 +153,7 @@ describe('HistoryQueryRepository', () => {
         updatedAt: ''
       },
       {
-        id: '',
+        id: 'temp_2',
         name: 'another item',
         enabled: true,
         settings: {} as SouthItemSettings,
@@ -168,10 +168,7 @@ describe('HistoryQueryRepository', () => {
         id: '',
         transformer: testData.transformers.list[0],
         options: {},
-        items: [
-          { id: '', name: 'new item', enabled: true, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
-          { id: '', name: 'bad item', enabled: true, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
-        ]
+        items: [{ id: 'temp_1', name: 'new item', enabled: true, createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }]
       }
     ];
     repository.saveHistory(newHistoryQuery);

@@ -586,10 +586,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   toggleColumnSort(columnName: keyof TableData) {
     this.currentColumnSort = columnName;
-    // Toggle state
     this.columnSortStates[this.currentColumnSort] = (this.columnSortStates[this.currentColumnSort] + 1) % 3;
-
-    // Reset state for every other column
     Object.keys(this.columnSortStates).forEach(key => {
       if (this.currentColumnSort !== key) {
         this.columnSortStates[key as keyof typeof this.columnSortStates] = 0;
@@ -657,7 +654,6 @@ export class EditSouthComponent implements CanComponentDeactivate {
   updateSelectionState() {
     const totalItems = this.filteredItems.length;
     const selectedCount = this.selectedItems.size;
-
     this.isAllSelected = selectedCount === totalItems && totalItems > 0;
     this.isIndeterminate = selectedCount > 0 && selectedCount < totalItems;
   }

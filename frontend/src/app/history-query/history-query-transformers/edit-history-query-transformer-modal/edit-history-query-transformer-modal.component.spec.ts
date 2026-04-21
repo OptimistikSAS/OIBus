@@ -4,8 +4,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
-import { TransformerService } from '../../../services/transformer.service';
-import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
@@ -134,18 +132,12 @@ const transformer: TransformerDTO = {
 describe('EditHistoryQueryTransformerModalComponent', () => {
   let tester: EditHistoryQueryTransformerModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
-  let transformerService: jasmine.SpyObj<TransformerService>;
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
-    transformerService = createMock(TransformerService);
 
     TestBed.configureTestingModule({
-      providers: [
-        provideI18nTesting(),
-        { provide: NgbActiveModal, useValue: fakeActiveModal },
-        { provide: TransformerService, useValue: transformerService }
-      ]
+      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -168,26 +160,17 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
   });
 
   it('should validate with transformers', async () => {
-    transformerService.findById.and.returnValue(of(transformer));
-    tester.componentInstance.prepareForEdition(
-      'opcua',
-      [],
-      [],
-      {
-        id: 'historyTransformerId1',
-        transformer,
-        options: {
-          mapping: [
-            { pointId: 'pointId1', nodeId: 'nodeId1', dataType: 'Int32' },
-            { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
-          ]
-        },
-        items: []
+    tester.componentInstance.prepareForEdition('opcua', [], [], [transformer], ['mqtt'], [], {
+      id: 'historyTransformerId1',
+      transformer,
+      options: {
+        mapping: [
+          { pointId: 'pointId1', nodeId: 'nodeId1', dataType: 'Int32' },
+          { pointId: 'pointId2', nodeId: 'nodeId2', dataType: 'Int32' }
+        ]
       },
-      [transformer],
-      ['mqtt'],
-      []
-    );
+      items: []
+    });
     await tester.change();
     expect(tester.transformerSelect).toBeDefined();
     expect(tester.options).toBeDefined();
@@ -209,20 +192,20 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
   describe('item selection', () => {
     it('should toggle between all items and specific items', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
-      expect(tester.componentInstance.selectAllItems).toBe(true);
+      expect(tester.componentInstance.selectionType).toBe('all');
       expect(tester.componentInstance.selectedItems).toEqual([]);
 
-      tester.componentInstance.toggleItemSelection(false);
-      expect(tester.componentInstance.selectAllItems).toBe(false);
+      tester.componentInstance.setSelectionType('items');
+      expect(tester.componentInstance.selectionType).toBe('items');
 
-      tester.componentInstance.toggleItemSelection(true);
-      expect(tester.componentInstance.selectAllItems).toBe(true);
+      tester.componentInstance.setSelectionType('all');
+      expect(tester.componentInstance.selectionType).toBe('all');
       expect(tester.componentInstance.selectedItems).toEqual([]);
     });
 
     it('should select all search results and clear them', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
-      tester.componentInstance.selectAllItems = false;
+      tester.componentInstance.selectionType = 'items';
       tester.componentInstance.searchResults = [
         { id: 'item1', name: 'Item 1' },
         { id: 'item2', name: 'Item 2' },
@@ -239,7 +222,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
 
     it('should not add duplicate items when selecting all results', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
-      tester.componentInstance.selectAllItems = false;
+      tester.componentInstance.selectionType = 'items';
       tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       tester.componentInstance.searchResults = [
         { id: 'item1', name: 'Item 1' },
@@ -336,7 +319,7 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
       tester.componentInstance.prepareForCreation('opcua', [], [], [transformer], [], []);
       tester.componentInstance.searchInteracted = true;
 
-      tester.componentInstance.toggleItemSelection(true);
+      tester.componentInstance.setSelectionType('all');
 
       expect(tester.componentInstance.searchInteracted).toBe(false);
     });
@@ -352,22 +335,14 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
       expect(tester.componentInstance.searchInteracted).toBe(false);
     });
 
-    it('should save with empty items array when selectAllItems is true', async () => {
-      tester.componentInstance.prepareForEdition(
-        'opcua',
-        [],
-        [],
-        {
-          id: 'historyTransformerId1',
-          transformer,
-          options: {},
-          items: []
-        },
-        [transformer],
-        ['mqtt'],
-        []
-      );
-      tester.componentInstance.selectAllItems = true;
+    it('should save with empty items array when selectionType is all', async () => {
+      tester.componentInstance.prepareForEdition('opcua', [], [], [transformer], ['mqtt'], [], {
+        id: 'historyTransformerId1',
+        transformer,
+        options: {},
+        items: []
+      });
+      tester.componentInstance.selectionType = 'all';
       tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       await tester.change();
 
@@ -380,22 +355,14 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
       );
     });
 
-    it('should save with selected items when selectAllItems is false', async () => {
-      tester.componentInstance.prepareForEdition(
-        'opcua',
-        [],
-        [],
-        {
-          id: 'historyTransformerId1',
-          transformer,
-          options: {},
-          items: [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>
-        },
-        [transformer],
-        ['mqtt'],
-        []
-      );
-      tester.componentInstance.selectAllItems = false;
+    it('should save with selected items when selectionType is items', async () => {
+      tester.componentInstance.prepareForEdition('opcua', [], [], [transformer], ['mqtt'], [], {
+        id: 'historyTransformerId1',
+        transformer,
+        options: {},
+        items: [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>
+      });
+      tester.componentInstance.selectionType = 'items';
       tester.componentInstance.selectedItems = [{ id: 'item1', name: 'Item 1' }] as unknown as Array<ItemLightDTO>;
       await tester.change();
 

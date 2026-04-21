@@ -747,6 +747,9 @@ async function removeThrottlingFieldsInConnectorSettings(knex: Knex): Promise<vo
       readDelay: newSettings.throttling.readDelay
     };
     delete newSettings.throttling;
+    if (historyQuery.south_type === 'opcua') {
+      delete newSettings.sharedConnection;
+    }
     await knex(HISTORY_QUERIES_TABLE)
       .update({
         south_settings: JSON.stringify(newSettings),
