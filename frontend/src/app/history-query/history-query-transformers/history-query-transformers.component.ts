@@ -12,9 +12,9 @@ import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { firstValueFrom, of, switchMap } from 'rxjs';
-import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryItemCommandDTO } from '../../../../../backend/shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
+import { ItemLightDTO, OIBusSouthType } from '../../../../../backend/shared/model/south-connector.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -41,6 +41,7 @@ export class HistoryQueryTransformersComponent {
   readonly transformers = input.required<Array<TransformerDTO>>();
   readonly transformersFromNorth = input<Array<HistoryTransformerDTOWithOptions>>([]);
   readonly southType = input.required<OIBusSouthType>();
+  readonly items = input<Array<HistoryQueryItemCommandDTO>>([]);
 
   transformersWithOptions: Array<HistoryTransformerDTOWithOptions> = []; // Array used to store subscription on north connector creation
 
@@ -74,7 +75,9 @@ export class HistoryQueryTransformersComponent {
       this.certificates(),
       this.transformers(),
       this.northManifest().types,
-      this.historyQuery()?.items || []
+      this.items().length > 0
+        ? this.items().map(item => ({ id: item.id, name: item.name, enabled: item.enabled }) as ItemLightDTO)
+        : this.historyQuery()?.items || []
     );
     this.refreshAfterAddModalClosed(modalRef);
   }
@@ -85,6 +88,7 @@ export class HistoryQueryTransformersComponent {
         switchMap((transformer: HistoryTransformerDTOWithOptions) => {
           const historyQuery = this.historyQuery();
           if (historyQuery && this.saveChangesDirectly()) {
+            transformer.id = ''; // remove temp_ id when creating directly
             return this.historyQueryService.addOrEditTransformer(historyQuery.id, transformer).pipe(switchMap(() => of(transformer)));
           }
           this.transformersWithOptions = [...this.transformersWithOptions, transformer];
@@ -114,10 +118,12 @@ export class HistoryQueryTransformersComponent {
       this.southType(),
       this.scanModes(),
       this.certificates(),
-      transformer,
       this.transformers(),
       this.northManifest().types,
-      this.historyQuery()?.items || []
+      this.items().length > 0
+        ? this.items().map(item => ({ id: item.id, name: item.name, enabled: item.enabled }) as ItemLightDTO)
+        : this.historyQuery()?.items || [],
+      transformer
     );
     this.refreshAfterEditModalClosed(modalRef, transformer);
   }
@@ -130,7 +136,6 @@ export class HistoryQueryTransformersComponent {
       .pipe(
         switchMap((transformer: HistoryTransformerDTOWithOptions) => {
           const historyQuery = this.historyQuery();
-
           if (historyQuery && this.saveChangesDirectly()) {
             return this.historyQueryService.addOrEditTransformer(historyQuery.id, transformer).pipe(switchMap(() => of(transformer)));
           }
@@ -142,6 +147,32 @@ export class HistoryQueryTransformersComponent {
       .subscribe(() => {
         if (this.saveChangesDirectly()) {
           this.notificationService.success('history-query.transformers.edited');
+        }
+        this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
+      });
+  }
+
+  deleteTransformer(transformer: HistoryTransformerDTOWithOptions) {
+    this.confirmationService
+      .confirm({
+        messageKey: `history-query.transformers.confirm-deletion`
+      })
+      .pipe(
+        switchMap(() => {
+          if (this.saveChangesDirectly()) {
+            this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
+            return this.historyQueryService.removeTransformer(this.historyQuery()!.id, transformer.id);
+          } else {
+            this.transformersWithOptions = this.transformersWithOptions.filter(element => {
+              return element.id !== transformer.id;
+            });
+          }
+          return of(null);
+        })
+      )
+      .subscribe(() => {
+        if (this.saveChangesDirectly()) {
+          this.notificationService.success('history-query.transformers.removed');
         }
         this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
       });
@@ -167,35 +198,5 @@ export class HistoryQueryTransformersComponent {
     return items.length > 5
       ? `${names}\n${this.translateService.instant('configuration.oibus.manifest.transformers.tooltip-overflow', { count: items.length - 5 })}`
       : names;
-  }
-
-  deleteTransformer(transformer: HistoryTransformerDTOWithOptions) {
-    this.confirmationService
-      .confirm({
-        messageKey: `history-query.transformers.confirm-deletion`
-      })
-      .pipe(
-        switchMap(() => {
-          if (this.saveChangesDirectly()) {
-            this.transformersWithOptions = this.transformersWithOptions.filter(element => element.id !== transformer.id);
-            return this.historyQueryService.removeTransformer(this.historyQuery()!.id, transformer.id);
-          } else {
-            this.transformersWithOptions = this.transformersWithOptions.filter(element => {
-              if (transformer.id) {
-                return element.id !== transformer.id;
-              } else {
-                return element.transformer.id !== transformer.transformer.id;
-              }
-            });
-          }
-          return of(null);
-        })
-      )
-      .subscribe(() => {
-        if (this.saveChangesDirectly()) {
-          this.notificationService.success('history-query.transformers.removed');
-        }
-        this.inMemoryTransformersWithOptions.emit(this.transformersWithOptions);
-      });
   }
 }

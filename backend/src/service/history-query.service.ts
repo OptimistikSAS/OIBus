@@ -90,7 +90,6 @@ export default class HistoryQueryService {
     )! as OIBusObjectAttribute;
     for (const item of command.items) {
       await this.validator.validateSettings(itemSettingsManifest, item.settings);
-      item.id = null;
     }
 
     const historyQuery = {} as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>;
@@ -104,8 +103,7 @@ export default class HistoryQueryService {
         southManifest,
         northManifest
       ),
-      this.scanModeRepository.findAll(),
-      !!retrieveSecretsFromHistoryQuery || !!retrieveSecretsFromSouth
+      this.scanModeRepository.findAll()
     );
     historyQuery.createdBy = createdBy;
     historyQuery.updatedBy = createdBy;
@@ -123,12 +121,12 @@ export default class HistoryQueryService {
         if (itemLight.id.startsWith('temp_')) {
           return {
             id: itemLight.id,
+            name: itemLight.name,
             enabled: itemLight.enabled,
             createdBy: createdBy,
             updatedBy: createdBy,
             createdAt: '',
-            updatedAt: '',
-            name: itemLight.name
+            updatedAt: ''
           };
         }
         const item = historyQuery.items.find(element => element.id === itemLight.id);
@@ -137,12 +135,12 @@ export default class HistoryQueryService {
         }
         return {
           id: item.id,
+          name: item.name,
           enabled: item.enabled,
           createdBy: item.createdBy,
           updatedBy: item.updatedBy,
           createdAt: item.createdAt,
-          updatedAt: item.updatedAt,
-          name: item.name
+          updatedAt: item.updatedAt
         };
       });
 
@@ -204,12 +202,12 @@ export default class HistoryQueryService {
         if (itemLight.id.startsWith('temp_')) {
           return {
             id: itemLight.id,
+            name: itemLight.name,
             enabled: itemLight.enabled,
             createdBy: updatedBy,
             updatedBy: updatedBy,
             createdAt: '',
-            updatedAt: '',
-            name: itemLight.name
+            updatedAt: ''
           };
         }
 
@@ -219,12 +217,12 @@ export default class HistoryQueryService {
         }
         return {
           id: item.id,
+          name: item.name,
           enabled: item.enabled,
           createdBy: item.createdBy,
           updatedBy: item.updatedBy,
           createdAt: item.createdAt,
-          updatedAt: item.updatedAt,
-          name: item.name
+          updatedAt: item.updatedAt
         };
       });
 
@@ -647,8 +645,7 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
   historyQueryEntity: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
   command: HistoryQueryCommandDTO,
   currentSettings: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null,
-  scanModes: Array<ScanMode>,
-  retrieveSecrets = false
+  scanModes: Array<ScanMode>
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === command.southType)!;
   const northManifest = northManifestList.find(element => element.id === command.northType)!;
@@ -701,8 +698,7 @@ const copyHistoryQueryCommandToHistoryQueryEntity = async (
         itemEntity,
         itemCommand,
         currentSettings?.items.find(element => element.id === itemCommand.id) || null,
-        historyQueryEntity.southType,
-        retrieveSecrets
+        historyQueryEntity.southType
       );
       return itemEntity;
     })
@@ -713,14 +709,13 @@ const copyHistoryQueryItemCommandToHistoryQueryItemEntity = async (
   historyQueryItemEntity: HistoryQueryItemEntity<SouthItemSettings>,
   command: HistoryQueryItemCommandDTO,
   currentSettings: HistoryQueryItemEntity<SouthItemSettings> | null,
-  southType: string,
-  retrieveSecrets = false
+  southType: string
 ): Promise<void> => {
   const southManifest = southManifestList.find(element => element.id === southType)!;
   const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
     attribute => attribute.key === 'settings'
   )! as OIBusObjectAttribute;
-  historyQueryItemEntity.id = retrieveSecrets ? '' : command.id || ''; // reset id if it is a copy from another history query
+  historyQueryItemEntity.id = command.id || '';
   historyQueryItemEntity.name = command.name;
   historyQueryItemEntity.enabled = command.enabled;
   historyQueryItemEntity.settings = await encryptionService.encryptConnectorSecrets(

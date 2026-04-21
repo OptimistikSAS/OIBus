@@ -63,11 +63,12 @@ export class EditHistoryQueryTransformerModalComponent {
   manifest: OIBusObjectAttribute | null = null;
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
-  existingTransformerWithOptions: HistoryTransformerDTOWithOptions | null = null;
   southType: OIBusSouthType | null = null;
-  selectedItems: Array<ItemLightDTO> = [];
+  existingTransformerWithOptions: HistoryTransformerDTOWithOptions | null = null;
+
   selectableItems: Array<ItemLightDTO> = [];
-  selectAllItems = true;
+  selectedItems: Array<ItemLightDTO> = [];
+  selectionType: 'all' | 'items' = 'all';
   searchResults: Array<ItemLightDTO> = [];
   filteredItems: Array<ItemLightDTO> = [];
   totalSearchResults = 0;
@@ -115,10 +116,10 @@ export class EditHistoryQueryTransformerModalComponent {
     southType: OIBusSouthType,
     scanModes: Array<ScanModeDTO>,
     certificates: Array<CertificateDTO>,
-    transformerWithOptionsToEdit: HistoryTransformerDTOWithOptions,
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>,
-    selectableItems: Array<ItemLightDTO>
+    selectableItems: Array<ItemLightDTO>,
+    transformerWithOptionsToEdit: HistoryTransformerDTOWithOptions
   ) {
     this.mode = 'edit';
     this.southType = southType;
@@ -129,8 +130,12 @@ export class EditHistoryQueryTransformerModalComponent {
     this.allTransformers = transformers;
     this.supportedOutputTypes = supportedOutputTypes;
     this.selectedItems = transformerWithOptionsToEdit.items;
+    if (this.selectedItems.length > 0) {
+      this.selectionType = 'items';
+    } else {
+      this.selectionType = 'all';
+    }
     this.selectableItems = selectableItems;
-    this.selectAllItems = transformerWithOptionsToEdit.items.length === 0;
 
     this.buildForm();
     this.createOptionsForm(transformerWithOptionsToEdit.transformer);
@@ -181,20 +186,21 @@ export class EditHistoryQueryTransformerModalComponent {
     }
 
     const result: HistoryTransformerDTOWithOptions = {
-      id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : '',
+      id: this.existingTransformerWithOptions ? this.existingTransformerWithOptions.id : `temp_${Date.now()}`,
       transformer: this.form.value.transformer!,
       options: this.form!.value.options,
-      items: this.selectAllItems
-        ? []
-        : this.selectedItems.map(item => ({
-            id: item.id,
-            name: item.name,
-            enabled: item.enabled,
-            createdBy: item.createdBy,
-            updatedBy: item.updatedBy,
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt
-          }))
+      items:
+        this.selectionType === 'all'
+          ? []
+          : this.selectedItems.map(item => ({
+              id: item.id,
+              name: item.name,
+              enabled: item.enabled,
+              createdBy: item.createdBy,
+              updatedBy: item.updatedBy,
+              createdAt: item.createdAt,
+              updatedAt: item.updatedAt
+            }))
     };
     this.modal.close(result);
   }
@@ -204,7 +210,6 @@ export class EditHistoryQueryTransformerModalComponent {
   }
 
   private updateSelectableOutput(southType: OIBusSouthType) {
-    const inputType = getAssociatedInputType(southType);
     this.selectableOutputs = this.allTransformers.filter(element => {
       if (!this.supportedOutputTypes.includes(element.outputType)) {
         return false;
@@ -214,7 +219,7 @@ export class EditHistoryQueryTransformerModalComponent {
       if (element.type === 'standard' && element.functionName === 'iso' && this.supportedOutputTypes.includes(element.inputType))
         return true;
 
-      return element.inputType === 'any-content' || element.inputType === 'any' || element.inputType === inputType;
+      return element.inputType === 'any-content' || element.inputType === 'any' || element.inputType === getAssociatedInputType(southType);
     });
   }
 
@@ -239,13 +244,17 @@ export class EditHistoryQueryTransformerModalComponent {
     this.selectedItems = this.selectedItems.filter(item => item.id !== itemToRemove.id);
   }
 
-  toggleItemSelection(selectAll: boolean) {
-    this.selectAllItems = selectAll;
-    if (selectAll) {
+  setSelectionType(type: 'all' | 'items') {
+    this.selectionType = type;
+    if (type !== 'items') {
       this.selectedItems = [];
+      this.searchInteracted = false;
+      this.searchResults = [];
+      this.filteredItems = [];
+      this.totalSearchResults = 0;
+    } else {
+      this.filterItems();
     }
-    // Reset search interaction flag when toggling
-    this.searchInteracted = false;
   }
 
   selectAllResults() {

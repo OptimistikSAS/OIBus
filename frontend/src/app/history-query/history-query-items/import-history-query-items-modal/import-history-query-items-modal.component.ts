@@ -39,7 +39,7 @@ export class ImportHistoryQueryItemsModalComponent {
   prepare(
     manifest: SouthConnectorManifest,
     existingItemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
-    newItemList: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
+    newItemList: Array<HistoryQueryItemCommandDTO>,
     errorList: Array<{
       item: HistoryQueryItemDTO | HistoryQueryItemCommandDTO;
       error: string;

@@ -151,7 +151,7 @@ export class EditHistoryQueryItemModalComponent {
   get formItem(): HistoryQueryItemCommandDTO {
     const formValue = this.form!.value;
     return {
-      id: this.item?.id ?? null,
+      id: this.item?.id ?? `temp_${Date.now()}`,
       enabled: formValue.enabled!,
       name: formValue.name!,
       settings: formValue.settings!

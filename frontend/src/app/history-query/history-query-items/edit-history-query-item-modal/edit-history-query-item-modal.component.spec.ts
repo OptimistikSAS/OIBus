@@ -116,7 +116,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       tester.save.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        id: null,
+        id: jasmine.stringMatching(/^temp_/),
         enabled: true,
         name: 'MyName',
         settings: { objectArray: [], objectSettings: {}, objectValue: 1 }

@@ -178,14 +178,17 @@ export default class HistoryQueryRepository {
           `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
         );
         for (const item of history.items) {
-          if (!item.id) {
-            item.id = generateRandomId(6);
-            for (const transformer of history.northTransformers) {
-              const transformerItemIndex = transformer.items.findIndex(element => element.name === item.name);
-              if (transformerItemIndex > -1) {
-                transformer.items[transformerItemIndex].id = item.id;
+          if (!item.id || item.id.startsWith('temp_')) {
+            const randomId = generateRandomId(6);
+            if (item.id.startsWith('temp_')) {
+              for (const transformer of history.northTransformers) {
+                const transformerItemIndex = transformer.items.findIndex(element => element.id === item.id);
+                if (transformerItemIndex > -1) {
+                  transformer.items[transformerItemIndex].id = randomId;
+                }
               }
             }
+            item.id = randomId;
             insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
           } else {
             update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
@@ -236,6 +239,9 @@ export default class HistoryQueryRepository {
       }
 
       for (const transformerWithOptions of history.northTransformers) {
+        if (transformerWithOptions.id.startsWith('temp_')) {
+          transformerWithOptions.id = '';
+        }
         this.addOrEditTransformer(history.id, transformerWithOptions);
       }
     });
