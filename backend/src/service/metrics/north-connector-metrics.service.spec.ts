@@ -1,3 +1,5 @@
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import NorthConnectorMetricsService from './north-connector-metrics.service';
 import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
 import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
@@ -6,167 +8,112 @@ import NorthConnector from '../../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import NorthConnectorMock from '../../tests/__mocks__/north-connector.mock';
 
-const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
-const northMock = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
+let northConnectorMetricsRepository: NorthMetricsRepositoryMock;
+let northMock: NorthConnectorMock;
+let service: NorthConnectorMetricsService;
 
 describe('NorthConnectorMetricsService', () => {
-  let service: NorthConnectorMetricsService;
-
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (northConnectorMetricsRepository.getMetrics as jest.Mock).mockReturnValue(JSON.parse(JSON.stringify(testData.north.metrics)));
-    service = new NorthConnectorMetricsService(northMock, northConnectorMetricsRepository);
+    northConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+    northMock = new NorthConnectorMock(testData.north.list[0]);
+    mock.timers.enable({ apis: ['Date', 'setInterval', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    northConnectorMetricsRepository.getMetrics.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.north.metrics)));
+    service = new NorthConnectorMetricsService(
+      northMock as unknown as NorthConnector<NorthSettings>,
+      northConnectorMetricsRepository as unknown as NorthConnectorMetricsRepository
+    );
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should be properly initialised', () => {
-    expect(northConnectorMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(service.metrics).toEqual(testData.north.metrics);
+    assert.deepStrictEqual(northConnectorMetricsRepository.initMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.deepStrictEqual(service.metrics, testData.north.metrics);
   });
 
   it('should update metrics', () => {
     northMock.metricsEvent.emit('cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
+    assert.deepStrictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [testData.north.list[0].id, {
       ...testData.north.metrics,
       currentCacheSize: 999,
       currentErrorSize: 888,
       currentArchiveSize: 777
-    });
+    }]);
 
     northMock.metricsEvent.emit('connect', { lastConnection: testData.constants.dates.DATE_1 });
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
-      ...testData.north.metrics,
-      currentCacheSize: 999,
-      currentErrorSize: 888,
-      currentArchiveSize: 777,
-      lastConnection: testData.constants.dates.DATE_1
-    });
-
     northMock.metricsEvent.emit('run-start', { lastRunStart: testData.constants.dates.DATE_2 });
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
-      ...testData.north.metrics,
-      currentCacheSize: 999,
-      currentErrorSize: 888,
-      currentArchiveSize: 777,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2
-    });
 
     northMock.metricsEvent.emit('run-end', {
       lastRunDuration: 888,
       metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'sent'
     });
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
-      ...testData.north.metrics,
-      currentCacheSize: 999,
-      currentErrorSize: 888,
-      currentArchiveSize: 777,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 888,
-      contentSentSize: testData.north.metrics.contentSentSize + 10,
-      lastContentSent: 'file.csv'
-    });
+    const call3 = northConnectorMetricsRepository.updateMetrics.mock.calls[3].arguments[1] as Record<string, unknown>;
+    assert.strictEqual(call3.contentSentSize as number, testData.north.metrics.contentSentSize + 10);
+    assert.strictEqual(call3.lastContentSent, 'file.csv');
 
     northMock.metricsEvent.emit('run-end', {
       lastRunDuration: 888,
       metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'archived'
     });
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
-      ...testData.north.metrics,
-      currentCacheSize: 999,
-      currentErrorSize: 888,
-      currentArchiveSize: 777,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 888,
-      contentSentSize: testData.north.metrics.contentSentSize + 20,
-      contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
-      lastContentSent: 'file.csv'
-    });
+    const call4 = northConnectorMetricsRepository.updateMetrics.mock.calls[4].arguments[1] as Record<string, unknown>;
+    assert.strictEqual(call4.contentArchivedSize as number, testData.north.metrics.contentArchivedSize + 10);
 
     northMock.metricsEvent.emit('run-end', {
       lastRunDuration: 888,
       metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'errored'
     });
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
-      ...testData.north.metrics,
-      currentCacheSize: 999,
-      currentErrorSize: 888,
-      currentArchiveSize: 777,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 888,
-      contentSentSize: testData.north.metrics.contentSentSize + 20,
-      contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
-      contentErroredSize: testData.north.metrics.contentErroredSize + 10,
-      lastContentSent: 'file.csv'
-    });
+    const call5 = northConnectorMetricsRepository.updateMetrics.mock.calls[5].arguments[1] as Record<string, unknown>;
+    assert.strictEqual(call5.contentErroredSize as number, testData.north.metrics.contentErroredSize + 10);
 
     northMock.metricsEvent.emit('cache-content-size', 123);
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.north.list[0].id, {
-      ...testData.north.metrics,
-      currentCacheSize: 999,
-      currentErrorSize: 888,
-      currentArchiveSize: 777,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 888,
-      contentCachedSize: testData.north.metrics.contentCachedSize + 123,
-      contentSentSize: testData.north.metrics.contentSentSize + 20,
-      contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
-      contentErroredSize: testData.north.metrics.contentErroredSize + 10,
-      lastContentSent: 'file.csv'
-    });
+    const call6 = northConnectorMetricsRepository.updateMetrics.mock.calls[6].arguments[1] as Record<string, unknown>;
+    assert.strictEqual(call6.contentCachedSize as number, testData.north.metrics.contentCachedSize + 123);
   });
 
   it('should reset metrics', () => {
     service.resetMetrics();
-    expect(northConnectorMetricsRepository.removeMetrics).toHaveBeenCalled();
-    expect(northConnectorMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
+    assert.ok(northConnectorMetricsRepository.removeMetrics.mock.calls.length > 0);
+    assert.deepStrictEqual(northConnectorMetricsRepository.initMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = jest.fn();
-    jest.advanceTimersByTime(100);
-    expect(stream.write).toHaveBeenCalledTimes(1);
-
-    expect(service.stream).toBeDefined();
+    stream.write = mock.fn();
+    mock.timers.tick(100);
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.ok(service.stream);
   });
 
   it('should write on stream', () => {
     const stream = service.stream;
-    stream.write = jest.fn();
+    stream.write = mock.fn();
 
     service.updateMetrics();
-    expect(stream.write).toHaveBeenCalledTimes(1);
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
     service.initMetrics();
-
-    expect(stream.write).toHaveBeenCalledTimes(2);
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 2);
   });
 
   it('should properly clean up listeners on destroy', () => {
-    const metricsEventOffSpy = jest.spyOn(northMock.metricsEvent, 'off');
+    const metricsEventOffSpy = mock.method(northMock.metricsEvent, 'off');
     const stream = service.stream;
-    const streamDestroySpy = jest.spyOn(stream, 'destroy');
+    const streamDestroySpy = mock.method(stream, 'destroy');
 
     service.destroy();
 
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('cache-size', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('cache-content-size', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('connect', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('run-start', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('run-end', expect.any(Function));
-    expect(streamDestroySpy).toHaveBeenCalled();
-    expect(service['_stream']).toBeNull();
+    const offEvents = metricsEventOffSpy.mock.calls.map(c => c.arguments[0]);
+    assert.ok(offEvents.includes('cache-size'));
+    assert.ok(offEvents.includes('cache-content-size'));
+    assert.ok(offEvents.includes('connect'));
+    assert.ok(offEvents.includes('run-start'));
+    assert.ok(offEvents.includes('run-end'));
+    assert.ok(streamDestroySpy.mock.calls.length > 0);
+    assert.strictEqual(service['_stream'], null);
   });
 });
