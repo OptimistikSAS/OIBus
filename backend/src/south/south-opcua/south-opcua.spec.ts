@@ -350,8 +350,7 @@ describe('SouthOPCUA', () => {
         { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } }, // ManufacturerName
         { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } }, // ProductName
         { statusCode: { value: 0 }, value: { value: '1.2.3' } }, // SoftwareVersion
-        { statusCode: { value: 0 }, value: { value: '1234' } }, // BuildNumber
-        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } } // BuildDate
+        { statusCode: { value: 0 }, value: { value: '1234' } } // BuildNumber
       ])
     };
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
@@ -361,7 +360,7 @@ describe('SouthOPCUA', () => {
     expect(mockedClient.read).toHaveBeenCalledTimes(1);
     expect(mockedClient.close).toHaveBeenCalledTimes(1);
     expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
-    expect(testResult.items).toHaveLength(6);
+    expect(testResult.items).toHaveLength(5);
     expect(testResult.items[0]).toEqual({ key: 'State', value: 'Running' }); // known state label
   });
 
@@ -386,18 +385,15 @@ describe('SouthOPCUA', () => {
         { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } }, // ManufacturerName Good — included
         { statusCode: { value: 0x80350000 }, value: { value: 'bad' } }, // ProductName Bad status — skipped
         { statusCode: { value: 0 }, value: { value: null } }, // SoftwareVersion null value — skipped
-        { statusCode: { value: 0 }, value: { value: '1234' } }, // BuildNumber Good — included
-        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } } // BuildDate Good Date — included
+        { statusCode: { value: 0 }, value: { value: '1234' } } // BuildNumber Good — included
       ])
     };
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
     const testResult = await south.testConnection();
-    expect(testResult.items).toHaveLength(4);
+    expect(testResult.items).toHaveLength(3);
     expect(testResult.items[0]).toEqual({ key: 'State', value: 'Running' });
     expect(testResult.items[1]).toEqual({ key: 'ManufacturerName', value: 'Prosys OPC' });
     expect(testResult.items[2]).toEqual({ key: 'BuildNumber', value: '1234' });
-    expect(testResult.items[3].key).toBe('BuildDate');
-    expect(testResult.items[3].value).toMatch(/^\d{4}-\d{2}-\d{2}T/); // ISO date format
   });
 
   it('should fall back to numeric string for unknown state values', async () => {

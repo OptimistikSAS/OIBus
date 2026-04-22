@@ -5,7 +5,17 @@ import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { AttributeIds, ClientSession, DataType, OPCUACertificateManager, OPCUAClient, resolveNodeId } from 'node-opcua';
+import {
+  AttributeIds,
+  ClientSession,
+  DataType,
+  MessageSecurityMode,
+  OPCUACertificateManager,
+  OPCUAClient,
+  resolveNodeId,
+  StatusCodes,
+  UserTokenType
+} from 'node-opcua';
 import { randomUUID } from 'crypto';
 import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import CacheService from '../../service/cache/cache.service';
@@ -40,9 +50,105 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
     });
     clientCertificateManager.state = 2;
     this.clientCertificateManager = clientCertificateManager;
+
+    const items: Array<{ key: string; value: string }> = [];
     let session;
     try {
       session = await this.createSession();
+
+      // Attempt to read server state and BuildInfo — gracefully degraded if unavailable
+      // Standard OPC UA node IDs per node-opcua-constants (VariableIds enum):
+      //   2259 = Server_ServerStatus_State
+      //   2261 = Server_ServerStatus_BuildInfo_ProductName
+      //   2263 = Server_ServerStatus_BuildInfo_ManufacturerName
+      //   2264 = Server_ServerStatus_BuildInfo_SoftwareVersion
+      //   2265 = Server_ServerStatus_BuildInfo_BuildNumber
+      try {
+        const SERVER_STATE_LABELS: Record<number, string> = {
+          0: 'Running',
+          1: 'Failed',
+          2: 'No Configuration',
+          3: 'Suspended',
+          4: 'Shutdown',
+          5: 'Test',
+          6: 'Communication Fault',
+          7: 'Unknown'
+        };
+        const nodesToRead = [
+          { nodeId: resolveNodeId('ns=0;i=2259'), key: 'State' },
+          { nodeId: resolveNodeId('ns=0;i=2263'), key: 'ManufacturerName' },
+          { nodeId: resolveNodeId('ns=0;i=2261'), key: 'ProductName' },
+          { nodeId: resolveNodeId('ns=0;i=2264'), key: 'SoftwareVersion' },
+          { nodeId: resolveNodeId('ns=0;i=2265'), key: 'BuildNumber' }
+        ];
+        const dataValues = await session.read(nodesToRead.map(n => ({ nodeId: n.nodeId, attributeId: AttributeIds.Value })));
+        for (let i = 0; i < nodesToRead.length; i++) {
+          const dv = dataValues[i];
+          if (dv && dv.statusCode.value === StatusCodes.Good.value && dv.value?.value != null) {
+            const raw = dv.value.value;
+            let value: string;
+            if (nodesToRead[i].key === 'State') {
+              value = SERVER_STATE_LABELS[raw as number] ?? String(raw);
+            } else {
+              value = raw instanceof Date ? raw.toISOString() : String(raw);
+            }
+            items.push({ key: nodesToRead[i].key, value });
+          }
+        }
+      } catch {
+        // Server does not expose BuildInfo — not an error, no diagnostic data added
+      }
+
+      try {
+        const SECURITY_MODE_LABELS: Partial<Record<MessageSecurityMode, string>> = {
+          [MessageSecurityMode.None]: 'None',
+          [MessageSecurityMode.Sign]: 'Sign',
+          [MessageSecurityMode.SignAndEncrypt]: 'SignAndEncrypt'
+        };
+        const AUTH_TYPE_LABELS: Partial<Record<UserTokenType, string>> = {
+          [UserTokenType.Anonymous]: 'Anonymous',
+          [UserTokenType.UserName]: 'Username/Password',
+          [UserTokenType.Certificate]: 'X509 Certificate',
+          [UserTokenType.IssuedToken]: 'IssuedToken'
+        };
+
+        const endpointClient = OPCUAClient.create({
+          applicationName: 'OIBus',
+          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+          endpointMustExist: false
+        });
+        try {
+          await endpointClient.connect(this.connector.settings.url);
+          const endpoints = await endpointClient.getEndpoints();
+
+          const securityModes = [...new Set(endpoints.map(e => SECURITY_MODE_LABELS[e.securityMode] ?? String(e.securityMode)))].filter(
+            Boolean
+          );
+          items.push({ key: 'SecurityModes', value: securityModes.join(', ') });
+
+          const securityPolicies = [
+            ...new Set(
+              endpoints
+                .map(e => {
+                  const uri = e.securityPolicyUri ?? '';
+                  const hashIdx = uri.lastIndexOf('#');
+                  return hashIdx >= 0 ? uri.substring(hashIdx + 1) : uri;
+                })
+                .filter(Boolean)
+            )
+          ];
+          if (securityPolicies.length) items.push({ key: 'SecurityPolicies', value: securityPolicies.join(', ') });
+
+          const authModes = [
+            ...new Set(endpoints.flatMap(e => (e.userIdentityTokens ?? []).map(t => AUTH_TYPE_LABELS[t.tokenType] ?? String(t.tokenType))))
+          ];
+          if (authModes.length) items.push({ key: 'AuthenticationModes', value: authModes.join(', ') });
+        } finally {
+          await endpointClient.disconnect();
+        }
+      } catch {
+        // Server may not expose endpoint details
+      }
     } finally {
       await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
       if (session) {
@@ -50,7 +156,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         session = null;
       }
     }
-    return { items: [] };
+    return { items };
   }
 
   override async start(): Promise<void> {

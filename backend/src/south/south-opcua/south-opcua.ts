@@ -17,12 +17,14 @@ import {
   ClientSession,
   ClientSubscription,
   DataValue,
+  MessageSecurityMode,
   NodeId,
   OPCUACertificateManager,
   OPCUAClient,
   resolveNodeId,
   StatusCodes,
-  TimestampsToReturn
+  TimestampsToReturn,
+  UserTokenType
 } from 'node-opcua';
 import { HistoryDataOptions, HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import {
@@ -158,7 +160,6 @@ export default class SouthOPCUA
       //   2263 = Server_ServerStatus_BuildInfo_ManufacturerName
       //   2264 = Server_ServerStatus_BuildInfo_SoftwareVersion
       //   2265 = Server_ServerStatus_BuildInfo_BuildNumber
-      //   2266 = Server_ServerStatus_BuildInfo_BuildDate
       try {
         const SERVER_STATE_LABELS: Record<number, string> = {
           0: 'Running',
@@ -175,8 +176,7 @@ export default class SouthOPCUA
           { nodeId: resolveNodeId('ns=0;i=2263'), key: 'ManufacturerName' },
           { nodeId: resolveNodeId('ns=0;i=2261'), key: 'ProductName' },
           { nodeId: resolveNodeId('ns=0;i=2264'), key: 'SoftwareVersion' },
-          { nodeId: resolveNodeId('ns=0;i=2265'), key: 'BuildNumber' },
-          { nodeId: resolveNodeId('ns=0;i=2266'), key: 'BuildDate' }
+          { nodeId: resolveNodeId('ns=0;i=2265'), key: 'BuildNumber' }
         ];
         const dataValues = await session.read(nodesToRead.map(n => ({ nodeId: n.nodeId, attributeId: AttributeIds.Value })));
         for (let i = 0; i < nodesToRead.length; i++) {
@@ -194,6 +194,67 @@ export default class SouthOPCUA
         }
       } catch {
         // Server does not expose BuildInfo — not an error, no diagnostic data added
+      }
+
+      try {
+        const SECURITY_MODE_LABELS: Partial<Record<MessageSecurityMode, string>> = {
+          [MessageSecurityMode.None]: 'None',
+          [MessageSecurityMode.Sign]: 'Sign',
+          [MessageSecurityMode.SignAndEncrypt]: 'SignAndEncrypt'
+        };
+        const AUTH_TYPE_LABELS: Partial<Record<UserTokenType, string>> = {
+          [UserTokenType.Anonymous]: 'Anonymous',
+          [UserTokenType.UserName]: 'Username/Password',
+          [UserTokenType.Certificate]: 'X509 Certificate',
+          [UserTokenType.IssuedToken]: 'IssuedToken'
+        };
+
+        const endpointClient = OPCUAClient.create({
+          applicationName: 'OIBus',
+          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+          endpointMustExist: false
+        });
+        try {
+          await endpointClient.connect(this.connector.settings.url);
+          const endpoints = await endpointClient.getEndpoints();
+
+          const securityModes = [...new Set(endpoints.map(e => SECURITY_MODE_LABELS[e.securityMode] ?? String(e.securityMode)))].filter(
+            Boolean
+          );
+          items.push({ key: 'SecurityModes', value: securityModes.join(', ') });
+
+          const securityPolicies = [
+            ...new Set(
+              endpoints
+                .map(e => {
+                  const uri = e.securityPolicyUri ?? '';
+                  const hashIdx = uri.lastIndexOf('#');
+                  return hashIdx >= 0 ? uri.substring(hashIdx + 1) : uri;
+                })
+                .filter(Boolean)
+            )
+          ];
+          if (securityPolicies.length) items.push({ key: 'SecurityPolicies', value: securityPolicies.join(', ') });
+
+          const authModes = [
+            ...new Set(endpoints.flatMap(e => (e.userIdentityTokens ?? []).map(t => AUTH_TYPE_LABELS[t.tokenType] ?? String(t.tokenType))))
+          ];
+          if (authModes.length) items.push({ key: 'AuthenticationModes', value: authModes.join(', ') });
+        } finally {
+          await endpointClient.disconnect();
+        }
+      } catch {
+        // Server may not expose endpoint details
+      }
+
+      try {
+        const browseResult = await session.browse('ns=0;i=11201');
+        const aggregates = (browseResult.references ?? [])
+          .map(ref => ref.displayName?.text)
+          .filter((text): text is string => Boolean(text));
+        if (aggregates.length) items.push({ key: 'SupportedAggregates', value: aggregates.join(', ') });
+      } catch {
+        // Server does not expose aggregate functions
       }
     } finally {
       await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
