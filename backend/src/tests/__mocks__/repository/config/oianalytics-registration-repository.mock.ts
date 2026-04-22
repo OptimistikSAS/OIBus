@@ -1,13 +1,13 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for OIAnalytics Registration repository
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    get: jest.fn(),
-    register: jest.fn(),
-    update: jest.fn(),
-    updateKeys: jest.fn(),
-    activate: jest.fn(),
-    unregister: jest.fn()
-  };
-});
+export default class OianalyticsRegistrationRepositoryMock {
+  get = mock.fn();
+  register = mock.fn();
+  update = mock.fn();
+  updateKeys = mock.fn();
+  activate = mock.fn();
+  unregister = mock.fn();
+}

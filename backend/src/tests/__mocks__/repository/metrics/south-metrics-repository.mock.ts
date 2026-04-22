@@ -1,11 +1,11 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for South Connector Metrics Repository
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    initMetrics: jest.fn(),
-    getMetrics: jest.fn(),
-    updateMetrics: jest.fn(),
-    removeMetrics: jest.fn()
-  };
-});
+export default class SouthMetricsRepositoryMock {
+  initMetrics = mock.fn();
+  getMetrics = mock.fn();
+  updateMetrics = mock.fn();
+  removeMetrics = mock.fn();
+}

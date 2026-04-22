@@ -1,12 +1,14 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for South Item Group Repository
  */
-export default jest.fn().mockImplementation(() => ({
-  findById: jest.fn(),
-  findBySouthId: jest.fn(),
-  findByNameAndSouthId: jest.fn(),
-  findAll: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn()
-}));
+export default class SouthItemGroupRepositoryMock {
+  findById = mock.fn();
+  findBySouthId = mock.fn();
+  findByNameAndSouthId = mock.fn();
+  findAll = mock.fn();
+  create = mock.fn();
+  update = mock.fn();
+  delete = mock.fn();
+}

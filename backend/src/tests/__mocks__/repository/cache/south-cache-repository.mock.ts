@@ -1,10 +1,12 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for South Cache Repository
  */
-export default jest.fn().mockImplementation(() => ({
-  createItemValueTable: jest.fn(),
-  dropItemValueTable: jest.fn(),
-  getItemLastValue: jest.fn(),
-  saveItemLastValue: jest.fn(),
-  deleteItemValue: jest.fn()
-}));
+export default class SouthCacheRepositoryMock {
+  createItemValueTable = mock.fn();
+  dropItemValueTable = mock.fn();
+  getItemLastValue = mock.fn();
+  saveItemLastValue = mock.fn();
+  deleteItemValue = mock.fn();
+}

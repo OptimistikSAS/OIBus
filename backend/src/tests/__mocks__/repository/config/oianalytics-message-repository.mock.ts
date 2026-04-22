@@ -1,13 +1,13 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for OIAnalytics Message repository
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    search: jest.fn(),
-    list: jest.fn(),
-    create: jest.fn(),
-    delete: jest.fn(),
-    markAsCompleted: jest.fn(),
-    markAsErrored: jest.fn()
-  };
-});
+export default class OianalyticsMessageRepositoryMock {
+  search = mock.fn();
+  list = mock.fn();
+  create = mock.fn();
+  delete = mock.fn();
+  markAsCompleted = mock.fn();
+  markAsErrored = mock.fn();
+}
