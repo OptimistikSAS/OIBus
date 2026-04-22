@@ -1,53 +1,72 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import path from 'node:path';
+import { createRequire } from 'node:module';
+
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-
-import pino from 'pino';
-
-import LoggerService from './logger.service';
-import { encryptionService } from '../encryption.service';
-import FileCleanupService from './file-cleanup.service';
 import testData from '../../tests/utils/test-data';
-import { EngineSettings } from '../../model/engine.model';
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import type { EngineSettings } from '../../model/engine.model';
+import type { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import type LoggerServiceType from './logger.service';
+import type FileCleanupServiceType from './file-cleanup.service';
 
-jest.mock('../encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
-jest.mock(
-  'pino',
-  jest.fn(() => jest.fn(() => ({ child: jest.fn() })))
-);
+const nodeRequire = createRequire(import.meta.url);
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-expect-error
-pino.stdTimeFunctions = {
-  isoTime(): string {
-    return '';
+let LoggerService: typeof LoggerServiceType;
+let encryptionMock: EncryptionServiceMock;
+let pinoMock: ReturnType<typeof mock.fn>;
+let isoTimeFn: () => string;
+let service: LoggerServiceType;
+
+before(async () => {
+  isoTimeFn = () => '';
+  const mockChild = mock.fn(() => null);
+  const mockPinoInstance = { child: mockChild };
+  pinoMock = mock.fn(() => mockPinoInstance);
+  (pinoMock as unknown as { stdTimeFunctions: { isoTime: () => string } }).stdTimeFunctions = { isoTime: isoTimeFn };
+
+  // Replace pino in require cache with the mock
+  nodeRequire('pino');
+  const pinoPath = nodeRequire.resolve('pino');
+  nodeRequire.cache[pinoPath]!.exports = pinoMock;
+
+  // Replace encryption service in require cache with a mock instance
+  encryptionMock = new EncryptionServiceMock('', '');
+  nodeRequire('../encryption.service');
+  const encPath = nodeRequire.resolve('../encryption.service');
+  nodeRequire.cache[encPath]!.exports = { __esModule: true, encryptionService: encryptionMock };
+
+  // Replace FileCleanupService in require cache with a mock constructor
+  // mock.fn() cannot be used with `new`, so use a plain constructor function
+  function fileCleanupCtorMock(this: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> }) {
+    this.start = mock.fn(async () => {});
+    this.stop = mock.fn();
   }
-};
-jest.mock('./file-cleanup.service');
-jest.mock('../encryption.service');
+  nodeRequire('./file-cleanup.service');
+  const fcPath = nodeRequire.resolve('./file-cleanup.service');
+  nodeRequire.cache[fcPath]!.exports = { __esModule: true, default: fileCleanupCtorMock };
 
-jest.mock('../utils');
+  // Force logger.service to reload with mocked dependencies
+  const lsPath = nodeRequire.resolve('./logger.service');
+  delete nodeRequire.cache[lsPath];
+  LoggerService = nodeRequire('./logger.service').default;
+});
 
-let service: LoggerService;
+beforeEach(() => {
+  pinoMock.mock.resetCalls();
+  encryptionMock.decryptText.mock.resetCalls();
+  service = new LoggerService('folder');
+});
+
+afterEach(() => {
+  mock.restoreAll();
+});
+
 describe('Logger', () => {
   const engineSettings = testData.engine.settings;
   const registration = testData.oIAnalytics.registration.completed;
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-
-    service = new LoggerService('folder');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
   it('should be properly initialized', async () => {
-    service.createChildLogger = jest.fn();
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: engineSettings.logParameters.console.level },
       {
@@ -96,33 +115,32 @@ describe('Logger', () => {
 
     await service.start(engineSettings, registration);
 
-    expect(pino).toHaveBeenCalledTimes(1);
-    expect(pino).toHaveBeenCalledWith({
-      base: undefined,
-      level: 'trace',
-      timestamp: pino.stdTimeFunctions.isoTime,
-      transport: { targets: expectedTargets }
-    });
+    assert.strictEqual(pinoMock.mock.calls.length, 1);
+    assert.deepStrictEqual(pinoMock.mock.calls[0].arguments, [
+      {
+        base: undefined,
+        level: 'trace',
+        timestamp: isoTimeFn,
+        transport: { targets: expectedTargets }
+      }
+    ]);
   });
 
   it('should be properly initialized with loki error and standard file names', async () => {
-    service.createChildLogger = jest.fn();
+    mock.method(console, 'error', mock.fn());
 
-    jest.spyOn(console, 'error').mockImplementation(() => Promise.resolve());
-
-    (encryptionService.decryptText as jest.Mock).mockImplementationOnce(() => {
+    encryptionMock.decryptText.mock.mockImplementationOnce(() => {
       throw new Error('decrypt-error');
     });
 
     await service.start(engineSettings, registration);
 
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(new Error('decrypt-error'));
+    assert.strictEqual((console.error as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((console.error as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [new Error('decrypt-error')]);
   });
 
   it('should be properly initialized without loki password, without oia token and without sqliteLog', async () => {
-    jest.spyOn(console, 'error').mockImplementationOnce(() => Promise.resolve());
-    service.createChildLogger = jest.fn();
+    mock.method(console, 'error', mock.fn());
 
     const specificRegistration: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed));
     specificRegistration.proxyPassword = 'proxyPassword';
@@ -171,23 +189,25 @@ describe('Logger', () => {
 
     await service.start(specificSettings, specificRegistration);
 
-    expect(pino).toHaveBeenCalledTimes(1);
-    expect(pino).toHaveBeenCalledWith({
-      base: undefined,
-      level: 'trace',
-      timestamp: pino.stdTimeFunctions.isoTime,
-      transport: { targets: expectedTargets }
-    });
+    assert.strictEqual(pinoMock.mock.calls.length, 1);
+    assert.deepStrictEqual(pinoMock.mock.calls[0].arguments, [
+      {
+        base: undefined,
+        level: 'trace',
+        timestamp: isoTimeFn,
+        transport: { targets: expectedTargets }
+      }
+    ]);
   });
 
   it('should be properly initialized without lokiLog, nor oianalytics nor sqliteLog', async () => {
+    mock.method(console, 'error', mock.fn());
+
     const specificRegistration: OIAnalyticsRegistration = JSON.parse(JSON.stringify(testData.engine.settings));
     specificRegistration.status = 'NOT_REGISTERED';
     const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     specificSettings.logParameters.database.maxNumberOfLogs = 0;
     specificSettings.logParameters.loki.address = '';
-    jest.spyOn(console, 'error').mockImplementationOnce(() => Promise.resolve());
-    service.createChildLogger = jest.fn();
 
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificSettings.logParameters.console.level },
@@ -203,28 +223,30 @@ describe('Logger', () => {
 
     await service.start(specificSettings, specificRegistration);
 
-    expect(pino).toHaveBeenCalledTimes(1);
-    expect(pino).toHaveBeenCalledWith({
-      base: undefined,
-      level: 'trace',
-      timestamp: pino.stdTimeFunctions.isoTime,
-      transport: { targets: expectedTargets }
-    });
+    assert.strictEqual(pinoMock.mock.calls.length, 1);
+    assert.deepStrictEqual(pinoMock.mock.calls[0].arguments, [
+      {
+        base: undefined,
+        level: 'trace',
+        timestamp: isoTimeFn,
+        transport: { targets: expectedTargets }
+      }
+    ]);
   });
 
-  it('should properly create child logger', async () => {
-    const childFunction = jest.fn();
-    service.logger = { child: childFunction } as unknown as pino.Logger;
+  it('should properly create child logger', () => {
+    const childFunction = mock.fn();
+    service.logger = { child: childFunction } as unknown as ReturnType<typeof childFunction>;
     service.createChildLogger('south');
-    expect(service.logger.child).toHaveBeenCalledWith({ scopeType: 'south' });
+    assert.deepStrictEqual(childFunction.mock.calls[0].arguments, [{ scopeType: 'south', scopeId: undefined, scopeName: undefined }]);
   });
 
-  it('should properly stop logger', async () => {
-    const stopMock = jest.fn();
-    service.stop();
+  it('should properly stop logger', () => {
+    service.stop(); // fileCleanUpService is null — no-op
 
-    service.fileCleanUpService = { stop: stopMock } as unknown as FileCleanupService;
+    const stopMock = mock.fn();
+    service.fileCleanUpService = { stop: stopMock } as unknown as FileCleanupServiceType;
     service.stop();
-    expect(stopMock).toHaveBeenCalledTimes(1);
+    assert.strictEqual(stopMock.mock.calls.length, 1);
   });
 });
