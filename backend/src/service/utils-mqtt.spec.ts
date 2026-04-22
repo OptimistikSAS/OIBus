@@ -357,7 +357,9 @@ describe('Service utils MQTT', () => {
     });
 
     it('should throw an error when no item matches the topic', () => {
-      assert.throws(() => utils.getItem('non/existent/topic', items), { message: "Item can't be determined from topic non/existent/topic" });
+      assert.throws(() => utils.getItem('non/existent/topic', items), {
+        message: "Item can't be determined from topic non/existent/topic"
+      });
     });
 
     it('should throw an error when multiple items match the topic (id8 and id9)', () => {

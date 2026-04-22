@@ -13,9 +13,7 @@ import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import testData from '../tests/utils/test-data';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import { OIBusValidationError } from '../model/types';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let scanModeRepository: ScanModeRepositoryMock;
@@ -91,10 +89,9 @@ describe('Scan Mode Service', () => {
   it('create() should not create a scan mode with duplicate name', async () => {
     scanModeRepository.findAll.mock.mockImplementationOnce(() => [{ id: 'existing-id', name: testData.scanMode.command.name }]);
 
-    await assert.rejects(
-      () => service.create(testData.scanMode.command, 'userTest'),
-      { message: `Scan mode name "${testData.scanMode.command.name}" already exists` }
-    );
+    await assert.rejects(() => service.create(testData.scanMode.command, 'userTest'), {
+      message: `Scan mode name "${testData.scanMode.command.name}" already exists`
+    });
   });
 
   it('update() should update a scan mode', async () => {
@@ -108,7 +105,11 @@ describe('Scan Mode Service', () => {
     assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
     assert.deepStrictEqual(scanModeRepository.findById.mock.calls[1].arguments, [testData.scanMode.list[0].id]);
     assert.strictEqual(scanModeRepository.findById.mock.calls.length, 2);
-    assert.deepStrictEqual(scanModeRepository.update.mock.calls[0].arguments, [testData.scanMode.list[0].id, testData.scanMode.command, 'userTest']);
+    assert.deepStrictEqual(scanModeRepository.update.mock.calls[0].arguments, [
+      testData.scanMode.list[0].id,
+      testData.scanMode.command,
+      'userTest'
+    ]);
     assert.deepStrictEqual(dataStreamEngine.updateScanMode.mock.calls[0].arguments, [testData.scanMode.list[1]]);
     assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
@@ -146,7 +147,11 @@ describe('Scan Mode Service', () => {
 
     await service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
 
-    assert.deepStrictEqual(scanModeRepository.update.mock.calls[0].arguments, [testData.scanMode.list[0].id, testData.scanMode.command, 'userTest']);
+    assert.deepStrictEqual(scanModeRepository.update.mock.calls[0].arguments, [
+      testData.scanMode.list[0].id,
+      testData.scanMode.command,
+      'userTest'
+    ]);
     assert.strictEqual(dataStreamEngine.updateScanMode.mock.calls.length, 0);
     assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
@@ -154,10 +159,9 @@ describe('Scan Mode Service', () => {
   it('update() should not update if the scan mode is not found', async () => {
     scanModeRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(
-      () => service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest'),
-      { message: `Scan mode "${testData.scanMode.list[0].id}" not found` }
-    );
+    await assert.rejects(() => service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest'), {
+      message: `Scan mode "${testData.scanMode.list[0].id}" not found`
+    });
 
     assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
     assert.strictEqual(scanModeRepository.update.mock.calls.length, 0);
@@ -171,10 +175,9 @@ describe('Scan Mode Service', () => {
     scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0]);
     scanModeRepository.findAll.mock.mockImplementationOnce(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
 
-    await assert.rejects(
-      () => service.update(testData.scanMode.list[0].id, command, 'userTest'),
-      { message: `Scan mode name "Duplicate Name" already exists` }
-    );
+    await assert.rejects(() => service.update(testData.scanMode.list[0].id, command, 'userTest'), {
+      message: `Scan mode name "Duplicate Name" already exists`
+    });
   });
 
   it('delete() should delete a scan mode', async () => {
@@ -194,10 +197,9 @@ describe('Scan Mode Service', () => {
   it('delete() should not delete if the scan mode is not found', async () => {
     scanModeRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(
-      () => service.delete(testData.scanMode.list[0].id),
-      { message: `Scan mode "${testData.scanMode.list[0].id}" not found` }
-    );
+    await assert.rejects(() => service.delete(testData.scanMode.list[0].id), {
+      message: `Scan mode "${testData.scanMode.list[0].id}" not found`
+    });
 
     assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
     assert.strictEqual(scanModeRepository.delete.mock.calls.length, 0);

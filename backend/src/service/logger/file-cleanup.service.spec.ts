@@ -25,7 +25,7 @@ describe('FileCleanupService', () => {
   });
 
   it('should properly start and stop', async () => {
-    const cleanUpMock = mock.fn(async () => {});
+    const cleanUpMock = mock.fn(async () => undefined);
     fileCleanupService.cleanUpLogFiles = cleanUpMock as unknown as () => Promise<void>;
     const clearIntervalSpy = mock.method(global, 'clearInterval', mock.fn());
 
@@ -68,10 +68,17 @@ describe('FileCleanupService', () => {
     mock.method(
       fs,
       'readdir',
-      mock.fn(async () => ['journal.log.1', 'journal.log.2', 'journal.log.233', 'journal.log.0.backup', 'journal.db', 'migration-journal.log'])
+      mock.fn(async () => [
+        'journal.log.1',
+        'journal.log.2',
+        'journal.log.233',
+        'journal.log.0.backup',
+        'journal.db',
+        'migration-journal.log'
+      ])
     );
 
-    const unlinkMock = mock.fn(async () => {});
+    const unlinkMock = mock.fn(async () => undefined);
     mock.method(fs, 'unlink', unlinkMock);
 
     await fileCleanupService.cleanUpLogFiles();
@@ -85,11 +92,19 @@ describe('FileCleanupService', () => {
   });
 
   it('should not clean up folder if not enough files', async () => {
-    mock.method(fs, 'stat', mock.fn(async () => ({}))); // filesExists — folder exists
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => ({}))
+    ); // filesExists — folder exists
 
-    mock.method(fs, 'readdir', mock.fn(async () => ['journal.log.1', 'journal.log.2']));
+    mock.method(
+      fs,
+      'readdir',
+      mock.fn(async () => ['journal.log.1', 'journal.log.2'])
+    );
 
-    const unlinkMock = mock.fn(async () => {});
+    const unlinkMock = mock.fn(async () => undefined);
     mock.method(fs, 'unlink', unlinkMock);
 
     await fileCleanupService.cleanUpLogFiles();
@@ -172,7 +187,11 @@ describe('FileCleanupService', () => {
   });
 
   it('should properly catch readdir error', async () => {
-    mock.method(fs, 'stat', mock.fn(async () => ({}))); // filesExists — folder exists
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => ({}))
+    ); // filesExists — folder exists
     mock.method(
       fs,
       'readdir',

@@ -28,12 +28,16 @@ describe('HTTPRequest Service', () => {
     mock.method(undiciModule, 'request', async () => createMockResponse(200, { success: true }));
 
     const instances = proxyAgentInstances;
-    mock.method(undiciModule, 'ProxyAgent', function (this: { isMockProxyAgent: boolean; options?: unknown; destroy: () => void }, options: unknown) {
-      this.isMockProxyAgent = true;
-      this.options = options;
-      this.destroy = () => {};
-      instances.push(this);
-    });
+    mock.method(
+      undiciModule,
+      'ProxyAgent',
+      function (this: { isMockProxyAgent: boolean; options?: unknown; destroy: () => void }, options: unknown) {
+        this.isMockProxyAgent = true;
+        this.options = options;
+        this.destroy = () => undefined;
+        instances.push(this);
+      }
+    );
 
     const agentInst = agentInstances;
     mock.method(undiciModule, 'Agent', function (this: { isMockAgent: boolean; options?: unknown }, options: unknown) {
@@ -117,7 +121,9 @@ describe('HTTPRequest Service', () => {
   });
 
   it('should handle non 2xx status codes and set ok to false', async () => {
-    (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => createMockResponse(404, { error: 'Not Found' }));
+    (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () =>
+      createMockResponse(404, { error: 'Not Found' })
+    );
     const response = await HTTPRequest(testUrl);
 
     assert.strictEqual(response.statusCode, 404);
@@ -231,7 +237,9 @@ describe('HTTPRequest Service', () => {
       await HTTPRequest(testUrl, options);
 
       assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [encryptedTokenWithPrefix]);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        encryptedTokenWithPrefix
+      ]);
       assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
         testUrl,
         {
@@ -405,7 +413,9 @@ describe('HTTPRequest Service', () => {
       await HTTPRequest(testUrl, options);
 
       assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-proxypass']);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'encrypted-proxypass'
+      ]);
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
         { uri: testProxyUrl, token: expectedToken }
@@ -429,7 +439,9 @@ describe('HTTPRequest Service', () => {
       await HTTPRequest(testUrl, options);
 
       assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-proxytoken']);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'encrypted-proxytoken'
+      ]);
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
         { uri: testProxyUrl, token: expectedToken }
@@ -455,7 +467,9 @@ describe('HTTPRequest Service', () => {
       await HTTPRequest(testUrl, options);
 
       assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-proxyurlpass']);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'encrypted-proxyurlpass'
+      ]);
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
         { uri: expectedProxyAgentUri, token: undefined }
@@ -499,7 +513,9 @@ describe('HTTPRequest Service', () => {
       await HTTPRequest(testUrl, options);
 
       assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-proxyurlpass']);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'encrypted-proxyurlpass'
+      ]);
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
         { uri: expectedProxyAgentUri, token: undefined }

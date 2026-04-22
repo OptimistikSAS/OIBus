@@ -121,11 +121,10 @@ describe('TransformerRepository', () => {
     const allTransformers = repository.list().map(stripAuditFields);
     // Standard transformers come first, then custom ones from test data
     for (const standard of standardTransformers) {
-      const { id: _id, ...rest } = standard;
       const found = allTransformers.find(t => t.type === 'standard' && (t as StandardTransformer).functionName === standard.functionName);
       assert.ok(found, `Standard transformer ${standard.functionName} not found`);
-      assert.strictEqual(found.inputType, rest.inputType);
-      assert.strictEqual(found.outputType, rest.outputType);
+      assert.strictEqual(found.inputType, standard.inputType);
+      assert.strictEqual(found.outputType, standard.outputType);
     }
     for (const custom of testData.transformers.list.map(stripAuditFields)) {
       const found = allTransformers.find(t => t.id === custom.id);

@@ -40,10 +40,7 @@ describe('SouthConnectorRepository', () => {
   });
 
   it('should properly get a south connector', () => {
-    assert.deepStrictEqual(
-      stripAuditFields(repository.findSouthById(testData.south.list[0].id)),
-      stripAuditFields(testData.south.list[0])
-    );
+    assert.deepStrictEqual(stripAuditFields(repository.findSouthById(testData.south.list[0].id)), stripAuditFields(testData.south.list[0]));
     assert.strictEqual(repository.findSouthById('badId'), null);
   });
 
@@ -149,7 +146,8 @@ describe('SouthConnectorRepository', () => {
       3
     );
     assert.strictEqual(
-      repository.searchItems(testData.south.list[1].id, { name: undefined, scanModeId: undefined, enabled: undefined, page: 0 }).totalElements,
+      repository.searchItems(testData.south.list[1].id, { name: undefined, scanModeId: undefined, enabled: undefined, page: 0 })
+        .totalElements,
       3
     );
   });

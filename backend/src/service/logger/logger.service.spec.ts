@@ -39,7 +39,7 @@ before(async () => {
   // Replace FileCleanupService in require cache with a mock constructor
   // mock.fn() cannot be used with `new`, so use a plain constructor function
   function fileCleanupCtorMock(this: { start: ReturnType<typeof mock.fn>; stop: ReturnType<typeof mock.fn> }) {
-    this.start = mock.fn(async () => {});
+    this.start = mock.fn(async () => undefined);
     this.stop = mock.fn();
   }
   nodeRequire('./file-cleanup.service');
