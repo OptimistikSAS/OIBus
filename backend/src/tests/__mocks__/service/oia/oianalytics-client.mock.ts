@@ -1,16 +1,16 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for OIAnalytics Client
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    updateCommandStatus: jest.fn(),
-    retrieveCancelledCommands: jest.fn(),
-    retrievePendingCommands: jest.fn(),
-    register: jest.fn(),
-    checkRegistration: jest.fn(),
-    sendConfiguration: jest.fn(),
-    sendHistoryQuery: jest.fn(),
-    deleteHistoryQuery: jest.fn(),
-    downloadFile: jest.fn()
-  };
-});
+export default class OIAnalyticsClientMock {
+  updateCommandStatus = mock.fn();
+  retrieveCancelledCommands = mock.fn();
+  retrievePendingCommands = mock.fn();
+  register = mock.fn();
+  checkRegistration = mock.fn();
+  sendConfiguration = mock.fn();
+  sendHistoryQuery = mock.fn();
+  deleteHistoryQuery = mock.fn();
+  downloadFile = mock.fn();
+}
