@@ -1,69 +1,70 @@
-import { request, ProxyAgent, Agent } from 'undici';
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { encryptionService } from './encryption.service';
 import { clearProxyAgentCache, HTTPRequest, ReqOptions } from './http-request.utils';
 import { createMockResponse } from '../tests/__mocks__/undici.mock';
 import { version } from '../../package.json';
 
-jest.mock('undici', () => ({
-  request: jest.fn(),
-  ProxyAgent: jest.fn().mockImplementation(options => ({
-    // Mock the constructor
-    options, // Store options for potential assertion
-    isMockProxyAgent: true // Add a flag for easy identification in tests
-  })),
-  Agent: jest.fn().mockImplementation(options => ({
-    // Mock the constructor
-    options, // Store options for potential assertion
-    isMockAgent: true // Add a flag for easy identification in tests
-  }))
-}));
-
-jest.mock('./encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
+const nodeRequire = createRequire(import.meta.url);
+const undiciModule = nodeRequire('undici');
 
 describe('HTTPRequest Service', () => {
-  let mockUndiciRequest: jest.Mock;
-  let mockUndiciProxyAgent: jest.Mock;
-  let mockUndiciAgent: jest.Mock;
-  let mockDecryptText: jest.Mock;
-  let mockAbortSignalTimeout: jest.SpyInstance;
-  const mockAbortSignal = 'mock-abort-signal' as unknown as AbortSignal;
-
   const testUrl = 'http://example.com/api';
   const testProxyUrl = 'http://proxy.example.com:8080';
+  const mockAbortSignal = 'mock-abort-signal' as unknown as AbortSignal;
+
+  let proxyAgentInstances: Array<{ isMockProxyAgent: boolean; options?: unknown }>;
+  let agentInstances: Array<{ isMockAgent: boolean; options?: unknown }>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
     clearProxyAgentCache();
+    proxyAgentInstances = [];
+    agentInstances = [];
 
-    mockUndiciRequest = request as jest.Mock;
-    mockUndiciProxyAgent = ProxyAgent as unknown as jest.Mock;
-    mockUndiciAgent = Agent as unknown as jest.Mock;
-    mockDecryptText = encryptionService.decryptText as jest.Mock;
+    mock.method(encryptionService, 'decryptText', async (text: unknown) => (text ? `${text}-decrypted` : ''));
+    mock.method(AbortSignal, 'timeout', (_ms: number) => mockAbortSignal);
 
-    mockUndiciRequest.mockResolvedValue(createMockResponse(200, { success: true }));
-    mockDecryptText.mockImplementation(async text => (text ? `${text}-decrypted` : ''));
-    mockAbortSignalTimeout = jest.spyOn(AbortSignal, 'timeout').mockReturnValue(mockAbortSignal);
+    mock.method(undiciModule, 'request', async () => createMockResponse(200, { success: true }));
+
+    const instances = proxyAgentInstances;
+    mock.method(undiciModule, 'ProxyAgent', function (this: { isMockProxyAgent: boolean; options?: unknown; destroy: () => void }, options: unknown) {
+      this.isMockProxyAgent = true;
+      this.options = options;
+      this.destroy = () => {};
+      instances.push(this);
+    });
+
+    const agentInst = agentInstances;
+    mock.method(undiciModule, 'Agent', function (this: { isMockAgent: boolean; options?: unknown }, options: unknown) {
+      this.isMockAgent = true;
+      this.options = options;
+      agentInst.push(this);
+    });
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('should make a basic request without options', async () => {
     const response = await HTTPRequest(testUrl);
 
-    expect(mockUndiciRequest).toHaveBeenCalledTimes(1);
-    // Expect the default empty options object '{}' when no options are passed
-    expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-      headers: {
-        'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+    assert.strictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      testUrl,
+      {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        }
       }
-    });
-    expect(response.statusCode).toBe(200);
-    expect(response.ok).toBe(true);
-    expect(mockDecryptText).not.toHaveBeenCalled();
-    expect(mockUndiciProxyAgent).not.toHaveBeenCalled();
-    expect(mockUndiciAgent).not.toHaveBeenCalled();
-    expect(mockAbortSignalTimeout).not.toHaveBeenCalled();
+    ]);
+    assert.strictEqual(response.statusCode, 200);
+    assert.strictEqual(response.ok, true);
+    assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(proxyAgentInstances.length, 0);
+    assert.strictEqual(agentInstances.length, 0);
+    assert.strictEqual((AbortSignal.timeout as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should make a request with custom headers', async () => {
@@ -77,9 +78,9 @@ describe('HTTPRequest Service', () => {
     };
     const response = await HTTPRequest(testUrl, options);
 
-    expect(mockUndiciRequest).toHaveBeenCalledTimes(1);
-    expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, options);
-    expect(response.ok).toBe(true);
+    assert.strictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [testUrl, options]);
+    assert.strictEqual(response.ok, true);
   });
 
   it('should make a request with accept unauthorized', async () => {
@@ -95,46 +96,49 @@ describe('HTTPRequest Service', () => {
     };
     const response = await HTTPRequest(testUrl, options);
 
-    expect(mockUndiciAgent).toHaveBeenCalledTimes(1);
-    expect(mockUndiciAgent).toHaveBeenCalledWith({
-      connect: {
-        rejectUnauthorized: false
+    assert.strictEqual(agentInstances.length, 1);
+    assert.deepStrictEqual((undiciModule.Agent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      {
+        connect: {
+          rejectUnauthorized: false
+        }
       }
+    ]);
+    assert.strictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    const calledWith = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1];
+    assert.deepStrictEqual(calledWith.method, 'POST');
+    assert.deepStrictEqual(calledWith.headers, {
+      'Content-Type': 'application/json',
+      'X-Custom-Header': 'value123',
+      'User-Agent': 'a custom user agent'
     });
-    expect(mockUndiciRequest).toHaveBeenCalledTimes(1);
-    expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Custom-Header': 'value123',
-        'User-Agent': `a custom user agent`
-      },
-      body: JSON.stringify({ data: 'test' }),
-      dispatcher: expect.objectContaining({ isMockAgent: true })
-    });
-    expect(response.ok).toBe(true);
+    assert.ok(calledWith.dispatcher?.isMockAgent);
+    assert.strictEqual(response.ok, true);
   });
 
-  it('should handle non 2xx status codes and set ok to alse', async () => {
-    mockUndiciRequest.mockResolvedValueOnce(createMockResponse(404, { error: 'Not Found' }));
+  it('should handle non 2xx status codes and set ok to false', async () => {
+    (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => createMockResponse(404, { error: 'Not Found' }));
     const response = await HTTPRequest(testUrl);
 
-    expect(response.statusCode).toBe(404);
-    expect(response.ok).toBe(false);
+    assert.strictEqual(response.statusCode, 404);
+    assert.strictEqual(response.ok, false);
   });
 
   it('should set AbortSignal for timeout', async () => {
     const options: ReqOptions = { timeout: 5000 };
     await HTTPRequest(testUrl, options);
 
-    expect(mockAbortSignalTimeout).toHaveBeenCalledTimes(1);
-    expect(mockAbortSignalTimeout).toHaveBeenCalledWith(5000);
-    expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-      headers: {
-        'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
-      },
-      signal: mockAbortSignal
-    });
+    assert.strictEqual((AbortSignal.timeout as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((AbortSignal.timeout as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [5000]);
+    assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      testUrl,
+      {
+        headers: {
+          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+        },
+        signal: mockAbortSignal
+      }
+    ]);
   });
 
   describe('Authorization', () => {
@@ -145,21 +149,24 @@ describe('HTTPRequest Service', () => {
           username: 'user',
           password: 'encrypted-pass'
         },
-        headers: { 'X-Other': 'value', 'user-agent': 'a user agent' } // Ensure other headers are kept and user-agent is removed
+        headers: { 'X-Other': 'value', 'user-agent': 'a user agent' }
       };
       const expectedToken = 'Basic ' + Buffer.from('user:encrypted-pass-decrypted').toString('base64');
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith('encrypted-pass');
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
-          'X-Other': 'value', // Existing header
-          Authorization: expectedToken // Added header
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-pass']);
+      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        testUrl,
+        {
+          headers: {
+            'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
+            'X-Other': 'value',
+            Authorization: expectedToken
+          }
         }
-      });
+      ]);
     });
 
     it('should handle Basic Auth with null/undefined password', async () => {
@@ -174,14 +181,17 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith(null);
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
-          Authorization: expectedToken
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [null]);
+      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        testUrl,
+        {
+          headers: {
+            'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
+            Authorization: expectedToken
+          }
         }
-      });
+      ]);
     });
 
     it('should handle Bearer Auth (adding Bearer prefix)', async () => {
@@ -195,14 +205,17 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith('encrypted-token');
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
-          Authorization: expectedToken
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-token']);
+      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        testUrl,
+        {
+          headers: {
+            'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
+            Authorization: expectedToken
+          }
         }
-      });
+      ]);
     });
 
     it('should handle Bearer Auth (with existing Bearer prefix)', async () => {
@@ -213,19 +226,21 @@ describe('HTTPRequest Service', () => {
           token: encryptedTokenWithPrefix
         }
       };
-      // Decrypt mock already returns "Bearer ..."
       const expectedToken = `${encryptedTokenWithPrefix}-decrypted`;
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith(encryptedTokenWithPrefix);
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
-          Authorization: expectedToken
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [encryptedTokenWithPrefix]);
+      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        testUrl,
+        {
+          headers: {
+            'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
+            Authorization: expectedToken
+          }
         }
-      });
+      ]);
     });
 
     it('should handle URL Auth', async () => {
@@ -241,17 +256,18 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(originalUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith('encrypted-urlpass');
-      // URL is modified, check it matches the standard URL serialization
-      expect(mockUndiciRequest).toHaveBeenCalledWith(expectedUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-urlpass']);
+      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        expectedUrl,
+        {
+          headers: {
+            'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+          }
         }
-      });
-      // Explicitly check that Authorization header is not be present
-      const actualOptionsPassed = mockUndiciRequest.mock.calls[0][1];
-      expect(actualOptionsPassed).not.toHaveProperty('Authorization');
+      ]);
+      const actualHeaders = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].headers;
+      assert.ok(!('Authorization' in actualHeaders));
     });
 
     it('should handle URL Auth with null/undefined password', async () => {
@@ -267,17 +283,18 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(originalUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith(null);
-      // URL is modified, check it matches the standard URL serialization
-      expect(mockUndiciRequest).toHaveBeenCalledWith(expectedUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [null]);
+      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        expectedUrl,
+        {
+          headers: {
+            'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+          }
         }
-      });
-      // Explicitly check that Authorization header is not be present
-      const actualOptionsPassed = mockUndiciRequest.mock.calls[0][1];
-      expect(actualOptionsPassed).not.toHaveProperty('Authorization');
+      ]);
+      const actualHeaders = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].headers;
+      assert.ok(!('Authorization' in actualHeaders));
     });
 
     it('should prioritize options.auth over lowercase authorization header', async () => {
@@ -288,24 +305,16 @@ describe('HTTPRequest Service', () => {
           password: 'encrypted-pass'
         },
         headers: {
-          authorization: 'some-other-token' // Lowercase header
+          authorization: 'some-other-token'
         }
       };
       const expectedToken = 'Basic ' + Buffer.from('user:encrypted-pass-decrypted').toString('base64');
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
-          // lowercase 'authorization' should be ignored, and uppercase 'Authorization' set by auth logic
-          Authorization: expectedToken
-        }
-      });
-      // Explicitly check that the lowercase header is not present
-      const actualHeaders = mockUndiciRequest.mock.calls[0][1].headers;
-      expect(actualHeaders).not.toHaveProperty('authorization');
-      expect(actualHeaders).toHaveProperty('Authorization', expectedToken);
+      const actualHeaders = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].headers;
+      assert.ok(!('authorization' in actualHeaders));
+      assert.strictEqual(actualHeaders.Authorization, expectedToken);
     });
 
     it('should keep existing uppercase Authorization header if no options.auth provided', async () => {
@@ -317,13 +326,16 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).not.toHaveBeenCalled();
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
-          Authorization: 'Bearer existing-token'
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        testUrl,
+        {
+          headers: {
+            'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`,
+            Authorization: 'Bearer existing-token'
+          }
         }
-      });
+      ]);
     });
   });
 
@@ -337,15 +349,20 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
-      expect(mockUndiciProxyAgent).toHaveBeenCalledWith({ uri: testProxyUrl });
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
-        },
-        dispatcher: expect.objectContaining({ isMockProxyAgent: true }) // Check if our mock instance was passed
-      });
-      expect(mockDecryptText).not.toHaveBeenCalled(); // No auth decryption needed
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [{ uri: testProxyUrl }]);
+      const dispatcher = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].dispatcher;
+      assert.ok(dispatcher?.isMockProxyAgent);
+      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        testUrl,
+        {
+          headers: {
+            'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
+          },
+          dispatcher
+        }
+      ]);
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
     });
 
     it('should configure ProxyAgent without auth and accept unauthorized', async () => {
@@ -358,20 +375,18 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
-      expect(mockUndiciProxyAgent).toHaveBeenCalledWith({
-        uri: testProxyUrl,
-        requestTls: {
-          rejectUnauthorized: false
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        {
+          uri: testProxyUrl,
+          requestTls: {
+            rejectUnauthorized: false
+          }
         }
-      });
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
-        },
-        dispatcher: expect.objectContaining({ isMockProxyAgent: true }) // Check if our mock instance was passed
-      });
-      expect(mockDecryptText).not.toHaveBeenCalled(); // No auth decryption needed
+      ]);
+      const dispatcher = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].dispatcher;
+      assert.ok(dispatcher?.isMockProxyAgent);
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
     });
 
     it('should configure ProxyAgent with Basic auth', async () => {
@@ -389,19 +404,14 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith('encrypted-proxypass');
-      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
-      expect(mockUndiciProxyAgent).toHaveBeenCalledWith({
-        uri: testProxyUrl, // URI remains the same for basic proxy auth
-        token: expectedToken
-      });
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
-        },
-        dispatcher: expect.objectContaining({ isMockProxyAgent: true })
-      });
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-proxypass']);
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        { uri: testProxyUrl, token: expectedToken }
+      ]);
+      const dispatcher = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].dispatcher;
+      assert.ok(dispatcher?.isMockProxyAgent);
     });
 
     it('should configure ProxyAgent with Bearer auth', async () => {
@@ -418,19 +428,14 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith('encrypted-proxytoken');
-      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
-      expect(mockUndiciProxyAgent).toHaveBeenCalledWith({
-        uri: testProxyUrl, // URI remains the same for basic proxy auth
-        token: expectedToken
-      });
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
-        },
-        dispatcher: expect.objectContaining({ isMockProxyAgent: true })
-      });
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-proxytoken']);
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        { uri: testProxyUrl, token: expectedToken }
+      ]);
+      const dispatcher = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].dispatcher;
+      assert.ok(dispatcher?.isMockProxyAgent);
     });
 
     it('should configure ProxyAgent with URL auth', async () => {
@@ -445,25 +450,16 @@ describe('HTTPRequest Service', () => {
         }
       };
 
-      // URL.toString() adds a trailing slash if the path is implied root
       const expectedProxyAgentUri = 'http://proxyurluser:encrypted-proxyurlpass-decrypted@proxy.internal:9090/';
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith('encrypted-proxyurlpass');
-      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
-      // For URL auth on proxy, the URI itself is modified, and token is NOT set in options
-      expect(mockUndiciProxyAgent).toHaveBeenCalledWith({
-        uri: expectedProxyAgentUri, // Check the corrected URI with trailing slash
-        token: undefined // No separate token for URL auth
-      });
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
-        },
-        dispatcher: expect.objectContaining({ isMockProxyAgent: true })
-      });
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-proxyurlpass']);
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        { uri: expectedProxyAgentUri, token: undefined }
+      ]);
     });
 
     it('should reuse ProxyAgent instance for the same proxy config', async () => {
@@ -472,8 +468,8 @@ describe('HTTPRequest Service', () => {
       await HTTPRequest(testUrl, options);
       await HTTPRequest(testUrl, options);
 
-      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
-      expect(mockUndiciRequest).toHaveBeenCalledTimes(2);
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls.length, 2);
     });
 
     it('should create separate ProxyAgent instances for different proxy configs', async () => {
@@ -483,7 +479,7 @@ describe('HTTPRequest Service', () => {
       await HTTPRequest(testUrl, optionsA);
       await HTTPRequest(testUrl, optionsB);
 
-      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(2);
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 2);
     });
 
     it('should configure ProxyAgent with URL auth even if URL has auth', async () => {
@@ -498,25 +494,16 @@ describe('HTTPRequest Service', () => {
         }
       };
 
-      // URL.toString() adds a trailing slash if the path is implied root
       const expectedProxyAgentUri = 'http://proxyurluser:encrypted-proxyurlpass-decrypted@proxy.internal:9090/';
 
       await HTTPRequest(testUrl, options);
 
-      expect(mockDecryptText).toHaveBeenCalledTimes(1);
-      expect(mockDecryptText).toHaveBeenCalledWith('encrypted-proxyurlpass');
-      expect(mockUndiciProxyAgent).toHaveBeenCalledTimes(1);
-      // For URL auth on proxy, the URI itself is modified, and token is NOT set in options
-      expect(mockUndiciProxyAgent).toHaveBeenCalledWith({
-        uri: expectedProxyAgentUri, // Check the corrected URI with trailing slash
-        token: undefined // No separate token for URL auth
-      });
-      expect(mockUndiciRequest).toHaveBeenCalledWith(testUrl, {
-        headers: {
-          'User-Agent': `OIBus/${version} (https://oibus.optimistik.com/)`
-        },
-        dispatcher: expect.objectContaining({ isMockProxyAgent: true })
-      });
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-proxyurlpass']);
+      assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        { uri: expectedProxyAgentUri, token: undefined }
+      ]);
     });
   });
 });

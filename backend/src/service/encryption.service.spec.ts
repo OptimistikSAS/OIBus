@@ -1,52 +1,30 @@
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
-import * as forge from 'node-forge';
 import path from 'node:path';
+import os from 'node:os';
 
 import EncryptionService, { CERT_FILE_NAME, CERT_PRIVATE_KEY_FILE_NAME, CERT_PUBLIC_KEY_FILE_NAME } from './encryption.service';
-
-import * as utils from './utils';
-
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
 import { SouthOPCUASettings } from '../../shared/model/south-settings.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute, OIBusSecretAttribute, OIBusStringAttribute } from '../../shared/model/form.model';
 import testData from '../tests/utils/test-data';
-import os from 'node:os';
 
-jest.mock('./utils');
-jest.mock('node:fs/promises');
-jest.mock('node:crypto');
-// MOCK NODE-FORGE
-// We create a mock certificate object that allows us to spy on methods like setExtensions
+const nodeRequire = createRequire(import.meta.url);
+const forgeModule = nodeRequire('node-forge');
+
+// Mock certificate object to spy on methods
 const mockCert = {
   publicKey: null,
   serialNumber: null,
   validity: {},
-  setSubject: jest.fn(),
-  setIssuer: jest.fn(),
-  setExtensions: jest.fn(),
-  sign: jest.fn()
+  setSubject: mock.fn(),
+  setIssuer: mock.fn(),
+  setExtensions: mock.fn(),
+  sign: mock.fn()
 };
-jest.mock('node-forge', () => ({
-  pki: {
-    rsa: {
-      generateKeyPair: jest.fn(() => ({ privateKey: 'MOCK_PRIV_KEY', publicKey: 'MOCK_PUB_KEY' }))
-    },
-    createCertificate: jest.fn(() => mockCert),
-    privateKeyToPem: jest.fn(() => '-----BEGIN PRIVATE KEY-----'),
-    publicKeyToPem: jest.fn(() => '-----BEGIN PUBLIC KEY-----'),
-    certificateToPem: jest.fn(() => '-----BEGIN CERTIFICATE-----')
-  },
-  md: {
-    sha256: { create: jest.fn() }
-  },
-  util: {
-    bytesToHex: jest.fn(() => 'HEX123')
-  },
-  random: {
-    getBytesSync: jest.fn()
-  }
-}));
 
 const encryptionService = EncryptionService.getInstance();
 
@@ -122,130 +100,174 @@ const manifest: OIBusObjectAttribute = {
 } as OIBusObjectAttribute;
 
 const certFolder = 'certFolder';
+
 describe('Encryption Service', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    // (os.hostname as jest.Mock).mockReturnValue('TEST_HOST');
+  beforeEach(() => {
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+
+    // Reset service caches between tests
+    encryptionService['_certFile'] = null;
+    encryptionService['_privateKey'] = null;
+    encryptionService['_publicKey'] = null;
+    encryptionService['initialized'] = true;
+
+    // Mock fs functions
+    mock.method(fs, 'stat', async () => {});
+    mock.method(fs, 'mkdir', async () => {});
+    mock.method(fs, 'readFile', async () => '');
+    mock.method(fs, 'writeFile', async () => {});
+
+    // Mock crypto functions
+    mock.method(crypto, 'createCipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
+    mock.method(crypto, 'createDecipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
+    mock.method(crypto, 'privateDecrypt', () => Buffer.from(''));
+
+    // Reset forge mocks
+    mockCert.setSubject = mock.fn();
+    mockCert.setIssuer = mock.fn();
+    mockCert.setExtensions = mock.fn();
+    mockCert.sign = mock.fn();
+
+    mock.method(forgeModule.pki.rsa, 'generateKeyPair', () => ({ privateKey: 'MOCK_PRIV_KEY', publicKey: 'MOCK_PUB_KEY' }));
+    mock.method(forgeModule.pki, 'createCertificate', () => mockCert);
+    mock.method(forgeModule.pki, 'privateKeyToPem', () => '-----BEGIN PRIVATE KEY-----');
+    mock.method(forgeModule.pki, 'publicKeyToPem', () => '-----BEGIN PUBLIC KEY-----');
+    mock.method(forgeModule.pki, 'certificateToPem', () => '-----BEGIN CERTIFICATE-----');
+    mock.method(forgeModule.util, 'bytesToHex', () => 'HEX123');
+    mock.method(forgeModule.random, 'getBytesSync', () => 'RANDOM');
+    mock.method(forgeModule.md.sha256, 'create', () => 'SHA256_MOCK');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should not create certificate if it already exists', async () => {
-    (utils.filesExists as jest.Mock).mockReturnValue(true);
-    encryptionService.generateSelfSignedCertificate = jest.fn();
+    // fs.stat resolves → filesExists returns true, createFolder sees folder as existing
+    mock.method(encryptionService, 'generateSelfSignedCertificate', mock.fn());
+
     await encryptionService.init(cryptoSettings, certFolder);
 
-    expect(utils.createFolder).toHaveBeenCalledWith(certFolder);
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME));
-    expect(encryptionService.generateSelfSignedCertificate).not.toHaveBeenCalled();
-    expect(fs.writeFile).not.toHaveBeenCalled();
-    expect(encryptionService.certsFolder).toEqual(certFolder);
-    encryptionService.generateSelfSignedCertificate = EncryptionService.prototype.generateSelfSignedCertificate;
+    // Verify createFolder was called (fs.stat called with resolved certFolder path)
+    const statCalls = (fs.stat as ReturnType<typeof mock.fn>).mock.calls.map(c => c.arguments[0]);
+    assert.ok(statCalls.includes(path.resolve(certFolder)), 'createFolder should check folder existence');
+    // Verify filesExists was called for cert paths
+    assert.ok(statCalls.includes(path.resolve(certFolder, CERT_FILE_NAME)));
+    assert.ok(statCalls.includes(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME)));
+    assert.ok(statCalls.includes(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME)));
+
+    assert.strictEqual((encryptionService.generateSelfSignedCertificate as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(encryptionService.certsFolder, certFolder);
   });
 
   it('should create certificate if it does not exist', async () => {
-    encryptionService.generateSelfSignedCertificate = jest.fn().mockReturnValueOnce({ private: 'private', public: 'public', cert: 'cert' });
-    (utils.filesExists as jest.Mock).mockReturnValue(false);
+    // Make filesExists return false by having fs.stat throw for file paths (but resolve for folder)
+    (fs.stat as ReturnType<typeof mock.fn>).mock.mockImplementation(async (filePath: unknown) => {
+      if (String(filePath) === path.resolve(certFolder)) return; // folder exists
+      throw new Error('ENOENT'); // files don't exist
+    });
+
+    mock.method(encryptionService, 'generateSelfSignedCertificate', mock.fn(async () => ({
+      private: 'private',
+      public: 'public',
+      cert: 'cert'
+    })));
 
     await encryptionService.init(cryptoSettings, certFolder);
 
-    expect(encryptionService.generateSelfSignedCertificate).toHaveBeenCalledWith({
-      commonName: 'OIBus',
-      countryName: 'FR',
-      stateOrProvinceName: 'Savoie',
-      localityName: 'Chambery',
-      organizationName: 'Optimistik',
-      keySize: 4096,
-      daysBeforeExpiry: 36500
-    });
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'private');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'public');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certFolder, CERT_FILE_NAME), 'cert');
-    encryptionService.generateSelfSignedCertificate = EncryptionService.prototype.generateSelfSignedCertificate;
+    assert.strictEqual((encryptionService.generateSelfSignedCertificate as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((encryptionService.generateSelfSignedCertificate as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      {
+        commonName: 'OIBus',
+        countryName: 'FR',
+        stateOrProvinceName: 'Savoie',
+        localityName: 'Chambery',
+        organizationName: 'Optimistik',
+        keySize: 4096,
+        daysBeforeExpiry: 36500
+      }
+    ]);
+    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'private']);
+    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments, [path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'public']);
+    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[2].arguments, [path.resolve(certFolder, CERT_FILE_NAME), 'cert']);
   });
 
   it('should properly retrieve files', async () => {
-    (fs.readFile as jest.Mock)
-      .mockReturnValueOnce('cert file content')
-      .mockReturnValueOnce('private key file content')
-      .mockReturnValueOnce('public key file content');
+    let readCallCount = 0;
+    (fs.readFile as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => {
+      readCallCount++;
+      if (readCallCount === 1) return 'cert file content';
+      if (readCallCount === 2) return 'private key file content';
+      return 'public key file content';
+    });
 
-    expect(await encryptionService.getCert()).toEqual('cert file content');
-    expect(await encryptionService.getCert()).toEqual('cert file content');
-    expect(fs.readFile).toHaveBeenCalledTimes(1);
-    expect(await encryptionService.getPrivateKey()).toEqual('private key file content');
-    expect(await encryptionService.getPrivateKey()).toEqual('private key file content');
-    expect(fs.readFile).toHaveBeenCalledTimes(2);
-    expect(await encryptionService.getPublicKey()).toEqual('public key file content');
-    expect(await encryptionService.getPublicKey()).toEqual('public key file content');
-    expect(fs.readFile).toHaveBeenCalledTimes(3);
+    assert.strictEqual(await encryptionService.getCert(), 'cert file content');
+    assert.strictEqual(await encryptionService.getCert(), 'cert file content');
+    assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(await encryptionService.getPrivateKey(), 'private key file content');
+    assert.strictEqual(await encryptionService.getPrivateKey(), 'private key file content');
+    assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(await encryptionService.getPublicKey(), 'public key file content');
+    assert.strictEqual(await encryptionService.getPublicKey(), 'public key file content');
+    assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 3);
   });
 
   it('should properly encrypt text', async () => {
-    const update = jest.fn(() => 'encrypted text');
-    const final = jest.fn(() => '');
-    (crypto.createCipheriv as jest.Mock).mockImplementationOnce(() => ({
-      update,
-      final
-    }));
+    const update = mock.fn(() => 'encrypted text');
+    const final = mock.fn(() => '');
+    (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
 
     const encryptedText = await encryptionService.encryptText('text to encrypt');
-    expect(encryptedText).toEqual('encrypted text');
-    expect(crypto.createCipheriv).toHaveBeenCalledWith(
+    assert.strictEqual(encryptedText, 'encrypted text');
+    assert.deepStrictEqual((crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       cryptoSettings.algorithm,
       Buffer.from(cryptoSettings.securityKey, 'base64'),
       Buffer.from(cryptoSettings.initVector, 'base64')
-    );
-    expect(update).toHaveBeenCalledWith('text to encrypt', 'utf8', 'base64');
-    expect(final).toHaveBeenCalledWith('base64');
+    ]);
+    assert.deepStrictEqual(update.mock.calls[0].arguments, ['text to encrypt', 'utf8', 'base64']);
+    assert.deepStrictEqual(final.mock.calls[0].arguments, ['base64']);
   });
 
   it('should properly encrypt empty input', async () => {
     const encryptedText = await encryptionService.encryptText('');
-    expect(encryptedText).toEqual('');
-    expect(crypto.createCipheriv).not.toHaveBeenCalled();
+    assert.strictEqual(encryptedText, '');
+    assert.strictEqual((crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should throw error on encrypt when class is not initialized', async () => {
     encryptionService['initialized'] = false;
-    await expect(encryptionService.encryptText('test')).rejects.toThrow('EncryptionService not initialized');
+    await assert.rejects(encryptionService.encryptText('test'), { message: 'EncryptionService not initialized' });
   });
 
   it('should properly decrypt text', async () => {
     encryptionService['initialized'] = true;
-    const update = jest.fn(() => 'decrypted text');
-    const final = jest.fn(() => '');
-    (crypto.createDecipheriv as jest.Mock).mockImplementationOnce(() => ({
-      update,
-      final
-    }));
+    const update = mock.fn(() => 'decrypted text');
+    const final = mock.fn(() => '');
+    (crypto.createDecipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
 
     const decryptedText = await encryptionService.decryptText('text to decrypt');
-    expect(decryptedText).toEqual('decrypted text');
-    expect(crypto.createDecipheriv).toHaveBeenCalledWith(
+    assert.strictEqual(decryptedText, 'decrypted text');
+    assert.deepStrictEqual((crypto.createDecipheriv as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       cryptoSettings.algorithm,
       Buffer.from(cryptoSettings.securityKey, 'base64'),
       Buffer.from(cryptoSettings.initVector, 'base64')
-    );
-    expect(update).toHaveBeenCalledWith('text to decrypt', 'base64', 'utf8');
-    expect(final).toHaveBeenCalledWith('utf8');
+    ]);
+    assert.deepStrictEqual(update.mock.calls[0].arguments, ['text to decrypt', 'base64', 'utf8']);
+    assert.deepStrictEqual(final.mock.calls[0].arguments, ['utf8']);
   });
 
   it('should properly decrypt empty input', async () => {
     encryptionService['initialized'] = true;
     const decryptedText = await encryptionService.decryptText('');
-    expect(decryptedText).toEqual('');
-    expect(crypto.createCipheriv).not.toHaveBeenCalled();
+    assert.strictEqual(decryptedText, '');
+    assert.strictEqual((crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should throw error on decrypt when class is not initialized', async () => {
     encryptionService['initialized'] = false;
-    await expect(encryptionService.decryptText('test')).rejects.toThrow('EncryptionService not initialized');
+    await assert.rejects(encryptionService.decryptText('test'), { message: 'EncryptionService not initialized' });
   });
 
   it('should properly encrypt connector secrets', async () => {
@@ -282,12 +304,9 @@ describe('Encryption Service', () => {
       } as unknown as SouthOPCUASettings
     } as SouthConnectorDTO;
 
-    const update = jest.fn(() => 'encrypted secret');
-    const final = jest.fn(() => '');
-    (crypto.createCipheriv as jest.Mock).mockImplementation(() => ({
-      update,
-      final
-    }));
+    const update = mock.fn(() => 'encrypted secret');
+    const final = mock.fn(() => '');
+    (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
 
     const expectedCommand = {
       field1: 'not a secret',
@@ -303,7 +322,7 @@ describe('Encryption Service', () => {
       }
     };
 
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest)).toEqual(expectedCommand);
+    assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest), expectedCommand);
   });
 
   it('should properly encrypt connector secrets when no secret provided', async () => {
@@ -330,12 +349,9 @@ describe('Encryption Service', () => {
       } as unknown as SouthOPCUASettings
     };
 
-    const update = jest.fn(() => 'encrypted secret');
-    const final = jest.fn(() => '');
-    (crypto.createCipheriv as jest.Mock).mockImplementation(() => ({
-      update,
-      final
-    }));
+    const update = mock.fn(() => 'encrypted secret');
+    const final = mock.fn(() => '');
+    (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
 
     const expectedCommand = {
       field1: 'not a secret',
@@ -351,7 +367,7 @@ describe('Encryption Service', () => {
       }
     };
 
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, manifest)).toEqual(expectedCommand);
+    assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(command.settings, null, manifest), expectedCommand);
   });
 
   it('should properly keep existing and encrypted connector secrets', async () => {
@@ -411,14 +427,11 @@ describe('Encryption Service', () => {
       }
     };
 
-    const update = jest.fn(() => 'encrypted secret');
-    const final = jest.fn(() => '');
-    (crypto.createCipheriv as jest.Mock).mockImplementation(() => ({
-      update,
-      final
-    }));
+    const update = mock.fn(() => 'encrypted secret');
+    const final = mock.fn(() => '');
+    (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
 
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest)).toEqual(expectedCommand);
+    assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest), expectedCommand);
   });
 
   it('should properly decrypt connector secrets', async () => {
@@ -443,12 +456,9 @@ describe('Encryption Service', () => {
       } as unknown as SouthOPCUASettings
     } as SouthConnectorCommandDTO;
 
-    const update = jest.fn(() => 'encrypted secret');
-    const final = jest.fn(() => '');
-    (crypto.createDecipheriv as jest.Mock).mockImplementation(() => ({
-      update,
-      final
-    }));
+    const update = mock.fn(() => 'encrypted secret');
+    const final = mock.fn(() => '');
+    (crypto.createDecipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
 
     const expectedCommand = {
       field1: 'not a secret',
@@ -464,7 +474,7 @@ describe('Encryption Service', () => {
       }
     };
 
-    expect(await encryptionService.decryptConnectorSecrets(command.settings, manifest)).toEqual(expectedCommand);
+    assert.deepStrictEqual(await encryptionService.decryptConnectorSecrets(command.settings, manifest), expectedCommand);
   });
 
   it('should properly filter out secret', () => {
@@ -489,7 +499,7 @@ describe('Encryption Service', () => {
       } as unknown as SouthOPCUASettings
     } as SouthConnectorDTO;
 
-    expect(encryptionService.filterSecrets(connector.settings, manifest)).toEqual({
+    assert.deepStrictEqual(encryptionService.filterSecrets(connector.settings, manifest), {
       field1: 'not a secret',
       field2: '',
       field3: 'not a secret',
@@ -526,7 +536,7 @@ describe('Encryption Service', () => {
         }
       } as unknown as SouthOPCUASettings
     };
-    (crypto.privateDecrypt as jest.Mock).mockImplementation(() => 'encrypted secret');
+    (crypto.privateDecrypt as ReturnType<typeof mock.fn>).mock.mockImplementation(() => Buffer.from('encrypted secret'));
     const expectedCommand = {
       field1: 'not a secret',
       field2: 'encrypted secret',
@@ -541,7 +551,7 @@ describe('Encryption Service', () => {
       }
     };
 
-    expect(await encryptionService.decryptSecretsWithPrivateKey(command.settings, manifest, 'private key')).toEqual(expectedCommand);
+    assert.deepStrictEqual(await encryptionService.decryptSecretsWithPrivateKey(command.settings, manifest, 'private key'), expectedCommand);
   });
 
   it('should generate a certificate with correct extensions and SANs', async () => {
@@ -557,11 +567,9 @@ describe('Encryption Service', () => {
 
     const result = await encryptionService.generateSelfSignedCertificate(options);
 
-    // 1. Check Keys Generation
-    expect(forge.pki.rsa.generateKeyPair).toHaveBeenCalledWith(2048);
+    assert.strictEqual((forgeModule.pki.rsa.generateKeyPair as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((forgeModule.pki.rsa.generateKeyPair as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [2048]);
 
-    // 2. Check Subject and Issuer (Short names)
-    // We expect 5 items because all fields are provided
     const expectedAttrs = [
       { shortName: 'CN', value: 'Test CN' },
       { shortName: 'C', value: 'FR' },
@@ -569,33 +577,28 @@ describe('Encryption Service', () => {
       { shortName: 'L', value: 'Chambery' },
       { shortName: 'O', value: 'Test Org' }
     ];
-    expect(mockCert.setSubject).toHaveBeenCalledWith(expectedAttrs);
-    expect(mockCert.setIssuer).toHaveBeenCalledWith(expectedAttrs);
+    assert.deepStrictEqual(mockCert.setSubject.mock.calls[0].arguments, [expectedAttrs]);
+    assert.deepStrictEqual(mockCert.setIssuer.mock.calls[0].arguments, [expectedAttrs]);
 
-    // 3. Check Extensions (CRITICAL: Verify SubjectAltName)
-    // We capture the array passed to setExtensions to inspect it deeply
-    const extensionsArg = (mockCert.setExtensions as jest.Mock).mock.calls[0][0];
+    const extensionsArg = mockCert.setExtensions.mock.calls[0].arguments[0];
 
-    // Check basic constraints
     const basicConstraints = extensionsArg.find((e: { name: string; cA: boolean; critical: boolean }) => e.name === 'basicConstraints');
-    expect(basicConstraints).toEqual({ name: 'basicConstraints', cA: false, critical: true });
+    assert.deepStrictEqual(basicConstraints, { name: 'basicConstraints', cA: false, critical: true });
 
-    // Check Subject Alternative Name
     const san = extensionsArg.find((e: { name: string; altNames: Array<{ type: number; value: string }> }) => e.name === 'subjectAltName');
-    expect(san).toBeDefined();
-    expect(san.altNames).toEqual([
+    assert.ok(san);
+    assert.deepStrictEqual(san.altNames, [
       {
-        type: 6, // URI
+        type: 6,
         value: `urn:${os.hostname()}:OIBus`
       },
       {
-        type: 2, // DNS
+        type: 2,
         value: os.hostname()
       }
     ]);
 
-    // 4. Check Return Output
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       private: '-----BEGIN PRIVATE KEY-----',
       public: '-----BEGIN PUBLIC KEY-----',
       cert: '-----BEGIN CERTIFICATE-----'
@@ -606,22 +609,21 @@ describe('Encryption Service', () => {
     const options = {
       commonName: 'Test CN',
       countryName: 'FR',
-      stateOrProvinceName: '', // EMPTY -> Should be removed
-      localityName: '', // NULL -> Should be removed
-      organizationName: '', // UNDEFINED -> Should be removed
+      stateOrProvinceName: '',
+      localityName: '',
+      organizationName: '',
       keySize: 2048,
       daysBeforeExpiry: 365
     };
 
     await encryptionService.generateSelfSignedCertificate(options);
 
-    // We expect only CN and C because the others were empty/null
     const expectedAttrs = [
       { shortName: 'CN', value: 'Test CN' },
       { shortName: 'C', value: 'FR' }
     ];
 
-    expect(mockCert.setSubject).toHaveBeenCalledWith(expectedAttrs);
-    expect(mockCert.setIssuer).toHaveBeenCalledWith(expectedAttrs);
+    assert.deepStrictEqual(mockCert.setSubject.mock.calls[0].arguments, [expectedAttrs]);
+    assert.deepStrictEqual(mockCert.setIssuer.mock.calls[0].arguments, [expectedAttrs]);
   });
 });
