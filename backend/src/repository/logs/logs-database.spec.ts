@@ -1,3 +1,5 @@
+import { before, after, beforeEach, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import LogRepository from './log.repository';
@@ -6,11 +8,11 @@ import { createPageFromArray } from '../../../shared/model/types';
 
 let database: Database;
 describe('Repository with populated database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('logs');
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('logs');
   });
@@ -19,8 +21,6 @@ describe('Repository with populated database', () => {
     let repository: LogRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
-
       repository = new LogRepository(database);
     });
 
@@ -61,7 +61,7 @@ describe('Repository with populated database', () => {
       );
       repository.saveAll([]);
 
-      expect(
+      assert.deepStrictEqual(
         repository.search({
           levels: [testData.logs.list[0].level],
           scopeIds: [testData.logs.list[0].scopeId as string],
@@ -70,12 +70,13 @@ describe('Repository with populated database', () => {
           page: 0,
           start: testData.constants.dates.DATE_1,
           end: testData.constants.dates.DATE_2
-        })
-      ).toEqual(createPageFromArray([testData.logs.list[0]], 50, 0));
+        }),
+        createPageFromArray([testData.logs.list[0]], 50, 0)
+      );
 
-      expect(repository.count()).toEqual(testData.logs.list.length);
+      assert.strictEqual(repository.count(), testData.logs.list.length);
 
-      expect(
+      assert.strictEqual(
         repository.search({
           levels: [],
           scopeIds: [],
@@ -84,10 +85,11 @@ describe('Repository with populated database', () => {
           page: 0,
           start: testData.constants.dates.DATE_1,
           end: testData.constants.dates.DATE_2
-        }).totalElements
-      ).toEqual(1);
+        }).totalElements,
+        1
+      );
 
-      expect(
+      assert.strictEqual(
         repository.search({
           levels: [],
           scopeIds: [],
@@ -96,28 +98,29 @@ describe('Repository with populated database', () => {
           page: 0,
           start: testData.constants.dates.DATE_1,
           end: testData.constants.dates.DATE_2
-        }).totalElements
-      ).toEqual(4);
+        }).totalElements,
+        4
+      );
     });
 
     it('should delete logs', () => {
       repository.delete(1);
-      expect(repository.count()).toEqual(testData.logs.list.length - 1);
+      assert.strictEqual(repository.count(), testData.logs.list.length - 1);
 
       repository.deleteLogsByScopeId('south', testData.logs.list[0].scopeId as string);
-      expect(repository.count()).toEqual(testData.logs.list.length - 2);
+      assert.strictEqual(repository.count(), testData.logs.list.length - 2);
 
       repository.vacuum();
     });
 
     it('should search scopes and find by id', () => {
       const result = repository.suggestScopes(testData.logs.list[2].scopeName as string);
-      expect(result).toEqual([{ scopeId: testData.logs.list[2].scopeId, scopeName: testData.logs.list[2].scopeName }]);
+      assert.deepStrictEqual(result, [{ scopeId: testData.logs.list[2].scopeId, scopeName: testData.logs.list[2].scopeName }]);
 
       const scope = repository.getScopeById(testData.logs.list[2].scopeId as string);
-      expect(scope).toEqual({ scopeId: testData.logs.list[2].scopeId, scopeName: testData.logs.list[2].scopeName });
+      assert.deepStrictEqual(scope, { scopeId: testData.logs.list[2].scopeId, scopeName: testData.logs.list[2].scopeName });
 
-      expect(repository.getScopeById('bad id')).toEqual(null);
+      assert.strictEqual(repository.getScopeById('bad id'), null);
     });
   });
 });

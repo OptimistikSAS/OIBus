@@ -1,3 +1,5 @@
+import { before, after, beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
@@ -8,11 +10,11 @@ const TEST_DB_PATH = 'src/tests/test-metrics-north.db';
 
 let database: Database;
 describe('NorthConnectorMetricsRepository with populated database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('metrics', true, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('metrics', TEST_DB_PATH);
   });
@@ -20,19 +22,18 @@ describe('NorthConnectorMetricsRepository with populated database', () => {
   let repository: NorthConnectorMetricsRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new NorthConnectorMetricsRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should get metrics', () => {
     repository.initMetrics(testData.north.list[0].id);
     const result = repository.getMetrics(testData.north.list[0].id);
-    expect(result).toEqual(testData.north.metrics);
+    assert.deepStrictEqual(result, testData.north.metrics);
   });
 
   it('should update metrics', () => {
@@ -44,31 +45,31 @@ describe('NorthConnectorMetricsRepository with populated database', () => {
     repository.updateMetrics(testData.north.list[0].id, newMetrics);
 
     const result = repository.getMetrics(testData.north.list[0].id)!;
-    expect(result.metricsStart).toEqual(newMetrics.metricsStart);
-    expect(result.contentSentSize).toEqual(newMetrics.contentSentSize);
-    expect(result.contentCachedSize).toEqual(newMetrics.contentCachedSize);
-    expect(result.contentErroredSize).toEqual(newMetrics.contentErroredSize);
-    expect(result.contentArchivedSize).toEqual(newMetrics.contentArchivedSize);
-    expect(result.lastContentSent).toEqual(newMetrics.lastContentSent);
+    assert.strictEqual(result.metricsStart, newMetrics.metricsStart);
+    assert.strictEqual(result.contentSentSize, newMetrics.contentSentSize);
+    assert.strictEqual(result.contentCachedSize, newMetrics.contentCachedSize);
+    assert.strictEqual(result.contentErroredSize, newMetrics.contentErroredSize);
+    assert.strictEqual(result.contentArchivedSize, newMetrics.contentArchivedSize);
+    assert.strictEqual(result.lastContentSent, newMetrics.lastContentSent);
 
     newMetrics.lastContentSent = null;
     repository.updateMetrics(testData.north.list[0].id, newMetrics);
     const resultWithoutValue = repository.getMetrics(testData.north.list[0].id)!;
-    expect(resultWithoutValue.lastContentSent).toEqual(null);
+    assert.strictEqual(resultWithoutValue.lastContentSent, null);
   });
 
   it('should remove metrics', () => {
     repository.removeMetrics(testData.north.list[0].id);
-    expect(repository.getMetrics(testData.north.list[0].id)).toEqual(null);
+    assert.strictEqual(repository.getMetrics(testData.north.list[0].id), null);
   });
 });
 
 describe('NorthConnectorMetricsRepository with empty database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('metrics', false, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('metrics', TEST_DB_PATH);
   });
@@ -76,19 +77,18 @@ describe('NorthConnectorMetricsRepository with empty database', () => {
   let repository: NorthConnectorMetricsRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new NorthConnectorMetricsRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should init and get metrics', () => {
     repository.initMetrics(testData.north.list[0].id);
     const result = repository.getMetrics(testData.north.list[0].id);
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       metricsStart: testData.constants.dates.FAKE_NOW,
       lastConnection: null,
       lastRunStart: null,
