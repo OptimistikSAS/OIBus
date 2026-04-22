@@ -8,7 +8,10 @@ import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 jest.mock('./utils', () => ({
   resolveBypassingExports: jest.fn((pkgName, subPath) => `/mock/path/${pkgName}/${subPath}`)
 }));
-jest.mock('node:fs');
+jest.mock('node:fs', () => {
+  const real = jest.requireActual<typeof import('node:fs')>('node:fs');
+  return { ...real, readFileSync: jest.fn() };
+});
 
 // Flag toggled per-describe to exercise the context === null finally branch.
 let simulateCreateContextFailure = false;

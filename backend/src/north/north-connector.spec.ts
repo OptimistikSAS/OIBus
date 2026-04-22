@@ -38,7 +38,10 @@ import { HistoryQueryItemEntity } from '../model/histor-query.model';
 
 // Mock fs
 jest.mock('node:stream');
-jest.mock('node:fs');
+jest.mock('node:fs', () => {
+  const real = jest.requireActual<typeof import('node:fs')>('node:fs');
+  return { ...real, createReadStream: jest.fn() };
+});
 jest.mock('node:fs/promises');
 
 // Mock services
