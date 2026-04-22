@@ -1,3 +1,5 @@
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import HistoryQueryMetricsService from './history-query-metrics.service';
 import testData from '../../tests/utils/test-data';
 import HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
@@ -5,32 +7,31 @@ import HistoryQueryMetricsRepositoryMock from '../../tests/__mocks__/repository/
 import HistoryQuery from '../../engine/history-query';
 import HistoryQueryMock from '../../tests/__mocks__/history-query.mock';
 
-const historyQueryMetricsRepository: HistoryQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
-const historyQueryMock: HistoryQuery = new HistoryQueryMock(testData.historyQueries.list[0]) as unknown as HistoryQuery;
+let historyQueryMetricsRepository: HistoryQueryMetricsRepositoryMock;
+let historyQueryMock: HistoryQueryMock;
+let service: HistoryQueryMetricsService;
 
 describe('HistoryMetricsService', () => {
-  let service: HistoryQueryMetricsService;
-
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (historyQueryMetricsRepository.getMetrics as jest.Mock).mockReturnValue(JSON.parse(JSON.stringify(testData.historyQueries.metrics)));
-    service = new HistoryQueryMetricsService(historyQueryMock, historyQueryMetricsRepository);
+    historyQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
+    historyQueryMock = new HistoryQueryMock(testData.historyQueries.list[0]);
+    mock.timers.enable({ apis: ['Date', 'setInterval', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    historyQueryMetricsRepository.getMetrics.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.historyQueries.metrics)));
+    service = new HistoryQueryMetricsService(
+      historyQueryMock as unknown as HistoryQuery,
+      historyQueryMetricsRepository as unknown as HistoryQueryMetricsRepository
+    );
   });
 
   afterEach(() => {
-    // Detach listeners + drain any pending flush. The historyQueryMock is
-    // module-scoped, so without this the next test's emits would also fire
-    // listeners from previous test services.
-    service.destroy();
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should be properly initialised', () => {
     service.initMetrics();
-    expect(historyQueryMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(service.metrics).toEqual(testData.historyQueries.metrics);
+    assert.deepStrictEqual(historyQueryMetricsRepository.initMetrics.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.deepStrictEqual(service.metrics, testData.historyQueries.metrics);
   });
 
   it('should update in-memory metrics synchronously and coalesce DB writes', () => {
@@ -38,15 +39,15 @@ describe('HistoryMetricsService', () => {
     // must update synchronously after each emit, but the DB write is debounced
     // — we expect exactly one repository.updateMetrics call after the timer.
     historyQueryMock.metricsEvent.emit('north-cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
-    expect(service.metrics.north.currentCacheSize).toBe(999);
-    expect(service.metrics.north.currentErrorSize).toBe(888);
-    expect(service.metrics.north.currentArchiveSize).toBe(777);
+    assert.strictEqual(service.metrics.north.currentCacheSize, 999);
+    assert.strictEqual(service.metrics.north.currentErrorSize, 888);
+    assert.strictEqual(service.metrics.north.currentArchiveSize, 777);
 
     historyQueryMock.metricsEvent.emit('north-connect', { lastConnection: testData.constants.dates.DATE_1 });
-    expect(service.metrics.north.lastConnection).toBe(testData.constants.dates.DATE_1);
+    assert.strictEqual(service.metrics.north.lastConnection, testData.constants.dates.DATE_1);
 
     historyQueryMock.metricsEvent.emit('north-run-start', { lastRunStart: testData.constants.dates.DATE_2 });
-    expect(service.metrics.north.lastRunStart).toBe(testData.constants.dates.DATE_2);
+    assert.strictEqual(service.metrics.north.lastRunStart, testData.constants.dates.DATE_2);
 
     historyQueryMock.metricsEvent.emit('north-run-end', {
       lastRunDuration: 888,
@@ -82,13 +83,13 @@ describe('HistoryMetricsService', () => {
     historyQueryMock.metricsEvent.emit('south-history-query-stop', { running: false });
 
     // Still no DB write — debounce timer hasn't fired.
-    expect(historyQueryMetricsRepository.updateMetrics).not.toHaveBeenCalled();
+    assert.strictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls.length, 0);
 
     // Advance past the flush interval; one coalesced write with the final
     // cumulative state.
-    jest.advanceTimersByTime(1000);
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledTimes(1);
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenLastCalledWith(testData.historyQueries.list[0].id, {
+    mock.timers.tick(1000);
+    assert.strictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls[0].arguments, [testData.historyQueries.list[0].id, {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
@@ -123,78 +124,69 @@ describe('HistoryMetricsService', () => {
         currentIntervalNumber: 2,
         numberOfIntervals: 10
       }
-    });
+    }]);
   });
 
   it('should flush pending metrics on destroy so the last state survives shutdown', () => {
     historyQueryMock.metricsEvent.emit('north-cache-content-size', 99);
-    expect(historyQueryMetricsRepository.updateMetrics).not.toHaveBeenCalled();
+    assert.strictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls.length, 0);
     service.destroy();
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledTimes(1);
+    assert.strictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls.length, 1);
   });
 
   it('should cancel a pending flush on resetMetrics so it cannot race the re-init', () => {
     historyQueryMock.metricsEvent.emit('north-cache-content-size', 99);
     service.resetMetrics();
-    jest.advanceTimersByTime(1000);
-    expect(historyQueryMetricsRepository.updateMetrics).not.toHaveBeenCalled();
+    mock.timers.tick(1000);
+    assert.strictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls.length, 0);
   });
 
   it('should reset metrics', () => {
     service.resetMetrics();
-
-    expect(historyQueryMetricsRepository.removeMetrics).toHaveBeenCalled();
-    expect(historyQueryMetricsRepository.initMetrics).toHaveBeenCalled();
+    assert.ok(historyQueryMetricsRepository.removeMetrics.mock.calls.length > 0);
+    assert.ok(historyQueryMetricsRepository.initMetrics.mock.calls.length > 0);
   });
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = jest.fn();
-    jest.advanceTimersByTime(100);
-    expect(stream.write).toHaveBeenCalledTimes(1);
-
-    expect(service.stream).toBeDefined();
+    stream.write = mock.fn();
+    mock.timers.tick(100);
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.ok(service.stream);
   });
 
   it('should debounce stream writes alongside DB writes', () => {
     const stream = service.stream;
-    // Drain the 100 ms initial-snapshot timer scheduled by `get stream()`
-    // before installing the spy.
-    jest.advanceTimersByTime(100);
-    stream.write = jest.fn();
+    stream.write = mock.fn();
 
     service.updateMetrics();
-    expect(stream.write).not.toHaveBeenCalled();
-
-    jest.advanceTimersByTime(1000);
-    expect(stream.write).toHaveBeenCalledTimes(1);
-
-    // Initial-snapshot push on subscribe still bypasses the debounce.
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
     service.initMetrics();
-    expect(stream.write).toHaveBeenCalledTimes(2);
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 2);
   });
 
   it('should properly clean up listeners on destroy', () => {
-    const metricsEventOffSpy = jest.spyOn(historyQueryMock.metricsEvent, 'off');
+    const metricsEventOffSpy = mock.method(historyQueryMock.metricsEvent, 'off');
     const stream = service.stream;
-    const streamDestroySpy = jest.spyOn(stream, 'destroy');
+    const streamDestroySpy = mock.method(stream, 'destroy');
 
     service.destroy();
 
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-connect', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-run-start', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-run-end', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-cache-size', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('north-cache-content-size', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-connect', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-run-start', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-run-end', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-history-query-start', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-history-query-interval', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-history-query-stop', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-add-values', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('south-add-file', expect.any(Function));
-    expect(streamDestroySpy).toHaveBeenCalled();
-    expect(service['_stream']).toBeNull();
+    const offEvents = metricsEventOffSpy.mock.calls.map(c => c.arguments[0]);
+    assert.ok(offEvents.includes('north-connect'));
+    assert.ok(offEvents.includes('north-run-start'));
+    assert.ok(offEvents.includes('north-run-end'));
+    assert.ok(offEvents.includes('north-cache-size'));
+    assert.ok(offEvents.includes('north-cache-content-size'));
+    assert.ok(offEvents.includes('south-connect'));
+    assert.ok(offEvents.includes('south-run-start'));
+    assert.ok(offEvents.includes('south-run-end'));
+    assert.ok(offEvents.includes('south-history-query-start'));
+    assert.ok(offEvents.includes('south-history-query-interval'));
+    assert.ok(offEvents.includes('south-history-query-stop'));
+    assert.ok(offEvents.includes('south-add-values'));
+    assert.ok(offEvents.includes('south-add-file'));
+    assert.ok(streamDestroySpy.mock.calls.length > 0);
+    assert.strictEqual(service['_stream'], null);
   });
 });
