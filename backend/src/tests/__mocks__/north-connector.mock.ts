@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { mock } from 'node:test';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 
@@ -10,26 +11,26 @@ export default class NorthConnectorMock {
   constructor(connector: NorthConnectorEntity<NorthSettings>) {
     this.connector = connector;
   }
-  start = jest.fn().mockImplementation(() => Promise.resolve());
-  isEnabled = jest.fn();
-  connect = jest.fn();
-  createCronJob = jest.fn();
-  addTaskToQueue = jest.fn();
-  run = jest.fn();
-  handleContentWrapper = jest.fn();
-  createOIBusError = jest.fn();
-  resetCache = jest.fn();
-  cacheContent = jest.fn();
-  isSubscribed = jest.fn();
-  isCacheEmpty = jest.fn();
-  disconnect = jest.fn();
-  stop = jest.fn();
-  setLogger = jest.fn();
-  updateScanMode = jest.fn();
-  searchCacheContent = jest.fn();
-  getFileFromCache = jest.fn();
-  updateCacheContent = jest.fn();
-  testConnection = jest.fn().mockResolvedValue({ items: [] });
+  start = mock.fn(async () => undefined);
+  isEnabled = mock.fn();
+  connect = mock.fn();
+  createCronJob = mock.fn();
+  addTaskToQueue = mock.fn();
+  run = mock.fn();
+  handleContentWrapper = mock.fn();
+  createOIBusError = mock.fn();
+  resetCache = mock.fn();
+  cacheContent = mock.fn();
+  isSubscribed = mock.fn();
+  isCacheEmpty = mock.fn();
+  disconnect = mock.fn();
+  stop = mock.fn();
+  setLogger = mock.fn();
+  updateScanMode = mock.fn();
+  searchCacheContent = mock.fn();
+  getFileFromCache = mock.fn();
+  updateCacheContent = mock.fn();
+  testConnection = mock.fn(async () => ({ items: [] }));
   metricsEvent = new EventEmitter();
 
   set connectorConfiguration(connectorConfiguration: NorthConnectorEntity<NorthSettings>) {
