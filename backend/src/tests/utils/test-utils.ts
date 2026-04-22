@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import Database from 'better-sqlite3';
 import { setImmediate } from 'node:timers';
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
@@ -45,16 +46,52 @@ const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 export const flushPromises = () => new Promise(setImmediate);
 
 /**
+ * Injects exports into the require cache for a module.
+ * The module is loaded first (if not already cached) to ensure it has a cache entry.
+ * Use before reloadModule() to set up mocks for dependencies of the module under test.
+ *
+ * IMPORTANT: tsx compiles `import { fn } from './mod'` as namespace access (`import_mod.fn()`),
+ * so the SUT holds a reference to the exports OBJECT, not individual bindings.
+ * This means replacing the cache entry works only when the SUT is loaded AFTER this call.
+ * To update mocks between tests, mutate the object returned by this function in-place
+ * rather than calling mockModule() again.
+ */
+export function mockModule(req: NodeRequire, modulePath: string, exports: unknown): Record<string, unknown> {
+  try {
+    req(modulePath);
+  } catch {} // ensure it has a cache entry
+  const resolved = req.resolve(modulePath);
+  req.cache[resolved]!.exports = exports;
+  return exports as Record<string, unknown>;
+}
+
+/**
+ * Deletes a module from the require cache and reloads it.
+ * Call after all mockModule() calls to load the SUT with mocked dependencies applied.
+ */
+export function reloadModule<T>(req: NodeRequire, modulePath: string): T {
+  const resolved = req.resolve(modulePath);
+  delete req.cache[resolved];
+  return req(modulePath) as T;
+}
+
+/**
+ * Creates a FIFO sequential mock implementation for node:test.
+ * node:test's mockImplementationOnce overwrites prior "once" impls, so this helper
+ * provides Jest-compatible sequential behaviour with multiple staged return values.
+ */
+export function seq<T>(...impls: Array<() => T>): () => T {
+  let i = 0;
+  return () => (i < impls.length ? impls[i++]() : (undefined as unknown as T));
+}
+
+/**
  * Asserts that `actual` contains all properties from `expected` (partial match).
  * Equivalent to Jest's expect(actual).toEqual(expect.objectContaining(expected)).
  */
 export function assertContains(actual: unknown, expected: Record<string, unknown>): void {
   for (const [key, value] of Object.entries(expected)) {
-    assert.deepStrictEqual(
-      (actual as Record<string, unknown>)[key],
-      value,
-      `Property '${key}' mismatch`
-    );
+    assert.deepStrictEqual((actual as Record<string, unknown>)[key], value, `Property '${key}' mismatch`);
   }
 }
 

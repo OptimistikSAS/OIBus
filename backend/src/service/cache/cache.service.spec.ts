@@ -20,6 +20,9 @@ let determineContentTypeFromFilenameMock: ReturnType<typeof mock.fn>;
 let generateRandomIdMock: ReturnType<typeof mock.fn>;
 let processCacheFileContentMock: ReturnType<typeof mock.fn>;
 
+// Holds the mutable exports object injected into cache.service at load time.
+let utilsExports: Record<string, unknown>;
+
 /**
  * Creates a FIFO sequential mock implementation.
  * node:test's mockImplementationOnce only stores one "once" impl (overwrites prior ones),
@@ -41,11 +44,14 @@ before(() => {
   const origExports = nodeRequire.cache[utilsPath]!.exports;
   // tsx compiles TypeScript ES module exports as non-configurable/non-writable properties,
   // so we must replace the whole exports object to inject mocks.
-  nodeRequire.cache[utilsPath]!.exports = Object.assign({}, origExports, {
+  // We capture the new object so beforeEach can mutate it in-place (not replace it),
+  // keeping cache.service's import_utils binding valid across tests.
+  utilsExports = Object.assign({}, origExports, {
     determineContentTypeFromFilename: determineContentTypeFromFilenameMock,
     generateRandomId: generateRandomIdMock,
     processCacheFileContent: processCacheFileContentMock
   });
+  nodeRequire.cache[utilsPath]!.exports = utilsExports;
 
   // Load CacheService fresh with mocked utils
   delete nodeRequire.cache[nodeRequire.resolve('./cache.service')];
@@ -131,20 +137,21 @@ describe('CacheService', () => {
     determineContentTypeFromFilenameMock = mock.fn();
     generateRandomIdMock = mock.fn();
     processCacheFileContentMock = mock.fn();
-    // Update live exports so CacheService sees new mocks (replace the whole object since
-    // tsx compiles non-configurable properties)
-    const utilsPath = nodeRequire.resolve('../utils');
-    const prevExports = nodeRequire.cache[utilsPath]!.exports;
-    nodeRequire.cache[utilsPath]!.exports = Object.assign({}, prevExports, {
-      determineContentTypeFromFilename: determineContentTypeFromFilenameMock,
-      generateRandomId: generateRandomIdMock,
-      processCacheFileContent: processCacheFileContentMock
-    });
+    // Mutate the SAME object that cache.service's import_utils variable references.
+    // Replacing the cache entry would create a new object that cache.service never sees.
+    utilsExports.determineContentTypeFromFilename = determineContentTypeFromFilenameMock;
+    utilsExports.generateRandomId = generateRandomIdMock;
+    utilsExports.processCacheFileContent = processCacheFileContentMock;
 
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
 
     logger = new PinoLogger() as unknown as pino.Logger;
-    service = new CacheService(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, mockBaseFolders('northId').archive);
+    service = new CacheService(
+      logger,
+      mockBaseFolders('northId').cache,
+      mockBaseFolders('northId').error,
+      mockBaseFolders('northId').archive
+    );
 
     readFileMock = mock.fn();
     mock.method(fs, 'readFile', readFileMock);
@@ -171,20 +178,26 @@ describe('CacheService', () => {
       seq(
         async () => ['file1', 'file2', 'bad'], // Cache folder
         async () => ['file3', 'file4', 'bad'], // Error folder
-        async () => ['file5', 'file6', 'bad']  // Archive folder
+        async () => ['file5', 'file6', 'bad'] // Archive folder
       )
     );
     readFileMock.mock.mockImplementation(
       seq(
         async () => JSON.stringify(fileList[0].metadata),
         async () => JSON.stringify(fileList[1].metadata),
-        async () => { throw new Error('error 1'); },
+        async () => {
+          throw new Error('error 1');
+        },
         async () => JSON.stringify(fileList[2].metadata),
         async () => JSON.stringify(fileList[3].metadata),
-        async () => { throw new Error('error 2'); },
+        async () => {
+          throw new Error('error 2');
+        },
         async () => JSON.stringify(fileList[4].metadata),
         async () => JSON.stringify(fileList[5].metadata),
-        async () => { throw new Error('error 3'); }
+        async () => {
+          throw new Error('error 3');
+        }
       )
     );
 
@@ -359,7 +372,7 @@ describe('CacheService', () => {
       seq(
         async () => [], // Cache folder
         async () => [], // Error folder
-        async () => []  // Archive folder
+        async () => [] // Archive folder
       )
     );
 
@@ -381,7 +394,7 @@ describe('CacheService', () => {
         async () => [], // start() archive
         async () => [fileList[0].filename, fileList[1].filename, 'bad-file'], // searchCacheContent cache
         async () => [], // searchCacheContent error
-        async () => []  // searchCacheContent archive
+        async () => [] // searchCacheContent archive
       )
     );
 
@@ -390,11 +403,15 @@ describe('CacheService', () => {
         // start() reads file1, file2, bad-file (throws) in cache folder
         async () => JSON.stringify(fileList[0].metadata),
         async () => JSON.stringify(fileList[1].metadata),
-        async () => { throw new Error('cache read error'); },
+        async () => {
+          throw new Error('cache read error');
+        },
         // searchCacheContent reads file1 (match), file2 (no match or match), bad-file (error)
         async () => JSON.stringify(fileList[0].metadata),
         async () => JSON.stringify(fileList[0].metadata),
-        async () => { throw new Error('read error'); }
+        async () => {
+          throw new Error('read error');
+        }
       )
     );
 
@@ -428,14 +445,20 @@ describe('CacheService', () => {
   it('should get cache content file stream', async () => {
     // Use nodeRequire to get the CJS-style fs module where createReadStream is configurable
     const fsSync = nodeRequire('node:fs');
-    mock.method(fsSync, 'createReadStream', mock.fn(() => null));
+    mock.method(
+      fsSync,
+      'createReadStream',
+      mock.fn(() => null)
+    );
     readFileMock.mock.mockImplementation(async () => JSON.stringify(fileList[0].metadata));
     determineContentTypeFromFilenameMock.mock.mockImplementation(() => 'json');
     const cacheFileContentResult = { content: 'content', truncated: false, contentFilename: 'file1-123456.json' };
     processCacheFileContentMock.mock.mockImplementation(
       seq(
         () => cacheFileContentResult,
-        () => { throw new Error('should not be called twice'); }
+        () => {
+          throw new Error('should not be called twice');
+        }
       )
     );
     const result = await service.getFileFromCache('cache', 'test');
@@ -443,15 +466,17 @@ describe('CacheService', () => {
 
     // Test error case
     readFileMock.mock.mockImplementation(
-      seq(
-        async () => { throw new Error('read error'); }
-      )
+      seq(async () => {
+        throw new Error('read error');
+      })
     );
     await assert.rejects(service.getFileFromCache('cache', 'test'), /Error while reading file/);
   });
 
   it('should not get cache content file stream if bad full path', async () => {
-    readFileMock.mock.mockImplementation(async () => { throw new Error('Invalid file path'); });
+    readFileMock.mock.mockImplementation(async () => {
+      throw new Error('Invalid file path');
+    });
     await assert.rejects(service.getFileFromCache('error', path.join('..', 'test')));
   });
 
@@ -467,9 +492,7 @@ describe('CacheService', () => {
     assert.ok((logger.trace as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('added to cache')));
     // Verify debounced logging
     assert.ok(
-      (logger.debug as any).mock.calls.some((c: any) =>
-        c.arguments.length > 1 && String(c.arguments[1]).includes('Cache updated')
-      )
+      (logger.debug as any).mock.calls.some((c: any) => c.arguments.length > 1 && String(c.arguments[1]).includes('Cache updated'))
     );
   });
 
@@ -626,11 +649,7 @@ describe('CacheService', () => {
         { filename: 'f2.json', metadata: { ...fileList[1].metadata } }
       ];
 
-      readFileMock.mock.mockImplementation(
-        seq(
-          async () => JSON.stringify([{ id: 1 }, { id: 2 }])
-        )
-      );
+      readFileMock.mock.mockImplementation(seq(async () => JSON.stringify([{ id: 1 }, { id: 2 }])));
 
       const result = await (service as any)['accumulateContent'](queueItems, maxGroupCount);
 
@@ -654,7 +673,9 @@ describe('CacheService', () => {
       readFileMock.mock.mockImplementation(
         seq(
           async () => JSON.stringify([{ id: 1 }]),
-          async () => { throw new Error('Invalid JSON'); },
+          async () => {
+            throw new Error('Invalid JSON');
+          },
           async () => JSON.stringify([{ id: 3 }])
         )
       );
@@ -669,7 +690,10 @@ describe('CacheService', () => {
       // Verify Error Handling
       assert.ok((logger.error as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('Error while reading file')));
       assert.deepStrictEqual((service as any)['deleteCacheEntry'].mock.calls[0].arguments, ['cache', 'bad.json']);
-      assert.strictEqual((service as any)['queue'].find((f: any) => f.filename === 'bad.json'), undefined);
+      assert.strictEqual(
+        (service as any)['queue'].find((f: any) => f.filename === 'bad.json'),
+        undefined
+      );
     });
   });
 
@@ -688,16 +712,13 @@ describe('CacheService', () => {
 
       await (service as any)['overwriteCacheFile'](fileData, newContent);
 
-      assert.ok(
-        writeFileMock.mock.calls.some((c: any) =>
-          String(c.arguments[0]).includes(path.join('content', 'test.json'))
-        )
-      );
+      assert.ok(writeFileMock.mock.calls.some((c: any) => String(c.arguments[0]).includes(path.join('content', 'test.json'))));
 
       assert.ok(
-        writeFileMock.mock.calls.some((c: any) =>
-          String(c.arguments[0]).includes(path.join('metadata', 'test.json')) &&
-          String(c.arguments[1]).includes(`"contentSize":${newSize}`)
+        writeFileMock.mock.calls.some(
+          (c: any) =>
+            String(c.arguments[0]).includes(path.join('metadata', 'test.json')) &&
+            String(c.arguments[1]).includes(`"contentSize":${newSize}`)
         )
       );
 
@@ -791,9 +812,7 @@ describe('CacheService', () => {
 
       // 4. Delete intermediate called for BOTH (logic says we clean up intermediate files)
       assert.ok(
-        (service as any)['deleteCacheEntry'].mock.calls.some((c: any) =>
-          c.arguments[0] === 'cache' && c.arguments[1] === '2.json'
-        )
+        (service as any)['deleteCacheEntry'].mock.calls.some((c: any) => c.arguments[0] === 'cache' && c.arguments[1] === '2.json')
       );
 
       // 5. Queue updated: should remove '2.json' (intermediate) but keep '1.json' (reused)
@@ -869,9 +888,10 @@ describe('CacheService', () => {
 
       assert.strictEqual(renameMock.mock.calls.length, 2); // Content + Metadata
       assert.ok(
-        renameMock.mock.calls.some((c: any) =>
-          String(c.arguments[0]).includes(path.join('cache', 'northId', 'content', filename)) &&
-          String(c.arguments[1]).includes(path.join('archive', 'northId', 'content', filename))
+        renameMock.mock.calls.some(
+          (c: any) =>
+            String(c.arguments[0]).includes(path.join('cache', 'northId', 'content', filename)) &&
+            String(c.arguments[1]).includes(path.join('archive', 'northId', 'content', filename))
         )
       );
 
@@ -901,7 +921,9 @@ describe('CacheService', () => {
       const filename = 'bad-file.json';
       const metadata = { contentSize: 200 } as CacheMetadata;
       (service as any)['readCacheMetadataFile'] = mock.fn(async () => metadata);
-      renameMock.mock.mockImplementation(async () => { throw new Error('Read Error'); });
+      renameMock.mock.mockImplementation(async () => {
+        throw new Error('Read Error');
+      });
 
       await (service as any)['moveContent']('cache', 'error', filename);
 
@@ -938,10 +960,11 @@ describe('CacheService', () => {
       // Verify FS operations
       assert.strictEqual(rmMock.mock.calls.length, 2); // Content + Metadata
       assert.ok(
-        rmMock.mock.calls.some((c: any) =>
-          String(c.arguments[0]).includes(path.join('cache', 'northId', 'content', filename)) &&
-          c.arguments[1]?.force === true &&
-          c.arguments[1]?.recursive === true
+        rmMock.mock.calls.some(
+          (c: any) =>
+            String(c.arguments[0]).includes(path.join('cache', 'northId', 'content', filename)) &&
+            c.arguments[1]?.force === true &&
+            c.arguments[1]?.recursive === true
         )
       );
 
@@ -956,7 +979,9 @@ describe('CacheService', () => {
       const metadata = { contentSize: 100 };
 
       (service as any)['readCacheMetadataFile'] = mock.fn(async () => metadata);
-      (service as any)['deleteCacheEntry'] = mock.fn(async () => { throw new Error('Rm Error'); });
+      (service as any)['deleteCacheEntry'] = mock.fn(async () => {
+        throw new Error('Rm Error');
+      });
 
       await (service as any)['removeContent']('archive', filename);
 
@@ -979,24 +1004,28 @@ describe('CacheService', () => {
     rmMock.mock.mockImplementation(
       seq(
         async () => undefined,
-        async () => { throw new Error('rm error'); }
+        async () => {
+          throw new Error('rm error');
+        }
       )
     );
     await (service as any)['deleteCacheEntry']('cache', 'file');
 
     assert.strictEqual(rmMock.mock.calls.length, 2);
     assert.ok(
-      rmMock.mock.calls.some((c: any) =>
-        c.arguments[0] === path.join(service.cacheFolder, METADATA_FOLDER, 'file') &&
-        c.arguments[1]?.recursive === true &&
-        c.arguments[1]?.force === true
+      rmMock.mock.calls.some(
+        (c: any) =>
+          c.arguments[0] === path.join(service.cacheFolder, METADATA_FOLDER, 'file') &&
+          c.arguments[1]?.recursive === true &&
+          c.arguments[1]?.force === true
       )
     );
     assert.ok(
-      rmMock.mock.calls.some((c: any) =>
-        c.arguments[0] === path.join(service.cacheFolder, CONTENT_FOLDER, 'file') &&
-        c.arguments[1]?.recursive === true &&
-        c.arguments[1]?.force === true
+      rmMock.mock.calls.some(
+        (c: any) =>
+          c.arguments[0] === path.join(service.cacheFolder, CONTENT_FOLDER, 'file') &&
+          c.arguments[1]?.recursive === true &&
+          c.arguments[1]?.force === true
       )
     );
     assert.ok((logger.trace as any).mock.calls.some((c: any) => c.arguments[0] === `Error deleting cache entry "file": rm error`));
@@ -1011,7 +1040,7 @@ describe('CacheService', () => {
         async () => ['file3', 'file4', 'bad'], // Error folder (metadata)
         async () => ['file3', 'file4', 'bad'], // Error folder (content)
         async () => ['file5', 'file6', 'bad'], // Archive folder (metadata)
-        async () => ['file5', 'file6', 'bad']  // Archive folder (content)
+        async () => ['file5', 'file6', 'bad'] // Archive folder (content)
       )
     );
 
