@@ -1,12 +1,12 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for IP Filter repository
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    list: jest.fn(),
-    findById: jest.fn(),
-    create: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn()
-  };
-});
+export default class IpFilterRepositoryMock {
+  list = mock.fn();
+  findById = mock.fn();
+  create = mock.fn();
+  update = mock.fn();
+  delete = mock.fn();
+}

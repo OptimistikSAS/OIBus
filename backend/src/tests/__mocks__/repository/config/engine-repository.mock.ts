@@ -1,10 +1,10 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for Engine repository
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    get: jest.fn(),
-    update: jest.fn(),
-    updateVersion: jest.fn()
-  };
-});
+export default class EngineRepositoryMock {
+  get = mock.fn();
+  update = mock.fn();
+  updateVersion = mock.fn();
+}
