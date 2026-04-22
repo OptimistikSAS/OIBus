@@ -1,13 +1,13 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for OIAnalytics Message Service
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    start: jest.fn(),
-    run: jest.fn(),
-    stop: jest.fn(),
-    setLogger: jest.fn(),
-    createFullConfigMessageIfNotPending: jest.fn(),
-    createFullHistoryQueriesMessageIfNotPending: jest.fn()
-  };
-});
+export default class OIAnalyticsMessageServiceMock {
+  start = mock.fn();
+  run = mock.fn();
+  stop = mock.fn();
+  setLogger = mock.fn();
+  createFullConfigMessageIfNotPending = mock.fn();
+  createFullHistoryQueriesMessageIfNotPending = mock.fn();
+}
