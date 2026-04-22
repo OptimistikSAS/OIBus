@@ -16,10 +16,7 @@ describe('HomeMetricsService', () => {
     oIBusService = new OIBusServiceMock();
     dataStreamEngine = new DataStreamEngineMock(null);
     mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
-    service = new HomeMetricsService(
-      oIBusService as unknown as OIBusService,
-      dataStreamEngine as unknown as DataStreamEngine
-    );
+    service = new HomeMetricsService(oIBusService as unknown as OIBusService, dataStreamEngine as unknown as DataStreamEngine);
   });
 
   afterEach(() => {

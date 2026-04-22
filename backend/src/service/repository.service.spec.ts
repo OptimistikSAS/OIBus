@@ -3,13 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { setImmediate } from 'node:timers';
 import RepositoryService from './repository.service';
-import {
-  migrateEntities,
-  migrateLogs,
-  migrateMetrics,
-  migrateCrypto,
-  migrateSouthCache
-} from '../migration/migration-service';
+import { migrateEntities, migrateLogs, migrateMetrics, migrateCrypto, migrateSouthCache } from '../migration/migration-service';
 
 const TEST_DB_PREFIX = 'src/tests/test-repo-service';
 const CONFIG_DB = `${TEST_DB_PREFIX}-config.db`;
