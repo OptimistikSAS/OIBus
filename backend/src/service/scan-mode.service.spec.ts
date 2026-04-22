@@ -1,3 +1,5 @@
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import DataStreamEngine from '../engine/data-stream-engine';
 import ScanModeService from './scan-mode.service';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
@@ -11,218 +13,213 @@ import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import testData from '../tests/utils/test-data';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
-import { validateCronExpression } from './utils';
 import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import { OIBusValidationError } from '../model/types';
 
-jest.mock('./utils');
-jest.mock('../web-server/controllers/validators/joi.validator');
-
-const validator = new JoiValidator();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
-const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
-
+let validator: { validate: ReturnType<typeof mock.fn> };
+let scanModeRepository: ScanModeRepositoryMock;
+let southConnectorRepository: SouthConnectorRepositoryMock;
+let southCacheRepository: SouthCacheRepositoryMock;
+let dataStreamEngine: DataStreamEngineMock;
+let oIAnalyticsMessageService: OianalyticsMessageServiceMock;
 let service: ScanModeService;
+
 describe('Scan Mode Service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    (scanModeRepository.findAll as jest.Mock).mockReturnValue([]);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([]);
+    validator = { validate: mock.fn() };
+    scanModeRepository = new ScanModeRepositoryMock();
+    southConnectorRepository = new SouthConnectorRepositoryMock();
+    southCacheRepository = new SouthCacheRepositoryMock();
+    dataStreamEngine = new DataStreamEngineMock(null);
+    oIAnalyticsMessageService = new OianalyticsMessageServiceMock();
+    scanModeRepository.findAll.mock.mockImplementation(() => []);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => []);
 
     service = new ScanModeService(
-      validator,
-      scanModeRepository,
-      southConnectorRepository,
-      southCacheRepository,
-      oIAnalyticsMessageService,
-      dataStreamEngine
+      validator as unknown as JoiValidator,
+      scanModeRepository as unknown as ScanModeRepository,
+      southConnectorRepository as unknown as SouthConnectorRepository,
+      southCacheRepository as unknown as SouthCacheRepository,
+      oIAnalyticsMessageService as unknown as OIAnalyticsMessageService,
+      dataStreamEngine as unknown as DataStreamEngine
     );
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('findAll() should find all scan modes', () => {
-    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => testData.scanMode.list);
 
     const result = service.list();
 
-    expect(scanModeRepository.findAll).toHaveBeenCalled();
-    expect(result).toEqual(testData.scanMode.list);
+    assert.ok(scanModeRepository.findAll.mock.calls.length > 0);
+    assert.deepStrictEqual(result, testData.scanMode.list);
   });
 
   it('findById() should find a scan mode by id', () => {
-    (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(testData.scanMode.list[0]);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0]);
 
     const result = service.findById(testData.scanMode.list[0].id);
 
-    expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(result).toEqual(testData.scanMode.list[0]);
+    assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
+    assert.deepStrictEqual(result, testData.scanMode.list[0]);
   });
 
   it('findById() should throw not found', () => {
-    (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(null);
-    expect(() => service.findById(testData.scanMode.list[0].id)).toThrow(
-      new Error(`Scan mode "${testData.scanMode.list[0].id}" not found`)
-    );
-    expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => null);
+
+    assert.throws(() => service.findById(testData.scanMode.list[0].id), {
+      message: `Scan mode "${testData.scanMode.list[0].id}" not found`
+    });
+    assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
   });
 
   it('create() should create a scan mode', async () => {
-    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce([]);
-    (scanModeRepository.create as jest.Mock).mockReturnValueOnce(testData.scanMode.list[0]);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => []);
+    scanModeRepository.create.mock.mockImplementationOnce(() => testData.scanMode.list[0]);
 
     const result = await service.create(testData.scanMode.command, 'userTest');
 
-    expect(validator.validate).toHaveBeenCalledWith(scanModeSchema, testData.scanMode.command);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(result).toEqual(testData.scanMode.list[0]);
+    assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [scanModeSchema, testData.scanMode.command]);
+    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.deepStrictEqual(result, testData.scanMode.list[0]);
   });
 
   it('create() should not create a scan mode with duplicate name', async () => {
-    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce([{ id: 'existing-id', name: testData.scanMode.command.name }]);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => [{ id: 'existing-id', name: testData.scanMode.command.name }]);
 
-    await expect(service.create(testData.scanMode.command, 'userTest')).rejects.toThrow(
-      new OIBusValidationError(`Scan mode name "${testData.scanMode.command.name}" already exists`)
+    await assert.rejects(
+      () => service.create(testData.scanMode.command, 'userTest'),
+      { message: `Scan mode name "${testData.scanMode.command.name}" already exists` }
     );
   });
 
   it('update() should update a scan mode', async () => {
-    (scanModeRepository.findById as jest.Mock)
-      .mockReturnValueOnce(testData.scanMode.list[0])
-      .mockReturnValueOnce(testData.scanMode.list[1]);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0], 0);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[1], 1);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => testData.scanMode.list);
 
     await service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
 
-    expect(validator.validate).toHaveBeenCalledWith(scanModeSchema, testData.scanMode.command);
-    expect(scanModeRepository.findById).toHaveBeenNthCalledWith(1, testData.scanMode.list[0].id);
-    expect(scanModeRepository.findById).toHaveBeenNthCalledWith(2, testData.scanMode.list[0].id);
-    expect(scanModeRepository.findById).toHaveBeenCalledTimes(2);
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
-    expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [scanModeSchema, testData.scanMode.command]);
+    assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
+    assert.deepStrictEqual(scanModeRepository.findById.mock.calls[1].arguments, [testData.scanMode.list[0].id]);
+    assert.strictEqual(scanModeRepository.findById.mock.calls.length, 2);
+    assert.deepStrictEqual(scanModeRepository.update.mock.calls[0].arguments, [testData.scanMode.list[0].id, testData.scanMode.command, 'userTest']);
+    assert.deepStrictEqual(dataStreamEngine.updateScanMode.mock.calls[0].arguments, [testData.scanMode.list[1]]);
+    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
 
   it('update() should update a scan mode without changing the name', async () => {
     const command = JSON.parse(JSON.stringify(testData.scanMode.command));
     command.name = testData.scanMode.list[0].name;
-    (scanModeRepository.findById as jest.Mock)
-      .mockReturnValueOnce(testData.scanMode.list[0])
-      .mockReturnValueOnce(testData.scanMode.list[1]);
-    (scanModeRepository.findAll as jest.Mock).mockClear();
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0], 0);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[1], 1);
 
     await service.update(testData.scanMode.list[0].id, command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, command, 'userTest');
-    expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
-    expect(scanModeRepository.findAll).not.toHaveBeenCalled();
+    assert.deepStrictEqual(scanModeRepository.update.mock.calls[0].arguments, [testData.scanMode.list[0].id, command, 'userTest']);
+    assert.deepStrictEqual(dataStreamEngine.updateScanMode.mock.calls[0].arguments, [testData.scanMode.list[1]]);
+    assert.strictEqual(scanModeRepository.findAll.mock.calls.length, 0);
   });
 
   it('update() should update a scan mode with a new unique name', async () => {
     const command = JSON.parse(JSON.stringify(testData.scanMode.command));
     command.name = 'Updated Scan Mode Name';
-    (scanModeRepository.findById as jest.Mock)
-      .mockReturnValueOnce(testData.scanMode.list[0])
-      .mockReturnValueOnce(testData.scanMode.list[1]);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0], 0);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[1], 1);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => testData.scanMode.list);
 
     await service.update(testData.scanMode.list[0].id, command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, command, 'userTest');
-    expect(dataStreamEngine.updateScanMode).toHaveBeenCalledWith(testData.scanMode.list[1]);
+    assert.deepStrictEqual(scanModeRepository.update.mock.calls[0].arguments, [testData.scanMode.list[0].id, command, 'userTest']);
+    assert.deepStrictEqual(dataStreamEngine.updateScanMode.mock.calls[0].arguments, [testData.scanMode.list[1]]);
   });
 
   it('update() should update a scan mode and not update engine', async () => {
-    (scanModeRepository.findById as jest.Mock)
-      .mockReturnValueOnce(testData.scanMode.list[0])
-      .mockReturnValueOnce(testData.scanMode.list[0]);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce(testData.scanMode.list);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0], 0);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0], 1);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => testData.scanMode.list);
 
     await service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
 
-    expect(scanModeRepository.update).toHaveBeenCalledWith(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest');
-    expect(dataStreamEngine.updateScanMode).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(scanModeRepository.update.mock.calls[0].arguments, [testData.scanMode.list[0].id, testData.scanMode.command, 'userTest']);
+    assert.strictEqual(dataStreamEngine.updateScanMode.mock.calls.length, 0);
+    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
 
   it('update() should not update if the scan mode is not found', async () => {
-    (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(null);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await expect(service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest')).rejects.toThrow(
-      new Error(`Scan mode "${testData.scanMode.list[0].id}" not found`)
+    await assert.rejects(
+      () => service.update(testData.scanMode.list[0].id, testData.scanMode.command, 'userTest'),
+      { message: `Scan mode "${testData.scanMode.list[0].id}" not found` }
     );
 
-    expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(scanModeRepository.update).not.toHaveBeenCalled();
-    expect(dataStreamEngine.updateScanMode).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+    assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
+    assert.strictEqual(scanModeRepository.update.mock.calls.length, 0);
+    assert.strictEqual(dataStreamEngine.updateScanMode.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
   });
 
   it('update() should not update a scan mode with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.scanMode.command));
     command.name = 'Duplicate Name';
-    (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(testData.scanMode.list[0]);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValueOnce([{ id: 'other-id', name: 'Duplicate Name' }]);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0]);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
 
-    await expect(service.update(testData.scanMode.list[0].id, command, 'userTest')).rejects.toThrow(
-      new OIBusValidationError(`Scan mode name "Duplicate Name" already exists`)
+    await assert.rejects(
+      () => service.update(testData.scanMode.list[0].id, command, 'userTest'),
+      { message: `Scan mode name "Duplicate Name" already exists` }
     );
   });
 
   it('delete() should delete a scan mode', async () => {
-    (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(testData.scanMode.list[0]);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValueOnce([{ id: 'south1' }, { id: 'south2' }]);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0]);
+    southConnectorRepository.findAllSouth.mock.mockImplementationOnce(() => [{ id: 'south1' }, { id: 'south2' }]);
 
     const mockItem = { id: 'item1', scanMode: { id: testData.scanMode.list[0].id } };
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue([mockItem]);
+    southConnectorRepository.findAllItemsForSouth.mock.mockImplementation(() => [mockItem]);
 
     await service.delete(testData.scanMode.list[0].id);
 
-    expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(scanModeRepository.delete).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
+    assert.deepStrictEqual(scanModeRepository.delete.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
+    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
 
   it('delete() should not delete if the scan mode is not found', async () => {
-    (scanModeRepository.findById as jest.Mock).mockReturnValueOnce(null);
+    scanModeRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await expect(service.delete(testData.scanMode.list[0].id)).rejects.toThrow(
-      new Error(`Scan mode "${testData.scanMode.list[0].id}" not found`)
+    await assert.rejects(
+      () => service.delete(testData.scanMode.list[0].id),
+      { message: `Scan mode "${testData.scanMode.list[0].id}" not found` }
     );
 
-    expect(scanModeRepository.findById).toHaveBeenCalledWith(testData.scanMode.list[0].id);
-    expect(scanModeRepository.delete).not.toHaveBeenCalled();
-    expect(southCacheRepository.dropItemValueTable).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+    assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
+    assert.strictEqual(scanModeRepository.delete.mock.calls.length, 0);
+    assert.strictEqual(southCacheRepository.dropItemValueTable.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
   });
 
   it('verifyCron() should verify cron expression of a scan mode', async () => {
-    const validatedCronExpression: ValidatedCronExpression = {
-      isValid: true,
-      errorMessage: '',
-      nextExecutions: [],
-      humanReadableForm: ''
-    };
-    (validateCronExpression as jest.Mock).mockReturnValueOnce(validatedCronExpression);
+    // Use a real valid cron expression
+    const result = await service.verifyCron({ cron: '* * * * * *' });
 
-    const result = await service.verifyCron(testData.scanMode.command);
-
-    expect(validateCronExpression).toHaveBeenCalledWith(testData.scanMode.command.cron);
-    expect(result).toEqual(validatedCronExpression);
+    assert.strictEqual(result.isValid, true);
+    assert.strictEqual(result.errorMessage, '');
+    assert.ok(result.nextExecutions.length > 0);
+    assert.ok(result.humanReadableForm.length > 0);
   });
 
   it('verifyCron() should return invalid result when cron is not valid', async () => {
-    const validatedCronExpression: ValidatedCronExpression = {
-      isValid: false,
-      errorMessage: 'validation error',
-      nextExecutions: [],
-      humanReadableForm: ''
-    };
-    (validateCronExpression as jest.Mock).mockReturnValueOnce(validatedCronExpression);
+    // Use an invalid cron expression (too many fields → quartz cron not supported)
+    const result = await service.verifyCron({ cron: 'invalid-cron-expression' });
 
-    await expect(service.verifyCron(testData.scanMode.command)).resolves.toEqual(validatedCronExpression);
+    assert.strictEqual(result.isValid, false);
+    assert.ok(result.errorMessage.length > 0);
   });
 });

@@ -1,35 +1,35 @@
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import testData from '../tests/utils/test-data';
 import { createPageFromArray } from '../../shared/model/types';
 import LogRepository from '../repository/logs/log.repository';
 import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
 import LogService, { toLogDTO } from './log.service';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { DateTime } from 'luxon';
 import { LogSearchParam } from '../../shared/model/logs.model';
 import { NotFoundError } from '../model/types';
 
-jest.mock('./utils');
-jest.mock('../web-server/controllers/validators/joi.validator');
-
-const validator = new JoiValidator();
-const logRepository: LogRepository = new LogRepositoryMock();
-
+let validator: { validate: ReturnType<typeof mock.fn> };
+let logRepository: LogRepositoryMock;
 let service: LogService;
+
 describe('Log Service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    service = new LogService(validator, logRepository);
+    validator = { validate: mock.fn() };
+    logRepository = new LogRepositoryMock();
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    service = new LogService(validator as unknown as JoiValidator, logRepository as unknown as LogRepository);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should search logs', () => {
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
-    (logRepository.search as jest.Mock).mockReturnValueOnce(expectedResult);
+    logRepository.search.mock.mockImplementationOnce(() => expectedResult);
 
     const searchParams: LogSearchParam = {
       page: 0,
@@ -42,38 +42,38 @@ describe('Log Service', () => {
     };
     const result = service.search(searchParams);
 
-    expect(logRepository.search).toHaveBeenCalledWith(searchParams);
-    expect(result).toEqual(expectedResult);
+    assert.deepStrictEqual(logRepository.search.mock.calls[0].arguments, [searchParams]);
+    assert.deepStrictEqual(result, expectedResult);
   });
 
   it('should suggest scopes', () => {
-    (logRepository.suggestScopes as jest.Mock).mockReturnValueOnce([]);
+    logRepository.suggestScopes.mock.mockImplementationOnce(() => []);
 
     const result = service.suggestScopes('scopeName');
 
-    expect(logRepository.suggestScopes).toHaveBeenCalledWith('scopeName');
-    expect(result).toEqual([]);
+    assert.deepStrictEqual(logRepository.suggestScopes.mock.calls[0].arguments, ['scopeName']);
+    assert.deepStrictEqual(result, []);
   });
 
   it('should get a scope', () => {
-    (logRepository.getScopeById as jest.Mock).mockReturnValueOnce({ scopeId: 'scopeId', scopeName: 'scopeName' });
+    logRepository.getScopeById.mock.mockImplementationOnce(() => ({ scopeId: 'scopeId', scopeName: 'scopeName' }));
 
     const result = service.getScopeById('scopeId');
 
-    expect(logRepository.getScopeById).toHaveBeenCalledWith('scopeId');
-    expect(result).toEqual({ scopeId: 'scopeId', scopeName: 'scopeName' });
+    assert.deepStrictEqual(logRepository.getScopeById.mock.calls[0].arguments, ['scopeId']);
+    assert.deepStrictEqual(result, { scopeId: 'scopeId', scopeName: 'scopeName' });
   });
 
-  it('should not get if the scope is not found', async () => {
-    (logRepository.getScopeById as jest.Mock).mockReturnValueOnce(null);
+  it('should not get if the scope is not found', () => {
+    logRepository.getScopeById.mock.mockImplementationOnce(() => null);
 
-    expect(() => service.getScopeById('scopeId')).toThrow(new NotFoundError(`Scope "scopeId" not found`));
-    expect(logRepository.getScopeById).toHaveBeenCalledWith('scopeId');
+    assert.throws(() => service.getScopeById('scopeId'), { message: `Scope "scopeId" not found` });
+    assert.deepStrictEqual(logRepository.getScopeById.mock.calls[0].arguments, ['scopeId']);
   });
 
   it('should properly convert to DTO', () => {
     const log = testData.logs.list[0];
-    expect(toLogDTO(log)).toEqual({
+    assert.deepStrictEqual(toLogDTO(log), {
       timestamp: log.timestamp,
       level: log.level,
       scopeType: log.scopeType,
