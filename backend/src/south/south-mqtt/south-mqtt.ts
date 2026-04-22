@@ -1,5 +1,5 @@
 import mqtt from 'mqtt';
-import { QoS } from 'mqtt-packet';
+import { IConnackPacket, QoS } from 'mqtt-packet';
 import SouthConnector from '../south-connector';
 
 import pino from 'pino';
@@ -151,9 +151,33 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
     const options = await createConnectionOptions(this.connector.id, this.connector.settings, this.logger);
-    const client = await mqtt.connectAsync(this.connector.settings.url, options);
-    client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
-    return { items: [{ key: 'Broker URL', value: this.connector.settings.url }] };
+    const connack = await new Promise<IConnackPacket>((resolve, reject) => {
+      const client = mqtt.connect(this.connector.settings.url, options);
+      client.once('connect', (packet: IConnackPacket) => {
+        client.end(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
+        resolve(packet);
+      });
+      client.once('error', (error: Error) => {
+        client.end(true);
+        reject(error);
+      });
+    });
+
+    const items: Array<{ key: string; value: string }> = [];
+    items.push({ key: 'SessionPresent', value: String(connack.sessionPresent) });
+    if (connack.properties) {
+      const p = connack.properties;
+      if (p.maximumQoS !== undefined) items.push({ key: 'MaximumQoS', value: String(p.maximumQoS) });
+      if (p.retainAvailable !== undefined) items.push({ key: 'RetainAvailable', value: String(p.retainAvailable) });
+      if (p.wildcardSubscriptionAvailable !== undefined)
+        items.push({ key: 'WildcardSubscriptions', value: String(p.wildcardSubscriptionAvailable) });
+      if (p.sharedSubscriptionAvailable !== undefined)
+        items.push({ key: 'SharedSubscriptions', value: String(p.sharedSubscriptionAvailable) });
+      if (p.maximumPacketSize !== undefined) items.push({ key: 'MaxPacketSize', value: String(p.maximumPacketSize) });
+      if (p.serverKeepAlive !== undefined) items.push({ key: 'ServerKeepAlive', value: `${p.serverKeepAlive}s` });
+      if (p.topicAliasMaximum !== undefined) items.push({ key: 'TopicAliasMaximum', value: String(p.topicAliasMaximum) });
+    }
+    return { items };
   }
 
   override async testItem(

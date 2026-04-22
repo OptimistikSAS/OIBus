@@ -179,10 +179,63 @@ describe('NorthMQTT', () => {
     expect(north['client']).toBeNull();
   });
 
-  it('should properly test connection', async () => {
+  it('should properly test connection and return session info', async () => {
+    const mockConnack = { cmd: 'connack', sessionPresent: false };
+    (mqtt.connect as jest.Mock).mockImplementationOnce(() => {
+      Promise.resolve().then(() => mockMqttClient.emit('connect', mockConnack));
+      return mockMqttClient;
+    });
+
     const testResult = await north.testConnection();
-    expect(mockMqttClient.end).toHaveBeenCalled();
-    expect(testResult).toEqual({ items: [{ key: 'Broker URL', value: configuration.settings.url }] });
+
+    expect(mockMqttClient.end).toHaveBeenCalledWith(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
+    expect(testResult).toEqual({ items: [{ key: 'SessionPresent', value: 'false' }] });
+  });
+
+  it('should include MQTT 5.0 server capabilities when provided', async () => {
+    const mockConnack = {
+      cmd: 'connack',
+      sessionPresent: true,
+      properties: {
+        maximumQoS: 2,
+        retainAvailable: false,
+        wildcardSubscriptionAvailable: true,
+        sharedSubscriptionAvailable: true,
+        maximumPacketSize: 2048,
+        serverKeepAlive: 30,
+        topicAliasMaximum: 5
+      }
+    };
+    (mqtt.connect as jest.Mock).mockImplementationOnce(() => {
+      Promise.resolve().then(() => mockMqttClient.emit('connect', mockConnack));
+      return mockMqttClient;
+    });
+
+    const testResult = await north.testConnection();
+
+    expect(testResult).toEqual({
+      items: [
+        { key: 'SessionPresent', value: 'true' },
+        { key: 'MaximumQoS', value: '2' },
+        { key: 'RetainAvailable', value: 'false' },
+        { key: 'WildcardSubscriptions', value: 'true' },
+        { key: 'SharedSubscriptions', value: 'true' },
+        { key: 'MaxPacketSize', value: '2048' },
+        { key: 'ServerKeepAlive', value: '30s' },
+        { key: 'TopicAliasMaximum', value: '5' }
+      ]
+    });
+  });
+
+  it('should throw when the broker rejects the connection', async () => {
+    const error = new Error('Connection refused');
+    (mqtt.connect as jest.Mock).mockImplementationOnce(() => {
+      Promise.resolve().then(() => mockMqttClient.emit('error', error));
+      return mockMqttClient;
+    });
+
+    await expect(north.testConnection()).rejects.toThrow('Connection refused');
+    expect(mockMqttClient.end).toHaveBeenCalledWith(true);
   });
 
   it('should throw error if connector is in reconnecting state', async () => {
