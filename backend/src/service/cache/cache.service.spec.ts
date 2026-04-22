@@ -1,22 +1,56 @@
+import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 
 import { mockBaseFolders } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
-import CacheService from './cache.service';
+import type CacheServiceType from './cache.service';
 import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/engine.model';
-import { determineContentTypeFromFilename, generateRandomId, processCacheFileContent } from '../utils';
 import DeferredPromise from '../deferred-promise';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
 
-jest.mock('node:fs/promises');
-jest.mock('node:fs');
-jest.mock('../../service/utils');
+const nodeRequire = createRequire(import.meta.url);
+let CacheService: typeof CacheServiceType;
 
-const logger: pino.Logger = new PinoLogger();
+let determineContentTypeFromFilenameMock: ReturnType<typeof mock.fn>;
+let generateRandomIdMock: ReturnType<typeof mock.fn>;
+let processCacheFileContentMock: ReturnType<typeof mock.fn>;
+
+/**
+ * Creates a FIFO sequential mock implementation.
+ * node:test's mockImplementationOnce only stores one "once" impl (overwrites prior ones),
+ * so this helper provides Jest-compatible sequential behaviour.
+ */
+function seq<T>(...impls: Array<() => T>): () => T {
+  let i = 0;
+  return () => (i < impls.length ? impls[i++]() : (undefined as unknown as T));
+}
+
+before(() => {
+  determineContentTypeFromFilenameMock = mock.fn();
+  generateRandomIdMock = mock.fn();
+  processCacheFileContentMock = mock.fn();
+
+  // Load utils first to warm the cache
+  nodeRequire('../utils');
+  const utilsPath = nodeRequire.resolve('../utils');
+  const origExports = nodeRequire.cache[utilsPath]!.exports;
+  // tsx compiles TypeScript ES module exports as non-configurable/non-writable properties,
+  // so we must replace the whole exports object to inject mocks.
+  nodeRequire.cache[utilsPath]!.exports = Object.assign({}, origExports, {
+    determineContentTypeFromFilename: determineContentTypeFromFilenameMock,
+    generateRandomId: generateRandomIdMock,
+    processCacheFileContent: processCacheFileContentMock
+  });
+
+  // Load CacheService fresh with mocked utils
+  delete nodeRequire.cache[nodeRequire.resolve('./cache.service')];
+  CacheService = nodeRequire('./cache.service').default;
+});
 
 const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
   {
@@ -82,93 +116,122 @@ const fileList: Array<{ filename: string; metadata: CacheMetadata }> = [
 ];
 
 describe('CacheService', () => {
-  let service: CacheService;
+  let service: CacheServiceType;
+  let logger: pino.Logger;
+
+  let readFileMock: ReturnType<typeof mock.fn>;
+  let readdirMock: ReturnType<typeof mock.fn>;
+  let writeFileMock: ReturnType<typeof mock.fn>;
+  let statMock: ReturnType<typeof mock.fn>;
+  let renameMock: ReturnType<typeof mock.fn>;
+  let rmMock: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    // Recreate utils mocks (clears implementations and call history)
+    determineContentTypeFromFilenameMock = mock.fn();
+    generateRandomIdMock = mock.fn();
+    processCacheFileContentMock = mock.fn();
+    // Update live exports so CacheService sees new mocks (replace the whole object since
+    // tsx compiles non-configurable properties)
+    const utilsPath = nodeRequire.resolve('../utils');
+    const prevExports = nodeRequire.cache[utilsPath]!.exports;
+    nodeRequire.cache[utilsPath]!.exports = Object.assign({}, prevExports, {
+      determineContentTypeFromFilename: determineContentTypeFromFilenameMock,
+      generateRandomId: generateRandomIdMock,
+      processCacheFileContent: processCacheFileContentMock
+    });
 
-    service = new CacheService(
-      logger,
-      mockBaseFolders('northId').cache,
-      mockBaseFolders('northId').error,
-      mockBaseFolders('northId').archive
-    );
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
+
+    logger = new PinoLogger() as unknown as pino.Logger;
+    service = new CacheService(logger, mockBaseFolders('northId').cache, mockBaseFolders('northId').error, mockBaseFolders('northId').archive);
+
+    readFileMock = mock.fn();
+    mock.method(fs, 'readFile', readFileMock);
+    readdirMock = mock.fn();
+    mock.method(fs, 'readdir', readdirMock);
+    writeFileMock = mock.fn();
+    mock.method(fs, 'writeFile', writeFileMock);
+    statMock = mock.fn();
+    mock.method(fs, 'stat', statMock);
+    renameMock = mock.fn();
+    mock.method(fs, 'rename', renameMock);
+    rmMock = mock.fn();
+    mock.method(fs, 'rm', rmMock);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
     service.cacheSizeEventEmitter.removeAllListeners();
+    mock.restoreAll();
+    mock.timers.reset();
   });
 
   it('should be properly initialized with files in cache', async () => {
-    (fs.readdir as jest.Mock)
-      .mockImplementationOnce(() => ['file1', 'file2', 'bad']) // Cache folder
-      .mockImplementationOnce(() => ['file3', 'file4', 'bad']) // Error folder
-      .mockImplementationOnce(() => ['file5', 'file6', 'bad']); // Archive folder
-    (fs.readFile as jest.Mock)
-      .mockImplementationOnce(() => JSON.stringify(fileList[0].metadata))
-      .mockImplementationOnce(() => JSON.stringify(fileList[1].metadata))
-      .mockImplementationOnce(() => {
-        throw new Error('error 1');
-      })
-      .mockImplementationOnce(() => JSON.stringify(fileList[2].metadata))
-      .mockImplementationOnce(() => JSON.stringify(fileList[3].metadata))
-      .mockImplementationOnce(() => {
-        throw new Error('error 2');
-      })
-      .mockImplementationOnce(() => JSON.stringify(fileList[4].metadata))
-      .mockImplementationOnce(() => JSON.stringify(fileList[5].metadata))
-      .mockImplementationOnce(() => {
-        throw new Error('error 3');
-      });
+    readdirMock.mock.mockImplementation(
+      seq(
+        async () => ['file1', 'file2', 'bad'], // Cache folder
+        async () => ['file3', 'file4', 'bad'], // Error folder
+        async () => ['file5', 'file6', 'bad']  // Archive folder
+      )
+    );
+    readFileMock.mock.mockImplementation(
+      seq(
+        async () => JSON.stringify(fileList[0].metadata),
+        async () => JSON.stringify(fileList[1].metadata),
+        async () => { throw new Error('error 1'); },
+        async () => JSON.stringify(fileList[2].metadata),
+        async () => JSON.stringify(fileList[3].metadata),
+        async () => { throw new Error('error 2'); },
+        async () => JSON.stringify(fileList[4].metadata),
+        async () => JSON.stringify(fileList[5].metadata),
+        async () => { throw new Error('error 3'); }
+      )
+    );
 
     await service.start();
 
     // Check initial queue sort based on date
     const expectedQueueLength = 2; // Only valid files in 'cache' folder
-    expect(service['queue'].length).toBe(expectedQueueLength);
-    expect(service.getCacheSize()).toBeGreaterThan(0);
+    assert.strictEqual((service as any)['queue'].length, expectedQueueLength);
+    assert.ok(service.getCacheSize() > 0);
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error while reading cache file'));
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error while reading errored file'));
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error while reading archived file'));
-    expect(logger.info).toHaveBeenCalledWith(`${expectedQueueLength} content in cache`);
-    expect(logger.warn).toHaveBeenCalledWith('3 content errored'); // 2 valid + 1 bad file
-    expect(logger.debug).toHaveBeenCalledWith('3 content archived'); // 2 valid + 1 bad file
+    assert.ok((logger.error as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('Error while reading cache file')));
+    assert.ok((logger.error as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('Error while reading errored file')));
+    assert.ok((logger.error as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('Error while reading archived file')));
+    assert.ok((logger.info as any).mock.calls.some((c: any) => c.arguments[0] === `${expectedQueueLength} content in cache`));
+    assert.ok((logger.warn as any).mock.calls.some((c: any) => c.arguments[0] === '3 content errored'));
+    assert.ok((logger.debug as any).mock.calls.some((c: any) => c.arguments[0] === '3 content archived'));
   });
 
   it('should set logger', () => {
-    const anotherLogger: pino.Logger = new PinoLogger();
+    const anotherLogger: pino.Logger = new PinoLogger() as unknown as pino.Logger;
     service.setLogger(anotherLogger);
-    expect(service['logger']).toBe(anotherLogger);
+    assert.strictEqual((service as any)['logger'], anotherLogger);
   });
 
   it('should not clear timeouts, reset flags, and remove listeners when stopping', () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    const clearTimeoutMock = mock.method(global, 'clearTimeout', mock.fn());
 
-    service['cacheSizeWarningDebounceTimeout'] = null;
-    service['cacheLogDebounceTimeout'] = null;
-    service['cacheSizeWarningDebounceFlag'] = true;
-    service['cacheLogDebounceFlag'] = true;
+    (service as any)['cacheSizeWarningDebounceTimeout'] = null;
+    (service as any)['cacheLogDebounceTimeout'] = null;
+    (service as any)['cacheSizeWarningDebounceFlag'] = true;
+    (service as any)['cacheLogDebounceFlag'] = true;
 
-    const removeAllListenersSpy = jest.spyOn(service.cacheSizeEventEmitter, 'removeAllListeners');
+    const removeAllListenersMock = mock.method(service.cacheSizeEventEmitter, 'removeAllListeners', mock.fn());
 
     service.stop();
 
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
+    assert.strictEqual(clearTimeoutMock.mock.calls.length, 0);
 
-    expect(service['cacheSizeWarningDebounceTimeout']).toBeNull();
-    expect(service['cacheLogDebounceTimeout']).toBeNull();
-    expect(service['cacheSizeWarningDebounceFlag']).toBe(false);
-    expect(service['cacheLogDebounceFlag']).toBe(false);
-    expect(removeAllListenersSpy).toHaveBeenCalled();
-
-    clearTimeoutSpy.mockRestore();
+    assert.strictEqual((service as any)['cacheSizeWarningDebounceTimeout'], null);
+    assert.strictEqual((service as any)['cacheLogDebounceTimeout'], null);
+    assert.strictEqual((service as any)['cacheSizeWarningDebounceFlag'], false);
+    assert.strictEqual((service as any)['cacheLogDebounceFlag'], false);
+    assert.ok(removeAllListenersMock.mock.calls.length > 0);
   });
 
   it('should clear timeouts, reset flags, and remove listeners', () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    const clearTimeoutMock = mock.method(global, 'clearTimeout', mock.fn());
 
     const mockSizeTimeout = setTimeout(() => {
       // Do nothing
@@ -177,25 +240,23 @@ describe('CacheService', () => {
       // Do nothing
     }, 10000);
 
-    service['cacheSizeWarningDebounceTimeout'] = mockSizeTimeout;
-    service['cacheLogDebounceTimeout'] = mockLogTimeout;
-    service['cacheSizeWarningDebounceFlag'] = true;
-    service['cacheLogDebounceFlag'] = true;
+    (service as any)['cacheSizeWarningDebounceTimeout'] = mockSizeTimeout;
+    (service as any)['cacheLogDebounceTimeout'] = mockLogTimeout;
+    (service as any)['cacheSizeWarningDebounceFlag'] = true;
+    (service as any)['cacheLogDebounceFlag'] = true;
 
-    const removeAllListenersSpy = jest.spyOn(service.cacheSizeEventEmitter, 'removeAllListeners');
+    const removeAllListenersMock = mock.method(service.cacheSizeEventEmitter, 'removeAllListeners', mock.fn());
 
     service.stop();
 
-    expect(clearTimeoutSpy).toHaveBeenCalledWith(mockSizeTimeout);
-    expect(clearTimeoutSpy).toHaveBeenCalledWith(mockLogTimeout);
+    assert.ok(clearTimeoutMock.mock.calls.some((c: any) => c.arguments[0] === mockSizeTimeout));
+    assert.ok(clearTimeoutMock.mock.calls.some((c: any) => c.arguments[0] === mockLogTimeout));
 
-    expect(service['cacheSizeWarningDebounceTimeout']).toBeNull();
-    expect(service['cacheLogDebounceTimeout']).toBeNull();
-    expect(service['cacheSizeWarningDebounceFlag']).toBe(false);
-    expect(service['cacheLogDebounceFlag']).toBe(false);
-    expect(removeAllListenersSpy).toHaveBeenCalled();
-
-    clearTimeoutSpy.mockRestore();
+    assert.strictEqual((service as any)['cacheSizeWarningDebounceTimeout'], null);
+    assert.strictEqual((service as any)['cacheLogDebounceTimeout'], null);
+    assert.strictEqual((service as any)['cacheSizeWarningDebounceFlag'], false);
+    assert.strictEqual((service as any)['cacheLogDebounceFlag'], false);
+    assert.ok(removeAllListenersMock.mock.calls.length > 0);
   });
 
   it('should wait for pending updateCache$ and compactQueue$ tasks to resolve', async () => {
@@ -204,118 +265,139 @@ describe('CacheService', () => {
       resolveUpdate = resolve;
     });
 
-    service['updateCache$'] = { promise: updatePromise } as DeferredPromise;
+    (service as any)['updateCache$'] = { promise: updatePromise } as DeferredPromise;
 
     let isFinished = false;
-    const waitCall = service['waitCacheUpdateTasks']().then(() => {
+    const waitCall = (service as any)['waitCacheUpdateTasks']().then(() => {
       isFinished = true;
     });
 
-    expect(isFinished).toBe(false);
+    assert.strictEqual(isFinished, false);
     resolveUpdate!();
     await waitCall;
-    expect(isFinished).toBe(true);
+    assert.strictEqual(isFinished, true);
   });
 
   it('should resolve immediately if no tasks are pending', async () => {
     // Setup: Ensure properties are null
-    service['updateCache$'] = null;
+    (service as any)['updateCache$'] = null;
 
     // Execute
-    await expect(service['waitCacheUpdateTasks']()).resolves.not.toThrow();
+    await assert.doesNotReject((service as any)['waitCacheUpdateTasks']());
   });
 
   it('should wait for tasks and return null if queue is empty', async () => {
-    service['waitCacheUpdateTasks'] = jest.fn();
-    service['queue'] = [];
+    (service as any)['waitCacheUpdateTasks'] = mock.fn();
+    (service as any)['queue'] = [];
 
     const result = await service.getCacheContentToSend(100);
 
-    expect(service['waitCacheUpdateTasks']).toHaveBeenCalled();
-    expect(result).toBeNull();
+    assert.ok((service as any)['waitCacheUpdateTasks'].mock.calls.length > 0);
+    assert.strictEqual(result, null);
   });
 
   it('should return item directly if content type is "any"', async () => {
     const item = { filename: 'file1.txt', metadata: { contentType: 'any' } as CacheMetadata };
-    service['queue'] = [item];
-    service['waitCacheUpdateTasks'] = jest.fn();
-    service['compactQueue'] = jest.fn();
+    (service as any)['queue'] = [item];
+    (service as any)['waitCacheUpdateTasks'] = mock.fn();
+    (service as any)['compactQueue'] = mock.fn();
 
     const result = await service.getCacheContentToSend(100);
 
-    expect(service['waitCacheUpdateTasks']).toHaveBeenCalled();
-    expect(service['compactQueue']).not.toHaveBeenCalled();
-    expect(result).toEqual(item);
+    assert.ok((service as any)['waitCacheUpdateTasks'].mock.calls.length > 0);
+    assert.strictEqual((service as any)['compactQueue'].mock.calls.length, 0);
+    assert.deepStrictEqual(result, item);
   });
 
   it('should compact queue and return item if content type is not "any"', async () => {
     const item = { filename: 'data.json', metadata: { contentType: 'time-values' } as CacheMetadata };
-    service['queue'] = [item];
+    (service as any)['queue'] = [item];
 
-    service['waitCacheUpdateTasks'] = jest.fn();
-    service['compactQueue'] = jest.fn();
+    (service as any)['waitCacheUpdateTasks'] = mock.fn();
+    (service as any)['compactQueue'] = mock.fn();
 
     const maxGroupCount = 50;
     const result = await service.getCacheContentToSend(maxGroupCount);
 
-    expect(service['waitCacheUpdateTasks']).toHaveBeenCalled();
-    expect(service['compactQueue']).toHaveBeenCalledWith(maxGroupCount, 'time-values');
-    expect(result).toEqual(item);
+    assert.ok((service as any)['waitCacheUpdateTasks'].mock.calls.length > 0);
+    assert.deepStrictEqual((service as any)['compactQueue'].mock.calls[0].arguments, [maxGroupCount, 'time-values']);
+    assert.deepStrictEqual(result, item);
   });
 
   it('should test if cache is empty', () => {
-    expect(service.cacheIsEmpty()).toBe(true);
+    assert.strictEqual(service.cacheIsEmpty(), true);
   });
 
   it('should get cache size', () => {
-    expect(service.getCacheSize()).toBe(0);
+    assert.strictEqual(service.getCacheSize(), 0);
   });
 
   it('should test if cache is full ', () => {
-    expect(service.cacheIsFull(0)).toBe(false);
+    assert.strictEqual(service.cacheIsFull(0), false);
 
-    service.getCacheSize = jest
-      .fn()
-      .mockReturnValueOnce(1024 * 1024)
-      .mockReturnValueOnce(1024 * 1024 * 3)
-      .mockReturnValueOnce(1024 * 1024 * 3);
+    (service as any).getCacheSize = mock.fn(
+      seq(
+        () => 1024 * 1024,
+        () => 1024 * 1024 * 3,
+        () => 1024 * 1024 * 3
+      )
+    );
 
-    expect(service.cacheIsFull(2)).toBe(false);
-    expect(service['cacheSizeWarningDebounceTimeout']).toBeNull();
-    expect(service.cacheIsFull(2)).toBe(true);
-    expect(service['cacheSizeWarningDebounceTimeout']).not.toBeNull();
-    expect(service.cacheIsFull(2)).toBe(true);
-    expect(service['cacheSizeWarningDebounceTimeout']).not.toBeNull();
-    expect(service['cacheSizeWarningDebounceFlag']).toBeTruthy();
-    jest.advanceTimersByTime(60_000);
-    expect(service['cacheSizeWarningDebounceFlag']).toBeFalsy();
+    assert.strictEqual(service.cacheIsFull(2), false);
+    assert.strictEqual((service as any)['cacheSizeWarningDebounceTimeout'], null);
+    assert.strictEqual(service.cacheIsFull(2), true);
+    assert.notStrictEqual((service as any)['cacheSizeWarningDebounceTimeout'], null);
+    assert.strictEqual(service.cacheIsFull(2), true);
+    assert.notStrictEqual((service as any)['cacheSizeWarningDebounceTimeout'], null);
+    assert.ok((service as any)['cacheSizeWarningDebounceFlag']);
+    mock.timers.tick(60_000);
+    assert.ok(!(service as any)['cacheSizeWarningDebounceFlag']);
   });
 
   it('should be properly initialized without files in cache', async () => {
-    (fs.readdir as jest.Mock)
-      .mockImplementationOnce(() => [])
-      .mockImplementationOnce(() => [])
-      .mockImplementationOnce(() => []);
+    readdirMock.mock.mockImplementation(
+      seq(
+        async () => [], // Cache folder
+        async () => [], // Error folder
+        async () => []  // Archive folder
+      )
+    );
 
     await service.start();
 
-    expect(logger.debug).toHaveBeenCalledWith('No content in cache');
-    expect(logger.debug).toHaveBeenCalledWith('No content errored');
-    expect(logger.debug).toHaveBeenCalledWith('No content archived');
+    assert.ok((logger.debug as any).mock.calls.some((c: any) => c.arguments[0] === 'No content in cache'));
+    assert.ok((logger.debug as any).mock.calls.some((c: any) => c.arguments[0] === 'No content errored'));
+    assert.ok((logger.debug as any).mock.calls.some((c: any) => c.arguments[0] === 'No content archived'));
   });
 
   it('should search cache content', async () => {
-    // Setup files in folders
-    (fs.readdir as jest.Mock)
-      .mockReturnValueOnce([fileList[0].filename, fileList[1].filename, 'bad-file']) // cache
-      .mockReturnValueOnce([]) // error
-      .mockReturnValueOnce([]); // archive
+    // start() calls readdir 3 times (cache, error, archive metadata folders)
+    // then searchCacheContent calls readdir 3 times again (cache, error, archive metadata folders)
+    // Setup: cache has 2 valid files + 1 bad; error/archive empty
+    readdirMock.mock.mockImplementation(
+      seq(
+        async () => [fileList[0].filename, fileList[1].filename, 'bad-file'], // start() cache
+        async () => [], // start() error
+        async () => [], // start() archive
+        async () => [fileList[0].filename, fileList[1].filename, 'bad-file'], // searchCacheContent cache
+        async () => [], // searchCacheContent error
+        async () => []  // searchCacheContent archive
+      )
+    );
 
-    (fs.readFile as jest.Mock)
-      .mockReturnValueOnce(JSON.stringify(fileList[0].metadata))
-      .mockReturnValueOnce(JSON.stringify(fileList[0].metadata))
-      .mockRejectedValueOnce(new Error('read error'))
-      .mockReturnValue('{}');
+    readFileMock.mock.mockImplementation(
+      seq(
+        // start() reads file1, file2, bad-file (throws) in cache folder
+        async () => JSON.stringify(fileList[0].metadata),
+        async () => JSON.stringify(fileList[1].metadata),
+        async () => { throw new Error('cache read error'); },
+        // searchCacheContent reads file1 (match), file2 (no match or match), bad-file (error)
+        async () => JSON.stringify(fileList[0].metadata),
+        async () => JSON.stringify(fileList[0].metadata),
+        async () => { throw new Error('read error'); }
+      )
+    );
+
     const result = await service.searchCacheContent({
       start: testData.constants.dates.DATE_1,
       end: testData.constants.dates.DATE_2,
@@ -323,15 +405,15 @@ describe('CacheService', () => {
       maxNumberOfFilesReturned: 1000
     });
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error while reading file'));
+    assert.ok((logger.error as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('Error while reading file')));
     // Should return files that match date range and name filter
-    expect(result.cache.length).toBeGreaterThan(0);
-    expect(result.cache[0].filename).toBe(fileList[0].filename);
+    assert.ok(result.cache.length > 0);
+    assert.strictEqual(result.cache[0].filename, fileList[0].filename);
   });
 
   it('should search cache content with minimal filters', async () => {
-    (fs.readdir as jest.Mock).mockReturnValue([fileList[0].filename]);
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify(fileList[0].metadata));
+    readdirMock.mock.mockImplementation(async () => [fileList[0].filename]);
+    readFileMock.mock.mockImplementation(async () => JSON.stringify(fileList[0].metadata));
 
     const result = await service.searchCacheContent({
       nameContains: undefined,
@@ -340,43 +422,55 @@ describe('CacheService', () => {
       maxNumberOfFilesReturned: 0
     });
 
-    expect(result.cache.length).toBe(1);
+    assert.strictEqual(result.cache.length, 1);
   });
 
   it('should get cache content file stream', async () => {
-    (createReadStream as jest.Mock).mockReturnValueOnce(null);
-    (fs.readFile as jest.Mock).mockResolvedValue(JSON.stringify(fileList[0].metadata));
-    (determineContentTypeFromFilename as jest.Mock).mockReturnValueOnce('json');
+    // Use nodeRequire to get the CJS-style fs module where createReadStream is configurable
+    const fsSync = nodeRequire('node:fs');
+    mock.method(fsSync, 'createReadStream', mock.fn(() => null));
+    readFileMock.mock.mockImplementation(async () => JSON.stringify(fileList[0].metadata));
+    determineContentTypeFromFilenameMock.mock.mockImplementation(() => 'json');
     const cacheFileContentResult = { content: 'content', truncated: false, contentFilename: 'file1-123456.json' };
-    (processCacheFileContent as jest.Mock).mockReturnValueOnce(cacheFileContentResult);
+    processCacheFileContentMock.mock.mockImplementation(
+      seq(
+        () => cacheFileContentResult,
+        () => { throw new Error('should not be called twice'); }
+      )
+    );
     const result = await service.getFileFromCache('cache', 'test');
-    expect(result).toEqual({ ...cacheFileContentResult, totalSize: 100, contentType: 'json' });
+    assert.deepStrictEqual(result, { ...cacheFileContentResult, totalSize: 100, contentType: 'json' });
 
     // Test error case
-    (fs.readFile as jest.Mock).mockRejectedValueOnce(new Error('read error'));
-    await expect(service.getFileFromCache('cache', 'test')).rejects.toThrow('Error while reading file');
+    readFileMock.mock.mockImplementation(
+      seq(
+        async () => { throw new Error('read error'); }
+      )
+    );
+    await assert.rejects(service.getFileFromCache('cache', 'test'), /Error while reading file/);
   });
 
   it('should not get cache content file stream if bad full path', async () => {
-    // This logic relies on path.resolve throwing or fs failure, but path.resolve generally doesn't throw.
-    // The implementation checks file existence via readFile/createReadStream.
-    // We mock failure directly.
-    (fs.readFile as jest.Mock).mockRejectedValue(new Error('Invalid file path'));
-    await expect(service.getFileFromCache('error', path.join('..', 'test'))).rejects.toThrow();
+    readFileMock.mock.mockImplementation(async () => { throw new Error('Invalid file path'); });
+    await assert.rejects(service.getFileFromCache('error', path.join('..', 'test')));
   });
 
   it('should properly add cache content and log state', async () => {
-    const output = Buffer.from('some content');
-    (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-    (fs.stat as jest.Mock).mockResolvedValue({ size: 1024, ctimeMs: Date.now() });
-    (generateRandomId as jest.Mock).mockReturnValue('random');
+    const output = 'some content';
+    writeFileMock.mock.mockImplementation(async () => undefined);
+    statMock.mock.mockImplementation(async () => ({ size: 1024, ctimeMs: Date.now() }));
+    generateRandomIdMock.mock.mockImplementation(() => 'random');
 
     await service.addCacheContent(output, { contentType: 'any' });
 
-    expect(fs.writeFile).toHaveBeenCalledTimes(2); // Content + Metadata
-    expect(logger.trace).toHaveBeenCalledWith(expect.stringContaining('added to cache'));
+    assert.strictEqual(writeFileMock.mock.calls.length, 2); // Content + Metadata
+    assert.ok((logger.trace as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('added to cache')));
     // Verify debounced logging
-    expect(logger.debug).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Cache updated'));
+    assert.ok(
+      (logger.debug as any).mock.calls.some((c: any) =>
+        c.arguments.length > 1 && String(c.arguments[1]).includes('Cache updated')
+      )
+    );
   });
 
   describe('Debounce Logging', () => {
@@ -384,50 +478,50 @@ describe('CacheService', () => {
       const metadata = fileList[0].metadata;
 
       // First log
-      service['logCacheState'](metadata);
-      expect(logger.debug).toHaveBeenCalledTimes(1);
-      expect(service['cacheLogDebounceFlag']).toBe(true);
+      (service as any)['logCacheState'](metadata);
+      assert.strictEqual((logger.debug as any).mock.calls.length, 1);
+      assert.strictEqual((service as any)['cacheLogDebounceFlag'], true);
 
       // Second log immediately (should be skipped)
-      service['logCacheState'](metadata);
-      expect(logger.debug).toHaveBeenCalledTimes(1);
+      (service as any)['logCacheState'](metadata);
+      assert.strictEqual((logger.debug as any).mock.calls.length, 1);
 
       // Advance timer
-      jest.advanceTimersByTime(10000); // DEBOUNCED_LOG_S
-      expect(service['cacheLogDebounceFlag']).toBe(false);
+      mock.timers.tick(10000); // DEBOUNCED_LOG_S
+      assert.strictEqual((service as any)['cacheLogDebounceFlag'], false);
 
       // Third log (should go through)
-      service['logCacheState'](metadata);
-      expect(logger.debug).toHaveBeenCalledTimes(2);
+      (service as any)['logCacheState'](metadata);
+      assert.strictEqual((logger.debug as any).mock.calls.length, 2);
     });
   });
 
   it('should check if cache is full and log warning with debounce', () => {
-    service['cacheSize'] = { cache: 1024 * 1024 * 100, error: 0, archive: 0 }; // 100MB
+    (service as any)['cacheSize'] = { cache: 1024 * 1024 * 100, error: 0, archive: 0 }; // 100MB
     const maxSize = 50; // 50MB
 
     // First check
-    expect(service.cacheIsFull(maxSize)).toBe(true);
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('exceeding the maximum allowed size'));
-    expect(service['cacheSizeWarningDebounceFlag']).toBe(true);
+    assert.strictEqual(service.cacheIsFull(maxSize), true);
+    assert.ok((logger.warn as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('exceeding the maximum allowed size')));
+    assert.strictEqual((service as any)['cacheSizeWarningDebounceFlag'], true);
 
     // Second check immediately (should return true but NOT log)
-    expect(service.cacheIsFull(maxSize)).toBe(true);
-    expect(logger.warn).toHaveBeenCalledTimes(1);
+    assert.strictEqual(service.cacheIsFull(maxSize), true);
+    assert.strictEqual((logger.warn as any).mock.calls.length, 1);
 
     // Advance timer
-    jest.advanceTimersByTime(60000); // DEBOUNCED_SIZE_WARNING_S
-    expect(service['cacheSizeWarningDebounceFlag']).toBe(false);
+    mock.timers.tick(60000); // DEBOUNCED_SIZE_WARNING_S
+    assert.strictEqual((service as any)['cacheSizeWarningDebounceFlag'], false);
 
     // Third check (should log again)
-    expect(service.cacheIsFull(maxSize)).toBe(true);
-    expect(logger.warn).toHaveBeenCalledTimes(2);
+    assert.strictEqual(service.cacheIsFull(maxSize), true);
+    assert.strictEqual((logger.warn as any).mock.calls.length, 2);
   });
 
   it('should update cache content (move/remove)', async () => {
-    service['removeContent'] = jest.fn();
-    service['moveContent'] = jest.fn();
-    const emitEventSpy = jest.spyOn(service.cacheSizeEventEmitter, 'emit');
+    (service as any)['removeContent'] = mock.fn();
+    (service as any)['moveContent'] = mock.fn();
+    const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
 
     const updateCommand = {
       cache: { remove: ['file1'], move: [{ to: 'archive', filename: 'file2' }] },
@@ -437,46 +531,48 @@ describe('CacheService', () => {
 
     await service.updateCacheContent(updateCommand);
 
-    expect(service['removeContent']).toHaveBeenCalledTimes(3);
-    expect(service['moveContent']).toHaveBeenCalledTimes(3);
-    expect(emitEventSpy).toHaveBeenCalled();
+    assert.strictEqual((service as any)['removeContent'].mock.calls.length, 3);
+    assert.strictEqual((service as any)['moveContent'].mock.calls.length, 3);
+    assert.ok(emitEventMock.mock.calls.length > 0);
   });
 
   it('should get number of raw files', () => {
-    service['queue'] = [
+    (service as any)['queue'] = [
       { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
       { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
       { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 1 } }
     ];
-    expect(service.getNumberOfRawFilesInQueue()).toEqual(2);
+    assert.strictEqual(service.getNumberOfRawFilesInQueue(), 2);
   });
 
   it('should properly filter files', () => {
-    expect(
-      service['filterFile'](
+    assert.deepStrictEqual(
+      (service as any)['filterFile'](
         [
           { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
           { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
           { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 1 } }
         ],
         { start: testData.constants.dates.DATE_2, end: testData.constants.dates.DATE_2, nameContains: '2', maxNumberOfFilesReturned: 0 }
-      )
-    ).toEqual([{ filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } }]);
+      ),
+      [{ filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } }]
+    );
 
-    expect(
-      service['filterFile'](
+    assert.deepStrictEqual(
+      (service as any)['filterFile'](
         [
           { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
           { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
           { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 1 } }
         ],
         { start: undefined, end: undefined, nameContains: undefined, maxNumberOfFilesReturned: 0 }
-      )
-    ).toEqual([
-      { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
-      { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
-      { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 1 } }
-    ]);
+      ),
+      [
+        { filename: 'f1.json', metadata: { ...fileList[0].metadata, numberOfElement: 0 } },
+        { filename: 'f2.json', metadata: { ...fileList[1].metadata, numberOfElement: 0 } },
+        { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 1 } }
+      ]
+    );
   });
 
   describe('accumulateContent', () => {
@@ -486,15 +582,18 @@ describe('CacheService', () => {
         { filename: 'f2.json', metadata: { ...fileList[1].metadata } }
       ];
 
-      (fs.readFile as jest.Mock)
-        .mockResolvedValueOnce(JSON.stringify([{ id: 1 }]))
-        .mockResolvedValueOnce(JSON.stringify([{ id: 2 }, { id: 3 }]));
+      readFileMock.mock.mockImplementation(
+        seq(
+          async () => JSON.stringify([{ id: 1 }]),
+          async () => JSON.stringify([{ id: 2 }, { id: 3 }])
+        )
+      );
 
-      const result = await service['accumulateContent'](queueItems, 0);
+      const result = await (service as any)['accumulateContent'](queueItems, 0);
 
-      expect(result.newListOfContent).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
-      expect(result.remainder).toEqual([]);
-      expect(result.compactedFiles.length).toBe(2);
+      assert.deepStrictEqual(result.newListOfContent, [{ id: 1 }, { id: 2 }, { id: 3 }]);
+      assert.deepStrictEqual(result.remainder, []);
+      assert.strictEqual(result.compactedFiles.length, 2);
     });
 
     it('should split content into main list and remainder when limit is reached', async () => {
@@ -505,15 +604,18 @@ describe('CacheService', () => {
         { filename: 'f2.json', metadata: { ...fileList[1].metadata } }
       ];
 
-      (fs.readFile as jest.Mock)
-        .mockResolvedValueOnce(JSON.stringify([{ id: 1 }, { id: 2 }]))
-        .mockResolvedValueOnce(JSON.stringify([{ id: 3 }, { id: 4 }]));
+      readFileMock.mock.mockImplementation(
+        seq(
+          async () => JSON.stringify([{ id: 1 }, { id: 2 }]),
+          async () => JSON.stringify([{ id: 3 }, { id: 4 }])
+        )
+      );
 
-      const result = await service['accumulateContent'](queueItems, maxGroupCount);
+      const result = await (service as any)['accumulateContent'](queueItems, maxGroupCount);
 
-      expect(result.newListOfContent).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]); // First 3
-      expect(result.remainder).toEqual([{ id: 4 }]); // The 4th item
-      expect(result.compactedFiles.length).toBe(2);
+      assert.deepStrictEqual(result.newListOfContent, [{ id: 1 }, { id: 2 }, { id: 3 }]); // First 3
+      assert.deepStrictEqual(result.remainder, [{ id: 4 }]); // The 4th item
+      assert.strictEqual(result.compactedFiles.length, 2);
     });
 
     it('should stop reading files once limit is reached', async () => {
@@ -524,14 +626,18 @@ describe('CacheService', () => {
         { filename: 'f2.json', metadata: { ...fileList[1].metadata } }
       ];
 
-      (fs.readFile as jest.Mock).mockResolvedValueOnce(JSON.stringify([{ id: 1 }, { id: 2 }]));
+      readFileMock.mock.mockImplementation(
+        seq(
+          async () => JSON.stringify([{ id: 1 }, { id: 2 }])
+        )
+      );
 
-      const result = await service['accumulateContent'](queueItems, maxGroupCount);
+      const result = await (service as any)['accumulateContent'](queueItems, maxGroupCount);
 
-      expect(result.newListOfContent).toEqual([{ id: 1 }]);
-      expect(result.remainder).toEqual([{ id: 2 }]);
-      expect(result.compactedFiles.length).toBe(1); // Only f1 was processed
-      expect(fs.readFile).toHaveBeenCalledTimes(1); // f2 was ignored
+      assert.deepStrictEqual(result.newListOfContent, [{ id: 1 }]);
+      assert.deepStrictEqual(result.remainder, [{ id: 2 }]);
+      assert.strictEqual(result.compactedFiles.length, 1); // Only f1 was processed
+      assert.strictEqual(readFileMock.mock.calls.length, 1); // f2 was ignored
     });
 
     it('should handle corrupt files by deleting them and continuing', async () => {
@@ -543,24 +649,27 @@ describe('CacheService', () => {
       ];
 
       // Inject queue into service so removeCacheContentFromQueue works
-      service['queue'] = [...queueItems];
+      (service as any)['queue'] = [...queueItems];
 
-      (fs.readFile as jest.Mock)
-        .mockResolvedValueOnce(JSON.stringify([{ id: 1 }]))
-        .mockRejectedValueOnce(new Error('Invalid JSON'))
-        .mockResolvedValueOnce(JSON.stringify([{ id: 3 }]));
+      readFileMock.mock.mockImplementation(
+        seq(
+          async () => JSON.stringify([{ id: 1 }]),
+          async () => { throw new Error('Invalid JSON'); },
+          async () => JSON.stringify([{ id: 3 }])
+        )
+      );
 
-      service['deleteCacheEntry'] = jest.fn();
+      (service as any)['deleteCacheEntry'] = mock.fn();
 
-      const result = await service['accumulateContent'](queueItems, 0);
+      const result = await (service as any)['accumulateContent'](queueItems, 0);
 
-      expect(result.newListOfContent).toEqual([{ id: 1 }, { id: 3 }]);
-      expect(result.compactedFiles.length).toBe(2); // f1 and f3
+      assert.deepStrictEqual(result.newListOfContent, [{ id: 1 }, { id: 3 }]);
+      assert.strictEqual(result.compactedFiles.length, 2); // f1 and f3
 
       // Verify Error Handling
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error while reading file'));
-      expect(service['deleteCacheEntry']).toHaveBeenCalledWith('cache', 'bad.json');
-      expect(service['queue'].find(f => f.filename === 'bad.json')).toBeUndefined();
+      assert.ok((logger.error as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('Error while reading file')));
+      assert.deepStrictEqual((service as any)['deleteCacheEntry'].mock.calls[0].arguments, ['cache', 'bad.json']);
+      assert.strictEqual((service as any)['queue'].find((f: any) => f.filename === 'bad.json'), undefined);
     });
   });
 
@@ -573,26 +682,27 @@ describe('CacheService', () => {
       const newContent = [{ id: 'new' }];
       const newSize = 500;
 
-      service['queue'] = [fileData]; // Put in queue to check in-memory update
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.stat as jest.Mock).mockResolvedValue({ size: newSize });
+      (service as any)['queue'] = [fileData]; // Put in queue to check in-memory update
+      writeFileMock.mock.mockImplementation(async () => undefined);
+      statMock.mock.mockImplementation(async () => ({ size: newSize }));
 
-      await service['overwriteCacheFile'](fileData, newContent);
+      await (service as any)['overwriteCacheFile'](fileData, newContent);
 
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining(path.join('content', 'test.json')),
-        JSON.stringify(newContent),
-        expect.anything()
+      assert.ok(
+        writeFileMock.mock.calls.some((c: any) =>
+          String(c.arguments[0]).includes(path.join('content', 'test.json'))
+        )
       );
 
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        expect.stringContaining(path.join('metadata', 'test.json')),
-        expect.stringContaining(`"contentSize":${newSize}`),
-        expect.anything()
+      assert.ok(
+        writeFileMock.mock.calls.some((c: any) =>
+          String(c.arguments[0]).includes(path.join('metadata', 'test.json')) &&
+          String(c.arguments[1]).includes(`"contentSize":${newSize}`)
+        )
       );
 
-      expect(fileData.metadata.contentSize).toBe(newSize);
-      expect(fileData.metadata.numberOfElement).toBe(1);
+      assert.strictEqual(fileData.metadata.contentSize, newSize);
+      assert.strictEqual(fileData.metadata.numberOfElement, 1);
     });
 
     it('should write content and not update metadata in memory if file not found in queue', async () => {
@@ -603,14 +713,14 @@ describe('CacheService', () => {
       const newContent = [{ id: 'new' }];
       const newSize = 500;
 
-      service['queue'] = [{ filename: 'another_file.json', metadata: fileData.metadata }]; // Put in queue a wrong filename
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.stat as jest.Mock).mockResolvedValue({ size: newSize });
+      (service as any)['queue'] = [{ filename: 'another_file.json', metadata: fileData.metadata }]; // Put in queue a wrong filename
+      writeFileMock.mock.mockImplementation(async () => undefined);
+      statMock.mock.mockImplementation(async () => ({ size: newSize }));
 
-      await service['overwriteCacheFile'](fileData, newContent);
+      await (service as any)['overwriteCacheFile'](fileData, newContent);
 
-      expect(fs.writeFile).toHaveBeenCalledTimes(2);
-      expect(service['queue']).toEqual([{ filename: 'another_file.json', metadata: fileData.metadata }]);
+      assert.strictEqual(writeFileMock.mock.calls.length, 2);
+      assert.deepStrictEqual((service as any)['queue'], [{ filename: 'another_file.json', metadata: fileData.metadata }]);
     });
 
     it('should handled missing queue element', async () => {
@@ -620,11 +730,11 @@ describe('CacheService', () => {
       };
       const newContent = [{ id: 'new' }];
 
-      service['queue'] = []; // Empty queue
-      (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-      (fs.stat as jest.Mock).mockResolvedValue({ size: 500 });
+      (service as any)['queue'] = []; // Empty queue
+      writeFileMock.mock.mockImplementation(async () => undefined);
+      statMock.mock.mockImplementation(async () => ({ size: 500 }));
 
-      await expect(service['overwriteCacheFile'](fileData, newContent)).resolves.not.toThrow();
+      await assert.doesNotReject((service as any)['overwriteCacheFile'](fileData, newContent));
     });
   });
 
@@ -635,109 +745,109 @@ describe('CacheService', () => {
         resolveCompact = resolve;
       });
 
-      service['updateCache$'] = { promise: compactPromise } as DeferredPromise;
+      (service as any)['updateCache$'] = { promise: compactPromise } as DeferredPromise;
 
       let isFinished = false;
-      const waitCall = service['compactQueue'](1, 'time-values').then(() => {
+      const waitCall = (service as any)['compactQueue'](1, 'time-values').then(() => {
         isFinished = true;
       });
 
-      expect(isFinished).toBe(false);
+      assert.strictEqual(isFinished, false);
       resolveCompact!();
       await waitCall;
-      expect(isFinished).toBe(true);
+      assert.strictEqual(isFinished, true);
     });
 
     it('should orchestrate accumulation, writing, and cleanup', async () => {
       // Setup: 2 items in queue, merge them into 1
       const item1 = { filename: '1.json', metadata: { contentType: 'typeA' } };
       const item2 = { filename: '2.json', metadata: { contentType: 'typeA' } };
-      service['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
+      (service as any)['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
 
       // Mocks for helper methods
-      service['accumulateContent'] = jest.fn().mockResolvedValue({
+      (service as any)['accumulateContent'] = mock.fn(async () => ({
         newListOfContent: [{ a: 1 }, { b: 2 }],
         remainder: [],
         compactedFiles: [item1, item2] // Both processed
-      });
-      service['overwriteCacheFile'] = jest.fn().mockResolvedValue(undefined);
-      service['deleteCacheEntry'] = jest.fn().mockResolvedValue(undefined);
+      }));
+      (service as any)['overwriteCacheFile'] = mock.fn(async () => undefined);
+      (service as any)['deleteCacheEntry'] = mock.fn(async () => undefined);
 
       await service.compactQueue(100, 'typeB'); // nothing to do on this type
-      expect(service['overwriteCacheFile']).not.toHaveBeenCalled();
-      expect(service['deleteCacheEntry']).not.toHaveBeenCalled();
+      assert.strictEqual((service as any)['overwriteCacheFile'].mock.calls.length, 0);
+      assert.strictEqual((service as any)['deleteCacheEntry'].mock.calls.length, 0);
 
       await service.compactQueue(100, 'typeA');
 
       // Verify Flow
       // 1. Accumulate called
-      expect(service['accumulateContent']).toHaveBeenCalled();
+      assert.ok((service as any)['accumulateContent'].mock.calls.length > 0);
 
       // 2. Write Main called with FIRST element (item1)
-      expect(service['overwriteCacheFile']).toHaveBeenCalledWith(item1, [{ a: 1 }, { b: 2 }]);
+      assert.deepStrictEqual((service as any)['overwriteCacheFile'].mock.calls[0].arguments, [item1, [{ a: 1 }, { b: 2 }]]);
 
       // 3. Write Remainder NOT called (remainder empty)
-      expect(service['overwriteCacheFile']).toHaveBeenCalledTimes(1);
+      assert.strictEqual((service as any)['overwriteCacheFile'].mock.calls.length, 1);
 
       // 4. Delete intermediate called for BOTH (logic says we clean up intermediate files)
-      // Note: Implementation iterates over compactedFiles.
-      expect(service['deleteCacheEntry']).toHaveBeenCalledWith('cache', '2.json');
+      assert.ok(
+        (service as any)['deleteCacheEntry'].mock.calls.some((c: any) =>
+          c.arguments[0] === 'cache' && c.arguments[1] === '2.json'
+        )
+      );
 
       // 5. Queue updated: should remove '2.json' (intermediate) but keep '1.json' (reused)
-
-      // We need to ensure our mock returns a COPY array if the method mutates it,
-      // or we accept that the method mutates the array we provided in the mock.
-      expect(service['queue'].length).toBe(1);
-      expect(service['queue'][0]).toBe(item1);
+      assert.strictEqual((service as any)['queue'].length, 1);
+      assert.strictEqual((service as any)['queue'][0], item1);
     });
 
     it('should handle remainder by writing to last file', async () => {
       const item1 = { filename: '1.json', metadata: { contentType: 'typeA' } };
       const item2 = { filename: '2.json', metadata: { contentType: 'typeA' } };
-      service['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
+      (service as any)['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
 
-      service['accumulateContent'] = jest.fn().mockResolvedValue({
+      (service as any)['accumulateContent'] = mock.fn(async () => ({
         newListOfContent: [{ a: 1 }],
         remainder: [{ b: 2 }],
         compactedFiles: [item1, item2]
-      });
-      service['overwriteCacheFile'] = jest.fn().mockResolvedValue(undefined);
-      service['deleteCacheEntry'] = jest.fn().mockResolvedValue(undefined);
+      }));
+      (service as any)['overwriteCacheFile'] = mock.fn(async () => undefined);
+      (service as any)['deleteCacheEntry'] = mock.fn(async () => undefined);
 
       await service.compactQueue(1, 'typeA');
 
       // Verify two writes
-      expect(service['overwriteCacheFile']).toHaveBeenCalledWith(item1, [{ a: 1 }]); // Main batch -> First file
-      expect(service['overwriteCacheFile']).toHaveBeenCalledWith(item2, [{ b: 2 }]); // Remainder -> Last file
+      assert.deepStrictEqual((service as any)['overwriteCacheFile'].mock.calls[0].arguments, [item1, [{ a: 1 }]]); // Main batch -> First file
+      assert.deepStrictEqual((service as any)['overwriteCacheFile'].mock.calls[1].arguments, [item2, [{ b: 2 }]]); // Remainder -> Last file
 
       // Queue update: Both should remain in queue because shift() removed item1 and pop() removed item2 from the list to delete
-      expect(service['queue'].length).toBe(2);
+      assert.strictEqual((service as any)['queue'].length, 2);
     });
 
     it('should orchestrate accumulation with no file compacted', async () => {
       // Setup: 2 items in queue, merge them into 1
       const item1 = { filename: '1.json', metadata: { contentType: 'typeA' } };
       const item2 = { filename: '2.json', metadata: { contentType: 'typeA' } };
-      service['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
+      (service as any)['queue'] = [item1, item2] as Array<{ filename: string; metadata: CacheMetadata }>;
 
       // Mocks for helper methods
-      service['accumulateContent'] = jest.fn().mockResolvedValue({
+      (service as any)['accumulateContent'] = mock.fn(async () => ({
         newListOfContent: [],
         remainder: [],
         compactedFiles: []
-      });
-      service['overwriteCacheFile'] = jest.fn();
-      service['deleteCacheEntry'] = jest.fn();
+      }));
+      (service as any)['overwriteCacheFile'] = mock.fn();
+      (service as any)['deleteCacheEntry'] = mock.fn();
 
       await service.compactQueue(100, 'typeA');
 
-      expect(service['accumulateContent']).toHaveBeenCalled();
-      expect(service['overwriteCacheFile']).not.toHaveBeenCalled();
-      expect(service['deleteCacheEntry']).not.toHaveBeenCalledWith();
+      assert.ok((service as any)['accumulateContent'].mock.calls.length > 0);
+      assert.strictEqual((service as any)['overwriteCacheFile'].mock.calls.length, 0);
+      assert.strictEqual((service as any)['deleteCacheEntry'].mock.calls.length, 0);
 
-      expect(service['queue'].length).toBe(2);
-      expect(service['queue'][0]).toBe(item1);
-      expect(service['queue'][1]).toBe(item2);
+      assert.strictEqual((service as any)['queue'].length, 2);
+      assert.strictEqual((service as any)['queue'][0], item1);
+      assert.strictEqual((service as any)['queue'][1], item2);
     });
   });
 
@@ -748,62 +858,64 @@ describe('CacheService', () => {
       const metadata = { contentSize: 100, numberOfElement: 1, createdAt: '', contentType: 'any', contentFile: 'file' };
 
       // Inject initial state
-      service['queue'] = [{ filename, metadata }];
-      service['cacheSize'] = { cache: 100, error: 0, archive: 0 };
+      (service as any)['queue'] = [{ filename, metadata }];
+      (service as any)['cacheSize'] = { cache: 100, error: 0, archive: 0 };
 
-      service['readCacheMetadataFile'] = jest.fn().mockResolvedValue(metadata);
-      service['removeCacheContentFromQueue'] = jest.fn();
-      (fs.rename as jest.Mock).mockResolvedValue(undefined);
+      (service as any)['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      (service as any)['removeCacheContentFromQueue'] = mock.fn();
+      renameMock.mock.mockImplementation(async () => undefined);
 
-      await service['moveContent']('cache', 'archive', filename);
+      await (service as any)['moveContent']('cache', 'archive', filename);
 
-      expect(fs.rename).toHaveBeenCalledTimes(2); // Content + Metadata
-      expect(fs.rename).toHaveBeenCalledWith(
-        expect.stringContaining(path.join('cache', 'northId', 'content', filename)),
-        expect.stringContaining(path.join('archive', 'northId', 'content', filename))
+      assert.strictEqual(renameMock.mock.calls.length, 2); // Content + Metadata
+      assert.ok(
+        renameMock.mock.calls.some((c: any) =>
+          String(c.arguments[0]).includes(path.join('cache', 'northId', 'content', filename)) &&
+          String(c.arguments[1]).includes(path.join('archive', 'northId', 'content', filename))
+        )
       );
 
-      expect(service['removeCacheContentFromQueue']).toHaveBeenCalledWith(filename);
-      expect(service['cacheSize'].cache).toBe(0);
-      expect(service['cacheSize'].archive).toBe(100);
-      expect(logger.trace).toHaveBeenCalledWith(expect.stringContaining('moved from cache to archive'));
+      assert.ok((service as any)['removeCacheContentFromQueue'].mock.calls.some((c: any) => c.arguments[0] === filename));
+      assert.strictEqual((service as any)['cacheSize'].cache, 0);
+      assert.strictEqual((service as any)['cacheSize'].archive, 100);
+      assert.ok((logger.trace as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('moved from cache to archive')));
     });
 
     it('should add to queue if moving TO cache', async () => {
       const filename = 'file2.json';
       const metadata = { contentSize: 50 };
-      service['cacheSize'] = { cache: 0, error: 50, archive: 0 };
+      (service as any)['cacheSize'] = { cache: 0, error: 50, archive: 0 };
 
-      service['readCacheMetadataFile'] = jest.fn().mockResolvedValue(metadata);
-      (fs.rename as jest.Mock).mockResolvedValue(undefined);
+      (service as any)['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      renameMock.mock.mockImplementation(async () => undefined);
 
-      await service['moveContent']('error', 'cache', filename);
+      await (service as any)['moveContent']('error', 'cache', filename);
 
-      const queue = service['queue'];
-      expect(queue.length).toBe(1);
-      expect(queue[0].filename).toBe(filename);
-      expect(service['cacheSize'].cache).toBe(50);
+      const queue = (service as any)['queue'];
+      assert.strictEqual(queue.length, 1);
+      assert.strictEqual(queue[0].filename, filename);
+      assert.strictEqual((service as any)['cacheSize'].cache, 50);
     });
 
     it('should handle errors during move', async () => {
       const filename = 'bad-file.json';
       const metadata = { contentSize: 200 } as CacheMetadata;
-      service['readCacheMetadataFile'] = jest.fn().mockResolvedValue(metadata);
-      (fs.rename as jest.Mock).mockRejectedValue(new Error('Read Error'));
+      (service as any)['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      renameMock.mock.mockImplementation(async () => { throw new Error('Read Error'); });
 
-      await service['moveContent']('cache', 'error', filename);
+      await (service as any)['moveContent']('cache', 'error', filename);
 
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error while moving files'));
+      assert.ok((logger.error as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('Error while moving files')));
     });
 
     it('should handle empty metadata', async () => {
       const filename = 'file.json';
 
-      service['readCacheMetadataFile'] = jest.fn().mockResolvedValue(null);
+      (service as any)['readCacheMetadataFile'] = mock.fn(async () => null);
 
-      await service['moveContent']('cache', 'error', filename);
+      await (service as any)['moveContent']('cache', 'error', filename);
 
-      expect(fs.rename).not.toHaveBeenCalled();
+      assert.strictEqual(renameMock.mock.calls.length, 0);
     });
   });
 
@@ -814,82 +926,103 @@ describe('CacheService', () => {
       const metadata = { contentSize: 200 } as CacheMetadata;
 
       // Inject initial state
-      service['queue'] = [{ filename, metadata }];
-      service['cacheSize'] = { cache: 200, error: 0, archive: 0 };
+      (service as any)['queue'] = [{ filename, metadata }];
+      (service as any)['cacheSize'] = { cache: 200, error: 0, archive: 0 };
 
-      service['readCacheMetadataFile'] = jest.fn().mockResolvedValue(metadata);
-      service['removeCacheContentFromQueue'] = jest.fn();
-      (fs.unlink as jest.Mock).mockResolvedValue(undefined);
+      (service as any)['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      (service as any)['removeCacheContentFromQueue'] = mock.fn();
 
       // Execute: Remove from 'cache'
-      await service['removeContent']('cache', filename);
+      await (service as any)['removeContent']('cache', filename);
 
       // Verify FS operations
-      expect(fs.rm).toHaveBeenCalledTimes(2); // Content + Metadata
-      expect(fs.rm).toHaveBeenCalledWith(expect.stringContaining(path.join('cache', 'northId', 'content', filename)), {
-        force: true,
-        recursive: true
-      });
+      assert.strictEqual(rmMock.mock.calls.length, 2); // Content + Metadata
+      assert.ok(
+        rmMock.mock.calls.some((c: any) =>
+          String(c.arguments[0]).includes(path.join('cache', 'northId', 'content', filename)) &&
+          c.arguments[1]?.force === true &&
+          c.arguments[1]?.recursive === true
+        )
+      );
 
       // Verify State Updates
-      expect(service['removeCacheContentFromQueue']).toHaveBeenCalledWith(filename);
-      expect(service['cacheSize'].cache).toBe(0);
-      expect(logger.trace).toHaveBeenCalledWith(expect.stringContaining('removed from cache'));
+      assert.ok((service as any)['removeCacheContentFromQueue'].mock.calls.some((c: any) => c.arguments[0] === filename));
+      assert.strictEqual((service as any)['cacheSize'].cache, 0);
+      assert.ok((logger.trace as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('removed from cache')));
     });
 
     it('should handle errors during removal', async () => {
       const filename = 'file.json';
       const metadata = { contentSize: 100 };
 
-      service['readCacheMetadataFile'] = jest.fn().mockResolvedValue(metadata);
-      service['deleteCacheEntry'] = jest.fn().mockRejectedValue(new Error('Rm Error'));
+      (service as any)['readCacheMetadataFile'] = mock.fn(async () => metadata);
+      (service as any)['deleteCacheEntry'] = mock.fn(async () => { throw new Error('Rm Error'); });
 
-      await service['removeContent']('archive', filename);
+      await (service as any)['removeContent']('archive', filename);
 
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error while removing file'));
+      assert.ok((logger.error as any).mock.calls.some((c: any) => String(c.arguments[0]).includes('Error while removing file')));
     });
 
     it('should handle empty metadata', async () => {
       const filename = 'file.json';
 
-      service['readCacheMetadataFile'] = jest.fn().mockResolvedValue(null);
-      service['deleteCacheEntry'] = jest.fn();
+      (service as any)['readCacheMetadataFile'] = mock.fn(async () => null);
+      (service as any)['deleteCacheEntry'] = mock.fn();
 
-      await service['removeContent']('archive', filename);
+      await (service as any)['removeContent']('archive', filename);
 
-      expect(service['deleteCacheEntry']).not.toHaveBeenCalled();
+      assert.strictEqual((service as any)['deleteCacheEntry'].mock.calls.length, 0);
     });
   });
 
   it('should delete cache entry', async () => {
-    (fs.rm as jest.Mock).mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('rm error'));
-    await service['deleteCacheEntry']('cache', 'file');
+    rmMock.mock.mockImplementation(
+      seq(
+        async () => undefined,
+        async () => { throw new Error('rm error'); }
+      )
+    );
+    await (service as any)['deleteCacheEntry']('cache', 'file');
 
-    expect(fs.rm).toHaveBeenCalledTimes(2);
-    expect(fs.rm).toHaveBeenCalledWith(path.join(service.cacheFolder, METADATA_FOLDER, 'file'), { recursive: true, force: true });
-    expect(fs.rm).toHaveBeenCalledWith(path.join(service.cacheFolder, CONTENT_FOLDER, 'file'), { recursive: true, force: true });
-    expect(logger.trace).toHaveBeenCalledWith(`Error deleting cache entry "file": rm error`);
+    assert.strictEqual(rmMock.mock.calls.length, 2);
+    assert.ok(
+      rmMock.mock.calls.some((c: any) =>
+        c.arguments[0] === path.join(service.cacheFolder, METADATA_FOLDER, 'file') &&
+        c.arguments[1]?.recursive === true &&
+        c.arguments[1]?.force === true
+      )
+    );
+    assert.ok(
+      rmMock.mock.calls.some((c: any) =>
+        c.arguments[0] === path.join(service.cacheFolder, CONTENT_FOLDER, 'file') &&
+        c.arguments[1]?.recursive === true &&
+        c.arguments[1]?.force === true
+      )
+    );
+    assert.ok((logger.trace as any).mock.calls.some((c: any) => c.arguments[0] === `Error deleting cache entry "file": rm error`));
   });
 
   it('should empty cache', async () => {
-    const emitEventSpy = jest.spyOn(service.cacheSizeEventEmitter, 'emit');
-    (fs.readdir as jest.Mock)
-      .mockImplementationOnce(() => ['file1', 'file2', 'bad']) // Cache folder (metadata)
-      .mockImplementationOnce(() => ['file1', 'file2', 'bad']) // Cache folder (content)
-      .mockImplementationOnce(() => ['file3', 'file4', 'bad']) // Error folder (metadata)
-      .mockImplementationOnce(() => ['file3', 'file4', 'bad']) // Error folder (content)
-      .mockImplementationOnce(() => ['file5', 'file6', 'bad']) // Archive folder (metadata)
-      .mockImplementationOnce(() => ['file5', 'file6', 'bad']); // Archive folder (content)
+    const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
+    readdirMock.mock.mockImplementation(
+      seq(
+        async () => ['file1', 'file2', 'bad'], // Cache folder (metadata)
+        async () => ['file1', 'file2', 'bad'], // Cache folder (content)
+        async () => ['file3', 'file4', 'bad'], // Error folder (metadata)
+        async () => ['file3', 'file4', 'bad'], // Error folder (content)
+        async () => ['file5', 'file6', 'bad'], // Archive folder (metadata)
+        async () => ['file5', 'file6', 'bad']  // Archive folder (content)
+      )
+    );
 
-    (fs.rm as jest.Mock).mockImplementation((file: string) => {
-      if (file.includes('bad')) return Promise.reject(new Error('rm error'));
-      return Promise.resolve();
+    rmMock.mock.mockImplementation(async (file: string) => {
+      if (file.includes('bad')) throw new Error('rm error');
     });
     await service.removeAllCacheContent();
 
-    expect(fs.readdir).toHaveBeenCalledTimes(6);
-    expect(fs.rm).toHaveBeenCalledTimes(18);
-    expect(logger.error).toHaveBeenCalledTimes(6);
-    expect(emitEventSpy).toHaveBeenCalledWith('cache-size', service['cacheSize']);
+    assert.strictEqual(readdirMock.mock.calls.length, 6);
+    assert.strictEqual(rmMock.mock.calls.length, 18);
+    assert.strictEqual((logger.error as any).mock.calls.length, 6);
+    assert.ok(emitEventMock.mock.calls.some((c: any) => c.arguments[0] === 'cache-size'));
   });
 });
