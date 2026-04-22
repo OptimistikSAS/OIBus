@@ -1,3 +1,6 @@
+import { before, after, beforeEach, afterEach, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
@@ -60,11 +63,11 @@ const TEST_DB_PATH = 'src/tests/test-config-command.db';
 
 let database: Database;
 describe('OIAnalyticsCommandRepository', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('config', true, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('config', TEST_DB_PATH);
   });
@@ -72,17 +75,16 @@ describe('OIAnalyticsCommandRepository', () => {
   let repository: OIAnalyticsCommandRepository;
 
   beforeEach(() => {
-    jest.resetAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new OIAnalyticsCommandRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should properly list commands', () => {
-    expect(repository.findAll().map(stripAuditFields)).toEqual(testData.oIAnalytics.commands.oIBusList.map(stripAuditFields));
+    assert.deepStrictEqual(repository.findAll().map(stripAuditFields), testData.oIAnalytics.commands.oIBusList.map(stripAuditFields));
   });
 
   it('should properly search commands and page them', () => {
@@ -94,10 +96,8 @@ describe('OIAnalyticsCommandRepository', () => {
       end: testData.constants.dates.FAKE_NOW_IN_FUTURE,
       page: 0
     });
-    expect({
-      ...filteredResult,
-      content: filteredResult.content.map(stripAuditFields)
-    }).toEqual(
+    assert.deepStrictEqual(
+      { ...filteredResult, content: filteredResult.content.map(stripAuditFields) },
       createPageFromArray(
         testData.oIAnalytics.commands.oIBusList
           .filter(element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status))
@@ -115,16 +115,14 @@ describe('OIAnalyticsCommandRepository', () => {
       end: undefined,
       page: 0
     });
-    expect({
-      ...searchResult,
-      content: searchResult.content.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields)
-    }).toEqual(
+    assert.deepStrictEqual(
+      { ...searchResult, content: searchResult.content.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields) },
       createPageFromArray(testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields), 50, 0)
     );
   });
 
   it('should properly search commands and list them', () => {
-    expect(
+    assert.deepStrictEqual(
       repository
         .list({
           types: ['update-version'],
@@ -133,8 +131,7 @@ describe('OIAnalyticsCommandRepository', () => {
           start: testData.constants.dates.JANUARY_1ST_2020_UTC,
           end: testData.constants.dates.FAKE_NOW_IN_FUTURE
         })
-        .map(stripAuditFields)
-    ).toEqual(
+        .map(stripAuditFields),
       testData.oIAnalytics.commands.oIBusList
         .filter(element => ['update-version'].includes(element.type) && ['RUNNING'].includes(element.status))
         .map(stripAuditFields)
@@ -146,16 +143,18 @@ describe('OIAnalyticsCommandRepository', () => {
       start: undefined,
       end: undefined
     });
-    expect(listResult.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields)).toEqual(
+    assert.deepStrictEqual(
+      listResult.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields),
       testData.oIAnalytics.commands.oIBusList.sort((a, b) => a.id.localeCompare(b.id)).map(stripAuditFields)
     );
   });
 
   it('should properly find by id', () => {
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[2].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[2].id)),
       stripAuditFields(testData.oIAnalytics.commands.oIBusList[2])
     );
-    expect(repository.findById('badId')).toEqual(null);
+    assert.strictEqual(repository.findById('badId'), null);
   });
 
   it('should create an update version command', () => {
@@ -163,7 +162,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[0] as OIAnalyticsFetchUpdateVersionCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -181,7 +180,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[1] as OIAnalyticsFetchUpdateEngineSettingsCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -199,7 +198,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[2] as OIAnalyticsFetchRestartEngineCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -216,7 +215,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[10] as OIAnalyticsFetchCreateOrUpdateSouthConnectorItemsFromCSVCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -239,7 +238,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[3] as OIAnalyticsFetchUpdateScanModeCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -258,7 +257,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[11] as OIAnalyticsFetchCreateSouthConnectorCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -280,7 +279,7 @@ describe('OIAnalyticsCommandRepository', () => {
     command.retrieveSecretsFromSouth = null;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -299,7 +298,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[4] as OIAnalyticsFetchUpdateSouthConnectorCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -318,19 +317,16 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[12] as OIAnalyticsFetchCreateNorthConnectorCommandDTO;
     repository.create(command);
 
-    expect(repository.findById(command.id)).toEqual(
-      expect.objectContaining({
-        id: command.id,
-        type: command.type,
-        status: 'RETRIEVED',
-        ack: false,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
-        targetVersion: command.targetVersion,
-        northConnectorId: command.retrieveSecretsFromNorth
-      })
-    );
+    const result = repository.findById(command.id)!;
+    assert.strictEqual(result.id, command.id);
+    assert.strictEqual(result.type, command.type);
+    assert.strictEqual(result.status, 'RETRIEVED');
+    assert.strictEqual(result.ack, false);
+    assert.strictEqual(result.retrievedDate, testData.constants.dates.FAKE_NOW);
+    assert.strictEqual(result.completedDate, null);
+    assert.strictEqual(result.result, null);
+    assert.strictEqual(result.targetVersion, command.targetVersion);
+    assert.strictEqual(result.northConnectorId, command.retrieveSecretsFromNorth);
   });
 
   it('should create a create north command without retrieved secrets from North', () => {
@@ -341,19 +337,16 @@ describe('OIAnalyticsCommandRepository', () => {
     command.retrieveSecretsFromNorth = null;
     repository.create(command);
 
-    expect(repository.findById(command.id)).toEqual(
-      expect.objectContaining({
-        id: command.id,
-        type: command.type,
-        status: 'RETRIEVED',
-        ack: false,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
-        targetVersion: command.targetVersion,
-        northConnectorId: ''
-      })
-    );
+    const result = repository.findById(command.id)!;
+    assert.strictEqual(result.id, command.id);
+    assert.strictEqual(result.type, command.type);
+    assert.strictEqual(result.status, 'RETRIEVED');
+    assert.strictEqual(result.ack, false);
+    assert.strictEqual(result.retrievedDate, testData.constants.dates.FAKE_NOW);
+    assert.strictEqual(result.completedDate, null);
+    assert.strictEqual(result.result, null);
+    assert.strictEqual(result.targetVersion, command.targetVersion);
+    assert.strictEqual(result.northConnectorId, '');
   });
 
   it('should create an update north command', () => {
@@ -361,19 +354,16 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[5] as OIAnalyticsFetchUpdateNorthConnectorCommandDTO;
     repository.create(command);
 
-    expect(repository.findById(command.id)).toEqual(
-      expect.objectContaining({
-        id: command.id,
-        type: command.type,
-        status: 'RETRIEVED',
-        ack: false,
-        retrievedDate: testData.constants.dates.FAKE_NOW,
-        completedDate: null,
-        result: null,
-        targetVersion: command.targetVersion,
-        northConnectorId: command.northConnectorId
-      })
-    );
+    const result = repository.findById(command.id)!;
+    assert.strictEqual(result.id, command.id);
+    assert.strictEqual(result.type, command.type);
+    assert.strictEqual(result.status, 'RETRIEVED');
+    assert.strictEqual(result.ack, false);
+    assert.strictEqual(result.retrievedDate, testData.constants.dates.FAKE_NOW);
+    assert.strictEqual(result.completedDate, null);
+    assert.strictEqual(result.result, null);
+    assert.strictEqual(result.targetVersion, command.targetVersion);
+    assert.strictEqual(result.northConnectorId, command.northConnectorId);
   });
 
   it('should create a delete scan mode command', () => {
@@ -381,7 +371,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[6] as OIAnalyticsFetchDeleteScanModeCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -399,7 +389,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[7] as OIAnalyticsFetchDeleteSouthConnectorCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -422,7 +412,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -451,7 +441,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -475,7 +465,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[8] as OIAnalyticsFetchDeleteNorthConnectorCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -498,7 +488,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -517,7 +507,7 @@ describe('OIAnalyticsCommandRepository', () => {
       .oIAnalyticsList[13] as OIAnalyticsFetchUpdateRegistrationSettingsCommandDTO;
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -533,7 +523,8 @@ describe('OIAnalyticsCommandRepository', () => {
   it('should mark a command as COMPLETED', () => {
     repository.markAsCompleted(testData.oIAnalytics.commands.oIBusList[0].id, testData.constants.dates.FAKE_NOW, 'ok');
 
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[0].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[0].id)),
       stripAuditFields({
         ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[0])),
         completedDate: testData.constants.dates.FAKE_NOW,
@@ -547,7 +538,8 @@ describe('OIAnalyticsCommandRepository', () => {
   it('should mark a command as ERRORED', () => {
     repository.markAsErrored(testData.oIAnalytics.commands.oIBusList[1].id, 'not ok');
 
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[1].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[1].id)),
       stripAuditFields({
         ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[1])),
         result: 'not ok',
@@ -559,7 +551,8 @@ describe('OIAnalyticsCommandRepository', () => {
   it('should mark a command as RUNNING', () => {
     repository.markAsRunning(testData.oIAnalytics.commands.oIBusList[2].id);
 
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[2].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[2].id)),
       stripAuditFields({
         ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[2])),
         status: 'RUNNING'
@@ -570,7 +563,8 @@ describe('OIAnalyticsCommandRepository', () => {
   it('should mark a command as Acknowledged', () => {
     repository.markAsAcknowledged(testData.oIAnalytics.commands.oIBusList[3].id);
 
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[3].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[3].id)),
       stripAuditFields({
         ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[3])),
         ack: true
@@ -581,7 +575,8 @@ describe('OIAnalyticsCommandRepository', () => {
   it('should mark a command as CANCELLED', () => {
     repository.cancel(testData.oIAnalytics.commands.oIBusList[4].id);
 
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[4].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.commands.oIBusList[4].id)),
       stripAuditFields({
         ...JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[4])),
         status: 'CANCELLED'
@@ -591,7 +586,7 @@ describe('OIAnalyticsCommandRepository', () => {
 
   it('should delete a command', () => {
     repository.delete(testData.oIAnalytics.commands.oIBusList[5].id);
-    expect(repository.findById(testData.oIAnalytics.commands.oIBusList[5].id)).toEqual(null);
+    assert.strictEqual(repository.findById(testData.oIAnalytics.commands.oIBusList[5].id), null);
   });
 
   it('should create a create ip filter command', () => {
@@ -603,7 +598,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -626,7 +621,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -649,7 +644,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -671,7 +666,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -694,7 +689,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -717,7 +712,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -742,7 +737,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -770,7 +765,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -796,7 +791,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -819,7 +814,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -843,7 +838,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -869,7 +864,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -900,7 +895,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -932,7 +927,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -960,7 +955,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -984,7 +979,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1008,7 +1003,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1032,7 +1027,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1056,7 +1051,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1080,7 +1075,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1108,7 +1103,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1136,7 +1131,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1159,7 +1154,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1182,7 +1177,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1205,7 +1200,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
@@ -1227,7 +1222,7 @@ describe('OIAnalyticsCommandRepository', () => {
     };
     repository.create(command);
 
-    expect(stripAuditFields(repository.findById(command.id))).toEqual({
+    assert.deepStrictEqual(stripAuditFields(repository.findById(command.id)), {
       id: command.id,
       type: command.type,
       status: 'RETRIEVED',
