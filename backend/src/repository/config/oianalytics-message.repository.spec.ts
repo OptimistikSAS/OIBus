@@ -1,36 +1,38 @@
+import { before, after, beforeEach, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
-import { generateRandomId } from '../../service/utils';
 import OIAnalyticsMessageRepository from './oianalytics-message.repository';
 import { createPageFromArray } from '../../../shared/model/types';
-
-jest.mock('../../service/utils');
 
 const TEST_DB_PATH = 'src/tests/test-config-message.db';
 
 let database: Database;
 describe('OIAnalyticsMessageRepository', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('config', true, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('config', TEST_DB_PATH);
   });
 
   let repository: OIAnalyticsMessageRepository;
+  let createdId: string;
+  let createdHistoryQueriesId: string;
+
   beforeEach(() => {
-    jest.resetAllMocks();
     repository = new OIAnalyticsMessageRepository(database);
   });
 
   it('should properly find by id', () => {
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id)),
       stripAuditFields(testData.oIAnalytics.messages.oIBusList[0])
     );
-    expect(repository.findById('badId')).toEqual(null);
+    assert.strictEqual(repository.findById('badId'), null);
   });
 
   it('should properly get messages page by search criteria', () => {
@@ -43,10 +45,8 @@ describe('OIAnalyticsMessageRepository', () => {
       },
       0
     );
-    expect({
-      ...filteredResult,
-      content: filteredResult.content.map(stripAuditFields)
-    }).toEqual(
+    assert.deepStrictEqual(
+      { ...filteredResult, content: filteredResult.content.map(stripAuditFields) },
       createPageFromArray(
         testData.oIAnalytics.messages.oIBusList
           .filter(element => ['full-config'].includes(element.type) && ['PENDING'].includes(element.status))
@@ -57,14 +57,14 @@ describe('OIAnalyticsMessageRepository', () => {
     );
 
     const allResult = repository.search({ types: [], status: [], start: undefined, end: undefined }, 0);
-    expect({
-      ...allResult,
-      content: allResult.content.map(stripAuditFields)
-    }).toEqual(createPageFromArray(testData.oIAnalytics.messages.oIBusList.map(stripAuditFields), 50, 0));
+    assert.deepStrictEqual(
+      { ...allResult, content: allResult.content.map(stripAuditFields) },
+      createPageFromArray(testData.oIAnalytics.messages.oIBusList.map(stripAuditFields), 50, 0)
+    );
   });
 
   it('should properly get messages list by search criteria', () => {
-    expect(
+    assert.deepStrictEqual(
       repository
         .list({
           types: ['full-config'],
@@ -72,24 +72,26 @@ describe('OIAnalyticsMessageRepository', () => {
           start: testData.constants.dates.JANUARY_1ST_2020_UTC,
           end: testData.constants.dates.FAKE_NOW_IN_FUTURE
         })
-        .map(stripAuditFields)
-    ).toEqual(
+        .map(stripAuditFields),
       testData.oIAnalytics.messages.oIBusList
         .filter(element => ['full-config'].includes(element.type) && ['PENDING'].includes(element.status))
         .map(stripAuditFields)
     );
-    expect(repository.list({ types: [], status: [], start: undefined, end: undefined }).map(stripAuditFields)).toEqual(
+    assert.deepStrictEqual(
+      repository.list({ types: [], status: [], start: undefined, end: undefined }).map(stripAuditFields),
       testData.oIAnalytics.messages.oIBusList.map(stripAuditFields)
     );
   });
 
   it('should create full-config message', () => {
-    (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
-
     repository.create({ type: 'full-config' });
+    const allMessages = repository.list({ types: ['full-config'], status: ['PENDING'], start: undefined, end: undefined });
+    const newMessage = allMessages.find(m => !testData.oIAnalytics.messages.oIBusList.some(existing => existing.id === m.id));
+    assert.ok(newMessage);
+    createdId = newMessage.id;
 
-    expect(stripAuditFields(repository.findById('newId'))).toEqual({
-      id: 'newId',
+    assert.deepStrictEqual(stripAuditFields(repository.findById(createdId)), {
+      id: createdId,
       type: 'full-config',
       status: 'PENDING',
       error: null,
@@ -98,12 +100,14 @@ describe('OIAnalyticsMessageRepository', () => {
   });
 
   it('should create history-queries message', () => {
-    (generateRandomId as jest.Mock).mockReturnValueOnce('newHistoryQueriesId');
-
     repository.create({ type: 'history-queries' });
+    const allMessages = repository.list({ types: ['history-queries'], status: ['PENDING'], start: undefined, end: undefined });
+    const newMessage = allMessages.find(m => !testData.oIAnalytics.messages.oIBusList.some(existing => existing.id === m.id));
+    assert.ok(newMessage);
+    createdHistoryQueriesId = newMessage.id;
 
-    expect(stripAuditFields(repository.findById('newHistoryQueriesId'))).toEqual({
-      id: 'newHistoryQueriesId',
+    assert.deepStrictEqual(stripAuditFields(repository.findById(createdHistoryQueriesId)), {
+      id: createdHistoryQueriesId,
       type: 'history-queries',
       status: 'PENDING',
       error: null,
@@ -114,7 +118,8 @@ describe('OIAnalyticsMessageRepository', () => {
   it('should mark a command as COMPLETED', () => {
     repository.markAsCompleted(testData.oIAnalytics.messages.oIBusList[0].id, testData.constants.dates.FAKE_NOW);
 
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id)),
       stripAuditFields({
         ...JSON.parse(JSON.stringify(testData.oIAnalytics.messages.oIBusList[0])),
         status: 'COMPLETED',
@@ -126,7 +131,8 @@ describe('OIAnalyticsMessageRepository', () => {
   it('should mark a command as ERRORED', () => {
     repository.markAsErrored(testData.oIAnalytics.messages.oIBusList[0].id, testData.constants.dates.FAKE_NOW, 'not ok');
 
-    expect(stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id))).toEqual(
+    assert.deepStrictEqual(
+      stripAuditFields(repository.findById(testData.oIAnalytics.messages.oIBusList[0].id)),
       stripAuditFields({
         ...JSON.parse(JSON.stringify(testData.oIAnalytics.messages.oIBusList[0])),
         status: 'ERRORED',
@@ -137,8 +143,8 @@ describe('OIAnalyticsMessageRepository', () => {
   });
 
   it('should properly delete new message', () => {
-    expect(repository.findById('newId')).not.toEqual(null);
-    repository.delete('newId');
-    expect(repository.findById('newId')).toEqual(null);
+    assert.notStrictEqual(repository.findById(createdId), null);
+    repository.delete(createdId);
+    assert.strictEqual(repository.findById(createdId), null);
   });
 });
