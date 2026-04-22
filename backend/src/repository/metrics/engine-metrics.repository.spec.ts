@@ -1,3 +1,5 @@
+import { before, after, beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
@@ -8,11 +10,11 @@ const TEST_DB_PATH = 'src/tests/test-metrics-engine.db';
 
 let database: Database;
 describe('EngineMetricsRepository with populated database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('metrics', true, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('metrics', TEST_DB_PATH);
   });
@@ -20,19 +22,18 @@ describe('EngineMetricsRepository with populated database', () => {
   let repository: EngineMetricsRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new EngineMetricsRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should get metrics', () => {
     repository.initMetrics(testData.engine.settings.id);
     const result = repository.getMetrics(testData.engine.settings.id);
-    expect(result).toEqual(testData.engine.metrics);
+    assert.deepStrictEqual(result, testData.engine.metrics);
   });
 
   it('should update metrics', () => {
@@ -43,23 +44,23 @@ describe('EngineMetricsRepository with populated database', () => {
     repository.updateMetrics(testData.engine.settings.id, newMetrics);
 
     const result = repository.getMetrics(testData.engine.settings.id)!;
-    expect(result.metricsStart).toEqual(newMetrics.metricsStart);
-    expect(result.freeMemory).toEqual(newMetrics.freeMemory);
-    expect(result.maxHeapUsed).toEqual(newMetrics.maxHeapUsed);
+    assert.strictEqual(result.metricsStart, newMetrics.metricsStart);
+    assert.strictEqual(result.freeMemory, newMetrics.freeMemory);
+    assert.strictEqual(result.maxHeapUsed, newMetrics.maxHeapUsed);
   });
 
   it('should remove metrics', () => {
     repository.removeMetrics(testData.engine.settings.id);
-    expect(repository.getMetrics(testData.engine.settings.id)).toEqual(null);
+    assert.strictEqual(repository.getMetrics(testData.engine.settings.id), null);
   });
 });
 
 describe('EngineMetricsRepository with empty database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('metrics', false, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('metrics', TEST_DB_PATH);
   });
@@ -67,19 +68,18 @@ describe('EngineMetricsRepository with empty database', () => {
   let repository: EngineMetricsRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new EngineMetricsRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should init and get metrics', () => {
     repository.initMetrics(testData.engine.settings.id);
     const result = repository.getMetrics(testData.engine.settings.id);
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       metricsStart: testData.constants.dates.FAKE_NOW,
       processCpuUsageInstant: 0,
       processCpuUsageAverage: 0,

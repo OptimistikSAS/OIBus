@@ -1,3 +1,5 @@
+import { before, after, beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
@@ -8,11 +10,11 @@ const TEST_DB_PATH = 'src/tests/test-metrics-history-query.db';
 
 let database: Database;
 describe('HistoryQueryMetricsRepository with populated database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('metrics', true, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('metrics', TEST_DB_PATH);
   });
@@ -20,19 +22,18 @@ describe('HistoryQueryMetricsRepository with populated database', () => {
   let repository: HistoryQueryMetricsRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new HistoryQueryMetricsRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should get metrics', () => {
     repository.initMetrics(testData.historyQueries.list[0].id);
     const result = repository.getMetrics(testData.historyQueries.list[0].id);
-    expect(result).toEqual(testData.historyQueries.metrics);
+    assert.deepStrictEqual(result, testData.historyQueries.metrics);
   });
 
   it('should update metrics', () => {
@@ -48,30 +49,30 @@ describe('HistoryQueryMetricsRepository with populated database', () => {
     repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);
 
     const result = repository.getMetrics(testData.historyQueries.list[0].id)!;
-    expect(result.metricsStart).toEqual(newMetrics.metricsStart);
-    expect(result.south.numberOfFilesRetrieved).toEqual(newMetrics.south.numberOfFilesRetrieved);
-    expect(result.south.lastValueRetrieved).toEqual(newMetrics.south.lastValueRetrieved);
+    assert.strictEqual(result.metricsStart, newMetrics.metricsStart);
+    assert.strictEqual(result.south.numberOfFilesRetrieved, newMetrics.south.numberOfFilesRetrieved);
+    assert.deepStrictEqual(result.south.lastValueRetrieved, newMetrics.south.lastValueRetrieved);
 
     newMetrics.south.lastValueRetrieved = null;
     newMetrics.north.lastContentSent = null;
     repository.updateMetrics(testData.historyQueries.list[0].id, newMetrics);
     const resultWithoutValue = repository.getMetrics(testData.historyQueries.list[0].id)!;
-    expect(resultWithoutValue.south.lastValueRetrieved).toEqual(null);
-    expect(resultWithoutValue.north.lastContentSent).toEqual(null);
+    assert.strictEqual(resultWithoutValue.south.lastValueRetrieved, null);
+    assert.strictEqual(resultWithoutValue.north.lastContentSent, null);
   });
 
   it('should remove metrics', () => {
     repository.removeMetrics(testData.historyQueries.list[0].id);
-    expect(repository.getMetrics(testData.historyQueries.list[0].id)).toEqual(null);
+    assert.strictEqual(repository.getMetrics(testData.historyQueries.list[0].id), null);
   });
 });
 
 describe('HistoryQueryMetricsRepository with empty database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('metrics', false, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('metrics', TEST_DB_PATH);
   });
@@ -79,19 +80,18 @@ describe('HistoryQueryMetricsRepository with empty database', () => {
   let repository: HistoryQueryMetricsRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new HistoryQueryMetricsRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should init and get metrics', () => {
     repository.initMetrics(testData.historyQueries.list[0].id);
     const result = repository.getMetrics(testData.historyQueries.list[0].id);
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       metricsStart: testData.constants.dates.FAKE_NOW,
       north: {
         lastConnection: null,

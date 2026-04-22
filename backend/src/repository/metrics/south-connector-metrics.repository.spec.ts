@@ -1,3 +1,5 @@
+import { before, after, beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
@@ -8,11 +10,11 @@ const TEST_DB_PATH = 'src/tests/test-metrics-south.db';
 
 let database: Database;
 describe('SouthConnectorMetricsRepository with populated database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('metrics', true, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('metrics', TEST_DB_PATH);
   });
@@ -20,19 +22,18 @@ describe('SouthConnectorMetricsRepository with populated database', () => {
   let repository: SouthConnectorMetricsRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new SouthConnectorMetricsRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should get metrics', () => {
     repository.initMetrics(testData.south.list[0].id);
     const result = repository.getMetrics(testData.south.list[0].id);
-    expect(result).toEqual(testData.south.metrics);
+    assert.deepStrictEqual(result, testData.south.metrics);
   });
 
   it('should update metrics', () => {
@@ -47,28 +48,28 @@ describe('SouthConnectorMetricsRepository with populated database', () => {
     repository.updateMetrics(testData.south.list[0].id, newMetrics);
 
     const result = repository.getMetrics(testData.south.list[0].id)!;
-    expect(result.metricsStart).toEqual(newMetrics.metricsStart);
-    expect(result.numberOfFilesRetrieved).toEqual(newMetrics.numberOfFilesRetrieved);
-    expect(result.lastValueRetrieved).toEqual(newMetrics.lastValueRetrieved);
+    assert.strictEqual(result.metricsStart, newMetrics.metricsStart);
+    assert.strictEqual(result.numberOfFilesRetrieved, newMetrics.numberOfFilesRetrieved);
+    assert.deepStrictEqual(result.lastValueRetrieved, newMetrics.lastValueRetrieved);
 
     newMetrics.lastValueRetrieved = null;
     repository.updateMetrics(testData.south.list[0].id, newMetrics);
     const resultWithoutValue = repository.getMetrics(testData.south.list[0].id)!;
-    expect(resultWithoutValue.lastValueRetrieved).toEqual(null);
+    assert.strictEqual(resultWithoutValue.lastValueRetrieved, null);
   });
 
   it('should remove metrics', () => {
     repository.removeMetrics(testData.south.list[0].id);
-    expect(repository.getMetrics(testData.south.list[0].id)).toEqual(null);
+    assert.strictEqual(repository.getMetrics(testData.south.list[0].id), null);
   });
 });
 
 describe('SouthConnectorMetricsRepository with empty database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('metrics', false, TEST_DB_PATH);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('metrics', TEST_DB_PATH);
   });
@@ -76,19 +77,18 @@ describe('SouthConnectorMetricsRepository with empty database', () => {
   let repository: SouthConnectorMetricsRepository;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     repository = new SouthConnectorMetricsRepository(database);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should init and get metrics', () => {
     repository.initMetrics(testData.south.list[0].id);
     const result = repository.getMetrics(testData.south.list[0].id);
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       metricsStart: testData.constants.dates.FAKE_NOW,
       lastConnection: null,
       lastRunStart: null,
