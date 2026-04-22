@@ -1,39 +1,41 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for South Service
  */
-export default jest.fn().mockImplementation(() => ({
-  listManifest: jest.fn(),
-  getManifest: jest.fn(),
-  list: jest.fn(),
-  findById: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  start: jest.fn(),
-  stop: jest.fn(),
-  getSouthDataStream: jest.fn(),
-  testSouth: jest.fn().mockResolvedValue({ items: [] }),
-  testItem: jest.fn(),
-  listItems: jest.fn(),
-  searchItems: jest.fn(),
-  findItemById: jest.fn(),
-  createItem: jest.fn(),
-  updateItem: jest.fn(),
-  enableItem: jest.fn(),
-  disableItem: jest.fn(),
-  enableItems: jest.fn(),
-  disableItems: jest.fn(),
-  deleteItem: jest.fn(),
-  deleteItems: jest.fn(),
-  deleteAllItems: jest.fn(),
-  getItemLastValue: jest.fn(),
-  checkImportItems: jest.fn(),
-  importItems: jest.fn(),
-  retrieveSecretsFromSouth: jest.fn(),
-  getGroups: jest.fn(),
-  getGroup: jest.fn(),
-  createGroup: jest.fn(),
-  updateGroup: jest.fn(),
-  deleteGroup: jest.fn(),
-  moveItemsToGroup: jest.fn()
-}));
+export default class SouthServiceMock {
+  listManifest = mock.fn();
+  getManifest = mock.fn();
+  list = mock.fn();
+  findById = mock.fn();
+  create = mock.fn();
+  update = mock.fn();
+  delete = mock.fn();
+  start = mock.fn();
+  stop = mock.fn();
+  getSouthDataStream = mock.fn();
+  testSouth = mock.fn(async () => ({ items: [] }));
+  testItem = mock.fn();
+  listItems = mock.fn();
+  searchItems = mock.fn();
+  findItemById = mock.fn();
+  createItem = mock.fn();
+  updateItem = mock.fn();
+  enableItem = mock.fn();
+  disableItem = mock.fn();
+  enableItems = mock.fn();
+  disableItems = mock.fn();
+  deleteItem = mock.fn();
+  deleteItems = mock.fn();
+  deleteAllItems = mock.fn();
+  getItemLastValue = mock.fn();
+  checkImportItems = mock.fn();
+  importItems = mock.fn();
+  retrieveSecretsFromSouth = mock.fn();
+  getGroups = mock.fn();
+  getGroup = mock.fn();
+  createGroup = mock.fn();
+  updateGroup = mock.fn();
+  deleteGroup = mock.fn();
+  moveItemsToGroup = mock.fn();
+}

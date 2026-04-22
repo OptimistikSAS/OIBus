@@ -13,25 +13,26 @@ import LogRepositoryMock from '../repository/log/log-repository.mock';
 import OianalyticsMessageRepositoryMock from '../repository/config/oianalytics-message-repository.mock';
 import EngineRepositoryMock from '../repository/config/engine-repository.mock';
 import SouthCacheRepositoryMock from '../repository/cache/south-cache-repository.mock';
+import OianalyticsCommandRepositoryMock from '../repository/config/oianalytics-command-repository.mock';
 
 /**
  * Create a mock object for Repository Service
  */
-export default jest.fn().mockImplementation(() => ({
-  northConnectorRepository: new NorthConnectorRepositoryMock(),
-  southConnectorRepository: new SouthConnectorRepositoryMock(),
-  historyQueryRepository: new HistoryQueryRepositoryMock(),
-  ipFilterRepository: new IpFilterRepositoryMock(),
-  scanModeRepository: new ScanModeRepositoryMock(),
-  certificateRepository: new CertificateRepositoryMock(),
-  oianalyticsRegistrationRepository: new OianalyticsRegistrationRepositoryMock(),
-  userRepository: new UserRepositoryMock(),
-  logRepository: new LogRepositoryMock(),
-  oianalyticsCommandRepository: new OianalyticsRegistrationRepositoryMock(),
-  oianalyticsMessageRepository: new OianalyticsMessageRepositoryMock(),
-  engineRepository: new EngineRepositoryMock(),
-  cryptoRepository: new CryptoRepositoryMock(),
-  southMetricsRepository: new SouthMetricsRepositoryMock(),
-  northMetricsRepository: new NorthMetricsRepositoryMock(),
-  southCacheRepository: new SouthCacheRepositoryMock()
-}));
+export default class RepositoryServiceMock {
+  northConnectorRepository = new NorthConnectorRepositoryMock();
+  southConnectorRepository = new SouthConnectorRepositoryMock();
+  historyQueryRepository = new HistoryQueryRepositoryMock();
+  ipFilterRepository = new IpFilterRepositoryMock();
+  scanModeRepository = new ScanModeRepositoryMock();
+  certificateRepository = new CertificateRepositoryMock();
+  oianalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
+  userRepository = new UserRepositoryMock();
+  logRepository = new LogRepositoryMock();
+  oianalyticsCommandRepository = new OianalyticsCommandRepositoryMock();
+  oianalyticsMessageRepository = new OianalyticsMessageRepositoryMock();
+  engineRepository = new EngineRepositoryMock();
+  cryptoRepository = new CryptoRepositoryMock();
+  southMetricsRepository = new SouthMetricsRepositoryMock();
+  northMetricsRepository = new NorthMetricsRepositoryMock();
+  southCacheRepository = new SouthCacheRepositoryMock();
+}
