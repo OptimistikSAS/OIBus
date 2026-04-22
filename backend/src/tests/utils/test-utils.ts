@@ -1,4 +1,6 @@
+import assert from 'node:assert/strict';
 import Database from 'better-sqlite3';
+import { setImmediate } from 'node:timers';
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
 import path from 'node:path';
 import knex from 'knex';
@@ -40,7 +42,21 @@ const LOGS_TEST_DATABASE = path.resolve('src', 'tests', 'test-logs.db');
 const METRICS_TEST_DATABASE = path.resolve('src', 'tests', 'test-metrics.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
-export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
+export const flushPromises = () => new Promise(setImmediate);
+
+/**
+ * Asserts that `actual` contains all properties from `expected` (partial match).
+ * Equivalent to Jest's expect(actual).toEqual(expect.objectContaining(expected)).
+ */
+export function assertContains(actual: unknown, expected: Record<string, unknown>): void {
+  for (const [key, value] of Object.entries(expected)) {
+    assert.deepStrictEqual(
+      (actual as Record<string, unknown>)[key],
+      value,
+      `Property '${key}' mismatch`
+    );
+  }
+}
 
 export function stripAuditFields<T>(obj: T): T {
   if (Array.isArray(obj)) {
