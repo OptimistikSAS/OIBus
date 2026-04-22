@@ -52,6 +52,8 @@ class CustomStream extends Stream {
   end() {
     return Promise.resolve();
   }
+
+  destroy = jest.fn();
 }
 
 // Error codes handled by the test function
@@ -459,8 +461,15 @@ describe('South Modbus', () => {
   });
 
   it('should properly test connection', async () => {
-    await expect(south.testConnection()).resolves.not.toThrow();
+    (mockedEmitter as unknown as { remoteAddress: string; remotePort: number }).remoteAddress = '192.168.1.100';
+    (mockedEmitter as unknown as { remoteAddress: string; remotePort: number }).remotePort = 502;
+
+    const result = await south.testConnection();
+
     expect(connectSocket).toHaveBeenCalledWith(mockedEmitter, configuration.settings);
+    expect(result).toEqual({
+      items: [{ key: 'RemoteAddress', value: '192.168.1.100:502' }]
+    });
   });
 
   it('should properly manage error on test connection failure', async () => {

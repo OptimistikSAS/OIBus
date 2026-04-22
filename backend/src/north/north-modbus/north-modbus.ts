@@ -31,20 +31,23 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
+    const socket = new net.Socket();
     try {
-      const socket = new net.Socket();
       await connectSocket(socket, this.connector.settings);
+      return {
+        items: [{ key: 'RemoteAddress', value: `${socket.remoteAddress}:${socket.remotePort}` }]
+      };
     } catch (error: unknown) {
       switch ((error as { code: string; message: string }).code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':
           throw new Error(`Please check host and port: ${(error as Error).message}`);
-
         default:
           throw new Error(`Unable to connect to socket: ${(error as Error).message}`);
       }
+    } finally {
+      socket.destroy();
     }
-    return { items: [] };
   }
 
   override async connect(): Promise<void> {

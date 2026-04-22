@@ -59,6 +59,7 @@ class CustomStream extends Stream {
   end() {
     return Promise.resolve();
   }
+  destroy = jest.fn();
 }
 
 describe('NorthModbus', () => {
@@ -333,8 +334,15 @@ describe('NorthModbus', () => {
   });
 
   it('should properly test connection', async () => {
-    await expect(north.testConnection()).resolves.not.toThrow();
-    expect(connectSocket).toHaveBeenCalledWith(expect.any(Object), configuration.settings);
+    (mockedEmitter as unknown as { remoteAddress: string; remotePort: number }).remoteAddress = '10.0.0.5';
+    (mockedEmitter as unknown as { remoteAddress: string; remotePort: number }).remotePort = 502;
+
+    const result = await north.testConnection();
+
+    expect(connectSocket).toHaveBeenCalledWith(mockedEmitter, configuration.settings);
+    expect(result).toEqual({
+      items: [{ key: 'RemoteAddress', value: '10.0.0.5:502' }]
+    });
   });
 
   it('should properly manage error on test connection failure', async () => {
