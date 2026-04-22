@@ -1,10 +1,12 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for Certificate Service
  */
-export default jest.fn().mockImplementation(() => ({
-  list: jest.fn(),
-  findById: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn()
-}));
+export default class CertificateServiceMock {
+  list = mock.fn();
+  findById = mock.fn();
+  create = mock.fn();
+  update = mock.fn();
+  delete = mock.fn();
+}

@@ -1,35 +1,37 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for History Query Service
  */
-export default jest.fn().mockImplementation(() => ({
-  list: jest.fn(),
-  findById: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  start: jest.fn(),
-  pause: jest.fn(),
-  getHistoryDataStream: jest.fn(),
-  getHistoryMetrics: jest.fn(),
-  getAllHistoryMetrics: jest.fn(),
-  testNorth: jest.fn().mockResolvedValue({ items: [] }),
-  testSouth: jest.fn().mockResolvedValue({ items: [] }),
-  testItem: jest.fn(),
-  listItems: jest.fn(),
-  searchItems: jest.fn(),
-  findItemById: jest.fn(),
-  createItem: jest.fn(),
-  updateItem: jest.fn(),
-  enableItem: jest.fn(),
-  disableItem: jest.fn(),
-  enableItems: jest.fn(),
-  disableItems: jest.fn(),
-  deleteItem: jest.fn(),
-  deleteItems: jest.fn(),
-  deleteAllItems: jest.fn(),
-  checkImportItems: jest.fn(),
-  importItems: jest.fn(),
-  addOrEditTransformer: jest.fn(),
-  removeTransformer: jest.fn(),
-  retrieveSecrets: jest.fn()
-}));
+export default class HistoryQueryServiceMock {
+  list = mock.fn();
+  findById = mock.fn();
+  create = mock.fn();
+  update = mock.fn();
+  delete = mock.fn();
+  start = mock.fn();
+  pause = mock.fn();
+  getHistoryDataStream = mock.fn();
+  getHistoryMetrics = mock.fn();
+  getAllHistoryMetrics = mock.fn();
+  testNorth = mock.fn(async () => ({ items: [] }));
+  testSouth = mock.fn(async () => ({ items: [] }));
+  testItem = mock.fn();
+  listItems = mock.fn();
+  searchItems = mock.fn();
+  findItemById = mock.fn();
+  createItem = mock.fn();
+  updateItem = mock.fn();
+  enableItem = mock.fn();
+  disableItem = mock.fn();
+  enableItems = mock.fn();
+  disableItems = mock.fn();
+  deleteItem = mock.fn();
+  deleteItems = mock.fn();
+  deleteAllItems = mock.fn();
+  checkImportItems = mock.fn();
+  importItems = mock.fn();
+  addOrEditTransformer = mock.fn();
+  removeTransformer = mock.fn();
+  retrieveSecrets = mock.fn();
+}
