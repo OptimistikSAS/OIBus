@@ -18,7 +18,10 @@ jest.mock('typescript', () => {
 jest.mock('./utils', () => ({
   resolveBypassingExports: jest.fn()
 }));
-jest.mock('node:fs');
+jest.mock('node:fs', () => {
+  const real = jest.requireActual<typeof import('node:fs')>('node:fs');
+  return { ...real, readFileSync: jest.fn() };
+});
 
 import SandboxService from './sandbox.service';
 import * as fs from 'node:fs';

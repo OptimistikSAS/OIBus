@@ -18,7 +18,7 @@ import { ReadStream } from 'node:fs';
 import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // Mock dependencies
-jest.mock('node:fs');
+jest.mock('node:fs', () => jest.requireActual<typeof import('node:fs')>('node:fs'));
 jest.mock('node:zlib');
 jest.mock('form-data');
 jest.mock('../../service/http-request.utils');
