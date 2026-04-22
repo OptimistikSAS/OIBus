@@ -105,9 +105,7 @@ describe('utils-oianalytics', () => {
       assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['secret']);
       assert.strictEqual(mockGetTokenCSC.mock.calls.length, 1);
       assert.deepStrictEqual(mockGetTokenCSC.mock.calls[0].arguments, ['scope']);
-      assert.deepStrictEqual((encryptionService.encryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
-        'Bearer azure-token'
-      ]);
+      assert.deepStrictEqual((encryptionService.encryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['Bearer azure-token']);
       assert.deepStrictEqual(result, { type: 'bearer', token: 'encrypted-token' });
     });
 
@@ -120,7 +118,7 @@ describe('utils-oianalytics', () => {
         scope: 'scope'
       } as NorthOIAnalyticsSettingsSpecificSettings;
 
-      mockCertRepo.findById.mock.mockImplementation(() => ({ certificate: 'cert-content', privateKey: 'pk' } as Certificate));
+      mockCertRepo.findById.mock.mockImplementation(() => ({ certificate: 'cert-content', privateKey: 'pk' }) as Certificate);
 
       const result = await getAuthorizationOptions(false, mockRegistration, settings, mockCertRepo as unknown as CertificateRepository);
 
@@ -361,16 +359,24 @@ describe('utils-oianalytics', () => {
     });
 
     it('should throw error when API returns 500', async () => {
-      (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => createMockResponse(500, 'Internal Server Error'));
+      (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () =>
+        createMockResponse(500, 'Internal Server Error')
+      );
 
-      await assert.rejects(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false), /HTTP request failed with status code 500/);
+      await assert.rejects(
+        testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false),
+        /HTTP request failed with status code 500/
+      );
     });
 
     describe('401 Handling', () => {
       it('should throw error on 401 if accept401AsSuccess is false', async () => {
         (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => createMockResponse(401, 'Unauthorized'));
 
-        await assert.rejects(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false), /HTTP request failed with status code 401/);
+        await assert.rejects(
+          testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false),
+          /HTTP request failed with status code 401/
+        );
       });
 
       it('should SUCCEED on 401 if accept401AsSuccess is true', async () => {
@@ -382,7 +388,10 @@ describe('utils-oianalytics', () => {
       it('should still throw on other errors (e.g. 403) even if accept401AsSuccess is true', async () => {
         (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => createMockResponse(403, 'Forbidden'));
 
-        await assert.rejects(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, true), /HTTP request failed with status code 403/);
+        await assert.rejects(
+          testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, true),
+          /HTTP request failed with status code 403/
+        );
       });
     });
   });

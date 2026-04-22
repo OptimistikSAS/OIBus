@@ -12,7 +12,6 @@ import { CertificateCommandDTO } from '../../shared/model/certificate.model';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import { NotFoundError } from '../model/types';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let certificateRepository: CertificateRepositoryMock;
@@ -88,10 +87,13 @@ describe('Certificate Service', () => {
     assert.strictEqual(createArgs.publicKey, 'public');
     assert.strictEqual(createArgs.privateKey, 'private');
     assert.strictEqual(createArgs.certificate, 'cert');
-    assert.strictEqual(createArgs.expiry, DateTime.now()
-      .startOf('day')
-      .plus(Duration.fromObject({ days: testData.certificates.command.options!.daysBeforeExpiry }))
-      .toISO()!);
+    assert.strictEqual(
+      createArgs.expiry,
+      DateTime.now()
+        .startOf('day')
+        .plus(Duration.fromObject({ days: testData.certificates.command.options!.daysBeforeExpiry }))
+        .toISO()!
+    );
     assert.strictEqual(createArgs.createdBy, 'userTest');
     assert.strictEqual(createArgs.updatedBy, 'userTest');
     assert.deepStrictEqual(result, testData.certificates.list[0]);
@@ -111,19 +113,21 @@ describe('Certificate Service', () => {
 
     assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [certificateSchema, command]);
     assert.deepStrictEqual(certificateRepository.findById.mock.calls[0].arguments, [testData.certificates.list[0].id]);
-    assert.deepStrictEqual(certificateRepository.update.mock.calls[0].arguments, [{
-      id: testData.certificates.list[0].id,
-      name: command.name,
-      description: command.description,
-      publicKey: 'public',
-      privateKey: 'private',
-      certificate: 'cert',
-      expiry: DateTime.now()
-        .startOf('day')
-        .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
-        .toISO()!,
-      updatedBy: 'userTest'
-    }]);
+    assert.deepStrictEqual(certificateRepository.update.mock.calls[0].arguments, [
+      {
+        id: testData.certificates.list[0].id,
+        name: command.name,
+        description: command.description,
+        publicKey: 'public',
+        privateKey: 'private',
+        certificate: 'cert',
+        expiry: DateTime.now()
+          .startOf('day')
+          .plus(Duration.fromObject({ days: command.options!.daysBeforeExpiry }))
+          .toISO()!,
+        updatedBy: 'userTest'
+      }
+    ]);
   });
 
   it('should just update name and description if regenerateCertificate is false', async () => {

@@ -112,10 +112,10 @@ describe('Encryption Service', () => {
     encryptionService['initialized'] = true;
 
     // Mock fs functions
-    mock.method(fs, 'stat', async () => {});
-    mock.method(fs, 'mkdir', async () => {});
+    mock.method(fs, 'stat', async () => undefined);
+    mock.method(fs, 'mkdir', async () => undefined);
     mock.method(fs, 'readFile', async () => '');
-    mock.method(fs, 'writeFile', async () => {});
+    mock.method(fs, 'writeFile', async () => undefined);
 
     // Mock crypto functions
     mock.method(crypto, 'createCipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
@@ -169,11 +169,15 @@ describe('Encryption Service', () => {
       throw new Error('ENOENT'); // files don't exist
     });
 
-    mock.method(encryptionService, 'generateSelfSignedCertificate', mock.fn(async () => ({
-      private: 'private',
-      public: 'public',
-      cert: 'cert'
-    })));
+    mock.method(
+      encryptionService,
+      'generateSelfSignedCertificate',
+      mock.fn(async () => ({
+        private: 'private',
+        public: 'public',
+        cert: 'cert'
+      }))
+    );
 
     await encryptionService.init(cryptoSettings, certFolder);
 
@@ -189,9 +193,18 @@ describe('Encryption Service', () => {
         daysBeforeExpiry: 36500
       }
     ]);
-    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'private']);
-    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments, [path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'public']);
-    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[2].arguments, [path.resolve(certFolder, CERT_FILE_NAME), 'cert']);
+    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME),
+      'private'
+    ]);
+    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments, [
+      path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME),
+      'public'
+    ]);
+    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[2].arguments, [
+      path.resolve(certFolder, CERT_FILE_NAME),
+      'cert'
+    ]);
   });
 
   it('should properly retrieve files', async () => {
@@ -322,7 +335,10 @@ describe('Encryption Service', () => {
       }
     };
 
-    assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest), expectedCommand);
+    assert.deepStrictEqual(
+      await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest),
+      expectedCommand
+    );
   });
 
   it('should properly encrypt connector secrets when no secret provided', async () => {
@@ -431,7 +447,10 @@ describe('Encryption Service', () => {
     const final = mock.fn(() => '');
     (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
 
-    assert.deepStrictEqual(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest), expectedCommand);
+    assert.deepStrictEqual(
+      await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest),
+      expectedCommand
+    );
   });
 
   it('should properly decrypt connector secrets', async () => {
@@ -551,7 +570,10 @@ describe('Encryption Service', () => {
       }
     };
 
-    assert.deepStrictEqual(await encryptionService.decryptSecretsWithPrivateKey(command.settings, manifest, 'private key'), expectedCommand);
+    assert.deepStrictEqual(
+      await encryptionService.decryptSecretsWithPrivateKey(command.settings, manifest, 'private key'),
+      expectedCommand
+    );
   });
 
   it('should generate a certificate with correct extensions and SANs', async () => {

@@ -41,22 +41,42 @@ describe('Service utils OPCUA', () => {
       await initOPCUACertificateFolders(folder);
       assert.strictEqual((fs.stat as ReturnType<typeof mock.fn>).mock.calls.length, 10);
       assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own')));
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'certs')));
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'private')));
+      assert.ok(
+        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'certs'))
+      );
+      assert.ok(
+        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'private'))
+      );
       assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'rejected')));
       assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted')));
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'certs')));
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'crl')));
+      assert.ok(
+        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'certs'))
+      );
+      assert.ok(
+        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'crl'))
+      );
       assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers')));
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'certs')));
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'crl')));
+      assert.ok(
+        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'certs'))
+      );
+      assert.ok(
+        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'crl'))
+      );
       assert.strictEqual((fs.copyFile as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.ok((fs.copyFile as ReturnType<typeof mock.fn>).mock.calls.some(
-        c => c.arguments[0] === path.resolve('private_key_path') && c.arguments[1] === path.resolve(folder, 'opcua', 'own', 'private', 'private_key.pem')
-      ));
-      assert.ok((fs.copyFile as ReturnType<typeof mock.fn>).mock.calls.some(
-        c => c.arguments[0] === path.resolve('cert_path') && c.arguments[1] === path.resolve(folder, 'opcua', 'own', 'certs', 'client_certificate.pem')
-      ));
+      assert.ok(
+        (fs.copyFile as ReturnType<typeof mock.fn>).mock.calls.some(
+          c =>
+            c.arguments[0] === path.resolve('private_key_path') &&
+            c.arguments[1] === path.resolve(folder, 'opcua', 'own', 'private', 'private_key.pem')
+        )
+      );
+      assert.ok(
+        (fs.copyFile as ReturnType<typeof mock.fn>).mock.calls.some(
+          c =>
+            c.arguments[0] === path.resolve('cert_path') &&
+            c.arguments[1] === path.resolve(folder, 'opcua', 'own', 'certs', 'client_certificate.pem')
+        )
+      );
     });
   });
 
@@ -107,21 +127,24 @@ describe('Service utils OPCUA', () => {
         flushMessageTimeout: 1000,
         maxNumberOfMessages: 1000
       };
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, {} as OPCUACertificateManager, 15_000), {
-        options: {
-          applicationName: 'OIBus',
-          clientCertificateManager: {},
-          clientName: 'connectorName-connectorId',
-          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-          endpointMustExist: false,
-          keepPendingSessionsOnDisconnect: false,
-          keepSessionAlive: false,
-          requestedSessionTimeout: 15000,
-          securityMode: 1,
-          securityPolicy: 'none'
-        },
-        userIdentity: { type: UserTokenType.Anonymous }
-      });
+      assert.deepStrictEqual(
+        await createSessionConfigs('connectorId', 'connectorName', southSettings, {} as OPCUACertificateManager, 15_000),
+        {
+          options: {
+            applicationName: 'OIBus',
+            clientCertificateManager: {},
+            clientName: 'connectorName-connectorId',
+            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+            endpointMustExist: false,
+            keepPendingSessionsOnDisconnect: false,
+            keepSessionAlive: false,
+            requestedSessionTimeout: 15000,
+            securityMode: 1,
+            securityPolicy: 'none'
+          },
+          userIdentity: { type: UserTokenType.Anonymous }
+        }
+      );
     });
 
     it('should properly create session configs with basic auth', async () => {
@@ -136,26 +159,31 @@ describe('Service utils OPCUA', () => {
         flushMessageTimeout: 1000,
         maxNumberOfMessages: 1000
       };
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, {} as OPCUACertificateManager, 15_000), {
-        options: {
-          applicationName: 'OIBus',
-          clientCertificateManager: {},
-          clientName: 'connectorName-connectorId',
-          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-          endpointMustExist: false,
-          keepPendingSessionsOnDisconnect: false,
-          keepSessionAlive: false,
-          requestedSessionTimeout: 15000,
-          securityMode: 1,
-          securityPolicy: 'none'
-        },
-        userIdentity: {
-          type: UserTokenType.UserName,
-          userName: southSettings.authentication.username!,
-          password: southSettings.authentication.password!
+      assert.deepStrictEqual(
+        await createSessionConfigs('connectorId', 'connectorName', southSettings, {} as OPCUACertificateManager, 15_000),
+        {
+          options: {
+            applicationName: 'OIBus',
+            clientCertificateManager: {},
+            clientName: 'connectorName-connectorId',
+            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+            endpointMustExist: false,
+            keepPendingSessionsOnDisconnect: false,
+            keepSessionAlive: false,
+            requestedSessionTimeout: 15000,
+            securityMode: 1,
+            securityPolicy: 'none'
+          },
+          userIdentity: {
+            type: UserTokenType.UserName,
+            userName: southSettings.authentication.username!,
+            password: southSettings.authentication.password!
+          }
         }
-      });
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [southSettings.authentication.password!]);
+      );
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        southSettings.authentication.password!
+      ]);
     });
 
     it('should properly create session configs with cert auth', async () => {
@@ -172,28 +200,37 @@ describe('Service utils OPCUA', () => {
         if (String(filePath).endsWith('key_file.pem')) return 'privateKey';
         return '';
       });
-      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', northSettings, {} as OPCUACertificateManager, undefined), {
-        options: {
-          applicationName: 'OIBus',
-          clientCertificateManager: {},
-          clientName: 'connectorName-connectorId',
-          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-          endpointMustExist: false,
-          keepPendingSessionsOnDisconnect: false,
-          keepSessionAlive: false,
-          requestedSessionTimeout: undefined,
-          securityMode: 1,
-          securityPolicy: 'none'
-        },
-        userIdentity: {
-          type: UserTokenType.Certificate,
-          certificateData: 'cert',
-          privateKey: 'privateKey'
+      assert.deepStrictEqual(
+        await createSessionConfigs('connectorId', 'connectorName', northSettings, {} as OPCUACertificateManager, undefined),
+        {
+          options: {
+            applicationName: 'OIBus',
+            clientCertificateManager: {},
+            clientName: 'connectorName-connectorId',
+            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+            endpointMustExist: false,
+            keepPendingSessionsOnDisconnect: false,
+            keepSessionAlive: false,
+            requestedSessionTimeout: undefined,
+            securityMode: 1,
+            securityPolicy: 'none'
+          },
+          userIdentity: {
+            type: UserTokenType.Certificate,
+            certificateData: 'cert',
+            privateKey: 'privateKey'
+          }
         }
-      });
+      );
       assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.deepStrictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], path.resolve(northSettings.authentication.certFilePath!));
-      assert.deepStrictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments[0], path.resolve(northSettings.authentication.keyFilePath!));
+      assert.deepStrictEqual(
+        (fs.readFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        path.resolve(northSettings.authentication.certFilePath!)
+      );
+      assert.deepStrictEqual(
+        (fs.readFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments[0],
+        path.resolve(northSettings.authentication.keyFilePath!)
+      );
     });
   });
 
@@ -407,7 +444,9 @@ describe('Service utils OPCUA', () => {
         assert.strictEqual(parseOPCUAValue('item1', opcuaVariant, debugLogger), '');
         assert.ok(
           (debugLogger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
-            c => typeof c.arguments[0] === 'string' && (c.arguments[0] as string).includes(`Item item1 with value [object Object] of type ${dataType} could not be parsed`)
+            c =>
+              typeof c.arguments[0] === 'string' &&
+              (c.arguments[0] as string).includes(`Item item1 with value [object Object] of type ${dataType} could not be parsed`)
           )
         );
       });
@@ -425,7 +464,9 @@ describe('Service utils OPCUA', () => {
       const logs = new Map<string, { description: string; affectedNodes: Array<string> }>();
       logs.set('200', { description: 'Success', affectedNodes: ['node1', 'node2'] });
       logMessages(logs, logger);
-      assert.deepStrictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['Success with status code 200: [node1,node2]']);
+      assert.deepStrictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        'Success with status code 200: [node1,node2]'
+      ]);
     });
 
     it('should log first and last affected nodes if their number exceeds MAX_NUMBER_OF_NODE_TO_LOG', () => {
@@ -433,7 +474,9 @@ describe('Service utils OPCUA', () => {
       const nodes = Array.from({ length: MAX_NUMBER_OF_NODE_TO_LOG + 1 }, (_, i) => `node${i + 1}`);
       logs.set('500', { description: 'Error', affectedNodes: nodes });
       logMessages(logs, logger);
-      assert.deepStrictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [`500 status code (Error): [node1..node${MAX_NUMBER_OF_NODE_TO_LOG + 1}]`]);
+      assert.deepStrictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        `500 status code (Error): [node1..node${MAX_NUMBER_OF_NODE_TO_LOG + 1}]`
+      ]);
     });
 
     it('should log nothing if logs map is empty', () => {
@@ -451,8 +494,14 @@ describe('Service utils OPCUA', () => {
       });
       logMessages(logs, logger);
       assert.strictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.ok((logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === 'Success with status code 200: [node1,node2]'));
-      assert.ok((logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === `500 status code (Error): [node1..node${MAX_NUMBER_OF_NODE_TO_LOG + 1}]`));
+      assert.ok(
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === 'Success with status code 200: [node1,node2]')
+      );
+      assert.ok(
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+          c => c.arguments[0] === `500 status code (Error): [node1..node${MAX_NUMBER_OF_NODE_TO_LOG + 1}]`
+        )
+      );
     });
   });
 });

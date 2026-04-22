@@ -39,18 +39,12 @@ describe('UserRepository', () => {
   });
 
   it('should search users', () => {
-    assert.deepStrictEqual(
-      repository.search({ login: 'second', page: 0 }),
-      createPageFromArray([testData.users.list[1]], 50, 0)
-    );
+    assert.deepStrictEqual(repository.search({ login: 'second', page: 0 }), createPageFromArray([testData.users.list[1]], 50, 0));
     assert.strictEqual(repository.search({ login: '', page: 0 }).totalElements, 2);
   });
 
   it('should search users without page', () => {
-    assert.deepStrictEqual(
-      repository.search({ login: 'second', page: 0 }),
-      createPageFromArray([testData.users.list[1]], 50, 0)
-    );
+    assert.deepStrictEqual(repository.search({ login: 'second', page: 0 }), createPageFromArray([testData.users.list[1]], 50, 0));
     assert.strictEqual(repository.search({ login: '', page: 0 }).totalElements, 2);
   });
 

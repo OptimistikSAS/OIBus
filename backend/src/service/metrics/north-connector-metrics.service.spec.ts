@@ -36,12 +36,15 @@ describe('NorthConnectorMetricsService', () => {
 
   it('should update metrics', () => {
     northMock.metricsEvent.emit('cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
-    assert.deepStrictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [testData.north.list[0].id, {
-      ...testData.north.metrics,
-      currentCacheSize: 999,
-      currentErrorSize: 888,
-      currentArchiveSize: 777
-    }]);
+    assert.deepStrictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [
+      testData.north.list[0].id,
+      {
+        ...testData.north.metrics,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777
+      }
+    ]);
 
     northMock.metricsEvent.emit('connect', { lastConnection: testData.constants.dates.DATE_1 });
     northMock.metricsEvent.emit('run-start', { lastRunStart: testData.constants.dates.DATE_2 });

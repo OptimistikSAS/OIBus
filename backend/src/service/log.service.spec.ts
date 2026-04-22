@@ -8,7 +8,6 @@ import LogService, { toLogDTO } from './log.service';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { DateTime } from 'luxon';
 import { LogSearchParam } from '../../shared/model/logs.model';
-import { NotFoundError } from '../model/types';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let logRepository: LogRepositoryMock;

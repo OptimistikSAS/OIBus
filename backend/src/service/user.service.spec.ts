@@ -7,7 +7,6 @@ import UserRepositoryMock from '../tests/__mocks__/repository/config/user-reposi
 import UserRepository from '../repository/config/user.repository';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { createPageFromArray } from '../../shared/model/types';
-import { NotFoundError, OIBusValidationError } from '../model/types';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let userRepository: UserRepositoryMock;
@@ -95,10 +94,9 @@ describe('User Service', () => {
   });
 
   it('should not create if the password is not provided', async () => {
-    await assert.rejects(
-      () => service.create(testData.users.command, undefined, testData.users.list[0].id),
-      { message: 'Password is required' }
-    );
+    await assert.rejects(() => service.create(testData.users.command, undefined, testData.users.list[0].id), {
+      message: 'Password is required'
+    });
 
     assert.strictEqual(userRepository.create.mock.calls.length, 0);
   });
@@ -116,10 +114,9 @@ describe('User Service', () => {
   it('should not update if the user is not found', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(
-      () => service.update(testData.users.list[0].id, testData.users.command),
-      { message: `User "${testData.users.list[0].id}" (id) not found` }
-    );
+    await assert.rejects(() => service.update(testData.users.list[0].id, testData.users.command), {
+      message: `User "${testData.users.list[0].id}" (id) not found`
+    });
 
     assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
     assert.strictEqual(userRepository.update.mock.calls.length, 0);
@@ -137,10 +134,7 @@ describe('User Service', () => {
   it('should not update a user password if the password is not provided', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => testData.users.list[0]);
 
-    await assert.rejects(
-      () => service.updatePassword(testData.users.list[0].id, undefined),
-      { message: `Password is required` }
-    );
+    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, undefined), { message: `Password is required` });
     assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
     assert.strictEqual(userRepository.updatePassword.mock.calls.length, 0);
   });
@@ -148,10 +142,9 @@ describe('User Service', () => {
   it('should not update the password if the user is not found', async () => {
     userRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(
-      () => service.updatePassword(testData.users.list[0].id, 'new password'),
-      { message: `User "${testData.users.list[0].id}" (id) not found` }
-    );
+    await assert.rejects(() => service.updatePassword(testData.users.list[0].id, 'new password'), {
+      message: `User "${testData.users.list[0].id}" (id) not found`
+    });
 
     assert.deepStrictEqual(userRepository.findById.mock.calls[0].arguments, [testData.users.list[0].id]);
     assert.strictEqual(userRepository.updatePassword.mock.calls.length, 0);
@@ -179,38 +172,44 @@ describe('User Service', () => {
 
   it('should properly convert to DTO', () => {
     const user = testData.users.list[0];
-    assert.deepStrictEqual(toUserDTO(user, id => ({ id, friendlyName: 'test' })), {
-      id: user.id,
-      login: user.login,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      language: user.language,
-      timezone: user.timezone,
-      friendlyName: 'Admin',
-      createdBy: { id: user.createdBy, friendlyName: 'test' },
-      updatedBy: { id: user.updatedBy, friendlyName: 'test' },
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
-    });
+    assert.deepStrictEqual(
+      toUserDTO(user, id => ({ id, friendlyName: 'test' })),
+      {
+        id: user.id,
+        login: user.login,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        language: user.language,
+        timezone: user.timezone,
+        friendlyName: 'Admin',
+        createdBy: { id: user.createdBy, friendlyName: 'test' },
+        updatedBy: { id: user.updatedBy, friendlyName: 'test' },
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    );
   });
 
   it('should properly convert non-admin user to DTO with firstName and lastName', () => {
     const user = testData.users.list[1];
-    assert.deepStrictEqual(toUserDTO(user, id => ({ id, friendlyName: 'test' })), {
-      id: user.id,
-      login: user.login,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      language: user.language,
-      timezone: user.timezone,
-      friendlyName: `${user.firstName} ${user.lastName} (${user.login})`,
-      createdBy: { id: user.createdBy, friendlyName: 'test' },
-      updatedBy: { id: user.updatedBy, friendlyName: 'test' },
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt
-    });
+    assert.deepStrictEqual(
+      toUserDTO(user, id => ({ id, friendlyName: 'test' })),
+      {
+        id: user.id,
+        login: user.login,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        language: user.language,
+        timezone: user.timezone,
+        friendlyName: `${user.firstName} ${user.lastName} (${user.login})`,
+        createdBy: { id: user.createdBy, friendlyName: 'test' },
+        updatedBy: { id: user.updatedBy, friendlyName: 'test' },
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+      }
+    );
   });
 
   it('should return empty info for null userId', () => {

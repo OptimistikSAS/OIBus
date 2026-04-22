@@ -155,11 +155,7 @@ describe('HistoryQueryRepository', () => {
       createdAt: '',
       updatedAt: ''
     };
-    newHistoryQuery.items = [
-      ...testData.historyQueries.list[1].items,
-      newItem1,
-      newItem2
-    ];
+    newHistoryQuery.items = [...testData.historyQueries.list[1].items, newItem1, newItem2];
     newHistoryQuery.northTransformers = [
       {
         id: '',
@@ -258,7 +254,9 @@ describe('HistoryQueryRepository', () => {
   it('should save all items without and delete previous items', () => {
     // At this point list[1] has 3 items (from 'update a history query' test)
     // saveAllItems with deleteItemsNotPresent=false: keeps existing items not in the list
-    const existingItems: Array<HistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(JSON.stringify(testData.historyQueries.list[1].items));
+    const existingItems: Array<HistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[1].items)
+    );
     const newItem: HistoryQueryItemEntity<SouthItemSettings> = {
       id: '',
       name: 'new history item',
@@ -289,7 +287,9 @@ describe('HistoryQueryRepository', () => {
   it('should save all items without deleting previous items', () => {
     // deleteItemsNotPresent=true: deletes all existing items, then only inserts new ones (id='')
     // list[0].items were deleted, so their IDs won't match anything after the delete
-    const existingItems: Array<HistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(JSON.stringify(testData.historyQueries.list[0].items));
+    const existingItems: Array<HistoryQueryItemEntity<SouthItemSettings>> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0].items)
+    );
     const newItem: HistoryQueryItemEntity<SouthItemSettings> = {
       id: '',
       name: 'new history item',

@@ -37,47 +37,62 @@ describe('SouthConnectorMetricsService', () => {
 
   it('should update metrics', () => {
     southMock.metricsEvent.emit('connect', { lastConnection: testData.constants.dates.DATE_1 });
-    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [testData.south.list[0].id, {
-      ...testData.south.metrics,
-      lastConnection: testData.constants.dates.DATE_1
-    }]);
+    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      {
+        ...testData.south.metrics,
+        lastConnection: testData.constants.dates.DATE_1
+      }
+    ]);
 
     southMock.metricsEvent.emit('run-start', { lastRunStart: testData.constants.dates.DATE_2 });
-    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[1].arguments, [testData.south.list[0].id, {
-      ...testData.south.metrics,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2
-    }]);
+    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[1].arguments, [
+      testData.south.list[0].id,
+      {
+        ...testData.south.metrics,
+        lastConnection: testData.constants.dates.DATE_1,
+        lastRunStart: testData.constants.dates.DATE_2
+      }
+    ]);
 
     southMock.metricsEvent.emit('run-end', { lastRunDuration: 999 });
-    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[2].arguments, [testData.south.list[0].id, {
-      ...testData.south.metrics,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 999
-    }]);
+    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[2].arguments, [
+      testData.south.list[0].id,
+      {
+        ...testData.south.metrics,
+        lastConnection: testData.constants.dates.DATE_1,
+        lastRunStart: testData.constants.dates.DATE_2,
+        lastRunDuration: 999
+      }
+    ]);
 
     southMock.metricsEvent.emit('add-values', { numberOfValuesRetrieved: 10, lastValueRetrieved: {} });
-    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[3].arguments, [testData.south.list[0].id, {
-      ...testData.south.metrics,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 999,
-      numberOfValuesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 10,
-      lastValueRetrieved: {}
-    }]);
+    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[3].arguments, [
+      testData.south.list[0].id,
+      {
+        ...testData.south.metrics,
+        lastConnection: testData.constants.dates.DATE_1,
+        lastRunStart: testData.constants.dates.DATE_2,
+        lastRunDuration: 999,
+        numberOfValuesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 10,
+        lastValueRetrieved: {}
+      }
+    ]);
 
     southMock.metricsEvent.emit('add-file', { lastFileRetrieved: 'last file retrieved' });
-    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[4].arguments, [testData.south.list[0].id, {
-      ...testData.south.metrics,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 999,
-      numberOfValuesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 10,
-      lastValueRetrieved: {},
-      lastFileRetrieved: 'last file retrieved',
-      numberOfFilesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 1
-    }]);
+    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[4].arguments, [
+      testData.south.list[0].id,
+      {
+        ...testData.south.metrics,
+        lastConnection: testData.constants.dates.DATE_1,
+        lastRunStart: testData.constants.dates.DATE_2,
+        lastRunDuration: 999,
+        numberOfValuesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 10,
+        lastValueRetrieved: {},
+        lastFileRetrieved: 'last file retrieved',
+        numberOfFilesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 1
+      }
+    ]);
   });
 
   it('should reset metrics', () => {

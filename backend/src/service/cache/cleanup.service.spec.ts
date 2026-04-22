@@ -36,6 +36,11 @@ describe('CleanupService', () => {
   let oianalyticsCommandRepository: OianalyticsCommandRepositoryMock;
   let engine: DataStreamEngineMock;
 
+  /** Cast service to a plain record for accessing private fields. */
+  const priv = () => service as unknown as Record<string, unknown>;
+  /** Cast a private field value to a mock function for .mock.calls access. */
+  const privMock = (key: string) => priv()[key] as ReturnType<typeof mock.fn>;
+
   beforeEach(() => {
     logger = new LoggerMock();
     anotherLogger = new LoggerMock();
@@ -68,36 +73,36 @@ describe('CleanupService', () => {
   it('should start and schedule cleanup', async () => {
     const clearIntervalSpy = mock.method(global, 'clearInterval', mock.fn());
 
-    (service as any)['cleanOrphans'] = mock.fn(async () => {});
-    (service as any)['cleanNorthConnectors'] = mock.fn(async () => {});
-    (service as any)['cleanHistoryQueries'] = mock.fn(async () => {});
-    (service as any)['cleanOIAnalyticsData'] = mock.fn();
+    priv()['cleanOrphans'] = mock.fn(async () => undefined);
+    priv()['cleanNorthConnectors'] = mock.fn(async () => undefined);
+    priv()['cleanHistoryQueries'] = mock.fn(async () => undefined);
+    priv()['cleanOIAnalyticsData'] = mock.fn();
 
     await service.start();
 
-    assert.strictEqual((service as any)['cleanOrphans'].mock.calls.length, 1);
+    assert.strictEqual(privMock('cleanOrphans').mock.calls.length, 1);
 
     // Verify setInterval was called with 3600s interval by ticking the clock
     mock.timers.tick(3600 * 1000);
-    assert.strictEqual((service as any)['cleanOrphans'].mock.calls.length, 2);
+    assert.strictEqual(privMock('cleanOrphans').mock.calls.length, 2);
 
     service.stop();
     assert.strictEqual(clearIntervalSpy.mock.calls.length, 1);
   });
 
   it('should run full cleanup process', async () => {
-    (service as any)['cleanOrphans'] = mock.fn(async () => {});
-    (service as any)['cleanNorthConnectors'] = mock.fn(async () => {});
-    (service as any)['cleanHistoryQueries'] = mock.fn(async () => {});
-    (service as any)['cleanOIAnalyticsData'] = mock.fn();
+    priv()['cleanOrphans'] = mock.fn(async () => undefined);
+    priv()['cleanNorthConnectors'] = mock.fn(async () => undefined);
+    priv()['cleanHistoryQueries'] = mock.fn(async () => undefined);
+    priv()['cleanOIAnalyticsData'] = mock.fn();
 
     await service.cleanup();
 
     assert.deepStrictEqual(logger.debug.mock.calls[0].arguments, ['Cleaning up data folder...']);
-    assert.strictEqual((service as any)['cleanOrphans'].mock.calls.length, 1);
-    assert.strictEqual((service as any)['cleanNorthConnectors'].mock.calls.length, 1);
-    assert.strictEqual((service as any)['cleanHistoryQueries'].mock.calls.length, 1);
-    assert.strictEqual((service as any)['cleanOIAnalyticsData'].mock.calls.length, 1);
+    assert.strictEqual(privMock('cleanOrphans').mock.calls.length, 1);
+    assert.strictEqual(privMock('cleanNorthConnectors').mock.calls.length, 1);
+    assert.strictEqual(privMock('cleanHistoryQueries').mock.calls.length, 1);
+    assert.strictEqual(privMock('cleanOIAnalyticsData').mock.calls.length, 1);
   });
 
   describe('cleanOrphans', () => {
@@ -128,7 +133,7 @@ describe('CleanupService', () => {
       northConnectorRepository.findNorthById.mock.mockImplementation((id: unknown) => (id === '1' ? {} : null));
       historyQueryRepository.findHistoryById.mock.mockImplementation((id: unknown) => (id === '1' ? {} : null));
 
-      await (service as any)['cleanOrphans']();
+      await (priv()['cleanOrphans'] as unknown as () => Promise<void>)();
 
       const rmCalls = (fs.rm as ReturnType<typeof mock.fn>).mock.calls.map(c => c.arguments[0]);
 
@@ -161,13 +166,19 @@ describe('CleanupService', () => {
         })
       );
 
-      await assert.doesNotReject(() => (service as any)['cleanOrphans']());
+      await assert.doesNotReject(() => (priv()['cleanOrphans'] as unknown as () => Promise<void>)());
     });
 
     it('should handle fs errors gracefully', async () => {
-      mock.method(fs, 'readdir', mock.fn(async () => { throw new Error('Read Error'); }));
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => {
+          throw new Error('Read Error');
+        })
+      );
 
-      await assert.doesNotReject(() => (service as any)['cleanOrphans']());
+      await assert.doesNotReject(() => (priv()['cleanOrphans'] as unknown as () => Promise<void>)());
     });
 
     it('should handle removal errors gracefully', async () => {
@@ -180,9 +191,15 @@ describe('CleanupService', () => {
         })
       );
       southConnectorRepository.findSouthById.mock.mockImplementation(() => null);
-      mock.method(fs, 'rm', mock.fn(async () => { throw new Error('Remove Error'); }));
+      mock.method(
+        fs,
+        'rm',
+        mock.fn(async () => {
+          throw new Error('Remove Error');
+        })
+      );
 
-      await (service as any)['cleanOrphans']();
+      await (priv()['cleanOrphans'] as unknown as () => Promise<void>)();
 
       assert.ok((fs.rm as ReturnType<typeof mock.fn>).mock.calls.some(c => String(c.arguments[0]).includes('south-2')));
       assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Could not remove orphan')));
@@ -228,7 +245,7 @@ describe('CleanupService', () => {
         })
       );
 
-      await (service as any)['cleanNorthConnectors']();
+      await (priv()['cleanNorthConnectors'] as unknown as () => Promise<void>)();
 
       assert.deepStrictEqual(engine.updateCacheContent.mock.calls[0].arguments, [
         'north',
@@ -251,7 +268,7 @@ describe('CleanupService', () => {
       };
       northConnectorRepository.findAllNorthFull.mock.mockImplementation(() => [north]);
 
-      await (service as any)['cleanNorthConnectors']();
+      await (priv()['cleanNorthConnectors'] as unknown as () => Promise<void>)();
 
       assert.strictEqual(engine.updateCacheContent.mock.calls.length, 0);
     });
@@ -281,9 +298,13 @@ describe('CleanupService', () => {
       );
 
       const oldDate = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ hours: 25 }).toUTC().toISO()!;
-      mock.method(fs, 'readFile', mock.fn(async () => createMetadata(oldDate)));
+      mock.method(
+        fs,
+        'readFile',
+        mock.fn(async () => createMetadata(oldDate))
+      );
 
-      await (service as any)['cleanHistoryQueries']();
+      await (priv()['cleanHistoryQueries'] as unknown as () => Promise<void>)();
 
       assert.deepStrictEqual(engine.updateCacheContent.mock.calls[0].arguments, [
         'history',
@@ -299,20 +320,44 @@ describe('CleanupService', () => {
 
   describe('retrieveFilesToDelete (Low Level)', () => {
     it('should delete corrupt metadata files', async () => {
-      mock.method(fs, 'readdir', mock.fn(async () => ['corrupt.json']));
-      mock.method(fs, 'readFile', mock.fn(async () => 'INVALID JSON'));
-      mock.method(fs, 'rm', mock.fn(async () => {}));
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => ['corrupt.json'])
+      );
+      mock.method(
+        fs,
+        'readFile',
+        mock.fn(async () => 'INVALID JSON')
+      );
+      mock.method(
+        fs,
+        'rm',
+        mock.fn(async () => undefined)
+      );
 
-      const files = await (service as any)['retrieveFilesToDelete']('some/folder', 10);
+      const files = await (priv()['retrieveFilesToDelete'] as unknown as (folder: string, retention: number) => Promise<Array<string>>)(
+        'some/folder',
+        10
+      );
 
       assert.ok((fs.rm as ReturnType<typeof mock.fn>).mock.calls.some(c => String(c.arguments[0]).includes('corrupt.json')));
       assert.deepStrictEqual(files, []);
     });
 
     it('should handle missing folders gracefully', async () => {
-      mock.method(fs, 'readdir', mock.fn(async () => { throw new Error('ENOENT'); }));
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => {
+          throw new Error('ENOENT');
+        })
+      );
 
-      const files = await (service as any)['retrieveFilesToDelete']('missing/folder', 10);
+      const files = await (priv()['retrieveFilesToDelete'] as unknown as (folder: string, retention: number) => Promise<Array<string>>)(
+        'missing/folder',
+        10
+      );
       assert.deepStrictEqual(files, []);
     });
   });
@@ -325,7 +370,7 @@ describe('CleanupService', () => {
       oianalyticsMessageRepository.list.mock.mockImplementation(() => messages);
       oianalyticsCommandRepository.list.mock.mockImplementation(() => commands);
 
-      (service as any)['cleanOIAnalyticsData']();
+      (priv()['cleanOIAnalyticsData'] as unknown as () => void)();
 
       const expectedEnd = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ days: 7 }).toUTC().toISO();
 
@@ -355,10 +400,10 @@ describe('CleanupService', () => {
 
   it('should use another logger', async () => {
     service.setLogger(anotherLogger as unknown as pino.Logger);
-    (service as any)['cleanOrphans'] = mock.fn(async () => {});
-    (service as any)['cleanNorthConnectors'] = mock.fn(async () => {});
-    (service as any)['cleanHistoryQueries'] = mock.fn(async () => {});
-    (service as any)['cleanOIAnalyticsData'] = mock.fn();
+    priv()['cleanOrphans'] = mock.fn(async () => undefined);
+    priv()['cleanNorthConnectors'] = mock.fn(async () => undefined);
+    priv()['cleanHistoryQueries'] = mock.fn(async () => undefined);
+    priv()['cleanOIAnalyticsData'] = mock.fn();
     await service.cleanup();
     assert.ok(anotherLogger.debug.mock.calls.length > 0);
   });

@@ -308,10 +308,12 @@ describe('connectSocket', () => {
       const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       mockSocket.emit('connect');
       await assert.doesNotReject(connectPromise);
-      assert.deepStrictEqual((mockSocket.connect as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [{
-        host: mockConnectionSettings.host,
-        port: mockConnectionSettings.port
-      }]);
+      assert.deepStrictEqual((mockSocket.connect as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        {
+          host: mockConnectionSettings.host,
+          port: mockConnectionSettings.port
+        }
+      ]);
       assert.strictEqual((mockSocket.removeAllListeners as ReturnType<typeof mock.fn>).mock.calls.length, 0);
     });
   });
