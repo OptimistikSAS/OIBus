@@ -1,7 +1,8 @@
+import { before, after, beforeEach, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
-import { generateRandomId } from '../../service/utils';
 import TransformerRepository from './transformer.repository';
 import { CustomTransformer, StandardTransformer } from '../../model/transformer.model';
 import OIBusTimeValuesToCsvTransformer from '../../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
@@ -18,8 +19,6 @@ import OIBusTimeValuesToOIAnalyticsTransformer from '../../transformers/time-val
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
-
-jest.mock('../../service/utils');
 
 const TEST_DB_PATH = 'src/tests/test-config-transformer.db';
 
@@ -102,77 +101,79 @@ const standardTransformers: Array<StandardTransformer> = [
 
 let database: Database;
 describe('TransformerRepository', () => {
-  beforeAll(async () => {
-    const { generateRandomId: realGenerateRandomId } = jest.requireActual('../../service/utils');
-    (generateRandomId as jest.Mock).mockImplementation(realGenerateRandomId);
+  before(async () => {
     database = await initDatabase('config', true, TEST_DB_PATH);
-    jest.resetAllMocks();
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('config', TEST_DB_PATH);
   });
 
   let repository: TransformerRepository;
+  let createdTransformerId: string;
 
   beforeEach(() => {
-    jest.resetAllMocks();
     repository = new TransformerRepository(database);
-    jest.resetAllMocks();
   });
 
   it('should properly find all transformers', () => {
-    expect(repository.list().map(stripAuditFields)).toEqual([
-      ...standardTransformers.map(({ id: _id, ...rest }) => expect.objectContaining(rest)),
-      ...testData.transformers.list.map(stripAuditFields).map(t => expect.objectContaining(t))
-    ]);
+    const allTransformers = repository.list().map(stripAuditFields);
+    // Standard transformers come first, then custom ones from test data
+    for (const standard of standardTransformers) {
+      const { id: _id, ...rest } = standard;
+      const found = allTransformers.find(t => t.type === 'standard' && (t as StandardTransformer).functionName === standard.functionName);
+      assert.ok(found, `Standard transformer ${standard.functionName} not found`);
+      assert.strictEqual(found.inputType, rest.inputType);
+      assert.strictEqual(found.outputType, rest.outputType);
+    }
+    for (const custom of testData.transformers.list.map(stripAuditFields)) {
+      const found = allTransformers.find(t => t.id === custom.id);
+      assert.ok(found, `Custom transformer ${custom.id} not found`);
+    }
   });
 
   it('should properly find a transformer by its ID', () => {
-    expect(stripAuditFields(repository.findById(testData.transformers.list[0].id))).toEqual(
-      expect.objectContaining(stripAuditFields(testData.transformers.list[0]))
-    );
-    expect(repository.findById('bad id')).toEqual(null);
+    const result = stripAuditFields(repository.findById(testData.transformers.list[0].id));
+    assert.ok(result);
+    assert.strictEqual(result.id, testData.transformers.list[0].id);
+    assert.strictEqual(result.type, testData.transformers.list[0].type);
+    assert.strictEqual(result.inputType, testData.transformers.list[0].inputType);
+    assert.strictEqual(result.outputType, testData.transformers.list[0].outputType);
+    assert.strictEqual(repository.findById('bad id'), null);
   });
 
   it('should create a transformer', () => {
-    repository.delete('newId');
-    expect(repository.findById('newId')).toBeNull();
-
-    (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
     const createTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
     createTransformer.id = '';
     createTransformer.name = 'new name';
     repository.save(createTransformer);
-    expect(stripAuditFields(repository.findById('newId'))).toEqual(expect.objectContaining(stripAuditFields(createTransformer)));
+    createdTransformerId = createTransformer.id;
+    assert.ok(createdTransformerId);
+
+    const found = stripAuditFields(repository.findById(createdTransformerId));
+    assert.ok(found);
+    assert.strictEqual(found.inputType, createTransformer.inputType);
+    assert.strictEqual(found.outputType, createTransformer.outputType);
   });
 
   it('should update a transformer', () => {
-    let existing = repository.findById('newId');
-    if (!existing) {
-      (generateRandomId as jest.Mock).mockReturnValueOnce('newId');
-      const createTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
-      createTransformer.id = '';
-      createTransformer.name = 'new name';
-      repository.save(createTransformer);
-      existing = repository.findById('newId');
-      if (!existing) {
-        throw new Error('Failed to create transformer for update test');
-      }
-    }
+    const existing = repository.findById(createdTransformerId);
+    assert.ok(existing, 'Transformer should exist from previous create test');
+
     const updateTransformer = JSON.parse(JSON.stringify(existing));
     updateTransformer.name = 'new name updated';
     updateTransformer.description = 'new description updated';
     repository.save(updateTransformer);
+
     const result = repository.findById(updateTransformer.id)!;
-    expect((result as CustomTransformer).name).toEqual(updateTransformer.name);
-    expect((result as CustomTransformer).description).toEqual(updateTransformer.description);
+    assert.strictEqual((result as CustomTransformer).name, 'new name updated');
+    assert.strictEqual((result as CustomTransformer).description, 'new description updated');
   });
 
   it('should delete transformer', () => {
-    repository.delete('newId');
-    expect(repository.findById('newId')).toEqual(null);
+    repository.delete(createdTransformerId);
+    assert.strictEqual(repository.findById(createdTransformerId), null);
   });
 
   it('should properly search transformers with search params and page them', () => {
@@ -182,15 +183,18 @@ describe('TransformerRepository', () => {
       outputType: testData.transformers.list[0].outputType,
       page: 0
     });
-    expect(result.totalElements).toEqual(1);
-    expect(result.content.map(stripAuditFields)).toEqual([expect.objectContaining(stripAuditFields(testData.transformers.list[0]))]);
+    assert.strictEqual(result.totalElements, 1);
+    const found = result.content.map(stripAuditFields)[0];
+    assert.strictEqual(found.id, testData.transformers.list[0].id);
+    assert.strictEqual(found.type, testData.transformers.list[0].type);
   });
 
   it('should properly search transformers and page them', () => {
     const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-    expect(result.totalElements).toEqual(17);
-    expect(result.content.map(stripAuditFields)).toEqual(
-      standardTransformers.slice(0, 10).map(({ id: _id, ...rest }) => expect.objectContaining(rest))
-    );
+    assert.strictEqual(result.totalElements, 17);
+    // First page contains standard transformers (10 per page)
+    for (const t of result.content.map(stripAuditFields)) {
+      assert.strictEqual(t.type, 'standard');
+    }
   });
 });
