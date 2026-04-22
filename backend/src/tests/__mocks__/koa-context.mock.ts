@@ -1,3 +1,4 @@
+import { mock } from 'node:test';
 import EncryptionServiceMock from './service/encryption-service.mock';
 import NorthServiceMock from './service/north-service.mock';
 import SouthServiceMock from './service/south-service.mock';
@@ -16,8 +17,8 @@ import TransformerServiceMock from './service/transformer-service.mock';
 /**
  * Create a mock object for Koa Context
  */
-export default jest.fn().mockImplementation(() => ({
-  app: {
+export default class KoaContextMock {
+  app = {
     scanModeService: new ScanModeServiceMock(),
     ipFilterService: new IpFilterServiceMock(),
     encryptionService: new EncryptionServiceMock(),
@@ -33,25 +34,25 @@ export default jest.fn().mockImplementation(() => ({
     logService: new LogServiceMock(),
     certificateService: new CertificateServiceMock(),
     logger: {
-      trace: jest.fn(),
-      debug: jest.fn(),
-      info: jest.fn(),
-      warn: jest.fn(),
-      error: jest.fn(),
-      child: jest.fn()
+      trace: mock.fn(),
+      debug: mock.fn(),
+      info: mock.fn(),
+      warn: mock.fn(),
+      error: mock.fn(),
+      child: mock.fn()
     },
     whiteList: []
-  },
-  request: {},
-  params: {},
-  query: {},
-  ok: jest.fn(),
-  attachment: jest.fn(),
-  created: jest.fn(),
-  noContent: jest.fn(),
-  badRequest: jest.fn(),
-  internalServerError: jest.fn(),
-  notFound: jest.fn(),
-  throw: jest.fn(),
-  set: jest.fn()
-}));
+  };
+  request = {};
+  params = {};
+  query = {};
+  ok = mock.fn();
+  attachment = mock.fn();
+  created = mock.fn();
+  noContent = mock.fn();
+  badRequest = mock.fn();
+  internalServerError = mock.fn();
+  notFound = mock.fn();
+  throw = mock.fn();
+  set = mock.fn();
+}

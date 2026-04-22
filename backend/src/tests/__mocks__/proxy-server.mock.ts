@@ -1,11 +1,11 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for Proxy Server
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    start: jest.fn(),
-    stop: jest.fn(),
-    setLogger: jest.fn(),
-    refreshIpFilters: jest.fn()
-  };
-});
+export default class ProxyServerMock {
+  start = mock.fn();
+  stop = mock.fn();
+  setLogger = mock.fn();
+  refreshIpFilters = mock.fn();
+}
