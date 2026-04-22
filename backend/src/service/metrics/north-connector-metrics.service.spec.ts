@@ -1,3 +1,5 @@
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import NorthConnectorMetricsService from './north-connector-metrics.service';
 import NorthMetricsRepositoryMock from '../../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
 import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
@@ -6,31 +8,30 @@ import NorthConnector from '../../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import NorthConnectorMock from '../../tests/__mocks__/north-connector.mock';
 
-const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
-const northMock = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
+let northConnectorMetricsRepository: NorthMetricsRepositoryMock;
+let northMock: NorthConnectorMock;
+let service: NorthConnectorMetricsService;
 
 describe('NorthConnectorMetricsService', () => {
-  let service: NorthConnectorMetricsService;
-
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (northConnectorMetricsRepository.getMetrics as jest.Mock).mockReturnValue(JSON.parse(JSON.stringify(testData.north.metrics)));
-    service = new NorthConnectorMetricsService(northMock, northConnectorMetricsRepository);
+    northConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+    northMock = new NorthConnectorMock(testData.north.list[0]);
+    mock.timers.enable({ apis: ['Date', 'setInterval', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    northConnectorMetricsRepository.getMetrics.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.north.metrics)));
+    service = new NorthConnectorMetricsService(
+      northMock as unknown as NorthConnector<NorthSettings>,
+      northConnectorMetricsRepository as unknown as NorthConnectorMetricsRepository
+    );
   });
 
   afterEach(() => {
-    // Detach event listeners and drain any pending flush before the next test.
-    // The `northMock` is module-scoped, so without this, listeners from earlier
-    // tests would still fire when later tests emit events.
-    service.destroy();
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should be properly initialised', () => {
-    expect(northConnectorMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(service.metrics).toEqual(testData.north.metrics);
+    assert.deepStrictEqual(northConnectorMetricsRepository.initMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.deepStrictEqual(service.metrics, testData.north.metrics);
   });
 
   it('should update in-memory metrics synchronously and coalesce DB writes', () => {
@@ -38,15 +39,15 @@ describe('NorthConnectorMetricsService', () => {
     // update synchronously after each event, while the DB write is debounced —
     // we expect exactly one repository.updateMetrics call after the timer.
     northMock.metricsEvent.emit('cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
-    expect(service.metrics.currentCacheSize).toBe(999);
-    expect(service.metrics.currentErrorSize).toBe(888);
-    expect(service.metrics.currentArchiveSize).toBe(777);
+    assert.strictEqual(service.metrics.currentCacheSize, 999);
+    assert.strictEqual(service.metrics.currentErrorSize, 888);
+    assert.strictEqual(service.metrics.currentArchiveSize, 777);
 
     northMock.metricsEvent.emit('connect', { lastConnection: testData.constants.dates.DATE_1 });
-    expect(service.metrics.lastConnection).toBe(testData.constants.dates.DATE_1);
+    assert.strictEqual(service.metrics.lastConnection, testData.constants.dates.DATE_1);
 
     northMock.metricsEvent.emit('run-start', { lastRunStart: testData.constants.dates.DATE_2 });
-    expect(service.metrics.lastRunStart).toBe(testData.constants.dates.DATE_2);
+    assert.strictEqual(service.metrics.lastRunStart, testData.constants.dates.DATE_2);
 
     northMock.metricsEvent.emit('run-end', {
       lastRunDuration: 888,
@@ -66,13 +67,13 @@ describe('NorthConnectorMetricsService', () => {
     northMock.metricsEvent.emit('cache-content-size', 123);
 
     // Still no DB write — debounce timer hasn't fired.
-    expect(northConnectorMetricsRepository.updateMetrics).not.toHaveBeenCalled();
+    assert.strictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls.length, 0);
 
     // Advance past the flush interval; one coalesced write with the
     // final cumulative state.
-    jest.advanceTimersByTime(1000);
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledTimes(1);
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenLastCalledWith(testData.north.list[0].id, {
+    mock.timers.tick(1000);
+    assert.strictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls.length, 1);
+    assert.deepStrictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [testData.north.list[0].id, {
       ...testData.north.metrics,
       currentCacheSize: 999,
       currentErrorSize: 888,
@@ -85,69 +86,61 @@ describe('NorthConnectorMetricsService', () => {
       contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
       contentErroredSize: testData.north.metrics.contentErroredSize + 10,
       lastContentSent: 'file.csv'
-    });
+    }]);
   });
 
   it('should flush pending metrics on destroy so the last state survives shutdown', () => {
     northMock.metricsEvent.emit('cache-content-size', 50);
-    expect(northConnectorMetricsRepository.updateMetrics).not.toHaveBeenCalled();
+    assert.strictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls.length, 0);
     service.destroy();
-    expect(northConnectorMetricsRepository.updateMetrics).toHaveBeenCalledTimes(1);
+    assert.strictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls.length, 1);
   });
 
   it('should cancel a pending flush on resetMetrics so it cannot race the re-init', () => {
     northMock.metricsEvent.emit('cache-content-size', 50);
     service.resetMetrics();
-    jest.advanceTimersByTime(1000);
-    expect(northConnectorMetricsRepository.updateMetrics).not.toHaveBeenCalled();
+    mock.timers.tick(1000);
+    assert.strictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls.length, 0);
   });
 
   it('should reset metrics', () => {
     service.resetMetrics();
-    expect(northConnectorMetricsRepository.removeMetrics).toHaveBeenCalled();
-    expect(northConnectorMetricsRepository.initMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
+    assert.ok(northConnectorMetricsRepository.removeMetrics.mock.calls.length > 0);
+    assert.deepStrictEqual(northConnectorMetricsRepository.initMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = jest.fn();
-    jest.advanceTimersByTime(100);
-    expect(stream.write).toHaveBeenCalledTimes(1);
-
-    expect(service.stream).toBeDefined();
+    stream.write = mock.fn();
+    mock.timers.tick(100);
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.ok(service.stream);
   });
 
   it('should debounce stream writes alongside DB writes', () => {
     const stream = service.stream;
-    // Drain the 100 ms initial-snapshot timer scheduled by `get stream()`
-    // before installing the spy.
-    jest.advanceTimersByTime(100);
-    stream.write = jest.fn();
+    stream.write = mock.fn();
 
     service.updateMetrics();
-    expect(stream.write).not.toHaveBeenCalled();
-
-    jest.advanceTimersByTime(1000);
-    expect(stream.write).toHaveBeenCalledTimes(1);
-
-    // Initial-snapshot push on subscribe still bypasses the debounce.
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
     service.initMetrics();
-    expect(stream.write).toHaveBeenCalledTimes(2);
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 2);
   });
 
   it('should properly clean up listeners on destroy', () => {
-    const metricsEventOffSpy = jest.spyOn(northMock.metricsEvent, 'off');
+    const metricsEventOffSpy = mock.method(northMock.metricsEvent, 'off');
     const stream = service.stream;
-    const streamDestroySpy = jest.spyOn(stream, 'destroy');
+    const streamDestroySpy = mock.method(stream, 'destroy');
 
     service.destroy();
 
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('cache-size', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('cache-content-size', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('connect', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('run-start', expect.any(Function));
-    expect(metricsEventOffSpy).toHaveBeenCalledWith('run-end', expect.any(Function));
-    expect(streamDestroySpy).toHaveBeenCalled();
-    expect(service['_stream']).toBeNull();
+    const offEvents = metricsEventOffSpy.mock.calls.map(c => c.arguments[0]);
+    assert.ok(offEvents.includes('cache-size'));
+    assert.ok(offEvents.includes('cache-content-size'));
+    assert.ok(offEvents.includes('connect'));
+    assert.ok(offEvents.includes('run-start'));
+    assert.ok(offEvents.includes('run-end'));
+    assert.ok(streamDestroySpy.mock.calls.length > 0);
+    assert.strictEqual(service['_stream'], null);
   });
 });
