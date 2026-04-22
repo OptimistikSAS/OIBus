@@ -907,8 +907,12 @@ export default class OIAnalyticsCommandService {
 
   private async executeTestSouthConnectionCommand(command: OIBusTestSouthConnectorCommand, privateKey: string) {
     await this.decryptSouthSettings(command, privateKey);
-    await this.southService.testSouth(command.southConnectorId, command.commandContent.type, command.commandContent.settings);
-    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'South connection tested successfully');
+    const result = await this.southService.testSouth(
+      command.southConnectorId,
+      command.commandContent.type,
+      command.commandContent.settings
+    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   private async executeTestSouthItemCommand(command: OIBusTestSouthConnectorItemCommand, privateKey: string) {
@@ -956,8 +960,12 @@ export default class OIAnalyticsCommandService {
 
   private async executeTestNorthConnectionCommand(command: OIBusTestNorthConnectorCommand, privateKey: string) {
     await this.decryptNorthSettings(command, privateKey);
-    await this.northService.testNorth(command.northConnectorId, command.commandContent.type, command.commandContent.settings);
-    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'North connection tested successfully');
+    const result = await this.northService.testNorth(
+      command.northConnectorId,
+      command.commandContent.type,
+      command.commandContent.settings
+    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   private async decryptHistoryQuerySettings(command: HistoryQueryCommandDTO, privateKey: string) {
@@ -1059,32 +1067,24 @@ export default class OIAnalyticsCommandService {
 
   private async executeTestHistoryQueryNorthConnectionCommand(command: OIBusTestHistoryQueryNorthConnectionCommand, privateKey: string) {
     await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
-    await this.historyQueryService.testNorth(
+    const result = await this.historyQueryService.testNorth(
       command.historyQueryId,
       command.commandContent.northType,
       command.northConnectorId,
       command.commandContent.northSettings
     );
-    this.oIAnalyticsCommandRepository.markAsCompleted(
-      command.id,
-      DateTime.now().toUTC().toISO(),
-      'History query North connection tested successfully'
-    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   private async executeTestHistoryQuerySouthConnectionCommand(command: OIBusTestHistoryQuerySouthConnectionCommand, privateKey: string) {
     await this.decryptHistoryQuerySettings(command.commandContent, privateKey);
-    await this.historyQueryService.testSouth(
+    const result = await this.historyQueryService.testSouth(
       command.historyQueryId,
       command.commandContent.southType,
       command.southConnectorId,
       command.commandContent.southSettings
     );
-    this.oIAnalyticsCommandRepository.markAsCompleted(
-      command.id,
-      DateTime.now().toUTC().toISO(),
-      'History query South connection tested successfully'
-    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   private async executeTestHistoryQuerySouthItemCommand(command: OIBusTestHistoryQuerySouthItemCommand, privateKey: string) {

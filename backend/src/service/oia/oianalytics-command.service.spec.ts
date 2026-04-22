@@ -1137,7 +1137,7 @@ describe('OIAnalytics Command Service', () => {
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
-      'South connection tested successfully'
+      JSON.stringify({ items: [] })
     );
   });
 
@@ -1205,7 +1205,7 @@ describe('OIAnalytics Command Service', () => {
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
-      'North connection tested successfully'
+      JSON.stringify({ items: [] })
     );
   });
 
@@ -1430,7 +1430,7 @@ describe('OIAnalytics Command Service', () => {
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
-      'History query North connection tested successfully'
+      JSON.stringify({ items: [] })
     );
   });
 
@@ -1469,7 +1469,7 @@ describe('OIAnalytics Command Service', () => {
     expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
       command.id,
       testData.constants.dates.FAKE_NOW,
-      'History query South connection tested successfully'
+      JSON.stringify({ items: [] })
     );
   });
 
