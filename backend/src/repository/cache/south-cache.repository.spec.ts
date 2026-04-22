@@ -1,63 +1,64 @@
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import SouthCacheRepository from './south-cache.repository';
 
-// Mock better-sqlite3
-const mockDatabase = {
-  prepare: jest.fn().mockReturnThis(),
-  run: jest.fn(),
-  get: jest.fn(),
-  all: jest.fn()
-};
-
-jest.mock('better-sqlite3', () => {
-  return jest.fn().mockImplementation(() => mockDatabase);
-});
-
 describe('SouthCacheRepository', () => {
   let repository: SouthCacheRepository;
+  let runMock: ReturnType<typeof mock.fn>;
+  let getMock: ReturnType<typeof mock.fn>;
+  let allMock: ReturnType<typeof mock.fn>;
+  let prepareMock: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
+    runMock = mock.fn();
+    getMock = mock.fn();
+    allMock = mock.fn();
+    prepareMock = mock.fn(() => ({ run: runMock, get: getMock, all: allMock }));
+    const mockDatabase = { prepare: prepareMock, run: runMock, get: getMock, all: allMock };
     repository = new SouthCacheRepository(mockDatabase as unknown as Database);
-    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('createItemValueTable() should create table with correct schema', () => {
     repository.createItemValueTable('south1');
-    expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('south_item_cache_south1'));
-    expect(mockDatabase.run).toHaveBeenCalled();
+    assert.ok(prepareMock.mock.calls.some(c => (c.arguments[0] as string).includes('south_item_cache_south1')));
+    assert.ok(runMock.mock.calls.length > 0);
   });
 
   it('dropItemValueTable() should drop table', () => {
     repository.dropItemValueTable('south1');
-    expect(mockDatabase.prepare).toHaveBeenCalledWith('DROP TABLE IF EXISTS "south_item_cache_south1";');
-    expect(mockDatabase.run).toHaveBeenCalled();
+    assert.deepStrictEqual(prepareMock.mock.calls[0].arguments, ['DROP TABLE IF EXISTS "south_item_cache_south1";']);
+    assert.ok(runMock.mock.calls.length > 0);
   });
 
   describe('getItemLastValue', () => {
     it('should return null if result is undefined', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce(undefined);
+      getMock.mock.mockImplementationOnce(() => undefined);
       const result = repository.getItemLastValue('south1', 'item1');
-      expect(result).toBeNull();
+      assert.strictEqual(result, null);
     });
 
     it('should look up by item_id only (not group_id)', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce(undefined);
+      getMock.mock.mockImplementationOnce(() => undefined);
       repository.getItemLastValue('south1', 'item1');
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('WHERE item_id = ?'));
-      // group_id must NOT appear in the WHERE clause
-      const sql: string = (mockDatabase.prepare as jest.Mock).mock.calls[0][0];
-      expect(sql).not.toMatch(/AND group_id/);
+      assert.ok(prepareMock.mock.calls.some(c => (c.arguments[0] as string).includes('WHERE item_id = ?')));
+      const sql = prepareMock.mock.calls.at(-1)!.arguments[0] as string;
+      assert.doesNotMatch(sql, /AND group_id/);
     });
 
     it('should return parsed value', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({
+      getMock.mock.mockImplementationOnce(() => ({
         item_id: 'item1',
         query_time: '2023-01-01',
         value: '{"a":1}',
         tracked_instant: '2023-01-01'
-      });
+      }));
       const result = repository.getItemLastValue('south1', 'item1');
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         itemId: 'item1',
         groupId: null,
         queryTime: '2023-01-01',
@@ -67,55 +68,47 @@ describe('SouthCacheRepository', () => {
     });
 
     it('should return raw value if parse fails', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({
+      getMock.mock.mockImplementationOnce(() => ({
         item_id: 'item1',
         value: 'invalid-json'
-      });
+      }));
       const result = repository.getItemLastValue('south1', 'item1');
-      expect(result?.value).toBe('invalid-json');
+      assert.strictEqual(result?.value, 'invalid-json');
     });
 
     it('should return null on db error', () => {
-      (mockDatabase.prepare as jest.Mock).mockImplementationOnce(() => {
+      prepareMock.mock.mockImplementationOnce(() => {
         throw new Error('DB Error');
       });
       const result = repository.getItemLastValue('south1', 'item1');
-      expect(result).toBeNull();
+      assert.strictEqual(result, null);
     });
   });
 
   describe('saveItemLastValue', () => {
     it('should execute a single statement (no SELECT-then-write round-trip)', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
-      // Exactly one prepare(), no preliminary SELECT.
-      expect(mockDatabase.prepare).toHaveBeenCalledTimes(1);
-      expect(mockDatabase.get).not.toHaveBeenCalled();
-      const sql: string = (mockDatabase.prepare as jest.Mock).mock.calls[0][0];
-      // INSERT OR REPLACE is SQLite shorthand for "insert; on conflict, delete + insert again".
-      expect(sql).toContain('INSERT OR REPLACE INTO "south_item_cache_south1"');
-      // Args follow the INSERT column order: group_id, item_id, query_time, value, tracked_instant.
-      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'item1', 'now', '1', 'now');
+      assert.strictEqual(prepareMock.mock.calls.length, 1);
+      assert.strictEqual(getMock.mock.calls.length, 0);
+      assert.ok((prepareMock.mock.calls[0].arguments[0] as string).includes('INSERT OR REPLACE INTO "south_item_cache_south1"'));
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['group1', 'item1', 'now', '1', 'now']);
     });
 
     it('should pass null group_id through when item has no group', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: null, value: 1, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.run).toHaveBeenCalledWith(null, 'item1', 'now', '1', 'now');
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, [null, 'item1', 'now', '1', 'now']);
     });
 
     it('should rewrite group_id when the row already exists', () => {
-      // INSERT OR REPLACE deletes the existing row and inserts the new one, so
-      // the new group_id is whatever the caller just passed — same semantic as
-      // the old "find by item_id, UPDATE group_id" branch, in a single
-      // statement.
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 42, trackedInstant: 'now', queryTime: 'now' });
-      const sql: string = (mockDatabase.prepare as jest.Mock).mock.calls[0][0];
-      expect(sql).toContain('INSERT OR REPLACE');
-      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'item1', 'now', '42', 'now');
+      assert.ok((prepareMock.mock.calls[0].arguments[0] as string).includes('INSERT OR REPLACE'));
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['group1', 'item1', 'now', '42', 'now']);
     });
 
     it('should store null when value is null', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: null, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'item1', 'now', null, 'now');
+      assert.ok(prepareMock.mock.calls.some(c => (c.arguments[0] as string).includes('INSERT OR REPLACE')));
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['group1', 'item1', 'now', null, 'now']);
     });
 
     it('should reuse the cached prepared statement on subsequent saves for the same connector', () => {
@@ -138,21 +131,19 @@ describe('SouthCacheRepository', () => {
   describe('deleteItemValue', () => {
     it('should delete by item_id only', () => {
       repository.deleteItemValue('south1', 'item1');
-      expect(mockDatabase.prepare).toHaveBeenCalledWith('DELETE FROM "south_item_cache_south1" WHERE item_id = ?;');
-      expect(mockDatabase.run).toHaveBeenCalledWith('item1');
-    });
-
-    it('should delete by item_id regardless of groupId being null', () => {
-      repository.deleteItemValue('south1', 'item1');
-      expect(mockDatabase.prepare).toHaveBeenCalledWith('DELETE FROM "south_item_cache_south1" WHERE item_id = ?;');
-      expect(mockDatabase.run).toHaveBeenCalledWith('item1');
+      assert.ok(
+        prepareMock.mock.calls.some(c =>
+          (c.arguments[0] as string).includes('DELETE FROM "south_item_cache_south1" WHERE item_id = ?')
+        )
+      );
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['item1']);
     });
 
     it('should catch error', () => {
-      (mockDatabase.prepare as jest.Mock).mockImplementationOnce(() => {
+      prepareMock.mock.mockImplementationOnce(() => {
         throw new Error('DB Error');
       });
-      expect(() => repository.deleteItemValue('south1', 'item1')).not.toThrow();
+      assert.doesNotThrow(() => repository.deleteItemValue('south1', 'item1'));
     });
   });
 });
