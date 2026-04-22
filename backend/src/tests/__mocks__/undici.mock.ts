@@ -1,3 +1,4 @@
+import { mock } from 'node:test';
 import { ReqResponse } from '../../service/http-request.utils';
 
 /**
@@ -12,9 +13,9 @@ export function createMockResponse(
     statusCode,
     headers,
     body: {
-      json: jest.fn().mockResolvedValue(body),
-      text: jest.fn().mockResolvedValue(typeof body === 'string' ? body : JSON.stringify(body)),
-      arrayBuffer: jest.fn().mockReturnValue(body)
+      json: mock.fn(async () => body),
+      text: mock.fn(async () => (typeof body === 'string' ? body : JSON.stringify(body))),
+      arrayBuffer: mock.fn(() => body)
     },
     ok: statusCode >= 200 && statusCode <= 299
   } as unknown as ReqResponse;

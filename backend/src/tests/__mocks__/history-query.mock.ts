@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { mock } from 'node:test';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -12,16 +13,16 @@ export default class HistoryQueryMock {
     this.connector = connector;
   }
 
-  start = jest.fn().mockImplementation(() => Promise.resolve());
-  stop = jest.fn();
-  resetCache = jest.fn();
-  finish = jest.fn();
-  setLogger = jest.fn();
+  start = mock.fn(async () => undefined);
+  stop = mock.fn();
+  resetCache = mock.fn();
+  finish = mock.fn();
+  setLogger = mock.fn();
   metricsEvent = new EventEmitter();
   finishEvent = new EventEmitter();
-  searchCacheContent = jest.fn();
-  getFileFromCache = jest.fn();
-  updateCacheContent = jest.fn();
+  searchCacheContent = mock.fn();
+  getFileFromCache = mock.fn();
+  updateCacheContent = mock.fn();
 
   set historyQueryConfiguration(connectorConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
     this.connector = connectorConfiguration;

@@ -1,53 +1,57 @@
+import { mock } from 'node:test';
 import { mockBaseFolders } from '../utils/test-utils';
 
 /**
  * Create a mock object for Data Stream engine
  */
-export default jest.fn().mockImplementation(logger => {
-  return {
-    cacheFolders: mockBaseFolders(''),
-    start: jest.fn(),
-    stop: jest.fn(),
-    createNorth: jest.fn(),
-    startNorth: jest.fn(),
-    getNorth: jest.fn(),
-    getNorthSSE: jest.fn(),
-    getNorthMetrics: jest.fn(),
-    getAllNorthMetrics: jest.fn(),
-    resetNorthMetrics: jest.fn(),
-    reloadNorth: jest.fn(),
-    stopNorth: jest.fn(),
-    deleteNorth: jest.fn(),
-    createSouth: jest.fn(),
-    startSouth: jest.fn(),
-    getSouthSSE: jest.fn(),
-    getSouthMetrics: jest.fn(),
-    getAllSouthMetrics: jest.fn(),
-    resetSouthMetrics: jest.fn(),
-    reloadSouth: jest.fn(),
-    reloadSouthItems: jest.fn(),
-    stopSouth: jest.fn(),
-    deleteSouth: jest.fn(),
-    createHistoryQuery: jest.fn(),
-    startHistoryQuery: jest.fn(),
-    getHistoryQuerySSE: jest.fn(),
-    getHistoryMetrics: jest.fn(),
-    getAllHistoryMetrics: jest.fn(),
-    reloadHistoryQuery: jest.fn(),
-    stopHistoryQuery: jest.fn(),
-    resetHistoryQueryCache: jest.fn(),
-    deleteHistoryQuery: jest.fn(),
-    logger,
-    setLogger: jest.fn(),
-    addContent: jest.fn(),
-    addExternalContent: jest.fn(),
-    searchCacheContent: jest.fn(),
-    getFileFromCache: jest.fn(),
-    updateCacheContent: jest.fn(),
-    updateScanMode: jest.fn(),
-    updateNorthTransformerBySouth: jest.fn(),
-    updateNorthConfiguration: jest.fn(),
-    reloadTransformer: jest.fn(),
-    removeAndReloadTransformer: jest.fn()
-  };
-});
+export default class DataStreamEngineMock {
+  cacheFolders = mockBaseFolders('');
+  logger: unknown;
+
+  constructor(logger: unknown) {
+    this.logger = logger;
+  }
+
+  start = mock.fn();
+  stop = mock.fn();
+  createNorth = mock.fn();
+  startNorth = mock.fn();
+  getNorth = mock.fn();
+  getNorthSSE = mock.fn();
+  getNorthMetrics = mock.fn();
+  getAllNorthMetrics = mock.fn();
+  resetNorthMetrics = mock.fn();
+  reloadNorth = mock.fn();
+  stopNorth = mock.fn();
+  deleteNorth = mock.fn();
+  createSouth = mock.fn();
+  startSouth = mock.fn();
+  getSouthSSE = mock.fn();
+  getSouthMetrics = mock.fn();
+  getAllSouthMetrics = mock.fn();
+  resetSouthMetrics = mock.fn();
+  reloadSouth = mock.fn();
+  reloadSouthItems = mock.fn();
+  stopSouth = mock.fn();
+  deleteSouth = mock.fn();
+  createHistoryQuery = mock.fn();
+  startHistoryQuery = mock.fn();
+  getHistoryQuerySSE = mock.fn();
+  getHistoryMetrics = mock.fn();
+  getAllHistoryMetrics = mock.fn();
+  reloadHistoryQuery = mock.fn();
+  stopHistoryQuery = mock.fn();
+  resetHistoryQueryCache = mock.fn();
+  deleteHistoryQuery = mock.fn();
+  setLogger = mock.fn();
+  addContent = mock.fn();
+  addExternalContent = mock.fn();
+  searchCacheContent = mock.fn();
+  getFileFromCache = mock.fn();
+  updateCacheContent = mock.fn();
+  updateScanMode = mock.fn();
+  updateNorthTransformerBySouth = mock.fn();
+  updateNorthConfiguration = mock.fn();
+  reloadTransformer = mock.fn();
+  removeAndReloadTransformer = mock.fn();
+}
