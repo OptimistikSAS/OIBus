@@ -192,7 +192,7 @@ export default class SandboxService {
       } else if ((error as Error).message.includes('TypeScript compilation failed')) {
         errorCategory = 'SYNTAX_ERROR';
       }
-      throw new Error(`[${errorCategory}] Sandbox execution failed: ${(error as Error).message}`);
+      throw new Error(`[${errorCategory}] Custom code execution failed: ${(error as Error).message}`);
     } finally {
       if (!isolate.isDisposed) {
         try {

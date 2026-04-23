@@ -429,7 +429,6 @@ describe('Transformer Service', () => {
   });
 
   describe('test a custom transformer', () => {
-    // Add this beforeEach block to configure the mock's behavior
     beforeEach(() => {
       (OIBusCustomTransformer as jest.Mock).mockImplementation(() => {
         return {
@@ -445,51 +444,26 @@ describe('Transformer Service', () => {
     });
 
     it('should test a custom transformer successfully', async () => {
-      const customTransformer: CustomTransformer = {
-        id: 'test-transformer',
-        type: 'custom',
-        name: 'Test Transformer',
-        description: 'Test transformer for testing',
-        inputType: 'time-values',
-        outputType: 'any',
-        customCode: `
-          function transform(data, source, filename, options) {
-            return {
-              data: JSON.parse(data),
-              filename: 'test-output.json',
-              numberOfElement: 1
-            };
-          }
-        `,
-        language: 'javascript',
-        timeout: 2000,
-        customManifest: {
-          type: 'object',
-          key: 'options',
-          translationKey: 'test',
-          attributes: [],
-          enablingConditions: [],
-          validators: [],
-          displayProperties: {
-            visible: true,
-            wrapInBox: false
-          }
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-
-      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(customTransformer);
-
       const testRequest = {
         inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }]),
         options: { testOption: 'value' }
       };
 
-      const result = await service.test('test-transformer', testRequest);
+      const result = await service.test(testData.transformers.command, testRequest);
 
+      expect(OIBusCustomTransformer).toHaveBeenCalledWith(
+        engine.logger,
+        expect.objectContaining({
+          id: 'test',
+          name: testData.transformers.command.name,
+          inputType: testData.transformers.command.inputType,
+          outputType: testData.transformers.command.outputType,
+          customCode: testData.transformers.command.customCode,
+          language: testData.transformers.command.language,
+          timeout: testData.transformers.command.timeout
+        }),
+        testRequest.options
+      );
       expect(result).toHaveProperty('output');
       expect(result).toHaveProperty('metadata');
       expect(result.metadata).toHaveProperty('contentType', 'any');
@@ -497,76 +471,15 @@ describe('Transformer Service', () => {
     });
 
     it('should test a custom transformer with undefined options', async () => {
-      const customTransformer: CustomTransformer = {
-        id: 'test-transformer',
-        type: 'custom',
-        name: 'Test Transformer',
-        description: 'Test transformer for testing',
-        inputType: 'time-values',
-        outputType: 'any',
-        customCode: `
-          function transform(data, source, filename, options) {
-            return {
-              data: JSON.parse(data),
-              filename: 'test-output.json',
-              numberOfElement: 1
-            };
-          }
-        `,
-        language: 'javascript',
-        timeout: 2000,
-        customManifest: {
-          type: 'object',
-          key: 'options',
-          translationKey: 'test',
-          attributes: [],
-          enablingConditions: [],
-          validators: [],
-          displayProperties: {
-            visible: true,
-            wrapInBox: false
-          }
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-
-      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(customTransformer);
-
       const testRequest = {
         inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }])
-        // options is undefined
       };
 
-      const result = await service.test('test-transformer', testRequest);
+      const result = await service.test(testData.transformers.command, testRequest);
 
+      expect(OIBusCustomTransformer).toHaveBeenCalledWith(engine.logger, expect.any(Object), {});
       expect(result).toHaveProperty('output');
       expect(result).toHaveProperty('metadata');
-      expect(result.metadata).toHaveProperty('contentType', 'any');
-      expect(result.metadata).toHaveProperty('numberOfElement', 1);
-    });
-
-    it('should throw an error if transformer is a standard one', async () => {
-      const standardTransformer: StandardTransformer = {
-        id: 'test-transformer',
-        type: 'standard',
-        functionName: 'Test Transformer',
-        inputType: 'time-values',
-        outputType: 'any'
-      };
-
-      (transformerRepository.findById as jest.Mock).mockReturnValueOnce(standardTransformer);
-
-      const testRequest = {
-        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }])
-        // options is undefined
-      };
-
-      await expect(service.test('test-transformer', testRequest)).rejects.toThrow(
-        `Cannot test standard transformer "${standardTransformer.functionName}"`
-      );
     });
   });
 

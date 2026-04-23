@@ -238,7 +238,8 @@
     "oibus-input-data-type": {
       "any": "Files (for all sources)",
       "setpoint": "Setpoints (for all sources)",
-      "time-values": "OIBus Time Values (for all sources)"
+      "time-values": "OIBus Time Values (for all sources)",
+      "any-content": "Any content"
     },
     "oibus-output-data-type": {
       "any": "Any",

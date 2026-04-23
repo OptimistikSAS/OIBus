@@ -35,7 +35,7 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
       ]
     };
     // Arrange
-    const transformer = new OIBusTimeValuesToModbusTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new OIBusTimeValuesToModbusTransformer(logger, testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
       {
         pointId: 'reference1',

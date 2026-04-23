@@ -15,6 +15,7 @@ import { Page } from '../../../shared/model/types';
 import { OIBusDataType } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import TransformerService from '../../service/transformer.service';
+import { OIBusTestingError } from '../../model/types';
 
 @Route('/api/transformers')
 @Tags('Transformers')
@@ -146,14 +147,17 @@ export class TransformerController extends Controller {
     await transformerService.delete(transformerId);
   }
 
-  @Post('/{transformerId}/test')
+  @Post('/test')
   async test(
-    @Path() transformerId: string,
-    @Body() command: TransformerTestRequest,
+    @Body() command: { transformer: CustomTransformerCommandDTO; testRequest: TransformerTestRequest },
     @Request() request: CustomExpressRequest
   ): Promise<TransformerTestResponse> {
     const transformerService = request.services.transformerService;
-    return transformerService.test(transformerId, command);
+    try {
+      return transformerService.test(command.transformer, command.testRequest);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
   }
 
   @Get('/template/{inputType}')

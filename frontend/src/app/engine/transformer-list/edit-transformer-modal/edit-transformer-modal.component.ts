@@ -64,19 +64,19 @@ export class EditTransformerModalComponent implements OnInit {
   outputTypes = OUTPUT_TYPES;
   languages = CUSTOM_TRANSFORMER_LANGUAGES;
 
-  inputType = this.fb.control(null as InputType | null, Validators.required);
-  outputType = this.fb.control(null as OutputType | null, Validators.required);
-  language = this.fb.control(null as TransformerLanguage | null, Validators.required);
   form = this.fb.group({
     name: ['', Validators.required],
     description: '',
-    timeout: this.fb.control(2000, [Validators.required, Validators.min(100)]),
+    inputType: [null as InputType | null, Validators.required],
+    outputType: [null as OutputType | null, Validators.required],
+    timeout: [2000, [Validators.required, Validators.min(100)]],
+    language: [null as TransformerLanguage | null, Validators.required],
     customCode: ['', Validators.required],
     attributes: this.fb.control([] as Array<OIBusAttribute>)
   });
 
   ngOnInit() {
-    this.language.valueChanges.subscribe(() => {
+    this.form.controls.language.valueChanges.subscribe(() => {
       if (this.mode === 'create') {
         this.generateCodeTemplate();
       }
@@ -94,7 +94,7 @@ export class EditTransformerModalComponent implements OnInit {
   }
 
   private getCodeTemplate(): string {
-    const language = this.language.value || 'javascript';
+    const language = this.form.controls.language.value || 'javascript';
     if (language === 'typescript') {
       return `// Custom transformer function
 // This function will be called for each input data
@@ -152,7 +152,10 @@ function transform(inputData, source, filename, options) {
       description: transformer.description,
       timeout: transformer.timeout,
       customCode: transformer.customCode,
-      attributes: transformer.manifest.attributes
+      attributes: transformer.manifest.attributes,
+      inputType: transformer.inputType,
+      outputType: transformer.outputType,
+      language: transformer.language
     });
   }
 
@@ -168,14 +171,14 @@ function transform(inputData, source, filename, options) {
   }
 
   canTest(): boolean {
-    if (this.mode === 'create') {
-      return this.inputType.valid && this.outputType.valid && this.language.valid && this.form?.valid === true;
+    if (this.mode === 'create' && this.form.valid) {
+      return true;
     }
-    return !!this.customTransformer && this.form?.valid === true;
+    return !!(this.mode === 'edit' && this.customTransformer && this.form.valid);
   }
 
   test() {
-    if (!this.form || !this.canTest()) {
+    if (!this.canTest()) {
       return;
     }
 
@@ -187,33 +190,29 @@ function transform(inputData, source, filename, options) {
     const component: TestTransformerModalComponent = modalRef.componentInstance;
     const formValue = this.form.value;
 
-    if (this.mode === 'create') {
-      const command: CustomTransformerCommandDTO = {
-        type: 'custom',
-        inputType: this.inputType.value!,
-        outputType: this.outputType.value!,
-        language: this.language.value!,
-        name: formValue.name!,
-        description: formValue.description!,
-        timeout: formValue.timeout!,
-        customCode: formValue.customCode!,
-        customManifest: {
-          type: 'object',
-          key: 'options',
-          translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
-          attributes: formValue.attributes!,
-          enablingConditions: [],
-          validators: [],
-          displayProperties: {
-            visible: true,
-            wrapInBox: false
-          }
+    const command: CustomTransformerCommandDTO = {
+      type: 'custom',
+      inputType: formValue.inputType!,
+      outputType: formValue.outputType!,
+      language: formValue.language!,
+      name: formValue.name!,
+      description: formValue.description!,
+      timeout: formValue.timeout!,
+      customCode: formValue.customCode!,
+      customManifest: {
+        type: 'object',
+        key: 'options',
+        translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
+        attributes: formValue.attributes!,
+        enablingConditions: [],
+        validators: [],
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
         }
-      };
-      component.prepareForCreationMode(command, formValue.attributes);
-    } else {
-      component.prepareForCreation(this.customTransformer!, formValue.customCode, formValue.attributes);
-    }
+      }
+    };
+    component.prepare(command);
   }
 
   save() {
@@ -221,28 +220,13 @@ function transform(inputData, source, filename, options) {
       return;
     }
 
-    let inputType: InputType;
-    let outputType: OutputType;
-    let language: TransformerLanguage;
-    if (this.mode === 'create') {
-      if (!this.inputType.valid || !this.outputType.valid || !this.language.valid) {
-        return;
-      }
-      inputType = this.inputType.value!;
-      outputType = this.outputType.value!;
-      language = this.language.value!;
-    } else {
-      inputType = this.customTransformer!.inputType;
-      outputType = this.customTransformer!.outputType;
-      language = this.customTransformer!.language;
-    }
     const formValue = this.form!.value;
 
     const command: CustomTransformerCommandDTO = {
       type: 'custom',
-      inputType,
-      outputType,
-      language,
+      inputType: formValue.inputType!,
+      outputType: formValue.outputType!,
+      language: formValue.language!,
       name: formValue.name!,
       description: formValue.description!,
       timeout: formValue.timeout!,

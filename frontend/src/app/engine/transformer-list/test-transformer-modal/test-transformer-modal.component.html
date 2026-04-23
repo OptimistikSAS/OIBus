@@ -3,18 +3,19 @@
 </div>
 
 <div class="modal-body">
-  @if (transformer() || transformerCommand()) {
+  @let currentTransformer = transformer();
+  @if (currentTransformer) {
     <div class="row mb-3">
       <div class="col-md-6">
         <div class="form-group">
           <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.transformer"></label>
-          <div class="form-control-plaintext">{{ (transformer() || transformerCommand())!.name }}</div>
+          <div class="form-control-plaintext">{{ currentTransformer.name }}</div>
         </div>
       </div>
       <div class="col-md-6">
         <div class="form-group">
           <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-type"></label>
-          <div class="form-control-plaintext">{{ (transformer() || transformerCommand())!.inputType | oIBusInputDataTypeEnum }}</div>
+          <div class="form-control-plaintext">{{ currentTransformer.inputType | oIBusInputDataTypeEnum }}</div>
         </div>
       </div>
     </div>
@@ -28,15 +29,13 @@
         </div>
       </div>
 
-      <div class="row mb-3">
-        <div class="col-12">
-          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.options"></label>
-          <oib-manifest-attributes-array
-            [label]="'configuration.oibus.manifest.transformers.test-transformer-modal.options' | translate"
-            [control]="form.controls.options!"
-          />
-          <val-errors controlName="options" />
-        </div>
+      <div class="row mb-3" formGroupName="options">
+        <oib-oibus-object-form-control
+          [scanModes]="[]"
+          [certificates]="[]"
+          [group]="form.controls.options"
+          [objectAttribute]="currentTransformer.customManifest"
+        />
       </div>
     </form>
 

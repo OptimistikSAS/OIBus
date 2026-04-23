@@ -52,7 +52,7 @@
                 for="input-type"
                 translate="configuration.oibus.manifest.transformers.edit-transformer-modal.input-type"
               ></label>
-              <select id="input-type" class="form-select" [formControl]="inputType">
+              <select id="input-type" class="form-select" formControlName="inputType">
                 <option [ngValue]="null"></option>
                 @for (value of inputTypes; track value) {
                   <option [value]="value">{{ value | oIBusInputDataTypeEnum }}</option>
@@ -69,7 +69,7 @@
                 for="output-type"
                 translate="configuration.oibus.manifest.transformers.edit-transformer-modal.output-type"
               ></label>
-              <select id="output-type" class="form-select" [formControl]="outputType">
+              <select id="output-type" class="form-select" formControlName="outputType">
                 <option [ngValue]="null"></option>
                 @for (value of outputTypes; track value) {
                   <option [value]="value">{{ value | oIBusOutputDataTypeEnum }}</option>
@@ -86,7 +86,7 @@
                 for="language"
                 translate="configuration.oibus.manifest.transformers.edit-transformer-modal.language"
               ></label>
-              <select id="language" class="form-select" [formControl]="language">
+              <select id="language" class="form-select" formControlName="language">
                 <option [ngValue]="null"></option>
                 @for (value of languages; track value) {
                   <option [value]="value">{{ value | oIBusTransformerLanguageEnum }}</option>
@@ -104,7 +104,7 @@
           class="form-label"
           translate="configuration.oibus.manifest.transformers.edit-transformer-modal.custom-code"
         ></label>
-        @if (!customTransformer && !this.language.value) {
+        @if (!customTransformer && !form.controls.language.value) {
           <span
             id="language-disclaimer"
             translate="configuration.oibus.manifest.transformers.edit-transformer-modal.select-language"
@@ -113,7 +113,7 @@
           <oib-code-block
             id="custom-code"
             formControlName="customCode"
-            [language]="customTransformer ? customTransformer.language : this.language.value!"
+            [language]="customTransformer ? customTransformer.language : form.controls.language.value!"
           />
         }
         <val-errors controlName="customCode" />
@@ -134,15 +134,15 @@
 <div class="modal-footer">
   <div class="btn-group">
     <button [oib-save-button]="state" form="form"></button>
-    @if ((mode === 'edit' && customTransformer) || (mode === 'create' && canTest())) {
-      <button
-        type="button"
-        class="btn btn-secondary"
-        (click)="test()"
-        translate="configuration.oibus.manifest.transformers.edit-transformer-modal.test"
-        id="test-button"
-      ></button>
-    }
+    <button
+      type="button"
+      class="btn btn-secondary"
+      (click)="test()"
+      [disabled]="!canTest()"
+      translate="configuration.oibus.manifest.transformers.edit-transformer-modal.test"
+      id="test-button"
+    ></button>
+
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>

@@ -60,7 +60,7 @@ describe('CSVToTimeValuesTransformer', () => {
 
   it('should transform valid CSV with headers', async () => {
     // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], headerOptions);
+    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], headerOptions);
 
     // Mock PapaParse success
     (Papa.parse as jest.Mock).mockReturnValue({
@@ -93,7 +93,7 @@ describe('CSVToTimeValuesTransformer', () => {
 
   it('should transform valid CSV without headers (using indices)', async () => {
     // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], indexOptions);
+    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], indexOptions);
 
     // Mock PapaParse success (array of arrays)
     (Papa.parse as jest.Mock).mockReturnValue({
@@ -125,7 +125,7 @@ describe('CSVToTimeValuesTransformer', () => {
 
   it('should skip rows with missing or invalid required fields', async () => {
     // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], headerOptions);
+    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], headerOptions);
 
     (Papa.parse as jest.Mock).mockReturnValue({
       errors: [],
@@ -159,7 +159,7 @@ describe('CSVToTimeValuesTransformer', () => {
   it('should handle configuration errors for Index Mode (NaN indices)', async () => {
     // Arrange: Config says no header, but columns are strings like "A", "B" (invalid for parseInt)
     const badConfig = { ...indexOptions, pointIdColumn: 'NotANumber' };
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], badConfig);
+    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], badConfig);
 
     (Papa.parse as jest.Mock).mockReturnValue({
       errors: [],
@@ -181,7 +181,7 @@ describe('CSVToTimeValuesTransformer', () => {
 
   it('should log warning if PapaParse reports errors', async () => {
     // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], testData.north.list[0], headerOptions);
+    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], headerOptions);
 
     // Mock Parsing Error
     (Papa.parse as jest.Mock).mockReturnValue({

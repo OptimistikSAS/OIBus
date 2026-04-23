@@ -1223,7 +1223,6 @@ describe('OIAnalyticsCommandRepository', () => {
       id: 'testCustomTransformerId',
       targetVersion: 'v3.8.0',
       type: 'test-custom-transformer',
-      transformerId: 'tr1',
       commandContent: { inputData: 'test-input' } as TransformerTestRequest
     };
     repository.create(command);
@@ -1237,7 +1236,6 @@ describe('OIAnalyticsCommandRepository', () => {
       retrievedDate: testData.constants.dates.FAKE_NOW,
       completedDate: null,
       result: null,
-      transformerId: 'tr1',
       commandContent: { inputData: 'test-input' }
     });
   });

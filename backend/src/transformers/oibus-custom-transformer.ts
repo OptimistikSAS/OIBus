@@ -4,8 +4,6 @@ import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
 import pino from 'pino';
 import { CustomTransformer } from '../model/transformer.model';
-import { NorthConnectorEntity } from '../model/north-connector.model';
-import { NorthSettings } from '../../shared/model/north-settings.model';
 import { sandboxService } from '../service/sandbox.service';
 import { promisify } from 'node:util';
 import { generateRandomId } from '../service/utils';
@@ -16,10 +14,9 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
   constructor(
     protected logger: pino.Logger,
     protected transformer: CustomTransformer,
-    protected northConnector: NorthConnectorEntity<NorthSettings>,
     protected _options: object
   ) {
-    super(logger, transformer, northConnector, transformer);
+    super(logger, transformer, transformer);
   }
 
   async transform(

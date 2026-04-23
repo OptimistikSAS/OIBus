@@ -1143,12 +1143,8 @@ export default class OIAnalyticsCommandService {
   }
 
   private async executeTestCustomTransformerConnectionCommand(command: OIBusTestCustomTransformerCommand) {
-    await this.transformerService.test(command.transformerId, command.commandContent);
-    this.oIAnalyticsCommandRepository.markAsCompleted(
-      command.id,
-      DateTime.now().toUTC().toISO(),
-      'CustomTransformer connection tested successfully'
-    );
+    const result = await this.transformerService.test(command.commandContent.command, command.commandContent.testRequest);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   private completeTestItemCommand(

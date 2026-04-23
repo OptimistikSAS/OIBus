@@ -23,7 +23,7 @@ describe('IgnoreTransformer', () => {
 
   it('should transform data from a stream and return metadata without filename', async () => {
     // Arrange
-    const transformer = new IgnoreTransformer(logger, testData.transformers.list[0], testData.north.list[0], {});
+    const transformer = new IgnoreTransformer(logger, testData.transformers.list[0], {});
 
     // Mock Readable stream
     const mockStream = new Readable();

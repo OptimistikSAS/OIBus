@@ -20274,11 +20274,6 @@
 						"type": "string",
 						"description": "The target version for the command.",
 						"example": "3.7.0"
-					},
-					"transformerId": {
-						"type": "string",
-						"description": "The ID of the custom transformer to test.",
-						"example": "transformer123"
 					}
 				},
 				"required": [
@@ -20289,8 +20284,7 @@
 					"retrievedDate",
 					"completedDate",
 					"result",
-					"targetVersion",
-					"transformerId"
+					"targetVersion"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -26285,7 +26279,7 @@
 				}
 			}
 		},
-		"/api/transformers/{transformerId}/test": {
+		"/api/transformers/test": {
 			"post": {
 				"operationId": "Test",
 				"responses": {
@@ -26304,22 +26298,25 @@
 					"Transformers"
 				],
 				"security": [],
-				"parameters": [
-					{
-						"in": "path",
-						"name": "transformerId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
+				"parameters": [],
 				"requestBody": {
 					"required": true,
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/TransformerTestRequest"
+								"properties": {
+									"testRequest": {
+										"$ref": "#/components/schemas/TransformerTestRequest"
+									},
+									"transformer": {
+										"$ref": "#/components/schemas/CustomTransformerCommandDTO"
+									}
+								},
+								"required": [
+									"testRequest",
+									"transformer"
+								],
+								"type": "object"
 							}
 						}
 					}
