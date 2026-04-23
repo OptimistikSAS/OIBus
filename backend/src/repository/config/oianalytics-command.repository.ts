@@ -339,9 +339,8 @@ export default class OIAnalyticsCommandRepository {
         insertQuery += `(id, retrieved_date, type, status, ack, target_version, transformer_id) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
       case 'test-custom-transformer':
-        queryParams.push(command.transformerId);
         queryParams.push(JSON.stringify(command.commandContent));
-        insertQuery += `(id, retrieved_date, type, status, ack, target_version, transformer_id, command_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
+        insertQuery += `(id, retrieved_date, type, status, ack, target_version, command_content) VALUES (?, ?, ?, ?, ?, ?, ?);`;
         break;
     }
     this.database.prepare(insertQuery).run(...queryParams);
@@ -685,7 +684,6 @@ export default class OIAnalyticsCommandRepository {
         return {
           ...baseCommandFields(command),
           type: 'test-custom-transformer',
-          transformerId: command.transformer_id as string,
           commandContent: JSON.parse(command.command_content as string)
         };
     }

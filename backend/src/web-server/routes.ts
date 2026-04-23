@@ -5020,7 +5020,6 @@ const models: TsoaRoute.Models = {
             "completedDate": {"dataType":"union","subSchemas":[{"ref":"Instant"},{"dataType":"enum","enums":[null]}],"required":true},
             "result": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "targetVersion": {"dataType":"string","required":true},
-            "transformerId": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -6610,11 +6609,10 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsTransformerController_test: Record<string, TsoaRoute.ParameterSchema> = {
-                transformerId: {"in":"path","name":"transformerId","required":true,"dataType":"string"},
-                command: {"in":"body","name":"command","required":true,"ref":"TransformerTestRequest"},
+                command: {"in":"body","name":"command","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"testRequest":{"ref":"TransformerTestRequest","required":true},"transformer":{"ref":"CustomTransformerCommandDTO","required":true}}},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.post('/api/transformers/:transformerId/test',
+        app.post('/api/transformers/test',
             ...(fetchMiddlewares<RequestHandler>(TransformerController)),
             ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.test)),
 

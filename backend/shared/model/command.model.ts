@@ -1162,12 +1162,6 @@ export interface OIBusTestCustomTransformerCommandDTO extends BaseOIBusCommandDT
    * @example "3.7.0"
    */
   targetVersion: string;
-
-  /**
-   * The ID of the custom transformer to test.
-   * @example "transformer123"
-   */
-  transformerId: string;
 }
 
 /**

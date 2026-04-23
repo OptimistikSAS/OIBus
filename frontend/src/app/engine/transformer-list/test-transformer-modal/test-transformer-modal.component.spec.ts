@@ -8,7 +8,11 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { noAnimation } from '../../../shared/test-utils';
 import { TestTransformerModalComponent } from './test-transformer-modal.component';
 import { TransformerService } from '../../../services/transformer.service';
-import { CustomTransformerDTO, InputTemplate, TransformerTestResponse } from '../../../../../../backend/shared/model/transformer.model';
+import {
+  CustomTransformerCommandDTO,
+  InputTemplate,
+  TransformerTestResponse
+} from '../../../../../../backend/shared/model/transformer.model';
 
 class TestTransformerModalComponentTester extends ComponentTester<TestTransformerModalComponent> {
   get modalTitle() {
@@ -25,10 +29,6 @@ class TestTransformerModalComponentTester extends ComponentTester<TestTransforme
 
   get inputDataCodeBlock() {
     return this.element('oib-code-block[formControlName="inputData"]')!;
-  }
-
-  get optionsManifestArray() {
-    return this.element('oib-manifest-attributes-array')!;
   }
 
   get testButton() {
@@ -75,25 +75,25 @@ describe('TestTransformerModalComponent', () => {
   let mockActiveModal: jasmine.SpyObj<NgbActiveModal>;
   let mockTransformerService: jasmine.SpyObj<TransformerService>;
 
-  const mockTransformer: CustomTransformerDTO = {
-    id: 'test-transformer-1',
+  const mockTransformer: CustomTransformerCommandDTO = {
+    type: 'custom',
     name: 'Test Transformer',
     description: 'A test transformer',
-    type: 'custom',
     inputType: 'time-values',
     outputType: 'any',
     customCode: 'function transform(data) { return data; }',
     language: 'javascript',
-    manifest: {
+    timeout: 2000,
+    customManifest: {
       type: 'object',
       attributes: [],
       enablingConditions: [],
-      displayProperties: {},
-      key: '',
+      displayProperties: { visible: true, wrapInBox: false },
+      key: 'options',
       translationKey: '',
       validators: []
     }
-  } as unknown as CustomTransformerDTO;
+  };
 
   const mockInputTemplate: InputTemplate = {
     type: 'time-values',
@@ -146,7 +146,7 @@ describe('TestTransformerModalComponent', () => {
 
     it('should initialize with empty form', () => {
       expect(tester.componentInstance.form.get('inputData')?.value).toBe('');
-      expect(tester.componentInstance.form.get('options')?.value).toEqual([] as any);
+      expect(tester.componentInstance.form.get('options')?.value).toEqual({});
     });
 
     it('should have required validators on inputData', () => {
@@ -155,29 +155,21 @@ describe('TestTransformerModalComponent', () => {
     });
   });
 
-  describe('prepareForCreation', () => {
+  describe('prepare', () => {
     beforeEach(() => {
       mockTransformerService.getInputTemplate.and.returnValue(of(mockInputTemplate));
     });
 
     it('should set transformer and load input template', () => {
-      tester.componentInstance.prepareForCreation(mockTransformer);
+      tester.componentInstance.prepare(mockTransformer);
       tester.detectChanges();
 
       expect(tester.componentInstance.transformer()).toEqual(mockTransformer);
       expect(mockTransformerService.getInputTemplate).toHaveBeenCalledWith('time-values');
     });
 
-    it('should pre-fill options when customManifest is provided', () => {
-      const customManifest = [{ key: 'testKey', type: 'string', label: 'Test Label' }];
-      tester.componentInstance.prepareForCreation(mockTransformer, undefined, customManifest);
-      tester.detectChanges();
-
-      expect(tester.componentInstance.form.get('options')?.value).toEqual(customManifest as any);
-    });
-
     it('should handle input template loading success', () => {
-      tester.componentInstance.prepareForCreation(mockTransformer);
+      tester.componentInstance.prepare(mockTransformer);
       tester.detectChanges();
 
       expect(tester.componentInstance.inputTemplate()).toBe(mockInputTemplate.data);
@@ -189,7 +181,7 @@ describe('TestTransformerModalComponent', () => {
       const errorMessage = 'Template loading failed';
       mockTransformerService.getInputTemplate.and.returnValue(throwError(() => new Error(errorMessage)));
 
-      tester.componentInstance.prepareForCreation(mockTransformer);
+      tester.componentInstance.prepare(mockTransformer);
       tester.detectChanges();
 
       expect(tester.componentInstance.error()).toBe('Failed to load input template: ' + errorMessage);
@@ -200,7 +192,7 @@ describe('TestTransformerModalComponent', () => {
   describe('Template Display', () => {
     beforeEach(() => {
       mockTransformerService.getInputTemplate.and.returnValue(of(mockInputTemplate));
-      tester.componentInstance.prepareForCreation(mockTransformer);
+      tester.componentInstance.prepare(mockTransformer);
       tester.detectChanges();
     });
 
@@ -232,7 +224,7 @@ describe('TestTransformerModalComponent', () => {
     beforeEach(() => {
       mockTransformerService.getInputTemplate.and.returnValue(of(mockInputTemplate));
       mockTransformerService.test.and.returnValue(of(mockTestResponse));
-      tester.componentInstance.prepareForCreation(mockTransformer);
+      tester.componentInstance.prepare(mockTransformer);
       tester.detectChanges();
     });
 
@@ -261,9 +253,9 @@ describe('TestTransformerModalComponent', () => {
 
       tester.testButton.click();
 
-      expect(mockTransformerService.test).toHaveBeenCalledWith('test-transformer-1', {
+      expect(mockTransformerService.test).toHaveBeenCalledWith(mockTransformer, {
         inputData: testData,
-        options: []
+        options: {}
       });
     });
 
@@ -305,7 +297,7 @@ describe('TestTransformerModalComponent', () => {
 
       tester.testButton.click();
 
-      expect(tester.componentInstance.error()).toBe('Test failed: ' + errorMessage);
+      expect(tester.componentInstance.error()).toBe(errorMessage);
       expect(tester.componentInstance.isLoading()).toBe(false);
     });
 
@@ -374,7 +366,7 @@ describe('TestTransformerModalComponent', () => {
   describe('Output Display', () => {
     beforeEach(() => {
       mockTransformerService.getInputTemplate.and.returnValue(of(mockInputTemplate));
-      tester.componentInstance.prepareForCreation(mockTransformer);
+      tester.componentInstance.prepare(mockTransformer);
       tester.detectChanges();
     });
 

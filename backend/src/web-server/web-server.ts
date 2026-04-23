@@ -198,22 +198,19 @@ export default class WebServer {
       if (err instanceof OIBusValidationError) {
         // Validation Error trigger by OIBus at the service layer
         return res.status(400).json({
-          message: 'Validation Failed',
-          details: err.message
+          message: err.message
         });
       }
       if (err instanceof OIBusTestingError) {
         // Validation Error trigger by OIBus at the service layer
         return res.status(400).json({
-          message: err.message,
-          details: 'Error while testing connection'
+          message: err.message
         });
       }
       if (err instanceof ValidateError) {
         // Validation Error trigger by tsoa at the HTTP layer
-        return res.status(422).json({
-          message: 'Validation Failed',
-          details: err.fields
+        return res.status(400).json({
+          message: err.fields
         });
       }
       if (err) {

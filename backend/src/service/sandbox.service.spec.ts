@@ -128,7 +128,7 @@ describe('SandboxService', () => {
 
       // Execute should log the error and then fail
       await expect(brokenService.execute('test', { source: 'test' }, 'file.txt', dummyTransformer, {}, logger)).rejects.toThrow(
-        'Sandbox execution failed: global is not defined'
+        'Custom code execution failed: global is not defined'
       );
 
       expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not load sandbox libraries or create snapshot'));
@@ -299,7 +299,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await expect(sandboxService.execute('', defaultSource, 'no-fn.txt', transformer, {}, logger)).rejects.toThrow(
-        /\[RUNTIME_ERROR\].*Sandbox execution failed: transform is not defined/
+        /\[RUNTIME_ERROR\].*Custom code execution failed: transform is not defined/
       );
     });
 
@@ -409,7 +409,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await expect(sandboxService.execute('', defaultSource, 'ts-err.txt', transformer, {}, logger)).rejects.toThrow(
-        /\[SYNTAX_ERROR\] Sandbox execution failed: TypeScript compilation failed/
+        /\[SYNTAX_ERROR\] Custom code execution failed: TypeScript compilation failed/
       );
     });
 
@@ -461,7 +461,7 @@ describe('SandboxService', () => {
     it('should silently ignore getHeapStatisticsSync failures in the metrics block', async () => {
       const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
       await expect(sandboxService.execute('', { source: 'test' }, 'heap-fail.txt', transformer, {}, logger)).rejects.toThrow(
-        '[RUNTIME_ERROR] Sandbox execution failed: createContext failed'
+        '[RUNTIME_ERROR] Custom code execution failed: createContext failed'
       );
       expect(logger.trace).not.toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
     });
@@ -479,7 +479,7 @@ describe('SandboxService', () => {
     it('should skip context.release() when context is null', async () => {
       const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
       await expect(sandboxService.execute('', { source: 'test' }, 'null-ctx.txt', transformer, {}, logger)).rejects.toThrow(
-        '[RUNTIME_ERROR] Sandbox execution failed: createContext failed'
+        '[RUNTIME_ERROR] Custom code execution failed: createContext failed'
       );
     });
   });

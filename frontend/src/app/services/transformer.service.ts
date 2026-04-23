@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, shareReplay } from 'rxjs';
-import { switchMap, finalize, tap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 import { inject, Injectable } from '@angular/core';
 import {
   CustomTransformerCommandDTO,
+  InputTemplate,
   TransformerDTO,
   TransformerTestRequest,
-  TransformerTestResponse,
-  InputTemplate
+  TransformerTestResponse
 } from '../../../../backend/shared/model/transformer.model';
 
 /**
@@ -67,11 +67,11 @@ export class TransformerService {
 
   /**
    * Test a custom transformer with input data
-   * @param transformerId - the ID of the transformer to test
+   * @param command - the transformer command to test
    * @param testRequest - the test request with input data and options
    */
-  test(transformerId: string, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
-    return this.http.post<TransformerTestResponse>(`/api/transformers/${transformerId}/test`, testRequest);
+  test(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
+    return this.http.post<TransformerTestResponse>(`/api/transformers/test`, { transformer: command, testRequest });
   }
 
   /**
@@ -80,21 +80,5 @@ export class TransformerService {
    */
   getInputTemplate(inputType: string): Observable<InputTemplate> {
     return this.http.get<InputTemplate>(`/api/transformers/template/${inputType}`);
-  }
-
-  /**
-   * Test a transformer definition by temporarily creating it
-   * @param command - the transformer command to test
-   * @param testRequest - the test request with input data and options
-   */
-  testDefinition(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
-    let transformerId: string;
-    return this.create(command).pipe(
-      switchMap(transformer => {
-        transformerId = transformer.id;
-        return this.test(transformer.id, testRequest);
-      }),
-      finalize(() => this.delete(transformerId!).subscribe())
-    );
   }
 }

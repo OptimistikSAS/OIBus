@@ -354,8 +354,7 @@ export interface OIBusDeleteCustomTransformerCommand extends BaseOIBusCommand {
 export interface OIBusTestCustomTransformerCommand extends BaseOIBusCommand {
   type: 'test-custom-transformer';
   targetVersion: string;
-  transformerId: string;
-  commandContent: TransformerTestRequest;
+  commandContent: { command: CustomTransformerCommandDTO; testRequest: TransformerTestRequest };
 }
 
 export type OIBusCommand =

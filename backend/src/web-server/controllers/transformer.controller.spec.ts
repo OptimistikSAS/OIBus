@@ -9,6 +9,7 @@ import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import { createPageFromArray } from '../../../shared/model/types';
+import { OIBusTestingError } from '../../model/types';
 import { OIBusDataType } from '../../../shared/model/engine.model';
 import UserService from 'src/service/user.service';
 
@@ -196,24 +197,34 @@ describe('TransformerController', () => {
   });
 
   it('should test a transformer', async () => {
-    const transformerId = testData.transformers.list[0].id;
-    (mockRequest.services!.transformerService.test as jest.Mock).mockResolvedValue(undefined);
-
-    const command: TransformerTestRequest = {
+    const command: CustomTransformerCommandDTO = testData.transformers.command;
+    const testRequest: TransformerTestRequest = {
       inputData: 'time-values',
       options: {}
     };
+    (mockRequest.services!.transformerService.test as jest.Mock).mockResolvedValue({
+      output: '{}',
+      metadata: { contentType: 'any', numberOfElement: 1 }
+    });
 
-    await controller.test(
-      transformerId,
-      {
-        inputData: 'time-values',
-        options: {}
-      },
-      mockRequest as CustomExpressRequest
-    );
+    await controller.test({ transformer: command, testRequest }, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.transformerService.test).toHaveBeenCalledWith(transformerId, command);
+    expect(mockRequest.services!.transformerService.test).toHaveBeenCalledWith(command, testRequest);
+  });
+
+  it('should throw OIBusTestingError when service throws synchronously', async () => {
+    const command: CustomTransformerCommandDTO = testData.transformers.command;
+    const testRequest: TransformerTestRequest = {
+      inputData: 'time-values',
+      options: {}
+    };
+    (mockRequest.services!.transformerService.test as jest.Mock).mockImplementation(() => {
+      throw new Error('Transformer execution failed');
+    });
+
+    await expect(
+      controller.test({ transformer: command, testRequest }, mockRequest as CustomExpressRequest)
+    ).rejects.toThrow(OIBusTestingError);
   });
 
   it('should get a template for transformer', async () => {

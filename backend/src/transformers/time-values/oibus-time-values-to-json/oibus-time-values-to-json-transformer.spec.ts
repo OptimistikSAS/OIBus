@@ -29,7 +29,7 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     // Arrange
-    const transformer = new OIBusTimeValuesToJSONTransformer(logger, testData.transformers.list[0], testData.north.list[0], {});
+    const transformer = new OIBusTimeValuesToJSONTransformer(logger, testData.transformers.list[0], {});
     const dataChunks: Array<OIBusTimeValue> = [
       {
         pointId: 'reference1',

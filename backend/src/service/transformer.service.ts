@@ -17,11 +17,6 @@ import { GetUserInfo, Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import pino from 'pino';
-
-interface TransformerReloadEngine {
-  reloadTransformer(transformerId: string): Promise<void>;
-  removeAndReloadTransformer(transformerId: string): Promise<void>;
-}
 import OibusTransformer from '../transformers/oibus-transformer';
 import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
 import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
@@ -37,7 +32,7 @@ import { NotFoundError, OIBusValidationError } from '../model/types';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import { Readable } from 'node:stream';
 import { DateTime } from 'luxon';
-import { CacheMetadataSource, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import { OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
@@ -55,6 +50,12 @@ import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-va
 import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
 import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
 import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
+
+interface TransformerReloadEngine {
+  reloadTransformer(transformerId: string): Promise<void>;
+  removeAndReloadTransformer(transformerId: string): Promise<void>;
+  logger: pino.Logger;
+}
 
 export const transformerManifestList: Array<TransformerManifest> = [
   isoManifest,
@@ -164,46 +165,28 @@ export default class TransformerService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  async test(id: string, testRequest: TransformerTestRequest): Promise<TransformerTestResponse> {
-    const transformer = this.findById(id);
-    if (transformer.type === 'standard') {
-      throw new OIBusValidationError(`Cannot test standard transformer "${transformer.functionName}"`);
-    }
-
-    const customTransformer = transformer as CustomTransformer;
-
-    // Create a mock north connector for testing
-    const mockNorthConnector = {
-      id: 'test-connector',
-      name: 'Test Connector',
-      type: 'test',
-      description: 'Mock connector for testing',
-      enabled: true,
-      settings: {},
-      caching: {
-        enabled: false,
-        maxSize: 0,
-        maxCount: 0,
-        throttling: {
-          maxNumberOfElements: 0,
-          maxDuration: 0
-        }
-      },
-      transformers: []
-    } as unknown as NorthConnectorEntity<NorthSettings>;
-
-    // Create a mock logger
-    const mockLogger = pino({ level: 'silent' });
-
+  async test(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Promise<TransformerTestResponse> {
     // Create the custom transformer instance
-    const transformerInstance = new OIBusCustomTransformer(mockLogger, customTransformer, mockNorthConnector, testRequest.options || {});
+    const transformer: CustomTransformer = {
+      id: 'test',
+      name: command.name,
+      inputType: command.inputType,
+      outputType: command.outputType,
+      customCode: command.customCode,
+      customManifest: command.customManifest,
+      language: command.language,
+      timeout: command.timeout
+    } as CustomTransformer;
+    const transformerInstance = new OIBusCustomTransformer(this.engine.logger, transformer, testRequest.options || {});
 
     // Execute the transformer
-    const inputStream = Readable.from([Buffer.from(testRequest.inputData, 'utf-8')]);
-    const source: CacheMetadataSource = {
-      source: 'test'
-    };
-    const { metadata, output } = await transformerInstance.transform(inputStream, source, 'test-input.json');
+    const { metadata, output } = await transformerInstance.transform(
+      Readable.from(testRequest.inputData),
+      {
+        source: 'test'
+      },
+      'test-input.json'
+    );
 
     return {
       output,
@@ -379,85 +362,40 @@ export const createTransformer = (
   if (transformerWithOptions.transformer.type === 'standard') {
     switch (transformerWithOptions.transformer.functionName) {
       case CSVToMQTTTransformer.transformerName: {
-        return new CSVToMQTTTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+        return new CSVToMQTTTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case CSVToTimeValuesTransformer.transformerName: {
-        return new CSVToTimeValuesTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+        return new CSVToTimeValuesTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case JSONToCSVTransformer.transformerName: {
-        return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+        return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusTimeValuesToCsvTransformer.transformerName: {
-        return new OIBusTimeValuesToCsvTransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusTimeValuesToCsvTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusTimeValuesToJSONTransformer.transformerName: {
-        return new OIBusTimeValuesToJSONTransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusTimeValuesToJSONTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusTimeValuesToModbusTransformer.transformerName: {
-        return new OIBusTimeValuesToModbusTransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusTimeValuesToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusTimeValuesToMQTTTransformer.transformerName: {
-        return new OIBusTimeValuesToMQTTTransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusTimeValuesToMQTTTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusTimeValuesToOIAnalyticsTransformer.transformerName: {
-        return new OIBusTimeValuesToOIAnalyticsTransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusTimeValuesToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusTimeValuesToOPCUATransformer.transformerName: {
-        return new OIBusTimeValuesToOPCUATransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusTimeValuesToOPCUATransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusSetpointToModbusTransformer.transformerName: {
-        return new OIBusSetpointToModbusTransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusSetpointToModbusTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusSetpointToMQTTTransformer.transformerName: {
-        return new OIBusSetpointToMQTTTransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusSetpointToMQTTTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
       case OIBusSetpointToOPCUATransformer.transformerName: {
-        return new OIBusSetpointToOPCUATransformer(
-          logger,
-          transformerWithOptions.transformer,
-          northConnector,
-          transformerWithOptions.options
-        );
+        return new OIBusSetpointToOPCUATransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
 
       default:
@@ -466,7 +404,7 @@ export const createTransformer = (
         );
     }
   } else {
-    return new OIBusCustomTransformer(logger, transformerWithOptions.transformer, northConnector, transformerWithOptions.options);
+    return new OIBusCustomTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
   }
 };
 

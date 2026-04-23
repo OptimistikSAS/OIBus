@@ -67,4 +67,24 @@ describe('TransformerService', () => {
     testRequest.flush(null);
     expect(done).toBe(true);
   });
+
+  it('should test a transformer', () => {
+    let done = false;
+    const command = testData.transformers.command;
+    const testRequest = { inputData: '{}', options: {} };
+
+    service.test(command, testRequest).subscribe(() => (done = true));
+    const testReq = http.expectOne({ method: 'POST', url: '/api/transformers/test' });
+    expect(testReq.request.body).toEqual({ transformer: command, testRequest });
+    testReq.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should get input template', () => {
+    let result: any = null;
+    const expected = { type: 'time-values', data: '[]', description: 'Sample' };
+    service.getInputTemplate('time-values').subscribe(t => (result = t));
+    http.expectOne({ url: '/api/transformers/template/time-values', method: 'GET' }).flush(expected);
+    expect(result).toEqual(expected);
+  });
 });

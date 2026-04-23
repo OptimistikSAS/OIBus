@@ -56,7 +56,7 @@ describe('JSONToCSVTransformer', () => {
     };
 
     // Arrange
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
     const filename = 'input.json';
 
     // Mock input data matching the structure expected by jsonpath
@@ -148,7 +148,7 @@ describe('JSONToCSVTransformer', () => {
     ];
 
     // 3. Initialize Transformer
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
     const mockStream = new Readable();
     (csv.unparse as jest.Mock).mockReturnValue('csv result');
 

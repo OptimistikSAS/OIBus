@@ -51,7 +51,7 @@ describe('SandboxService - TypeScript compilation error', () => {
     } as CustomTransformer;
 
     await expect(sandboxService.execute('', { source: 'test' }, 'ts-err.txt', transformer, {}, logger)).rejects.toThrow(
-      /\[SYNTAX_ERROR\] Sandbox execution failed: TypeScript compilation failed: Unexpected token/
+      /\[SYNTAX_ERROR\] Custom code execution failed: TypeScript compilation failed: Unexpected token/
     );
   });
 });

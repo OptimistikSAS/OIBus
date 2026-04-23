@@ -62,7 +62,7 @@ describe('CSVToMQTTTransformer', () => {
       ]
     };
 
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `topic,temperature,isEnabled,timestamp\ndevice/1,25.5,true,2023-01-01`;
 
@@ -92,7 +92,7 @@ describe('CSVToMQTTTransformer', () => {
       objectFields: [] // No fields defined
     };
 
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `topic,val\ndevice/1,100`;
 
@@ -111,7 +111,7 @@ describe('CSVToMQTTTransformer', () => {
   // --------------------------------------------------------------------------
   it('should transform CSV data into a STRING payload', async () => {
     const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `topic,val\ndevice/s,123`;
 
@@ -127,7 +127,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should transform CSV data into a NUMBER payload', async () => {
     const options = { ...baseOptions, payloadType: 'number', valueColumn: 'val' };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `topic,val\ndevice/n,45.6`;
 
@@ -143,7 +143,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should transform CSV data into a BOOLEAN payload', async () => {
     const options = { ...baseOptions, payloadType: 'boolean', valueColumn: 'val' };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `topic,val\ndevice/b,true`;
 
@@ -164,7 +164,7 @@ describe('CSVToMQTTTransformer', () => {
       valueColumn: 'val',
       datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
     };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `topic,val\ndevice/d,2023-01-01`;
 
@@ -191,7 +191,7 @@ describe('CSVToMQTTTransformer', () => {
       payloadType: 'string',
       valueColumn: '1' // Column index 1
     };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `device/1,100\ndevice/2,200`;
 
@@ -217,7 +217,7 @@ describe('CSVToMQTTTransformer', () => {
       payloadType: 'string',
       valueColumn: '1' // Column index 1
     };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `device/1,{}\ndevice/2,{}`;
 
@@ -242,7 +242,7 @@ describe('CSVToMQTTTransformer', () => {
       topicColumn: '0', // Column index 0
       payloadType: 'string'
     };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `device/1,100\ndevice/2,200`;
 
@@ -264,7 +264,7 @@ describe('CSVToMQTTTransformer', () => {
       payloadType: 'string',
       valueColumn: '1'
     };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `device/1,100`;
 
@@ -284,7 +284,7 @@ describe('CSVToMQTTTransformer', () => {
   // --------------------------------------------------------------------------
   it('should skip rows where TOPIC is missing', async () => {
     const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     // Row 2 has empty topic
     const csvContent = `topic,val\ndevice/1,10\n,20`;
@@ -302,7 +302,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should skip rows where VALUE is missing or null', async () => {
     const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     // Row 2 has empty value
     const csvContent = `topic,val\ndevice/1,10\ndevice/2,`;
@@ -321,7 +321,7 @@ describe('CSVToMQTTTransformer', () => {
   it('should log warning if CSV parsing has errors', async () => {
     // Tests parseResult.errors.length check
     const options = { ...baseOptions, delimiter: 'COMMA', payloadType: 'string', valueColumn: 'val' };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     // Malformed CSV (unclosed quote)
     const csvContent = `topic,val\n"device/1,10`;
@@ -339,7 +339,7 @@ describe('CSVToMQTTTransformer', () => {
   it('should default to raw value if type is unknown in formatValue', async () => {
     // Explicitly testing the default case of the switch statement
     const options = { ...baseOptions, payloadType: 'unknown', valueColumn: 'val' };
-    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    transformer = new CSVToMQTTTransformer(logger, testData.transformers.list[0], options);
 
     const csvContent = `topic,val\ndevice/1,raw-content`;
 

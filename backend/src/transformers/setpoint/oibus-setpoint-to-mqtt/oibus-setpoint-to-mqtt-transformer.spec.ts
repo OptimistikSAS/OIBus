@@ -35,7 +35,7 @@ describe('OIBusSetpointToMQTTTransformer', () => {
       ]
     };
     // Arrange
-    const transformer = new OIBusSetpointToMQTTTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new OIBusSetpointToMQTTTransformer(logger, testData.transformers.list[0], options);
     const dataChunks: Array<OIBusSetpoint> = [
       {
         reference: 'reference1',

@@ -196,11 +196,13 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
               client.end(true);
               resolve({
                 type: 'any-content',
-                content: JSON.stringify({
-                  message: message,
-                  timestamp: messageTimestamp,
-                  item: { id: item.id, name: item.name, topic: item.settings.topic }
-                })
+                content: JSON.stringify([
+                  {
+                    message: message,
+                    timestamp: messageTimestamp,
+                    item: { id: item.id, name: item.name, topic: item.settings.topic }
+                  }
+                ])
               });
             } catch (error: unknown) {
               reject(`Error when testing item ${item.settings.topic} (received message "${message}"): ${(error as Error).message}`);

@@ -28,7 +28,7 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
       precision: 'ms'
     };
 
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
       {
         pointId: 'reference1',
@@ -87,7 +87,7 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
     const options = {
       precision: 'ms'
     };
-    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
 
     expect(transformer.formatInstant('2020-03-15T12:34:56.789Z', 'ms')).toEqual('2020-03-15T12:34:56.789Z');
     expect(transformer.formatInstant('2020-03-15T12:34:56.789Z', 's')).toEqual('2020-03-15T12:34:56.000Z');

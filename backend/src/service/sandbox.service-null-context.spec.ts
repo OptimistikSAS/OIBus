@@ -52,7 +52,7 @@ describe('SandboxService - null context in finally block', () => {
     const transformer = { language: 'javascript', customCode: '' } as CustomTransformer;
 
     await expect(sandboxService.execute('', { source: 'test' }, 'file.txt', transformer, {}, logger)).rejects.toThrow(
-      '[RUNTIME_ERROR] Sandbox execution failed: context creation failed'
+      '[RUNTIME_ERROR] Custom code execution failed: context creation failed'
     );
   });
 });

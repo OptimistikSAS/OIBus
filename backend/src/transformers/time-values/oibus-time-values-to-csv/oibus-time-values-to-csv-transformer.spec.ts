@@ -42,7 +42,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     };
 
     // Arrange
-    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], testData.north.list[0], options);
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
       {
         pointId: 'reference1',

@@ -463,7 +463,6 @@ export interface OIAnalyticsFetchDeleteCustomTransformerCommandDTO extends BaseO
 
 export interface OIAnalyticsFetchTestCustomTransformerCommandDTO extends BaseOIAnalyticsFetchCommandDTO {
   type: 'test-custom-transformer';
-  transformerId: string;
   commandContent: TransformerTestRequest;
 }
 
