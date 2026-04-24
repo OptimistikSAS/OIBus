@@ -1,3 +1,4 @@
+import { Component, input } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { EditTransformerModalComponent } from './edit-transformer-modal.component';
@@ -11,6 +12,13 @@ import { OibCodeBlockStubComponent } from '../../../shared/form/oib-code-block/o
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { of } from 'rxjs';
 import { ConfirmationService } from '../../../shared/confirmation.service';
+import { TransformerTestComponent } from '../transformer-test/transformer-test.component';
+import { CustomTransformerCommandDTO } from '../../../../../../backend/shared/model/transformer.model';
+
+@Component({ selector: 'oib-transformer-test', standalone: true, template: '' })
+class TransformerTestStubComponent {
+  readonly transformer = input<CustomTransformerCommandDTO | null>(null);
+}
 
 class EditTransformerModalComponentTester extends ComponentTester<EditTransformerModalComponent> {
   constructor() {
@@ -78,10 +86,10 @@ describe('EditTransformerModalComponent', () => {
 
     TestBed.overrideComponent(EditTransformerModalComponent, {
       remove: {
-        imports: [OibCodeBlockComponent]
+        imports: [OibCodeBlockComponent, TransformerTestComponent]
       },
       add: {
-        imports: [OibCodeBlockStubComponent]
+        imports: [OibCodeBlockStubComponent, TransformerTestStubComponent]
       }
     });
 
@@ -188,7 +196,9 @@ describe('EditTransformerModalComponent', () => {
     expect(fakeActiveModal.close).not.toHaveBeenCalled();
   });
 
-  it('should cancel', () => {
+  it('should cancel', async () => {
+    tester.componentInstance.prepareForCreation();
+    await tester.change();
     tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
