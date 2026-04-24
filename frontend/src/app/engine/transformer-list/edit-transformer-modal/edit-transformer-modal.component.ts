@@ -1,4 +1,4 @@
-import { Component, inject, ViewChild, OnInit } from '@angular/core';
+import { Component, computed, inject, ViewChild, OnInit } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -16,18 +16,18 @@ import {
   TransformerDTO,
   TransformerLanguage
 } from '../../../../../../backend/shared/model/transformer.model';
-import { Observable, switchMap } from 'rxjs';
+import { Observable, startWith, switchMap } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { TransformerService } from '../../../services/transformer.service';
-import { ModalService } from '../../../shared/modal.service';
 import { ConfirmationService } from '../../../shared/confirmation.service';
-import { TestTransformerModalComponent } from '../test-transformer-modal/test-transformer-modal.component';
 import { OibusInputDataTypeEnumPipe } from '../../../shared/oibus-input-data-type-enum.pipe';
 import { OibusOutputDataTypeEnumPipe } from '../../../shared/oibus-output-data-type-enum.pipe';
 import { OIBusTransformerLanguageEnumPipe } from '../../../shared/oibus-transformer-language-enum.pipe';
 import { OIBusAttribute } from '../../../../../../backend/shared/model/form.model';
 import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-builder/manifest-attributes-array/manifest-attributes-array.component';
+import { TransformerTestComponent } from '../transformer-test/transformer-test.component';
 
 @Component({
   selector: 'oib-edit-transformer-modal',
@@ -43,7 +43,8 @@ import { ManifestAttributesArrayComponent } from '../../../shared/form/manifest-
     OibusOutputDataTypeEnumPipe,
     OIBusTransformerLanguageEnumPipe,
     ManifestAttributesArrayComponent,
-    TranslatePipe
+    TranslatePipe,
+    TransformerTestComponent
   ]
 })
 export class EditTransformerModalComponent implements OnInit {
@@ -51,7 +52,6 @@ export class EditTransformerModalComponent implements OnInit {
   private transformerService = inject(TransformerService);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
   private confirmationService = inject(ConfirmationService);
-  private modalService = inject(ModalService);
   private fb = inject(NonNullableFormBuilder);
 
   @ViewChild(OibCodeBlockComponent) editor: OibCodeBlockComponent | null = null;
@@ -73,6 +73,37 @@ export class EditTransformerModalComponent implements OnInit {
     language: [null as TransformerLanguage | null, Validators.required],
     customCode: ['', Validators.required],
     attributes: this.fb.control([] as Array<OIBusAttribute>)
+  });
+
+  private readonly formValue = toSignal(this.form.valueChanges.pipe(startWith(this.form.value)));
+  private readonly formValid = toSignal(this.form.statusChanges.pipe(startWith(this.form.status)));
+
+  readonly transformerCommand = computed<CustomTransformerCommandDTO | null>(() => {
+    if (this.formValid() !== 'VALID') return null;
+    if (this.mode === 'edit' && !this.customTransformer) return null;
+    const formValue = this.formValue()!;
+    return {
+      type: 'custom',
+      inputType: formValue.inputType!,
+      outputType: formValue.outputType!,
+      language: formValue.language!,
+      name: formValue.name!,
+      description: formValue.description!,
+      timeout: formValue.timeout!,
+      customCode: formValue.customCode!,
+      customManifest: {
+        type: 'object',
+        key: 'options',
+        translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
+        attributes: formValue.attributes!,
+        enablingConditions: [],
+        validators: [],
+        displayProperties: {
+          visible: true,
+          wrapInBox: false
+        }
+      }
+    };
   });
 
   ngOnInit() {
@@ -170,80 +201,9 @@ function transform(inputData, source, filename, options) {
     this.modal.dismiss();
   }
 
-  canTest(): boolean {
-    if (this.mode === 'create' && this.form.valid) {
-      return true;
-    }
-    return !!(this.mode === 'edit' && this.customTransformer && this.form.valid);
-  }
-
-  test() {
-    if (!this.canTest()) {
-      return;
-    }
-
-    const modalRef = this.modalService.open(TestTransformerModalComponent, {
-      size: 'xl',
-      windowClass: 'test-transformer-modal'
-    });
-
-    const component: TestTransformerModalComponent = modalRef.componentInstance;
-    const formValue = this.form.value;
-
-    const command: CustomTransformerCommandDTO = {
-      type: 'custom',
-      inputType: formValue.inputType!,
-      outputType: formValue.outputType!,
-      language: formValue.language!,
-      name: formValue.name!,
-      description: formValue.description!,
-      timeout: formValue.timeout!,
-      customCode: formValue.customCode!,
-      customManifest: {
-        type: 'object',
-        key: 'options',
-        translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
-        attributes: formValue.attributes!,
-        enablingConditions: [],
-        validators: [],
-        displayProperties: {
-          visible: true,
-          wrapInBox: false
-        }
-      }
-    };
-    component.prepare(command);
-  }
-
   save() {
-    if (!this.form!.valid) {
-      return;
-    }
-
-    const formValue = this.form!.value;
-
-    const command: CustomTransformerCommandDTO = {
-      type: 'custom',
-      inputType: formValue.inputType!,
-      outputType: formValue.outputType!,
-      language: formValue.language!,
-      name: formValue.name!,
-      description: formValue.description!,
-      timeout: formValue.timeout!,
-      customCode: formValue.customCode!,
-      customManifest: {
-        type: 'object',
-        key: 'options',
-        translationKey: 'configuration.oibus.manifest.transformers.choose-transformer-modal.options',
-        attributes: formValue.attributes!,
-        enablingConditions: [],
-        validators: [],
-        displayProperties: {
-          visible: true,
-          wrapInBox: false
-        }
-      }
-    };
+    const command = this.transformerCommand();
+    if (!command) return;
 
     let obs: Observable<TransformerDTO>;
     if (this.mode === 'create') {

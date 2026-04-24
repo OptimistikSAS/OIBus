@@ -1,0 +1,56 @@
+@let currentTransformer = transformer();
+
+<div class="mt-4">
+  <hr />
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h6 class="mb-0" translate="configuration.oibus.manifest.transformers.test-transformer-modal.title"></h6>
+    <button
+      type="button"
+      class="btn btn-secondary btn-sm"
+      (click)="test()"
+      [disabled]="!form.valid || isLoading() || !currentTransformer"
+      id="run-test-button"
+    >
+      @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      } @else {
+        <span class="fa fa-check me-2"></span>
+      }
+      <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.test"></span>
+    </button>
+  </div>
+
+  @if (currentTransformer) {
+    <form [formGroup]="form" id="test-form">
+      <div class="row mb-3">
+        <div class="col-12">
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"></label>
+          <oib-code-block formControlName="inputData" [language]="'json'" [readOnly]="false" />
+        </div>
+      </div>
+
+      <div class="row mb-2" formGroupName="options">
+        <oib-oibus-object-form-control
+          [scanModes]="[]"
+          [certificates]="[]"
+          [group]="form.controls.options"
+          [objectAttribute]="currentTransformer.customManifest"
+        />
+      </div>
+    </form>
+
+    @if (error()) {
+      <div class="alert alert-danger mt-2" role="alert">{{ error() }}</div>
+    }
+
+    @if (output()) {
+      <div class="mt-3">
+        <div class="alert alert-info" role="alert">
+          <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.success"></span>
+        </div>
+        <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.results"></label>
+        <oib-code-block [formControl]="outputControl" [language]="'json'" [readOnly]="true" [height]="'300px'" />
+      </div>
+    }
+  }
+</div>

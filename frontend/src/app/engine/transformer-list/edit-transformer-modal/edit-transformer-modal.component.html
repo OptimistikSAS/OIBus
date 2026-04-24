@@ -129,20 +129,16 @@
         </div>
       </div>
     </form>
+
+    <div class="d-flex justify-content-end mt-3">
+      <div class="btn-group">
+        <button [oib-save-button]="state" form="form"></button>
+        <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+      </div>
+    </div>
+
+    @if (transformerCommand()) {
+      <oib-transformer-test [transformer]="transformerCommand()" />
+    }
   </div>
 }
-<div class="modal-footer">
-  <div class="btn-group">
-    <button [oib-save-button]="state" form="form"></button>
-    <button
-      type="button"
-      class="btn btn-secondary"
-      (click)="test()"
-      [disabled]="!canTest()"
-      translate="configuration.oibus.manifest.transformers.edit-transformer-modal.test"
-      id="test-button"
-    ></button>
-
-    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
-  </div>
-</div>
