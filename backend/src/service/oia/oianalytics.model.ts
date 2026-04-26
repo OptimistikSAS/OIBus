@@ -16,23 +16,27 @@ import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryStatus 
 import { CustomTransformerCommandDTO, TransformerTestRequest } from '../../../shared/model/transformer.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 
-export interface OIAnalyticsScanModeCommandDTO {
-  oIBusInternalId: string | null;
+interface BaseAuditFields {
+  oIBusInternalId: string;
+  oIBusCreatedBy: string;
+  oIBusUpdatedBy: string;
+  oIBusCreatedAt: string;
+  oIBusUpdatedAt: string;
+}
+
+export interface OIAnalyticsScanModeCommandDTO extends BaseAuditFields {
   settings: ScanModeCommandDTO;
 }
 
-export interface OIAnalyticsIPFilterCommandDTO {
-  oIBusInternalId: string | null;
+export interface OIAnalyticsIPFilterCommandDTO extends BaseAuditFields {
   settings: IPFilterCommandDTO;
 }
 
-export interface OIAnalyticsCertificateCommandDTO {
-  oIBusInternalId: string | null;
-  settings: Omit<CertificateDTO, 'id'>;
+export interface OIAnalyticsCertificateCommandDTO extends BaseAuditFields {
+  settings: Omit<CertificateDTO, 'id' | 'createdAt' | 'createdBy' | 'updatedAt' | 'updatedBy'>;
 }
 
-export interface OIAnalyticsUserCommandDTO {
-  oIBusInternalId: string;
+export interface OIAnalyticsUserCommandDTO extends BaseAuditFields {
   settings: UserCommandDTO;
 }
 
@@ -50,7 +54,7 @@ export interface OIAnalyticsTransformerCommandDTO {
   manifest: OIBusObjectAttribute;
 }
 
-export interface OIAnalyticsRegistrationCommandDTO {
+export interface OIAnalyticsRegistrationCommandDTO extends BaseAuditFields {
   publicKey: string;
   settings: {
     commandRefreshInterval: number;
@@ -86,8 +90,7 @@ export interface OIAnalyticsRegistrationCommandDTO {
   };
 }
 
-export interface OIAnalyticsEngineCommandDTO {
-  oIBusInternalId: string;
+export interface OIAnalyticsEngineCommandDTO extends BaseAuditFields {
   name: string;
   softwareVersion: string;
   launcherVersion: string;
@@ -96,14 +99,12 @@ export interface OIAnalyticsEngineCommandDTO {
   settings: EngineSettingsCommandDTO;
 }
 
-export interface OIAnalyticsSouthCommandDTO {
-  oIBusInternalId: string | null;
+export interface OIAnalyticsSouthCommandDTO extends BaseAuditFields {
   type: string;
   settings: SouthConnectorCommandDTO;
 }
 
-export interface OIAnalyticsNorthCommandDTO {
-  oIBusInternalId: string | null;
+export interface OIAnalyticsNorthCommandDTO extends BaseAuditFields {
   type: string;
   settings: NorthConnectorCommandDTO;
 }
@@ -122,7 +123,11 @@ export interface OIBusFullConfigurationCommandDTO {
 
 export interface OIBusHistoryQueriesCommandDTO {
   historyQueries: Array<{
-    oIBusInternalId: string | null;
+    oIBusInternalId: string;
+    oIBusCreatedBy: string;
+    oIBusUpdatedBy: string;
+    oIBusCreatedAt: string;
+    oIBusUpdatedAt: string;
     settings: HistoryQueryCommandDTO;
   }>;
 }
