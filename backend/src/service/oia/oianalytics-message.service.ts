@@ -262,6 +262,10 @@ export default class OIAnalyticsMessageService {
         const northManifest = northManifestList.find(manifest => manifest.id === historyQuery.northType)!;
         const result = {
           oIBusInternalId: historyQuery.id,
+          oIBusCreatedBy: historyQuery.createdBy,
+          oIBusUpdatedBy: historyQuery.updatedBy,
+          oIBusCreatedAt: historyQuery.createdAt,
+          oIBusUpdatedAt: historyQuery.updatedAt,
           settings: {
             name: historyQuery.name,
             description: historyQuery.description,
@@ -300,6 +304,10 @@ export default class OIAnalyticsMessageService {
             },
             items: historyQuery.items.map(item => ({
               id: item.id,
+              oIBusCreatedBy: item.createdBy,
+              oIBusUpdatedBy: item.updatedBy,
+              oIBusCreatedAt: item.createdAt,
+              oIBusUpdatedAt: item.updatedAt,
               name: item.name,
               enabled: item.enabled,
               settings: encryptionService.filterSecrets(item.settings, itemSettingsManifest)
@@ -313,7 +321,14 @@ export default class OIAnalyticsMessageService {
           }
         };
         // Type assertion is safe because we know the southType and northType match the settings at runtime
-        return result as unknown as { oIBusInternalId: string; settings: HistoryQueryCommandDTO };
+        return result as {
+          oIBusInternalId: string;
+          oIBusCreatedBy: string;
+          oIBusUpdatedBy: string;
+          oIBusCreatedAt: string;
+          oIBusUpdatedAt: string;
+          settings: HistoryQueryCommandDTO;
+        };
       })
     };
   }
@@ -323,6 +338,10 @@ export default class OIAnalyticsMessageService {
     const info = getOIBusInfo(engine);
     return {
       oIBusInternalId: engine.id,
+      oIBusCreatedBy: engine.createdBy,
+      oIBusUpdatedBy: engine.updatedBy,
+      oIBusCreatedAt: engine.createdAt,
+      oIBusUpdatedAt: engine.updatedAt,
       name: engine.name,
       softwareVersion: engine.version,
       launcherVersion: engine.launcherVersion,
@@ -364,6 +383,11 @@ export default class OIAnalyticsMessageService {
 
   private createRegistrationCommand(registration: OIAnalyticsRegistration): OIAnalyticsRegistrationCommandDTO {
     return {
+      oIBusInternalId: registration.id,
+      oIBusCreatedBy: registration.createdBy,
+      oIBusUpdatedBy: registration.updatedBy,
+      oIBusCreatedAt: registration.createdAt,
+      oIBusUpdatedAt: registration.updatedAt,
       publicKey: registration.publicCipherKey || '',
       settings: {
         commandRefreshInterval: registration.commandRefreshInterval,
@@ -378,6 +402,10 @@ export default class OIAnalyticsMessageService {
     const scanModes = this.scanModeRepository.findAll();
     return scanModes.map(scanMode => ({
       oIBusInternalId: scanMode.id,
+      oIBusCreatedBy: scanMode.createdBy,
+      oIBusUpdatedBy: scanMode.updatedBy,
+      oIBusCreatedAt: scanMode.createdAt,
+      oIBusUpdatedAt: scanMode.updatedAt,
       settings: {
         name: scanMode.name,
         description: scanMode.description,
@@ -390,6 +418,10 @@ export default class OIAnalyticsMessageService {
     const ipFilters = this.ipFilterRepository.list();
     return ipFilters.map(ipFilter => ({
       oIBusInternalId: ipFilter.id,
+      oIBusCreatedBy: ipFilter.createdBy,
+      oIBusUpdatedBy: ipFilter.updatedBy,
+      oIBusCreatedAt: ipFilter.createdAt,
+      oIBusUpdatedAt: ipFilter.updatedAt,
       settings: {
         description: ipFilter.description,
         address: ipFilter.address
@@ -401,16 +433,16 @@ export default class OIAnalyticsMessageService {
     const certificates = this.certificateRepository.list();
     return certificates.map(certificate => ({
       oIBusInternalId: certificate.id,
+      oIBusCreatedBy: certificate.createdBy,
+      oIBusUpdatedBy: certificate.updatedBy,
+      oIBusCreatedAt: certificate.createdAt,
+      oIBusUpdatedAt: certificate.updatedAt,
       settings: {
         name: certificate.name,
         description: certificate.description,
         publicKey: certificate.publicKey,
         certificate: certificate.certificate,
-        expiry: certificate.expiry,
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
-        createdAt: certificate.createdAt,
-        updatedAt: certificate.updatedAt
+        expiry: certificate.expiry
       }
     }));
   }
@@ -419,6 +451,10 @@ export default class OIAnalyticsMessageService {
     const users = this.userRepository.list();
     return users.map(user => ({
       oIBusInternalId: user.id,
+      oIBusCreatedBy: user.createdBy,
+      oIBusUpdatedBy: user.updatedBy,
+      oIBusCreatedAt: user.createdAt,
+      oIBusUpdatedAt: user.updatedAt,
       settings: {
         login: user.login,
         firstName: user.firstName,
@@ -440,6 +476,10 @@ export default class OIAnalyticsMessageService {
       )! as OIBusObjectAttribute;
       const result = {
         oIBusInternalId: south.id,
+        oIBusCreatedBy: south.createdBy,
+        oIBusUpdatedBy: south.updatedBy,
+        oIBusCreatedAt: south.createdAt,
+        oIBusUpdatedAt: south.updatedAt,
         type: south.type,
         settings: {
           type: south.type,
@@ -449,6 +489,10 @@ export default class OIAnalyticsMessageService {
           settings: encryptionService.filterSecrets(south.settings, manifest.settings),
           items: south.items.map(item => ({
             id: item.id,
+            oIBusCreatedBy: item.createdBy,
+            oIBusUpdatedBy: item.updatedBy,
+            oIBusCreatedAt: item.createdAt,
+            oIBusUpdatedAt: item.updatedAt,
             name: item.name,
             enabled: item.enabled,
             scanModeId: item.scanMode?.id || null,
@@ -487,6 +531,10 @@ export default class OIAnalyticsMessageService {
       const manifest = northManifestList.find(manifest => manifest.id === north.type)!;
       const result = {
         oIBusInternalId: north.id,
+        oIBusCreatedBy: north.createdBy,
+        oIBusUpdatedBy: north.updatedBy,
+        oIBusCreatedAt: north.createdAt,
+        oIBusUpdatedAt: north.updatedAt,
         type: north.type,
         settings: {
           type: north.type,
@@ -558,6 +606,10 @@ export default class OIAnalyticsMessageService {
       } else {
         return {
           oIBusInternalId: transformer.id,
+          oIBusCreatedBy: transformer.createdBy,
+          oIBusUpdatedBy: transformer.updatedBy,
+          oIBusCreatedAt: transformer.createdAt,
+          oIBusUpdatedAt: transformer.updatedAt,
           type: transformer.type,
           settings: {
             name: transformer.name,
