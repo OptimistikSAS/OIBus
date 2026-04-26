@@ -142,7 +142,7 @@ describe('SandboxService', () => {
       const transformer = {
         language: 'javascript',
         customCode: `
-          function transform(content, options, source, filename) {
+          function transform(content, source, filename, options) {
             return {
               data: { originalContent: content, passedOption: options.myVar },
               filename: 'out_' + filename,
@@ -205,8 +205,8 @@ describe('SandboxService', () => {
       const result1 = await sandboxService.execute('first', defaultSource, 'f1.txt', transformer, {}, logger);
       const result2 = await sandboxService.execute('second', defaultSource, 'f2.txt', transformer, {}, logger);
 
-      expect(JSON.parse(result1.output)).toBe('first');
-      expect(JSON.parse(result2.output)).toBe('second');
+      expect(result1.output).toBe('first');
+      expect(result2.output).toBe('second');
     });
 
     it('should successfully require and use Luxon', async () => {
@@ -261,6 +261,28 @@ describe('SandboxService', () => {
         { name: 'Alice', age: '30' },
         { name: 'Bob', age: '25' }
       ]);
+    });
+
+    it('should return string data as-is without JSON.stringify', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { return { data: 'hello, world', filename: 'out.txt' }; }`,
+        timeout: 5000
+      } as CustomTransformer;
+
+      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
+      expect(result.output).toBe('hello, world');
+    });
+
+    it('should JSON.stringify non-string data', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { return { data: { key: 'value' }, filename: 'out.json' }; }`,
+        timeout: 5000
+      } as CustomTransformer;
+
+      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
+      expect(JSON.parse(result.output)).toEqual({ key: 'value' });
     });
 
     it('should log execution metrics on success', async () => {

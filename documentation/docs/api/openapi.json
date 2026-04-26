@@ -1412,12 +1412,25 @@
 								"type": "number",
 								"format": "double"
 							},
+							"createdAt": {
+								"$ref": "#/components/schemas/Instant"
+							},
+							"contentSize": {
+								"type": "number",
+								"format": "double"
+							},
+							"contentFile": {
+								"type": "string"
+							},
 							"contentType": {
 								"type": "string"
 							}
 						},
 						"required": [
 							"numberOfElement",
+							"createdAt",
+							"contentSize",
+							"contentFile",
 							"contentType"
 						],
 						"type": "object"

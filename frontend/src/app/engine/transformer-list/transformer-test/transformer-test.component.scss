@@ -1,3 +1,30 @@
+@import '../../../../common';
+
 :host {
   display: block;
+
+  .btn-link {
+    color: $link-color;
+
+    &:hover {
+      color: $darkGrey;
+    }
+  }
+}
+
+.grid-table {
+  display: grid;
+}
+
+.grid-table-header,
+.grid-table-row {
+  display: contents;
+}
+
+.grid-table > .grid-table-row:nth-child(even) > div {
+  background-color: $veryLightGrey;
+}
+
+.grid-table-row:hover > div {
+  background-color: $mediumGrey !important;
 }

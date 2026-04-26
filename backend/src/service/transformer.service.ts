@@ -180,21 +180,13 @@ export default class TransformerService {
     const transformerInstance = new OIBusCustomTransformer(this.engine.logger, transformer, testRequest.options || {});
 
     // Execute the transformer
-    const { metadata, output } = await transformerInstance.transform(
+    return await transformerInstance.transform(
       Readable.from(testRequest.inputData),
       {
         source: 'test'
       },
       'test-input.json'
     );
-
-    return {
-      output,
-      metadata: {
-        contentType: metadata.contentType,
-        numberOfElement: metadata.numberOfElement
-      }
-    };
   }
 
   generateTemplate(inputType: InputType): InputTemplate {

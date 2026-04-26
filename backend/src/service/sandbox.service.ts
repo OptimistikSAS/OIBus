@@ -159,9 +159,9 @@ export default class SandboxService {
         undefined,
         [
           new ivm.ExternalCopy(stringContent).copyInto(),
-          new ivm.ExternalCopy(options).copyInto(),
           new ivm.ExternalCopy(source).copyInto(),
-          new ivm.ExternalCopy(filename).copyInto()
+          new ivm.ExternalCopy(filename).copyInto(),
+          new ivm.ExternalCopy(options).copyInto()
         ],
         {
           result: { copy: true, promise: true },
@@ -174,7 +174,7 @@ export default class SandboxService {
       }
 
       return {
-        output: JSON.stringify(_resultRef.data),
+        output: typeof _resultRef.data === 'string' ? _resultRef.data : JSON.stringify(_resultRef.data),
         metadata: {
           contentFile: _resultRef.filename,
           contentSize: Buffer.byteLength(stringContent, 'utf8'),

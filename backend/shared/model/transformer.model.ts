@@ -477,6 +477,9 @@ export interface TransformerTestResponse {
   output: string;
   metadata: {
     contentType: string;
+    contentFile: string;
+    contentSize: number;
+    createdAt: Instant;
     numberOfElement: number;
   };
 }
