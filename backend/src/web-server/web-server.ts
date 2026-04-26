@@ -342,8 +342,12 @@ export default class WebServer {
 
     if (!this.app) return;
 
-    this.webServer = this.app.listen(this.port, () => {
-      this.logger.info(`OIBus web server started on ${this.port}`);
+    this.webServer = this.app.listen(this.port, (error?: Error) => {
+      if (error) {
+        this.logger.error(`Could not start server on port ${this.port}: ${error.message}`);
+      } else {
+        this.logger.info(`OIBus web server started on ${this.port}`);
+      }
     });
   }
 
