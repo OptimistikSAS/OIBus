@@ -438,7 +438,7 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "output": {"dataType":"string","required":true},
-            "metadata": {"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfElement":{"dataType":"double","required":true},"contentType":{"dataType":"string","required":true}},"required":true},
+            "metadata": {"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfElement":{"dataType":"double","required":true},"createdAt":{"ref":"Instant","required":true},"contentSize":{"dataType":"double","required":true},"contentFile":{"dataType":"string","required":true},"contentType":{"dataType":"string","required":true}},"required":true},
         },
         "additionalProperties": false,
     },

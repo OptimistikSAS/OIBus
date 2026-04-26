@@ -1033,7 +1033,20 @@
             "output": "Output",
             "results": "Results",
             "success": "Test completed successfully",
-            "test": "Run Test"
+            "test": "Run Test",
+            "content-file": "File:",
+            "content-size": "Size:",
+            "created-at": "Created at:",
+            "number-of-elements": "Number of elements:",
+            "csv-delimiter": "Delimiter",
+            "csv-delimiter-dot": "Dot .",
+            "csv-delimiter-semicolon": "Semi colon ;",
+            "csv-delimiter-colon": "Colon :",
+            "csv-delimiter-comma": "Comma ,",
+            "csv-delimiter-slash": "Slash /",
+            "csv-delimiter-tab": "Tab",
+            "csv-delimiter-non-breaking-space": "Space",
+            "csv-delimiter-pipe": "Pipe |"
           },
           "attributes": {
             "attribute": "Attribute",
