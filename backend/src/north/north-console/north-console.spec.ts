@@ -1,78 +1,95 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
-import NorthConsole from './north-console';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
-import { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
 import testData from '../../tests/utils/test-data';
-import CacheService from '../../service/cache/cache.service';
-import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../transformers/oibus-transformer';
+import { mockModule, reloadModule, asLogger, buildNorthEntity } from '../../tests/utils/test-utils';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import { streamToString } from '../../service/utils';
-import { buildNorthEntity } from '../../tests/utils/test-utils';
+import type { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
+import type { OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
+import type { NorthConnectorEntity } from '../../model/north-connector.model';
+import type NorthConsoleClass from './north-console';
 
-// Mock dependencies
-jest.mock('../../service/transformer.service');
-jest.mock('../../service/utils');
-
-// Spy on console table and process.stdout
-jest.spyOn(global.console, 'table').mockImplementation(() => ({}));
-jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
-
-const logger: pino.Logger = new PinoLogger();
-const cacheService: CacheService = new CacheServiceMock();
-const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
-
-jest.mock(
-  '../../service/cache/cache.service',
-  () =>
-    function () {
-      return cacheService;
-    }
-);
-
-// Test Data
-const timeValues: Array<OIBusTimeValue> = [
-  {
-    pointId: 'pointId',
-    timestamp: testData.constants.dates.FAKE_NOW,
-    data: { value: '666', quality: 'good' }
-  }
-];
-
-const setpoints: Array<OIBusSetpoint> = [{ reference: 'reference', value: '123456' }];
-
-let configuration: NorthConnectorEntity<NorthConsoleSettings>;
-let north: NorthConsole;
+const nodeRequire = createRequire(import.meta.url);
 
 describe('NorthConsole', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let NorthConsole: typeof NorthConsoleClass;
+  let north: NorthConsoleClass;
+
+  const logger = new PinoLogger();
+  const cacheService = new CacheServiceMock();
+  const oiBusTransformer = new OIBusTransformerMock();
+
+  const transformerExports = {
+    createTransformer: mock.fn(() => oiBusTransformer)
+  };
+
+  const utilsExports = {
+    streamToString: mock.fn(async () => '[]'),
+    checkAge: mock.fn(() => true),
+    compress: mock.fn(async () => undefined),
+    delay: mock.fn(async () => undefined),
+    generateIntervals: mock.fn(() => []),
+    groupItemsByGroup: mock.fn(() => []),
+    validateCronExpression: mock.fn(() => ({ expression: '' }))
+  };
+
+  const timeValues: Array<OIBusTimeValue> = [
+    {
+      pointId: 'pointId',
+      timestamp: testData.constants.dates.FAKE_NOW,
+      data: { value: '666', quality: 'good' }
+    }
+  ];
+
+  const setpoints: Array<OIBusSetpoint> = [{ reference: 'reference', value: '123456' }];
+
+  let configuration: NorthConnectorEntity<NorthConsoleSettings>;
+
+  before(() => {
+    mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, '../../service/cache/cache.service', {
+      __esModule: true,
+      default: function () {
+        return cacheService;
+      }
+    });
+    NorthConsole = reloadModule<{ default: typeof NorthConsoleClass }>(nodeRequire, './north-console').default;
+  });
+
+  beforeEach(() => {
+    transformerExports.createTransformer.mock.resetCalls();
+    utilsExports.streamToString.mock.resetCalls();
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
 
     configuration = buildNorthEntity<NorthConsoleSettings>('console', {
       verbose: true
     });
-    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthConsole(configuration, logger, cacheService);
+    north = new NorthConsole(configuration, asLogger(logger), cacheService);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.restoreAll();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should retrieve supported types', () => {
-    expect(north.supportedTypes()).toEqual(['any', 'time-values', 'setpoint']);
+    assert.deepStrictEqual(north.supportedTypes(), ['any', 'time-values', 'setpoint']);
   });
 
   it('should properly handle values in verbose mode', async () => {
-    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(timeValues));
+    utilsExports.streamToString.mock.mockImplementation(async () => JSON.stringify(timeValues));
     const readStream = {} as ReadStream;
+    const consoleTableMock = mock.method(console, 'table', () => undefined);
+    const stdoutWriteMock = mock.method(process.stdout, 'write', () => true);
 
     await north.handleContent(readStream, {
       contentFile: '/path/to/file/example-123.json',
@@ -82,14 +99,18 @@ describe('NorthConsole', () => {
       contentType: 'time-values'
     });
 
-    expect(streamToString).toHaveBeenCalledWith(readStream);
-    expect(console.table).toHaveBeenCalledWith(timeValues, ['pointId', 'timestamp', 'data']);
-    expect(process.stdout.write).not.toHaveBeenCalled();
+    assert.strictEqual(utilsExports.streamToString.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);
+    assert.strictEqual(consoleTableMock.mock.calls.length, 1);
+    assert.deepStrictEqual(consoleTableMock.mock.calls[0].arguments, [timeValues, ['pointId', 'timestamp', 'data']]);
+    assert.strictEqual(stdoutWriteMock.mock.calls.length, 0);
   });
 
   it('should properly handle setpoints in verbose mode', async () => {
-    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(setpoints));
+    utilsExports.streamToString.mock.mockImplementation(async () => JSON.stringify(setpoints));
     const readStream = {} as ReadStream;
+    const consoleTableMock = mock.method(console, 'table', () => undefined);
+    const stdoutWriteMock = mock.method(process.stdout, 'write', () => true);
 
     await north.handleContent(readStream, {
       contentFile: '/path/to/file/example-123.json',
@@ -99,13 +120,17 @@ describe('NorthConsole', () => {
       contentType: 'setpoint'
     });
 
-    expect(streamToString).toHaveBeenCalledWith(readStream);
-    expect(console.table).toHaveBeenCalledWith(setpoints, ['reference', 'value']);
-    expect(process.stdout.write).not.toHaveBeenCalled();
+    assert.strictEqual(utilsExports.streamToString.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);
+    assert.strictEqual(consoleTableMock.mock.calls.length, 1);
+    assert.deepStrictEqual(consoleTableMock.mock.calls[0].arguments, [setpoints, ['reference', 'value']]);
+    assert.strictEqual(stdoutWriteMock.mock.calls.length, 0);
   });
 
   it('should properly handle files in verbose mode', async () => {
     const readStream = {} as ReadStream;
+    const consoleTableMock = mock.method(console, 'table', () => undefined);
+    const stdoutWriteMock = mock.method(process.stdout, 'write', () => true);
 
     await north.handleContent(readStream, {
       contentFile: 'path/to/file/example.file',
@@ -116,17 +141,20 @@ describe('NorthConsole', () => {
     });
 
     // Handle File does not read the stream in NorthConsole, it just logs metadata
-    expect(streamToString).not.toHaveBeenCalled();
-    expect(console.table).toHaveBeenCalledWith([{ filename: 'path/to/file/example.file', fileSize: 666 }]);
-    expect(process.stdout.write).not.toHaveBeenCalled();
+    assert.strictEqual(utilsExports.streamToString.mock.calls.length, 0);
+    assert.strictEqual(consoleTableMock.mock.calls.length, 1);
+    assert.deepStrictEqual(consoleTableMock.mock.calls[0].arguments, [[{ filename: 'path/to/file/example.file', fileSize: 666 }]]);
+    assert.strictEqual(stdoutWriteMock.mock.calls.length, 0);
   });
 
   it('should properly handle values in non verbose mode', async () => {
-    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(timeValues));
+    utilsExports.streamToString.mock.mockImplementation(async () => JSON.stringify(timeValues));
     const readStream = {} as ReadStream;
     north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', {
       verbose: false
     });
+    const consoleTableMock = mock.method(console, 'table', () => undefined);
+    const stdoutWriteMock = mock.method(process.stdout, 'write', () => true);
 
     await north.handleContent(readStream, {
       contentFile: '/path/to/file/example-123.json',
@@ -136,17 +164,21 @@ describe('NorthConsole', () => {
       contentType: 'time-values'
     });
 
-    expect(streamToString).toHaveBeenCalledWith(readStream);
-    expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 values.\r\n');
-    expect(console.table).not.toHaveBeenCalled();
+    assert.strictEqual(utilsExports.streamToString.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);
+    assert.strictEqual(stdoutWriteMock.mock.calls.length, 1);
+    assert.deepStrictEqual(stdoutWriteMock.mock.calls[0].arguments, ['North Console sent 1 values.\r\n']);
+    assert.strictEqual(consoleTableMock.mock.calls.length, 0);
   });
 
   it('should properly handle setpoints in non verbose mode', async () => {
-    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(setpoints));
+    utilsExports.streamToString.mock.mockImplementation(async () => JSON.stringify(setpoints));
     const readStream = {} as ReadStream;
     north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', {
       verbose: false
     });
+    const consoleTableMock = mock.method(console, 'table', () => undefined);
+    const stdoutWriteMock = mock.method(process.stdout, 'write', () => true);
 
     await north.handleContent(readStream, {
       contentFile: '/path/to/file/example-123.json',
@@ -156,9 +188,11 @@ describe('NorthConsole', () => {
       contentType: 'setpoint'
     });
 
-    expect(streamToString).toHaveBeenCalledWith(readStream);
-    expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 setpoint.\r\n');
-    expect(console.table).not.toHaveBeenCalled();
+    assert.strictEqual(utilsExports.streamToString.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsExports.streamToString.mock.calls[0].arguments, [readStream]);
+    assert.strictEqual(stdoutWriteMock.mock.calls.length, 1);
+    assert.deepStrictEqual(stdoutWriteMock.mock.calls[0].arguments, ['North Console sent 1 setpoint.\r\n']);
+    assert.strictEqual(consoleTableMock.mock.calls.length, 0);
   });
 
   it('should properly handle file in non verbose mode', async () => {
@@ -166,6 +200,8 @@ describe('NorthConsole', () => {
     north.connectorConfiguration = buildNorthEntity<NorthConsoleSettings>('console', {
       verbose: false
     });
+    const consoleTableMock = mock.method(console, 'table', () => undefined);
+    const stdoutWriteMock = mock.method(process.stdout, 'write', () => true);
 
     await north.handleContent(readStream, {
       contentFile: 'path/to/file/example.file',
@@ -175,29 +211,36 @@ describe('NorthConsole', () => {
       contentType: 'any'
     });
 
-    expect(streamToString).not.toHaveBeenCalled();
-    expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 file.\r\n');
-    expect(console.table).not.toHaveBeenCalled();
+    assert.strictEqual(utilsExports.streamToString.mock.calls.length, 0);
+    assert.strictEqual(stdoutWriteMock.mock.calls.length, 1);
+    assert.deepStrictEqual(stdoutWriteMock.mock.calls[0].arguments, ['North Console sent 1 file.\r\n']);
+    assert.strictEqual(consoleTableMock.mock.calls.length, 0);
   });
 
   it('should be able to write test data to output', async () => {
-    await expect(north.testConnection()).resolves.not.toThrow();
+    const consoleTableMock = mock.method(console, 'table', () => undefined);
+    const stdoutWriteMock = mock.method(process.stdout, 'write', () => true);
 
-    expect(process.stdout.write).toHaveBeenCalledWith('North Console output test.\r\n');
-    expect(console.table).toHaveBeenCalledWith([{ data: 'foo' }, { data: 'bar' }]);
+    await north.testConnection();
+
+    assert.strictEqual(stdoutWriteMock.mock.calls.length, 1);
+    assert.deepStrictEqual(stdoutWriteMock.mock.calls[0].arguments, ['North Console output test.\r\n']);
+    assert.strictEqual(consoleTableMock.mock.calls.length, 1);
+    assert.deepStrictEqual(consoleTableMock.mock.calls[0].arguments, [[{ data: 'foo' }, { data: 'bar' }]]);
   });
 
   it('should not be able to write to output when stdout is not writable', async () => {
+    mock.method(console, 'table', () => undefined);
+    mock.method(process.stdout, 'write', () => true);
+
     // Temporarily override writable property
     const originalWritable = process.stdout.writable;
     Object.defineProperty(process.stdout, 'writable', { value: false, configurable: true });
 
     try {
-      const error = new Error('The process.stdout stream has been destroyed, errored or ended');
-      await expect(north.testConnection()).rejects.toThrow(error);
-
-      expect(process.stdout.write).not.toHaveBeenCalled();
-      expect(console.table).not.toHaveBeenCalled();
+      await assert.rejects(async () => {
+        await north.testConnection();
+      }, /The process\.stdout stream has been destroyed, errored or ended/);
     } finally {
       // Restore writable property
       Object.defineProperty(process.stdout, 'writable', { value: originalWritable, configurable: true });
@@ -205,13 +248,18 @@ describe('NorthConsole', () => {
   });
 
   it('should not be able to write to output when stdout.write throws error', async () => {
+    mock.method(console, 'table', () => undefined);
     const error = new Error('Cannot write to stdout');
-    jest.spyOn(process.stdout, 'write').mockImplementation(() => {
+    const stdoutWriteMock = mock.method(process.stdout, 'write', () => {
       throw error;
     });
 
-    await expect(north.testConnection()).rejects.toThrow(new Error(`Node process is unable to write to STDOUT. ${error}`));
-    expect(process.stdout.write).toHaveBeenCalled();
-    expect(console.table).not.toHaveBeenCalled();
+    await assert.rejects(
+      async () => {
+        await north.testConnection();
+      },
+      new Error(`Node process is unable to write to STDOUT. ${error}`)
+    );
+    assert.strictEqual(stdoutWriteMock.mock.calls.length, 1);
   });
 });
