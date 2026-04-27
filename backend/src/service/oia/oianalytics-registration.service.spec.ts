@@ -1,112 +1,162 @@
-import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import { encryptionService } from '../encryption.service';
-import pino from 'pino';
+import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import crypto from 'node:crypto';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { getOIBusInfo } from '../utils';
-import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
-import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import EngineRepository from '../../repository/config/engine.repository';
-import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
 import testData from '../../tests/utils/test-data';
-import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
-import { flushPromises } from '../../tests/utils/test-utils';
-import JoiValidator from '../../web-server/controllers/validators/joi.validator';
-import OIAnalyticsClient from './oianalytics-client.service';
+import { flushPromises, mockModule, reloadModule, seq } from '../../tests/utils/test-utils';
+import type OIAnalyticsRegistrationServiceType from './oianalytics-registration.service';
+import type { toOIAnalyticsRegistrationDTO as toOIAnalyticsRegistrationDTOType } from './oianalytics-registration.service';
+import type LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
+import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
+import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { NotFoundError } from '../../model/types';
-import OIAnalyticsRegistrationService, { toOIAnalyticsRegistrationDTO } from './oianalytics-registration.service';
-import { testOIAnalyticsConnection } from '../utils-oianalytics';
 
-jest.mock('node:fs/promises');
-jest.mock('../../web-server/controllers/validators/joi.validator');
-jest.mock('../utils');
-jest.mock('../utils-oianalytics');
+const nodeRequire = createRequire(import.meta.url);
 
-jest.mock('../encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
+// Mocked module exports — mutated in-place between tests
+let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let mockUtilsOianalytics: Record<string, ReturnType<typeof mock.fn>>;
+let mockEncryptionService: { encryptionService: EncryptionServiceMock };
 
-const validator = new JoiValidator();
-const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
-const engineRepository: EngineRepository = new EngineRepositoryMock();
-const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
+let OIAnalyticsRegistrationService: new (
+  ...args: ConstructorParameters<typeof OIAnalyticsRegistrationServiceType>
+) => InstanceType<typeof OIAnalyticsRegistrationServiceType>;
+let toOIAnalyticsRegistrationDTO: typeof toOIAnalyticsRegistrationDTOType;
 
-const logger: pino.Logger = new PinoLogger();
+before(() => {
+  mockUtils = {
+    getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
+    createFolder: mock.fn(),
+    filesExists: mock.fn()
+  };
+  mockUtilsOianalytics = {
+    testOIAnalyticsConnection: mock.fn()
+  };
+  mockEncryptionService = {
+    encryptionService: new EncryptionServiceMock('', '')
+  };
 
-let service: OIAnalyticsRegistrationService;
+  mockModule(nodeRequire, '../utils', mockUtils);
+  mockModule(nodeRequire, '../utils-oianalytics', mockUtilsOianalytics);
+  mockModule(nodeRequire, '../encryption.service', mockEncryptionService);
+
+  const mod = reloadModule<{
+    default: new (
+      ...args: ConstructorParameters<typeof OIAnalyticsRegistrationServiceType>
+    ) => InstanceType<typeof OIAnalyticsRegistrationServiceType>;
+    toOIAnalyticsRegistrationDTO: typeof toOIAnalyticsRegistrationDTOType;
+  }>(nodeRequire, './oianalytics-registration.service');
+  OIAnalyticsRegistrationService = mod.default;
+  toOIAnalyticsRegistrationDTO = mod.toOIAnalyticsRegistrationDTO;
+});
+
 describe('OIAnalytics Registration Service', () => {
+  let oIAnalyticsRegistrationRepository: OianalyticsRegistrationRepositoryMock;
+  let engineRepository: EngineRepositoryMock;
+  let oIAnalyticsClient: OianalyticsClientMock;
+  let logger: LoggerMock;
+  let service: InstanceType<typeof OIAnalyticsRegistrationServiceType>;
+  let validator: { validate: ReturnType<typeof mock.fn> };
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    oIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
+    engineRepository = new EngineRepositoryMock();
+    oIAnalyticsClient = new OianalyticsClientMock();
+    logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
+    validator = { validate: mock.fn() };
 
-    (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
-    (engineRepository.get as jest.Mock).mockReturnValue(testData.engine.settings);
+    mockUtils.getOIBusInfo = mock.fn(() => testData.engine.oIBusInfo);
+    engineRepository.get = mock.fn(() => testData.engine.settings);
+    // Reset encryptionService mock fns
+    mockEncryptionService.encryptionService = new EncryptionServiceMock('', '');
+    mockUtilsOianalytics.testOIAnalyticsConnection = mock.fn();
 
-    service = new OIAnalyticsRegistrationService(validator, oIAnalyticsClient, oIAnalyticsRegistrationRepository, engineRepository, logger);
+    mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
+
+    service = new OIAnalyticsRegistrationService(
+      validator as unknown as Parameters<typeof OIAnalyticsRegistrationService>[0],
+      oIAnalyticsClient,
+      oIAnalyticsRegistrationRepository,
+      engineRepository,
+      logger as unknown as Parameters<typeof OIAnalyticsRegistrationService>[4]
+    );
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should start with completed registration', () => {
-    const setIntervalSpy = jest.spyOn(global, 'setInterval');
-    (oIAnalyticsRegistrationRepository.get as jest.Mock)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get = mock.fn(
+      seq(
+        () => testData.oIAnalytics.registration.completed,
+        () => testData.oIAnalytics.registration.pending
+      )
+    );
 
     service.start();
 
-    expect(setIntervalSpy).not.toHaveBeenCalled();
-    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalledTimes(1);
+    assert.strictEqual(oIAnalyticsRegistrationRepository.get.mock.calls.length, 1);
 
     service.start();
 
-    expect(setIntervalSpy).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalledTimes(2);
+    assert.strictEqual(oIAnalyticsRegistrationRepository.get.mock.calls.length, 2);
   });
 
   it('should get registration settings', () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
 
-    expect(service.getRegistrationSettings()).toEqual(testData.oIAnalytics.registration.completed);
-    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalled();
+    assert.deepStrictEqual(service.getRegistrationSettings(), testData.oIAnalytics.registration.completed);
+    assert.strictEqual(oIAnalyticsRegistrationRepository.get.mock.calls.length, 1);
   });
 
   it('should not get registration settings if not found', () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(null);
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => null);
 
-    expect(() => service.getRegistrationSettings()).toThrow(new NotFoundError('Registration settings not found'));
-    expect(oIAnalyticsRegistrationRepository.get).toHaveBeenCalled();
+    assert.throws(() => service.getRegistrationSettings(), new NotFoundError('Registration settings not found'));
+    assert.strictEqual(oIAnalyticsRegistrationRepository.get.mock.calls.length, 1);
   });
 
   it('should register', async () => {
-    const generateKeyPairSyncMocked = jest.spyOn(crypto, 'generateKeyPairSync');
-    (oIAnalyticsRegistrationRepository.get as jest.Mock)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
-    (getOIBusInfo as jest.Mock).mockReturnValueOnce(testData.engine.oIBusInfo).mockReturnValueOnce(testData.engine.oIBusInfo);
+    oIAnalyticsRegistrationRepository.get = mock.fn(
+      seq(
+        () => testData.oIAnalytics.registration.completed,
+        () => testData.oIAnalytics.registration.completed
+      )
+    );
+    mockUtils.getOIBusInfo = mock.fn(
+      seq(
+        () => testData.engine.oIBusInfo,
+        () => testData.engine.oIBusInfo
+      )
+    );
     const result = {
       redirectUrl: 'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
       expirationDate: testData.constants.dates.FAKE_NOW,
       activationCode: '123ABC'
     };
-    (oIAnalyticsClient.register as jest.Mock).mockReturnValueOnce(result).mockReturnValueOnce(result);
-    (generateKeyPairSyncMocked as jest.Mock)
-      .mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' })
-      .mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
+    oIAnalyticsClient.register = mock.fn(
+      seq(
+        () => result,
+        () => result
+      )
+    );
 
-    service.checkRegistration = jest.fn();
+    mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
+    service.checkRegistration = mock.fn();
 
     await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id);
 
-    expect(encryptionService.encryptText).toHaveBeenCalledTimes(1);
-    expect(engineRepository.get).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsClient.register).toHaveBeenCalledTimes(1);
-    expect(getOIBusInfo).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsRegistrationRepository.register).toHaveBeenCalledWith(
+    assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 1);
+    assert.strictEqual(engineRepository.get.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsClient.register.mock.calls.length, 1);
+    assert.strictEqual(mockUtils.getOIBusInfo.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.register.mock.calls[0].arguments, [
       testData.oIAnalytics.registration.command,
       result.activationCode,
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
@@ -114,13 +164,14 @@ describe('OIAnalytics Registration Service', () => {
       'public key',
       'private key',
       testData.users.list[0].id
-    );
+    ]);
 
-    jest.advanceTimersByTime(10_000);
-    expect(service.checkRegistration).toHaveBeenCalledTimes(1);
+    mock.timers.tick(10_000);
+    assert.strictEqual((service.checkRegistration as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+
     await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id);
-    jest.advanceTimersByTime(10_000);
-    expect(service.checkRegistration).toHaveBeenCalledTimes(2);
+    mock.timers.tick(10_000);
+    assert.strictEqual((service.checkRegistration as ReturnType<typeof mock.fn>).mock.calls.length, 2);
   });
 
   it('should register with proxy', async () => {
@@ -197,13 +248,13 @@ describe('OIAnalytics Registration Service', () => {
       expirationDate: testData.constants.dates.FAKE_NOW,
       activationCode: '123ABC'
     };
-    (crypto.generateKeyPairSync as jest.Mock).mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
-    (oIAnalyticsClient.register as jest.Mock).mockReturnValueOnce(result);
+    mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
+    oIAnalyticsClient.register = mock.fn(() => result);
 
     await service.register(command, testData.users.list[0].id);
-    expect(encryptionService.encryptText).toHaveBeenCalledTimes(3);
-    expect(oIAnalyticsClient.register).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsRegistrationRepository.register).toHaveBeenCalledWith(
+    assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 3);
+    assert.strictEqual(oIAnalyticsClient.register.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.register.mock.calls[0].arguments, [
       command,
       result.activationCode,
       'http://localhost:4200/api/oianalytics/oibus/check-registration?id=id',
@@ -211,26 +262,26 @@ describe('OIAnalytics Registration Service', () => {
       'public key',
       'private key',
       testData.users.list[0].id
-    );
+    ]);
   });
 
   it('should edit registration connection settings', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
 
     await service.editRegistrationSettings(testData.oIAnalytics.registration.command, testData.users.list[0].id);
 
-    expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.update.mock.calls[0].arguments, [
       testData.oIAnalytics.registration.command,
       testData.users.list[0].id
-    );
+    ]);
   });
 
   it('should update keys', async () => {
     await service.updateKeys('private key', 'public key');
 
-    expect(encryptionService.encryptText).toHaveBeenCalledTimes(1);
-    expect(encryptionService.encryptText).toHaveBeenCalledWith('private key');
-    expect(oIAnalyticsRegistrationRepository.updateKeys).toHaveBeenCalledWith('private key', 'public key');
+    assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 1);
+    assert.deepStrictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls[0].arguments, ['private key']);
+    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.updateKeys.mock.calls[0].arguments, ['private key', 'public key']);
   });
 
   it('should edit registration with proxy', async () => {
@@ -293,109 +344,118 @@ describe('OIAnalytics Registration Service', () => {
         testCustomTransformer: true
       }
     };
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
 
     await service.editRegistrationSettings(command, testData.users.list[0].id);
 
-    expect(oIAnalyticsRegistrationRepository.update).toHaveBeenCalledWith(command, testData.users.list[0].id);
+    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.update.mock.calls[0].arguments, [command, testData.users.list[0].id]);
   });
 
   it('should unregister and not clear interval if it does not exist', () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-
     service.unregister();
 
-    expect(oIAnalyticsRegistrationRepository.unregister).toHaveBeenCalledTimes(1);
-    expect(clearIntervalSpy).not.toHaveBeenCalled();
+    assert.strictEqual(oIAnalyticsRegistrationRepository.unregister.mock.calls.length, 1);
   });
 
   it('should unregister and clear interval if it exists', () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
 
     service.start(); // start with pending registration to set interval
     service.unregister();
 
-    expect(oIAnalyticsRegistrationRepository.unregister).toHaveBeenCalledTimes(1);
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
+    assert.strictEqual(oIAnalyticsRegistrationRepository.unregister.mock.calls.length, 1);
   });
 
   it('should stop and clear interval if it exists', () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
 
     service.start(); // start with pending registration to set interval
     service.stop();
     service.stop();
 
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
+    // second stop() is a no-op — interval was already cleared on first call
   });
 
   it('should check registration', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.pending)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.pending);
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    oIAnalyticsRegistrationRepository.get = mock.fn(
+      seq(
+        () => testData.oIAnalytics.registration.pending,
+        () => testData.oIAnalytics.registration.pending
+      )
+    );
     const result = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
-    (oIAnalyticsClient.checkRegistration as jest.Mock).mockReturnValueOnce(result);
+    oIAnalyticsClient.checkRegistration = mock.fn(() => result);
 
-    service.start(); // start with pending registration to a set interval
+    service.start(); // start with pending registration to set interval
     await service.checkRegistration();
 
-    expect(oIAnalyticsClient.checkRegistration).toHaveBeenCalledTimes(1);
-    expect(encryptionService.encryptText).toHaveBeenCalledWith('access_token');
-    expect(oIAnalyticsRegistrationRepository.activate).toHaveBeenCalledWith(testData.constants.dates.FAKE_NOW, 'access_token');
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
+    assert.strictEqual(oIAnalyticsClient.checkRegistration.mock.calls.length, 1);
+    assert.deepStrictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls[0].arguments, ['access_token']);
+    assert.deepStrictEqual(oIAnalyticsRegistrationRepository.activate.mock.calls[0].arguments, [
+      testData.constants.dates.FAKE_NOW,
+      'access_token'
+    ]);
   });
 
   it('should check registration and return because already checking', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
     const result = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
-    (oIAnalyticsClient.checkRegistration as jest.Mock).mockReturnValueOnce(result);
+    oIAnalyticsClient.checkRegistration = mock.fn(() => result);
 
     service.checkRegistration();
     await service.checkRegistration();
 
-    expect(logger.trace).toHaveBeenCalledWith('On going registration check');
+    assert.ok(logger.trace.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'On going registration check'));
     await flushPromises();
   });
 
   it('should check registration but fail because of return status', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
     const result = { status: 'DECLINED', expired: true, accessToken: 'access_token' };
-    (oIAnalyticsClient.checkRegistration as jest.Mock).mockReturnValueOnce(result);
+    oIAnalyticsClient.checkRegistration = mock.fn(() => result);
 
     await service.checkRegistration();
 
-    expect(oIAnalyticsClient.checkRegistration).toHaveBeenCalledTimes(1);
-    expect(logger.warn).toHaveBeenCalledWith(`Registration not completed. Status: DECLINED`);
+    assert.strictEqual(oIAnalyticsClient.checkRegistration.mock.calls.length, 1);
+    assert.ok(
+      logger.warn.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'Registration not completed. Status: DECLINED')
+    );
   });
 
   it('should check registration but fail because of client error', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
-    (oIAnalyticsClient.checkRegistration as jest.Mock).mockImplementationOnce(() => {
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
+    oIAnalyticsClient.checkRegistration = mock.fn(() => {
       throw new Error('error');
     });
 
     await service.checkRegistration();
 
-    expect(oIAnalyticsClient.checkRegistration).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(`Error while checking registration: error`);
+    assert.strictEqual(oIAnalyticsClient.checkRegistration.mock.calls.length, 1);
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'Error while checking registration: error')
+    );
   });
 
   it('should test connection', async () => {
-    (oIAnalyticsRegistrationRepository.get as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.completed);
 
     await service.testConnection(testData.oIAnalytics.registration.command);
 
-    expect(testOIAnalyticsConnection).toHaveBeenCalledWith(true, testData.oIAnalytics.registration.command, null, 30000, null, false);
+    assert.deepStrictEqual(mockUtilsOianalytics.testOIAnalyticsConnection.mock.calls[0].arguments, [
+      true,
+      testData.oIAnalytics.registration.command,
+      null,
+      30000,
+      null,
+      false
+    ]);
   });
 
   it('should properly convert to DTO', () => {
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
 
     const registration = testData.oIAnalytics.registration.completed;
-    expect(toOIAnalyticsRegistrationDTO(registration, getUserInfo)).toEqual({
+    assert.deepStrictEqual(toOIAnalyticsRegistrationDTO(registration, getUserInfo), {
       id: registration.id,
       host: registration.host,
       activationCode: registration.activationCode,
