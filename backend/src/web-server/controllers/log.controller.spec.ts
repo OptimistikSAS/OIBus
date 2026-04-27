@@ -1,32 +1,45 @@
-import { LogController } from './log.controller';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { LogSearchParam, Scope } from '../../../shared/model/logs.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import LogServiceMock from '../../tests/__mocks__/service/log-service.mock';
 import { createPageFromArray } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
+import type { LogController as LogControllerShape } from './log.controller';
 
-// Mock the services
-jest.mock('../../service/log.service', () => ({
-  toLogDTO: jest.fn().mockImplementation(log => log)
-}));
+const nodeRequire = createRequire(import.meta.url);
+
+let mockLogServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+let LogController: typeof LogControllerShape;
+
+before(() => {
+  fixTsoaModuleResolution(nodeRequire);
+  mockLogServiceModule = { toLogDTO: mock.fn((log: unknown) => log) };
+  mockModule(nodeRequire, '../../service/log.service', mockLogServiceModule);
+  const mod = reloadModule<{ LogController: typeof LogControllerShape }>(nodeRequire, './log.controller');
+  LogController = mod.LogController;
+});
 
 describe('LogController', () => {
-  let controller: LogController;
-  const mockRequest: Partial<CustomExpressRequest> = {
-    services: {
-      logService: new LogServiceMock()
-    }
-  } as CustomExpressRequest;
+  let controller: LogControllerShape;
+  let logService: LogServiceMock;
+  let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    logService = new LogServiceMock();
+    mockRequest = {
+      services: { logService }
+    } as Partial<CustomExpressRequest>;
+    mockLogServiceModule.toLogDTO = mock.fn((log: unknown) => log);
     controller = new LogController();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should return logs with search parameters', async () => {
@@ -40,16 +53,16 @@ describe('LogController', () => {
 
     const searchParams: LogSearchParam = {
       page: 1,
-      start: start,
-      end: end,
+      start,
+      end,
       levels: ['info', 'debug'],
       scopeTypes: ['south', 'north'],
       scopeIds: ['scope1', 'scope2'],
-      messageContent: messageContent
+      messageContent
     };
 
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
-    (mockRequest.services!.logService.search as jest.Mock).mockResolvedValue(expectedResult);
+    logService.search = mock.fn(async () => expectedResult);
 
     const result = await controller.search(
       start,
@@ -62,11 +75,9 @@ describe('LogController', () => {
       mockRequest as CustomExpressRequest
     );
 
-    expect(mockRequest.services!.logService.search).toHaveBeenCalledWith(searchParams);
-    expect(result).toEqual({
-      ...expectedResult,
-      content: expectedResult.content
-    });
+    assert.strictEqual(logService.search.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.search.mock.calls[0].arguments[0], searchParams);
+    assert.deepStrictEqual(result, { ...expectedResult, content: expectedResult.content });
   });
 
   it('should return logs with default search parameters', async () => {
@@ -84,7 +95,7 @@ describe('LogController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
-    (mockRequest.services!.logService.search as jest.Mock).mockResolvedValue(expectedResult);
+    logService.search = mock.fn(async () => expectedResult);
 
     const result = await controller.search(
       undefined,
@@ -97,42 +108,43 @@ describe('LogController', () => {
       mockRequest as CustomExpressRequest
     );
 
-    expect(mockRequest.services!.logService.search).toHaveBeenCalledWith(searchParams);
-    expect(result).toEqual({
-      ...expectedResult,
-      content: expectedResult.content
-    });
+    assert.strictEqual(logService.search.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.search.mock.calls[0].arguments[0], searchParams);
+    assert.deepStrictEqual(result, { ...expectedResult, content: expectedResult.content });
   });
 
   it('should suggest scopes by name', async () => {
     const scopes: Array<Scope> = [{ scopeId: 'id', scopeName: 'name' }];
     const name = 'name';
-    (mockRequest.services!.logService.suggestScopes as jest.Mock).mockReturnValue(scopes);
+    logService.suggestScopes = mock.fn(() => scopes);
 
     const result = await controller.suggestScopes(name, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.logService.suggestScopes).toHaveBeenCalledWith(name);
-    expect(result).toEqual(scopes);
+    assert.strictEqual(logService.suggestScopes.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.suggestScopes.mock.calls[0].arguments[0], name);
+    assert.deepStrictEqual(result, scopes);
   });
 
   it('should suggest scopes by name with default parameter', async () => {
     const scopes: Array<Scope> = [{ scopeId: 'id', scopeName: 'name' }];
-    (mockRequest.services!.logService.suggestScopes as jest.Mock).mockReturnValue(scopes);
+    logService.suggestScopes = mock.fn(() => scopes);
 
     const result = await controller.suggestScopes(undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.logService.suggestScopes).toHaveBeenCalledWith('');
-    expect(result).toEqual(scopes);
+    assert.strictEqual(logService.suggestScopes.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.suggestScopes.mock.calls[0].arguments[0], '');
+    assert.deepStrictEqual(result, scopes);
   });
 
   it('should get scope by its ID', async () => {
     const scope: Scope = { scopeId: 'id', scopeName: 'name' };
     const scopeId = 'id';
-    (mockRequest.services!.logService.getScopeById as jest.Mock).mockReturnValue(scope);
+    logService.getScopeById = mock.fn(() => scope);
 
     const result = await controller.getScopeById(scopeId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.logService.getScopeById).toHaveBeenCalledWith(scopeId);
-    expect(result).toEqual(scope);
+    assert.strictEqual(logService.getScopeById.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.getScopeById.mock.calls[0].arguments[0], scopeId);
+    assert.deepStrictEqual(result, scope);
   });
 });

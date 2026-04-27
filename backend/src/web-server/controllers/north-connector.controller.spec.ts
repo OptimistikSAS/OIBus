@@ -1,57 +1,74 @@
-import { NorthConnectorController } from './north-connector.controller';
+import { describe, it, before, beforeEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { NorthConnectorCommandDTO, OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
+import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/engine.model';
-import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import { OIBusTestingError } from '../../model/types';
-import UserService from 'src/service/user.service';
+import type { NorthConnectorController as NorthConnectorControllerShape } from './north-connector.controller';
 
-// Mock the services
-jest.mock('../../service/north.service', () => ({
-  toNorthConnectorDTO: jest.fn().mockImplementation((connector, getUserInfo) => {
-    getUserInfo('');
-    return connector;
-  }),
-  toNorthConnectorLightDTO: jest.fn().mockImplementation((connector, getUserInfo) => {
-    getUserInfo('');
-    return connector;
-  })
-}));
+const nodeRequire = createRequire(import.meta.url);
+
+let mockNorthServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+let NorthConnectorController: typeof NorthConnectorControllerShape;
+
+before(() => {
+  fixTsoaModuleResolution(nodeRequire);
+  mockNorthServiceModule = {
+    toNorthConnectorDTO: mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return connector;
+    }),
+    toNorthConnectorLightDTO: mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return connector;
+    })
+  };
+  mockModule(nodeRequire, '../../service/north.service', mockNorthServiceModule);
+  const mod = reloadModule<{ NorthConnectorController: typeof NorthConnectorControllerShape }>(nodeRequire, './north-connector.controller');
+  NorthConnectorController = mod.NorthConnectorController;
+});
 
 describe('NorthConnectorController', () => {
-  let controller: NorthConnectorController;
-  const mockRequest: Partial<CustomExpressRequest> = {
-    services: {
-      northService: new NorthServiceMock(),
-      oIBusService: new OibusServiceMock(),
-      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
-    },
-    user: {
-      id: 'test',
-      login: 'testUser'
-    },
-    res: {
-      setHeader: jest.fn(),
-      pipe: jest.fn()
-    }
-  } as unknown as CustomExpressRequest;
+  let controller: NorthConnectorControllerShape;
+  let northService: NorthServiceMock;
+  let oIBusService: OIBusServiceMock;
+  let userService: UserServiceMock;
+  let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    northService = new NorthServiceMock();
+    oIBusService = new OIBusServiceMock();
+    userService = new UserServiceMock();
+    mockRequest = {
+      services: { northService, oIBusService, userService },
+      user: { id: 'test', login: 'testUser' }
+    } as Partial<CustomExpressRequest>;
+    mockNorthServiceModule.toNorthConnectorDTO = mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return connector;
+    });
+    mockNorthServiceModule.toNorthConnectorLightDTO = mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return connector;
+    });
     controller = new NorthConnectorController();
   });
 
   it('should return north connector types', async () => {
     const mockManifests = [testData.north.manifest];
-    (mockRequest.services!.northService.listManifest as jest.Mock).mockReturnValue(mockManifests);
+    northService.listManifest = mock.fn(() => mockManifests);
 
     const result = controller.listManifest(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.listManifest).toHaveBeenCalled();
-    expect(result).toEqual([
+    assert.strictEqual(northService.listManifest.mock.calls.length, 1);
+    assert.deepStrictEqual(result, [
       {
         id: testData.north.manifest.id,
         category: testData.north.manifest.category,
@@ -63,118 +80,128 @@ describe('NorthConnectorController', () => {
   it('should return a north connector manifest', async () => {
     const mockManifest = testData.north.manifest;
     const type = testData.north.manifest.id;
-    (mockRequest.services!.northService.getManifest as jest.Mock).mockReturnValue(mockManifest);
+    northService.getManifest = mock.fn(() => mockManifest);
 
     const result = controller.getManifest(type, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.getManifest).toHaveBeenCalled();
-    expect(result).toEqual(mockManifest);
+    assert.strictEqual(northService.getManifest.mock.calls.length, 1);
+    assert.deepStrictEqual(result, mockManifest);
   });
 
   it('should return a list of north connectors', async () => {
     const mockNorthConnectors = testData.north.list;
-    (mockRequest.services!.northService.list as jest.Mock).mockReturnValue(mockNorthConnectors);
+    northService.list = mock.fn(() => mockNorthConnectors);
 
     const result = controller.list(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.list).toHaveBeenCalled();
-    expect(result).toEqual(mockNorthConnectors);
+    assert.strictEqual(northService.list.mock.calls.length, 1);
+    assert.deepStrictEqual(result, mockNorthConnectors);
   });
 
   it('should return a north connector by ID', async () => {
     const mockNorthConnector = testData.north.list[0];
     const northId = mockNorthConnector.id;
-    (mockRequest.services!.northService.findById as jest.Mock).mockReturnValue(mockNorthConnector);
+    northService.findById = mock.fn(() => mockNorthConnector);
 
     const result = await controller.findById(northId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.findById).toHaveBeenCalledWith(northId);
-    expect(result).toEqual(mockNorthConnector);
+    assert.strictEqual(northService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.findById.mock.calls[0].arguments[0], northId);
+    assert.deepStrictEqual(result, mockNorthConnector);
   });
 
   it('should create a new north connector', async () => {
     const command: NorthConnectorCommandDTO = testData.north.command;
     const createdNorthConnector = testData.north.list[0];
-    (mockRequest.services!.northService.create as jest.Mock).mockResolvedValue(createdNorthConnector);
+    northService.create = mock.fn(async () => createdNorthConnector);
 
     const result = await controller.create(command, undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.create).toHaveBeenCalledWith(command, null, 'test');
-    expect(result).toEqual(createdNorthConnector);
+    assert.strictEqual(northService.create.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.create.mock.calls[0].arguments, [command, null, 'test']);
+    assert.deepStrictEqual(result, createdNorthConnector);
   });
 
   it('should update an existing north connector', async () => {
     const northId = testData.north.list[0].id;
     const command: NorthConnectorCommandDTO = testData.north.command;
-    (mockRequest.services!.northService.update as jest.Mock).mockResolvedValue(undefined);
+    northService.update = mock.fn(async () => undefined);
 
     await controller.update(northId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.update).toHaveBeenCalledWith(northId, command, 'test');
+    assert.strictEqual(northService.update.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.update.mock.calls[0].arguments, [northId, command, 'test']);
   });
 
   it('should delete a north connector', async () => {
     const northId = testData.north.list[0].id;
-    (mockRequest.services!.northService.delete as jest.Mock).mockResolvedValue(undefined);
+    northService.delete = mock.fn(async () => undefined);
 
     await controller.delete(northId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.delete).toHaveBeenCalledWith(northId);
+    assert.strictEqual(northService.delete.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.delete.mock.calls[0].arguments[0], northId);
   });
 
   it('should start a north connector', async () => {
     const northId = testData.north.list[0].id;
-    (mockRequest.services!.northService.start as jest.Mock).mockResolvedValue(undefined);
+    northService.start = mock.fn(async () => undefined);
 
     await controller.start(northId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.start).toHaveBeenCalledWith(northId);
+    assert.strictEqual(northService.start.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.start.mock.calls[0].arguments[0], northId);
   });
 
   it('should stop a north connector', async () => {
     const northId = testData.north.list[0].id;
-    (mockRequest.services!.northService.stop as jest.Mock).mockResolvedValue(undefined);
+    northService.stop = mock.fn(async () => undefined);
 
     await controller.stop(northId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.stop).toHaveBeenCalledWith(northId);
+    assert.strictEqual(northService.stop.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.stop.mock.calls[0].arguments[0], northId);
   });
 
   it('should reset north connector metrics', async () => {
     const northId = testData.north.list[0].id;
-    (mockRequest.services!.oIBusService.resetNorthMetrics as jest.Mock).mockResolvedValue(undefined);
+    oIBusService.resetNorthMetrics = mock.fn(async () => undefined);
 
     await controller.resetMetrics(northId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.resetNorthMetrics).toHaveBeenCalledWith(northId);
+    assert.strictEqual(oIBusService.resetNorthMetrics.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.resetNorthMetrics.mock.calls[0].arguments[0], northId);
   });
 
   it('should test north connection', async () => {
     const northId = testData.north.list[0].id;
     const northType: OIBusNorthType = testData.north.command.type;
     const settings = testData.north.command.settings;
-
-    (mockRequest.services!.northService.testNorth as jest.Mock).mockResolvedValue({ items: [] });
+    northService.testNorth = mock.fn(async () => ({ items: [] }));
 
     await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.testNorth).toHaveBeenCalledWith(northId, northType, settings);
+    assert.strictEqual(northService.testNorth.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings]);
   });
 
   it('should wrap errors when testing north connection', async () => {
     const northId = testData.north.list[0].id;
     const northType: OIBusNorthType = testData.north.command.type;
     const settings = testData.north.command.settings;
-
-    (mockRequest.services!.northService.testNorth as jest.Mock).mockRejectedValue(new Error('North connection failure'));
-
-    const promise = controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
-
-    await expect(promise).rejects.toThrow('North connection failure');
-    await promise.catch(error => {
-      expect(error).toBeInstanceOf(OIBusTestingError);
+    northService.testNorth = mock.fn(async () => {
+      throw new Error('North connection failure');
     });
-    expect(mockRequest.services!.northService.testNorth).toHaveBeenCalledWith(northId, northType, settings);
+
+    try {
+      await controller.testNorth(northId, northType, settings, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual(error.message, 'North connection failure');
+    }
+    assert.strictEqual(northService.testNorth.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [northId, northType, settings]);
   });
 
   it('should add or edit a transformer', async () => {
@@ -183,34 +210,31 @@ describe('NorthConnectorController', () => {
       id: 'northTransformerId1',
       transformer: testData.transformers.list[0] as StandardTransformerDTO,
       options: {},
-      source: {
-        type: 'oianalytics-setpoint'
-      }
+      source: { type: 'oianalytics-setpoint' }
     };
-
-    (mockRequest.services!.northService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);
+    northService.addOrEditTransformer = mock.fn(async () => undefined);
 
     await controller.addOrEditTransformer(northId, transformer, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.addOrEditTransformer).toHaveBeenCalledWith(northId, transformer);
+    assert.strictEqual(northService.addOrEditTransformer.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.addOrEditTransformer.mock.calls[0].arguments, [northId, transformer]);
   });
 
   it('should remove a transformer', async () => {
     const northId = testData.north.list[0].id;
     const transformerId = testData.transformers.list[0].id;
-
-    (mockRequest.services!.northService.removeTransformer as jest.Mock).mockResolvedValue(undefined);
+    northService.removeTransformer = mock.fn(async () => undefined);
 
     await controller.removeTransformer(northId, transformerId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.northService.removeTransformer).toHaveBeenCalledWith(northId, transformerId);
+    assert.strictEqual(northService.removeTransformer.mock.calls.length, 1);
+    assert.deepStrictEqual(northService.removeTransformer.mock.calls[0].arguments, [northId, transformerId]);
   });
 
   it('should search cache content with default params', async () => {
     const northId = testData.north.list[0].id;
-
     const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-    (mockRequest.services!.oIBusService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
+    oIBusService.searchCacheContent = mock.fn(async () => mockCacheMetadata);
 
     const result = await controller.searchCacheContent(
       northId,
@@ -221,13 +245,13 @@ describe('NorthConnectorController', () => {
       mockRequest as CustomExpressRequest
     );
 
-    expect(mockRequest.services!.oIBusService.searchCacheContent).toHaveBeenCalledWith('north', northId, {
-      start: undefined,
-      end: undefined,
-      nameContains: undefined,
-      maxNumberOfFilesReturned: 0
-    });
-    expect(result).toEqual(mockCacheMetadata);
+    assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
+      'north',
+      northId,
+      { start: undefined, end: undefined, nameContains: undefined, maxNumberOfFilesReturned: 0 }
+    ]);
+    assert.deepStrictEqual(result, mockCacheMetadata);
   });
 
   it('should search cache content with parameters', async () => {
@@ -235,41 +259,40 @@ describe('NorthConnectorController', () => {
     const nameContains = 'test';
     const start = testData.constants.dates.DATE_1;
     const end = testData.constants.dates.DATE_2;
-
     const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-    (mockRequest.services!.oIBusService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
+    oIBusService.searchCacheContent = mock.fn(async () => mockCacheMetadata);
 
     const result = await controller.searchCacheContent(northId, nameContains, start, end, 10000, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.searchCacheContent).toHaveBeenCalledWith('north', northId, {
-      start,
-      end,
-      nameContains,
-      maxNumberOfFilesReturned: 10000
-    });
-    expect(result).toEqual(mockCacheMetadata);
+    assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
+      'north',
+      northId,
+      { start, end, nameContains, maxNumberOfFilesReturned: 10000 }
+    ]);
+    assert.deepStrictEqual(result, mockCacheMetadata);
   });
 
   it('should get cache file content', async () => {
     const northId = testData.north.list[0].id;
     const folder = 'cache';
     const filename = 'test-file';
-
-    const mockFileStream = { pipe: jest.fn() };
-    (mockRequest.services!.oIBusService.getFileFromCache as jest.Mock).mockResolvedValue(mockFileStream);
+    const mockFileStream = { pipe: mock.fn() };
+    oIBusService.getFileFromCache = mock.fn(async () => mockFileStream);
 
     await controller.getCacheFileContent(northId, filename, folder, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.getFileFromCache).toHaveBeenCalledWith('north', northId, folder, filename);
+    assert.strictEqual(oIBusService.getFileFromCache.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.getFileFromCache.mock.calls[0].arguments, ['north', northId, folder, filename]);
   });
 
   it('should update cache content', async () => {
     const northId = testData.north.list[0].id;
-
-    (mockRequest.services!.oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
+    oIBusService.updateCacheContent = mock.fn(async () => undefined);
 
     await controller.updateCacheContent(northId, {} as CacheContentUpdateCommand, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.updateCacheContent).toHaveBeenCalledWith('north', northId, {});
+    assert.strictEqual(oIBusService.updateCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateCacheContent.mock.calls[0].arguments, ['north', northId, {}]);
   });
 });
