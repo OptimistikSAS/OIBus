@@ -1,31 +1,35 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { Readable } from 'stream';
-import pino from 'pino';
-import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock'; // Adjust path
-import testData from '../../../tests/utils/test-data'; // Adjust path
-import { flushPromises } from '../../../tests/utils/test-utils'; // Adjust path
-import CSVToTimeValuesTransformer from './csv-to-time-values-transformer';
+import testData from '../../../tests/utils/test-data';
+import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import type CSVToTimeValuesTransformerType from './csv-to-time-values-transformer';
 import csvToTimeValuesManifest from './manifest';
-import Papa from 'papaparse';
 
-// 1. Mock External Dependencies
-jest.mock('papaparse', () => ({
-  parse: jest.fn()
-}));
+const nodeRequire = createRequire(import.meta.url);
 
-jest.mock('../../../service/utils', () => ({
-  convertDateTimeToInstant: jest.fn().mockReturnValue(1698400000000), // Fixed timestamp
-  convertDelimiter: jest.fn().mockImplementation(delim => (delim === 'SEMI_COLON' ? ';' : ',')),
-  generateRandomId: jest.fn().mockReturnValue('fixed-random-id'),
-  sanitizeFilename: jest.fn().mockImplementation(name => name)
-}));
+let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let mockPapaparse: Record<string, ReturnType<typeof mock.fn>>;
+let CSVToTimeValuesTransformer: typeof CSVToTimeValuesTransformerType;
 
-const logger: pino.Logger = new PinoLogger();
+before(() => {
+  mockUtils = {
+    convertDateTimeToInstant: mock.fn(() => 1698400000000),
+    convertDelimiter: mock.fn((delim: string) => (delim === 'SEMI_COLON' ? ';' : ',')),
+    generateRandomId: mock.fn(() => 'fixed-random-id')
+  };
+  mockPapaparse = { parse: mock.fn() };
+  mockModule(nodeRequire, '../../../service/utils', mockUtils);
+  mockModule(nodeRequire, 'papaparse', mockPapaparse);
+  const mod = reloadModule<{ default: typeof CSVToTimeValuesTransformerType }>(nodeRequire, './csv-to-time-values-transformer');
+  CSVToTimeValuesTransformer = mod.default;
+});
 
 describe('CSVToTimeValuesTransformer', () => {
-  let transformer: CSVToTimeValuesTransformer;
-  let mockStream: Readable;
+  let logger: PinoLogger;
 
-  // Default options for "Header Mode"
   const headerOptions = {
     regex: '.*\\.csv',
     filename: 'header-output',
@@ -37,7 +41,6 @@ describe('CSVToTimeValuesTransformer', () => {
     timestampSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
   };
 
-  // Default options for "Index Mode"
   const indexOptions = {
     regex: '.*\\.csv',
     filename: 'index-output',
@@ -50,163 +53,153 @@ describe('CSVToTimeValuesTransformer', () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockStream = new Readable();
+    logger = new PinoLogger();
+    mockUtils.convertDateTimeToInstant = mock.fn(() => 1698400000000);
+    mockUtils.convertDelimiter = mock.fn((delim: string) => (delim === 'SEMI_COLON' ? ';' : ','));
+    mockUtils.generateRandomId = mock.fn(() => 'fixed-random-id');
+    mockPapaparse.parse = mock.fn();
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
-  // --------------------------------------------------------------------------
-  // 1. Header Mode Tests
-  // --------------------------------------------------------------------------
+  afterEach(() => {
+    mock.timers.reset();
+  });
 
   it('should transform valid CSV with headers', async () => {
-    // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], headerOptions);
-
-    // Mock PapaParse success
-    (Papa.parse as jest.Mock).mockReturnValue({
+    const transformer = new CSVToTimeValuesTransformer(
+      asLogger(logger),
+      testData.transformers.list[0],
+      headerOptions
+    );
+    mockPapaparse.parse = mock.fn(() => ({
       errors: [],
       data: [
         { SensorID: 'S1', Time: '2023-01-01', Reading: 10 },
         { SensorID: 'S2', Time: '2023-01-02', Reading: 20 }
       ]
-    });
+    }));
+    const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('raw-csv-content');
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse((result.output as Buffer).toString());
+    const output = JSON.parse(result.output);
 
-    // Assert
-    expect(Papa.parse).toHaveBeenCalledWith('raw-csv-content', expect.objectContaining({ header: true, delimiter: ';' }));
-    expect(output).toHaveLength(2);
-    expect(output[0].pointId).toBe('S1');
-    expect(output[1].data.value).toBe(20);
-    expect(result.metadata.contentFile).toBe('fixed-random-id.json');
+    assert.ok(mockPapaparse.parse.mock.calls.length > 0);
+    assert.strictEqual(mockPapaparse.parse.mock.calls[0].arguments[1].header, true);
+    assert.strictEqual(mockPapaparse.parse.mock.calls[0].arguments[1].delimiter, ';');
+    assert.strictEqual(output.length, 2);
+    assert.strictEqual(output[0].pointId, 'S1');
+    assert.strictEqual(output[1].data.value, 20);
+    assert.strictEqual(result.metadata.contentFile, 'fixed-random-id.json');
   });
 
-  // --------------------------------------------------------------------------
-  // 2. Index Mode Tests
-  // --------------------------------------------------------------------------
-
   it('should transform valid CSV without headers (using indices)', async () => {
-    // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], indexOptions);
-
-    // Mock PapaParse success (array of arrays)
-    (Papa.parse as jest.Mock).mockReturnValue({
+    const transformer = new CSVToTimeValuesTransformer(
+      asLogger(logger),
+      testData.transformers.list[0],
+      indexOptions
+    );
+    mockPapaparse.parse = mock.fn(() => ({
       errors: [],
       data: [
         ['S1', '2023-01-01', 10],
         ['S2', '2023-01-02', 20]
       ]
-    });
+    }));
+    const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('content');
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse((result.output as Buffer).toString());
+    const output = JSON.parse(result.output);
 
-    // Assert
-    expect(Papa.parse).toHaveBeenCalledWith('content', expect.objectContaining({ header: false, delimiter: ',' }));
-    expect(output).toHaveLength(2);
-    expect(output[0].pointId).toBe('S1');
-    expect(output[1].pointId).toBe('S2');
+    assert.ok(mockPapaparse.parse.mock.calls.length > 0);
+    assert.strictEqual(mockPapaparse.parse.mock.calls[0].arguments[1].header, false);
+    assert.strictEqual(mockPapaparse.parse.mock.calls[0].arguments[1].delimiter, ',');
+    assert.strictEqual(output.length, 2);
+    assert.strictEqual(output[0].pointId, 'S1');
+    assert.strictEqual(output[1].pointId, 'S2');
   });
-
-  // --------------------------------------------------------------------------
-  // 3. Validation & Filtering Logic (The "if" checks)
-  // --------------------------------------------------------------------------
 
   it('should skip rows with missing or invalid required fields', async () => {
-    // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], headerOptions);
-
-    (Papa.parse as jest.Mock).mockReturnValue({
+    const transformer = new CSVToTimeValuesTransformer(
+      asLogger(logger),
+      testData.transformers.list[0],
+      headerOptions
+    );
+    mockPapaparse.parse = mock.fn(() => ({
       errors: [],
       data: [
-        { SensorID: 'Valid', Time: '2023', Reading: 1 }, // Keep
-        { SensorID: null, Time: '2023', Reading: 2 }, // Skip (No ID)
-        { SensorID: 'NoTS', Time: null, Reading: 3 }, // Skip (No TS)
-        { SensorID: 'NoVal', Time: '2023', Reading: null }, // Skip (No Value)
-        { SensorID: 'ValidZero', Time: '2023', Reading: 0 } // Keep (0 is valid)
+        { SensorID: 'Valid', Time: '2023', Reading: 1 },
+        { SensorID: null, Time: '2023', Reading: 2 },
+        { SensorID: 'NoTS', Time: null, Reading: 3 },
+        { SensorID: 'NoVal', Time: '2023', Reading: null },
+        { SensorID: 'ValidZero', Time: '2023', Reading: 0 }
       ]
-    });
+    }));
+    const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('content');
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse((result.output as Buffer).toString());
+    const output = JSON.parse(result.output);
 
-    // Assert
-    expect(output).toHaveLength(2);
-    expect(output[0].pointId).toBe('Valid');
-    expect(output[1].pointId).toBe('ValidZero');
+    assert.strictEqual(output.length, 2);
+    assert.strictEqual(output[0].pointId, 'Valid');
+    assert.strictEqual(output[1].pointId, 'ValidZero');
   });
 
-  // --------------------------------------------------------------------------
-  // 4. Edge Cases: Invalid Configurations & Errors
-  // --------------------------------------------------------------------------
-
   it('should handle configuration errors for Index Mode (NaN indices)', async () => {
-    // Arrange: Config says no header, but columns are strings like "A", "B" (invalid for parseInt)
     const badConfig = { ...indexOptions, pointIdColumn: 'NotANumber' };
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], badConfig);
-
-    (Papa.parse as jest.Mock).mockReturnValue({
+    const transformer = new CSVToTimeValuesTransformer(asLogger(logger), testData.transformers.list[0],  badConfig);
+    mockPapaparse.parse = mock.fn(() => ({
       errors: [],
       data: [['S1', '2023', 10]]
-    });
+    }));
+    const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('content');
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse((result.output as Buffer).toString());
+    const output = JSON.parse(result.output);
 
-    // Assert
-    // extractValue -> parseInt('NotANumber') -> NaN -> returns '' -> Row skipped
-    expect(output).toHaveLength(0);
+    assert.strictEqual(output.length, 0);
   });
 
   it('should log warning if PapaParse reports errors', async () => {
-    // Arrange
-    transformer = new CSVToTimeValuesTransformer(logger, testData.transformers.list[0], headerOptions);
-
-    // Mock Parsing Error
-    (Papa.parse as jest.Mock).mockReturnValue({
+    const transformer = new CSVToTimeValuesTransformer(
+      asLogger(logger),
+      testData.transformers.list[0],
+      headerOptions
+    );
+    mockPapaparse.parse = mock.fn(() => ({
       errors: [{ message: 'Unclosed quote', row: 0 }],
       data: []
-    });
+    }));
+    const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
     mockStream.push('bad-csv');
     mockStream.push(null);
     await flushPromises();
     await promise;
 
-    // Assert
-    expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Encountered 1 errors while parsing'));
+    assert.ok(logger.warn.mock.calls.length > 0);
+    assert.ok((logger.warn.mock.calls[0].arguments[0] as string).includes('Encountered 1 errors while parsing'));
   });
 
-  // --------------------------------------------------------------------------
-  // 5. Manifest
-  // --------------------------------------------------------------------------
-
   it('should correctly expose the manifest settings', () => {
-    expect(csvToTimeValuesManifest.settings).toBeDefined();
-    expect(csvToTimeValuesManifest.settings.key).toBe('options');
-    expect(csvToTimeValuesManifest.settings.attributes[0].key).toBe('delimiter');
+    assert.ok(csvToTimeValuesManifest.settings !== undefined);
+    assert.strictEqual(csvToTimeValuesManifest.settings.key, 'options');
+    assert.strictEqual(csvToTimeValuesManifest.settings.attributes[0].key, 'delimiter');
   });
 });
