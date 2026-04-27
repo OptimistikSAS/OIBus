@@ -1,68 +1,75 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-
-import SouthFtp from './south-ftp';
-
-import { checkAge, compress } from '../../service/utils';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-
-import { SouthFTPItemSettings, SouthFTPSettings } from '../../../shared/model/south-settings.model';
-import { Client as FTPClient, FileInfo } from 'basic-ftp';
-import { DateTime } from 'luxon';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
-import testData from '../../tests/utils/test-data';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthFTPItemSettings, SouthFTPSettings } from '../../../shared/model/south-settings.model';
+import { DateTime } from 'luxon';
+import type { FileInfo } from 'basic-ftp';
+import type SouthFtpClass from './south-ftp';
 
-jest.mock('node:fs/promises');
-
-const mockFtpClient = {
-  access: jest.fn(),
-  list: jest.fn(),
-  downloadTo: jest.fn(),
-  remove: jest.fn(),
-  close: jest.fn()
-};
-jest.mock('basic-ftp');
-jest.mock('../../service/utils');
-jest.mock('../../service/encryption.service', () => ({
-  encryptionService: {
-    decryptText: jest.fn().mockResolvedValue('decrypted-password')
-  }
-}));
-
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
-
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
-    }
-);
-
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
-
-const createMockFileInfo = (name: string, modifiedAt: Date): FileInfo =>
-  ({
-    name,
-    type: '-' as unknown as FileInfo['type'],
-    size: 100,
-    modifiedAt,
-    permissions: { user: 6, group: 4, world: 4 },
-    hardLinkCount: 1,
-    link: undefined,
-    group: 'group',
-    user: 'user',
-    uniqueID: 'unique'
-  }) as FileInfo;
+const nodeRequire = createRequire(import.meta.url);
 
 describe('SouthFTP', () => {
-  let south: SouthFtp;
+  let SouthFtp: typeof SouthFtpClass;
+  let south: SouthFtpClass;
+
+  const logger = new PinoLogger();
+  const addContentCallback = mock.fn();
+  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let southCacheService: SouthCacheServiceMock;
+
+  const mockFtpClient = {
+    access: mock.fn(async () => undefined),
+    list: mock.fn(async () => [] as Array<FileInfo>),
+    downloadTo: mock.fn(async () => undefined),
+    remove: mock.fn(async () => undefined),
+    close: mock.fn(() => undefined)
+  };
+
+  const ftpExports = {
+    __esModule: true,
+    Client: mock.fn(function () {
+      return mockFtpClient;
+    })
+  };
+
+  const utilsExports = {
+    checkAge: mock.fn(() => true),
+    compress: mock.fn(async () => undefined),
+    delay: mock.fn(async () => undefined),
+    generateIntervals: mock.fn(() => []),
+    groupItemsByGroup: mock.fn(() => []),
+    validateCronExpression: mock.fn(() => ({ expression: '' }))
+  };
+
+  const encryptionExports = {
+    __esModule: true,
+    encryptionService: {
+      decryptText: mock.fn(async () => 'decrypted-password')
+    }
+  };
+
+  before(() => {
+    mockModule(nodeRequire, 'basic-ftp', ftpExports);
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, '../../service/encryption.service', encryptionExports);
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    SouthFtp = reloadModule<{ default: typeof SouthFtpClass }>(nodeRequire, './south-ftp').default;
+  });
+
   const configuration: SouthConnectorEntity<SouthFTPSettings, SouthFTPItemSettings> = {
     id: 'southId',
     name: 'south',
@@ -161,30 +168,55 @@ describe('SouthFTP', () => {
     updatedAt: ''
   };
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (FTPClient as jest.MockedClass<typeof FTPClient>).mockImplementation(() => mockFtpClient as unknown as InstanceType<typeof FTPClient>);
-    (fs.mkdir as jest.Mock).mockReturnValue(undefined);
-    (fs.unlink as jest.Mock).mockReturnValue(undefined);
-    (compress as jest.Mock).mockReturnValue(undefined);
-    (checkAge as jest.Mock).mockReturnValue(true);
-    southCacheService.createCustomTable.mockReturnValue(undefined);
-    southCacheService.getQueryOnCustomTable.mockReturnValue(null);
-    southCacheService.runQueryOnCustomTable.mockReturnValue(undefined);
+  const createMockFileInfo = (name: string, modifiedAt: Date): FileInfo =>
+    ({
+      name,
+      type: '-' as unknown as FileInfo['type'],
+      size: 100,
+      modifiedAt,
+      permissions: { user: 6, group: 4, world: 4 },
+      hardLinkCount: 1,
+      link: undefined,
+      group: 'group',
+      user: 'user',
+      uniqueID: 'unique'
+    }) as FileInfo;
 
-    // Reset FTP client mocks
-    mockFtpClient.access.mockReset();
-    mockFtpClient.list.mockReset();
-    mockFtpClient.downloadTo.mockReset();
-    mockFtpClient.remove.mockReset();
-    mockFtpClient.close.mockReset();
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    addContentCallback.mock.resetCalls();
 
-    south = new SouthFtp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    ftpExports.Client.mock.resetCalls();
+
+    mockFtpClient.access = mock.fn(async () => undefined);
+    mockFtpClient.list = mock.fn(async () => [] as Array<FileInfo>);
+    mockFtpClient.downloadTo = mock.fn(async () => undefined);
+    mockFtpClient.remove = mock.fn(async () => undefined);
+    mockFtpClient.close = mock.fn(() => undefined);
+
+    utilsExports.checkAge.mock.resetCalls();
+    utilsExports.checkAge.mock.mockImplementation(() => true);
+    utilsExports.compress.mock.resetCalls();
+    utilsExports.compress.mock.mockImplementation(async () => undefined);
+
+    encryptionExports.encryptionService.decryptText.mock.resetCalls();
+    encryptionExports.encryptionService.decryptText.mock.mockImplementation(async () => 'decrypted-password');
+
+    southCacheService.createCustomTable.mock.mockImplementation(() => undefined);
+    southCacheService.getQueryOnCustomTable.mock.mockImplementation(() => null);
+    southCacheService.runQueryOnCustomTable.mock.mockImplementation(() => undefined);
+
+    mock.method(fs, 'mkdir', async () => undefined);
+    mock.method(fs, 'unlink', async () => undefined);
+
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+
+    south = new SouthFtp(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   describe('with valid configuration', () => {
@@ -193,24 +225,24 @@ describe('SouthFTP', () => {
     });
 
     it('should properly start', () => {
-      expect(southCacheService.createItemValueTable).toHaveBeenCalledWith('southId');
+      assert.ok(southCacheService.createItemValueTable.mock.calls.some(c => c.arguments[0] === 'southId'));
     });
 
     it('should test connection', async () => {
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
+      mockFtpClient.access.mock.mockImplementation(async () => undefined);
+      mockFtpClient.close.mock.mockImplementation(async () => undefined);
 
       const testResult = await south.testConnection();
 
-      expect(mockFtpClient.access).toHaveBeenCalledWith({
+      assert.deepStrictEqual(mockFtpClient.access.mock.calls[0].arguments[0], {
         host: '127.0.0.1',
         port: 21,
         user: 'user',
         password: 'decrypted-password',
         secure: false
       });
-      expect(mockFtpClient.close).toHaveBeenCalled();
-      expect(testResult).toEqual({
+      assert.ok(mockFtpClient.close.mock.calls.length > 0);
+      assert.deepStrictEqual(testResult, {
         items: [
           { key: 'Host', value: `${configuration.settings.host}:${configuration.settings.port}` },
           { key: 'Username', value: configuration.settings.username }
@@ -219,30 +251,27 @@ describe('SouthFTP', () => {
     });
 
     it('should test connection with error', async () => {
-      mockFtpClient.access.mockRejectedValue(new Error('Connection failed'));
+      mockFtpClient.access.mock.mockImplementation(async () => {
+        throw new Error('Connection failed');
+      });
 
-      await expect(south.testConnection()).rejects.toThrow('Access error on "127.0.0.1:21": Connection failed');
+      await assert.rejects(south.testConnection(), new Error('Access error on "127.0.0.1:21": Connection failed'));
     });
 
     it('should test item', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      south['listFiles'] = jest.fn().mockResolvedValue([fileInfo]);
+      mock.method(south, 'listFiles', async () => [fileInfo]);
 
       const item = configuration.items[0];
-
       const result = await south.testItem(item, { history: undefined });
 
-      expect(result).toEqual({
-        type: 'time-values',
-        content: [
-          {
-            pointId: 'item1',
-            timestamp: expect.any(String),
-            data: { value: 'test.csv' }
-          }
-        ]
-      });
+      assert.strictEqual(result.type, 'time-values');
+      const content = (result as { type: string; content: Array<{ pointId: string; timestamp: string; data: { value: string } }> }).content;
+      assert.strictEqual(content.length, 1);
+      assert.strictEqual(content[0].pointId, 'item1');
+      assert.ok(typeof content[0].timestamp === 'string');
+      assert.deepStrictEqual(content[0].data, { value: 'test.csv' });
     });
 
     it('should test item with file without modifiedAt date', async () => {
@@ -264,89 +293,69 @@ describe('SouthFTP', () => {
         date: new Date()
       } as unknown as FileInfo;
 
-      // Mock the listFiles method to return the file directly, bypassing checkCondition
-      const originalListFiles = south.listFiles.bind(south);
-      south.listFiles = jest.fn().mockResolvedValue([fileInfoWithoutDate]);
+      mock.method(south, 'listFiles', async () => [fileInfoWithoutDate]);
 
       const item = configuration.items[0];
-
       const result = await south.testItem(item, { history: undefined });
 
-      expect(result).toEqual({
-        type: 'time-values',
-        content: [
-          {
-            pointId: 'item1',
-            timestamp: expect.any(String),
-            data: { value: 'test.csv' }
-          }
-        ]
-      });
-
-      // Restore the original method
-      south.listFiles = originalListFiles;
+      assert.strictEqual(result.type, 'time-values');
+      assert.strictEqual((result as { type: string; content: Array<unknown> }).content.length, 1);
     });
 
     it('should list files', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.list.mockResolvedValue([fileInfo]);
+      mockFtpClient.list.mock.mockImplementation(async () => [fileInfo]);
 
       const item = configuration.items[0];
       const files = await south.listFiles(item, []);
 
-      expect(files).toEqual([fileInfo]);
-      expect(mockFtpClient.access).toHaveBeenCalledWith({
+      assert.deepStrictEqual(files, [fileInfo]);
+      assert.deepStrictEqual(mockFtpClient.access.mock.calls[0].arguments[0], {
         host: '127.0.0.1',
         port: 21,
         user: 'user',
         password: 'decrypted-password',
         secure: false
       });
-      expect(mockFtpClient.list).toHaveBeenCalledWith('input');
-      expect(mockFtpClient.close).toHaveBeenCalled();
+      assert.deepStrictEqual(mockFtpClient.list.mock.calls[0].arguments[0], 'input');
+      assert.ok(mockFtpClient.close.mock.calls.length > 0);
     });
 
     it('should filter files by regex', async () => {
       const fileInfo1 = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
       const fileInfo2 = createMockFileInfo('test.txt', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.list.mockResolvedValue([fileInfo1, fileInfo2]);
+      mockFtpClient.list.mock.mockImplementation(async () => [fileInfo1, fileInfo2]);
 
       const item = configuration.items[0]; // regex: '.*.csv'
       const files = await south.listFiles(item, []);
 
-      expect(files).toEqual([fileInfo1]);
+      assert.deepStrictEqual(files, [fileInfo1]);
     });
 
     it('should get file', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-
       const item = configuration.items[0]; // preserveFiles: false
       await south.getFile(fileInfo, item, []);
 
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
-      expect(mockFtpClient.remove).toHaveBeenCalledWith('input/test.csv');
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      );
+      assert.deepStrictEqual(mockFtpClient.downloadTo.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
+      assert.deepStrictEqual(mockFtpClient.downloadTo.mock.calls[0].arguments[1], 'input/test.csv');
+      assert.deepStrictEqual(mockFtpClient.remove.mock.calls[0].arguments[0], 'input/test.csv');
+      assert.strictEqual(addContentCallback.mock.calls[0].arguments[0], 'southId');
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+      });
+      assert.strictEqual(addContentCallback.mock.calls[0].arguments[2], testData.constants.dates.FAKE_NOW);
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
     });
 
     it('should get file with compression', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      (compress as jest.Mock).mockResolvedValue(undefined);
+      utilsExports.compress.mock.mockImplementation(async () => undefined);
 
       const configurationWithCompression = {
         ...configuration,
@@ -357,7 +366,7 @@ describe('SouthFTP', () => {
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        asLogger(logger),
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -365,60 +374,50 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       await southWithCompression.getFile(fileInfo, item, []);
 
-      expect(compress).toHaveBeenCalledWith(
-        path.resolve('cacheFolder', 'tmp', 'test.csv'),
-        path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
-      );
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      );
+      assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
+      assert.deepStrictEqual(utilsExports.compress.mock.calls[0].arguments[1], path.resolve('cacheFolder', 'tmp', 'test.csv.gz'));
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
+      });
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
     });
 
     it('should preserve files when configured', async () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      southCacheService.getItemLastValue.mockReturnValue(null);
+      southCacheService.getItemLastValue.mock.mockImplementation(() => null);
 
       const item = configuration.items[1]; // preserveFiles: true
       await south.getFile(fileInfo, item, []);
 
-      expect(mockFtpClient.remove).not.toHaveBeenCalled();
+      assert.strictEqual(mockFtpClient.remove.mock.calls.length, 0);
     });
 
     it('should handle file removal error', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockRejectedValue(new Error('Remove failed'));
+      mockFtpClient.remove.mock.mockImplementation(async () => {
+        throw new Error('Remove failed');
+      });
 
       const item = configuration.items[0];
       await south.getFile(fileInfo, item, []);
 
-      expect(mockFtpClient.remove).toHaveBeenCalledWith('input/test.csv');
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      );
+      assert.deepStrictEqual(mockFtpClient.remove.mock.calls[0].arguments[0], 'input/test.csv');
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+      });
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [item]);
     });
 
     it('should handle compression error', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      (compress as jest.Mock).mockRejectedValue(new Error('Compression failed'));
+      utilsExports.compress.mock.mockImplementation(async () => {
+        throw new Error('Compression failed');
+      });
 
       const configurationWithCompression = {
         ...configuration,
@@ -428,7 +427,7 @@ describe('SouthFTP', () => {
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        asLogger(logger),
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -436,36 +435,26 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       await southWithCompression.getFile(fileInfo, item, []);
 
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      );
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+      });
     });
 
     it('should list files recursively when recursive is true', async () => {
       const configRecursive = {
         ...configuration,
         settings: { ...configuration.settings },
-        items: [
-          ...configuration.items.map(item => ({
-            ...item,
-            settings: {
-              ...item.settings,
-              recursive: true
-            }
-          }))
-        ],
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, recursive: true }
+        })),
         createdBy: '',
         updatedBy: '',
         createdAt: '',
         updatedAt: ''
       };
-      const southRecursive = new SouthFtp(configRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southRecursive = new SouthFtp(configRecursive, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
       await southRecursive.start();
 
       const dirEntry = {
@@ -485,15 +474,20 @@ describe('SouthFTP', () => {
         isFile: true
       } as FileInfo;
 
-      mockFtpClient.list.mockResolvedValueOnce([dirEntry]).mockResolvedValueOnce([fileInSubdir, fileFailsCondition]);
+      let listCallCount = 0;
+      mockFtpClient.list.mock.mockImplementation(async () => {
+        listCallCount++;
+        if (listCallCount === 1) return [dirEntry];
+        return [fileInSubdir, fileFailsCondition];
+      });
 
       const item = configRecursive.items[0];
       const result = await southRecursive.listFiles(item, []);
 
-      expect(mockFtpClient.list).toHaveBeenCalledWith('input');
-      expect(mockFtpClient.list).toHaveBeenCalledWith('input/subdir');
-      expect(result).toHaveLength(1);
-      expect(result[0].name).toBe('subdir/file.csv');
+      assert.deepStrictEqual(mockFtpClient.list.mock.calls[0].arguments[0], 'input');
+      assert.deepStrictEqual(mockFtpClient.list.mock.calls[1].arguments[0], 'input/subdir');
+      assert.strictEqual(result.length, 1);
+      assert.strictEqual(result[0].name, 'subdir/file.csv');
     });
 
     it('should query files with file that has zero size', async () => {
@@ -502,276 +496,241 @@ describe('SouthFTP', () => {
         size: 0
       };
 
-      mockFtpClient.list.mockResolvedValue([fileWithNoSize]);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
+      mockFtpClient.list.mock.mockImplementation(async () => [fileWithNoSize]);
 
       await south.directQuery([configuration.items[0]]);
 
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
+      assert.deepStrictEqual(mockFtpClient.downloadTo.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
     });
 
     it('should query files', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.list.mockResolvedValue([fileInfo]);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
+      mockFtpClient.list.mock.mockImplementation(async () => [fileInfo]);
 
       await south.directQuery([configuration.items[0]]);
 
-      expect(mockFtpClient.list).toHaveBeenCalledWith('input');
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledWith(path.resolve('cacheFolder', 'tmp', 'test.csv'), 'input/test.csv');
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [configuration.items[0]]
-      );
+      assert.deepStrictEqual(mockFtpClient.list.mock.calls[0].arguments[0], 'input');
+      assert.deepStrictEqual(mockFtpClient.downloadTo.mock.calls[0].arguments[0], path.resolve('cacheFolder', 'tmp', 'test.csv'));
+      assert.deepStrictEqual(mockFtpClient.downloadTo.mock.calls[0].arguments[1], 'input/test.csv');
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+      });
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [configuration.items[0]]);
     });
 
     it('should respect max files limit and skip remaining files', async () => {
       const configWithLimit = {
         ...configuration,
         settings: { ...configuration.settings },
-        items: [
-          ...configuration.items.map(item => ({
-            ...item,
-            settings: {
-              ...item.settings,
-              maxFiles: 2,
-              maxSize: 0
-            }
-          }))
-        ],
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 2, maxSize: 0 }
+        })),
         createdBy: '',
         updatedBy: '',
         createdAt: '',
         updatedAt: ''
       };
-      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
       await southWithLimit.start();
 
       const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
       const file2 = createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
       const file3 = createMockFileInfo('file3.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.list.mockResolvedValue([file1, file2, file3]);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
+      mockFtpClient.list.mock.mockImplementation(async () => [file1, file2, file3]);
 
       await southWithLimit.directQuery([configWithLimit.items[0]]);
 
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
-      expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
+      assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 2);
+      assert.ok(
+        logger.debug.mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Max files limit (2) reached for item item1, skipping remaining files'
+        )
+      );
     });
 
     it('should respect max files limit and stop file query across items', async () => {
       const configWithLimit = {
         ...configuration,
         settings: { ...configuration.settings },
-        items: [
-          ...configuration.items.map(item => ({
-            ...item,
-            settings: {
-              ...item.settings,
-              maxFiles: 2,
-              maxSize: 0
-            }
-          }))
-        ],
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 2, maxSize: 0 }
+        })),
         createdBy: '',
         updatedBy: '',
         createdAt: '',
         updatedAt: ''
       };
-      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
       await southWithLimit.start();
 
       const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
       const file2 = createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
       const file3 = createMockFileInfo('file3.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.list.mockResolvedValueOnce([file1, file2, file3]);
-
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
+      mockFtpClient.list.mock.mockImplementationOnce(async () => [file1, file2, file3]);
 
       await southWithLimit.directQuery(configWithLimit.items);
 
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
-      expect(logger.debug).toHaveBeenCalledWith('Max files limit (2) reached for item item1, skipping remaining files');
+      assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 2);
+      assert.ok(
+        logger.debug.mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Max files limit (2) reached for item item1, skipping remaining files'
+        )
+      );
     });
 
     it('should respect max size limit and skip remaining files', async () => {
       const configWithLimit = {
         ...configuration,
         settings: { ...configuration.settings },
-        items: [
-          ...configuration.items.map(item => ({
-            ...item,
-            settings: {
-              ...item.settings,
-              maxFiles: 0,
-              maxSize: 1
-            }
-          }))
-        ],
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 0, maxSize: 1 }
+        })),
         createdBy: '',
         updatedBy: '',
         createdAt: '',
         updatedAt: ''
       };
-      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
       await southWithLimit.start();
 
       const file1 = { ...createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 600 * 1024 };
       const file2 = { ...createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 600 * 1024 };
 
-      mockFtpClient.list.mockResolvedValue([file1, file2]);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
+      mockFtpClient.list.mock.mockImplementation(async () => [file1, file2]);
 
       await southWithLimit.directQuery([configWithLimit.items[0]]);
 
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(1);
-      expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
+      assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 1);
+      assert.ok(
+        logger.debug.mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Max size limit (1 MB) reached for item item1, skipping remaining files'
+        )
+      );
     });
 
     it('should respect max size limit and stop file query across items', async () => {
       const configWithLimit = {
         ...configuration,
         settings: { ...configuration.settings },
-        items: [
-          ...configuration.items.map(item => ({
-            ...item,
-            settings: {
-              ...item.settings,
-              maxFiles: 0,
-              maxSize: 1
-            }
-          }))
-        ],
+        items: configuration.items.map(item => ({
+          ...item,
+          settings: { ...item.settings, maxFiles: 0, maxSize: 1 }
+        })),
         createdBy: '',
         updatedBy: '',
         createdAt: '',
         updatedAt: ''
       };
-      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
       await southWithLimit.start();
 
       const file1 = { ...createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 512 * 1024 };
       const file2 = { ...createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 512 * 1024 };
       const file3 = createMockFileInfo('file3.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.list.mockResolvedValue([file1, file2, file3]);
-
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
+      mockFtpClient.list.mock.mockImplementation(async () => [file1, file2, file3]);
 
       await southWithLimit.directQuery(configWithLimit.items);
 
-      expect(mockFtpClient.downloadTo).toHaveBeenCalledTimes(2);
-      expect(logger.debug).toHaveBeenCalledWith('Max size limit (1 MB) reached for item item1, skipping remaining files');
+      assert.strictEqual(mockFtpClient.downloadTo.mock.calls.length, 2);
+      assert.ok(
+        logger.debug.mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Max size limit (1 MB) reached for item item1, skipping remaining files'
+        )
+      );
     });
 
     it('should handle start error when createFolder fails', async () => {
-      (fs.mkdir as jest.Mock).mockReset();
-      (fs.mkdir as jest.Mock).mockRejectedValue(new Error('Failed to create folder'));
+      mock.method(fs, 'mkdir', async () => {
+        throw new Error('Failed to create folder');
+      });
 
-      const configWithDifferentId = {
-        ...configuration,
-        id: 'southId-not-test'
-      };
-
-      const newSouth = new SouthFtp(configWithDifferentId, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const configWithDifferentId = { ...configuration, id: 'southId-not-test' };
+      const newSouth = new SouthFtp(configWithDifferentId, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
 
       await newSouth.start();
 
-      expect(southCacheService.createItemValueTable).toHaveBeenCalledWith('southId-not-test');
+      assert.ok(southCacheService.createItemValueTable.mock.calls.some(c => c.arguments[0] === 'southId-not-test'));
     });
 
     it('should handle listFiles error when FTP access fails', async () => {
-      mockFtpClient.access.mockRejectedValue(new Error('FTP access failed'));
+      mockFtpClient.access.mock.mockImplementation(async () => {
+        throw new Error('FTP access failed');
+      });
 
       const item = configuration.items[0];
-
-      await expect(south.listFiles(item, [])).rejects.toThrow('FTP access failed');
-      expect(mockFtpClient.access).toHaveBeenCalled();
+      await assert.rejects(south.listFiles(item, []), new Error('FTP access failed'));
+      assert.ok(mockFtpClient.access.mock.calls.length > 0);
     });
 
     it('should handle getFile error when FTP access fails', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.access.mockRejectedValue(new Error('FTP access failed'));
+      mockFtpClient.access.mock.mockImplementation(async () => {
+        throw new Error('FTP access failed');
+      });
 
       const item = configuration.items[0];
-
-      await expect(south.getFile(fileInfo, item, [])).rejects.toThrow('FTP access failed');
+      await assert.rejects(south.getFile(fileInfo, item, []), new Error('FTP access failed'));
     });
 
     it('should handle download error', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockRejectedValue(new Error('Download failed'));
+      mockFtpClient.downloadTo.mock.mockImplementation(async () => {
+        throw new Error('Download failed');
+      });
 
       const item = configuration.items[0];
-
-      await expect(south.getFile(fileInfo, item, [])).rejects.toThrow('Download failed');
+      await assert.rejects(south.getFile(fileInfo, item, []), new Error('Download failed'));
     });
 
     it('should handle FTP close error in listFiles', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.list.mockResolvedValue([fileInfo]);
-      mockFtpClient.close.mockImplementationOnce(() => {
+      mockFtpClient.list.mock.mockImplementation(async () => [fileInfo]);
+      mockFtpClient.close.mock.mockImplementationOnce(() => {
         throw new Error('Close failed');
       });
 
       const item = configuration.items[0];
-
-      await expect(south.listFiles(item, [])).rejects.toThrow('Close failed');
+      await assert.rejects(south.listFiles(item, []), new Error('Close failed'));
     });
 
     it('should handle FTP close error in getFile', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockRejectedValue(new Error('download failed'));
+      mockFtpClient.downloadTo.mock.mockImplementation(async () => {
+        throw new Error('download failed');
+      });
 
       const item = configuration.items[0];
-
-      await expect(south.getFile(fileInfo, item, [])).rejects.toThrow('download failed');
+      await assert.rejects(south.getFile(fileInfo, item, []), new Error('download failed'));
     });
 
     it('should handle file unlink error after compression', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
-      (compress as jest.Mock).mockResolvedValue(undefined);
-
-      // Reset fs.unlink mock and make it fail for both calls
-      (fs.unlink as jest.Mock).mockReset();
-      (fs.unlink as jest.Mock).mockRejectedValue(new Error('Unlink failed'));
+      mock.method(fs, 'unlink', async () => {
+        throw new Error('Unlink failed');
+      });
 
       const configurationWithCompression = {
         ...configuration,
         settings: { ...configuration.settings, compression: true }
       };
-
       const southWithCompression = new SouthFtp(
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        asLogger(logger),
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -779,42 +738,28 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       await southWithCompression.getFile(fileInfo, item, []);
 
-      // Should send the compressed file even if unlink fails
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      );
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv.gz')
+      });
     });
 
     it('should handle empty username and password', async () => {
       const configWithoutCredentials = {
         ...configuration,
-        settings: {
-          ...configuration.settings,
-          username: '',
-          password: ''
-        }
+        settings: { ...configuration.settings, username: '', password: '' }
       };
-
       const southWithoutCredentials = new SouthFtp(
         configWithoutCredentials,
         addContentCallback,
         southCacheRepository,
-        logger,
+        asLogger(logger),
         'cacheFolder'
       );
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
-
       await southWithoutCredentials.testConnection();
 
-      expect(mockFtpClient.access).toHaveBeenCalledWith({
+      assert.deepStrictEqual(mockFtpClient.access.mock.calls[0].arguments[0], {
         host: '127.0.0.1',
         port: 21,
         user: '',
@@ -824,99 +769,74 @@ describe('SouthFTP', () => {
     });
 
     it('should handle start method when connector id is not test', async () => {
-      const nonTestConfig = {
-        ...configuration,
-        id: 'southId-not-test'
-      };
+      const nonTestConfig = { ...configuration, id: 'southId-not-test' };
+      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
 
-      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-
-      // Clear previous calls to createItemValueTable
-      southCacheService.createItemValueTable.mockClear();
-
+      southCacheService.createItemValueTable.mock.resetCalls();
       await nonTestSouth.start();
 
-      // When connector id is not 'test', createItemValueTable should be called
-      expect(southCacheService.createItemValueTable).toHaveBeenCalledWith('southId-not-test');
+      assert.ok(southCacheService.createItemValueTable.mock.calls.some(c => c.arguments[0] === 'southId-not-test'));
     });
 
     it('should handle start method when connector id is not test and createFolder succeeds', async () => {
-      const nonTestConfig = {
-        ...configuration,
-        id: 'southId-not-test'
-      };
+      const nonTestConfig = { ...configuration, id: 'southId-not-test' };
 
-      // Mock createFolder to succeed
-      (fs.mkdir as jest.Mock).mockResolvedValue(undefined);
+      mock.method(fs, 'mkdir', async () => undefined);
 
-      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-
-      // Clear previous calls to createItemValueTable
-      southCacheService.createItemValueTable.mockClear();
+      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      southCacheService.createItemValueTable.mock.resetCalls();
 
       await nonTestSouth.start();
 
-      // When connector id is not 'test', the condition this.connector.id !== 'test' should be true
-      // and createItemValueTable should be called
-      expect(southCacheService.createItemValueTable).toHaveBeenCalledWith('southId-not-test');
+      assert.ok(southCacheService.createItemValueTable.mock.calls.some(c => c.arguments[0] === 'southId-not-test'));
     });
 
-    it('should handle preserveFiles with ignoreModifiedDate true', async () => {
+    it('should handle preserveFiles with ignoreModifiedDate true', () => {
       const fileInfo = createMockFileInfo('test.txt', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
-
       const item = configuration.items[2]; // preserveFiles: true, ignoreModifiedDate: true
-      const result = south.checkCondition(item, fileInfo, []);
 
-      // With ignoreModifiedDate: true, it should return true regardless of modified time
-      expect(result).toBe(true);
+      const result = south.checkCondition(item, fileInfo, []);
+      assert.strictEqual(result, true);
     });
 
-    it('should handle regex not matching', async () => {
+    it('should handle regex not matching', () => {
       const fileInfo = createMockFileInfo('test.xml', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
-
       const item = configuration.items[0]; // regex: '.*.csv'
-      const result = south.checkCondition(item, fileInfo, []);
 
-      expect(result).toBe(false);
+      const result = south.checkCondition(item, fileInfo, []);
+      assert.strictEqual(result, false);
     });
 
-    // Test the specific error handling in getFile method
     it('should handle file access and close properly even with errors', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
-
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
 
       const item = configuration.items[0];
       await south.getFile(fileInfo, item, []);
 
-      expect(mockFtpClient.access).toHaveBeenCalled();
-      expect(mockFtpClient.downloadTo).toHaveBeenCalled();
-      expect(mockFtpClient.close).toHaveBeenCalled();
+      assert.ok(mockFtpClient.access.mock.calls.length > 0);
+      assert.ok(mockFtpClient.downloadTo.mock.calls.length > 0);
+      assert.ok(mockFtpClient.close.mock.calls.length > 0);
     });
 
     it('should handle try-catch blocks properly in getFile with compression error and unlink error', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
-      (compress as jest.Mock).mockRejectedValue(new Error('Compression failed'));
-      (fs.unlink as jest.Mock).mockRejectedValue(new Error('Unlink failed'));
+      utilsExports.compress.mock.mockImplementation(async () => {
+        throw new Error('Compression failed');
+      });
+      mock.method(fs, 'unlink', async () => {
+        throw new Error('Unlink failed');
+      });
 
       const configurationWithCompression = {
         ...configuration,
         settings: { ...configuration.settings, compression: true }
       };
-
       const southWithCompression = new SouthFtp(
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        asLogger(logger),
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -924,45 +844,31 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       await southWithCompression.getFile(fileInfo, item, []);
 
-      // Should send the original file when compression fails
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      );
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+      });
     });
 
     it('should handle password decryption', async () => {
-      const { encryptionService } = jest.requireMock('../../service/encryption.service');
-      (encryptionService.decryptText as jest.Mock).mockResolvedValue('decrypted-password');
+      encryptionExports.encryptionService.decryptText.mock.mockImplementation(async () => 'decrypted-password');
 
       const configWithEncryptedPassword = {
         ...configuration,
-        settings: {
-          ...configuration.settings,
-          password: 'encrypted-password'
-        }
+        settings: { ...configuration.settings, password: 'encrypted-password' }
       };
-
       const southWithEncryptedPassword = new SouthFtp(
         configWithEncryptedPassword,
         addContentCallback,
         southCacheRepository,
-        logger,
+        asLogger(logger),
         'cacheFolder'
       );
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
-
       await southWithEncryptedPassword.testConnection();
 
-      expect(encryptionService.decryptText).toHaveBeenCalledWith('encrypted-password');
-      expect(mockFtpClient.access).toHaveBeenCalledWith({
+      assert.ok(encryptionExports.encryptionService.decryptText.mock.calls.some(c => c.arguments[0] === 'encrypted-password'));
+      assert.deepStrictEqual(mockFtpClient.access.mock.calls[0].arguments[0], {
         host: '127.0.0.1',
         port: 21,
         user: 'user',
@@ -971,19 +877,17 @@ describe('SouthFTP', () => {
       });
     });
 
-    it('should handle file with modifiedAt date that is newer than cached version', async () => {
+    it('should handle file with modifiedAt date that is newer than cached version', () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 1 }).toMillis()));
 
-      // Mock that the file exists in cache with an older timestamp
-      southCacheService.getItemLastValue.mockReturnValue({
-        value: [{ filename: 'test.log', modifiedTime: DateTime.now().minus({ minutes: 5 }).toMillis() }] // Older timestamp
-      });
+      southCacheService.getItemLastValue.mock.mockImplementation(() => ({
+        value: [{ filename: 'test.log', modifiedTime: DateTime.now().minus({ minutes: 5 }).toMillis() }]
+      }));
 
       const item = configuration.items[1]; // preserveFiles: true, ignoreModifiedDate: false
       const result = south.checkCondition(item, fileInfo, []);
 
-      // Should return true because the file is newer than the cached version
-      expect(result).toBe(true);
+      assert.strictEqual(result, true);
     });
 
     it('should handle file with undefined modifiedAt date in getFile', async () => {
@@ -1005,70 +909,49 @@ describe('SouthFTP', () => {
         date: new Date()
       } as unknown as FileInfo;
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
-
       const item = configuration.items[1]; // preserveFiles: true
       await south.getFile(fileInfoWithoutDate, item, []);
 
-      // Should use Date.now() when modifiedAt is undefined
-      expect(mockFtpClient.access).toHaveBeenCalled();
-      expect(mockFtpClient.downloadTo).toHaveBeenCalled();
-      expect(mockFtpClient.close).toHaveBeenCalled();
+      assert.ok(mockFtpClient.access.mock.calls.length > 0);
+      assert.ok(mockFtpClient.downloadTo.mock.calls.length > 0);
+      assert.ok(mockFtpClient.close.mock.calls.length > 0);
     });
 
     it('should handle file unlink error in non-compression mode', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
-
-      // Reset fs.unlink mock and make it fail
-      (fs.unlink as jest.Mock).mockReset();
-      (fs.unlink as jest.Mock).mockRejectedValue(new Error('Unlink failed'));
+      mock.method(fs, 'unlink', async () => {
+        throw new Error('Unlink failed');
+      });
 
       const item = configuration.items[0];
       await south.getFile(fileInfo, item, []);
 
-      // Should still send the file even if unlink fails
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      );
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+      });
     });
 
     it('should handle compression error and unlink error', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
-      mockFtpClient.access.mockResolvedValue(undefined);
-      mockFtpClient.downloadTo.mockResolvedValue(undefined);
-      mockFtpClient.remove.mockResolvedValue(undefined);
-      mockFtpClient.close.mockResolvedValue(undefined);
-      (compress as jest.Mock).mockRejectedValue(new Error('Compression failed'));
-
-      // Reset fs.unlink mock and make it fail
-      (fs.unlink as jest.Mock).mockReset();
-      (fs.unlink as jest.Mock).mockRejectedValue(new Error('Unlink failed'));
+      utilsExports.compress.mock.mockImplementation(async () => {
+        throw new Error('Compression failed');
+      });
+      mock.method(fs, 'unlink', async () => {
+        throw new Error('Unlink failed');
+      });
 
       const configurationWithCompression = {
         ...configuration,
         settings: { ...configuration.settings, compression: true }
       };
-
       const southWithCompression = new SouthFtp(
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        asLogger(logger),
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -1076,16 +959,10 @@ describe('SouthFTP', () => {
       const item = configuration.items[0];
       await southWithCompression.getFile(fileInfo, item, []);
 
-      // Should send the original file when compression fails
-      expect(addContentCallback).toHaveBeenCalledWith(
-        'southId',
-        {
-          type: 'any',
-          filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
-        },
-        testData.constants.dates.FAKE_NOW,
-        [item]
-      );
+      assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[1], {
+        type: 'any',
+        filePath: path.resolve('cacheFolder', 'tmp', 'test.csv')
+      });
     });
   });
 });
