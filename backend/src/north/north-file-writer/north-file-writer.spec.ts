@@ -1,73 +1,79 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { pipeline } from 'node:stream/promises';
-import { createWriteStream, ReadStream } from 'node:fs';
-import NorthFileWriter from './north-file-writer';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
-import CacheService from '../../service/cache/cache.service';
-import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../transformers/oibus-transformer';
+import { mockModule, reloadModule, asLogger, buildNorthEntity } from '../../tests/utils/test-utils';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import type { NorthConnectorEntity } from '../../model/north-connector.model';
+import type { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
+import type { ReadStream } from 'node:fs';
 import { DateTime } from 'luxon';
-import { buildNorthEntity } from '../../tests/utils/test-utils';
+import type NorthFileWriterClass from './north-file-writer';
 
-// Mock Node modules
-jest.mock('node:fs/promises');
-jest.mock('node:stream/promises');
-jest.mock('node:fs', () => {
-  const originalModule = jest.requireActual('node:fs');
-  return {
-    ...originalModule,
-    createWriteStream: jest.fn(),
-    ReadStream: jest.fn()
-  };
-});
-jest.mock('../../service/transformer.service');
+const nodeRequire = createRequire(import.meta.url);
 
-const logger: pino.Logger = new PinoLogger();
-const cacheService: CacheService = new CacheServiceMock();
-const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
-
-jest.mock(
-  '../../service/cache/cache.service',
-  () =>
-    function () {
-      return cacheService;
-    }
-);
-
-let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
-let north: NorthFileWriter;
-const mockWriteStream = { write: jest.fn(), end: jest.fn() };
+// Load these via CJS require so we can use mock.method on the shared module objects
+const streamPromises = nodeRequire('node:stream/promises') as { pipeline: (...args: Array<unknown>) => Promise<void> };
+const nodeFs = nodeRequire('node:fs') as { createWriteStream: (...args: Array<unknown>) => unknown };
 
 describe('NorthFileWriter', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let NorthFileWriter: typeof NorthFileWriterClass;
+  let north: NorthFileWriterClass;
+
+  const logger = new PinoLogger();
+  const cacheService = new CacheServiceMock();
+  const oiBusTransformer = new OIBusTransformerMock();
+
+  const mockWriteStream = { write: mock.fn(), end: mock.fn() };
+
+  const transformerExports = {
+    createTransformer: mock.fn(() => oiBusTransformer)
+  };
+
+  before(() => {
+    mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
+    mockModule(nodeRequire, '../../service/cache/cache.service', {
+      __esModule: true,
+      default: function () {
+        return cacheService;
+      }
+    });
+    NorthFileWriter = reloadModule<{ default: typeof NorthFileWriterClass }>(nodeRequire, './north-file-writer').default;
+  });
+
+  let configuration: NorthConnectorEntity<NorthFileWriterSettings>;
+
+  beforeEach(() => {
+    transformerExports.createTransformer.mock.resetCalls();
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
+
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     configuration = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
       outputFolder: 'outputFolder',
       prefix: 'prefix_',
       suffix: '_suffix'
     });
-    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
-    (createWriteStream as jest.Mock).mockReturnValue(mockWriteStream);
-    (pipeline as jest.Mock).mockResolvedValue(undefined);
 
-    north = new NorthFileWriter(configuration, logger, cacheService);
+    north = new NorthFileWriter(configuration, asLogger(logger), cacheService);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
+    cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should retrieve supported types', () => {
-    expect(north.supportedTypes()).toEqual(['any', 'setpoint', 'time-values']);
+    assert.deepStrictEqual(north.supportedTypes(), ['any', 'setpoint', 'time-values']);
   });
 
   it('should properly handle files with prefix and suffix', async () => {
@@ -84,16 +90,21 @@ describe('NorthFileWriter', () => {
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     const expectedPath = path.join(expectedOutputFolder, expectedFilename);
 
+    const createWriteStreamMock = mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
+    const pipelineMock = mock.method(streamPromises, 'pipeline', async () => undefined);
+
     await north.handleContent(readStream, metadata);
 
-    expect(createWriteStream).toHaveBeenCalledWith(expectedPath);
-    expect(pipeline).toHaveBeenCalledWith(readStream, mockWriteStream);
+    assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
+    assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, [expectedPath]);
+    assert.strictEqual(pipelineMock.mock.calls.length, 1);
+    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, mockWriteStream]);
   });
 
   it('should properly handle files with dynamic replacements in prefix/suffix', async () => {
     configuration.settings.prefix = 'pre_@ConnectorName_';
     configuration.settings.suffix = '_@CurrentDate_suf';
-    north = new NorthFileWriter(configuration, logger, cacheService);
+    north = new NorthFileWriter(configuration, asLogger(logger), cacheService);
 
     const readStream = {} as ReadStream;
     const metadata = {
@@ -104,34 +115,41 @@ describe('NorthFileWriter', () => {
       contentType: 'any'
     };
 
-    const nowDate = DateTime.fromJSDate(new Date(testData.constants.dates.FAKE_NOW)).toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
+    const nowDate = DateTime.fromMillis(new Date(testData.constants.dates.FAKE_NOW).getTime()).toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
 
-    // Simplified verification based on exact logic reconstruction
     const p = `pre_${configuration.name}_`;
     const s = `_${nowDate}_suf`;
     const finalName = `${p}data${s}.csv`;
     const expectedPath = path.join(path.resolve(configuration.settings.outputFolder), finalName);
 
+    const createWriteStreamMock = mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
+    const pipelineMock = mock.method(streamPromises, 'pipeline', async () => undefined);
+
     await north.handleContent(readStream, metadata);
 
-    expect(createWriteStream).toHaveBeenCalledWith(expectedPath);
-    expect(pipeline).toHaveBeenCalledWith(readStream, mockWriteStream);
+    assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
+    assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, [expectedPath]);
+    assert.strictEqual(pipelineMock.mock.calls.length, 1);
+    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, mockWriteStream]);
   });
 
   it('should properly catch handle file error (pipeline failure)', async () => {
     const error = new Error('Pipeline failed');
-    (pipeline as jest.Mock).mockRejectedValue(error);
+    mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
+    mock.method(streamPromises, 'pipeline', async () => {
+      throw error;
+    });
     const readStream = {} as ReadStream;
 
-    await expect(
-      north.handleContent(readStream, {
+    await assert.rejects(async () => {
+      await north.handleContent(readStream, {
         contentFile: 'example.file',
         contentSize: 1234,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
         contentType: 'any'
-      })
-    ).rejects.toThrow('Pipeline failed');
+      });
+    }, /Pipeline failed/);
   });
 
   it('should properly handle files (direct naming)', async () => {
@@ -151,24 +169,28 @@ describe('NorthFileWriter', () => {
     });
 
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
-    // Logic: '' + 'example-123' + '' + '.file'
     const expectedPath = path.join(expectedOutputFolder, 'example-123.file');
+
+    const createWriteStreamMock = mock.method(nodeFs, 'createWriteStream', () => mockWriteStream);
+    const pipelineMock = mock.method(streamPromises, 'pipeline', async () => undefined);
 
     await north.handleContent(readStream, metadata);
 
-    expect(createWriteStream).toHaveBeenCalledWith(expectedPath);
-    expect(pipeline).toHaveBeenCalledWith(readStream, mockWriteStream);
+    assert.strictEqual(createWriteStreamMock.mock.calls.length, 1);
+    assert.deepStrictEqual(createWriteStreamMock.mock.calls[0].arguments, [expectedPath]);
+    assert.strictEqual(pipelineMock.mock.calls.length, 1);
+    assert.deepStrictEqual(pipelineMock.mock.calls[0].arguments, [readStream, mockWriteStream]);
   });
 
   it('should have access to output folder (Test Connection)', async () => {
-    (fs.access as jest.Mock).mockResolvedValue(undefined);
-    (fs.readdir as jest.Mock).mockResolvedValue(['file1.txt', 'file2.csv', 'file3.json']);
+    const accessMock = mock.method(fs, 'access', async () => undefined);
+    mock.method(fs, 'readdir', async () => ['file1.txt', 'file2.csv', 'file3.json'] as unknown as Array<string>);
 
     const testResult = await north.testConnection();
 
     const outputFolder = path.resolve(configuration.settings.outputFolder);
-    expect(fs.access).toHaveBeenCalledWith(outputFolder, expect.anything());
-    expect(testResult).toEqual({
+    assert.strictEqual(accessMock.mock.calls.length, 2);
+    assert.deepStrictEqual(testResult, {
       items: [
         { key: 'Output Folder', value: outputFolder },
         { key: 'Files', value: '3' }
@@ -178,21 +200,37 @@ describe('NorthFileWriter', () => {
 
   it('should handle folder not existing (Test Connection)', async () => {
     const outputFolder = path.resolve(configuration.settings.outputFolder);
-
     const errorMessage = 'Folder does not exist';
-    (fs.access as jest.Mock).mockRejectedValueOnce(new Error(errorMessage));
 
-    await expect(north.testConnection()).rejects.toThrow(`Access error on "${outputFolder}": ${errorMessage}`);
+    mock.method(fs, 'access', async () => {
+      throw new Error(errorMessage);
+    });
+
+    await assert.rejects(
+      async () => {
+        await north.testConnection();
+      },
+      new Error(`Access error on "${outputFolder}": ${errorMessage}`)
+    );
   });
 
   it('should handle not having write access on folder (Test Connection)', async () => {
     const outputFolder = path.resolve(configuration.settings.outputFolder);
-
     const errorMessage = 'No write access';
-    (fs.access as jest.Mock)
-      .mockResolvedValueOnce(undefined) // F_OK success
-      .mockRejectedValueOnce(new Error(errorMessage)); // W_OK fail
+    let callCount = 0;
 
-    await expect(north.testConnection()).rejects.toThrow(`Access error on "${outputFolder}": ${errorMessage}`);
+    mock.method(fs, 'access', async () => {
+      callCount++;
+      if (callCount === 2) {
+        throw new Error(errorMessage);
+      }
+    });
+
+    await assert.rejects(
+      async () => {
+        await north.testConnection();
+      },
+      new Error(`Access error on "${outputFolder}": ${errorMessage}`)
+    );
   });
 });
