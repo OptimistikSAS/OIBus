@@ -1,57 +1,56 @@
-import path from 'node:path';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
-import SouthSQLite from './south-sqlite';
-import * as utils from '../../service/utils';
-import pino from 'pino';
+import path from 'node:path';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger, buildSouthEntity } from '../../tests/utils/test-utils';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { DateTime } from 'luxon';
-import {
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type SouthSQLiteClass from './south-sqlite';
+import type {
   SouthSQLiteItemSettings,
   SouthSQLiteItemSettingsDateTimeFields,
   SouthSQLiteSettings
 } from '../../../shared/model/south-settings.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import testData from '../../tests/utils/test-data';
-import { buildSouthEntity } from '../../tests/utils/test-utils';
+import { DateTime } from 'luxon';
 
-jest.mock('node:fs/promises');
-jest.mock('../../service/utils');
+const nodeRequire = createRequire(import.meta.url);
 
-const all = jest.fn();
+const logger = new PinoLogger();
+const addContentCallback = mock.fn();
+const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+let southCacheService: SouthCacheServiceMock;
 
-/**
- * Create a mock object for SQLite database
- */
-const DatabaseMock = jest.fn().mockImplementation(() => {
-  return {
-    prepare: jest.fn(),
-    transaction: jest.fn(),
-    close: jest.fn()
-  };
-});
+const mockDatabase = {
+  prepare: mock.fn(),
+  transaction: mock.fn(),
+  close: mock.fn(),
+  all: mock.fn()
+};
 
-const mockDatabase = new DatabaseMock();
-jest.mock('better-sqlite3', () => () => mockDatabase);
-
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
-
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
-    }
-);
-
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
+const utilsExports = {
+  checkAge: mock.fn(() => true),
+  compress: mock.fn(async () => undefined),
+  delay: mock.fn(async () => undefined),
+  generateIntervals: mock.fn(() => []),
+  groupItemsByGroup: mock.fn(() => []),
+  validateCronExpression: mock.fn(() => ({ expression: '' })),
+  formatInstant: mock.fn((inst: unknown) => inst),
+  convertDateTimeToInstant: mock.fn((inst: unknown) => inst),
+  logQuery: mock.fn(),
+  persistResults: mock.fn(async () => undefined),
+  generateReplacementParameters: mock.fn(() => []),
+  generateCsvContent: mock.fn(() => ''),
+  generateFilenameForSerialization: mock.fn(() => 'file.csv')
+};
 
 const connectorSettings: SouthSQLiteSettings = {
   databasePath: './database.db'
 };
+
 const itemSettings: Array<SouthSQLiteItemSettings> = [
   {
     query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
@@ -125,176 +124,254 @@ const itemSettings: Array<SouthSQLiteItemSettings> = [
   }
 ];
 
+let SouthSQLite: typeof SouthSQLiteClass;
+
 describe('SouthSQLite', () => {
-  let south: SouthSQLite;
+  let south: SouthSQLiteClass;
   const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', connectorSettings, itemSettings);
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  before(() => {
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, 'better-sqlite3', () => mockDatabase);
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    SouthSQLite = reloadModule<{ default: typeof SouthSQLiteClass }>(nodeRequire, './south-sqlite').default;
+  });
 
-    (utils.generateReplacementParameters as jest.Mock).mockReturnValue([
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    addContentCallback.mock.resetCalls();
+
+    mockDatabase.prepare = mock.fn();
+    mockDatabase.all = mock.fn();
+
+    utilsExports.formatInstant = mock.fn((inst: unknown) => inst);
+    utilsExports.convertDateTimeToInstant = mock.fn((inst: unknown) => inst);
+    utilsExports.logQuery = mock.fn();
+    utilsExports.persistResults = mock.fn(async () => undefined);
+    utilsExports.generateReplacementParameters = mock.fn(() => [
       new Date(testData.constants.dates.FAKE_NOW),
       new Date(testData.constants.dates.FAKE_NOW)
     ]);
 
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should properly run historyQuery', async () => {
     const startTime = testData.constants.dates.DATE_1;
-    south.queryData = jest.fn().mockReturnValueOnce([
+    const queryDataResults = [
       { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
       { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-    ]);
-    (utils.formatInstant as jest.Mock).mockReturnValueOnce('2020-02-01 00:00:00.000');
-    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+    ];
+    const queryDataMock = mock.method(
+      south as unknown as Record<string, unknown>,
+      'queryData',
+      mock.fn(async () => queryDataResults)
+    );
+    utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
 
     const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(utils.persistResults).toHaveBeenCalledTimes(1);
-    expect(south.queryData).toHaveBeenCalledTimes(1);
-    expect(south.queryData).toHaveBeenCalledWith(
+    assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
+    assert.strictEqual(queryDataMock.mock.calls.length, 1);
+    assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
       configuration.items[0],
       testData.constants.dates.DATE_1,
       testData.constants.dates.FAKE_NOW
-    );
-    expect(result).toEqual({
+    ]);
+    assert.deepStrictEqual(result, {
       trackedInstant: '2020-03-01T00:00:00.000Z',
       value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
     });
-    expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${configuration.items[0].name} in 0 ms`);
+    assert.strictEqual(
+      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `Found 2 results for item ${configuration.items[0].name} in 0 ms`
+      ),
+      true
+    );
   });
 
   it('should properly run historyQuery without result', async () => {
     const startTime = testData.constants.dates.DATE_1;
-    south.queryData = jest.fn().mockReturnValueOnce([]);
+    const queryDataMock = mock.method(
+      south as unknown as Record<string, unknown>,
+      'queryData',
+      mock.fn(async () => [])
+    );
 
     const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(utils.persistResults).not.toHaveBeenCalled();
-    expect(south.queryData).toHaveBeenCalledTimes(1);
-    expect(south.queryData).toHaveBeenCalledWith(
+    assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
+    assert.strictEqual(queryDataMock.mock.calls.length, 1);
+    assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
       configuration.items[0],
       testData.constants.dates.DATE_1,
       testData.constants.dates.FAKE_NOW
+    ]);
+    assert.deepStrictEqual(result, { trackedInstant: null, value: null });
+    assert.strictEqual(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `No result found for item ${configuration.items[0].name}. Request done in 0 ms`
+      ),
+      true
     );
-    expect(result).toEqual({
-      trackedInstant: null,
-      value: null
-    });
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
   });
 
   it('should get data from sqlite', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    all.mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
-    (utils.formatInstant as jest.Mock)
-      .mockReturnValueOnce(DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'))
-      .mockReturnValueOnce(DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'));
+    mockDatabase.all = mock.fn(() => [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    utilsExports.formatInstant = mock.fn(
+      (() => {
+        let callCount = 0;
+        return () => {
+          callCount++;
+          if (callCount === 1) return DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
+          return DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
+        };
+      })()
+    );
 
-    (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
+    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
     const result = await south.queryData(configuration.items[0], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(
+    assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments, [
       configuration.items[0].settings.query,
       DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
       DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      logger
-    );
+      asLogger(logger)
+    ]);
 
-    expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });
 
   it('should get data from sqlite without reference', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    all.mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    mockDatabase.all = mock.fn(() => [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
 
-    (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
     const result = await south.queryData(configuration.items[1], startTime, endTime);
-    expect(utils.formatInstant).not.toHaveBeenCalled();
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
+    assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
+    assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments, [
+      configuration.items[1].settings.query,
+      startTime,
+      endTime,
+      asLogger(logger)
+    ]);
 
-    expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });
 
   it('should manage query error', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
-    all.mockImplementation(() => {
+    mockDatabase.all = mock.fn(() => {
       throw new Error('query error');
     });
+    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
 
-    let error;
-    try {
-      await south.queryData(configuration.items[1], startTime, endTime);
-    } catch (err) {
-      error = err;
-    }
-
-    expect(error).toEqual(new Error('query error'));
+    await assert.rejects(south.queryData(configuration.items[1], startTime, endTime), { message: 'query error' });
   });
 
   it('should test item', async () => {
     const formattedInstant = '2020-01-01T00:00:00.000Z';
-    south.queryData = jest.fn().mockReturnValueOnce([
-      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-    ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
-    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+    utilsExports.formatInstant = mock.fn(() => formattedInstant);
+    const queryDataMock = mock.method(
+      south as unknown as Record<string, unknown>,
+      'queryData',
+      mock.fn(async () => [
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+    );
 
     await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
+    assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime]);
   });
 
   it('should test item without datetimeFields', async () => {
     const formattedInstant = '2020-01-01T00:00:00.000Z';
-    south.queryData = jest.fn().mockReturnValueOnce([
-      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-    ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
-    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+    utilsExports.formatInstant = mock.fn(() => formattedInstant);
+    const queryDataMock = mock.method(
+      south as unknown as Record<string, unknown>,
+      'queryData',
+      mock.fn(async () => [
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+    );
 
     await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    expect(south.queryData).toHaveBeenCalledWith(configuration.items[1], startTime, endTime);
+    assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime]);
   });
 });
 
 describe('SouthSQLite test connection', () => {
-  let south: SouthSQLite;
+  let south: SouthSQLiteClass;
   const configuration = buildSouthEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>('sqlite', connectorSettings, itemSettings);
+  const dbPath = path.resolve(configuration.settings.databasePath);
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  before(() => {
+    // SouthSQLite is already loaded by the first describe block's before()
+    // No need to reload; module is shared
+  });
+
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    addContentCallback.mock.resetCalls();
+
+    mockDatabase.prepare = mock.fn();
+    mockDatabase.all = mock.fn();
+
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
-  const dbPath = path.resolve(configuration.settings.databasePath);
-
   it('Database is reachable and has tables', async () => {
-    const tableCountAll = jest.fn().mockReturnValue([{ table_count: 21 }]);
-    const versionAll = jest.fn().mockReturnValue([{ version: '3.39.5' }]);
-    (mockDatabase.prepare as jest.Mock).mockReturnValueOnce({ all: tableCountAll }).mockReturnValueOnce({ all: versionAll });
-    (fs.stat as jest.Mock).mockResolvedValue({ size: 10240 });
+    const tableCountAll = mock.fn(() => [{ table_count: 21 }]);
+    const versionAll = mock.fn(() => [{ version: '3.39.5' }]);
+    let prepareCallCount = 0;
+    mockDatabase.prepare = mock.fn(() => {
+      prepareCallCount++;
+      if (prepareCallCount === 1) return { all: tableCountAll };
+      return { all: versionAll };
+    });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => ({ size: 10240 }))
+    );
 
     const testResult = await south.testConnection();
 
-    expect(testResult).toEqual({
+    assert.deepStrictEqual(testResult, {
       items: [
         { key: 'SQLite Version', value: '3.39.5' },
         { key: 'Tables', value: '21' },
@@ -304,14 +381,28 @@ describe('SouthSQLite test connection', () => {
   });
 
   it('Database is reachable but version is unavailable', async () => {
-    const tableCountAll = jest.fn().mockReturnValue([{ table_count: 5 }]);
-    const versionAll = jest.fn().mockReturnValue([{}]); // no version key
-    (mockDatabase.prepare as jest.Mock).mockReturnValueOnce({ all: tableCountAll }).mockReturnValueOnce({ all: versionAll });
-    (fs.stat as jest.Mock).mockResolvedValue({ size: 2048 });
+    const tableCountAll = mock.fn(() => [{ table_count: 5 }]);
+    const versionAll = mock.fn(() => [{}]);
+    let prepareCallCount = 0;
+    mockDatabase.prepare = mock.fn(() => {
+      prepareCallCount++;
+      if (prepareCallCount === 1) return { all: tableCountAll };
+      return { all: versionAll };
+    });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => ({ size: 2048 }))
+    );
 
     const testResult = await south.testConnection();
 
-    expect(testResult).toEqual({
+    assert.deepStrictEqual(testResult, {
       items: [
         { key: 'Tables', value: '5' },
         { key: 'File Size', value: '2.0 KB' }
@@ -321,33 +412,52 @@ describe('SouthSQLite test connection', () => {
 
   it('Database file does not exist', async () => {
     const errorMessage = 'File does not exist';
-    (fs.access as jest.Mock).mockImplementationOnce(() => {
-      throw new Error(errorMessage);
-    });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(() => {
+        throw new Error(errorMessage);
+      })
+    );
 
-    await expect(south.testConnection()).rejects.toThrow(`Access error on "${dbPath}". ${errorMessage}`);
+    await assert.rejects(south.testConnection(), { message: `Access error on "${dbPath}". ${errorMessage}` });
   });
 
   it('Database connection error', async () => {
     const errorMessage = `Can't query database`;
-    (mockDatabase.prepare as jest.Mock).mockImplementationOnce(() => {
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mockDatabase.prepare = mock.fn(() => {
       throw new Error(errorMessage);
     });
 
-    await expect(south.testConnection()).rejects.toThrow(`Unable to query system table. ${errorMessage}`);
+    await assert.rejects(south.testConnection(), { message: `Unable to query system table. ${errorMessage}` });
   });
 
   it('Database has no tables', async () => {
-    all.mockReturnValue([{ table_count: 0 }]);
-    (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mockDatabase.all = mock.fn(() => [{ table_count: 0 }]);
+    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
 
-    await expect(south.testConnection()).rejects.toThrow(`Database "${dbPath}" has no table`);
+    await assert.rejects(south.testConnection(), { message: `Database "${dbPath}" has no tables` });
   });
 
   it('Database does not return count of tables', async () => {
-    all.mockReturnValue([]);
-    (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
+    mock.method(
+      fs,
+      'access',
+      mock.fn(async () => undefined)
+    );
+    mockDatabase.all = mock.fn(() => []);
+    mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
 
-    await expect(south.testConnection()).rejects.toThrow(`Database "${dbPath}" has no table`);
+    await assert.rejects(south.testConnection(), { message: `Database "${dbPath}" has no tables` });
   });
 });
