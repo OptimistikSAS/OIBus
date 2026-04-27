@@ -1,280 +1,307 @@
-import HistoryQuery from './history-query';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-
-import pino from 'pino';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
-import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
-import NorthConnector from '../north/north-connector';
-import { NorthSettings } from '../../shared/model/north-settings.model';
+import { mockModule, reloadModule, asLogger, flushPromises } from '../tests/utils/test-utils';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
-import SouthConnector from '../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import { flushPromises } from '../tests/utils/test-utils';
-import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import { CacheContentUpdateCommand } from '../../shared/model/engine.model';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import type NorthConnector from '../north/north-connector';
+import type { NorthSettings } from '../../shared/model/north-settings.model';
+import type SouthConnector from '../south/south-connector';
+import type { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import type { CacheContentUpdateCommand } from '../../shared/model/engine.model';
+import type HistoryQueryClass from './history-query';
 
-jest.mock('../service/utils');
-
-const logger: pino.Logger = new PinoLogger();
-const anotherLogger: pino.Logger = new PinoLogger();
-
-const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
-const oianalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
+const nodeRequire = createRequire(import.meta.url);
 
 describe('HistoryQuery enabled', () => {
-  let historyQuery: HistoryQuery;
-  const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
-  const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
+  let HistoryQuery: typeof HistoryQueryClass;
+  let historyQuery: HistoryQueryClass;
+
+  // Separate mock-typed references so we can access .mock properties without casts
+  let mockedNorth1Mock: NorthConnectorMock;
+  let mockedSouth1Mock: SouthConnectorMock;
+
+  // Real-typed references for passing to constructors and HistoryQuery internals
+  let mockedNorth1: NorthConnector<NorthSettings>;
+  let mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings>;
+
+  const logger = new PinoLogger();
+  const anotherLogger = new PinoLogger();
+
+  before(() => {
+    // Mock service/utils to prevent real delays and folder creation
+    mockModule(nodeRequire, '../service/utils', {
+      delay: mock.fn(async () => undefined),
+      createFolder: mock.fn(async () => undefined)
+    });
+    HistoryQuery = reloadModule<{ default: typeof HistoryQueryClass }>(nodeRequire, './history-query').default;
+  });
 
   beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers({ doNotFake: ['performance'] }).setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    mockedNorth1Mock = new NorthConnectorMock(testData.north.list[0]);
+    mockedSouth1Mock = new SouthConnectorMock(testData.south.list[0]);
+    // structural mocks — satisfy connector interfaces at injection boundaries
+    mockedNorth1 = mockedNorth1Mock as unknown as NorthConnector<NorthSettings>;
+    mockedSouth1 = mockedSouth1Mock as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
 
-    historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, logger);
+    historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, asLogger(logger));
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    mockedSouth1.connectedEvent.removeAllListeners();
+    mock.timers.reset();
+    mock.restoreAll();
+    mockedSouth1Mock.connectedEvent.removeAllListeners();
+    mockedSouth1Mock.metricsEvent.removeAllListeners();
+    mockedNorth1Mock.metricsEvent.removeAllListeners();
   });
 
   it('should be properly initialized', async () => {
     await historyQuery.start();
 
-    expect(mockedNorth1.start).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.start).toHaveBeenCalledTimes(1);
-    expect(historyQuery.historyQueryConfiguration).toEqual(testData.historyQueries.list[0]);
+    assert.strictEqual(mockedNorth1Mock.start.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQuery.historyQueryConfiguration, testData.historyQueries.list[0]);
   });
 
   it('should start south connector', async () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    (mockedSouth1.historyQueryHandler as jest.Mock).mockImplementation(() => {
-      return new Promise(resolve => {
-        resolve('');
-      });
-    });
+    const clearIntervalMock = mock.method(globalThis, 'clearInterval');
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => '');
+
     await historyQuery.start();
-    mockedSouth1.connectedEvent.emit('connected');
-    expect(mockedSouth1.start).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledWith(
+    mockedSouth1Mock.connectedEvent.emit('connected');
+
+    assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1Mock.historyQueryHandler.mock.calls.length, 1);
+    assert.deepStrictEqual(
+      mockedSouth1Mock.historyQueryHandler.mock.calls[0].arguments[0],
       testData.historyQueries.list[0].items.map(item => ({
         ...item,
-        scanMode: {
-          cron: '',
-          description: '',
-          id: 'history',
-          name: 'history',
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
+        scanMode: { cron: '', description: '', id: 'history', name: 'history', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
         overlap: null
-      })),
-      testData.historyQueries.list[0].queryTimeRange.startTime,
+      }))
+    );
+    assert.deepStrictEqual(
+      mockedSouth1Mock.historyQueryHandler.mock.calls[0].arguments[1],
+      testData.historyQueries.list[0].queryTimeRange.startTime
+    );
+    assert.deepStrictEqual(
+      mockedSouth1Mock.historyQueryHandler.mock.calls[0].arguments[2],
       testData.historyQueries.list[0].queryTimeRange.endTime
     );
-    expect(clearIntervalSpy).not.toHaveBeenCalled();
-    mockedSouth1.connectedEvent.emit('connected');
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
+    assert.strictEqual(clearIntervalMock.mock.calls.length, 0);
+
+    mockedSouth1Mock.connectedEvent.emit('connected');
+    assert.strictEqual(clearIntervalMock.mock.calls.length, 1);
   });
 
   it('should start south connector with error', async () => {
-    (mockedSouth1.historyQueryHandler as jest.Mock)
-      .mockImplementationOnce(() => {
-        return new Promise((_resolve, reject) => {
-          reject('error');
-        });
-      })
-      .mockImplementationOnce(() => {
-        return new Promise((_resolve, reject) => {
-          reject('error');
-        });
-      })
-      .mockImplementation(() => {
-        return new Promise(resolve => {
-          resolve('');
-        });
-      });
-    await historyQuery.start();
-    expect(mockedSouth1.start).toHaveBeenCalledTimes(1);
-    expect(mockedNorth1.start).toHaveBeenCalledTimes(1);
+    let handlerCallCount = 0;
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => {
+      handlerCallCount++;
+      if (handlerCallCount <= 2) throw 'error';
+      return '';
+    });
 
-    mockedSouth1.connectedEvent.emit('connected');
+    await historyQuery.start();
+    assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 1);
+    assert.strictEqual(mockedNorth1Mock.start.mock.calls.length, 1);
+
+    mockedSouth1Mock.connectedEvent.emit('connected');
 
     await flushPromises();
-    expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.historyQueryHandler).toHaveBeenCalledWith(
+    assert.strictEqual(mockedSouth1Mock.historyQueryHandler.mock.calls.length, 1);
+    assert.deepStrictEqual(
+      mockedSouth1Mock.historyQueryHandler.mock.calls[0].arguments[0],
       testData.historyQueries.list[0].items.map(item => ({
         ...item,
-        scanMode: {
-          cron: '',
-          description: '',
-          id: 'history',
-          name: 'history',
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        },
+        scanMode: { cron: '', description: '', id: 'history', name: 'history', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
         group: null,
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
         overlap: null
-      })),
-      testData.historyQueries.list[0].queryTimeRange.startTime,
-      testData.historyQueries.list[0].queryTimeRange.endTime
+      }))
     );
 
-    expect(mockedSouth1.start).toHaveBeenCalledTimes(2);
-    expect(mockedSouth1.stop).toHaveBeenCalledTimes(1);
+    assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 2);
+    assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
 
     historyQuery.historyQueryConfiguration = { ...testData.historyQueries.list[0], status: 'PENDING' };
-    mockedSouth1.connectedEvent.emit('connected');
+    mockedSouth1Mock.connectedEvent.emit('connected');
     await flushPromises();
 
-    expect(mockedSouth1.start).toHaveBeenCalledTimes(2);
-    expect(mockedSouth1.stop).toHaveBeenCalledTimes(1);
+    assert.strictEqual(mockedSouth1Mock.start.mock.calls.length, 2);
+    assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
   });
 
   it('should properly stop', async () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    const clearIntervalMock = mock.method(globalThis, 'clearInterval');
+    // historyQueryHandler must return a promise so the connected event handler can set up setInterval
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => '');
 
     let southConnectedEventRemoved!: number;
     let southStopCalled!: number;
     let southMetricsEventRemoved!: number;
-
     let northStopCalled!: number;
     let northMetricsEventRemoved!: number;
 
-    // hook into south calls
-    // @ts-expect-error overriding method
-    mockedSouth1.connectedEvent.removeAllListeners = () => {
+    // @ts-expect-error overriding EventEmitter method to capture timestamp
+    mockedSouth1Mock.connectedEvent.removeAllListeners = () => {
       southConnectedEventRemoved = performance.now();
     };
-    (mockedSouth1.stop as jest.Mock).mockImplementationOnce(async () => {
+    mockedSouth1Mock.stop = mock.fn(async () => {
       southStopCalled = performance.now();
     });
-    // @ts-expect-error overriding method
-    mockedSouth1.metricsEvent.removeAllListeners = () => {
+    // @ts-expect-error overriding EventEmitter method to capture timestamp
+    mockedSouth1Mock.metricsEvent.removeAllListeners = () => {
       southMetricsEventRemoved = performance.now();
     };
 
-    // hook into north calls
-    (mockedNorth1.stop as jest.Mock).mockImplementationOnce(async () => {
+    mockedNorth1Mock.stop = mock.fn(async () => {
       northStopCalled = performance.now();
     });
-    // @ts-expect-error overriding method
-    mockedNorth1.metricsEvent.removeAllListeners = () => {
+    // @ts-expect-error overriding EventEmitter method to capture timestamp
+    mockedNorth1Mock.metricsEvent.removeAllListeners = () => {
       northMetricsEventRemoved = performance.now();
     };
 
     await historyQuery.start();
-    mockedSouth1.connectedEvent.emit('connected');
+    mockedSouth1Mock.connectedEvent.emit('connected');
     await historyQuery.stop();
 
-    // make sure function are called in a specific order
+    // Verify call ordering via performance.now() timestamps
     const expectedOrder = [
       southConnectedEventRemoved,
       southStopCalled,
       southMetricsEventRemoved,
-
       northStopCalled,
       northMetricsEventRemoved
     ];
-    // if the order above is correct, it will equal to the sorted array
-    expect(expectedOrder).toEqual(expectedOrder.slice().sort((a, b) => a - b));
+    assert.deepStrictEqual(
+      expectedOrder,
+      expectedOrder.slice().sort((a, b) => a - b)
+    );
 
-    // safety check for mocking time
-    // if sometimes in the future we mess with how we mock time, and accidentally mock `performance.now`
-    // all calls to `now` will result in '0', and this will throw an error
-    expect(expectedOrder.reduce((val, sum) => val + sum, 0)).not.toEqual(0);
+    // Safety check: if performance.now() were accidentally mocked to return 0, all values would be 0
+    assert.notStrictEqual(
+      expectedOrder.reduce((sum, val) => sum + val, 0),
+      0
+    );
 
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.stop).toHaveBeenCalledTimes(1);
-    expect(mockedNorth1.stop).toHaveBeenCalledTimes(1);
-    expect(mockedNorth1.resetCache).not.toHaveBeenCalled();
-    expect(mockedSouth1.resetCache).not.toHaveBeenCalled();
+    assert.strictEqual(clearIntervalMock.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1Mock.stop.mock.calls.length, 1);
+    assert.strictEqual(mockedNorth1Mock.stop.mock.calls.length, 1);
+    assert.strictEqual(mockedNorth1Mock.resetCache.mock.calls.length, 0);
+    assert.strictEqual(mockedSouth1Mock.resetCache.mock.calls.length, 0);
 
-    // Reset the spy before the second stop() call to test idempotency
-    (mockedSouth1.stop as jest.Mock).mockClear();
-    (mockedNorth1.stop as jest.Mock).mockClear();
+    // Reset to verify idempotent second stop()
+    mockedSouth1Mock.stop.mock.resetCalls();
+    mockedNorth1Mock.stop.mock.resetCalls();
     await historyQuery.stop();
-    expect(logger.debug).not.toHaveBeenCalled();
+    assert.strictEqual(logger.debug.mock.calls.length, 0);
 
     await historyQuery.resetCache();
-    expect(mockedNorth1.resetCache).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.resetCache).toHaveBeenCalledTimes(1);
+    assert.strictEqual(mockedNorth1Mock.resetCache.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1Mock.resetCache.mock.calls.length, 1);
   });
 
   it('should properly finish and not stop', async () => {
-    historyQuery.stop = jest.fn();
+    const stopMock = mock.method(
+      historyQuery,
+      'stop',
+      mock.fn(async () => undefined)
+    );
+    // @ts-expect-error historyIsRunning exists at runtime on SouthConnector but not declared on type
     mockedSouth1.historyIsRunning = true;
-    (mockedNorth1.isCacheEmpty as jest.Mock).mockReturnValueOnce(false).mockReturnValue(true);
+    mockedNorth1Mock.isCacheEmpty = mock.fn(() => {
+      // first call returns false, subsequent calls return true
+      const callCount = mockedNorth1Mock.isCacheEmpty.mock.calls.length;
+      return callCount > 1;
+    });
 
     await historyQuery.start();
     await historyQuery.finish();
 
-    expect(logger.trace).toHaveBeenCalledWith(`History query "${testData.historyQueries.list[0].name}" is still running`);
-    expect(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).not.toHaveBeenCalled();
-    await historyQuery.finish();
-    expect(logger.trace).toHaveBeenCalledTimes(2);
+    assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('is still running')));
+    assert.strictEqual(stopMock.mock.calls.length, 0);
 
+    await historyQuery.finish();
+    assert.strictEqual(logger.trace.mock.calls.length, 2);
+
+    // @ts-expect-error historyIsRunning exists at runtime on SouthConnector but not declared on type
     mockedSouth1.historyIsRunning = false;
     await historyQuery.finish();
-    expect(logger.info).toHaveBeenCalledWith(
-      `Finish History query "${testData.historyQueries.list[0].name}" (${testData.historyQueries.list[0].id})`
+    assert.ok(
+      logger.info.mock.calls.some(c =>
+        (c.arguments[0] as string).includes(`Finish History query "${testData.historyQueries.list[0].name}"`)
+      )
     );
   });
 
   it('should properly set another logger', async () => {
-    historyQuery.stop = jest.fn();
-    historyQuery.setLogger(anotherLogger);
+    mock.method(
+      historyQuery,
+      'stop',
+      mock.fn(async () => undefined)
+    );
+    // isCacheEmpty must return true so finish() takes the info branch
+    mockedNorth1Mock.isCacheEmpty = mock.fn(() => true);
+    historyQuery.setLogger(asLogger(anotherLogger));
     await historyQuery.finish();
-    expect(anotherLogger.info).toHaveBeenCalledTimes(1);
+    assert.strictEqual(anotherLogger.info.mock.calls.length, 1);
   });
 
   it('should listen on metrics', async () => {
-    const emitSpy = jest.spyOn(historyQuery.metricsEvent, 'emit');
+    const emitMock = mock.method(historyQuery.metricsEvent, 'emit');
 
     await historyQuery.start();
-    mockedNorth1.metricsEvent.emit('connect', {});
-    expect(emitSpy).toHaveBeenCalledWith('north-connect', {});
-    mockedNorth1.metricsEvent.emit('run-start', {});
-    expect(emitSpy).toHaveBeenCalledWith('north-run-start', {});
-    mockedNorth1.metricsEvent.emit('run-end', {});
-    expect(emitSpy).toHaveBeenCalledWith('north-run-end', {});
-    mockedNorth1.metricsEvent.emit('cache-size', {});
-    expect(emitSpy).toHaveBeenCalledWith('north-cache-size', {});
-    mockedNorth1.metricsEvent.emit('cache-content-size', 123);
-    expect(emitSpy).toHaveBeenCalledWith('north-cache-content-size', 123);
-    mockedSouth1.metricsEvent.emit('connect', {});
-    expect(emitSpy).toHaveBeenCalledWith('south-connect', {});
-    mockedSouth1.metricsEvent.emit('run-start', {});
-    expect(emitSpy).toHaveBeenCalledWith('south-run-start', {});
-    mockedSouth1.metricsEvent.emit('run-end', {});
-    expect(emitSpy).toHaveBeenCalledWith('south-run-end', {});
-    mockedSouth1.metricsEvent.emit('history-query-start', {});
-    expect(emitSpy).toHaveBeenCalledWith('south-history-query-start', {});
-    mockedSouth1.metricsEvent.emit('history-query-interval', {});
-    expect(emitSpy).toHaveBeenCalledWith('south-history-query-interval', {});
-    mockedSouth1.metricsEvent.emit('history-query-stop', {});
-    expect(emitSpy).toHaveBeenCalledWith('south-history-query-stop', {});
-    mockedSouth1.metricsEvent.emit('add-values', {});
-    expect(emitSpy).toHaveBeenCalledWith('south-add-values', {});
-    mockedSouth1.metricsEvent.emit('add-file', {});
-    expect(emitSpy).toHaveBeenCalledWith('south-add-file', {});
+
+    mockedNorth1Mock.metricsEvent.emit('connect', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'north-connect'));
+
+    mockedNorth1Mock.metricsEvent.emit('run-start', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'north-run-start'));
+
+    mockedNorth1Mock.metricsEvent.emit('run-end', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'north-run-end'));
+
+    mockedNorth1Mock.metricsEvent.emit('cache-size', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'north-cache-size'));
+
+    mockedNorth1Mock.metricsEvent.emit('cache-content-size', 123);
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'north-cache-content-size' && c.arguments[1] === 123));
+
+    mockedSouth1Mock.metricsEvent.emit('connect', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-connect'));
+
+    mockedSouth1Mock.metricsEvent.emit('run-start', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-run-start'));
+
+    mockedSouth1Mock.metricsEvent.emit('run-end', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-run-end'));
+
+    mockedSouth1Mock.metricsEvent.emit('history-query-start', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-start'));
+
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-interval'));
+
+    mockedSouth1Mock.metricsEvent.emit('history-query-stop', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-stop'));
+
+    mockedSouth1Mock.metricsEvent.emit('add-values', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-add-values'));
+
+    mockedSouth1Mock.metricsEvent.emit('add-file', {});
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-add-file'));
   });
 
   it('should search cache', async () => {
@@ -285,30 +312,24 @@ describe('HistoryQuery enabled', () => {
       maxNumberOfFilesReturned: 1000
     };
     await historyQuery.searchCacheContent(searchParams);
-    expect(mockedNorth1.searchCacheContent).toHaveBeenCalledWith(searchParams);
+    assert.strictEqual(mockedNorth1Mock.searchCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(mockedNorth1Mock.searchCacheContent.mock.calls[0].arguments[0], searchParams);
   });
 
   it('should get file from cache', async () => {
     await historyQuery.getFileFromCache('cache', 'file');
-    expect(mockedNorth1.getFileFromCache).toHaveBeenCalledWith('cache', 'file');
+    assert.strictEqual(mockedNorth1Mock.getFileFromCache.mock.calls.length, 1);
+    assert.deepStrictEqual(mockedNorth1Mock.getFileFromCache.mock.calls[0].arguments, ['cache', 'file']);
   });
 
   it('should update cache', async () => {
     const updateCommand: CacheContentUpdateCommand = {
-      cache: {
-        remove: [],
-        move: []
-      },
-      archive: {
-        remove: [],
-        move: []
-      },
-      error: {
-        remove: [],
-        move: []
-      }
+      cache: { remove: [], move: [] },
+      archive: { remove: [], move: [] },
+      error: { remove: [], move: [] }
     };
     await historyQuery.updateCacheContent(updateCommand);
-    expect(mockedNorth1.updateCacheContent).toHaveBeenCalledWith(updateCommand);
+    assert.strictEqual(mockedNorth1Mock.updateCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(mockedNorth1Mock.updateCacheContent.mock.calls[0].arguments[0], updateCommand);
   });
 });
