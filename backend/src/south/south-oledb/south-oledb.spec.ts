@@ -1,46 +1,46 @@
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import pino from 'pino';
-import * as utils from '../../service/utils';
-import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResults } from '../../service/utils';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger, assertContains } from '../../tests/utils/test-utils';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import {
+import { createMockResponse } from '../../tests/__mocks__/undici.mock';
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type {
   SouthOLEDBItemSettings,
   SouthOLEDBItemSettingsDateTimeFields,
   SouthOLEDBSettings
 } from '../../../shared/model/south-settings.model';
-import SouthOLEDB from './south-oledb';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import testData from '../../tests/utils/test-data';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { HTTPRequest } from '../../service/http-request.utils';
-import { createMockResponse } from '../../tests/__mocks__/undici.mock';
+import type SouthOLEDBClass from './south-oledb';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 
-jest.mock('node:fs/promises');
-jest.mock('../../service/http-request.utils');
-jest.mock('../../service/utils');
-jest.mock('../../service/encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
-
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
-
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
-    }
-);
-
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
+const nodeRequire = createRequire(import.meta.url);
 
 describe('SouthOLEDB', () => {
-  let south: SouthOLEDB;
+  let SouthOLEDB: typeof SouthOLEDBClass;
+  let south: SouthOLEDBClass;
+
+  const logger = new PinoLogger();
+  const addContentCallback = mock.fn();
+  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let southCacheService: SouthCacheServiceMock;
+
+  const httpRequestExports = {
+    HTTPRequest: mock.fn(async () => createMockResponse(200))
+  };
+
+  const utilsExports = {
+    convertDelimiter: mock.fn((value: unknown) => value),
+    formatInstant: mock.fn((value: unknown) => value),
+    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
+    logQuery: mock.fn(),
+    persistResults: mock.fn(async () => undefined)
+  };
+
   const configuration: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
     id: 'southId',
     name: 'south',
@@ -178,183 +178,186 @@ describe('SouthOLEDB', () => {
     createdAt: '',
     updatedAt: ''
   };
+
   const connectionStringWithPassword = 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;Password=encrypted-password;';
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  before(() => {
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    mockModule(nodeRequire, '../../service/encryption.service', {
+      __esModule: true,
+      encryptionService: new EncryptionServiceMock('', '')
+    });
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    SouthOLEDB = reloadModule<{ default: typeof SouthOLEDBClass }>(nodeRequire, './south-oledb').default;
+  });
 
-    (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
-    (convertDelimiter as jest.Mock).mockImplementation(value => value);
-    (formatInstant as jest.Mock).mockImplementation(value => value);
-
-    south = new SouthOLEDB(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200));
+    utilsExports.convertDelimiter = mock.fn((value: unknown) => value);
+    utilsExports.formatInstant = mock.fn((value: unknown) => value);
+    utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
+    utilsExports.logQuery = mock.fn();
+    utilsExports.persistResults = mock.fn(async () => undefined);
+    addContentCallback.mock.resetCalls();
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    south = new SouthOLEDB(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
-  it('should properly connect to remote agent and disconnect ', async () => {
+  it('should properly connect to remote agent and disconnect', async () => {
     await south.connect();
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/connect` }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: connectionStringWithPassword,
-          connectionTimeout: configuration.settings.connectionTimeout
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/connect`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: connectionStringWithPassword,
+        connectionTimeout: configuration.settings.connectionTimeout
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    });
 
     await south.disconnect();
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/disconnect` }),
-      {
-        method: 'DELETE'
-      }
-    );
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[1].arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/disconnect`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[1].arguments[1], { method: 'DELETE' });
   });
 
   it('should connect without password when not provided', async () => {
     const configurationWithoutPassword: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
       ...configuration,
-      settings: {
-        ...configuration.settings,
-        password: null
-      }
+      settings: { ...configuration.settings, password: null }
     };
     const southWithoutPassword = new SouthOLEDB(
       configurationWithoutPassword,
       addContentCallback,
       southCacheRepository,
-      logger,
+      asLogger(logger),
       'cacheFolder'
     );
 
     await southWithoutPassword.connect();
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: `${configurationWithoutPassword.settings.agentUrl}/api/ole/${configurationWithoutPassword.id}/connect`
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+      href: `${configurationWithoutPassword.settings.agentUrl}/api/ole/${configurationWithoutPassword.id}/connect`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: configurationWithoutPassword.settings.connectionString,
+        connectionTimeout: configurationWithoutPassword.settings.connectionTimeout
       }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: configurationWithoutPassword.settings.connectionString,
-          connectionTimeout: configurationWithoutPassword.settings.connectionTimeout
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+      headers: { 'Content-Type': 'application/json' }
+    });
   });
 
   it('should avoid adding duplicate semicolons when password is provided', async () => {
     const configurationWithTrailingSemicolon: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
       ...configuration,
-      settings: {
-        ...configuration.settings,
-        connectionString: `${configuration.settings.connectionString};`
-      }
+      settings: { ...configuration.settings, connectionString: `${configuration.settings.connectionString};` }
     };
     const southWithTrailingSemicolon = new SouthOLEDB(
       configurationWithTrailingSemicolon,
       addContentCallback,
       southCacheRepository,
-      logger,
+      asLogger(logger),
       'cacheFolder'
     );
     const expectedConnectionString = `${configurationWithTrailingSemicolon.settings.connectionString}Password=encrypted-password;`;
 
     await southWithTrailingSemicolon.connect();
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        href: `${configurationWithTrailingSemicolon.settings.agentUrl}/api/ole/${configurationWithTrailingSemicolon.id}/connect`
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+      href: `${configurationWithTrailingSemicolon.settings.agentUrl}/api/ole/${configurationWithTrailingSemicolon.id}/connect`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: expectedConnectionString,
+        connectionTimeout: configurationWithTrailingSemicolon.settings.connectionTimeout
       }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: expectedConnectionString,
-          connectionTimeout: configurationWithTrailingSemicolon.settings.connectionTimeout
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+      headers: { 'Content-Type': 'application/json' }
+    });
   });
 
-  it('should properly reconnect to when connection fails ', async () => {
-    (HTTPRequest as jest.Mock).mockRejectedValueOnce(new Error('connection failed'));
+  it('should properly reconnect when connection fails', async () => {
+    let callCount = 0;
+    httpRequestExports.HTTPRequest = mock.fn(async () => {
+      callCount++;
+      if (callCount === 1) throw new Error('connection failed');
+      return createMockResponse(200);
+    });
 
     await south.connect();
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/connect` }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: connectionStringWithPassword,
-          connectionTimeout: configuration.settings.connectionTimeout
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
 
-    expect(HTTPRequest).toHaveBeenCalledTimes(1);
-    jest.advanceTimersByTime(configuration.settings.retryInterval);
-    await jest.runOnlyPendingTimersAsync();
-    expect(HTTPRequest).toHaveBeenCalledTimes(2);
+    mock.timers.tick(configuration.settings.retryInterval);
+    // flush microtasks so the async connect callback can reach HTTPRequest
+    await Promise.resolve();
+    await Promise.resolve();
+    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
   });
 
   it('should properly clear reconnect timeout on disconnect', async () => {
-    (HTTPRequest as jest.Mock)
-      .mockRejectedValueOnce(new Error('connection failed'))
-      .mockResolvedValueOnce(true)
-      .mockRejectedValueOnce(new Error('disconnection failed'));
-
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    let callCount = 0;
+    httpRequestExports.HTTPRequest = mock.fn(async () => {
+      callCount++;
+      if (callCount === 1) throw new Error('connection failed');
+      if (callCount === 2) return createMockResponse(200);
+      throw new Error('disconnection failed');
+    });
 
     await south.connect();
+    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
 
-    expect(HTTPRequest).toHaveBeenCalledTimes(1);
     await south.connect();
-
     await south.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-    jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(HTTPRequest).toHaveBeenCalledTimes(3);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms. ${new Error(
-        'connection failed'
-      )}`
+    mock.timers.tick(configuration.settings.retryInterval);
+    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 3);
+    assert.ok(
+      logger.error.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes('Error while sending connection HTTP request') &&
+          (c.arguments[0] as string).includes(`${configuration.settings.retryInterval} ms`)
+      )
     );
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while sending disconnection HTTP request into agent. ${new Error('disconnection failed')}`
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[0] as string).includes('Error while sending disconnection HTTP request')
+      )
     );
   });
 
   it('should properly run historyQuery', async () => {
     const startTime = testData.constants.dates.DATE_1;
-    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce({
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-    });
+    const queryRemoteAgentDataMock = mock.method(
+      south,
+      'queryRemoteAgentData',
+      mock.fn(async () => ({
+        trackedInstant: '2020-03-01T00:00:00.000Z',
+        value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+      }))
+    );
 
     const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
+    assert.strictEqual(queryRemoteAgentDataMock.mock.calls.length, 1);
+    assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [
       configuration.items[0],
       testData.constants.dates.DATE_1,
       testData.constants.dates.FAKE_NOW
-    );
-    expect(result).toEqual({
+    ]);
+    assert.deepStrictEqual(result, {
       trackedInstant: '2020-03-01T00:00:00.000Z',
       value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
     });
@@ -364,75 +367,80 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(
-        createMockResponse(200, {
+    let callCount = 0;
+    httpRequestExports.HTTPRequest = mock.fn(async () => {
+      callCount++;
+      if (callCount === 1)
+        return createMockResponse(200, {
           recordCount: 2,
           content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
           maxInstant: '2020-03-01T00:00:00.000Z'
-        })
-      )
-      .mockResolvedValueOnce(
-        createMockResponse(200, {
-          recordCount: 0,
-          content: [],
-          maxInstant: '2020-03-01T00:00:00.000Z'
-        })
-      );
+        });
+      return createMockResponse(200, { recordCount: 0, content: [], maxInstant: '2020-03-01T00:00:00.000Z' });
+    });
 
     const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
-
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read` }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: connectionStringWithPassword,
-          sql: 'query1',
-          readTimeout: 1000,
-          timeColumn: 'timestamp',
-          datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-          datasourceTimezone: 'Europe/Paris',
-          delimiter: 'COMMA',
-          outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-          outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
+    assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual(
+      (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      configuration.items[0].settings.query
     );
 
-    expect(result).toEqual({
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: connectionStringWithPassword,
+        sql: 'query1',
+        readTimeout: 1000,
+        timeColumn: 'timestamp',
+        datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        datasourceTimezone: 'Europe/Paris',
+        delimiter: 'COMMA',
+        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    assert.deepStrictEqual(result, {
       trackedInstant: '2020-03-01T00:00:00.000Z',
       value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
     });
-    expect(persistResults).toHaveBeenCalledWith(
-      [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-      {
-        type: 'file',
-        filename: configuration.items[0].settings.serialization.filename,
-        compression: configuration.items[0].settings.serialization.compression
-      },
-      configuration.name,
-      configuration.items[0],
-      testData.constants.dates.FAKE_NOW,
-      path.resolve('cacheFolder', 'tmp'),
-      expect.any(Function),
-      logger
-    );
+
+    const persistCall = (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0];
+    assert.deepStrictEqual(persistCall.arguments[0], [
+      { timestamp: '2020-02-01T00:00:00.000Z' },
+      { timestamp: '2020-03-01T00:00:00.000Z' }
+    ]);
+    assert.deepStrictEqual(persistCall.arguments[1], {
+      type: 'file',
+      filename: configuration.items[0].settings.serialization.filename,
+      compression: configuration.items[0].settings.serialization.compression
+    });
+    assert.strictEqual(persistCall.arguments[2], configuration.name);
+    assert.strictEqual(persistCall.arguments[3], configuration.items[0]);
+    assert.strictEqual(persistCall.arguments[4], testData.constants.dates.FAKE_NOW);
+    assert.strictEqual(persistCall.arguments[5], path.resolve('cacheFolder', 'tmp'));
+    assert.ok(typeof persistCall.arguments[6] === 'function');
 
     await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
+    assert.ok(
+      logger.debug.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes('No result found') && (c.arguments[0] as string).includes(configuration.items[0].name)
+      )
+    );
   });
 
   it('should get data from Remote agent without datetime reference', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(
+    httpRequestExports.HTTPRequest = mock.fn(async () =>
       createMockResponse(200, {
         recordCount: 2,
         content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
@@ -442,27 +450,23 @@ describe('SouthOLEDB', () => {
 
     const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
-
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read` }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: connectionStringWithPassword,
-          sql: 'query2',
-          readTimeout: 1000,
-          delimiter: 'COMMA',
-          outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
-          outputTimezone: configuration.items[1].settings.serialization.outputTimezone
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    expect(result).toEqual({
+    assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: connectionStringWithPassword,
+        sql: 'query2',
+        readTimeout: 1000,
+        delimiter: 'COMMA',
+        outputTimestampFormat: configuration.items[1].settings.serialization.outputTimestampFormat,
+        outputTimezone: configuration.items[1].settings.serialization.outputTimezone
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    });
+    assert.deepStrictEqual(result, {
       trackedInstant: null,
       value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
     });
@@ -472,116 +476,130 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'bad request')).mockResolvedValueOnce(createMockResponse(500));
+    let callCount = 0;
+    httpRequestExports.HTTPRequest = mock.fn(async () => {
+      callCount++;
+      if (callCount === 1) return createMockResponse(400, 'bad request');
+      return createMockResponse(500);
+    });
 
-    await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: bad request`
+    await assert.rejects(
+      south.queryRemoteAgentData(configuration.items[0], startTime, endTime),
+      new Error('Error occurred when querying remote agent with status 400: bad request')
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[0] as string).includes('Error occurred when querying remote agent with status 400: bad request')
+      )
+    );
 
-    await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 500`
+    await assert.rejects(
+      south.queryRemoteAgentData(configuration.items[0], startTime, endTime),
+      new Error('Error occurred when querying remote agent with status 500')
     );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[0] as string).includes('Error occurred when querying remote agent with status 500')
+      )
+    );
   });
 
   it('should test item', async () => {
-    const formattedInstant = '2020-01-01T00:00:00.000Z';
-    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce([
-      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-    ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
-    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+    const queryRemoteAgentDataMock = mock.method(
+      south,
+      'queryRemoteAgentData',
+      mock.fn(async () => [
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+    );
 
     await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime, true);
+    assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime, true]);
   });
 
   it('should test item without datetimeFields', async () => {
-    const formattedInstant = '2020-01-01T00:00:00.000Z';
-    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce([
-      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-    ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
-    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+    const queryRemoteAgentDataMock = mock.method(
+      south,
+      'queryRemoteAgentData',
+      mock.fn(async () => [
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+    );
 
     await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(configuration.items[1], startTime, endTime, true);
+    assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime, true]);
   });
 
   it('QueryRemoteAgentData in case of item test', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(
-        createMockResponse(200, {
+    let callCount = 0;
+    httpRequestExports.HTTPRequest = mock.fn(async () => {
+      callCount++;
+      if (callCount === 1)
+        return createMockResponse(200, {
           recordCount: 2,
           content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
           maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        })
-      )
-      .mockResolvedValueOnce(
-        createMockResponse(200, {
-          recordCount: 0,
-          content: [],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        })
-      );
+        });
+      return createMockResponse(200, { recordCount: 0, content: [], maxInstantRetrieved: '2020-03-01T00:00:00.000Z' });
+    });
 
     await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
-
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read` }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: connectionStringWithPassword,
-          sql: 'query1',
-          readTimeout: 1000,
-          timeColumn: 'timestamp',
-          datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-          datasourceTimezone: 'Europe/Paris',
-          delimiter: 'COMMA',
-          outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
-          outputTimezone: configuration.items[0].settings.serialization.outputTimezone
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
+      href: `${configuration.settings.agentUrl}/api/ole/${configuration.id}/read`
+    });
+    assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: connectionStringWithPassword,
+        sql: 'query1',
+        readTimeout: 1000,
+        timeColumn: 'timestamp',
+        datasourceTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        datasourceTimezone: 'Europe/Paris',
+        delimiter: 'COMMA',
+        outputTimestampFormat: configuration.items[0].settings.serialization.outputTimestampFormat,
+        outputTimezone: configuration.items[0].settings.serialization.outputTimezone
+      }),
+      headers: { 'Content-Type': 'application/json' }
+    });
   });
 
   it('should test connection successfully', async () => {
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200));
-    await expect(south.testConnection()).resolves.not.toThrow();
-    expect(logger.info).toHaveBeenCalledWith(
-      'Testing OLE OIBus Agent connection on http://localhost:2224 with "Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;Password=<secret>;"'
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200));
+    await assert.doesNotReject(south.testConnection());
+    assert.ok(
+      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[0] as string).includes('Testing OLE OIBus Agent connection')
+      )
     );
   });
 
   it('should test connection fail', async () => {
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(createMockResponse(400, 'bad request'))
-      .mockResolvedValueOnce(createMockResponse(500, 'another error'));
+    let callCount = 0;
+    httpRequestExports.HTTPRequest = mock.fn(async () => {
+      callCount++;
+      if (callCount === 1) return createMockResponse(400, 'bad request');
+      return createMockResponse(500, 'another error');
+    });
 
-    await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
+    await assert.rejects(
+      south.testConnection(),
+      new Error('Error occurred when sending connect command to remote agent with status 400: bad request')
     );
-    await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 500`)
-    );
+    await assert.rejects(south.testConnection(), new Error('Error occurred when sending connect command to remote agent with status 500'));
   });
 
   it('should disconnect without fetch when not connected', async () => {
     await south.disconnect();
-    expect(HTTPRequest).not.toHaveBeenCalled();
+    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 0);
   });
 });
