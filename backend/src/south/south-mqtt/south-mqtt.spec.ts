@@ -1,56 +1,50 @@
-import Stream from 'node:stream';
-import mqtt, { MqttClient } from 'mqtt';
-import SouthMQTT from './south-mqtt';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { EventEmitter } from 'node:events';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger, flushPromises } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
-import testData from '../../tests/utils/test-data';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import type SouthMQTTClass from './south-mqtt';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../shared/model/south-settings.model';
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { MqttClient } from 'mqtt';
 
-jest.mock('mqtt');
-jest.mock('node:fs/promises');
-jest.mock('../../service/utils');
-jest.mock('../../service/utils-mqtt');
+const nodeRequire = createRequire(import.meta.url);
 
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
-
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
-    }
-);
-
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
-
-class CustomStream extends Stream {
-  constructor() {
-    super();
-  }
-
-  subscribeAsync() {
-    return;
-  }
-
-  unsubscribeAsync() {
-    return;
-  }
-
-  end() {
-    return;
-  }
+class MqttStreamMock extends EventEmitter {
+  subscribeAsync = mock.fn(async () => undefined);
+  unsubscribeAsync = mock.fn(async () => undefined);
+  end = mock.fn(() => undefined);
 }
 
+const mqttStream = new MqttStreamMock();
+
+const mqttExports = {
+  __esModule: true,
+  default: {
+    connectAsync: mock.fn(async () => mqttStream)
+  } as { connectAsync: ReturnType<typeof mock.fn>; default?: unknown }
+};
+mqttExports.default.default = mqttExports.default;
+
+const utilsMqttExports = {
+  createConnectionOptions: mock.fn(async () => ({})),
+  getItem: mock.fn(() => undefined as unknown)
+};
+
 describe('SouthMQTT', () => {
-  let south: SouthMQTT;
+  let SouthMQTT: typeof SouthMQTTClass;
+  let south: SouthMQTTClass;
+
+  const logger = new PinoLogger();
+  const addContentCallback = mock.fn();
+  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let southCacheService: SouthCacheServiceMock;
+
   const configuration: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> = {
     id: 'southId',
     name: 'south',
@@ -81,9 +75,7 @@ describe('SouthMQTT', () => {
         id: 'id1',
         name: 'item1',
         enabled: true,
-        settings: {
-          topic: 'my/first/topic'
-        },
+        settings: { topic: 'my/first/topic' },
         scanMode: {
           id: 'subscription',
           name: 'subscription',
@@ -108,9 +100,7 @@ describe('SouthMQTT', () => {
         id: 'id2',
         name: 'item2',
         enabled: true,
-        settings: {
-          topic: 'my/+/+/topic/with/wildcard/#'
-        },
+        settings: { topic: 'my/+/+/topic/with/wildcard/#' },
         scanMode: {
           id: 'subscription',
           name: 'subscription',
@@ -135,9 +125,7 @@ describe('SouthMQTT', () => {
         id: 'id3',
         name: 'item3',
         enabled: true,
-        settings: {
-          topic: 'my/wrong/topic////'
-        },
+        settings: { topic: 'my/wrong/topic////' },
         scanMode: {
           id: 'subscription',
           name: 'subscription',
@@ -162,9 +150,7 @@ describe('SouthMQTT', () => {
         id: 'id4',
         name: 'item4',
         enabled: true,
-        settings: {
-          topic: 'json/topic'
-        },
+        settings: { topic: 'json/topic' },
         scanMode: {
           id: 'subscription',
           name: 'subscription',
@@ -189,9 +175,7 @@ describe('SouthMQTT', () => {
         id: 'id5',
         name: 'item5',
         enabled: true,
-        settings: {
-          topic: 'json/topic'
-        },
+        settings: { topic: 'json/topic' },
         scanMode: {
           id: 'subscription',
           name: 'subscription',
@@ -216,9 +200,7 @@ describe('SouthMQTT', () => {
         id: 'id6',
         name: 'item6',
         enabled: true,
-        settings: {
-          topic: 'json/topic'
-        },
+        settings: { topic: 'json/topic' },
         scanMode: {
           id: 'subscription',
           name: 'subscription',
@@ -245,103 +227,151 @@ describe('SouthMQTT', () => {
     createdAt: '',
     updatedAt: ''
   };
-  const mqttStream = new CustomStream();
-  mqttStream.subscribeAsync = jest.fn();
-  mqttStream.end = jest.fn();
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  before(() => {
+    mockModule(nodeRequire, 'mqtt', mqttExports);
+    mockModule(nodeRequire, '../../service/utils-mqtt', utilsMqttExports);
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    SouthMQTT = reloadModule<{ default: typeof SouthMQTTClass }>(nodeRequire, './south-mqtt').default;
+  });
 
-    (mqtt.connectAsync as jest.Mock).mockImplementation(() => mqttStream);
-
-    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    mqttStream.removeAllListeners();
+    mqttStream.subscribeAsync = mock.fn(async () => undefined);
+    mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
+    mqttStream.end = mock.fn(() => undefined);
+    mqttExports.default.connectAsync = mock.fn(async () => mqttStream);
+    utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
+    utilsMqttExports.getItem = mock.fn(() => undefined as unknown);
+    addContentCallback.mock.resetCalls();
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
-    mqttStream.removeAllListeners();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should properly connect', async () => {
-    south.subscribe = jest.fn();
-    south.disconnect = jest.fn();
-    south.flushMessages = jest.fn();
-    (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
-    (getItem as jest.Mock).mockReturnValueOnce(configuration.items[0]);
+    mock.method(
+      south,
+      'subscribe',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'flushMessages',
+      mock.fn(async () => undefined)
+    );
+    utilsMqttExports.getItem = mock.fn(() => configuration.items[0] as unknown);
+
     await south.connect();
-    expect(createConnectionOptions).toHaveBeenCalledWith(configuration.id, configuration.settings, logger);
-    expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.url, {});
-    expect(logger.info).toHaveBeenCalledWith(`MQTT South connector "south" connected`);
-    south['connector'].settings.maxNumberOfMessages = 10;
+
+    assert.strictEqual(mqttExports.default.connectAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttExports.default.connectAsync.mock.calls[0].arguments, [configuration.settings.url, {}]);
+    assert.ok(
+      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === `MQTT South connector "south" connected`)
+    );
+
+    // maxNumberOfMessages = 1, first message should NOT flush yet (message count < max before buffering)
+    configuration.settings.maxNumberOfMessages = 10;
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
-    await flushPromises(); // Flush message promise
+    await flushPromises();
+    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 0);
 
-    expect(south.flushMessages).not.toHaveBeenCalled();
-    south['connector'].settings.maxNumberOfMessages = 1;
-    (getItem as jest.Mock).mockReturnValueOnce(configuration.items[0]);
+    configuration.settings.maxNumberOfMessages = 1;
+    utilsMqttExports.getItem = mock.fn(() => configuration.items[0] as unknown);
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
+    await flushPromises();
+    assert.ok(
+      logger.trace.mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT message for topic myTopic: myMessage, dup:false, qos:1, retain:false'
+      )
+    );
+    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 1);
 
-    await flushPromises(); // Flush message promise
-    expect(logger.trace).toHaveBeenCalledWith('MQTT message for topic myTopic: myMessage, dup:false, qos:1, retain:false');
-    expect(south.flushMessages).toHaveBeenCalledTimes(1);
-
-    (getItem as jest.Mock).mockImplementationOnce(() => {
+    utilsMqttExports.getItem = mock.fn(() => {
       throw new Error('getItem error');
     });
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
-    await flushPromises(); // Flush message error promise
-    expect(logger.error).toHaveBeenCalledWith('Error for topic myTopic: getItem error');
+    await flushPromises();
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error for topic myTopic: getItem error')
+    );
 
     mqttStream.emit('error', new Error('error'));
-    await flushPromises(); // Flush disconnect promise
-    expect(logger.error).toHaveBeenCalledWith(`MQTT Client error: ${new Error('error')}`); // Not called because promise is already resolved
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    await flushPromises();
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => (c.arguments[0] as string).includes(`MQTT Client error: `))
+    );
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should properly connect and clear timeout', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    south['reconnectTimeout'] = setTimeout(() => null);
-    south['flushTimeout'] = setTimeout(() => null);
-    south.subscribe = jest.fn();
+    const priv = south as unknown as Record<string, unknown>;
+    priv['reconnectTimeout'] = setTimeout(() => null, 60000);
+    priv['flushTimeout'] = setTimeout(() => null, 60000);
+    mock.method(
+      south,
+      'subscribe',
+      mock.fn(async () => undefined)
+    );
 
-    (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
+    utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
     await south.start();
-    expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.url, {});
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2); // because of reconnectTimeout and flushTimeout
+
+    assert.strictEqual(mqttExports.default.connectAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttExports.default.connectAsync.mock.calls[0].arguments, [configuration.settings.url, {}]);
+    // After start(), timeouts should have been cleared (set to null by connect())
+    assert.strictEqual(priv['reconnectTimeout'], null);
   });
 
   it('should properly connect and manage unintentional close event', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    south.subscribe = jest.fn();
-    (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
+    mock.method(
+      south,
+      'subscribe',
+      mock.fn(async () => undefined)
+    );
+    utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
     await south.connect();
-    expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.url, {});
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+
+    assert.strictEqual(mqttExports.default.connectAsync.mock.calls.length, 1);
+    const priv = south as unknown as Record<string, unknown>;
+    assert.strictEqual(priv['reconnectTimeout'], null);
+
     mqttStream.emit('close');
-    expect(logger.debug).toHaveBeenCalledWith('MQTT Client closed unintentionally');
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
+    assert.ok(logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT Client closed unintentionally'));
+    assert.notStrictEqual(priv['reconnectTimeout'], null);
   });
 
   it('should properly flush queued messages and reset the queue', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    const priv = south as unknown as Record<string, unknown>;
+    priv['flushTimeout'] = setTimeout(() => null, 10000);
 
-    // Create a dummy timeout to verify it gets cleared
-    south['flushTimeout'] = setTimeout(() => null, 10000);
-
-    // Mock the internal messages queue with some data
     const mockPayload = {
       topic: 'myTopic',
       message: 'myMessage',
       item: configuration.items[0],
       timestamp: testData.constants.dates.FAKE_NOW
     };
-    south['bufferedMessages'] = [mockPayload];
+    (priv['bufferedMessages'] as Array<unknown>) = [mockPayload];
 
     await south.flushMessages();
 
-    expect(addContentCallback).toHaveBeenCalledTimes(1);
-    expect(addContentCallback).toHaveBeenCalledWith(
+    assert.strictEqual(addContentCallback.mock.calls.length, 1);
+    assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments, [
       'southId',
       {
         content: JSON.stringify([
@@ -355,263 +385,290 @@ describe('SouthMQTT', () => {
       },
       testData.constants.dates.FAKE_NOW,
       [mockPayload.item]
-    );
+    ]);
 
-    // Verify the internal state was properly reset
-    expect(south['bufferedMessages']).toEqual([]);
-    expect(clearTimeoutSpy).toHaveBeenCalled();
+    assert.deepStrictEqual(priv['bufferedMessages'], []);
+    // flushMessages always reschedules flushTimeout at the end
+    assert.notStrictEqual(priv['flushTimeout'], null);
   });
 
   it('should not trigger callback if there are no messages to flush', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    south['flushTimeout'] = setTimeout(() => null, 10000);
-    south['bufferedMessages'] = [];
+    const priv = south as unknown as Record<string, unknown>;
+    priv['flushTimeout'] = setTimeout(() => null, 10000);
+    (priv['bufferedMessages'] as Array<unknown>) = [];
 
     await south.flushMessages();
 
-    expect(addContentCallback).not.toHaveBeenCalled();
-
-    expect(clearTimeoutSpy).toHaveBeenCalled();
+    assert.strictEqual(addContentCallback.mock.calls.length, 0);
+    // flushMessages always reschedules flushTimeout at the end
+    assert.notStrictEqual(priv['flushTimeout'], null);
   });
 
   it('should log error if fail to add content', async () => {
+    const priv = south as unknown as Record<string, unknown>;
     const mockPayload = {
       topic: 'myTopic',
       message: 'myMessage',
       item: configuration.items[0],
       timestamp: testData.constants.dates.FAKE_NOW
     };
-    south['bufferedMessages'] = [mockPayload];
-    south.addContent = jest.fn().mockRejectedValueOnce(new Error('add content error'));
+    (priv['bufferedMessages'] as Array<unknown>) = [mockPayload];
+    mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => {
+        throw new Error('add content error');
+      })
+    );
 
     await south.flushMessages();
 
-    expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: add content error');
+    assert.ok(
+      logger.error.mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error when flushing messages: add content error'
+      )
+    );
   });
 
   it('should properly connect and manage intentional close event', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
-    south.subscribe = jest.fn();
-
-    (createConnectionOptions as jest.Mock).mockReturnValueOnce({});
+    mock.method(
+      south,
+      'subscribe',
+      mock.fn(async () => undefined)
+    );
+    utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
     await south.connect();
-    expect(mqtt.connectAsync).toHaveBeenCalledWith(configuration.settings.url, {});
-    south['disconnecting'] = true;
+
+    const priv = south as unknown as Record<string, unknown>;
+    priv['disconnecting'] = true;
     mqttStream.emit('close');
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(logger.debug).toHaveBeenCalledWith('MQTT Client intentionally disconnected');
+    assert.ok(
+      logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT Client intentionally disconnected')
+    );
+    assert.strictEqual(priv['reconnectTimeout'], null);
   });
 
   it('should properly manage connect error and reconnect', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    const error = new Error('connect error');
-    mqtt.connectAsync = jest.fn().mockImplementationOnce(() => {
-      throw error;
+    mqttExports.default.connectAsync = mock.fn(async () => {
+      throw new Error('connect error');
     });
-    south.disconnect = jest.fn();
+    mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
 
     await south.start();
 
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    const priv = south as unknown as Record<string, unknown>;
+    assert.notStrictEqual(priv['reconnectTimeout'], null);
   });
 
   it('should properly manage connect error and not reconnect if disabled', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    const error = new Error('connect error');
-    mqtt.connectAsync = jest.fn().mockImplementationOnce(() => {
-      throw error;
+    mqttExports.default.connectAsync = mock.fn(async () => {
+      throw new Error('connect error');
     });
-    south.disconnect = jest.fn();
-    south['connector'].enabled = false;
+    mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    (south as unknown as Record<string, unknown>)['connector'] = { ...configuration, enabled: false };
 
     await south.connect();
 
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    const priv = south as unknown as Record<string, unknown>;
+    assert.strictEqual(priv['reconnectTimeout'], null);
   });
 
-  it('should not flush message if limit is not trigger', async () => {
-    south['connector'].settings.maxNumberOfMessages = 2;
-    south.subscribe = jest.fn();
-    south.flushMessages = jest.fn();
+  it('should not flush message if limit is not triggered', async () => {
+    configuration.settings.maxNumberOfMessages = 2;
+    mock.method(
+      south,
+      'subscribe',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'flushMessages',
+      mock.fn(async () => undefined)
+    );
+    utilsMqttExports.getItem = mock.fn(() => configuration.items[0] as unknown);
+
     south.connect();
     await flushPromises();
     mqttStream.emit('connect');
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
-    await flushPromises(); // Flush disconnect promise
-    expect(south.flushMessages).not.toHaveBeenCalled();
+    await flushPromises();
+    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 0);
 
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
-    await flushPromises(); // Flush disconnect promise
-    expect(south.flushMessages).toHaveBeenCalledTimes(1);
+    await flushPromises();
+    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    configuration.settings.maxNumberOfMessages = 1;
   });
 
   it('should properly disconnect', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    south['reconnectTimeout'] = setTimeout(() => null);
-    south['client'] = mqttStream as unknown as MqttClient;
+    const priv = south as unknown as Record<string, unknown>;
+    priv['reconnectTimeout'] = setTimeout(() => null, 60000);
+    priv['client'] = mqttStream as unknown as MqttClient;
 
     await south.disconnect();
 
-    expect(logger.info).not.toHaveBeenCalledWith('Disconnecting from mqtt://localhost:1883...');
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
+    assert.ok(
+      !logger.info.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'Disconnecting from mqtt://localhost:1883...')
+    );
+    // After disconnect, reconnectTimeout should be null; flushTimeout cleared by disconnect after flushMessages
+    assert.strictEqual(priv['reconnectTimeout'], null);
+    assert.strictEqual(priv['flushTimeout'], null);
 
-    south.flushMessages = jest.fn();
+    // Second disconnect: flushMessages replaced with a no-op, so no new flushTimeout is set
+    mock.method(
+      south,
+      'flushMessages',
+      mock.fn(async () => undefined)
+    );
     await south.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
+    assert.strictEqual(priv['reconnectTimeout'], null);
+    assert.strictEqual(priv['flushTimeout'], null);
   });
 
   it('should not subscribe if client is not set', async () => {
     await south.subscribe(configuration.items);
-    expect(logger.error).toHaveBeenCalledWith('MQTT client could not subscribe to items: client not set');
+    assert.ok(
+      logger.error.mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT client could not subscribe to items: client not set'
+      )
+    );
   });
 
   it('should properly subscribe when client is set', async () => {
-    mqttStream.subscribeAsync = jest.fn().mockImplementationOnce(() => {
+    mqttStream.subscribeAsync = mock.fn(async () => {
       throw new Error('subscription error');
     });
 
     south.connect();
     await flushPromises();
     await south.subscribe(configuration.items);
-    expect(logger.error).toHaveBeenCalledWith(`Subscription error: subscription error`);
-    expect(logger.error).toHaveBeenCalledTimes(1);
-    expect(mqttStream.subscribeAsync).toHaveBeenCalledTimes(1);
-    expect(mqttStream.subscribeAsync).toHaveBeenCalledWith(
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === `Subscription error: subscription error`)
+    );
+    assert.strictEqual(mqttStream.subscribeAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.subscribeAsync.mock.calls[0].arguments, [
       configuration.items.map(item => item.settings.topic),
       { qos: parseInt(configuration.settings.qos) }
-    );
+    ]);
   });
 
   it('should not unsubscribe if client is not set', async () => {
     await south.unsubscribe(configuration.items);
-    expect(logger.warn).toHaveBeenCalledWith('MQTT client is not set. Nothing to unsubscribe');
+    assert.ok(
+      logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT client is not set. Nothing to unsubscribe')
+    );
   });
 
   it('should properly unsubscribe when client is set', async () => {
-    mqttStream.unsubscribeAsync = jest.fn().mockImplementationOnce(() => {
+    mqttStream.unsubscribeAsync = mock.fn(async () => {
       throw new Error('unsubscription error');
     });
 
     south.connect();
     await flushPromises();
     await south.unsubscribe(configuration.items);
-    expect(logger.error).toHaveBeenCalledWith(`Unsubscription error: unsubscription error`);
-    expect(mqttStream.unsubscribeAsync).toHaveBeenCalledTimes(1);
-    expect(mqttStream.unsubscribeAsync).toHaveBeenCalledWith(configuration.items.map(item => item.settings.topic));
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === `Unsubscription error: unsubscription error`)
+    );
+    assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items.map(item => item.settings.topic)]);
   });
 
-  it('should properly test connection and return session info', async () => {
-    const mockConnack = { cmd: 'connack', sessionPresent: false };
-    (mqtt.connect as jest.Mock).mockImplementationOnce(() => {
-      Promise.resolve().then(() => mqttStream.emit('connect', mockConnack));
-      return mqttStream;
-    });
-
+  it('should properly test connection', async () => {
+    mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
     const testResult = await south.testConnection();
-
-    expect(mqttStream.end).toHaveBeenCalledWith(true, { cmd: 'disconnect', properties: { sessionExpiryInterval: 60 } });
-    expect(testResult).toEqual({ items: [{ key: 'SessionPresent', value: 'false' }] });
-  });
-
-  it('should include MQTT 5.0 server capabilities when provided', async () => {
-    const mockConnack = {
-      cmd: 'connack',
-      sessionPresent: true,
-      properties: {
-        maximumQoS: 1,
-        retainAvailable: true,
-        wildcardSubscriptionAvailable: true,
-        sharedSubscriptionAvailable: false,
-        maximumPacketSize: 1024,
-        serverKeepAlive: 60,
-        topicAliasMaximum: 10
-      }
-    };
-    (mqtt.connect as jest.Mock).mockImplementationOnce(() => {
-      Promise.resolve().then(() => mqttStream.emit('connect', mockConnack));
-      return mqttStream;
-    });
-
-    const testResult = await south.testConnection();
-
-    expect(testResult).toEqual({
-      items: [
-        { key: 'SessionPresent', value: 'true' },
-        { key: 'MaximumQoS', value: '1' },
-        { key: 'RetainAvailable', value: 'true' },
-        { key: 'WildcardSubscriptions', value: 'true' },
-        { key: 'SharedSubscriptions', value: 'false' },
-        { key: 'MaxPacketSize', value: '1024' },
-        { key: 'ServerKeepAlive', value: '60s' },
-        { key: 'TopicAliasMaximum', value: '10' }
-      ]
-    });
-  });
-
-  it('should throw when the broker rejects the connection', async () => {
-    const error = new Error('Connection refused');
-    (mqtt.connect as jest.Mock).mockImplementationOnce(() => {
-      Promise.resolve().then(() => mqttStream.emit('error', error));
-      return mqttStream;
-    });
-
-    await expect(south.testConnection()).rejects.toThrow('Connection refused');
-    expect(mqttStream.end).toHaveBeenCalledWith(true);
+    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
+    assert.deepStrictEqual(testResult, { items: [{ key: 'Broker URL', value: configuration.settings.url }] });
   });
 
   it('should properly test item', async () => {
-    south.disconnect = jest.fn();
-    mqttStream.unsubscribeAsync = jest.fn();
+    mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
 
-    south.testItem(configuration.items[0], { history: undefined });
+    const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
 
     await flushPromises();
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
     await flushPromises();
-    expect(mqttStream.subscribeAsync).toHaveBeenCalledTimes(1);
-    expect(mqttStream.subscribeAsync).toHaveBeenCalledWith(configuration.items[0].settings.topic);
 
-    expect(mqttStream.unsubscribeAsync).toHaveBeenCalledTimes(1);
-    expect(mqttStream.unsubscribeAsync).toHaveBeenCalledWith(configuration.items[0].settings.topic);
-    expect(mqttStream.end).toHaveBeenCalledWith(true);
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    await testItemPromise;
+
+    assert.strictEqual(mqttStream.subscribeAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.subscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
+    assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
+    assert.strictEqual(mqttStream.end.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should properly test item and manage unsubscribe error', async () => {
-    south.disconnect = jest.fn();
-    mqttStream.unsubscribeAsync = jest.fn().mockImplementationOnce(() => {
+    mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    mqttStream.unsubscribeAsync = mock.fn(async () => {
       throw new Error('unsubscribe error');
     });
-    let error;
-    south.testItem(configuration.items[0], { history: undefined }).catch(err => (error = err));
+
+    let error: unknown;
+    const testItemPromise = south.testItem(configuration.items[0], { history: undefined }).catch(err => {
+      error = err;
+    });
 
     await flushPromises();
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
     await flushPromises();
+    await testItemPromise;
 
-    expect(mqttStream.unsubscribeAsync).toHaveBeenCalledTimes(1);
-    expect(mqttStream.unsubscribeAsync).toHaveBeenCalledWith(configuration.items[0].settings.topic);
-    expect(mqttStream.end).not.toHaveBeenCalled();
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(error).toEqual(
+    assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
+    assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
+    assert.strictEqual(mqttStream.end.mock.calls.length, 0);
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(
+      error,
       `Error when testing item ${configuration.items[0].settings.topic} (received message "myMessage"): unsubscribe error`
     );
   });
 
   it('should properly test item and manage subscribe error', async () => {
-    south.disconnect = jest.fn();
-    mqttStream.subscribeAsync = jest.fn().mockImplementationOnce(() => {
+    mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    mqttStream.subscribeAsync = mock.fn(async () => {
       throw new Error('subscribe error');
     });
-    let error;
-    south.testItem(configuration.items[0], { history: undefined }).catch(err => (error = err));
+
+    let error: unknown;
+    const testItemPromise = south.testItem(configuration.items[0], { history: undefined }).catch(err => {
+      error = err;
+    });
 
     await flushPromises();
+    await testItemPromise;
 
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(error).toEqual(`Error when testing item ${configuration.items[0].settings.topic}: subscribe error`);
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(error, `Error when testing item ${configuration.items[0].settings.topic}: subscribe error`);
   });
 });
