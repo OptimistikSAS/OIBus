@@ -1,845 +1,716 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
+import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import SouthPostgreSQL from './south-postgresql';
-import * as utils from '../../service/utils';
-import { generateReplacementParameters } from '../../service/utils';
-import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import pg from 'pg';
-import { DateTime } from 'luxon';
-import {
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type {
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLItemSettingsDateTimeFields,
   SouthPostgreSQLSettings
 } from '../../../shared/model/south-settings.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
-import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
-import testData from '../../tests/utils/test-data';
+import type SouthPostgreSQLClass from './south-postgresql';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { DateTime } from 'luxon';
 
-jest.mock('pg');
+const nodeRequire = createRequire(import.meta.url);
 
-jest.mock('../../service/utils');
+// Error messages handled by the test function
+// With the expected error messages to throw
+// Note: The PostgreSQL connect function throws errors with no codes,
+//       so messages are used to distinguish the cases
+const ERROR_MESSAGES = {
+  'timeout expired': 'Please check host and port.',
+  'connect ECONNREFUSED ::1:1234': 'Please check host and port.',
+  'password authentication failed for user "username"': 'Please check username and password.',
+  'database "db" does not exist': `Database "db" does not exist.`,
+  DEFAULT: 'Unexpected error.'
+} as const;
 
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
+type ErrorMessages = keyof typeof ERROR_MESSAGES;
 
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
-    }
-);
-jest.mock('../../service/encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
-
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
-
-describe('SouthPostgreSQL with authentication', () => {
-  let south: SouthPostgreSQL;
-  const configuration: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'postgresql',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      host: 'localhost',
-      port: 5432,
-      database: 'db',
-      sslMode: true,
-      username: 'username',
-      password: 'password',
-      connectionTimeout: 1000,
-      requestTimeout: 1000
-    },
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    groups: [],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (utils.generateReplacementParameters as jest.Mock).mockReturnValue([
-      new Date(testData.constants.dates.FAKE_NOW),
-      new Date(testData.constants.dates.FAKE_NOW)
-    ]);
-
-    south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should properly run historyQuery', async () => {
-    const startTime = testData.constants.dates.DATE_1;
-    south.queryData = jest.fn().mockReturnValueOnce([
-      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
-      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-    ]);
-    (utils.formatInstant as jest.Mock).mockReturnValueOnce('2020-02-01 00:00:00.000');
-    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
-
-    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(utils.persistResults).toHaveBeenCalledTimes(1);
-    expect(south.queryData).toHaveBeenCalledTimes(1);
-    expect(south.queryData).toHaveBeenCalledWith(
-      configuration.items[0],
-      testData.constants.dates.DATE_1,
-      testData.constants.dates.FAKE_NOW
-    );
-    expect(result).toEqual({
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-    });
-    expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${configuration.items[0].name} in 0 ms`);
-  });
-
-  it('should properly run historyQuery without result', async () => {
-    const startTime = testData.constants.dates.DATE_1;
-    south.queryData = jest.fn().mockReturnValueOnce([]);
-
-    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(utils.persistResults).not.toHaveBeenCalled();
-    expect(south.queryData).toHaveBeenCalledTimes(1);
-    expect(south.queryData).toHaveBeenCalledWith(
-      configuration.items[0],
-      testData.constants.dates.DATE_1,
-      testData.constants.dates.FAKE_NOW
-    );
-    expect(result).toEqual({
-      trackedInstant: null,
-      value: null
-    });
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
-  });
-
-  it('should get data from PostgreSQL', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    (generateReplacementParameters as jest.Mock).mockReturnValue({
-      startTime: DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
-    });
-    const client = {
-      connect: jest.fn(),
-      query: jest.fn(() => ({
-        rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-      })),
-      end: jest.fn()
-    };
-    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
-    (utils.formatInstant as jest.Mock)
-      .mockReturnValueOnce(DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'))
-      .mockReturnValueOnce(DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'));
-
-    const result = await south.queryData(configuration.items[0], startTime, endTime);
-
-    expect(utils.logQuery).toHaveBeenCalledWith(
-      configuration.items[0].settings.query,
-      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      logger
-    );
-    expect(pg.Client).toHaveBeenCalledWith({
-      host: configuration.settings.host,
-      port: configuration.settings.port,
-      user: configuration.settings.username,
-      password: configuration.settings.password,
-      database: configuration.settings.database,
-      connectionTimeoutMillis: configuration.settings.connectionTimeout,
-      query_timeout: configuration.settings.requestTimeout,
-      ssl: true
-    });
-    expect(client.connect).toHaveBeenCalledTimes(1);
-    expect(client.query).toHaveBeenCalledWith(
-      configuration.items[0].settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2'),
-      {
-        startTime: DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-        endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
-      }
-    );
-    expect(client.end).toHaveBeenCalledTimes(1);
-    expect(generateReplacementParameters).toHaveBeenCalledWith(
-      configuration.items[0].settings.query,
-      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
-    );
-
-    expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
-  });
-
-  it('should get data from postgre without reference', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    const client = {
-      connect: jest.fn(),
-      query: jest.fn(() => ({
-        rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-      })),
-      end: jest.fn()
-    };
-    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
-    const result = await south.queryData(configuration.items[1], startTime, endTime);
-    expect(utils.formatInstant).not.toHaveBeenCalled();
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
-
-    expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
-  });
-
-  it('should manage query error', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    pg.types.setTypeParser = jest.fn();
-    (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
-    const client = {
-      connect: jest.fn(),
-      query: jest.fn().mockImplementation(() => {
-        throw new Error('query error');
-      }),
-      end: jest.fn()
-    };
-    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
-
-    let error;
-    try {
-      await south.queryData(configuration.items[0], startTime, endTime);
-    } catch (err) {
-      error = err;
-    }
-
-    expect(client.connect).toHaveBeenCalledTimes(1);
-    expect(client.query).toHaveBeenCalledWith(
-      configuration.items[0].settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2'),
-      {
-        startTime,
-        endTime
-      }
-    );
-    expect(error).toEqual(new Error('query error'));
-
-    expect(client.end).toHaveBeenCalledTimes(1);
-  });
-
-  it('should test item', async () => {
-    const formattedInstant = '2020-01-01T00:00:00.000Z';
-    south.queryData = jest.fn().mockReturnValueOnce([
-      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-    ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
-    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
-
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    expect(south.queryData).toHaveBeenCalledWith(configuration.items[0], startTime, endTime);
-  });
-
-  it('should test item without datetimeFields', async () => {
-    const formattedInstant = '2020-01-01T00:00:00.000Z';
-    south.queryData = jest.fn().mockReturnValueOnce([
-      { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-      { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-    ]);
-    (utils.formatInstant as jest.Mock).mockReturnValue(formattedInstant);
-    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
-
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    expect(south.queryData).toHaveBeenCalledWith(configuration.items[1], startTime, endTime);
-  });
-});
-
-describe('SouthPostgreSQL without authentication', () => {
-  let south: SouthPostgreSQL;
-  const configuration: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'postgresql',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      host: 'localhost',
-      port: 1521,
-      database: 'db',
-      sslMode: false,
-      username: '',
-      password: '',
-      connectionTimeout: 1000,
-      requestTimeout: 1000
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should manage connection error', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    pg.types.setTypeParser = jest.fn();
-    (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
-
-    (pg.Client as unknown as jest.Mock).mockImplementation(() => {
-      throw new Error('connection error');
-    });
-
-    let error;
-    try {
-      await south.queryData(configuration.items[0], startTime, endTime);
-    } catch (err) {
-      error = err;
-    }
-
-    expect(error).toEqual(new Error('connection error'));
-  });
-});
-
-describe('SouthPostgreSQL test connection', () => {
-  let south: SouthPostgreSQL;
-  const configuration: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'postgresql',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      host: 'localhost',
-      port: 5432,
-      database: 'db',
-      sslMode: false,
-      username: 'username',
-      password: 'password',
-      connectionTimeout: 1000,
-      requestTimeout: 1000
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-
-  // Error messages handled by the test function
-  // With the expected error messages to throw
-  // Note: The PostgreSQL connect function throws errors with no codes,
-  //       so messages are used to distinguish the cases
-  const ERROR_MESSAGES = {
-    'timeout expired': 'Please check host and port.',
-    'connect ECONNREFUSED ::1:1234': 'Please check host and port.',
-    'password authentication failed for user "username"': 'Please check username and password.',
-    'database "db" does not exist': `Database "${configuration.settings.database}" does not exist.`,
-    DEFAULT: 'Unexpected error.' // For exceptions that we aren't explicitly specifying
-  } as const;
-
-  type ErrorMessages = keyof typeof ERROR_MESSAGES;
-
-  class PGError extends Error {
-    constructor(message: ErrorMessages) {
-      super();
-      this.name = 'PGError';
-      this.message = message;
-    }
+class PGError extends Error {
+  constructor(message: ErrorMessages) {
+    super();
+    this.name = 'PGError';
+    this.message = message;
   }
+}
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+describe('SouthPostgreSQL', () => {
+  let SouthPostgreSQL: typeof SouthPostgreSQLClass;
 
-    south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  const logger = new PinoLogger();
+  const addContentCallback = mock.fn();
+  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let southCacheService: SouthCacheServiceMock;
+
+  const clientConnect = mock.fn(async () => undefined);
+  const clientQuery = mock.fn(async () => ({
+    rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+  }));
+  const clientEnd = mock.fn(async () => undefined);
+
+  const pgExports: Record<string, unknown> = {
+    __esModule: true,
+    Client: mock.fn(function () {
+      return { connect: clientConnect, query: clientQuery, end: clientEnd };
+    })
+  };
+  pgExports.default = pgExports;
+
+  const utilsExports = {
+    convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
+    formatInstant: mock.fn((instant: unknown) => instant),
+    generateCsvContent: mock.fn(() => ''),
+    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
+    generateReplacementParameters: mock.fn(() => []),
+    logQuery: mock.fn(),
+    persistResults: mock.fn(async () => undefined)
+  };
+
+  before(() => {
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, 'pg', pgExports);
+    mockModule(nodeRequire, '../../service/encryption.service', {
+      __esModule: true,
+      encryptionService: new EncryptionServiceMock('', '')
+    });
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    SouthPostgreSQL = reloadModule<{ default: typeof SouthPostgreSQLClass }>(nodeRequire, './south-postgresql').default;
+  });
+
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    clientConnect.mock.resetCalls();
+    clientQuery.mock.resetCalls();
+    clientEnd.mock.resetCalls();
+    addContentCallback.mock.resetCalls();
+    pgExports.Client = mock.fn(function () {
+      return { connect: clientConnect, query: clientQuery, end: clientEnd };
+    });
+    utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+    utilsExports.formatInstant = mock.fn((instant: unknown) => instant);
+    utilsExports.generateCsvContent = mock.fn(() => '');
+    utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
+    utilsExports.generateReplacementParameters = mock.fn(() => []);
+    utilsExports.logQuery = mock.fn();
+    utilsExports.persistResults = mock.fn(async () => undefined);
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
-  it('Database is reachable and has tables', async () => {
-    const result = [{ table_count: 21 }];
-    const client = {
-      connect: jest.fn(),
-      query: jest
-        .fn()
-        .mockReturnValueOnce({ rows: result })
-        .mockReturnValueOnce({ rows: [{ version: 'PostgreSQL 14.5 on x86_64-pc-linux-gnu' }] }),
-      end: jest.fn()
-    };
-    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
-
-    const testResult = await south.testConnection();
-
-    expect(testResult).toEqual({
+  describe('SouthPostgreSQL with authentication', () => {
+    let south: SouthPostgreSQLClass;
+    const configuration: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'postgresql',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        host: 'localhost',
+        port: 5432,
+        database: 'db',
+        sslMode: true,
+        username: 'username',
+        password: 'password',
+        connectionTimeout: 1000,
+        requestTimeout: 1000
+      },
+      groups: [],
       items: [
-        { key: 'Version', value: 'PostgreSQL 14.5 on x86_64-pc-linux-gnu' },
-        { key: 'Tables', value: '21' }
-      ]
-    });
-    expect(client.end).toHaveBeenCalled();
-  });
-
-  it('Database is reachable but version is unavailable', async () => {
-    const client = {
-      connect: jest.fn(),
-      query: jest
-        .fn()
-        .mockReturnValueOnce({ rows: [{ table_count: 5 }] })
-        .mockReturnValueOnce({ rows: [{}] }), // no version key
-      end: jest.fn()
+        {
+          id: 'id1',
+          name: 'item1',
+          enabled: true,
+          settings: {
+            query: 'query1',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id2',
+          name: 'item2',
+          enabled: true,
+          settings: {
+            query: 'query2',
+            dateTimeFields: null,
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id3',
+          name: 'item3',
+          enabled: true,
+          settings: {
+            query: 'query3',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[1],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
     };
-    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
 
-    const testResult = await south.testConnection();
+    beforeEach(() => {
+      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    });
 
-    expect(testResult).toEqual({ items: [{ key: 'Tables', value: '5' }] });
-    expect(client.end).toHaveBeenCalled();
-  });
+    it('should properly run historyQuery', async () => {
+      const startTime = testData.constants.dates.DATE_1;
+      const queryDataMock = mock.method(
+        south,
+        'queryData',
+        mock.fn(async () => [
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+        ])
+      );
+      utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
+      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-  it('Unable to create connection', async () => {
-    let errorMessage: ErrorMessages;
+      const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(queryDataMock.mock.calls.length, 1);
+      assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
+        configuration.items[0],
+        testData.constants.dates.DATE_1,
+        testData.constants.dates.FAKE_NOW
+      ]);
+      assert.deepStrictEqual(result, {
+        trackedInstant: '2020-03-01T00:00:00.000Z',
+        value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+      });
+      assert.ok(
+        logger.info.mock.calls.some(
+          (c: { arguments: Array<unknown> }) =>
+            (c.arguments[0] as string).includes('Found 2 results') && (c.arguments[0] as string).includes(configuration.items[0].name)
+        )
+      );
+    });
 
-    for (errorMessage in ERROR_MESSAGES) {
-      (logger.error as jest.Mock).mockClear();
-      (logger.info as jest.Mock).mockClear();
-      (pg.Client as unknown as jest.Mock).mockImplementationOnce(() => {
-        throw new PGError(errorMessage);
+    it('should properly run historyQuery without result', async () => {
+      const startTime = testData.constants.dates.DATE_1;
+      const queryDataMock = mock.method(
+        south,
+        'queryData',
+        mock.fn(async () => [])
+      );
+
+      const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(queryDataMock.mock.calls.length, 1);
+      assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [
+        configuration.items[0],
+        testData.constants.dates.DATE_1,
+        testData.constants.dates.FAKE_NOW
+      ]);
+      assert.deepStrictEqual(result, { trackedInstant: null, value: null });
+      assert.ok(
+        logger.debug.mock.calls.some(
+          (c: { arguments: Array<unknown> }) =>
+            (c.arguments[0] as string).includes('No result found') && (c.arguments[0] as string).includes(configuration.items[0].name)
+        )
+      );
+    });
+
+    it('should get data from PostgreSQL', async () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      const formattedStartTime = DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
+      const formattedEndTime = DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
+
+      const replacementParams = { startTime: formattedStartTime, endTime: formattedEndTime };
+      utilsExports.generateReplacementParameters = mock.fn(() => replacementParams);
+
+      let formatCallCount = 0;
+      utilsExports.formatInstant = mock.fn(() => {
+        formatCallCount++;
+        if (formatCallCount === 1) return formattedStartTime;
+        if (formatCallCount === 2) return formattedEndTime;
+        return startTime;
       });
 
-      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_MESSAGES[errorMessage]} ${errorMessage}`));
-    }
+      const result = await south.queryData(configuration.items[0], startTime, endTime);
+
+      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual(
+        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        configuration.items[0].settings.query
+      );
+
+      assert.strictEqual((pgExports.Client as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((pgExports.Client as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+        host: configuration.settings.host,
+        port: configuration.settings.port,
+        user: configuration.settings.username,
+        password: configuration.settings.password,
+        database: configuration.settings.database,
+        connectionTimeoutMillis: configuration.settings.connectionTimeout,
+        query_timeout: configuration.settings.requestTimeout,
+        ssl: true
+      });
+
+      assert.strictEqual(clientConnect.mock.calls.length, 1);
+
+      assert.deepStrictEqual(clientQuery.mock.calls[0].arguments, [
+        configuration.items[0].settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2'),
+        replacementParams
+      ]);
+
+      assert.strictEqual(clientEnd.mock.calls.length, 1);
+
+      assert.deepStrictEqual((utilsExports.generateReplacementParameters as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+        configuration.items[0].settings.query,
+        formattedStartTime,
+        formattedEndTime
+      ]);
+
+      assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    });
+
+    it('should get data from PostgreSQL without reference', async () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      const result = await south.queryData(configuration.items[1], startTime, endTime);
+
+      assert.strictEqual((utilsExports.formatInstant as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.deepStrictEqual(
+        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        configuration.items[1].settings.query
+      );
+
+      assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+    });
+
+    it('should manage query error', async () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      utilsExports.generateReplacementParameters = mock.fn(() => ({ startTime, endTime }));
+      clientQuery.mock.resetCalls();
+      clientQuery.mock.mockImplementationOnce(() => {
+        throw new Error('query error');
+      });
+
+      await assert.rejects(south.queryData(configuration.items[0], startTime, endTime), new Error('query error'));
+
+      assert.strictEqual(clientConnect.mock.calls.length, 1);
+      assert.strictEqual(clientEnd.mock.calls.length, 1);
+    });
+
+    it('should test item', async () => {
+      const queryDataMock = mock.method(
+        south,
+        'queryData',
+        mock.fn(async () => [
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+        ])
+      );
+      utilsExports.formatInstant = mock.fn(() => testData.constants.dates.DATE_1);
+      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+
+      await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+      const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+      assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime]);
+    });
+
+    it('should test item without datetimeFields', async () => {
+      const queryDataMock = mock.method(
+        south,
+        'queryData',
+        mock.fn(async () => [
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+        ])
+      );
+      utilsExports.formatInstant = mock.fn(() => testData.constants.dates.DATE_1);
+      utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+
+      await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
+      const { startTime, endTime } = testData.south.itemTestingSettings.history!;
+      assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime]);
+    });
   });
 
-  it('System table unreachable', async () => {
-    const errorMessage = 'information_schema.TABLES does not exist';
-    const client = {
-      connect: jest.fn(),
-      query: jest.fn().mockImplementationOnce(() => {
-        throw new Error(errorMessage);
-      }),
-      end: jest.fn()
-    };
-    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
-
-    await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
-    );
-
-    expect(client.end).toHaveBeenCalled();
-  });
-
-  it('Database has no tables', async () => {
-    const client = {
-      connect: jest.fn(),
-      query: jest.fn().mockReturnValueOnce({ rows: [{ table_count: 0 }] }),
-      end: jest.fn()
-    };
-    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
-
-    await expect(south.testConnection()).rejects.toThrow(new Error(`Database "${configuration.settings.database}" has no tables`));
-    expect(client.end).toHaveBeenCalled();
-  });
-
-  it('Database does not return count of tables', async () => {
-    const client = {
-      connect: jest.fn(),
-      query: jest.fn().mockReturnValueOnce({ rows: [] }),
-      end: jest.fn()
-    };
-    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
-
-    await expect(south.testConnection()).rejects.toThrow(new Error(`Database "${configuration.settings.database}" has no tables`));
-
-    expect(client.end).toHaveBeenCalled();
-  });
-
-  it('Unable to connect to database without password', async () => {
-    configuration.settings.password = '';
-    let errorMessage: ErrorMessages;
-
-    for (errorMessage in ERROR_MESSAGES) {
-      const client = {
-        connect: () => {
-          throw new PGError(errorMessage);
+  describe('SouthPostgreSQL without authentication', () => {
+    let south: SouthPostgreSQLClass;
+    const configuration: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'postgresql',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        host: 'localhost',
+        port: 1521,
+        database: 'db',
+        sslMode: false,
+        username: '',
+        password: '',
+        connectionTimeout: 1000,
+        requestTimeout: 1000
+      },
+      groups: [],
+      items: [
+        {
+          id: 'id1',
+          name: 'item1',
+          enabled: true,
+          settings: {
+            query: 'query1',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
-        query: jest.fn().mockReturnValueOnce([[]]),
-        end: jest.fn()
-      };
-      (pg.Client as unknown as jest.Mock).mockReturnValue(client);
+        {
+          id: 'id2',
+          name: 'item2',
+          enabled: true,
+          settings: {
+            query: 'query2',
+            dateTimeFields: null,
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id3',
+          name: 'item3',
+          enabled: true,
+          settings: {
+            query: 'query3',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[1],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
 
-      await expect(south.testConnection()).rejects.toThrow(new Error(`${ERROR_MESSAGES[errorMessage]} ${errorMessage}`));
-    }
+    beforeEach(() => {
+      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    });
+
+    it('should manage connection error', async () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      utilsExports.generateReplacementParameters = mock.fn(() => ({ startTime, endTime }));
+      pgExports.Client = mock.fn(function () {
+        throw new Error('connection error');
+      });
+
+      await assert.rejects(south.queryData(configuration.items[0], startTime, endTime), new Error('connection error'));
+    });
+  });
+
+  describe('SouthPostgreSQL test connection', () => {
+    let south: SouthPostgreSQLClass;
+    const configuration: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'postgresql',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        host: 'localhost',
+        port: 5432,
+        database: 'db',
+        sslMode: false,
+        username: 'username',
+        password: 'password',
+        connectionTimeout: 1000,
+        requestTimeout: 1000
+      },
+      groups: [],
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    beforeEach(() => {
+      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    });
+
+    it('Database is reachable and has tables', async () => {
+      let queryCallCount = 0;
+      clientQuery.mock.resetCalls();
+      clientQuery.mock.mockImplementation(async () => {
+        queryCallCount++;
+        if (queryCallCount === 1) return { rows: [{ table_count: 21 }] };
+        return { rows: [{ version: 'PostgreSQL 14.5 on x86_64-pc-linux-gnu' }] };
+      });
+
+      const testResult = await south.testConnection();
+      assert.deepStrictEqual(testResult, {
+        items: [
+          { key: 'Version', value: 'PostgreSQL 14.5 on x86_64-pc-linux-gnu' },
+          { key: 'Tables', value: '21' }
+        ]
+      });
+      assert.ok(clientEnd.mock.calls.length > 0);
+    });
+
+    it('Database is reachable but version is unavailable', async () => {
+      let queryCallCount = 0;
+      clientQuery.mock.resetCalls();
+      clientQuery.mock.mockImplementation(async () => {
+        queryCallCount++;
+        if (queryCallCount === 1) return { rows: [{ table_count: 5 }] };
+        return { rows: [{}] };
+      });
+
+      const testResult = await south.testConnection();
+      assert.deepStrictEqual(testResult, { items: [{ key: 'Tables', value: '5' }] });
+      assert.ok(clientEnd.mock.calls.length > 0);
+    });
+
+    it('Unable to create connection', async () => {
+      for (const errorMessage of Object.keys(ERROR_MESSAGES) as Array<ErrorMessages>) {
+        clientConnect.mock.resetCalls();
+        clientEnd.mock.resetCalls();
+        pgExports.Client = mock.fn(function () {
+          throw new PGError(errorMessage);
+        });
+        await assert.rejects(south.testConnection(), new Error(`${ERROR_MESSAGES[errorMessage]} ${errorMessage}`));
+      }
+    });
+
+    it('System table unreachable', async () => {
+      const errorMessage = 'information_schema.TABLES does not exist';
+      clientQuery.mock.resetCalls();
+      clientQuery.mock.mockImplementationOnce(async () => {
+        throw new Error(errorMessage);
+      });
+
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Unable to read tables in database "${configuration.settings.database}". ${errorMessage}`)
+      );
+      assert.ok(clientEnd.mock.calls.length > 0);
+    });
+
+    it('Database has no tables', async () => {
+      clientQuery.mock.resetCalls();
+      clientQuery.mock.mockImplementation(async () => ({ rows: [{ table_count: 0 }] }));
+
+      await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
+      assert.ok(clientEnd.mock.calls.length > 0);
+    });
+
+    it('Database does not return count of tables', async () => {
+      clientQuery.mock.resetCalls();
+      clientQuery.mock.mockImplementation(async () => ({ rows: [] }));
+
+      await assert.rejects(south.testConnection(), new Error(`Database "${configuration.settings.database}" has no tables`));
+      assert.ok(clientEnd.mock.calls.length > 0);
+    });
+
+    it('Unable to connect to database without password', async () => {
+      for (const errorMessage of Object.keys(ERROR_MESSAGES) as Array<ErrorMessages>) {
+        clientConnect.mock.resetCalls();
+        clientEnd.mock.resetCalls();
+        clientConnect.mock.mockImplementationOnce(async () => {
+          throw new PGError(errorMessage);
+        });
+        await assert.rejects(south.testConnection(), new Error(`${ERROR_MESSAGES[errorMessage]} ${errorMessage}`));
+      }
+    });
   });
 });
