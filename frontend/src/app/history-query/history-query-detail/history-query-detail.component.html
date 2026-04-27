@@ -74,16 +74,25 @@
               }
             </span>
           </h1>
-          <span class="text-disabled pull-right me-2">
-            {{ historyQuery.id }}
-            <i
-              class="fa fa-copy"
-              role="button"
-              [ngbTooltip]="'history-query.tooltips.copy-cache-path' | translate"
-              [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
-              (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
-            ></i>
-          </span>
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">
+              {{ 'history-query.query-time-range.start' | translate }}:
+              {{ historyQuery.queryTimeRange.startTime | datetime: 'mediumWithSeconds' }}
+              &ndash;
+              {{ 'history-query.query-time-range.end' | translate }}:
+              {{ historyQuery.queryTimeRange.endTime | datetime: 'mediumWithSeconds' }}
+            </span>
+            <span class="text-disabled me-2">
+              {{ historyQuery.id }}
+              <i
+                class="fa fa-copy"
+                role="button"
+                [ngbTooltip]="'history-query.tooltips.copy-cache-path' | translate"
+                [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
+                (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+              ></i>
+            </span>
+          </div>
         </div>
         @if (historyMetrics) {
           <oib-history-metrics
