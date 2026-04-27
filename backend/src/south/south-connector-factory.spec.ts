@@ -1,29 +1,18 @@
-import pino from 'pino';
-import { buildSouth, deleteSouthCache, initSouthCache } from './south-connector-factory';
-import { SouthConnectorEntity } from '../model/south-connector.model';
-import { OIBusContent } from '../../shared/model/engine.model';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
-import SouthADS from '../south/south-ads/south-ads';
-import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
-import SouthModbus from '../south/south-modbus/south-modbus';
-import SouthMQTT from '../south/south-mqtt/south-mqtt';
-import SouthMSSQL from '../south/south-mssql/south-mssql';
-import SouthMySQL from '../south/south-mysql/south-mysql';
-import SouthODBC from '../south/south-odbc/south-odbc';
-import SouthOIAnalytics from '../south/south-oianalytics/south-oianalytics';
-import SouthOLEDB from '../south/south-oledb/south-oledb';
-import SouthOPC from '../south/south-opc/south-opc';
-import SouthOPCUA from '../south/south-opcua/south-opcua';
-import SouthOracle from '../south/south-oracle/south-oracle';
-import SouthPI from '../south/south-pi/south-pi';
-import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
-import SouthRestAPI from '../south/south-rest/south-rest';
-import SouthSFTP from '../south/south-sftp/south-sftp';
-import SouthFTP from '../south/south-ftp/south-ftp';
-import SouthSQLite from '../south/south-sqlite/south-sqlite';
-import {
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import type pino from 'pino';
+import type { SouthConnectorEntity } from '../model/south-connector.model';
+import type { OIBusContent } from '../../shared/model/engine.model';
+import type { Instant } from '../../shared/model/types';
+import type { SouthConnectorItemEntity } from '../model/south-connector.model';
+import type SouthCacheRepository from '../repository/cache/south-cache.repository';
+import type CertificateRepository from '../repository/config/certificate.repository';
+import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import type {
   SouthADSItemSettings,
   SouthADSSettings,
   SouthFolderScannerItemSettings,
@@ -63,40 +52,85 @@ import {
   SouthSQLiteItemSettings,
   SouthSQLiteSettings
 } from '../../shared/model/south-settings.model';
-import path from 'node:path';
-import fs from 'node:fs/promises';
-import { createFolder } from '../service/utils';
+import type {
+  buildSouth as BuildSouthFn,
+  deleteSouthCache as DeleteSouthCacheFn,
+  initSouthCache as InitSouthCacheFn
+} from './south-connector-factory';
 
-// Mock all dependencies
-jest.mock('node:fs/promises');
-jest.mock('../service/utils');
-jest.mock('pino');
-jest.mock('../south/south-ads/south-ads');
-jest.mock('../south/south-folder-scanner/south-folder-scanner');
-jest.mock('../south/south-modbus/south-modbus');
-jest.mock('../south/south-mqtt/south-mqtt');
-jest.mock('../south/south-mssql/south-mssql');
-jest.mock('../south/south-mysql/south-mysql');
-jest.mock('../south/south-odbc/south-odbc');
-jest.mock('../south/south-oianalytics/south-oianalytics');
-jest.mock('../south/south-oledb/south-oledb');
-jest.mock('../south/south-opc/south-opc');
-jest.mock('../south/south-opcua/south-opcua');
-jest.mock('../south/south-oracle/south-oracle');
-jest.mock('../south/south-pi/south-pi');
-jest.mock('../south/south-postgresql/south-postgresql');
-jest.mock('../south/south-sftp/south-sftp');
-jest.mock('../south/south-ftp/south-ftp');
-jest.mock('../south/south-sqlite/south-sqlite');
-jest.mock('../south/south-rest/south-rest');
+const nodeRequire = createRequire(import.meta.url);
 
 describe('South Connector Factory', () => {
   const mockLogger = {} as pino.Logger;
-  const mockAddContent = jest.fn() as (southId: string, data: OIBusContent) => Promise<void>;
+  const mockAddContent = mock.fn<[string, OIBusContent, Instant, Array<SouthConnectorItemEntity<SouthItemSettings>>], Promise<void>>();
   const mockSouthCacheFolder = '/tmp/cache';
   const mockSouthCacheRepository = {} as SouthCacheRepository;
   const mockCertificateRepository = {} as CertificateRepository;
   const mockOIAnalyticsRegistrationRepository = {} as OIAnalyticsRegistrationRepository;
+
+  let buildSouth: typeof BuildSouthFn;
+  let deleteSouthCache: typeof DeleteSouthCacheFn;
+  let initSouthCache: typeof InitSouthCacheFn;
+
+  const ctorCalls: Record<string, number> = {};
+  const makeMock = (key: string) =>
+    class {
+      constructor() {
+        ctorCalls[key] = (ctorCalls[key] ?? 0) + 1;
+      }
+    };
+
+  const MockSouthADS = makeMock('ads');
+  const MockSouthFolderScanner = makeMock('folder-scanner');
+  const MockSouthModbus = makeMock('modbus');
+  const MockSouthMQTT = makeMock('mqtt');
+  const MockSouthMSSQL = makeMock('mssql');
+  const MockSouthMySQL = makeMock('mysql');
+  const MockSouthODBC = makeMock('odbc');
+  const MockSouthOIAnalytics = makeMock('oianalytics');
+  const MockSouthOLEDB = makeMock('oledb');
+  const MockSouthOPC = makeMock('opc');
+  const MockSouthOPCUA = makeMock('opcua');
+  const MockSouthOracle = makeMock('oracle');
+  const MockSouthPI = makeMock('osisoft-pi');
+  const MockSouthPostgreSQL = makeMock('postgresql');
+  const MockSouthRest = makeMock('rest');
+  const MockSouthSFTP = makeMock('sftp');
+  const MockSouthFTP = makeMock('ftp');
+  const MockSouthSQLite = makeMock('sqlite');
+
+  const utilsExports = { createFolder: mock.fn(async () => undefined) };
+
+  before(() => {
+    mockModule(nodeRequire, '../service/utils', utilsExports);
+    mockModule(nodeRequire, '../south/south-ads/south-ads', { __esModule: true, default: MockSouthADS });
+    mockModule(nodeRequire, '../south/south-folder-scanner/south-folder-scanner', { __esModule: true, default: MockSouthFolderScanner });
+    mockModule(nodeRequire, '../south/south-modbus/south-modbus', { __esModule: true, default: MockSouthModbus });
+    mockModule(nodeRequire, '../south/south-mqtt/south-mqtt', { __esModule: true, default: MockSouthMQTT });
+    mockModule(nodeRequire, '../south/south-mssql/south-mssql', { __esModule: true, default: MockSouthMSSQL });
+    mockModule(nodeRequire, '../south/south-mysql/south-mysql', { __esModule: true, default: MockSouthMySQL });
+    mockModule(nodeRequire, '../south/south-odbc/south-odbc', { __esModule: true, default: MockSouthODBC });
+    mockModule(nodeRequire, '../south/south-oianalytics/south-oianalytics', { __esModule: true, default: MockSouthOIAnalytics });
+    mockModule(nodeRequire, '../south/south-oledb/south-oledb', { __esModule: true, default: MockSouthOLEDB });
+    mockModule(nodeRequire, '../south/south-opc/south-opc', { __esModule: true, default: MockSouthOPC });
+    mockModule(nodeRequire, '../south/south-opcua/south-opcua', { __esModule: true, default: MockSouthOPCUA });
+    mockModule(nodeRequire, '../south/south-oracle/south-oracle', { __esModule: true, default: MockSouthOracle });
+    mockModule(nodeRequire, '../south/south-pi/south-pi', { __esModule: true, default: MockSouthPI });
+    mockModule(nodeRequire, '../south/south-postgresql/south-postgresql', { __esModule: true, default: MockSouthPostgreSQL });
+    mockModule(nodeRequire, '../south/south-rest/south-rest', { __esModule: true, default: MockSouthRest });
+    mockModule(nodeRequire, '../south/south-sftp/south-sftp', { __esModule: true, default: MockSouthSFTP });
+    mockModule(nodeRequire, '../south/south-ftp/south-ftp', { __esModule: true, default: MockSouthFTP });
+    mockModule(nodeRequire, '../south/south-sqlite/south-sqlite', { __esModule: true, default: MockSouthSQLite });
+
+    const factory = reloadModule<{
+      buildSouth: typeof BuildSouthFn;
+      deleteSouthCache: typeof DeleteSouthCacheFn;
+      initSouthCache: typeof InitSouthCacheFn;
+    }>(nodeRequire, './south-connector-factory');
+    buildSouth = factory.buildSouth;
+    deleteSouthCache = factory.deleteSouthCache;
+    initSouthCache = factory.initSouthCache;
+  });
 
   const baseSettings = {
     id: 'test-id',
@@ -111,9 +145,25 @@ describe('South Connector Factory', () => {
     updatedAt: ''
   };
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  beforeEach(() => {
+    for (const key of Object.keys(ctorCalls)) delete ctorCalls[key];
+    utilsExports.createFolder = mock.fn(async () => undefined);
   });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  const callBuildSouth = (settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>) =>
+    buildSouth(
+      settings,
+      mockAddContent,
+      mockLogger,
+      mockSouthCacheFolder,
+      mockSouthCacheRepository,
+      mockCertificateRepository,
+      mockOIAnalyticsRegistrationRepository
+    );
 
   describe('buildSouth', () => {
     it('should create SouthADS for type "ads"', () => {
@@ -122,340 +172,165 @@ describe('South Connector Factory', () => {
         type: 'ads',
         settings: {} as SouthADSSettings
       };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthADS).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthADS);
+      const result = callBuildSouth(settings);
+      assert.strictEqual(ctorCalls['ads'], 1);
+      assert.ok(result instanceof MockSouthADS);
     });
 
     it('should create SouthFolderScanner for type "folder-scanner"', () => {
-      const settings: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings> = {
+      const result = callBuildSouth({
         ...baseSettings,
         type: 'folder-scanner',
         settings: {} as SouthFolderScannerSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthFolderScanner).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthFolderScanner);
+      } as SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>);
+      assert.strictEqual(ctorCalls['folder-scanner'], 1);
+      assert.ok(result instanceof MockSouthFolderScanner);
     });
 
     it('should create SouthModbus for type "modbus"', () => {
-      const settings: SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings> = {
-        ...baseSettings,
-        type: 'modbus',
-        settings: {} as SouthModbusSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthModbus).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthModbus);
+      const result = callBuildSouth({ ...baseSettings, type: 'modbus', settings: {} as SouthModbusSettings } as SouthConnectorEntity<
+        SouthModbusSettings,
+        SouthModbusItemSettings
+      >);
+      assert.strictEqual(ctorCalls['modbus'], 1);
+      assert.ok(result instanceof MockSouthModbus);
     });
 
     it('should create SouthMQTT for type "mqtt"', () => {
-      const settings: SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings> = {
-        ...baseSettings,
-        type: 'mqtt',
-        settings: {} as SouthMQTTSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthMQTT).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthMQTT);
+      const result = callBuildSouth({ ...baseSettings, type: 'mqtt', settings: {} as SouthMQTTSettings } as SouthConnectorEntity<
+        SouthMQTTSettings,
+        SouthMQTTItemSettings
+      >);
+      assert.strictEqual(ctorCalls['mqtt'], 1);
+      assert.ok(result instanceof MockSouthMQTT);
     });
 
     it('should create SouthMSSQL for type "mssql"', () => {
-      const settings: SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings> = {
-        ...baseSettings,
-        type: 'mssql',
-        settings: {} as SouthMSSQLSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthMSSQL).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthMSSQL);
+      const result = callBuildSouth({ ...baseSettings, type: 'mssql', settings: {} as SouthMSSQLSettings } as SouthConnectorEntity<
+        SouthMSSQLSettings,
+        SouthMSSQLItemSettings
+      >);
+      assert.strictEqual(ctorCalls['mssql'], 1);
+      assert.ok(result instanceof MockSouthMSSQL);
     });
 
     it('should create SouthMySQL for type "mysql"', () => {
-      const settings: SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings> = {
-        ...baseSettings,
-        type: 'mysql',
-        settings: {} as SouthMySQLSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthMySQL).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthMySQL);
+      const result = callBuildSouth({ ...baseSettings, type: 'mysql', settings: {} as SouthMySQLSettings } as SouthConnectorEntity<
+        SouthMySQLSettings,
+        SouthMySQLItemSettings
+      >);
+      assert.strictEqual(ctorCalls['mysql'], 1);
+      assert.ok(result instanceof MockSouthMySQL);
     });
 
     it('should create SouthODBC for type "odbc"', () => {
-      const settings: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
-        ...baseSettings,
-        type: 'odbc',
-        settings: {} as SouthODBCSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthODBC).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthODBC);
+      const result = callBuildSouth({ ...baseSettings, type: 'odbc', settings: {} as SouthODBCSettings } as SouthConnectorEntity<
+        SouthODBCSettings,
+        SouthODBCItemSettings
+      >);
+      assert.strictEqual(ctorCalls['odbc'], 1);
+      assert.ok(result instanceof MockSouthODBC);
     });
 
     it('should create SouthOIAnalytics for type "oianalytics"', () => {
-      const settings: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings> = {
+      const result = callBuildSouth({
         ...baseSettings,
         type: 'oianalytics',
         settings: {} as SouthOIAnalyticsSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthOIAnalytics).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthOIAnalytics);
+      } as SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>);
+      assert.strictEqual(ctorCalls['oianalytics'], 1);
+      assert.ok(result instanceof MockSouthOIAnalytics);
     });
 
     it('should create SouthOLEDB for type "oledb"', () => {
-      const settings: SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings> = {
-        ...baseSettings,
-        type: 'oledb',
-        settings: {} as SouthOLEDBSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthOLEDB).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthOLEDB);
+      const result = callBuildSouth({ ...baseSettings, type: 'oledb', settings: {} as SouthOLEDBSettings } as SouthConnectorEntity<
+        SouthOLEDBSettings,
+        SouthOLEDBItemSettings
+      >);
+      assert.strictEqual(ctorCalls['oledb'], 1);
+      assert.ok(result instanceof MockSouthOLEDB);
     });
 
     it('should create SouthOPC for type "opc"', () => {
-      const settings: SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings> = {
-        ...baseSettings,
-        type: 'opc',
-        settings: {} as SouthOPCSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthOPC).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthOPC);
+      const result = callBuildSouth({ ...baseSettings, type: 'opc', settings: {} as SouthOPCSettings } as SouthConnectorEntity<
+        SouthOPCSettings,
+        SouthOPCItemSettings
+      >);
+      assert.strictEqual(ctorCalls['opc'], 1);
+      assert.ok(result instanceof MockSouthOPC);
     });
 
     it('should create SouthOPCUA for type "opcua"', () => {
-      const settings: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
-        ...baseSettings,
-        type: 'opcua',
-        settings: {} as SouthOPCUASettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthOPCUA).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthOPCUA);
+      const result = callBuildSouth({ ...baseSettings, type: 'opcua', settings: {} as SouthOPCUASettings } as SouthConnectorEntity<
+        SouthOPCUASettings,
+        SouthOPCUAItemSettings
+      >);
+      assert.strictEqual(ctorCalls['opcua'], 1);
+      assert.ok(result instanceof MockSouthOPCUA);
     });
 
     it('should create SouthOracle for type "oracle"', () => {
-      const settings: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
-        ...baseSettings,
-        type: 'oracle',
-        settings: {} as SouthOracleSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthOracle).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthOracle);
+      const result = callBuildSouth({ ...baseSettings, type: 'oracle', settings: {} as SouthOracleSettings } as SouthConnectorEntity<
+        SouthOracleSettings,
+        SouthOracleItemSettings
+      >);
+      assert.strictEqual(ctorCalls['oracle'], 1);
+      assert.ok(result instanceof MockSouthOracle);
     });
 
     it('should create SouthPI for type "osisoft-pi"', () => {
-      const settings: SouthConnectorEntity<SouthPISettings, SouthPIItemSettings> = {
-        ...baseSettings,
-        type: 'osisoft-pi',
-        settings: {} as SouthPISettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthPI).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthPI);
+      const result = callBuildSouth({ ...baseSettings, type: 'osisoft-pi', settings: {} as SouthPISettings } as SouthConnectorEntity<
+        SouthPISettings,
+        SouthPIItemSettings
+      >);
+      assert.strictEqual(ctorCalls['osisoft-pi'], 1);
+      assert.ok(result instanceof MockSouthPI);
     });
 
     it('should create SouthPostgreSQL for type "postgresql"', () => {
-      const settings: SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings> = {
+      const result = callBuildSouth({
         ...baseSettings,
         type: 'postgresql',
         settings: {} as SouthPostgreSQLSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthPostgreSQL).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthPostgreSQL);
+      } as SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>);
+      assert.strictEqual(ctorCalls['postgresql'], 1);
+      assert.ok(result instanceof MockSouthPostgreSQL);
     });
 
-    it('should create SouthRestAPI for type "rest-api"', () => {
-      const settings: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings> = {
-        ...baseSettings,
-        type: 'rest',
-        settings: {} as SouthRestSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthRestAPI).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthRestAPI);
+    it('should create SouthRestAPI for type "rest"', () => {
+      const result = callBuildSouth({ ...baseSettings, type: 'rest', settings: {} as SouthRestSettings } as SouthConnectorEntity<
+        SouthRestSettings,
+        SouthRestItemSettings
+      >);
+      assert.strictEqual(ctorCalls['rest'], 1);
+      assert.ok(result instanceof MockSouthRest);
     });
 
     it('should create SouthSFTP for type "sftp"', () => {
-      const settings: SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings> = {
-        ...baseSettings,
-        type: 'sftp',
-        settings: {} as SouthSFTPSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthSFTP).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthSFTP);
+      const result = callBuildSouth({ ...baseSettings, type: 'sftp', settings: {} as SouthSFTPSettings } as SouthConnectorEntity<
+        SouthSFTPSettings,
+        SouthSFTPItemSettings
+      >);
+      assert.strictEqual(ctorCalls['sftp'], 1);
+      assert.ok(result instanceof MockSouthSFTP);
     });
 
     it('should create SouthFTP for type "ftp"', () => {
-      const settings: SouthConnectorEntity<SouthFTPSettings, SouthFTPItemSettings> = {
-        ...baseSettings,
-        type: 'ftp',
-        settings: {} as SouthFTPSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthFTP).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthFTP);
+      const result = callBuildSouth({ ...baseSettings, type: 'ftp', settings: {} as SouthFTPSettings } as SouthConnectorEntity<
+        SouthFTPSettings,
+        SouthFTPItemSettings
+      >);
+      assert.strictEqual(ctorCalls['ftp'], 1);
+      assert.ok(result instanceof MockSouthFTP);
     });
 
     it('should create SouthSQLite for type "sqlite"', () => {
-      const settings: SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings> = {
-        ...baseSettings,
-        type: 'sqlite',
-        settings: {} as SouthSQLiteSettings
-      };
-      const result = buildSouth(
-        settings,
-        mockAddContent,
-        mockLogger,
-        mockSouthCacheFolder,
-        mockSouthCacheRepository,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(SouthSQLite).toHaveBeenCalledTimes(1);
-      expect(result).toBeInstanceOf(SouthSQLite);
+      const result = callBuildSouth({ ...baseSettings, type: 'sqlite', settings: {} as SouthSQLiteSettings } as SouthConnectorEntity<
+        SouthSQLiteSettings,
+        SouthSQLiteItemSettings
+      >);
+      assert.strictEqual(ctorCalls['sqlite'], 1);
+      assert.ok(result instanceof MockSouthSQLite);
     });
 
     it('should throw an error for unknown type', () => {
@@ -463,18 +338,8 @@ describe('South Connector Factory', () => {
         ...baseSettings,
         type: 'unknown' as const,
         settings: {}
-      } as unknown as SouthConnectorEntity<SouthSettings, SouthItemSettings>;
-      expect(() =>
-        buildSouth(
-          settings,
-          mockAddContent,
-          mockLogger,
-          mockSouthCacheFolder,
-          mockSouthCacheRepository,
-          mockCertificateRepository,
-          mockOIAnalyticsRegistrationRepository
-        )
-      ).toThrow(`South connector of type "unknown" not installed`);
+      } as unknown as SouthConnectorEntity<SouthSettings, SouthItemSettings>; // intentionally invalid type to test the error branch
+      assert.throws(() => callBuildSouth(settings), new Error('South connector of type "unknown" not installed'));
     });
   });
 
@@ -485,17 +350,19 @@ describe('South Connector Factory', () => {
     it('should create necessary folders for standard connector', async () => {
       await initSouthCache(id, 'modbus', baseFolder);
 
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `south-${id}`));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `south-${id}`, 'tmp'));
-      expect(createFolder).not.toHaveBeenCalledWith(path.join(baseFolder, 'cache', `south-${id}`, 'opcua'));
+      const calledPaths = utilsExports.createFolder.mock.calls.map(c => c.arguments[0] as string);
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`, 'tmp')));
+      assert.ok(!calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`, 'opcua')));
     });
 
     it('should create additional folder for opcua connector', async () => {
       await initSouthCache(id, 'opcua', baseFolder);
 
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `south-${id}`));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `south-${id}`, 'tmp'));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `south-${id}`, 'opcua'));
+      const calledPaths = utilsExports.createFolder.mock.calls.map(c => c.arguments[0] as string);
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`, 'tmp')));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `south-${id}`, 'opcua')));
     });
   });
 
@@ -504,9 +371,17 @@ describe('South Connector Factory', () => {
     const id = 'connector-id';
 
     it('should remove south cache folder', async () => {
+      const rmMock = mock.method(
+        fs,
+        'rm',
+        mock.fn(async () => undefined)
+      );
       await deleteSouthCache(id, baseFolder);
-
-      expect(fs.rm).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `south-${id}`), { recursive: true, force: true });
+      assert.strictEqual(rmMock.mock.calls.length, 1);
+      assert.deepStrictEqual(rmMock.mock.calls[0].arguments, [
+        path.join(baseFolder, 'cache', `south-${id}`),
+        { recursive: true, force: true }
+      ]);
     });
   });
 });
