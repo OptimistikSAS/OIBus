@@ -1,25 +1,41 @@
-import { OIAnalyticsCommandController } from './oianalytics-command.controller';
+import { describe, it, before, beforeEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { CommandSearchParam } from '../../../shared/model/command.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import OIAnalyticsCommandServiceMock from '../../tests/__mocks__/service/oia/oianalytics-command-service.mock';
 import { createPageFromArray } from '../../../shared/model/types';
+import type { OIAnalyticsCommandController as OIAnalyticsCommandControllerShape } from './oianalytics-command.controller';
 
-// Mock the services
-jest.mock('../../service/oia/oianalytics-command.service', () => ({
-  toOIBusCommandDTO: jest.fn().mockImplementation(command => command)
-}));
+const nodeRequire = createRequire(import.meta.url);
+
+let mockCommandServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+let OIAnalyticsCommandController: typeof OIAnalyticsCommandControllerShape;
+
+before(() => {
+  fixTsoaModuleResolution(nodeRequire);
+  mockCommandServiceModule = { toOIBusCommandDTO: mock.fn((command: unknown) => command) };
+  mockModule(nodeRequire, '../../service/oia/oianalytics-command.service', mockCommandServiceModule);
+  const mod = reloadModule<{ OIAnalyticsCommandController: typeof OIAnalyticsCommandControllerShape }>(
+    nodeRequire,
+    './oianalytics-command.controller'
+  );
+  OIAnalyticsCommandController = mod.OIAnalyticsCommandController;
+});
 
 describe('OIAnalyticsCommandController', () => {
-  let controller: OIAnalyticsCommandController;
-  const mockRequest: Partial<CustomExpressRequest> = {
-    services: {
-      oIAnalyticsCommandService: new OIAnalyticsCommandServiceMock()
-    }
-  } as CustomExpressRequest;
+  let controller: OIAnalyticsCommandControllerShape;
+  let commandService: OIAnalyticsCommandServiceMock;
+  let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    commandService = new OIAnalyticsCommandServiceMock();
+    mockRequest = {
+      services: { oIAnalyticsCommandService: commandService }
+    } as Partial<CustomExpressRequest>;
+    mockCommandServiceModule.toOIBusCommandDTO = mock.fn((command: unknown) => command);
     controller = new OIAnalyticsCommandController();
   });
 
@@ -41,15 +57,13 @@ describe('OIAnalyticsCommandController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 1);
-    (mockRequest.services!.oIAnalyticsCommandService.search as jest.Mock).mockReturnValue(expectedResult);
+    commandService.search = mock.fn(() => expectedResult);
 
     const result = await controller.search(types, status, start, end, ack, page, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams);
-    expect(result).toEqual({
-      ...expectedResult,
-      content: expectedResult.content
-    });
+    assert.strictEqual(commandService.search.mock.calls.length, 1);
+    assert.deepStrictEqual(commandService.search.mock.calls[0].arguments[0], searchParams);
+    assert.deepStrictEqual(result, { ...expectedResult, content: expectedResult.content });
   });
 
   it('should return commands with default search parameters', async () => {
@@ -63,7 +77,7 @@ describe('OIAnalyticsCommandController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 25, 0);
-    (mockRequest.services!.oIAnalyticsCommandService.search as jest.Mock).mockReturnValue(expectedResult);
+    commandService.search = mock.fn(() => expectedResult);
 
     const result = await controller.search(
       undefined,
@@ -75,19 +89,18 @@ describe('OIAnalyticsCommandController', () => {
       mockRequest as CustomExpressRequest
     );
 
-    expect(mockRequest.services!.oIAnalyticsCommandService.search).toHaveBeenCalledWith(searchParams);
-    expect(result).toEqual({
-      ...expectedResult,
-      content: expectedResult.content
-    });
+    assert.strictEqual(commandService.search.mock.calls.length, 1);
+    assert.deepStrictEqual(commandService.search.mock.calls[0].arguments[0], searchParams);
+    assert.deepStrictEqual(result, { ...expectedResult, content: expectedResult.content });
   });
 
   it('should delete a command', async () => {
     const commandId = 'id';
-    (mockRequest.services!.oIAnalyticsCommandService.delete as jest.Mock).mockResolvedValue(undefined);
+    commandService.delete = mock.fn(async () => undefined);
 
     await controller.delete(commandId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsCommandService.delete).toHaveBeenCalledWith(commandId);
+    assert.strictEqual(commandService.delete.mock.calls.length, 1);
+    assert.deepStrictEqual(commandService.delete.mock.calls[0].arguments[0], commandId);
   });
 });
