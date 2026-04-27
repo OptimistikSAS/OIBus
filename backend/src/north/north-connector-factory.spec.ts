@@ -1,19 +1,13 @@
-import pino from 'pino';
-import { buildNorth, createNorthOrchestrator, deleteNorthCache, initNorthCache } from './north-connector-factory';
-import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
-import CacheService from '../service/cache/cache.service';
-import NorthAmazonS3 from './north-amazon-s3/north-amazon-s3';
-import NorthAzureBlob from './north-azure-blob/north-azure-blob';
-import NorthConsole from './north-console/north-console';
-import NorthFileWriter from './north-file-writer/north-file-writer';
-import NorthModbus from './north-modbus/north-modbus';
-import NorthMQTT from './north-mqtt/north-mqtt';
-import NorthOIAnalytics from './north-oianalytics/north-oianalytics';
-import NorthREST from './north-rest/north-rest';
-import NorthOPCUA from './north-opcua/north-opcua';
-import NorthSFTP from './north-sftp/north-sftp';
-import {
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import type pino from 'pino';
+import type CertificateRepository from '../repository/config/certificate.repository';
+import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import type {
   NorthAmazonS3Settings,
   NorthAzureBlobSettings,
   NorthConsoleSettings,
@@ -26,40 +20,81 @@ import {
   NorthSettings,
   NorthSFTPSettings
 } from '../../shared/model/north-settings.model';
-import { NorthConnectorEntity } from '../model/north-connector.model';
-import fs from 'node:fs/promises';
-import { createFolder } from '../service/utils';
-import path from 'node:path';
-import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
+import type { NorthConnectorEntity } from '../model/north-connector.model';
+import type { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
+import type {
+  buildNorth as BuildNorthFn,
+  createNorthOrchestrator as CreateNorthOrchestratorFn,
+  deleteNorthCache as DeleteNorthCacheFn,
+  initNorthCache as InitNorthCacheFn
+} from './north-connector-factory';
 
-// Mock all dependencies
-jest.mock('node:fs/promises');
-jest.mock('../service/utils');
-jest.mock('../service/cache/cache.service');
-jest.mock('./north-amazon-s3/north-amazon-s3');
-jest.mock('./north-azure-blob/north-azure-blob');
-jest.mock('./north-console/north-console');
-jest.mock('./north-file-writer/north-file-writer');
-jest.mock('./north-modbus/north-modbus');
-jest.mock('./north-mqtt/north-mqtt');
-jest.mock('./north-oianalytics/north-oianalytics');
-jest.mock('./north-rest/north-rest');
-jest.mock('./north-opcua/north-opcua');
-jest.mock('./north-sftp/north-sftp');
+const nodeRequire = createRequire(import.meta.url);
 
 describe('North Connector Factory', () => {
   const mockLogger = {} as pino.Logger;
   const mockCertificateRepository = {} as CertificateRepository;
   const mockOIAnalyticsRegistrationRepository = {} as OIAnalyticsRegistrationRepository;
-  const mockOrchestrator = {} as CacheService;
+
+  let buildNorth: typeof BuildNorthFn;
+  let initNorthCache: typeof InitNorthCacheFn;
+  let deleteNorthCache: typeof DeleteNorthCacheFn;
+  let createNorthOrchestrator: typeof CreateNorthOrchestratorFn;
+
+  const ctorCalls: Record<string, Array<Array<unknown>>> = {};
+  const makeMock = (key: string) =>
+    class {
+      constructor(...args: Array<unknown>) {
+        if (!ctorCalls[key]) ctorCalls[key] = [];
+        ctorCalls[key].push(args);
+      }
+    };
+
+  const MockNorthAmazonS3 = makeMock('aws-s3');
+  const MockNorthAzureBlob = makeMock('azure-blob');
+  const MockNorthConsole = makeMock('console');
+  const MockNorthFileWriter = makeMock('file-writer');
+  const MockNorthModbus = makeMock('modbus');
+  const MockNorthMQTT = makeMock('mqtt');
+  const MockNorthOIAnalytics = makeMock('oianalytics');
+  const MockNorthREST = makeMock('rest');
+  const MockNorthOPCUA = makeMock('opcua');
+  const MockNorthSFTP = makeMock('sftp');
+  const MockCacheService = makeMock('cache-service');
+
+  const utilsExports = { createFolder: mock.fn(async () => undefined) };
+
+  before(() => {
+    mockModule(nodeRequire, '../service/utils', utilsExports);
+    mockModule(nodeRequire, '../service/cache/cache.service', { __esModule: true, default: MockCacheService });
+    mockModule(nodeRequire, '../north/north-amazon-s3/north-amazon-s3', { __esModule: true, default: MockNorthAmazonS3 });
+    mockModule(nodeRequire, '../north/north-azure-blob/north-azure-blob', { __esModule: true, default: MockNorthAzureBlob });
+    mockModule(nodeRequire, '../north/north-console/north-console', { __esModule: true, default: MockNorthConsole });
+    mockModule(nodeRequire, '../north/north-file-writer/north-file-writer', { __esModule: true, default: MockNorthFileWriter });
+    mockModule(nodeRequire, '../north/north-modbus/north-modbus', { __esModule: true, default: MockNorthModbus });
+    mockModule(nodeRequire, '../north/north-mqtt/north-mqtt', { __esModule: true, default: MockNorthMQTT });
+    mockModule(nodeRequire, '../north/north-oianalytics/north-oianalytics', { __esModule: true, default: MockNorthOIAnalytics });
+    mockModule(nodeRequire, '../north/north-rest/north-rest', { __esModule: true, default: MockNorthREST });
+    mockModule(nodeRequire, '../north/north-opcua/north-opcua', { __esModule: true, default: MockNorthOPCUA });
+    mockModule(nodeRequire, '../north/north-sftp/north-sftp', { __esModule: true, default: MockNorthSFTP });
+
+    const factory = reloadModule<{
+      buildNorth: typeof BuildNorthFn;
+      initNorthCache: typeof InitNorthCacheFn;
+      deleteNorthCache: typeof DeleteNorthCacheFn;
+      createNorthOrchestrator: typeof CreateNorthOrchestratorFn;
+    }>(nodeRequire, './north-connector-factory');
+    buildNorth = factory.buildNorth;
+    initNorthCache = factory.initNorthCache;
+    deleteNorthCache = factory.deleteNorthCache;
+    createNorthOrchestrator = factory.createNorthOrchestrator;
+  });
 
   const baseSettings = {
     id: 'test-id',
     name: 'test-name',
-    type: 'aws-s3' as const,
     description: 'test-description',
     enabled: true,
-    settings: {},
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -88,9 +123,17 @@ describe('North Connector Factory', () => {
     transformers: []
   };
 
-  afterEach(() => {
-    jest.clearAllMocks();
+  beforeEach(() => {
+    for (const key of Object.keys(ctorCalls)) delete ctorCalls[key];
+    utilsExports.createFolder = mock.fn(async () => undefined);
   });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  const callBuildNorth = (settings: NorthConnectorEntity<NorthSettings>) =>
+    buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, {} as never);
 
   describe('buildNorth', () => {
     it('should create NorthAmazonS3 for type "aws-s3"', () => {
@@ -99,9 +142,9 @@ describe('North Connector Factory', () => {
         type: 'aws-s3',
         settings: {} as NorthAmazonS3Settings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthAmazonS3).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthAmazonS3);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['aws-s3']?.length, 1);
+      assert.ok(result instanceof MockNorthAmazonS3);
     });
 
     it('should create NorthAzureBlob for type "azure-blob"', () => {
@@ -110,9 +153,9 @@ describe('North Connector Factory', () => {
         type: 'azure-blob',
         settings: {} as NorthAzureBlobSettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthAzureBlob).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthAzureBlob);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['azure-blob']?.length, 1);
+      assert.ok(result instanceof MockNorthAzureBlob);
     });
 
     it('should create NorthConsole for type "console"', () => {
@@ -121,9 +164,9 @@ describe('North Connector Factory', () => {
         type: 'console',
         settings: {} as NorthConsoleSettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthConsole).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthConsole);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['console']?.length, 1);
+      assert.ok(result instanceof MockNorthConsole);
     });
 
     it('should create NorthFileWriter for type "file-writer"', () => {
@@ -132,9 +175,9 @@ describe('North Connector Factory', () => {
         type: 'file-writer',
         settings: {} as NorthFileWriterSettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthFileWriter).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthFileWriter);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['file-writer']?.length, 1);
+      assert.ok(result instanceof MockNorthFileWriter);
     });
 
     it('should create NorthModbus for type "modbus"', () => {
@@ -143,9 +186,9 @@ describe('North Connector Factory', () => {
         type: 'modbus',
         settings: {} as NorthModbusSettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthModbus).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthModbus);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['modbus']?.length, 1);
+      assert.ok(result instanceof MockNorthModbus);
     });
 
     it('should create NorthMQTT for type "mqtt"', () => {
@@ -154,9 +197,9 @@ describe('North Connector Factory', () => {
         type: 'mqtt',
         settings: {} as NorthMQTTSettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthMQTT).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthMQTT);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['mqtt']?.length, 1);
+      assert.ok(result instanceof MockNorthMQTT);
     });
 
     it('should create NorthOIAnalytics for type "oianalytics"', () => {
@@ -165,15 +208,13 @@ describe('North Connector Factory', () => {
         type: 'oianalytics',
         settings: {} as NorthOIAnalyticsSettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthOIAnalytics).toHaveBeenCalledWith(
-        settings,
-        mockLogger,
-        mockOrchestrator,
-        mockCertificateRepository,
-        mockOIAnalyticsRegistrationRepository
-      );
-      expect(result).toBeInstanceOf(NorthOIAnalytics);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['oianalytics']?.length, 1);
+      const args = ctorCalls['oianalytics'][0];
+      assert.deepStrictEqual(args[2], {}); // orchestrator
+      assert.strictEqual(args[3], mockCertificateRepository);
+      assert.strictEqual(args[4], mockOIAnalyticsRegistrationRepository);
+      assert.ok(result instanceof MockNorthOIAnalytics);
     });
 
     it('should create NorthOPCUA for type "opcua"', () => {
@@ -182,9 +223,9 @@ describe('North Connector Factory', () => {
         type: 'opcua',
         settings: {} as NorthOPCUASettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthOPCUA).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthOPCUA);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['opcua']?.length, 1);
+      assert.ok(result instanceof MockNorthOPCUA);
     });
 
     it('should create NorthREST for type "rest"', () => {
@@ -193,9 +234,9 @@ describe('North Connector Factory', () => {
         type: 'rest',
         settings: {} as NorthRESTSettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthREST).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthREST);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['rest']?.length, 1);
+      assert.ok(result instanceof MockNorthREST);
     });
 
     it('should create NorthSFTP for type "sftp"', () => {
@@ -204,9 +245,9 @@ describe('North Connector Factory', () => {
         type: 'sftp',
         settings: {} as NorthSFTPSettings
       };
-      const result = buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator);
-      expect(NorthSFTP).toHaveBeenCalledWith(settings, mockLogger, mockOrchestrator);
-      expect(result).toBeInstanceOf(NorthSFTP);
+      const result = callBuildNorth(settings);
+      assert.strictEqual(ctorCalls['sftp']?.length, 1);
+      assert.ok(result instanceof MockNorthSFTP);
     });
 
     it('should throw an error for unknown type', () => {
@@ -214,10 +255,8 @@ describe('North Connector Factory', () => {
         ...baseSettings,
         type: 'unknown' as const,
         settings: {}
-      } as unknown as NorthConnectorEntity<NorthSettings>;
-      expect(() =>
-        buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, mockOrchestrator)
-      ).toThrow(`North connector of type "unknown" not installed`);
+      } as unknown as NorthConnectorEntity<NorthSettings>; // intentionally invalid type to test the error branch
+      assert.throws(() => callBuildNorth(settings), new Error('North connector of type "unknown" not installed'));
     });
   });
 
@@ -228,30 +267,29 @@ describe('North Connector Factory', () => {
     it('should create necessary folders for standard connector', async () => {
       await initNorthCache(id, 'file-writer', baseFolder);
 
+      const calledPaths = utilsExports.createFolder.mock.calls.map(c => c.arguments[0] as string);
       // Cache
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `north-${id}`));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `north-${id}`, METADATA_FOLDER));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `north-${id}`, CONTENT_FOLDER));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `north-${id}`, 'tmp'));
-
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `north-${id}`)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `north-${id}`, 'metadata' as typeof METADATA_FOLDER)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `north-${id}`, 'content' as typeof CONTENT_FOLDER)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `north-${id}`, 'tmp')));
       // Error
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'error', `north-${id}`));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'error', `north-${id}`, METADATA_FOLDER));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'error', `north-${id}`, CONTENT_FOLDER));
-
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'error', `north-${id}`)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'error', `north-${id}`, 'metadata' as typeof METADATA_FOLDER)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'error', `north-${id}`, 'content' as typeof CONTENT_FOLDER)));
       // Archive
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'archive', `north-${id}`));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'archive', `north-${id}`, METADATA_FOLDER));
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'archive', `north-${id}`, CONTENT_FOLDER));
-
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'archive', `north-${id}`)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'archive', `north-${id}`, 'metadata' as typeof METADATA_FOLDER)));
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'archive', `north-${id}`, 'content' as typeof CONTENT_FOLDER)));
       // Should NOT create opcua folder
-      expect(createFolder).not.toHaveBeenCalledWith(path.join(baseFolder, 'cache', `north-${id}`, 'opcua'));
+      assert.ok(!calledPaths.includes(path.join(baseFolder, 'cache', `north-${id}`, 'opcua')));
     });
 
     it('should create additional folder for opcua connector', async () => {
       await initNorthCache(id, 'opcua', baseFolder);
 
-      expect(createFolder).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `north-${id}`, 'opcua'));
+      const calledPaths = utilsExports.createFolder.mock.calls.map(c => c.arguments[0] as string);
+      assert.ok(calledPaths.includes(path.join(baseFolder, 'cache', `north-${id}`, 'opcua')));
     });
   });
 
@@ -260,12 +298,25 @@ describe('North Connector Factory', () => {
     const id = 'connector-id';
 
     it('should remove cache, error and archive folders', async () => {
+      const rmMock = mock.method(
+        fs,
+        'rm',
+        mock.fn(async () => undefined)
+      );
       await deleteNorthCache(id, baseFolder);
-
-      expect(fs.rm).toHaveBeenCalledTimes(3);
-      expect(fs.rm).toHaveBeenCalledWith(path.join(baseFolder, 'cache', `north-${id}`), { recursive: true, force: true });
-      expect(fs.rm).toHaveBeenCalledWith(path.join(baseFolder, 'error', `north-${id}`), { recursive: true, force: true });
-      expect(fs.rm).toHaveBeenCalledWith(path.join(baseFolder, 'archive', `north-${id}`), { recursive: true, force: true });
+      assert.strictEqual(rmMock.mock.calls.length, 3);
+      assert.deepStrictEqual(rmMock.mock.calls[0].arguments, [
+        path.join(baseFolder, 'cache', `north-${id}`),
+        { recursive: true, force: true }
+      ]);
+      assert.deepStrictEqual(rmMock.mock.calls[1].arguments, [
+        path.join(baseFolder, 'error', `north-${id}`),
+        { recursive: true, force: true }
+      ]);
+      assert.deepStrictEqual(rmMock.mock.calls[2].arguments, [
+        path.join(baseFolder, 'archive', `north-${id}`),
+        { recursive: true, force: true }
+      ]);
     });
   });
 
@@ -276,13 +327,13 @@ describe('North Connector Factory', () => {
 
       const result = createNorthOrchestrator(baseFolder, id, mockLogger);
 
-      expect(CacheService).toHaveBeenCalledWith(
-        mockLogger,
-        path.join(baseFolder, 'cache', `north-${id}`),
-        path.join(baseFolder, 'error', `north-${id}`),
-        path.join(baseFolder, 'archive', `north-${id}`)
-      );
-      expect(result).toBeInstanceOf(CacheService);
+      assert.strictEqual(ctorCalls['cache-service']?.length, 1);
+      const args = ctorCalls['cache-service'][0];
+      assert.strictEqual(args[0], mockLogger);
+      assert.strictEqual(args[1], path.join(baseFolder, 'cache', `north-${id}`));
+      assert.strictEqual(args[2], path.join(baseFolder, 'error', `north-${id}`));
+      assert.strictEqual(args[3], path.join(baseFolder, 'archive', `north-${id}`));
+      assert.ok(result instanceof MockCacheService);
     });
   });
 });
