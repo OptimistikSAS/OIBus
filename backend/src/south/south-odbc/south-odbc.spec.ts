@@ -1,50 +1,105 @@
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import path from 'node:path';
-import SouthODBC from './south-odbc';
-import * as utils from '../../service/utils';
-import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResults } from '../../service/utils';
-import pino from 'pino';
-import { loadOdbc } from './odbc-loader';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { SouthODBCItemSettings, SouthODBCItemSettingsDateTimeFields, SouthODBCSettings } from '../../../shared/model/south-settings.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import testData from '../../tests/utils/test-data';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
-import { HTTPRequest } from '../../service/http-request.utils';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type {
+  SouthODBCItemSettings,
+  SouthODBCItemSettingsDateTimeFields,
+  SouthODBCSettings
+} from '../../../shared/model/south-settings.model';
+import type SouthODBCClass from './south-odbc';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 
-jest.mock('../../service/http-request.utils');
-jest.mock('node:fs/promises');
-jest.mock('../../service/utils');
-jest.mock('./odbc-loader.ts');
+const nodeRequire = createRequire(import.meta.url);
 
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
+describe('SouthODBC', () => {
+  let SouthODBC: typeof SouthODBCClass;
 
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
+  const logger = new PinoLogger();
+  const addContentCallback = mock.fn();
+  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let southCacheService: SouthCacheServiceMock;
+
+  const utilsExports = {
+    convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
+    convertDelimiter: mock.fn((d: unknown) => d),
+    formatInstant: mock.fn((instant: unknown) => instant),
+    generateCsvContent: mock.fn(() => ''),
+    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
+    generateReplacementParameters: mock.fn(() => []),
+    logQuery: mock.fn(),
+    persistResults: mock.fn(async () => undefined)
+  };
+
+  const odbcLoaderExports = {
+    loadOdbc: mock.fn(() => null)
+  };
+
+  const httpRequestExports = {
+    __esModule: true,
+    HTTPRequest: mock.fn(async () => createMockResponse(200, {}))
+  };
+
+  before(() => {
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, './odbc-loader', odbcLoaderExports);
+    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    mockModule(nodeRequire, '../../service/encryption.service', {
+      __esModule: true,
+      encryptionService: new EncryptionServiceMock('', '')
+    });
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    SouthODBC = reloadModule<{ default: typeof SouthODBCClass }>(nodeRequire, './south-odbc').default;
+  });
+
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    addContentCallback.mock.resetCalls();
+
+    // Reset utils mocks
+    utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
+    utilsExports.convertDelimiter = mock.fn((d: unknown) => d);
+    utilsExports.formatInstant = mock.fn((instant: unknown) => instant);
+    utilsExports.generateCsvContent = mock.fn(() => '');
+    utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
+    utilsExports.logQuery = mock.fn();
+    utilsExports.persistResults = mock.fn(async () => undefined);
+
+    // Reset other mocks
+    odbcLoaderExports.loadOdbc = mock.fn(() => null);
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+
+    // Reset logger mocks
+    for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
+      (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
     }
-);
-jest.mock('../../service/encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
 
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
+    mock.method(console, 'info', () => null);
+    mock.method(console, 'error', () => null);
 
-// Spy on console info and error
-jest.spyOn(global.console, 'info').mockImplementation(() => null);
-jest.spyOn(global.console, 'error').mockImplementation(() => null);
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+  });
 
-describe('SouthODBC odbc driver with authentication', () => {
-  let south: SouthODBC;
-  const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
+  afterEach(() => {
+    mock.timers.reset();
+    mock.restoreAll();
+  });
+
+  // Shared configuration for "with authentication" describe blocks
+  const configurationWithAuth: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -182,1049 +237,1070 @@ describe('SouthODBC odbc driver with authentication', () => {
     updatedAt: ''
   };
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  describe('SouthODBC odbc driver with authentication', () => {
+    let south: SouthODBCClass;
 
-    (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
+    const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = JSON.parse(JSON.stringify(configurationWithAuth));
 
-    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should do nothing on connect and disconnect', async () => {
-    await south.connect();
-    await south.disconnect();
-    expect(HTTPRequest).not.toHaveBeenCalled();
-  });
-
-  it('should not add ; if  present', async () => {
-    south.connectorConfiguration = JSON.parse(JSON.stringify(south.connectorConfiguration));
-    south.connectorConfiguration.settings.connectionString += ';';
-    const result = await south.createConnectionConfig(south.connectorConfiguration.settings);
-    expect(result).toEqual({
-      connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;PWD=password;',
-      connectionTimeout: 1000
-    });
-  });
-
-  it('should properly run historyQuery', async () => {
-    const startTime = testData.constants.dates.DATE_1;
-    south.queryOdbcData = jest.fn().mockReturnValueOnce({
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    beforeEach(() => {
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
     });
 
-    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryOdbcData).toHaveBeenCalledTimes(1);
-    expect(south.queryOdbcData).toHaveBeenCalledWith(
-      configuration.items[0],
-      testData.constants.dates.DATE_1,
-      testData.constants.dates.FAKE_NOW
-    );
-    expect(result).toEqual({
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+    it('should do nothing on connect and disconnect', async () => {
+      await south.connect();
+      await south.disconnect();
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 0);
     });
-  });
 
-  it('should get data from ODBC', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc).mockReturnValueOnce(odbc);
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    const odbcConnection = {
-      close: jest.fn(),
-      query: jest
-        .fn()
-        .mockReturnValueOnce([
-          { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
-          { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
-        ])
-        .mockReturnValueOnce([])
-    };
-    (formatInstant as jest.Mock).mockImplementation(value => value);
-
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-
-    const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
-
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
-
-    expect(odbc.connect).toHaveBeenCalledWith({
-      connectionString: `${configuration.settings.connectionString};` + 'PWD=password;',
-      connectionTimeout: configuration.settings.connectionTimeout
+    it('should not add ; if present', async () => {
+      const settingsCopy = JSON.parse(JSON.stringify(south.connectorConfiguration.settings));
+      settingsCopy.connectionString += ';';
+      const result = await south.createConnectionConfig(settingsCopy);
+      assert.deepStrictEqual(result, {
+        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes;PWD=password;',
+        connectionTimeout: 1000
+      });
     });
-    expect(logger.debug).toHaveBeenCalledWith(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`);
-    expect(odbcConnection.query).toHaveBeenCalledWith(configuration.items[0].settings.query);
-    expect(odbcConnection.close).toHaveBeenCalledTimes(1);
 
-    expect(result).toEqual({
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z', value: 1 }
+    it('should properly run historyQuery', async () => {
+      const startTime = testData.constants.dates.DATE_1;
+      const mockReturnValue = {
+        trackedInstant: '2020-03-01T00:00:00.000Z',
+        value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+      };
+      const queryOdbcDataMock = mock.method(
+        south,
+        'queryOdbcData',
+        mock.fn(async () => mockReturnValue)
+      );
+
+      const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(queryOdbcDataMock.mock.calls.length, 1);
+      assert.deepStrictEqual(queryOdbcDataMock.mock.calls[0].arguments, [
+        configuration.items[0],
+        testData.constants.dates.DATE_1,
+        testData.constants.dates.FAKE_NOW
+      ]);
+      assert.deepStrictEqual(result, mockReturnValue);
     });
-    expect(persistResults).toHaveBeenCalledWith(
-      [
+
+    it('should get data from ODBC', async () => {
+      const odbcConnection = {
+        close: mock.fn(),
+        query: mock.fn()
+      };
+      let queryCallCount = 0;
+      odbcConnection.query.mock.mockImplementation(() => {
+        queryCallCount++;
+        if (queryCallCount === 1) {
+          return [
+            { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
+            { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
+          ];
+        }
+        return [];
+      });
+
+      const odbc = {
+        connect: mock.fn(() => odbcConnection)
+      };
+      let loadOdbcCallCount = 0;
+      odbcLoaderExports.loadOdbc = mock.fn(() => {
+        loadOdbcCallCount++;
+        if (loadOdbcCallCount <= 2) return odbc;
+        return null;
+      });
+
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
+
+      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual(
+        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        configuration.items[0].settings.query
+      );
+
+      assert.strictEqual(odbc.connect.mock.calls.length, 1);
+      assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
+        connectionString: `${configuration.settings.connectionString};PWD=password;`,
+        connectionTimeout: configuration.settings.connectionTimeout
+      });
+      assert.ok(
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`)
+        )
+      );
+      assert.strictEqual(odbcConnection.query.mock.calls.length, 1);
+      assert.deepStrictEqual(odbcConnection.query.mock.calls[0].arguments[0], configuration.items[0].settings.query);
+      assert.strictEqual(odbcConnection.close.mock.calls.length, 1);
+
+      assert.deepStrictEqual(result, {
+        trackedInstant: '2020-03-01T00:00:00.000Z',
+        value: { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
+      });
+
+      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], [
         { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
         { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
-      ],
-      configuration.items[0].settings.serialization,
-      configuration.name,
-      configuration.items[0],
-      testData.constants.dates.FAKE_NOW,
-      path.resolve('cacheFolder', 'tmp'),
-      expect.any(Function),
-      logger
-    );
+      ]);
+      assert.deepStrictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        configuration.items[0].settings.serialization
+      );
+      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], configuration.name);
+      assert.deepStrictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[3],
+        configuration.items[0]
+      );
+      assert.strictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[4],
+        testData.constants.dates.FAKE_NOW
+      );
+      assert.strictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[5],
+        path.resolve('cacheFolder', 'tmp')
+      );
 
-    const noResult = await south.queryOdbcData(configuration.items[0], startTime, endTime);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
-    expect(noResult).toEqual({ trackedInstant: null, value: null });
-  });
-
-  it('should get data from ODBC without datetime reference', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    const odbcConnection = {
-      close: jest.fn(),
-      query: jest.fn().mockReturnValueOnce([
-        { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
-        { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
-      ])
-    };
-    (formatInstant as jest.Mock).mockImplementation(value => value);
-
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-
-    const result = await south.queryOdbcData(configuration.items[1], startTime, endTime);
-
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
-
-    expect(result).toEqual({
-      trackedInstant: null,
-      value: {
-        anotherTimestamp: '2020-03-01T00:00:00.000Z',
-        timestamp: '2020-03-01T00:00:00.000Z',
-        value: 2
-      }
-    });
-  });
-
-  it('should manage query error', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    const odbcConnection = {
-      close: jest.fn(),
-      query: jest.fn().mockImplementationOnce(() => {
-        throw new Error('query error');
-      })
-    };
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-
-    await expect(south.queryOdbcData(configuration.items[0], startTime, endTime)).rejects.toThrow('query error');
-    expect(odbcConnection.query).toHaveBeenCalledWith(configuration.items[0].settings.query);
-    expect(odbcConnection.close).toHaveBeenCalledTimes(1);
-  });
-
-  it('should manage odbc error', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    const odbcConnection = {
-      close: jest.fn(),
-      query: jest.fn().mockImplementationOnce(() => {
-        throw {
-          message: 'odbc error',
-          odbcErrors: [{ message: 'error1' }, { message: 'error2' }]
-        };
-      })
-    };
-    (odbc.connect as jest.Mock).mockReturnValueOnce(odbcConnection);
-
-    await expect(south.queryOdbcData(configuration.items[0], startTime, endTime)).rejects.toThrow('odbc error');
-
-    expect(logger.error).toHaveBeenCalledWith(`Error from ODBC driver: error1`);
-    expect(logger.error).toHaveBeenCalledWith(`Error from ODBC driver: error2`);
-  });
-
-  it('queryOdbcData should throw error if ODBC library not loaded', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-    (loadOdbc as jest.Mock).mockReturnValueOnce(null);
-    await expect(south.queryOdbcData(configuration.items[0], startTime, endTime)).rejects.toThrow('ODBC library not available');
-  });
-
-  it('should test item with queryOdbcData', async () => {
-    south.queryOdbcData = jest.fn().mockReturnValue({
-      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }] as Array<OIBusTimeValue>
+      // Reset for second call
+      odbcConnection.close.mock.resetCalls();
+      const noResult = await south.queryOdbcData(configuration.items[0], startTime, endTime);
+      assert.ok(
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(`No result found for item ${configuration.items[0].name}`)
+        )
+      );
+      assert.deepStrictEqual(noResult, { trackedInstant: null, value: null });
     });
 
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-    expect(south.queryOdbcData).toHaveBeenCalledTimes(1);
-    expect(convertDateTimeToInstant).not.toHaveBeenCalled();
-    expect(formatInstant).not.toHaveBeenCalled();
-  });
-
-  it('QueryOdbcData in case of item test', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    const odbcConnection = {
-      close: jest.fn(),
-      query: jest
-        .fn()
-        .mockReturnValueOnce([
+    it('should get data from ODBC without datetime reference', async () => {
+      const odbcConnection = {
+        close: mock.fn(),
+        query: mock.fn(() => [
           { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
           { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
         ])
-        .mockReturnValueOnce([])
-    };
-    (formatInstant as jest.Mock).mockImplementation(value => value);
-
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-
-    await south.queryOdbcData(configuration.items[0], startTime, endTime, true);
-
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
-
-    expect(odbc.connect).toHaveBeenCalledWith({
-      connectionString: `${configuration.settings.connectionString};` + 'PWD=password;',
-      connectionTimeout: configuration.settings.connectionTimeout
-    });
-    expect(logger.debug).toHaveBeenCalledWith(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`);
-    expect(odbcConnection.query).toHaveBeenCalledWith(configuration.items[0].settings.query);
-    expect(odbcConnection.close).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('SouthODBC odbc driver without authentication', () => {
-  let south: SouthODBC;
-  const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'odbc',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      remoteAgent: false,
-      connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-      password: null,
-      connectionTimeout: 1000,
-      retryInterval: 1000,
-      requestTimeout: 1000
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthODBCItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthODBCItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should get data from ODBC without auth', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
-    (formatInstant as jest.Mock).mockImplementation(value => value);
-    const odbcConnection = {
-      close: jest.fn(),
-      query: jest.fn().mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
-    };
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-
-    const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
-
-    expect(odbc.connect).toHaveBeenCalledWith({
-      connectionString: configuration.settings.connectionString,
-      connectionTimeout: configuration.settings.connectionTimeout
-    });
-    expect(logger.debug).toHaveBeenCalledWith(`Connecting with connection string ${configuration.settings.connectionString}`);
-
-    expect(result).toEqual({ trackedInstant: '2020-03-01T00:00:00.000Z', value: { timestamp: '2020-03-01T00:00:00.000Z' } });
-    expect(persistResults).toHaveBeenCalledWith(
-      [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-      configuration.items[0].settings.serialization,
-      configuration.name,
-      configuration.items[0],
-      testData.constants.dates.FAKE_NOW,
-      path.resolve('cacheFolder', 'tmp'),
-      expect.any(Function),
-      logger
-    );
-  });
-
-  it('should manage connection error', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    (odbc.connect as jest.Mock).mockImplementation(() => {
-      throw new Error('connection error');
-    });
-
-    let error;
-    try {
-      await south.queryOdbcData(configuration.items[0], startTime, endTime);
-    } catch (err) {
-      error = err;
-    }
-    expect(odbc.connect).toHaveBeenCalledWith({
-      connectionString: configuration.settings.connectionString,
-      connectionTimeout: configuration.settings.connectionTimeout
-    });
-    expect(error).toEqual(new Error('connection error'));
-  });
-});
-
-describe('SouthODBC odbc driver test connection', () => {
-  let south: SouthODBC;
-  const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'odbc',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      remoteAgent: false,
-      connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-      password: 'password',
-      connectionTimeout: 1000,
-      retryInterval: 1000,
-      requestTimeout: 1000
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthODBCItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthODBCItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-
-  class NodeOdbcError extends Error {
-    constructor(
-      message: string,
-      private odbcErrors: Array<{ code: number; message: string; state: string }> = []
-    ) {
-      super();
-      this.name = 'ODBCError';
-      this.message = message;
-    }
-  }
-
-  // Error types and the messages thrown by the test function
-  const ERROR_TYPE = {
-    HOST: 'Please check host and port',
-    PORT: 'Please check host and port',
-    CREDENTIALS: 'Please check username and password',
-    DB_ACCESS: `User does not have access to database`,
-    DEFAULT: 'Unable to connect to database'
-  } as const;
-  const connectionErrorMessage = 'Error creating connection';
-
-  /**
-   * Returns the NodeOdbcError driver error with it's expected error thrown by the test function
-   *
-   * @param expectedErrorMessage message thrown by the test function
-   * @param message OdbcError message
-   * @param code OdbcError code
-   */
-  const createOdbcError = (expectedErrorMessage: string, message: string, code: number) => {
-    const driverError = new NodeOdbcError(connectionErrorMessage, [{ code, message, state: '' }]);
-    const expectedError = new Error(expectedErrorMessage);
-
-    return { driverError, expectedError };
-  };
-
-  // Drivers with the errors they are throwing
-  const DRIVER_ERRORS = {
-    'SQL Server': [
-      createOdbcError(ERROR_TYPE.HOST, 'Host unreachable', 17),
-      createOdbcError(ERROR_TYPE.PORT, 'Host:port unreachable', 17),
-      createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 18456),
-      createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 4060),
-      createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
-    ],
-    PostgreSQL: [
-      createOdbcError(ERROR_TYPE.HOST, 'Unknown host', 1),
-      createOdbcError(ERROR_TYPE.PORT, 'Connection refused', 1),
-      createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1),
-      createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 1),
-      createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
-    ],
-    // Note: Could not determine host, port and db_access errors codes
-    Oracle: [createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1017)],
-    MySQL: [
-      createOdbcError(ERROR_TYPE.HOST, 'Unknown host', 2005),
-      createOdbcError(ERROR_TYPE.PORT, 'Host:port unreachable', 2003),
-      createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1045),
-      createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 1044),
-      createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
-    ],
-    myOdbcDriver: [
-      createOdbcError(ERROR_TYPE.DEFAULT, 'Unknown host', 1),
-      createOdbcError(ERROR_TYPE.DEFAULT, 'Host:port unreachable', 2),
-      createOdbcError(ERROR_TYPE.DEFAULT, 'Bad username or password', 3),
-      createOdbcError(ERROR_TYPE.DEFAULT, 'Unreachable Database', 4),
-      createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
-    ]
-  };
-
-  // Flattens the errors inside DRIVER_ERRORS, keeping the name of the driver
-  const flattenedErrors = Object.entries(DRIVER_ERRORS).flatMap(([driver, errors]) => errors.map(error => ({ driver, error })));
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('Database is reachable and has tables', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-    const tablesResult = [{ TABLE_NAME: 'logs' }];
-    const columnsResult = [
-      { COLUMN_NAME: 'data', TYPE_NAME: 'INTEGER' },
-      { COLUMN_NAME: 'timestamp', TYPE_NAME: 'datetime' }
-    ];
-    const odbcConnection = {
-      close: jest.fn(),
-      tables: jest.fn(() => tablesResult),
-      columns: jest.fn(() => columnsResult)
-    };
-    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
-    await expect(south.testConnection()).resolves.not.toThrow();
-
-    expect(odbcConnection.close).toHaveBeenCalled();
-  });
-
-  it.each(flattenedErrors)(
-    'Unable to create connection with $driver, error code $error.driverError.odbcErrors.0.code',
-    async driverTest => {
-      const odbc = {
-        connect: jest.fn()
       };
-      (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
+      const odbc = { connect: mock.fn(() => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
 
-      (odbc.connect as jest.Mock).mockImplementationOnce(() => {
-        throw driverTest.error.driverError;
-      });
-      configuration.settings.connectionString = `Driver=${driverTest.driver}`;
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
 
-      await expect(south.testConnection()).rejects.toThrow(`${driverTest.error.expectedError.message}`);
-    }
-  );
+      const result = await south.queryOdbcData(configuration.items[1], startTime, endTime);
 
-  it('Could not load driver', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-    configuration.settings.connectionString = `Driver=Unknown driver`;
+      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual(
+        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        configuration.items[1].settings.query
+      );
 
-    const error = new NodeOdbcError(connectionErrorMessage, [{ code: -1, message: 'Driver not found', state: 'IM002' }]);
-    (odbc.connect as jest.Mock).mockImplementation(() => {
-      throw error;
-    });
-
-    await expect(south.testConnection()).rejects.toThrow(new Error(`Driver not found. Check connection string and driver`));
-  });
-
-  it('Could not load driver', async () => {
-    (loadOdbc as jest.Mock).mockReturnValueOnce(null);
-
-    await expect(south.testConnection()).rejects.toThrow('ODBC library not available');
-  });
-
-  it('Unable to connect to database without password', async () => {
-    const odbc = {
-      connect: jest.fn()
-    };
-    (loadOdbc as jest.Mock).mockReturnValueOnce(odbc);
-    const errorMessage = 'Error connecting to database';
-    configuration.settings.connectionString = 'myOdbcDriver';
-    configuration.settings.password = '';
-    (odbc.connect as jest.Mock).mockImplementationOnce(() => {
-      throw new NodeOdbcError(errorMessage, [{ code: -1, message: errorMessage, state: '' }]);
-    });
-
-    await expect(south.testConnection()).rejects.toThrow(new Error(`Unable to connect to database`));
-  });
-});
-
-describe('SouthODBC odbc remote with authentication', () => {
-  let south: SouthODBC;
-  const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'odbc',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      remoteAgent: true,
-      agentUrl: 'http://localhost:2224',
-      connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-      password: 'password',
-      connectionTimeout: 1000,
-      retryInterval: 1000,
-      requestTimeout: 1000
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthODBCItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthODBCItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
-            }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
-
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
-    (convertDelimiter as jest.Mock).mockImplementation(value => value);
-
-    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should properly connect to remote agent and disconnect ', async () => {
-    await south.connect();
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect` }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
-          connectionTimeout: configuration.settings.connectionTimeout
-        }),
-        headers: {
-          'Content-Type': 'application/json'
+      assert.deepStrictEqual(result, {
+        trackedInstant: null,
+        value: {
+          anotherTimestamp: '2020-03-01T00:00:00.000Z',
+          timestamp: '2020-03-01T00:00:00.000Z',
+          value: 2
         }
-      }
-    );
-
-    await south.disconnect();
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/disconnect` }),
-      {
-        method: 'DELETE'
-      }
-    );
-  });
-
-  it('should properly reconnect to when connection fails ', async () => {
-    (HTTPRequest as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('connection failed');
-    });
-
-    await south.connect();
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect` }),
-      {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: configuration.settings.connectionString,
-          connectionTimeout: configuration.settings.connectionTimeout
-        }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    expect(HTTPRequest).toHaveBeenCalledTimes(1);
-    jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(HTTPRequest).toHaveBeenCalledTimes(2);
-  });
-
-  it('should properly clear reconnect timeout on disconnect', async () => {
-    (HTTPRequest as unknown as jest.Mock)
-      .mockImplementationOnce(() => {
-        throw new Error('connection failed');
-      })
-      .mockImplementationOnce(() => {
-        return true;
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('disconnection failed');
       });
-
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-
-    await south.connect();
-
-    expect(HTTPRequest).toHaveBeenCalledTimes(1);
-    await south.connect();
-
-    await south.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-    jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(HTTPRequest).toHaveBeenCalledTimes(3);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms. ${new Error(
-        'connection failed'
-      )}`
-    );
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while sending disconnection HTTP request into agent. ${new Error('disconnection failed')}`
-    );
-  });
-
-  it('should properly run historyQuery', async () => {
-    const startTime = testData.constants.dates.DATE_1;
-    south.queryRemoteAgentData = jest.fn().mockReturnValueOnce({
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
     });
 
-    const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledTimes(1);
-    expect(south.queryRemoteAgentData).toHaveBeenCalledWith(
-      configuration.items[0],
-      testData.constants.dates.DATE_1,
-      testData.constants.dates.FAKE_NOW
-    );
-    expect(result).toEqual({
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
-    });
-  });
-
-  it('should get data from Remote agent', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(
-        createMockResponse(200, {
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstant: '2020-03-01T00:00:00.000Z'
+    it('should manage query error', async () => {
+      const odbcConnection = {
+        close: mock.fn(),
+        query: mock.fn(() => {
+          throw new Error('query error');
         })
-      )
-      .mockResolvedValueOnce(
-        createMockResponse(200, {
+      };
+      const odbc = { connect: mock.fn(() => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      await assert.rejects(south.queryOdbcData(configuration.items[0], startTime, endTime), { message: 'query error' });
+      assert.strictEqual(odbcConnection.query.mock.calls.length, 1);
+      assert.deepStrictEqual(odbcConnection.query.mock.calls[0].arguments[0], configuration.items[0].settings.query);
+      assert.strictEqual(odbcConnection.close.mock.calls.length, 1);
+    });
+
+    it('should manage odbc error', async () => {
+      const odbcConnection = {
+        close: mock.fn(),
+        query: mock.fn(() => {
+          throw {
+            message: 'odbc error',
+            odbcErrors: [{ message: 'error1' }, { message: 'error2' }]
+          };
+        })
+      };
+      const odbc = { connect: mock.fn(() => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      await assert.rejects(south.queryOdbcData(configuration.items[0], startTime, endTime), { message: 'odbc error' });
+
+      assert.ok(
+        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error from ODBC driver: error1'
+        )
+      );
+      assert.ok(
+        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error from ODBC driver: error2'
+        )
+      );
+    });
+
+    it('queryOdbcData should throw error if ODBC library not loaded', async () => {
+      odbcLoaderExports.loadOdbc = mock.fn(() => null);
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+      await assert.rejects(south.queryOdbcData(configuration.items[0], startTime, endTime), { message: 'ODBC library not available' });
+    });
+
+    it('should test item with queryOdbcData', async () => {
+      const mockReturnValue = {
+        trackedInstant: null,
+        value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      };
+      const queryOdbcDataMock = mock.method(
+        south,
+        'queryOdbcData',
+        mock.fn(async () => mockReturnValue)
+      );
+
+      await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
+      assert.strictEqual(queryOdbcDataMock.mock.calls.length, 1);
+      assert.strictEqual((utilsExports.convertDateTimeToInstant as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual((utilsExports.formatInstant as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    });
+
+    it('QueryOdbcData in case of item test', async () => {
+      const odbcConnection = {
+        close: mock.fn(),
+        query: mock.fn(() => [
+          { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
+          { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
+        ])
+      };
+      const odbc = { connect: mock.fn(() => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      await south.queryOdbcData(configuration.items[0], startTime, endTime, true);
+
+      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(odbc.connect.mock.calls.length, 1);
+      assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
+        connectionString: `${configuration.settings.connectionString};PWD=password;`,
+        connectionTimeout: configuration.settings.connectionTimeout
+      });
+      assert.ok(
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(`Connecting with connection string ${configuration.settings.connectionString}PWD=<secret>;`)
+        )
+      );
+      assert.deepStrictEqual(odbcConnection.query.mock.calls[0].arguments[0], configuration.items[0].settings.query);
+      assert.strictEqual(odbcConnection.close.mock.calls.length, 1);
+    });
+  });
+
+  describe('SouthODBC odbc driver without authentication', () => {
+    let south: SouthODBCClass;
+
+    const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'odbc',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        remoteAgent: false,
+        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+        password: null,
+        connectionTimeout: 1000,
+        retryInterval: 1000,
+        requestTimeout: 1000
+      },
+      groups: [],
+      items: [
+        {
+          id: 'id1',
+          name: 'item1',
+          enabled: true,
+          settings: {
+            query: 'query1',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthODBCItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id2',
+          name: 'item2',
+          enabled: true,
+          settings: {
+            query: 'query2',
+            dateTimeFields: null,
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id3',
+          name: 'item3',
+          enabled: true,
+          settings: {
+            query: 'query3',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthODBCItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[1],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    beforeEach(() => {
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    });
+
+    it('should get data from ODBC without auth', async () => {
+      const odbcConnection = {
+        close: mock.fn(),
+        query: mock.fn(() => [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
+      };
+      const odbc = { connect: mock.fn(() => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
+
+      assert.strictEqual(odbc.connect.mock.calls.length, 1);
+      assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
+        connectionString: configuration.settings.connectionString,
+        connectionTimeout: configuration.settings.connectionTimeout
+      });
+      assert.ok(
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(`Connecting with connection string ${configuration.settings.connectionString}`)
+        )
+      );
+
+      assert.deepStrictEqual(result, { trackedInstant: '2020-03-01T00:00:00.000Z', value: { timestamp: '2020-03-01T00:00:00.000Z' } });
+      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], [
+        { timestamp: '2020-02-01T00:00:00.000Z' },
+        { timestamp: '2020-03-01T00:00:00.000Z' }
+      ]);
+      assert.deepStrictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        configuration.items[0].settings.serialization
+      );
+      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], configuration.name);
+      assert.deepStrictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[3],
+        configuration.items[0]
+      );
+      assert.strictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[4],
+        testData.constants.dates.FAKE_NOW
+      );
+      assert.strictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[5],
+        path.resolve('cacheFolder', 'tmp')
+      );
+    });
+
+    it('should manage connection error', async () => {
+      const odbc = {
+        connect: mock.fn(() => {
+          throw new Error('connection error');
+        })
+      };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      await assert.rejects(south.queryOdbcData(configuration.items[0], startTime, endTime), new Error('connection error'));
+      assert.strictEqual(odbc.connect.mock.calls.length, 1);
+      assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
+        connectionString: configuration.settings.connectionString,
+        connectionTimeout: configuration.settings.connectionTimeout
+      });
+    });
+  });
+
+  describe('SouthODBC odbc driver test connection', () => {
+    let south: SouthODBCClass;
+
+    const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'odbc',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        remoteAgent: false,
+        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+        password: 'password',
+        connectionTimeout: 1000,
+        retryInterval: 1000,
+        requestTimeout: 1000
+      },
+      groups: [],
+      items: [
+        {
+          id: 'id1',
+          name: 'item1',
+          enabled: true,
+          settings: {
+            query: 'query1',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthODBCItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id2',
+          name: 'item2',
+          enabled: true,
+          settings: {
+            query: 'query2',
+            dateTimeFields: null,
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id3',
+          name: 'item3',
+          enabled: true,
+          settings: {
+            query: 'query3',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthODBCItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[1],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    class NodeOdbcError extends Error {
+      public odbcErrors: Array<{ code: number; message: string; state: string }>;
+      constructor(message: string, odbcErrors: Array<{ code: number; message: string; state: string }> = []) {
+        super();
+        this.name = 'ODBCError';
+        this.message = message;
+        this.odbcErrors = odbcErrors;
+      }
+    }
+
+    // Error types and the messages thrown by the test function
+    const ERROR_TYPE = {
+      HOST: 'Please check host and port',
+      PORT: 'Please check host and port',
+      CREDENTIALS: 'Please check username and password',
+      DB_ACCESS: `User does not have access to database`,
+      DEFAULT: 'Unable to connect to database'
+    } as const;
+    const connectionErrorMessage = 'Error creating connection';
+
+    const createOdbcError = (expectedErrorMessage: string, message: string, code: number) => {
+      const driverError = new NodeOdbcError(connectionErrorMessage, [{ code, message, state: '' }]);
+      const expectedError = new Error(expectedErrorMessage);
+      return { driverError, expectedError };
+    };
+
+    // Drivers with the errors they are throwing
+    const DRIVER_ERRORS: Record<string, Array<{ driverError: NodeOdbcError; expectedError: Error }>> = {
+      'SQL Server': [
+        createOdbcError(ERROR_TYPE.HOST, 'Host unreachable', 17),
+        createOdbcError(ERROR_TYPE.PORT, 'Host:port unreachable', 17),
+        createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 18456),
+        createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 4060),
+        createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
+      ],
+      PostgreSQL: [
+        createOdbcError(ERROR_TYPE.HOST, 'Unknown host', 1),
+        createOdbcError(ERROR_TYPE.PORT, 'Connection refused', 1),
+        createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1),
+        createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 1),
+        createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
+      ],
+      Oracle: [createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1017)],
+      MySQL: [
+        createOdbcError(ERROR_TYPE.HOST, 'Unknown host', 2005),
+        createOdbcError(ERROR_TYPE.PORT, 'Host:port unreachable', 2003),
+        createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1045),
+        createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 1044),
+        createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
+      ],
+      myOdbcDriver: [
+        createOdbcError(ERROR_TYPE.DEFAULT, 'Unknown host', 1),
+        createOdbcError(ERROR_TYPE.DEFAULT, 'Host:port unreachable', 2),
+        createOdbcError(ERROR_TYPE.DEFAULT, 'Bad username or password', 3),
+        createOdbcError(ERROR_TYPE.DEFAULT, 'Unreachable Database', 4),
+        createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
+      ]
+    };
+
+    // Flattens the errors inside DRIVER_ERRORS, keeping the name of the driver
+    const flattenedErrors = Object.entries(DRIVER_ERRORS).flatMap(([driver, errors]) => errors.map(error => ({ driver, error })));
+
+    beforeEach(() => {
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    });
+
+    it('Database is reachable and has tables', async () => {
+      const tablesResult = [{ TABLE_NAME: 'logs' }];
+      const columnsResult = [
+        { COLUMN_NAME: 'data', TYPE_NAME: 'INTEGER' },
+        { COLUMN_NAME: 'timestamp', TYPE_NAME: 'datetime' }
+      ];
+      const odbcConnection = {
+        close: mock.fn(),
+        tables: mock.fn(() => tablesResult),
+        columns: mock.fn(() => columnsResult)
+      };
+      const odbc = { connect: mock.fn(() => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+
+      await assert.doesNotReject(south.testConnection());
+      assert.ok(odbcConnection.close.mock.calls.length > 0);
+    });
+
+    for (const driverTest of flattenedErrors) {
+      it(`Unable to create connection with ${driverTest.driver}, error code ${driverTest.error.driverError.odbcErrors[0].code}`, async () => {
+        const odbc = {
+          connect: mock.fn(() => {
+            throw driverTest.error.driverError;
+          })
+        };
+        odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+
+        configuration.settings.connectionString = `Driver=${driverTest.driver}`;
+
+        await assert.rejects(south.testConnection(), new Error(driverTest.error.expectedError.message));
+      });
+    }
+
+    it('Could not load driver', async () => {
+      const error = new NodeOdbcError(connectionErrorMessage, [{ code: -1, message: 'Driver not found', state: 'IM002' }]);
+      const odbc = {
+        connect: mock.fn(() => {
+          throw error;
+        })
+      };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+      configuration.settings.connectionString = `Driver=Unknown driver`;
+
+      await assert.rejects(south.testConnection(), new Error(`Driver not found. Check connection string and driver`));
+    });
+
+    it('Could not load driver (no odbc)', async () => {
+      odbcLoaderExports.loadOdbc = mock.fn(() => null);
+
+      await assert.rejects(south.testConnection(), { message: 'ODBC library not available' });
+    });
+
+    it('Unable to connect to database without password', async () => {
+      const errorMessage = 'Error connecting to database';
+      configuration.settings.connectionString = 'myOdbcDriver';
+      configuration.settings.password = '';
+      const odbc = {
+        connect: mock.fn(() => {
+          throw new NodeOdbcError(errorMessage, [{ code: -1, message: errorMessage, state: '' }]);
+        })
+      };
+      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+
+      await assert.rejects(south.testConnection(), new Error(`Unable to connect to database`));
+    });
+  });
+
+  describe('SouthODBC odbc remote with authentication', () => {
+    let south: SouthODBCClass;
+
+    const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'odbc',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        remoteAgent: true,
+        agentUrl: 'http://localhost:2224',
+        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+        password: 'password',
+        connectionTimeout: 1000,
+        retryInterval: 1000,
+        requestTimeout: 1000
+      },
+      groups: [],
+      items: [
+        {
+          id: 'id1',
+          name: 'item1',
+          enabled: true,
+          settings: {
+            query: 'query1',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthODBCItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id2',
+          name: 'item2',
+          enabled: true,
+          settings: {
+            query: 'query2',
+            dateTimeFields: null,
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        {
+          id: 'id3',
+          name: 'item3',
+          enabled: true,
+          settings: {
+            query: 'query3',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthODBCItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[1],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    beforeEach(() => {
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    });
+
+    it('should properly connect to remote agent and disconnect', async () => {
+      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+
+      await south.connect();
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      assert.ok(
+        (httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as URL).href ===
+          `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect`
+      );
+      assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          connectionTimeout: configuration.settings.connectionTimeout
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      await south.disconnect();
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+      assert.ok(
+        (httpRequestExports.HTTPRequest.mock.calls[1].arguments[0] as URL).href ===
+          `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/disconnect`
+      );
+      assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[1].arguments[1], {
+        method: 'DELETE'
+      });
+    });
+
+    it('should properly reconnect to when connection fails', async () => {
+      let httpCallCount = 0;
+      httpRequestExports.HTTPRequest = mock.fn(async () => {
+        httpCallCount++;
+        if (httpCallCount === 1) throw new Error('connection failed');
+        return createMockResponse(200, {});
+      });
+
+      await south.connect();
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      assert.ok(
+        (httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as URL).href ===
+          `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect`
+      );
+      assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: configuration.settings.connectionString,
+          connectionTimeout: configuration.settings.connectionTimeout
+        }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      mock.timers.tick(configuration.settings.retryInterval!);
+      // Wait for the promise created by the setTimeout callback to settle
+      await new Promise(resolve => setImmediate(resolve));
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+    });
+
+    it('should properly clear reconnect timeout on disconnect', async () => {
+      let httpCallCount = 0;
+      httpRequestExports.HTTPRequest = mock.fn(async () => {
+        httpCallCount++;
+        if (httpCallCount === 1) throw new Error('connection failed');
+        if (httpCallCount === 2) return createMockResponse(200, {});
+        if (httpCallCount === 3) throw new Error('disconnection failed');
+        return createMockResponse(200, {});
+      });
+
+      await south.connect();
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+
+      await south.connect();
+
+      await south.disconnect();
+      // After disconnect, advancing timer should not trigger another reconnect
+      mock.timers.tick(configuration.settings.retryInterval!);
+      await new Promise(resolve => setImmediate(resolve));
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 3);
+
+      assert.ok(
+        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(
+            `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms.`
+          )
+        )
+      );
+      assert.ok(
+        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(`Error while sending disconnection HTTP request into agent.`)
+        )
+      );
+    });
+
+    it('should properly run historyQuery', async () => {
+      const startTime = testData.constants.dates.DATE_1;
+      const mockReturnValue = {
+        trackedInstant: '2020-03-01T00:00:00.000Z',
+        value: { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
+      };
+      const queryRemoteAgentDataMock = mock.method(
+        south,
+        'queryRemoteAgentData',
+        mock.fn(async () => mockReturnValue)
+      );
+
+      const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(queryRemoteAgentDataMock.mock.calls.length, 1);
+      assert.deepStrictEqual(queryRemoteAgentDataMock.mock.calls[0].arguments, [
+        configuration.items[0],
+        testData.constants.dates.DATE_1,
+        testData.constants.dates.FAKE_NOW
+      ]);
+      assert.deepStrictEqual(result, mockReturnValue);
+    });
+
+    it('should get data from Remote agent', async () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      let httpCallCount = 0;
+      httpRequestExports.HTTPRequest = mock.fn(async () => {
+        httpCallCount++;
+        if (httpCallCount === 1) {
+          return createMockResponse(200, {
+            recordCount: 2,
+            content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+            maxInstant: '2020-03-01T00:00:00.000Z'
+          });
+        }
+        return createMockResponse(200, {
           recordCount: 0,
           content: [],
           maxInstant: '2020-03-01T00:00:00.000Z'
-        })
+        });
+      });
+
+      const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
+
+      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual(
+        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        configuration.items[0].settings.query
       );
-    (formatInstant as jest.Mock).mockImplementation(value => value);
 
-    const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
-
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[0].settings.query, startTime, endTime, logger);
-
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read` }),
-      {
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      assert.ok(
+        (httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as URL).href ===
+          `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read`
+      );
+      assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
         method: 'PUT',
         body: JSON.stringify({
           connectionString: configuration.settings.connectionString,
@@ -1240,51 +1316,66 @@ describe('SouthODBC odbc remote with authentication', () => {
         headers: {
           'Content-Type': 'application/json'
         }
-      }
-    );
+      });
 
-    expect(result).toEqual({
-      trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-    });
-    expect(persistResults).toHaveBeenCalledWith(
-      [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-      {
+      assert.deepStrictEqual(result, {
+        trackedInstant: '2020-03-01T00:00:00.000Z',
+        value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      });
+      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], [
+        { timestamp: '2020-02-01T00:00:00.000Z' },
+        { timestamp: '2020-03-01T00:00:00.000Z' }
+      ]);
+      assert.deepStrictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
         type: 'file',
         filename: configuration.items[0].settings.serialization.filename,
         compression: configuration.items[0].settings.serialization.compression
-      },
-      configuration.name,
-      configuration.items[0],
-      testData.constants.dates.FAKE_NOW,
-      path.resolve('cacheFolder', 'tmp'),
-      expect.any(Function),
-      logger
-    );
+      });
+      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], configuration.name);
+      assert.deepStrictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[3],
+        configuration.items[0]
+      );
+      assert.strictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[4],
+        testData.constants.dates.FAKE_NOW
+      );
+      assert.strictEqual(
+        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[5],
+        path.resolve('cacheFolder', 'tmp')
+      );
 
-    await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${configuration.items[0].name}. Request done in 0 ms`);
-  });
+      await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
+      assert.ok(
+        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some((c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(`No result found for item ${configuration.items[0].name}`)
+        )
+      );
+    });
 
-  it('should get data from Remote agent without datetime reference', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
+    it('should get data from Remote agent without datetime reference', async () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
 
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(
-      createMockResponse(200, {
-        recordCount: 2,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-        maxInstantRetrieved: startTime
-      })
-    );
+      httpRequestExports.HTTPRequest = mock.fn(async () =>
+        createMockResponse(200, {
+          recordCount: 2,
+          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
+          maxInstantRetrieved: startTime
+        })
+      );
 
-    const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
+      const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
 
-    expect(utils.logQuery).toHaveBeenCalledWith(configuration.items[1].settings.query, startTime, endTime, logger);
+      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.deepStrictEqual(
+        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        configuration.items[1].settings.query
+      );
 
-    expect(HTTPRequest).toHaveBeenCalledWith(
-      expect.objectContaining({ href: `${configuration.settings.agentUrl}/api/odbc/${configuration.id}/read` }),
-      {
+      assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+      assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {
         method: 'PUT',
         body: JSON.stringify({
           connectionString: configuration.settings.connectionString,
@@ -1297,231 +1388,249 @@ describe('SouthODBC odbc remote with authentication', () => {
         headers: {
           'Content-Type': 'application/json'
         }
-      }
-    );
+      });
 
-    expect(result).toEqual({
-      trackedInstant: null,
-      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      assert.deepStrictEqual(result, {
+        trackedInstant: null,
+        value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      });
+    });
+
+    it('should manage query error', async () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      let httpCallCount = 0;
+      httpRequestExports.HTTPRequest = mock.fn(async () => {
+        httpCallCount++;
+        if (httpCallCount === 1) return createMockResponse(400, 'bad request');
+        return createMockResponse(500);
+      });
+
+      await assert.rejects(south.queryRemoteAgentData(configuration.items[0], startTime, endTime), {
+        message: `Error occurred when querying remote agent with status 400: bad request`
+      });
+      assert.ok(
+        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error occurred when querying remote agent with status 400: bad request`
+        )
+      );
+
+      await assert.rejects(south.queryRemoteAgentData(configuration.items[0], startTime, endTime), {
+        message: `Error occurred when querying remote agent with status 500`
+      });
+      assert.ok(
+        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error occurred when querying remote agent with status 500`
+        )
+      );
+    });
+
+    it('should test item with queryRemoteAgentData', async () => {
+      const mockReturnValue = [
+        [
+          {
+            timestamp: '2020-02-01T00:00:00.000Z',
+            table_count: 2
+          },
+          { timestamp: '2020-03-01T00:00:00.000Z' }
+        ]
+      ];
+      const queryRemoteAgentDataMock = mock.method(
+        south,
+        'queryRemoteAgentData',
+        mock.fn(async () => mockReturnValue)
+      );
+
+      await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
+      assert.ok(queryRemoteAgentDataMock.mock.calls.length > 0);
+    });
+
+    it('QueryRemoteAgentData in case of item test', async () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2022-01-01T00:00:00.000Z';
+
+      httpRequestExports.HTTPRequest = mock.fn(async () =>
+        createMockResponse(200, {
+          recordCount: 0,
+          content: [],
+          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
+        })
+      );
+
+      await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
+      assert.ok(httpRequestExports.HTTPRequest.mock.calls.length > 0);
     });
   });
 
-  it('should manage query error', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
+  describe('SouthODBC odbc remote test connection', () => {
+    let south: SouthODBCClass;
 
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(400, 'bad request')).mockResolvedValueOnce(createMockResponse(500));
-
-    await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 400: bad request`
-    );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 400: bad request`);
-
-    await expect(south.queryRemoteAgentData(configuration.items[0], startTime, endTime)).rejects.toThrow(
-      `Error occurred when querying remote agent with status 500`
-    );
-    expect(logger.error).toHaveBeenCalledWith(`Error occurred when querying remote agent with status 500`);
-  });
-
-  it('should test item with queryRemoteAgentData', async () => {
-    south.queryRemoteAgentData = jest.fn().mockReturnValue([
-      [
+    const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'odbc',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        remoteAgent: true,
+        agentUrl: 'http://localhost:2224',
+        connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
+        password: 'password',
+        connectionTimeout: 1000,
+        retryInterval: 1000,
+        requestTimeout: 1000
+      },
+      groups: [],
+      items: [
         {
-          timestamp: '2020-02-01T00:00:00.000Z',
-          table_count: 2
-        },
-        { timestamp: '2020-03-01T00:00:00.000Z' }
-      ]
-    ]);
-
-    await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-    expect(south.queryRemoteAgentData).toHaveBeenCalled();
-  });
-
-  it('QueryRemoteAgentData in case of item test', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(
-      createMockResponse(200, {
-        recordCount: 0,
-        content: [],
-        maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-      })
-    );
-
-    await south.queryRemoteAgentData(configuration.items[0], startTime, endTime, true);
-    expect(HTTPRequest).toHaveBeenCalled();
-  });
-});
-
-describe('SouthODBC odbc remote test connection', () => {
-  let south: SouthODBC;
-  const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'odbc',
-    description: 'my test connector',
-    enabled: true,
-    settings: {
-      remoteAgent: true,
-      agentUrl: 'http://localhost:2224',
-      connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
-      password: 'password',
-      connectionTimeout: 1000,
-      retryInterval: 1000,
-      requestTimeout: 1000
-    },
-    groups: [],
-    items: [
-      {
-        id: 'id1',
-        name: 'item1',
-        enabled: true,
-        settings: {
-          query: 'query1',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthODBCItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
+          id: 'id1',
+          name: 'item1',
+          enabled: true,
+          settings: {
+            query: 'query1',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthODBCItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
             }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id2',
-        name: 'item2',
-        enabled: true,
-        settings: {
-          query: 'query2',
-          dateTimeFields: null,
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
-        },
-        scanMode: testData.scanMode.list[0],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      },
-      {
-        id: 'id3',
-        name: 'item3',
-        enabled: true,
-        settings: {
-          query: 'query3',
-          dateTimeFields: [
-            {
-              fieldName: 'anotherTimestamp',
-              useAsReference: false,
-              type: 'unix-epoch-ms',
-              timezone: null,
-              format: null,
-              locale: null
-            } as unknown as SouthODBCItemSettingsDateTimeFields,
-            {
-              fieldName: 'timestamp',
-              useAsReference: true,
-              type: 'string',
-              timezone: 'Europe/Paris',
-              format: 'yyyy-MM-dd HH:mm:ss.SSS',
-              locale: 'en-US'
+        {
+          id: 'id2',
+          name: 'item2',
+          enabled: true,
+          settings: {
+            query: 'query2',
+            dateTimeFields: null,
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
             }
-          ],
-          serialization: {
-            type: 'csv',
-            filename: 'sql-@CurrentDate.csv',
-            delimiter: 'COMMA',
-            compression: true,
-            outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-            outputTimezone: 'Europe/Paris'
-          }
+          },
+          scanMode: testData.scanMode.list[0],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
         },
-        scanMode: testData.scanMode.list[1],
-        group: null,
-        syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 0,
-        overlap: 0,
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      }
-    ],
-    createdBy: '',
-    updatedBy: '',
-    createdAt: '',
-    updatedAt: ''
-  };
+        {
+          id: 'id3',
+          name: 'item3',
+          enabled: true,
+          settings: {
+            query: 'query3',
+            dateTimeFields: [
+              {
+                fieldName: 'anotherTimestamp',
+                useAsReference: false,
+                type: 'unix-epoch-ms',
+                timezone: null,
+                format: null,
+                locale: null
+              } as unknown as SouthODBCItemSettingsDateTimeFields,
+              {
+                fieldName: 'timestamp',
+                useAsReference: true,
+                type: 'string',
+                timezone: 'Europe/Paris',
+                format: 'yyyy-MM-dd HH:mm:ss.SSS',
+                locale: 'en-US'
+              }
+            ],
+            serialization: {
+              type: 'csv',
+              filename: 'sql-@CurrentDate.csv',
+              delimiter: 'COMMA',
+              compression: true,
+              outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+              outputTimezone: 'Europe/Paris'
+            }
+          },
+          scanMode: testData.scanMode.list[1],
+          group: null,
+          syncWithGroup: false,
+          maxReadInterval: 3600,
+          readDelay: 0,
+          overlap: 0,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    beforeEach(() => {
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    });
 
-    south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-  });
+    it('should test connection successfully', async () => {
+      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, 'bad request'));
+      await assert.doesNotReject(south.testConnection());
+    });
 
-  afterEach(() => {
-    jest.useRealTimers();
-  });
+    it('should test connection fail', async () => {
+      let httpCallCount = 0;
+      httpRequestExports.HTTPRequest = mock.fn(async () => {
+        httpCallCount++;
+        if (httpCallCount === 1) return createMockResponse(400, 'bad request');
+        return createMockResponse(500, 'another error');
+      });
 
-  it('should test connection successfully', async () => {
-    (HTTPRequest as jest.Mock).mockResolvedValueOnce(createMockResponse(200, 'bad request'));
-    await expect(south.testConnection()).resolves.not.toThrow();
-  });
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
+      );
 
-  it('should test connection fail', async () => {
-    (HTTPRequest as jest.Mock)
-      .mockResolvedValueOnce(createMockResponse(400, 'bad request'))
-      .mockResolvedValueOnce(createMockResponse(500, 'another error'));
-    await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 400: bad request`)
-    );
-
-    await expect(south.testConnection()).rejects.toThrow(
-      new Error(`Error occurred when sending connect command to remote agent with status 500`)
-    );
+      await assert.rejects(
+        south.testConnection(),
+        new Error(`Error occurred when sending connect command to remote agent with status 500`)
+      );
+    });
   });
 });
