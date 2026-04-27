@@ -41,6 +41,9 @@ export default {
   HistoryReadRequest,
   ReadRawModifiedDetails,
   ReadProcessedDetails,
-  OPCUACertificateManager: mock.fn(() => ({})),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  OPCUACertificateManager: function OPCUACertificateManagerMock(this: any) {
+    this.state = 0;
+  },
   resolveNodeId: mock.fn((nodeId: unknown) => nodeId)
 };
