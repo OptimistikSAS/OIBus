@@ -148,6 +148,8 @@
       "node_modules/argon2/**/*.node",
       "node_modules/oracledb/**/*.node",
       "node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+      "node_modules/isolated-vm/prebuilds/**/*.node",
+      "node_modules/isolated-vm/build/Release/*.node",
       "node_modules/odbc/**/*.node",
       "node_modules/luxon/build/global/luxon.min.js",
       "node_modules/jsonpath-plus/dist/index-browser-umd.min.cjs",
