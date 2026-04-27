@@ -1,155 +1,182 @@
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import SouthRest from './south-rest';
-import { SouthRestItemSettings, SouthRestSettings } from '../../../shared/model/south-settings.model';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import pino from 'pino';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs/promises';
 import testData from '../../tests/utils/test-data';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { mockModule, reloadModule, asLogger, assertContains } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import fs from 'node:fs/promises';
-import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import * as utils from '../../service/utils';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { Stats } from 'node:fs';
-import { OIBusFileContent } from '../../../shared/model/engine.model';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { SouthRestItemSettings, SouthRestSettings } from '../../../shared/model/south-settings.model';
+import type { ReqOptions } from '../../service/http-request.utils';
+import type { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import type { OIBusFileContent } from '../../../shared/model/engine.model';
+import type SouthRestClass from './south-rest';
 
-// --- Mocks ---
-jest.mock('../../service/utils', () => {
-  const actualUtils = jest.requireActual('../../service/utils');
-  return {
-    ...actualUtils,
-    formatInstant: jest.fn((instant: string) => instant), // Simple identity mock by default
-    convertDateTimeToInstant: jest.fn(val => {
-      // Mock conversion for trackMaxInstant logic
+const nodeRequire = createRequire(import.meta.url);
+
+describe('SouthRestAPI connector', () => {
+  let SouthRest: typeof SouthRestClass;
+  let south: SouthRestClass;
+
+  const logger = new PinoLogger();
+  const addContentCallback = mock.fn();
+  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let southCacheService: SouthCacheServiceMock;
+
+  const utilsExports = {
+    convertDateTimeToInstant: mock.fn((val: unknown) => {
       if (val === '2024-01-01') return testData.constants.dates.DATE_1;
       if (val === '2024-01-02') return testData.constants.dates.DATE_2;
       return 0;
     }),
-    generateRandomId: jest.fn(() => 'random-id'),
-    sanitizeFilename: jest.fn(name => name)
+    formatInstant: mock.fn((instant: string) => instant),
+    generateRandomId: mock.fn(() => 'random-id'),
+    sanitizeFilename: mock.fn((name: unknown) => name),
+    delay: mock.fn(async () => undefined),
+    generateIntervals: mock.fn(() => []),
+    groupItemsByGroup: mock.fn(() => []),
+    validateCronExpression: mock.fn(() => ({ expression: '' }))
   };
-});
-jest.mock('../../service/http-request.utils');
-jest.mock('node:fs/promises');
 
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
+  const httpRequestExports = {
+    HTTPRequest: mock.fn(async () => createMockResponse(200))
+  };
 
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
-    }
-);
-jest.mock('../../service/encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
+  const encryptionServiceInstance = new EncryptionServiceMock('', '');
 
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
-const fsMock = jest.mocked(fs, { shallow: false });
-const httpRequestMock = HTTPRequest as jest.MockedFunction<typeof HTTPRequest>;
-const formatInstantMock = utils.formatInstant as jest.Mock;
+  let fsMock: {
+    writeFile: ReturnType<typeof mock.fn>;
+    stat: ReturnType<typeof mock.fn>;
+  };
 
-// --- Test Data Helpers ---
-const baseConfiguration: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings> = {
-  id: 'south-rest',
-  name: 'REST',
-  type: 'rest',
-  description: 'Rest connector',
-  enabled: true,
-  settings: {
-    host: 'https://api.example.com/',
-    acceptUnauthorized: true,
-    authentication: {
-      type: 'basic',
-      username: 'rest-user',
-      password: 'rest-password',
-      token: 'bearer-token'
+  before(() => {
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    mockModule(nodeRequire, '../../service/encryption.service', {
+      encryptionService: encryptionServiceInstance
+    });
+    SouthRest = reloadModule<{ default: typeof SouthRestClass }>(nodeRequire, './south-rest').default;
+  });
+
+  // --- Test Data Helpers ---
+  const baseConfiguration: SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings> = {
+    id: 'south-rest',
+    name: 'REST',
+    type: 'rest',
+    description: 'Rest connector',
+    enabled: true,
+    settings: {
+      host: 'https://api.example.com/',
+      acceptUnauthorized: true,
+      authentication: {
+        type: 'basic',
+        username: 'rest-user',
+        password: 'rest-password',
+        token: 'bearer-token'
+      },
+      test: { endpoint: '/health', method: 'GET', successCode: 200 },
+      timeout: 15,
+      proxy: {
+        useProxy: false
+      }
     },
-    test: { endpoint: '/health', method: 'GET', successCode: 200 },
-    timeout: 15,
-    proxy: {
-      useProxy: false
-    }
-  },
-  groups: [],
-  items: [],
-  createdBy: '',
-  updatedBy: '',
-  createdAt: '',
-  updatedAt: ''
-};
+    groups: [],
+    items: [],
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
+  };
 
-const createConfiguration = () => structuredClone(baseConfiguration);
-const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorItemEntity<SouthRestItemSettings> => ({
-  id: 'item-1',
-  name: 'Test Item',
-  enabled: true,
-  scanMode: testData.scanMode.list[0],
-  group: null,
-  syncWithGroup: false,
-  maxReadInterval: 900,
-  readDelay: 5,
-  overlap: 10,
-  settings: {
-    endpoint: '/data',
-    method: 'GET',
-    returnType: 'body',
-    queryParams: [],
-    headers: [],
-    trackingInstant: { trackInstant: false },
-    ...overrides
-  },
-  createdBy: '',
-  updatedBy: '',
-  createdAt: '',
-  updatedAt: ''
-});
+  const createConfiguration = () => structuredClone(baseConfiguration);
+  const createItem = (overrides?: Partial<SouthRestItemSettings>): SouthConnectorItemEntity<SouthRestItemSettings> => ({
+    id: 'item-1',
+    name: 'Test Item',
+    enabled: true,
+    scanMode: testData.scanMode.list[0],
+    group: null,
+    syncWithGroup: false,
+    maxReadInterval: 900,
+    readDelay: 5,
+    overlap: 10,
+    settings: {
+      endpoint: '/data',
+      method: 'GET',
+      returnType: 'body',
+      queryParams: [],
+      headers: [],
+      trackingInstant: { trackInstant: false },
+      ...overrides
+    },
+    createdBy: '',
+    updatedBy: '',
+    createdAt: '',
+    updatedAt: ''
+  });
 
-const getRequestOptions = (index = 0): ReqOptions => httpRequestMock.mock.calls[index][1] as ReqOptions;
-
-describe('SouthRestAPI connector', () => {
-  let south: SouthRest;
+  const getRequestOptions = (index = 0): ReqOptions => httpRequestExports.HTTPRequest.mock.calls[index].arguments[1] as ReqOptions;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-
-    // Default mocks
-    fsMock.writeFile.mockResolvedValue();
-    fsMock.stat.mockResolvedValue({ size: 100 } as Stats);
-    southCacheService.getSouthCache.mockReturnValue({ southId: 'south-rest', scanModeId: 'mode-1', maxInstant: null });
+    southCacheService = new SouthCacheServiceMock();
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200));
+    fsMock = {
+      writeFile: mock.method(fs, 'writeFile', async () => undefined) as unknown as ReturnType<typeof mock.fn>,
+      stat: mock.method(fs, 'stat', async () => ({ size: 100 })) as unknown as ReturnType<typeof mock.fn>
+    };
+    utilsExports.formatInstant = mock.fn((instant: string) => instant);
+    utilsExports.convertDateTimeToInstant = mock.fn((val: unknown) => {
+      if (val === '2024-01-01') return testData.constants.dates.DATE_1;
+      if (val === '2024-01-02') return testData.constants.dates.DATE_2;
+      return 0;
+    });
+    utilsExports.generateRandomId = mock.fn(() => 'random-id');
+    utilsExports.sanitizeFilename = mock.fn((name: unknown) => name);
+    southCacheService.getSouthCache = mock.fn(() => ({ southId: 'south-rest', scanModeId: 'mode-1', maxInstant: null }));
+    addContentCallback.mock.resetCalls();
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     const config = createConfiguration();
-    south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthRest(config, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   // --------------------------------------------------------------------------
-  // 1. Connection Testing (Existing + Refined)
+  // 1. Connection Testing
   // --------------------------------------------------------------------------
 
   it('should test connection successfully', async () => {
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, 'OK'));
-    await expect(south.testConnection()).resolves.not.toThrow();
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, 'OK'));
+    await assert.doesNotReject(south.testConnection());
   });
 
   it('should fail test connection on HTTP error', async () => {
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(500, 'Server Error'));
-    await expect(south.testConnection()).rejects.toThrow('HTTP request failed with status code 500');
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(500, 'Server Error'));
+    await assert.rejects(
+      south.testConnection(),
+      new Error('HTTP request failed with status code 500, expected 200. Message: Server Error')
+    );
   });
 
   it('should fail test connection on fetch error', async () => {
-    httpRequestMock.mockRejectedValueOnce(new Error('http error'));
-    await expect(south.testConnection()).rejects.toThrow('Fetch error: http error');
+    httpRequestExports.HTTPRequest = mock.fn(async () => {
+      throw new Error('http error');
+    });
+    await assert.rejects(south.testConnection(), new Error('Fetch error: http error'));
   });
 
   it('should handle API Key authentication in query params', async () => {
@@ -161,13 +188,13 @@ describe('SouthRestAPI connector', () => {
     config.settings.test.method = 'POST';
     config.settings.test.body = 'body';
 
-    south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, 'OK'));
+    south = new SouthRest(config, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, 'OK'));
 
     await south.testConnection();
 
-    const url = httpRequestMock.mock.calls[0][0] as URL;
-    expect(url.searchParams.get('api_key')).toBe('secret'); // Decrypted by mock is just the text
+    const url = httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as URL;
+    assert.strictEqual(url.searchParams.get('api_key'), 'secret');
   });
 
   // --------------------------------------------------------------------------
@@ -182,13 +209,15 @@ describe('SouthRestAPI connector', () => {
       ]
     });
 
-    formatInstantMock.mockReturnValueOnce(testData.constants.dates.DATE_1).mockReturnValueOnce(testData.constants.dates.DATE_2);
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, { data: [] }));
+    const fmtQueue = [testData.constants.dates.DATE_1, testData.constants.dates.DATE_2];
+    let fmtIdx = 0;
+    utilsExports.formatInstant = mock.fn(() => fmtQueue[fmtIdx++] ?? '');
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }));
 
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
     const options = getRequestOptions();
-    expect(options.query).toEqual({
+    assert.deepStrictEqual(options.query, {
       start: testData.constants.dates.DATE_1,
       end: testData.constants.dates.DATE_2
     });
@@ -202,13 +231,15 @@ describe('SouthRestAPI connector', () => {
       ]
     });
 
-    formatInstantMock.mockReturnValueOnce('2024-01-01').mockReturnValueOnce('2025-01-01');
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, {}));
+    const fmtQueue = ['2024-01-01', '2025-01-01'];
+    let fmtIdx = 0;
+    utilsExports.formatInstant = mock.fn(() => fmtQueue[fmtIdx++] ?? '');
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
 
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
     const options = getRequestOptions();
-    expect(options.headers).toMatchObject({
+    assertContains(options.headers as object, {
       'X-Time-From': 'From 2024-01-01',
       'X-Time-To': 'From 2025-01-01'
     });
@@ -223,14 +254,16 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    formatInstantMock.mockReturnValueOnce('START').mockReturnValueOnce('END');
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, {}));
+    const fmtQueue = ['START', 'END'];
+    let fmtIdx = 0;
+    utilsExports.formatInstant = mock.fn(() => fmtQueue[fmtIdx++] ?? '');
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
 
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
     const options = getRequestOptions();
-    expect(options.body).toBe('{"from": "START", "to": "END"}');
-    expect(options.headers).toMatchObject({ 'Content-Type': 'application/json' });
+    assert.strictEqual(options.body, '{"from": "START", "to": "END"}');
+    assertContains(options.headers as object, { 'Content-Type': 'application/json' });
   });
 
   it('should not replace @StartTime and @EndTime in Body for POST requests', async () => {
@@ -241,117 +274,106 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
 
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
     const options = getRequestOptions();
-    expect(formatInstantMock).not.toHaveBeenCalled();
-    expect(options.body).toBe('{"from": "StartTime", "to": "EndTime"}');
-    expect(options.headers).toMatchObject({ 'Content-Type': 'application/json' });
+    assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
+    assert.strictEqual(options.body, '{"from": "StartTime", "to": "EndTime"}');
+    assertContains(options.headers as object, { 'Content-Type': 'application/json' });
   });
 
   it('should handle XML response types', async () => {
-    const item = createItem({ returnType: 'body' }); // Hint logic mostly relies on content-type header
+    const item = createItem({ returnType: 'body' });
     const xmlContent = '<root>data</root>';
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, xmlContent, { 'content-type': 'application/xml' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, xmlContent, { 'content-type': 'application/xml' }));
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result.filename).toContain('.xml');
-    expect(result.content).toBe(xmlContent);
+    assert.ok((result.filename as string).includes('.xml'));
+    assert.strictEqual(result.content, xmlContent);
   });
 
   it('should handle file downloads (returnType = file)', async () => {
     const item = createItem({ returnType: 'file' });
 
-    // Mock response with arrayBuffer for file
     const mockRes = createMockResponse(200, 'file-content', { 'content-disposition': 'attachment; filename="report.pdf"' });
-
-    httpRequestMock.mockResolvedValueOnce(mockRes);
+    httpRequestExports.HTTPRequest = mock.fn(async () => mockRes);
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    // Filename sanitized
-    expect(result.filename).toBe('"report.pdf"');
-    // Content as string (connector logic converts buffer to string currently)
-    expect(result.content).toBe('file-content');
-    expect(result.maxInstant).toBeNull();
+    assert.strictEqual(result.filename, '"report.pdf"');
+    assert.strictEqual(result.content, 'file-content');
+    assert.strictEqual(result.maxInstant, null);
   });
 
   it('should handle file downloads (returnType = file) without filename', async () => {
     const item = createItem({ returnType: 'file' });
 
-    // Mock response with arrayBuffer for file
     const mockRes = createMockResponse(200, 'file-content', { 'content-disposition': 'attachment; file="report.pdf"' });
-
-    httpRequestMock.mockResolvedValueOnce(mockRes);
+    httpRequestExports.HTTPRequest = mock.fn(async () => mockRes);
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    // Filename sanitized
-    expect(result.filename).toBe('REST-Test Item-random-id');
-    // Content as string (connector logic converts buffer to string currently)
-    expect(result.content).toBe('file-content');
-    expect(result.maxInstant).toBeNull();
+    assert.strictEqual(result.filename, 'REST-Test Item-random-id');
+    assert.strictEqual(result.content, 'file-content');
+    assert.strictEqual(result.maxInstant, null);
   });
 
   it('should handle file downloads (returnType = file) without content disposition', async () => {
     const item = createItem({ returnType: 'file' });
 
-    // Mock response with arrayBuffer for file
     const mockRes = createMockResponse(200, 'file-content', {});
-
-    httpRequestMock.mockResolvedValueOnce(mockRes);
+    httpRequestExports.HTTPRequest = mock.fn(async () => mockRes);
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    // Filename sanitized
-    expect(result.filename).toBe('REST-Test Item-random-id');
-    // Content as string (connector logic converts buffer to string currently)
-    expect(result.content).toBe('file-content');
-    expect(result.maxInstant).toBeNull();
+    assert.strictEqual(result.filename, 'REST-Test Item-random-id');
+    assert.strictEqual(result.content, 'file-content');
+    assert.strictEqual(result.maxInstant, null);
   });
 
   it('should parse JSON string response manually if content-type is missing/text', async () => {
     const item = createItem();
     const jsonString = '{"manual": "parse"}';
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result.content).toEqual({ manual: 'parse' }); // It was parsed to object
-    expect(result.filename).toContain('.json');
+    assert.deepStrictEqual(result.content, { manual: 'parse' });
+    assert.ok((result.filename as string).includes('.json'));
   });
 
   it('should parse string response manually if content-type is missing/text', async () => {
     const item = createItem();
     const jsonString = '1';
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result.content).toEqual('1');
-    expect(result.filename).toEqual('REST-Test Item-random-id.json');
+    assert.deepStrictEqual(result.content, '1');
+    assert.strictEqual(result.filename, 'REST-Test Item-random-id.json');
   });
 
   it('should return raw content if parse fails', async () => {
     const item = createItem();
     const jsonString = '{]';
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result.content).toEqual('{]');
-    expect(result.filename).toEqual('REST-Test Item-random-id');
+    assert.deepStrictEqual(result.content, '{]');
+    assert.strictEqual(result.filename, 'REST-Test Item-random-id');
   });
 
   it('should throw error if queryData response is not OK', async () => {
     const item = createItem();
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(404, 'Not Found'));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(404, 'Not Found'));
 
-    await expect(south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2)).rejects.toThrow(
-      'HTTP request failed with status code 404'
+    await assert.rejects(
+      south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2),
+      new Error('HTTP request failed with status code 404 and message: Not Found')
     );
   });
 
@@ -369,18 +391,14 @@ describe('SouthRestAPI connector', () => {
     });
 
     const responseData = {
-      items: [
-        { date: '2024-01-01' },
-        { date: '2024-01-02' } // This is the max
-      ]
+      items: [{ date: '2024-01-01' }, { date: '2024-01-02' }]
     };
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, responseData, { 'content-type': 'application/json' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, responseData, { 'content-type': 'application/json' }));
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    // See mock at top: 2024-01-02 -> testData.constants.dates.DATE_2
-    expect(result.maxInstant).toBe(testData.constants.dates.DATE_2);
+    assert.strictEqual(result.maxInstant, testData.constants.dates.DATE_2);
   });
 
   it('should return null max instant if json path finds nothing', async () => {
@@ -392,9 +410,9 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, { data: [] }, { 'content-type': 'application/json' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }, { 'content-type': 'application/json' }));
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result.maxInstant).toBeNull();
+    assert.strictEqual(result.maxInstant, null);
   });
 
   it('should return null max instant if not tracking instant with json result', async () => {
@@ -404,9 +422,9 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, { data: [] }, { 'content-type': 'application/json' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }, { 'content-type': 'application/json' }));
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result.maxInstant).toBeNull();
+    assert.strictEqual(result.maxInstant, null);
   });
 
   it('should track max instant from text response', async () => {
@@ -419,20 +437,14 @@ describe('SouthRestAPI connector', () => {
     });
 
     const responseData = JSON.stringify({
-      items: [
-        { date: '2024-01-01' },
-        { date: '2024-01-02' }, // This is the max
-        { date: null },
-        { date: '2024-01-01' }
-      ]
+      items: [{ date: '2024-01-01' }, { date: '2024-01-02' }, { date: null }, { date: '2024-01-01' }]
     });
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, responseData, { 'content-type': 'application/text' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, responseData, { 'content-type': 'application/text' }));
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    // See mock at top: 2024-01-02 -> testData.constants.dates.DATE_2
-    expect(result.maxInstant).toBe(testData.constants.dates.DATE_2);
+    assert.strictEqual(result.maxInstant, testData.constants.dates.DATE_2);
   });
 
   it('should return null max instant if json path finds nothing from text', async () => {
@@ -444,9 +456,9 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, { data: [] }, { 'content-type': 'application/text' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }, { 'content-type': 'application/text' }));
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result.maxInstant).toBeNull();
+    assert.strictEqual(result.maxInstant, null);
   });
 
   it('should return null max instant if not tracking instant with text result', async () => {
@@ -456,9 +468,9 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, { data: [] }, { 'content-type': 'application/text' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }, { 'content-type': 'application/text' }));
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result.maxInstant).toBeNull();
+    assert.strictEqual(result.maxInstant, null);
   });
 
   // --------------------------------------------------------------------------
@@ -468,29 +480,26 @@ describe('SouthRestAPI connector', () => {
   it('should execute historyQuery for multiple items and save content', async () => {
     const item1 = createItem({ endpoint: '/item1' });
 
-    // Mock two responses
-    south.queryData = jest
-      .fn()
-      .mockResolvedValueOnce({ filename: 'REST-Test Item-random-id.json', content: 'content', maxInstant: testData.constants.dates.DATE_2 })
-      .mockResolvedValueOnce({
-        filename: 'REST-Test Item-random-id.json',
-        content: 'content',
-        maxInstant: testData.constants.dates.DATE_1
-      });
+    let callCount = 0;
+    mock.method(
+      south,
+      'queryData',
+      mock.fn(async () => {
+        callCount++;
+        if (callCount === 1)
+          return { filename: 'REST-Test Item-random-id.json', content: 'content', maxInstant: testData.constants.dates.DATE_2 };
+        return { filename: 'REST-Test Item-random-id.json', content: 'content', maxInstant: testData.constants.dates.DATE_1 };
+      })
+    );
 
     await south.historyQuery([item1], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    // Verify file writes
-    expect(fsMock.writeFile).toHaveBeenCalledTimes(1);
-    // Verify engine callback
-    expect(addContentCallback).toHaveBeenCalledTimes(1);
-    // Verify first call arguments for addContent
-    expect(addContentCallback).toHaveBeenCalledWith(
-      'south-rest',
-      expect.objectContaining({ type: 'any', filePath: expect.stringContaining('REST-Test Item-random-id.json') }),
-      testData.constants.dates.FAKE_NOW,
-      [item1]
-    );
+    assert.strictEqual(fsMock.writeFile.mock.calls.length, 1);
+    assert.strictEqual(addContentCallback.mock.calls.length, 1);
+    const cbArgs = addContentCallback.mock.calls[0].arguments;
+    assert.strictEqual(cbArgs[0], 'south-rest');
+    assertContains(cbArgs[1] as object, { type: 'any' });
+    assert.ok((cbArgs[1] as { filePath: string }).filePath.includes('REST-Test Item-random-id.json'));
   });
 
   it('should update maxInstant across multiple items in historyQuery', async () => {
@@ -498,33 +507,26 @@ describe('SouthRestAPI connector', () => {
       trackingInstant: { trackInstant: true, jsonPath: '$', dateTimeInput: { type: 'iso-string' } }
     });
 
-    // Mock response that triggers max instant logic (mocked to return specific number)
-    // The connector calls queryData, which calls trackMaxInstant.
-    // We'll trust the trackMaxInstant integration tested above.
-    // Here we ensure historyQuery picks the max of the results.
-
-    // item 1 returns null maxInstant (e.g. empty)
-    // item 2 returns 5000 (mocking queryData return logic via spy would be cleaner, but we integrate)
-
-    // Let's Spy on queryData to control return strictly
-    const querySpy = jest.spyOn(south, 'queryData');
-    querySpy.mockResolvedValueOnce({ filename: 'f1', content: '', maxInstant: testData.constants.dates.DATE_1 });
+    mock.method(
+      south,
+      'queryData',
+      mock.fn(async () => ({ filename: 'f1', content: '', maxInstant: testData.constants.dates.DATE_1 }))
+    );
 
     const result = await south.historyQuery([item1, item1], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
-    expect(result).toEqual({ trackedInstant: testData.constants.dates.DATE_1, value: '' });
+    assert.deepStrictEqual(result, { trackedInstant: testData.constants.dates.DATE_1, value: '' });
   });
 
   it('should not add content if file is empty', async () => {
     const item = createItem();
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
 
-    // fs.stat returns size 0
-    fsMock.stat.mockResolvedValueOnce({ size: 0 } as Stats);
+    fsMock.stat.mock.mockImplementation(async () => ({ size: 0 }));
 
     await south.historyQuery([item], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
-    expect(fsMock.writeFile).toHaveBeenCalled();
-    expect(addContentCallback).not.toHaveBeenCalled(); // Skipped because size 0
+    assert.strictEqual(fsMock.writeFile.mock.calls.length, 1);
+    assert.strictEqual(addContentCallback.mock.calls.length, 0);
   });
 
   // --------------------------------------------------------------------------
@@ -537,45 +539,48 @@ describe('SouthRestAPI connector', () => {
       history: { startTime: testData.constants.dates.DATE_1, endTime: testData.constants.dates.DATE_2 }
     };
 
-    httpRequestMock.mockResolvedValueOnce(createMockResponse(200, { test: 'ok' }, { 'content-type': 'application/json' }));
+    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { test: 'ok' }, { 'content-type': 'application/json' }));
 
     const result = await south.testItem(item, testingSettings);
 
-    expect(result.type).toBe('any');
-    expect(result.content).toEqual(JSON.stringify({ test: 'ok' }));
-    expect((result as OIBusFileContent).filePath).toBeDefined();
+    assert.strictEqual(result.type, 'any');
+    assert.strictEqual((result as OIBusFileContent).content, JSON.stringify({ test: 'ok' }));
+    assert.notStrictEqual((result as OIBusFileContent).filePath, undefined);
   });
 
   // --------------------------------------------------------------------------
   // 6. Test Proxy options and authorizations
   // --------------------------------------------------------------------------
 
-  it('should not get proxy if proxy url is not specified', async () => {
+  it('should not get proxy if proxy url is not specified', () => {
     const config = createConfiguration();
     config.settings.proxy.useProxy = true;
-    south['connector'] = config;
-    expect(() => south['getProxyOptions']()).toThrow(new Error('Proxy URL not specified'));
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.throws(
+      () => (south as unknown as Record<string, Array<() => unknown>>)['getProxyOptions'](),
+      new Error('Proxy URL not specified')
+    );
   });
 
-  it('should get proxy', async () => {
+  it('should get proxy', () => {
     const config = createConfiguration();
     config.settings.proxy.useProxy = true;
     config.settings.proxy.proxyUrl = 'http://localhost:8080/';
-    south['connector'] = config;
-    expect(south['getProxyOptions']()).toEqual({
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.deepStrictEqual((south as unknown as Record<string, () => unknown>)['getProxyOptions'](), {
       proxy: { url: 'http://localhost:8080/' },
       acceptUnauthorized: config.settings.acceptUnauthorized
     });
   });
 
-  it('should get proxy with auth', async () => {
+  it('should get proxy with auth', () => {
     const config = createConfiguration();
     config.settings.proxy.useProxy = true;
     config.settings.proxy.proxyUrl = 'http://localhost:8080/';
     config.settings.proxy.proxyUsername = 'username';
     config.settings.proxy.proxyPassword = 'password';
-    south['connector'] = config;
-    expect(south['getProxyOptions']()).toEqual({
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.deepStrictEqual((south as unknown as Record<string, () => unknown>)['getProxyOptions'](), {
       proxy: { url: 'http://localhost:8080/', auth: { type: 'url', username: 'username', password: 'password' } },
       acceptUnauthorized: config.settings.acceptUnauthorized
     });
@@ -586,8 +591,8 @@ describe('SouthRestAPI connector', () => {
     config.settings.authentication.type = 'basic';
     config.settings.authentication.username = 'username';
     config.settings.authentication.password = 'password';
-    south['connector'] = config;
-    expect(await south['getAuthorizationOptions']()).toEqual({
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.deepStrictEqual(await (south as unknown as Record<string, () => Promise<unknown>>)['getAuthorizationOptions'](), {
       type: 'basic',
       username: 'username',
       password: 'password'
@@ -598,16 +603,16 @@ describe('SouthRestAPI connector', () => {
     const config = createConfiguration();
     config.settings.authentication.type = 'basic';
     config.settings.authentication.username = '';
-    south['connector'] = config;
-    expect(await south['getAuthorizationOptions']()).toEqual(undefined);
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.strictEqual(await (south as unknown as Record<string, () => Promise<unknown>>)['getAuthorizationOptions'](), undefined);
   });
 
   it('should get bearer auth', async () => {
     const config = createConfiguration();
     config.settings.authentication.type = 'bearer';
     config.settings.authentication.token = 'token';
-    south['connector'] = config;
-    expect(await south['getAuthorizationOptions']()).toEqual({
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.deepStrictEqual(await (south as unknown as Record<string, () => Promise<unknown>>)['getAuthorizationOptions'](), {
       type: 'bearer',
       token: 'token'
     });
@@ -617,106 +622,94 @@ describe('SouthRestAPI connector', () => {
     const config = createConfiguration();
     config.settings.authentication.type = 'bearer';
     config.settings.authentication.token = '';
-    south['connector'] = config;
-    expect(await south['getAuthorizationOptions']()).toEqual(undefined);
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.strictEqual(await (south as unknown as Record<string, () => Promise<unknown>>)['getAuthorizationOptions'](), undefined);
   });
 
   it('should not get auth if api-key', async () => {
     const config = createConfiguration();
     config.settings.authentication.type = 'api-key';
-    south['connector'] = config;
-    expect(await south['getAuthorizationOptions']()).toEqual(undefined);
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.strictEqual(await (south as unknown as Record<string, () => Promise<unknown>>)['getAuthorizationOptions'](), undefined);
   });
 
   it('should not get auth if none', async () => {
     const config = createConfiguration();
     config.settings.authentication.type = 'none';
-    south['connector'] = config;
-    expect(await south['getAuthorizationOptions']()).toEqual(undefined);
+    (south as unknown as Record<string, unknown>)['connector'] = config;
+    assert.strictEqual(await (south as unknown as Record<string, () => Promise<unknown>>)['getAuthorizationOptions'](), undefined);
   });
 
   it('should add API key to HEADERS when configured', async () => {
-    // 1. Setup Configuration
     const config = createConfiguration();
     config.settings.authentication.type = 'api-key';
     config.settings.authentication.apiKey = 'X-Custom-Auth';
     config.settings.authentication.apiValue = 'secret-value';
     config.settings.authentication.addTo = 'header';
-    south['connector'] = config;
+    (south as unknown as Record<string, unknown>)['connector'] = config;
 
-    // 2. Prepare Inputs
     const options: ReqOptions = { method: 'GET' };
     const url = new URL('https://api.example.com/data');
 
-    // 3. Execute (access private method via casting)
-    await south['handleApiKeyAuth'](options, url);
+    await (south as unknown as Record<string, (o: ReqOptions, u: URL) => Promise<void>>)['handleApiKeyAuth'](options, url);
 
-    // 4. Assert
-    expect(options.headers).toBeDefined();
-    expect((options.headers as Record<string, string>)['X-Custom-Auth']).toBe('secret-value');
-    expect(url.searchParams.has('X-Custom-Auth')).toBe(false);
+    assert.notStrictEqual(options.headers, undefined);
+    assert.strictEqual((options.headers as Record<string, string>)['X-Custom-Auth'], 'secret-value');
+    assert.strictEqual(url.searchParams.has('X-Custom-Auth'), false);
   });
 
   it('should add API key to QUERY PARAMS when configured', async () => {
-    // 1. Setup Configuration
     const config = createConfiguration();
     config.settings.authentication.type = 'api-key';
     config.settings.authentication.apiKey = 'api_key';
     config.settings.authentication.apiValue = 'secret-value';
     config.settings.authentication.addTo = 'query-params';
-    south['connector'] = config;
+    (south as unknown as Record<string, unknown>)['connector'] = config;
 
-    // 2. Prepare Inputs with existing params to ensure append works
     const options: ReqOptions = { method: 'GET' };
     const url = new URL('https://api.example.com/data?existing=true');
 
-    // 3. Execute
-    await south['handleApiKeyAuth'](options, url);
+    await (south as unknown as Record<string, (o: ReqOptions, u: URL) => Promise<void>>)['handleApiKeyAuth'](options, url);
 
-    // 4. Assert
-    expect(url.searchParams.get('api_key')).toBe('secret-value');
-    expect(url.searchParams.get('existing')).toBe('true'); // Should preserve existing params
-    expect(options.headers).toBeUndefined();
+    assert.strictEqual(url.searchParams.get('api_key'), 'secret-value');
+    assert.strictEqual(url.searchParams.get('existing'), 'true');
+    assert.strictEqual(options.headers, undefined);
   });
 
   it('should NOT modify options or url if authentication is NOT api-key', async () => {
-    // 1. Setup Configuration (Basic Auth)
     const config = createConfiguration();
     config.settings.authentication.type = 'basic';
-    config.settings.authentication.apiKey = 'should-ignore'; // Even if these are present
+    config.settings.authentication.apiKey = 'should-ignore';
     config.settings.authentication.apiValue = 'should-ignore';
-    south['connector'] = config;
+    (south as unknown as Record<string, unknown>)['connector'] = config;
 
     const options: ReqOptions = { method: 'GET' };
     const url = new URL('https://api.example.com/data');
 
-    await south['handleApiKeyAuth'](options, url);
+    await (south as unknown as Record<string, (o: ReqOptions, u: URL) => Promise<void>>)['handleApiKeyAuth'](options, url);
 
-    // Assert nothing changed
-    expect(options.headers).toBeUndefined();
-    expect(url.searchParams.toString()).toBe('');
+    assert.strictEqual(options.headers, undefined);
+    assert.strictEqual(url.searchParams.toString(), '');
   });
 
   it('should NOT modify options or url if apiKey or apiValue are missing', async () => {
     const config = createConfiguration();
     config.settings.authentication.type = 'api-key';
     config.settings.authentication.addTo = 'header';
-    south['connector'] = config;
+    (south as unknown as Record<string, unknown>)['connector'] = config;
 
     const options: ReqOptions = { method: 'GET' };
     const url = new URL('https://api.example.com/data');
 
-    // Case 1: Missing Key
     config.settings.authentication.apiKey = '';
     config.settings.authentication.apiValue = 'some-value';
-    await south['handleApiKeyAuth'](options, url);
-    expect(options.headers).toBeUndefined();
+    await (south as unknown as Record<string, (o: ReqOptions, u: URL) => Promise<void>>)['handleApiKeyAuth'](options, url);
+    assert.strictEqual(options.headers, undefined);
 
-    // Case 2: Missing Value
     config.settings.authentication.apiKey = 'some-key';
     config.settings.authentication.apiValue = '';
-    await south['handleApiKeyAuth'](options, url);
-    expect(options.headers).toBeUndefined();
+    await (south as unknown as Record<string, (o: ReqOptions, u: URL) => Promise<void>>)['handleApiKeyAuth'](options, url);
+    assert.strictEqual(options.headers, undefined);
   });
 
   it('should append to existing headers object if it already exists', async () => {
@@ -725,18 +718,17 @@ describe('SouthRestAPI connector', () => {
     config.settings.authentication.apiKey = 'X-Auth';
     config.settings.authentication.apiValue = 'secret-value';
     config.settings.authentication.addTo = 'header';
-    south['connector'] = config;
+    (south as unknown as Record<string, unknown>)['connector'] = config;
 
-    // Pre-fill headers (e.g. Content-Type)
     const options: ReqOptions = {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     };
     const url = new URL('https://api.example.com/data');
 
-    await south['handleApiKeyAuth'](options, url);
+    await (south as unknown as Record<string, (o: ReqOptions, u: URL) => Promise<void>>)['handleApiKeyAuth'](options, url);
 
-    expect(options.headers).toMatchObject({
+    assertContains(options.headers as object, {
       'Content-Type': 'application/json',
       'X-Auth': 'secret-value'
     });
