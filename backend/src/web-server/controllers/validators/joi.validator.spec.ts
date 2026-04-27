@@ -1,3 +1,5 @@
+import { describe, it, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import Joi from 'joi';
 import JoiValidator from './joi.validator';
 import {
@@ -14,6 +16,18 @@ import {
   OIBusTimezoneAttribute
 } from '../../../../shared/model/form.model';
 
+// Module augmentation to expose private methods for testing without unsafe casts
+declare module './joi.validator' {
+  interface JoiValidator {
+    generateSingleTrueValidator(fieldKey: string): Joi.CustomValidator;
+    applyArrayLevelValidators(schema: Joi.ArraySchema): Joi.ArraySchema;
+    isMqttItemsArray(formControl: OIBusArrayAttribute): boolean;
+    mqttTopicOverlapValidator: Joi.CustomValidator;
+    doMqttTopicsOverlap(topic1: string, topic2: string): boolean;
+    mqttTopicMatches(topic: string, pattern: string): boolean;
+  }
+}
+
 const validator = new JoiValidator();
 
 class JoiValidatorExtend extends JoiValidator {
@@ -24,25 +38,29 @@ class JoiValidatorExtend extends JoiValidator {
 
 const extendedValidator = new JoiValidatorExtend();
 
+afterEach(() => {
+  mock.restoreAll();
+});
+
 describe('Joi validator', () => {
   it('validate should throw exception on invalid schema', async () => {
     const schema = Joi.object({});
     const dto = {};
-    const validateAsyncSpy = jest.spyOn(schema, 'validateAsync').mockImplementationOnce(() => {
+    const validateAsyncSpy = mock.method(schema, 'validateAsync', () => {
       throw new Error();
     });
 
-    await expect(validator.validate(schema, dto)).rejects.toThrow(new Error());
-    expect(validateAsyncSpy).toHaveBeenCalledWith(dto, { abortEarly: false });
+    await assert.rejects(validator.validate(schema, dto), new Error());
+    assert.deepStrictEqual(validateAsyncSpy.mock.calls[0].arguments, [dto, { abortEarly: false }]);
   });
 
   it('validate should not throw exception on valid schema', async () => {
     const schema = Joi.object({});
     const dto = {};
-    const validateAsyncSpy = jest.spyOn(schema, 'validateAsync');
+    const validateAsyncSpy = mock.method(schema, 'validateAsync');
 
-    await expect(validator.validate(schema, dto)).resolves.not.toThrow();
-    expect(validateAsyncSpy).toHaveBeenCalledWith(dto, { abortEarly: false });
+    await assert.doesNotReject(validator.validate(schema, dto));
+    assert.deepStrictEqual(validateAsyncSpy.mock.calls[0].arguments, [dto, { abortEarly: false }]);
   });
 
   it('validateSettings should properly call validate', async () => {
@@ -57,12 +75,13 @@ describe('Joi validator', () => {
     };
     const dto = {};
     const schema = Joi.object({});
-    validator.validate = jest.fn();
-    jest.spyOn(validator, 'generateFormGroupJoiSchema').mockReturnValueOnce({ objectSettings: schema });
+    const validateMock = mock.fn();
+    validator.validate = validateMock;
+    mock.method(validator, 'generateFormGroupJoiSchema', () => ({ objectSettings: schema }));
 
     await validator.validateSettings(settings, dto);
 
-    expect(validator.validate).toHaveBeenCalledWith(schema, dto);
+    assert.deepStrictEqual(validateMock.mock.calls[0].arguments, [schema, dto]);
   });
 
   it('generateJoiSchema should generate proper Joi schema for different form controls', async () => {
@@ -143,7 +162,7 @@ describe('Joi validator', () => {
         certificate: Joi.string().allow(null, '')
       })
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    assert.deepStrictEqual(expectedSchema.describe(), generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly generate text Joi schema', async () => {
@@ -177,7 +196,7 @@ describe('Joi validator', () => {
         host: Joi.string().required().pattern(new RegExp('^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*'))
       })
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    assert.deepStrictEqual(expectedSchema.describe(), generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly generate number Joi schema', async () => {
@@ -209,7 +228,7 @@ describe('Joi validator', () => {
         port: Joi.number().required().min(1).max(65535)
       })
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    assert.deepStrictEqual(expectedSchema.describe(), generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly generate select Joi schema', async () => {
@@ -247,7 +266,7 @@ describe('Joi validator', () => {
         requestMethod: Joi.string().required().valid('GET', 'POST', 'PUT', 'PATCH')
       })
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    assert.deepStrictEqual(expectedSchema.describe(), generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly generate boolean Joi schema', async () => {
@@ -284,7 +303,7 @@ describe('Joi validator', () => {
         verbose: Joi.boolean().required().falsy(0).truthy(1)
       })
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    assert.deepStrictEqual(expectedSchema.describe(), generatedSchema.describe());
   });
 
   it('generateJoiSchema should properly handle conditional display', async () => {
@@ -344,7 +363,7 @@ describe('Joi validator', () => {
         query: Joi.string().allow(null, '')
       })
     });
-    expect(generatedSchema.describe()).toEqual(expectedSchema.describe());
+    assert.deepStrictEqual(generatedSchema.describe(), expectedSchema.describe());
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Groups', async () => {
@@ -410,7 +429,7 @@ describe('Joi validator', () => {
         apiKey: Joi.string().allow(null, '')
       }).required()
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    assert.deepStrictEqual(expectedSchema.describe(), generatedSchema.describe());
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Groups without validators', async () => {
@@ -474,7 +493,7 @@ describe('Joi validator', () => {
         apiKey: Joi.string().allow(null, '')
       })
     });
-    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+    assert.deepStrictEqual(expectedSchema.describe(), generatedSchema.describe());
   });
 
   it('generateJoiSchema should generate proper Joi schema for form Array', async () => {
@@ -678,27 +697,30 @@ describe('Joi validator', () => {
           .custom(() => null, 'SINGLE_TRUE validation for useAsReference')
       })
     });
-    expect(JSON.stringify(generatedSchema.describe())).toEqual(JSON.stringify(expectedSchema.describe()));
+    assert.strictEqual(JSON.stringify(generatedSchema.describe()), JSON.stringify(expectedSchema.describe()));
   });
 
   it('generateSingleTrueValidator should manage single true fields', async () => {
-    const helpers = { message: jest.fn().mockReturnValueOnce('error') } as unknown as Joi.CustomHelpers;
-    const test = extendedValidator['generateSingleTrueValidator']('singleTrueField');
-    expect(test([{ singleTrueField: true }, { singleTrueField: true }, { singleTrueField: true }], helpers)).toEqual('error');
-    expect(helpers.message).toHaveBeenCalledWith({ custom: `Only one item in the array can have "singleTrueField" set to true` });
+    // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
+    const helpers = { message: mock.fn(() => 'error') } as unknown as Joi.CustomHelpers;
+    const test = extendedValidator.generateSingleTrueValidator('singleTrueField');
+    assert.deepStrictEqual(test([{ singleTrueField: true }, { singleTrueField: true }, { singleTrueField: true }], helpers), 'error');
+    assert.deepStrictEqual((helpers.message as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      custom: `Only one item in the array can have "singleTrueField" set to true`
+    });
 
-    expect(test([{ singleTrueField: true }, { singleTrueField: false }, { singleTrueField: false }], helpers)).toEqual([
+    assert.deepStrictEqual(test([{ singleTrueField: true }, { singleTrueField: false }, { singleTrueField: false }], helpers), [
       { singleTrueField: true },
       { singleTrueField: false },
       { singleTrueField: false }
     ]);
 
-    expect(test({ singleTrueField: true }, helpers)).toEqual({ singleTrueField: true });
+    assert.deepStrictEqual(test({ singleTrueField: true }, helpers), { singleTrueField: true });
   });
 
   it('applyArrayLevelValidators should return schema if no validators', async () => {
     const schema = Joi.array();
-    expect(extendedValidator['applyArrayLevelValidators'](schema)).toEqual(schema);
+    assert.deepStrictEqual(extendedValidator.applyArrayLevelValidators(schema), schema);
   });
 
   describe('MQTT Topic Validation', () => {
@@ -743,10 +765,8 @@ describe('Joi validator', () => {
           }
         };
 
-        const result = (validator as unknown as { isMqttItemsArray: (formControl: OIBusArrayAttribute) => boolean }).isMqttItemsArray(
-          mqttArrayControl
-        );
-        expect(result).toBe(true);
+        const result = validator.isMqttItemsArray(mqttArrayControl);
+        assert.strictEqual(result, true);
       });
 
       it('should return false when array does not contain topic field', () => {
@@ -789,356 +809,245 @@ describe('Joi validator', () => {
           }
         };
 
-        const result = (validator as unknown as { isMqttItemsArray: (formControl: OIBusArrayAttribute) => boolean }).isMqttItemsArray(
-          mqttArrayControl
-        );
-        expect(result).toBe(false);
+        const result = validator.isMqttItemsArray(mqttArrayControl);
+        assert.strictEqual(result, false);
       });
     });
 
     describe('doMqttTopicsOverlap', () => {
       it('should return true for identical topics', () => {
-        const result = (validator as unknown as { doMqttTopicsOverlap: (topic1: string, topic2: string) => boolean }).doMqttTopicsOverlap(
-          '/oibus/counter',
-          '/oibus/counter'
-        );
-        expect(result).toBe(true);
+        const result = validator.doMqttTopicsOverlap('/oibus/counter', '/oibus/counter');
+        assert.strictEqual(result, true);
       });
 
       it('should return true when topic1 matches topic2 pattern', () => {
-        const result = (validator as unknown as { doMqttTopicsOverlap: (topic1: string, topic2: string) => boolean }).doMqttTopicsOverlap(
-          '/oibus/counter',
-          '/oibus/#'
-        );
-        expect(result).toBe(true);
+        const result = validator.doMqttTopicsOverlap('/oibus/counter', '/oibus/#');
+        assert.strictEqual(result, true);
       });
 
       it('should return true when topic2 matches topic1 pattern', () => {
-        const result = (validator as unknown as { doMqttTopicsOverlap: (topic1: string, topic2: string) => boolean }).doMqttTopicsOverlap(
-          '/oibus/#',
-          '/oibus/counter'
-        );
-        expect(result).toBe(true);
+        const result = validator.doMqttTopicsOverlap('/oibus/#', '/oibus/counter');
+        assert.strictEqual(result, true);
       });
 
       it('should return false for non-overlapping topics', () => {
-        const result = (validator as unknown as { doMqttTopicsOverlap: (topic1: string, topic2: string) => boolean }).doMqttTopicsOverlap(
-          '/oibus/counter',
-          '/other/topic'
-        );
-        expect(result).toBe(false);
+        const result = validator.doMqttTopicsOverlap('/oibus/counter', '/other/topic');
+        assert.strictEqual(result, false);
       });
     });
 
     describe('mqttTopicMatches', () => {
       describe('exact matches', () => {
         it('should match identical topics', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter',
-            '/oibus/counter'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('/oibus/counter', '/oibus/counter');
+          assert.strictEqual(result, true);
         });
 
         it('should not match different topics', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter',
-            '/oibus/other'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oibus/counter', '/oibus/other');
+          assert.strictEqual(result, false);
         });
       });
 
       describe('single-level wildcard (+)', () => {
         it('should match single level wildcard', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter',
-            '/oibus/+'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('/oibus/counter', '/oibus/+');
+          assert.strictEqual(result, true);
         });
 
         it('should match multiple single level wildcards', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter/value',
-            '/oibus/+/+'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('/oibus/counter/value', '/oibus/+/+');
+          assert.strictEqual(result, true);
         });
 
         it('should not match if level count differs', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter',
-            '/oibus/+/value'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oibus/counter', '/oibus/+/value');
+          assert.strictEqual(result, false);
         });
 
         it('should match empty level with + (implementation behavior)', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus//value',
-            '/oibus/+/value'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('/oibus//value', '/oibus/+/value');
+          assert.strictEqual(result, true);
         });
       });
 
       describe('multi-level wildcard (#)', () => {
         it('should match everything after # wildcard', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter/value',
-            '/oibus/#'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('/oibus/counter/value', '/oibus/#');
+          assert.strictEqual(result, true);
         });
 
         it('should not match exact prefix with # when topic is shorter', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus',
-            '/oibus/#'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oibus', '/oibus/#');
+          assert.strictEqual(result, false);
         });
 
         it('should match root level with #', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter',
-            '/#'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('/oibus/counter', '/#');
+          assert.strictEqual(result, true);
         });
 
         it('should match everything with just #', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter/value',
-            '#'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('/oibus/counter/value', '#');
+          assert.strictEqual(result, true);
         });
 
         it('should not match if prefix does not match', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/other/counter',
-            '/oibus/#'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/other/counter', '/oibus/#');
+          assert.strictEqual(result, false);
         });
 
         it('should not match if topic is shorter than prefix', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oib',
-            '/oibus/#'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oib', '/oibus/#');
+          assert.strictEqual(result, false);
         });
       });
 
       describe('combined wildcards', () => {
         it('should handle combined + and # wildcards based on implementation', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter/value/123',
-            '/oibus/+/#'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oibus/counter/value/123', '/oibus/+/#');
+          assert.strictEqual(result, false);
         });
 
         it('should not match if single level part does not match', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter/value',
-            '/other/+/#'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oibus/counter/value', '/other/+/#');
+          assert.strictEqual(result, false);
         });
       });
 
       describe('additional pattern matching', () => {
         it('should not match when # is not at the end of pattern', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter',
-            '/oibus/#/something'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oibus/counter', '/oibus/#/something');
+          assert.strictEqual(result, false);
         });
 
         it('should not match when # is not preceded by / and not at beginning', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter',
-            '/oibus#'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oibus/counter', '/oibus#');
+          assert.strictEqual(result, false);
         });
 
         it('should match when # is at beginning of pattern', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            'oibus/counter',
-            '#'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('oibus/counter', '#');
+          assert.strictEqual(result, true);
         });
 
         it('should match exact topic and pattern without wildcards - final return', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            'level1/level2/level3',
-            'level1/level2/level3'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('level1/level2/level3', 'level1/level2/level3');
+          assert.strictEqual(result, true);
         });
 
         it('should match topic with + wildcards in all positions - final return', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            'level1/level2/level3',
-            '+/+/+'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('level1/level2/level3', '+/+/+');
+          assert.strictEqual(result, true);
         });
 
         it('should handle pattern with # followed by non-empty character', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter',
-            '/oibus/#extra'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('/oibus/counter', '/oibus/#extra');
+          assert.strictEqual(result, false);
         });
 
         it('should not match when topic is shorter than required parts before #', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            'a',
-            'a#/b/#'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('a', 'a#/b/#');
+          assert.strictEqual(result, false);
         });
 
         it('should not match when parts before # do not match', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            'a#/different/extra',
-            'a#/b/#'
-          );
-          expect(result).toBe(false);
+          const result = validator.mqttTopicMatches('a#/different/extra', 'a#/b/#');
+          assert.strictEqual(result, false);
         });
 
         it('should match when parts before # match correctly', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            'a#/b/extra/parts',
-            'a#/b/#'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('a#/b/extra/parts', 'a#/b/#');
+          assert.strictEqual(result, true);
         });
 
         it('should match with + wildcard before # in split pattern', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            'a#/anything/extra',
-            'a#/+/#'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('a#/anything/extra', 'a#/+/#');
+          assert.strictEqual(result, true);
         });
       });
 
       describe('edge cases', () => {
         it('should handle empty topics', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '',
-            ''
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('', '');
+          assert.strictEqual(result, true);
         });
 
         it('should handle topics with special characters', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            '/oibus/counter-1_test',
-            '/oibus/+'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('/oibus/counter-1_test', '/oibus/+');
+          assert.strictEqual(result, true);
         });
 
         it('should handle topics starting without slash', () => {
-          const result = (validator as unknown as { mqttTopicMatches: (topic: string, pattern: string) => boolean }).mqttTopicMatches(
-            'oibus/counter',
-            'oibus/+'
-          );
-          expect(result).toBe(true);
+          const result = validator.mqttTopicMatches('oibus/counter', 'oibus/+');
+          assert.strictEqual(result, true);
         });
       });
     });
 
     describe('mqttTopicOverlapValidator', () => {
       it('should pass validation when no overlaps exist', () => {
-        const mockHelpers = {
-          message: jest.fn()
-        };
+        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
+        const mockHelpers = { message: mock.fn() } as unknown as Joi.CustomHelpers;
 
         const topics = [{ topic: '/oibus/counter' }, { topic: '/other/topic' }, { topic: '/different/path' }];
 
-        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
-          topics,
-          mockHelpers as unknown as Joi.CustomHelpers
-        );
-        expect(result).toBe(topics);
-        expect(mockHelpers.message).not.toHaveBeenCalled();
+        const result = validator.mqttTopicOverlapValidator(topics, mockHelpers);
+        assert.strictEqual(result, topics);
+        assert.strictEqual((mockHelpers.message as ReturnType<typeof mock.fn>).mock.calls.length, 0);
       });
 
       it('should fail validation when overlaps exist', () => {
-        const mockHelpers = {
-          message: jest.fn().mockReturnValue('error message')
-        };
+        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
+        const mockHelpers = { message: mock.fn(() => 'error message') } as unknown as Joi.CustomHelpers;
 
         const topics = [{ topic: '/oibus/counter' }, { topic: '/oibus/#' }];
 
-        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
-          topics,
-          mockHelpers as unknown as Joi.CustomHelpers
-        );
+        const result = validator.mqttTopicOverlapValidator(topics, mockHelpers);
 
-        expect(mockHelpers.message).toHaveBeenCalledWith({
+        assert.deepStrictEqual((mockHelpers.message as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
           custom: 'MQTT topic subscriptions cannot overlap. Conflicting topics: "/oibus/counter" and "/oibus/#"'
         });
-        expect(result).toBe('error message');
+        assert.strictEqual(result, 'error message');
       });
 
       it('should handle non-array input', () => {
-        const mockHelpers = {
-          message: jest.fn()
-        };
+        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
+        const mockHelpers = { message: mock.fn() } as unknown as Joi.CustomHelpers;
 
         const nonArrayValue = 'not-an-array';
-        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
-          nonArrayValue as unknown as Array<Record<string, unknown>>,
-          mockHelpers as unknown as Joi.CustomHelpers
-        );
-        expect(result).toBe(nonArrayValue);
-        expect(mockHelpers.message).not.toHaveBeenCalled();
+        // intentional wrong-type input to test defensive behavior
+        const result = validator.mqttTopicOverlapValidator(nonArrayValue as unknown as Array<Record<string, unknown>>, mockHelpers);
+        assert.strictEqual(result, nonArrayValue);
+        assert.strictEqual((mockHelpers.message as ReturnType<typeof mock.fn>).mock.calls.length, 0);
       });
 
       it('should filter out empty topics', () => {
-        const mockHelpers = {
-          message: jest.fn()
-        };
+        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
+        const mockHelpers = { message: mock.fn() } as unknown as Joi.CustomHelpers;
 
         const topics = [{ topic: '/oibus/counter' }, { topic: '' }, { topic: '   ' }, { topic: '/other/topic' }];
 
-        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
-          topics,
-          mockHelpers as unknown as Joi.CustomHelpers
-        );
-        expect(result).toBe(topics);
-        expect(mockHelpers.message).not.toHaveBeenCalled();
+        const result = validator.mqttTopicOverlapValidator(topics, mockHelpers);
+        assert.strictEqual(result, topics);
+        assert.strictEqual((mockHelpers.message as ReturnType<typeof mock.fn>).mock.calls.length, 0);
       });
 
       it('should handle multiple overlaps', () => {
-        const mockHelpers = {
-          message: jest.fn().mockReturnValue('error message')
-        };
+        // partial mock of Joi.CustomHelpers — only .message() is used by the validator under test
+        const mockHelpers = { message: mock.fn(() => 'error message') } as unknown as Joi.CustomHelpers;
 
         const topics = [{ topic: '/oibus/counter' }, { topic: '/oibus/+' }, { topic: '/oibus/#' }];
 
-        const result = (validator as unknown as { mqttTopicOverlapValidator: Joi.CustomValidator }).mqttTopicOverlapValidator(
-          topics,
-          mockHelpers as unknown as Joi.CustomHelpers
-        );
+        const result = validator.mqttTopicOverlapValidator(topics, mockHelpers);
 
-        expect(mockHelpers.message).toHaveBeenCalledWith({
-          custom: expect.stringContaining('MQTT topic subscriptions cannot overlap')
-        });
-        expect(result).toBe('error message');
+        assert.strictEqual((mockHelpers.message as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+        assert.ok(
+          String((mockHelpers.message as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0].custom).includes(
+            'MQTT topic subscriptions cannot overlap'
+          )
+        );
+        assert.strictEqual(result, 'error message');
       });
     });
 
@@ -1217,7 +1126,7 @@ describe('Joi validator', () => {
           ]
         };
 
-        await expect(extendedValidator.validateSettings(settings, validData)).resolves.not.toThrow();
+        await assert.doesNotReject(extendedValidator.validateSettings(settings, validData));
       });
 
       it('should fail validation for overlapping MQTT topics', async () => {
@@ -1294,7 +1203,7 @@ describe('Joi validator', () => {
           ]
         };
 
-        await expect(extendedValidator.validateSettings(settings, invalidData)).rejects.toThrow();
+        await assert.rejects(extendedValidator.validateSettings(settings, invalidData));
       });
 
       it('should pass validation for non-MQTT arrays without topic field', async () => {
@@ -1351,7 +1260,7 @@ describe('Joi validator', () => {
           items: [{ name: 'item1' }, { name: 'item2' }]
         };
 
-        await expect(extendedValidator.validateSettings(settings, validData)).resolves.not.toThrow();
+        await assert.doesNotReject(extendedValidator.validateSettings(settings, validData));
       });
     });
   });
