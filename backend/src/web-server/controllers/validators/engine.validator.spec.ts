@@ -1,3 +1,5 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import JoiValidator from './joi.validator';
 import { engineSchema } from './oibus-validation-schema';
 
@@ -150,11 +152,15 @@ const dataProviders: Array<DataProvider> = [
 describe('Engine validator', () => {
   const validator: JoiValidator = new JoiValidator();
 
-  it.each(dataProviders)(`$# Should be valid: $isValid`, async dataProvider => {
-    if (dataProvider.isValid) {
-      await expect(validator.validate(engineSchema, dataProvider.dto)).resolves.not.toThrow();
-    } else {
-      await expect(validator.validate(engineSchema, dataProvider.dto)).rejects.toThrow(new Error(dataProvider.errorMessage as string));
-    }
-  });
+  for (const [index, dataProvider] of dataProviders.entries()) {
+    it(`${index} Should be valid: ${dataProvider.isValid}`, async () => {
+      if (dataProvider.isValid) {
+        await assert.doesNotReject(validator.validate(engineSchema, dataProvider.dto));
+      } else {
+        await assert.rejects(validator.validate(engineSchema, dataProvider.dto), {
+          message: dataProvider.errorMessage as string
+        });
+      }
+    });
+  }
 });
