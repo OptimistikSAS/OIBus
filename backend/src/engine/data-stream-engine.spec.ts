@@ -1,264 +1,359 @@
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import pino from 'pino';
-import DataStreamEngine from './data-stream-engine';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
 import testData from '../tests/utils/test-data';
-import NorthConnector from '../north/north-connector';
-import { NorthSettings } from '../../shared/model/north-settings.model';
-import SouthConnector from '../south/south-connector';
-import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import { mockModule, reloadModule, asLogger, flushPromises } from '../tests/utils/test-utils';
+
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
-import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
-import NorthConnectorMetricsService from '../service/metrics/north-connector-metrics.service';
 import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
-import SouthConnectorMetricsService from '../service/metrics/south-connector-metrics.service';
 import SouthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/south-connector-metrics-service.mock';
-import { SouthConnectorEntityLight } from '../model/south-connector.model';
-import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
+import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';
+import HistoryQueryMock from '../tests/__mocks__/history-query.mock';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
-import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
 import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
-import HistoryQuery from './history-query';
-import HistoryQueryMock from '../tests/__mocks__/history-query.mock';
-import { HistoryQueryEntityLight } from '../model/histor-query.model';
-import { CacheContentUpdateCommand, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
-import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
-import HistoryQueryMetricsServiceMock from '../tests/__mocks__/service/metrics/history-query-metrics-service.mock';
-import CacheService from '../service/cache/cache.service';
 
-// Import Factory Functions to mock them
-import { buildNorth, createNorthOrchestrator, deleteNorthCache, initNorthCache } from '../north/north-connector-factory';
-import { buildSouth, deleteSouthCache, initSouthCache } from '../south/south-connector-factory';
-import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
+import type DataStreamEngineType from './data-stream-engine';
+import type { NorthConnectorEntityLight } from '../model/north-connector.model';
+import type { SouthConnectorEntityLight } from '../model/south-connector.model';
+import type { HistoryQueryEntityLight } from '../model/histor-query.model';
+import type { NorthConnectorEntity } from '../model/north-connector.model';
+import type { NorthSettings } from '../../shared/model/north-settings.model';
+import type { CacheContentUpdateCommand, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
 
-jest.mock('../south/south-mqtt/south-mqtt');
-jest.mock('../service/utils');
-jest.mock('node:fs/promises');
+const nodeRequire = createRequire(import.meta.url);
 
-// Mock Factories
-jest.mock('../north/north-connector-factory');
-jest.mock('../south/south-connector-factory');
-jest.mock('./history-query-factory');
+// --- Module-level mutable exports objects (mutated per test rather than replaced) ---
+const northFactoryExports: Record<string, unknown> = {
+  buildNorth: mock.fn(),
+  createNorthOrchestrator: mock.fn(),
+  deleteNorthCache: mock.fn(),
+  initNorthCache: mock.fn()
+};
 
-let mockedHistoryQuery1: HistoryQuery;
-let mockedHistoryQuery2: HistoryQuery;
+const southFactoryExports: Record<string, unknown> = {
+  buildSouth: mock.fn(),
+  deleteSouthCache: mock.fn(),
+  initSouthCache: mock.fn()
+};
 
-// Mock HistoryQuery Class (default export)
-jest.mock('./history-query', () =>
-  jest.fn((configuration, _north, _south, _logger) => {
-    if (configuration.id === testData.historyQueries.list[0].id) {
-      return mockedHistoryQuery1;
-    } else if (configuration.id === testData.historyQueries.list[1].id) {
-      return mockedHistoryQuery2;
-    }
+const historyFactoryExports: Record<string, unknown> = {
+  buildHistoryQuery: mock.fn(),
+  createHistoryQueryOrchestrator: mock.fn(),
+  deleteHistoryQueryCache: mock.fn(),
+  initHistoryQueryCache: mock.fn()
+};
+
+// --- Metrics service constructor closures (reassigned in beforeEach) ---
+let northConnectorMetricsService: NorthConnectorMetricsServiceMock;
+let southConnectorMetricsService: SouthConnectorMetricsServiceMock;
+let historyQueryMetricsService: HistoryQueryMetricsServiceMock;
+
+const northMetricsExports = {
+  __esModule: true,
+  default: function () {
+    return northConnectorMetricsService;
+  }
+};
+const southMetricsExports = {
+  __esModule: true,
+  default: function () {
+    return southConnectorMetricsService;
+  }
+};
+const historyMetricsExports = {
+  __esModule: true,
+  default: function () {
+    return historyQueryMetricsService;
+  }
+};
+
+// --- HistoryQuery constructor closure (reassigned in beforeEach) ---
+let mockedHistoryQuery1: HistoryQueryMock;
+let mockedHistoryQuery2: HistoryQueryMock;
+
+const historyQueryClassExports = {
+  __esModule: true,
+  default: function (configuration: unknown) {
+    const id = (configuration as { id: string }).id;
+    if (id === testData.historyQueries.list[0].id) return mockedHistoryQuery1;
+    if (id === testData.historyQueries.list[1].id) return mockedHistoryQuery2;
     return null;
-  })
-);
+  }
+};
 
-const northConnectorMetricsService: NorthConnectorMetricsService = new NorthConnectorMetricsServiceMock();
-jest.mock(
-  '../service/metrics/north-connector-metrics.service',
-  () =>
-    function () {
-      return northConnectorMetricsService;
-    }
-);
+// --- Fixed repositories (created once) ---
+const northConnectorRepository = new NorthConnectorRepositoryMock();
+const southConnectorRepository = new SouthConnectorRepositoryMock();
+const historyQueryRepository = new HistoryQueryRepositoryMock();
+const northConnectorMetricsRepository = new NorthMetricsRepositoryMock();
+const southConnectorMetricsRepository = new SouthMetricsRepositoryMock();
+const historyQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
+// SouthCacheRepository uses SouthConnectorRepositoryMock as a structural stand-in
+const southCacheRepository = new SouthConnectorRepositoryMock();
+const certificateRepository = new CertificateRepositoryMock();
+const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
+const oianalyticsMessageService = new OIAnalyticsMessageServiceMock();
 
-const southConnectorMetricsService: SouthConnectorMetricsService = new SouthConnectorMetricsServiceMock();
-jest.mock(
-  '../service/metrics/south-connector-metrics.service',
-  () =>
-    function () {
-      return southConnectorMetricsService;
-    }
-);
+let DataStreamEngine: new (...args: Array<unknown>) => DataStreamEngineType;
+let engine: DataStreamEngineType;
+const logger = new PinoLogger();
 
-const historyQueryMetricsService: HistoryQueryMetricsService = new HistoryQueryMetricsServiceMock();
-jest.mock(
-  '../service/metrics/history-query-metrics.service',
-  () =>
-    function () {
-      return historyQueryMetricsService;
-    }
-);
+before(() => {
+  // south-mqtt: no-op default export class
+  mockModule(nodeRequire, '../south/south-mqtt/south-mqtt', { default: class {} });
+  // service/utils: stub createFolder
+  mockModule(nodeRequire, '../service/utils', { createFolder: mock.fn() });
+  // node:fs/promises: stub rm
+  mockModule(nodeRequire, 'node:fs/promises', { rm: mock.fn(), ...nodeRequire('node:fs/promises') });
+  // http-request utils: stub clearProxyAgentCache
+  mockModule(nodeRequire, '../service/http-request.utils', { clearProxyAgentCache: mock.fn() });
 
-const northConnectorMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const southConnectorMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
-const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
-const historyQueryMetricsRepository: HistoryQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
-const southCacheRepository: SouthCacheRepository = new SouthConnectorRepositoryMock();
-const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
-const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
-const oianalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
+  // Metrics service constructors
+  mockModule(nodeRequire, '../service/metrics/north-connector-metrics.service', northMetricsExports);
+  mockModule(nodeRequire, '../service/metrics/south-connector-metrics.service', southMetricsExports);
+  mockModule(nodeRequire, '../service/metrics/history-query-metrics.service', historyMetricsExports);
 
-const logger: pino.Logger = new PinoLogger();
+  // Factory modules
+  mockModule(nodeRequire, '../north/north-connector-factory', northFactoryExports);
+  mockModule(nodeRequire, '../south/south-connector-factory', southFactoryExports);
+  mockModule(nodeRequire, './history-query-factory', historyFactoryExports);
+
+  // HistoryQuery class
+  mockModule(nodeRequire, './history-query', historyQueryClassExports);
+
+  // Load the SUT
+  const mod = reloadModule<{ default: new (...args: Array<unknown>) => DataStreamEngineType }>(nodeRequire, './data-stream-engine');
+  DataStreamEngine = mod.default;
+});
 
 describe('DataStreamEngine', () => {
-  let engine: DataStreamEngine;
-  let mockedNorth1: NorthConnector<NorthSettings>;
-  let mockedNorth2: NorthConnector<NorthSettings>;
-  let mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings>;
-  let mockedSouth2: SouthConnector<SouthSettings, SouthItemSettings>;
+  let mockedNorth1: NorthConnectorMock;
+  let mockedNorth2: NorthConnectorMock;
+  let mockedSouth1: SouthConnectorMock;
+  let mockedSouth2: SouthConnectorMock;
 
-  const northList = [
-    { id: testData.north.list[0].id, type: testData.north.list[0].type, name: testData.north.list[0].name },
-    { id: testData.north.list[1].id, type: testData.north.list[1].type, name: testData.north.list[1].name }
-  ] as Array<NorthConnectorEntityLight>;
-  const southList = [
-    { id: testData.south.list[0].id, type: testData.south.list[0].type, name: testData.south.list[0].name },
-    { id: testData.south.list[1].id, type: testData.south.list[1].type, name: testData.south.list[1].name }
-  ] as Array<SouthConnectorEntityLight>;
-  const historyList = [
+  const northList: Array<NorthConnectorEntityLight> = [
+    { id: testData.north.list[0].id, type: testData.north.list[0].type, name: testData.north.list[0].name } as NorthConnectorEntityLight,
+    { id: testData.north.list[1].id, type: testData.north.list[1].type, name: testData.north.list[1].name } as NorthConnectorEntityLight
+  ];
+  const southList: Array<SouthConnectorEntityLight> = [
+    { id: testData.south.list[0].id, type: testData.south.list[0].type, name: testData.south.list[0].name } as SouthConnectorEntityLight,
+    { id: testData.south.list[1].id, type: testData.south.list[1].type, name: testData.south.list[1].name } as SouthConnectorEntityLight
+  ];
+  const historyList: Array<HistoryQueryEntityLight> = [
     {
       id: testData.historyQueries.list[0].id,
       northType: testData.historyQueries.list[0].northType,
       southType: testData.historyQueries.list[0].southType,
       name: testData.historyQueries.list[0].name
-    },
+    } as HistoryQueryEntityLight,
     {
       id: testData.historyQueries.list[1].id,
       northType: testData.historyQueries.list[1].northType,
       southType: testData.historyQueries.list[1].southType,
       name: testData.historyQueries.list[1].name
-    }
-  ] as Array<HistoryQueryEntityLight>;
+    } as HistoryQueryEntityLight
+  ];
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    (logger.child as jest.Mock).mockReturnValue(logger);
+  beforeEach(() => {
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    mockedNorth1 = new NorthConnectorMock(testData.north.list[0]) as unknown as NorthConnector<NorthSettings>;
-    mockedNorth2 = new NorthConnectorMock(testData.north.list[1]) as unknown as NorthConnector<NorthSettings>;
-    mockedSouth1 = new SouthConnectorMock(testData.south.list[0]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
-    mockedSouth2 = new SouthConnectorMock(testData.south.list[1]) as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
-    mockedHistoryQuery1 = new HistoryQueryMock(testData.historyQueries.list[0]) as unknown as HistoryQuery;
-    mockedHistoryQuery2 = new HistoryQueryMock(testData.historyQueries.list[1]) as unknown as HistoryQuery;
+    // Reset all mock call history on repositories
+    northConnectorRepository.findNorthById.mock.resetCalls();
+    southConnectorRepository.findSouthById.mock.resetCalls();
+    historyQueryRepository.findHistoryById.mock.resetCalls();
+    historyQueryRepository.updateHistoryStatus.mock.resetCalls();
+    northConnectorRepository.removeTransformersByTransformerId.mock.resetCalls();
+    historyQueryRepository.removeTransformersByTransformerId.mock.resetCalls();
+    oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.resetCalls();
 
-    // Repo Mocks
-    (northConnectorRepository.findNorthById as jest.Mock).mockImplementation(id => testData.north.list.find(element => element.id === id));
-    (southConnectorRepository.findSouthById as jest.Mock).mockImplementation(id => testData.south.list.find(element => element.id === id));
-    (historyQueryRepository.findHistoryById as jest.Mock).mockImplementation(id =>
-      testData.historyQueries.list.find(element => element.id === id)
-    );
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
+    logger.child = mock.fn(() => asLogger(logger));
 
-    // Factory Mocks
-    (buildNorth as jest.Mock).mockImplementation(conf => {
+    // Fresh metrics service instances
+    northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
+    southConnectorMetricsService = new SouthConnectorMetricsServiceMock();
+    historyQueryMetricsService = new HistoryQueryMetricsServiceMock();
+
+    // Fresh history query instances
+    mockedHistoryQuery1 = new HistoryQueryMock(testData.historyQueries.list[0]);
+    mockedHistoryQuery2 = new HistoryQueryMock(testData.historyQueries.list[1]);
+
+    // Fresh connector instances
+    mockedNorth1 = new NorthConnectorMock(testData.north.list[0]);
+    mockedNorth2 = new NorthConnectorMock(testData.north.list[1]);
+    mockedSouth1 = new SouthConnectorMock(testData.south.list[0]);
+    mockedSouth2 = new SouthConnectorMock(testData.south.list[1]);
+
+    // Repository mock implementations
+    northConnectorRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(el => el.id === id));
+    southConnectorRepository.findSouthById = mock.fn((id: string) => testData.south.list.find(el => el.id === id));
+    historyQueryRepository.findHistoryById = mock.fn((id: string) => testData.historyQueries.list.find(el => el.id === id));
+
+    // Factory mock implementations (mutate in-place so the SUT's reference stays valid)
+    northFactoryExports.buildNorth = mock.fn((conf: { id: string }) => {
       if (conf.id === testData.north.list[0].id) return mockedNorth1;
       if (conf.id === testData.north.list[1].id) return mockedNorth2;
       return null;
     });
-    (buildSouth as jest.Mock).mockImplementation(conf => {
+    northFactoryExports.createNorthOrchestrator = mock.fn(() => ({}));
+    northFactoryExports.deleteNorthCache = mock.fn();
+    northFactoryExports.initNorthCache = mock.fn();
+
+    southFactoryExports.buildSouth = mock.fn((conf: { id: string }) => {
       if (conf.id === testData.south.list[0].id) return mockedSouth1;
       if (conf.id === testData.south.list[1].id) return mockedSouth2;
       return null;
     });
-    (buildHistoryQuery as jest.Mock).mockImplementation(conf => {
+    southFactoryExports.deleteSouthCache = mock.fn();
+    southFactoryExports.initSouthCache = mock.fn();
+
+    historyFactoryExports.buildHistoryQuery = mock.fn((conf: { id: string }) => {
       if (conf.id === testData.historyQueries.list[0].id) return mockedHistoryQuery1;
       if (conf.id === testData.historyQueries.list[1].id) return mockedHistoryQuery2;
       return null;
     });
+    historyFactoryExports.createHistoryQueryOrchestrator = mock.fn(() => ({}));
+    historyFactoryExports.deleteHistoryQueryCache = mock.fn();
+    historyFactoryExports.initHistoryQueryCache = mock.fn();
 
-    // Orchestrator Mocks
-    (createNorthOrchestrator as jest.Mock).mockReturnValue({} as CacheService);
-    (createHistoryQueryOrchestrator as jest.Mock).mockReturnValue({} as CacheService);
-
+    // Create a fresh engine instance
     engine = new DataStreamEngine(
-      northConnectorRepository,
+      northConnectorRepository, // structural mock — satisfies NorthConnectorRepository interface
       northConnectorMetricsRepository,
-      southConnectorRepository,
+      southConnectorRepository, // structural mock — satisfies SouthConnectorRepository interface
       southConnectorMetricsRepository,
       historyQueryRepository,
       historyQueryMetricsRepository,
-      southCacheRepository,
+      southCacheRepository, // structural mock — satisfies SouthCacheRepository interface
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       oianalyticsMessageService,
-      logger
+      asLogger(logger)
     );
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
+    // Remove south connector event listeners to prevent inter-test leakage
     mockedSouth1.connectedEvent.removeAllListeners();
     mockedSouth2.connectedEvent.removeAllListeners();
+    mockedHistoryQuery1.finishEvent.removeAllListeners();
+    mockedHistoryQuery2.finishEvent.removeAllListeners();
   });
 
   describe('Lifecycle (Start/Stop)', () => {
     it('should start and stop successfully', async () => {
-      // Setup scenarios where second connectors fail to verify error handling
-      (mockedNorth2.start as jest.Mock).mockRejectedValue(new Error('North error'));
-      (mockedSouth2.start as jest.Mock).mockRejectedValue(new Error('South error'));
-      (mockedHistoryQuery2.start as jest.Mock).mockRejectedValue(new Error('History error'));
-
-      engine.createNorth = jest.fn().mockRejectedValueOnce(new Error('north creation error'));
-      engine.createSouth = jest.fn().mockRejectedValueOnce(new Error('south creation error'));
-      engine.createHistoryQuery = jest.fn().mockRejectedValueOnce(new Error('history creation error'));
+      // Replace engine methods to inject errors the first time
+      engine.createNorth = mock.fn(async () => {
+        throw new Error('north creation error');
+      });
+      engine.createSouth = mock.fn(async () => {
+        throw new Error('south creation error');
+      });
+      engine.createHistoryQuery = mock.fn(async () => {
+        throw new Error('history creation error');
+      });
 
       await engine.start([northList[0]], [southList[0]], [historyList[0]]);
 
-      expect(logger.error).toHaveBeenCalledWith(
-        `Error while creating North connector "${northList[0].name}" of type "${northList[0].type}" (${northList[0].id}): north creation error`
+      assert.ok(
+        logger.error.mock.calls.some(c =>
+          (c.arguments[0] as string).includes(
+            `Error while creating North connector "${northList[0].name}" of type "${northList[0].type}" (${northList[0].id}): north creation error`
+          )
+        )
       );
-      expect(logger.error).toHaveBeenCalledWith(
-        `Error while creating South connector "${southList[0].name}" of type "${southList[0].type}" (${southList[0].id}): south creation error`
+      assert.ok(
+        logger.error.mock.calls.some(c =>
+          (c.arguments[0] as string).includes(
+            `Error while creating South connector "${southList[0].name}" of type "${southList[0].type}" (${southList[0].id}): south creation error`
+          )
+        )
       );
-      expect(logger.error).toHaveBeenCalledWith(
-        `Error while creating History query "${historyList[0].name}" of South type "${historyList[0].southType}" and North type "${historyList[0].northType}" (${historyList[0].id}): history creation error`
+      assert.ok(
+        logger.error.mock.calls.some(c =>
+          (c.arguments[0] as string).includes(
+            `Error while creating History query "${historyList[0].name}" of South type "${historyList[0].southType}" and North type "${historyList[0].northType}" (${historyList[0].id}): history creation error`
+          )
+        )
       );
 
+      // Manually inject connectors so stop() has something to stop
       engine['northConnectors'].set(northList[0].id, { north: mockedNorth1, metrics: northConnectorMetricsService });
       engine['southConnectors'].set(southList[0].id, { south: mockedSouth1, metrics: southConnectorMetricsService });
       engine['historyQueries'].set(historyList[0].id, { historyQuery: mockedHistoryQuery1, metrics: historyQueryMetricsService });
-      engine.stopSouth = jest.fn().mockRejectedValueOnce(new Error('south stop error'));
-      engine.stopNorth = jest.fn().mockRejectedValueOnce(new Error('north stop error'));
-      engine.stopHistoryQuery = jest.fn().mockRejectedValueOnce(new Error('history stop error'));
+
+      engine.stopSouth = mock.fn(async () => {
+        throw new Error('south stop error');
+      });
+      engine.stopNorth = mock.fn(async () => {
+        throw new Error('north stop error');
+      });
+      engine.stopHistoryQuery = mock.fn(async () => {
+        throw new Error('history stop error');
+      });
 
       await engine.stop();
 
-      expect(logger.error).toHaveBeenCalledWith(`Error while stopping North "${northList[0].id}": north stop error`);
-      expect(logger.error).toHaveBeenCalledWith(`Error while stopping South "${southList[0].id}": south stop error`);
-      expect(logger.error).toHaveBeenCalledWith(`Error while stopping History query "${historyList[0].id}": history stop error`);
+      assert.ok(
+        logger.error.mock.calls.some(c =>
+          (c.arguments[0] as string).includes(`Error while stopping North "${northList[0].id}": north stop error`)
+        )
+      );
+      assert.ok(
+        logger.error.mock.calls.some(c =>
+          (c.arguments[0] as string).includes(`Error while stopping South "${southList[0].id}": south stop error`)
+        )
+      );
+      assert.ok(
+        logger.error.mock.calls.some(c =>
+          (c.arguments[0] as string).includes(`Error while stopping History query "${historyList[0].id}": history stop error`)
+        )
+      );
     });
 
     it('should properly manage entity creation errors', async () => {
-      // Setup scenarios where second connectors fail to verify error handling
-      (mockedNorth2.start as jest.Mock).mockRejectedValue(new Error('North error'));
-      (mockedSouth2.start as jest.Mock).mockRejectedValue(new Error('South error'));
-      (mockedHistoryQuery2.start as jest.Mock).mockRejectedValue(new Error('History error'));
+      // Connectors 2 fail to start
+      mockedNorth2.start = mock.fn(async () => {
+        throw new Error('North error');
+      });
+      mockedSouth2.start = mock.fn(async () => {
+        throw new Error('South error');
+      });
+      mockedHistoryQuery2.start = mock.fn(async () => {
+        throw new Error('History error');
+      });
 
       await engine.start(northList, southList, historyList);
 
-      expect(logger.info).toHaveBeenCalledWith(`OIBus engine started`);
-      expect(logger.error).toHaveBeenCalledTimes(3); // 3 start failures
+      assert.ok(logger.info.mock.calls.some(c => (c.arguments[0] as string) === 'OIBus engine started'));
+      assert.strictEqual(logger.error.mock.calls.length, 3); // 3 start failures
 
-      // Verify initialization
-      expect(initNorthCache).toHaveBeenCalledTimes(2);
-      expect(initSouthCache).toHaveBeenCalledTimes(2);
-      expect(initHistoryQueryCache).toHaveBeenCalledTimes(2);
+      assert.strictEqual((northFactoryExports.initNorthCache as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+      assert.strictEqual((southFactoryExports.initSouthCache as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+      assert.strictEqual((historyFactoryExports.initHistoryQueryCache as ReturnType<typeof mock.fn>).mock.calls.length, 2);
 
       await engine.stop();
 
-      expect(mockedNorth1.stop).toHaveBeenCalled();
-      expect(mockedSouth1.stop).toHaveBeenCalled();
-      expect(mockedHistoryQuery1.stop).toHaveBeenCalled();
+      assert.strictEqual(mockedNorth1.stop.mock.calls.length, 1);
+      assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+      assert.strictEqual(mockedHistoryQuery1.stop.mock.calls.length, 1);
     });
   });
 
@@ -268,17 +363,30 @@ describe('DataStreamEngine', () => {
       const southConfig = { ...testData.south.list[0], type: 'opcua' };
       const historyConfig = { ...testData.historyQueries.list[0], southType: 'opcua', northType: 'opcua' };
 
-      (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(northConfig);
-      (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(southConfig);
-      (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValue(historyConfig);
+      northConnectorRepository.findNorthById = mock.fn(() => northConfig);
+      southConnectorRepository.findSouthById = mock.fn(() => southConfig);
+      historyQueryRepository.findHistoryById = mock.fn(() => historyConfig);
 
       await engine.createNorth(northConfig.id);
       await engine.createSouth(southConfig.id);
       await engine.createHistoryQuery(historyConfig.id);
 
-      expect(initNorthCache).toHaveBeenCalledWith(northConfig.id, 'opcua', expect.any(String));
-      expect(initSouthCache).toHaveBeenCalledWith(southConfig.id, 'opcua', expect.any(String));
-      expect(initHistoryQueryCache).toHaveBeenCalledWith(historyConfig.id, 'opcua', 'opcua', expect.any(String));
+      const initNorthCacheFn = northFactoryExports.initNorthCache as ReturnType<typeof mock.fn>;
+      const initSouthCacheFn = southFactoryExports.initSouthCache as ReturnType<typeof mock.fn>;
+      const initHistoryQueryCacheFn = historyFactoryExports.initHistoryQueryCache as ReturnType<typeof mock.fn>;
+
+      assert.strictEqual(initNorthCacheFn.mock.calls.length, 1);
+      assert.strictEqual(initNorthCacheFn.mock.calls[0].arguments[0], northConfig.id);
+      assert.strictEqual(initNorthCacheFn.mock.calls[0].arguments[1], 'opcua');
+
+      assert.strictEqual(initSouthCacheFn.mock.calls.length, 1);
+      assert.strictEqual(initSouthCacheFn.mock.calls[0].arguments[0], southConfig.id);
+      assert.strictEqual(initSouthCacheFn.mock.calls[0].arguments[1], 'opcua');
+
+      assert.strictEqual(initHistoryQueryCacheFn.mock.calls.length, 1);
+      assert.strictEqual(initHistoryQueryCacheFn.mock.calls[0].arguments[0], historyConfig.id);
+      assert.strictEqual(initHistoryQueryCacheFn.mock.calls[0].arguments[1], 'opcua');
+      assert.strictEqual(initHistoryQueryCacheFn.mock.calls[0].arguments[2], 'opcua');
     });
 
     it('should clean up old metrics when recreating connectors', async () => {
@@ -287,16 +395,16 @@ describe('DataStreamEngine', () => {
       await engine.createSouth(testData.south.list[0].id);
       await engine.createHistoryQuery(testData.historyQueries.list[0].id);
 
-      expect(northConnectorMetricsService.destroy).not.toHaveBeenCalled();
+      assert.strictEqual(northConnectorMetricsService.destroy.mock.calls.length, 0);
 
       // Create second time (should destroy old metrics)
       await engine.createNorth(testData.north.list[0].id);
       await engine.createSouth(testData.south.list[0].id);
       await engine.createHistoryQuery(testData.historyQueries.list[0].id);
 
-      expect(northConnectorMetricsService.destroy).toHaveBeenCalledTimes(1);
-      expect(southConnectorMetricsService.destroy).toHaveBeenCalledTimes(1);
-      expect(historyQueryMetricsService.destroy).toHaveBeenCalledTimes(1);
+      assert.strictEqual(northConnectorMetricsService.destroy.mock.calls.length, 1);
+      assert.strictEqual(southConnectorMetricsService.destroy.mock.calls.length, 1);
+      assert.strictEqual(historyQueryMetricsService.destroy.mock.calls.length, 1);
     });
   });
 
@@ -307,78 +415,82 @@ describe('DataStreamEngine', () => {
 
     it('should get all north metrics', () => {
       const metrics = engine.getAllNorthMetrics();
-      expect(metrics).toHaveProperty(testData.north.list[0].id);
-      expect(metrics).toHaveProperty(testData.north.list[1].id);
+      assert.ok(testData.north.list[0].id in metrics);
+      assert.ok(testData.north.list[1].id in metrics);
     });
 
     it('should get north SSE stream', () => {
       const sse = engine.getNorthSSE(testData.north.list[0].id);
-      expect(sse).toBeDefined(); // Mocked returns a stream
+      assert.ok(sse !== undefined && sse !== null);
     });
 
     it('should reload north connector', async () => {
       const northEntity = testData.north.list[0];
-      const spyStop = jest.spyOn(engine, 'stopNorth');
-      const spyStart = jest.spyOn(engine, 'startNorth');
+      const spyStop = mock.method(engine, 'stopNorth');
+      const spyStart = mock.method(engine, 'startNorth');
 
       await engine.reloadNorth(northEntity);
 
-      expect(spyStop).toHaveBeenCalledWith(northEntity.id);
-      expect(spyStart).toHaveBeenCalledWith(northEntity.id);
-      expect(mockedNorth1.setLogger).toHaveBeenCalled();
+      assert.strictEqual(spyStop.mock.calls.length, 1);
+      assert.deepStrictEqual(spyStop.mock.calls[0].arguments, [northEntity.id]);
+      assert.strictEqual(spyStart.mock.calls.length, 1);
+      assert.deepStrictEqual(spyStart.mock.calls[0].arguments, [northEntity.id]);
+      assert.strictEqual(mockedNorth1.setLogger.mock.calls.length, 1);
     });
 
     it('should delete north connector', async () => {
-      const spyStop = jest.spyOn(engine, 'stopNorth');
+      const spyStop = mock.method(engine, 'stopNorth');
       await engine.deleteNorth(testData.north.list[0]);
 
-      expect(spyStop).toHaveBeenCalled();
-      expect(deleteNorthCache).toHaveBeenCalled();
-      expect(northConnectorMetricsService.destroy).toHaveBeenCalled();
-      expect(() => engine.getNorth(testData.north.list[0].id)).toThrow();
+      assert.strictEqual(spyStop.mock.calls.length, 1);
+      assert.strictEqual((northFactoryExports.deleteNorthCache as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(northConnectorMetricsService.destroy.mock.calls.length, 1);
+      assert.throws(() => engine.getNorth(testData.north.list[0].id));
     });
 
     it('should reset north metrics', () => {
       engine.resetNorthMetrics(testData.north.list[0].id);
-      expect(northConnectorMetricsService.resetMetrics).toHaveBeenCalled();
+      assert.strictEqual(northConnectorMetricsService.resetMetrics.mock.calls.length, 1);
     });
 
     it('should add external content (API)', async () => {
-      (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(true);
+      mockedNorth1.isEnabled = mock.fn(() => true);
       const mockContent: OIBusContent = { type: 'any', filePath: 'file' };
       await engine.addExternalContent(testData.north.list[0].id, 'dataSourceId', mockContent);
 
-      expect(mockedNorth1.cacheContent).toHaveBeenCalledWith(mockContent, { source: 'oibus-api', dataSourceId: 'dataSourceId' });
+      assert.strictEqual(mockedNorth1.cacheContent.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedNorth1.cacheContent.mock.calls[0].arguments, [
+        mockContent,
+        { source: 'oibus-api', dataSourceId: 'dataSourceId' }
+      ]);
     });
 
     it('should not add external content (API) when disabled', async () => {
-      (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(false);
+      mockedNorth1.isEnabled = mock.fn(() => false);
       const mockContent: OIBusContent = { type: 'any', filePath: 'file' };
       await engine.addExternalContent(testData.north.list[0].id, 'dataSourceId', mockContent);
 
-      expect(mockedNorth1.cacheContent).not.toHaveBeenCalled();
+      assert.strictEqual(mockedNorth1.cacheContent.mock.calls.length, 0);
     });
 
     it('should update north configuration', () => {
       engine.updateNorthConfiguration(testData.north.list[0].id);
-      expect(mockedNorth1.connectorConfiguration).toBeDefined();
+      assert.ok(mockedNorth1.connectorConfiguration !== undefined && mockedNorth1.connectorConfiguration !== null);
     });
 
     it('should update north transformer by south id', () => {
-      // Setup mock to simulate a north having a transformer linked to this south
       const northConfig = {
         ...testData.north.list[0],
         transformers: [{ source: { type: 'south', south: { id: 'south-1' } } }]
       } as NorthConnectorEntity<NorthSettings>;
-      (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(northConfig);
+      northConnectorRepository.findNorthById = mock.fn(() => northConfig);
 
-      // We need to inject this config into the running instance map
-      // (Mocked north returns undefined config by default in this test setup unless we set it)
       mockedNorth1.connectorConfiguration = northConfig;
 
       engine.updateNorthTransformerBySouth('south-1');
 
-      expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(northConfig.id);
+      assert.strictEqual(northConnectorRepository.findNorthById.mock.calls.length, 1);
+      assert.deepStrictEqual(northConnectorRepository.findNorthById.mock.calls[0].arguments, [northConfig.id]);
     });
   });
 
@@ -389,130 +501,139 @@ describe('DataStreamEngine', () => {
 
     it('should get all south metrics', () => {
       const metrics = engine.getAllSouthMetrics();
-      expect(metrics).toHaveProperty(testData.south.list[0].id);
+      assert.ok(testData.south.list[0].id in metrics);
     });
 
     it('should get south SSE stream', () => {
-      expect(engine.getSouthSSE(testData.south.list[0].id)).toBeDefined();
+      const sse = engine.getSouthSSE(testData.south.list[0].id);
+      assert.ok(sse !== undefined && sse !== null);
     });
 
     it('should reload south connector and update cache/cron/subs', async () => {
       const southEntity = testData.south.list[0];
 
-      // Mock capabilities
-      (mockedSouth1.hasHistoryQuery as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.hasDirectQuery as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.hasSubscription as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.isEnabled as jest.Mock).mockReturnValue(true);
+      mockedSouth1.hasHistoryQuery = mock.fn(() => true);
+      mockedSouth1.hasDirectQuery = mock.fn(() => true);
+      mockedSouth1.hasSubscription = mock.fn(() => true);
+      mockedSouth1.isEnabled = mock.fn(() => true);
 
-      const spyStop = jest.spyOn(engine, 'stopSouth');
-      const spyStart = jest.spyOn(engine, 'startSouth');
+      const spyStop = mock.method(engine, 'stopSouth');
+      const spyStart = mock.method(engine, 'startSouth');
 
       await engine.reloadSouth(southEntity);
 
-      expect(spyStop).toHaveBeenCalled();
-      expect(spyStart).toHaveBeenCalled();
-      expect(mockedSouth1.setLogger).toHaveBeenCalled();
+      assert.strictEqual(spyStop.mock.calls.length, 1);
+      assert.strictEqual(spyStart.mock.calls.length, 1);
+      assert.strictEqual(mockedSouth1.setLogger.mock.calls.length, 1);
     });
 
     it('should reload south connector and not update cache history', async () => {
       const southEntity = testData.south.list[0];
 
-      (mockedSouth1.hasHistoryQuery as unknown as jest.Mock).mockReturnValue(false);
+      mockedSouth1.hasHistoryQuery = mock.fn(() => false);
 
-      const spyStop = jest.spyOn(engine, 'stopSouth');
-      const spyStart = jest.spyOn(engine, 'startSouth');
+      const spyStop = mock.method(engine, 'stopSouth');
+      const spyStart = mock.method(engine, 'startSouth');
 
       await engine.reloadSouth(southEntity);
 
-      expect(spyStop).toHaveBeenCalled();
-      expect(spyStart).toHaveBeenCalled();
+      assert.strictEqual(spyStop.mock.calls.length, 1);
+      assert.strictEqual(spyStart.mock.calls.length, 1);
     });
 
     it('should manage south connect event', async () => {
-      engine.getSouth = jest.fn().mockReturnValueOnce({ south: mockedSouth1 });
+      engine.getSouth = mock.fn(() => ({ south: mockedSouth1 }));
 
-      const hasHistoryQuerySpy = jest.spyOn(mockedSouth1, 'hasHistoryQuery').mockReturnValueOnce(false).mockReturnValueOnce(true);
-      const hasSubscriptionSpy = jest.spyOn(mockedSouth1, 'hasSubscription').mockReturnValueOnce(false).mockReturnValueOnce(true);
+      let hasHistoryQueryCall = 0;
+      mockedSouth1.hasHistoryQuery = mock.fn(() => {
+        hasHistoryQueryCall++;
+        return hasHistoryQueryCall % 2 === 0; // false on 1st call, true on 2nd
+      });
+
+      let hasSubscriptionCall = 0;
+      mockedSouth1.hasSubscription = mock.fn(() => {
+        hasSubscriptionCall++;
+        return hasSubscriptionCall % 2 === 0; // false on 1st call, true on 2nd
+      });
 
       await engine.startSouth(testData.south.list[0].id);
+
       mockedSouth1.connectedEvent.emit('connected');
-      expect(mockedSouth1.updateCronJobs).not.toHaveBeenCalled();
-      expect(mockedSouth1.updateSubscriptions).not.toHaveBeenCalled();
+      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 0);
+      assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 0);
+
       mockedSouth1.connectedEvent.emit('connected');
-      expect(mockedSouth1.updateCronJobs).toHaveBeenCalledTimes(1);
-      expect(mockedSouth1.updateSubscriptions).toHaveBeenCalledTimes(1);
-      expect(hasHistoryQuerySpy).toHaveBeenCalledTimes(2);
-      expect(hasSubscriptionSpy).toHaveBeenCalledTimes(2);
+      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 1);
+      assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 1);
+
+      assert.strictEqual(mockedSouth1.hasHistoryQuery.mock.calls.length, 2);
+      assert.strictEqual(mockedSouth1.hasSubscription.mock.calls.length, 2);
     });
 
     it('should reload south items', async () => {
       const southEntity = testData.south.list[0];
 
-      // Mock capabilities
-      (mockedSouth1.hasHistoryQuery as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.hasDirectQuery as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.hasSubscription as unknown as jest.Mock).mockReturnValue(true);
-      (mockedSouth1.isEnabled as jest.Mock).mockReturnValue(true);
+      mockedSouth1.hasHistoryQuery = mock.fn(() => true);
+      mockedSouth1.hasDirectQuery = mock.fn(() => true);
+      mockedSouth1.hasSubscription = mock.fn(() => true);
+      mockedSouth1.isEnabled = mock.fn(() => true);
 
       await engine.reloadSouthItems(southEntity);
 
-      expect(mockedSouth1.updateCronJobs).toHaveBeenCalled();
-      expect(mockedSouth1.updateSubscriptions).toHaveBeenCalled();
+      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 1);
+      assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 1);
     });
 
     it('should reload south items and manage connector type', async () => {
       const southEntity = testData.south.list[0];
 
-      // Mock capabilities
-      (mockedSouth1.hasHistoryQuery as unknown as jest.Mock).mockReturnValue(false);
-      (mockedSouth1.hasDirectQuery as unknown as jest.Mock).mockReturnValue(false);
-      (mockedSouth1.hasSubscription as unknown as jest.Mock).mockReturnValue(false);
-      (mockedSouth1.isEnabled as jest.Mock).mockReturnValue(true);
+      mockedSouth1.hasHistoryQuery = mock.fn(() => false);
+      mockedSouth1.hasDirectQuery = mock.fn(() => false);
+      mockedSouth1.hasSubscription = mock.fn(() => false);
+      mockedSouth1.isEnabled = mock.fn(() => true);
 
       await engine.reloadSouthItems(southEntity);
 
-      expect(mockedSouth1.updateCronJobs).not.toHaveBeenCalled();
-      expect(mockedSouth1.updateSubscriptions).not.toHaveBeenCalled();
+      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 0);
+      assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 0);
     });
 
     it('should reload south items when not enabled', async () => {
       const southEntity = testData.south.list[0];
 
-      (mockedSouth1.isEnabled as jest.Mock).mockReturnValue(false);
+      mockedSouth1.isEnabled = mock.fn(() => false);
 
       await engine.reloadSouthItems(southEntity);
 
-      expect(mockedSouth1.updateCronJobs).not.toHaveBeenCalled();
-      expect(mockedSouth1.updateSubscriptions).not.toHaveBeenCalled();
+      assert.strictEqual(mockedSouth1.updateCronJobs.mock.calls.length, 0);
+      assert.strictEqual(mockedSouth1.updateSubscriptions.mock.calls.length, 0);
     });
 
     it('should delete south connector', async () => {
-      const spyStop = jest.spyOn(engine, 'stopSouth');
+      const spyStop = mock.method(engine, 'stopSouth');
       await engine.deleteSouth(testData.south.list[0]);
 
-      expect(spyStop).toHaveBeenCalled();
-      expect(deleteSouthCache).toHaveBeenCalled();
-      expect(southConnectorMetricsService.destroy).toHaveBeenCalled();
-      expect(() => engine.getSouth(testData.south.list[0].id)).toThrow();
+      assert.strictEqual(spyStop.mock.calls.length, 1);
+      assert.strictEqual((southFactoryExports.deleteSouthCache as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(southConnectorMetricsService.destroy.mock.calls.length, 1);
+      assert.throws(() => engine.getSouth(testData.south.list[0].id));
     });
 
     it('should reset south metrics', () => {
       engine.resetSouthMetrics(testData.south.list[0].id);
-      expect(southConnectorMetricsService.resetMetrics).toHaveBeenCalled();
+      assert.strictEqual(southConnectorMetricsService.resetMetrics.mock.calls.length, 1);
     });
 
     it('should handle addContent callback from South', async () => {
-      (mockedNorth1.isEnabled as jest.Mock).mockReturnValueOnce(true);
+      mockedNorth1.isEnabled = mock.fn(() => true);
 
-      // Need to create a history query to trigger the buildSouth with the callback logic
-      // But we can test the `addContent` method directly on the engine
-      await engine.start(northList, [], []); // Start norths to have them enabled
+      // Start norths so they can receive content
+      await engine.start(northList, [], []);
 
       const mockData: OIBusContent = { type: 'time-values', content: [] };
       await engine.addContent('south-1', mockData, '2023-01-01', []);
 
-      expect(mockedNorth1.cacheContent).toHaveBeenCalled();
+      assert.strictEqual(mockedNorth1.cacheContent.mock.calls.length, 1);
     });
   });
 
@@ -522,59 +643,64 @@ describe('DataStreamEngine', () => {
     });
 
     it('should handle history finish event', async () => {
-      // Trigger the 'finished' event on the mocked history query
       mockedHistoryQuery1.finishEvent.emit('finished');
 
-      // It's async inside the handler, wait a tick
-      await jest.requireActual('timers').setImmediate;
+      // Async inside the handler — drain the microtask queue
+      await flushPromises();
 
-      expect(historyQueryRepository.updateHistoryStatus).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'FINISHED');
-      expect(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
+      assert.strictEqual(historyQueryRepository.updateHistoryStatus.mock.calls.length, 1);
+      assert.deepStrictEqual(historyQueryRepository.updateHistoryStatus.mock.calls[0].arguments, [
+        testData.historyQueries.list[0].id,
+        'FINISHED'
+      ]);
+      assert.strictEqual(oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     });
 
     it('should reload history query', async () => {
       const config = testData.historyQueries.list[0];
-      const spyStop = jest.spyOn(engine, 'stopHistoryQuery');
-      const spyStart = jest.spyOn(engine, 'startHistoryQuery');
-      const spyReset = jest.spyOn(engine, 'resetHistoryQueryCache');
+      const spyStop = mock.method(engine, 'stopHistoryQuery');
+      const spyStart = mock.method(engine, 'startHistoryQuery');
+      const spyReset = mock.method(engine, 'resetHistoryQueryCache');
 
       await engine.reloadHistoryQuery(config, true);
 
-      expect(spyStop).toHaveBeenCalled();
-      expect(spyReset).toHaveBeenCalled();
-      expect(spyStart).toHaveBeenCalled();
-      expect(mockedHistoryQuery1.setLogger).toHaveBeenCalled();
+      assert.strictEqual(spyStop.mock.calls.length, 1);
+      assert.strictEqual(spyReset.mock.calls.length, 1);
+      assert.strictEqual(spyStart.mock.calls.length, 1);
+      assert.strictEqual(mockedHistoryQuery1.setLogger.mock.calls.length, 1);
     });
 
     it('should reload history query without reset cache', async () => {
       const config = testData.historyQueries.list[0];
-      const spyStop = jest.spyOn(engine, 'stopHistoryQuery');
-      const spyStart = jest.spyOn(engine, 'startHistoryQuery');
-      const spyReset = jest.spyOn(engine, 'resetHistoryQueryCache');
+      const spyStop = mock.method(engine, 'stopHistoryQuery');
+      const spyStart = mock.method(engine, 'startHistoryQuery');
+      const spyReset = mock.method(engine, 'resetHistoryQueryCache');
 
       await engine.reloadHistoryQuery(config, false);
 
-      expect(spyStop).toHaveBeenCalled();
-      expect(spyReset).not.toHaveBeenCalled();
-      expect(spyStart).toHaveBeenCalled();
+      assert.strictEqual(spyStop.mock.calls.length, 1);
+      assert.strictEqual(spyReset.mock.calls.length, 0);
+      assert.strictEqual(spyStart.mock.calls.length, 1);
     });
 
     it('should delete history query', async () => {
       const config = testData.historyQueries.list[0];
-      const spyStop = jest.spyOn(engine, 'stopHistoryQuery');
+      const spyStop = mock.method(engine, 'stopHistoryQuery');
 
       await engine.deleteHistoryQuery(config);
 
-      expect(spyStop).toHaveBeenCalled();
-      expect(deleteHistoryQueryCache).toHaveBeenCalled();
-      expect(historyQueryMetricsService.destroy).toHaveBeenCalled();
-      expect(() => engine.getHistoryQuery(config.id)).toThrow();
+      assert.strictEqual(spyStop.mock.calls.length, 1);
+      assert.strictEqual((historyFactoryExports.deleteHistoryQueryCache as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(historyQueryMetricsService.destroy.mock.calls.length, 1);
+      assert.throws(() => engine.getHistoryQuery(config.id));
     });
 
     it('should get metrics and SSE', () => {
       const id = testData.historyQueries.list[0].id;
-      expect(engine.getHistoryMetrics(id)).toBeDefined();
-      expect(engine.getHistoryQuerySSE(id)).toBeDefined();
+      const metrics = engine.getHistoryMetrics(id);
+      assert.ok(metrics !== undefined && metrics !== null);
+      const sse = engine.getHistoryQuerySSE(id);
+      assert.ok(sse !== undefined && sse !== null);
     });
   });
 
@@ -588,59 +714,71 @@ describe('DataStreamEngine', () => {
 
     describe('reloadTransformer', () => {
       it('should reload north connector configuration when transformer is in use', async () => {
-        jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
-        (northConnectorRepository.findNorthById as jest.Mock).mockClear();
+        mock.method(engine, 'reloadHistoryQuery', async () => undefined);
+        northConnectorRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(el => el.id === id));
 
         await engine.reloadTransformer(transformerId);
 
-        expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining(testData.north.list[0].name));
-        expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+        assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes(testData.north.list[0].name)));
+        assert.strictEqual(northConnectorRepository.findNorthById.mock.calls.length, 1);
+        assert.deepStrictEqual(northConnectorRepository.findNorthById.mock.calls[0].arguments, [testData.north.list[0].id]);
       });
 
       it('should reload history query when transformer is in use', async () => {
-        const spyReloadHistoryQuery = jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
+        const spyReloadHistoryQuery = mock.method(engine, 'reloadHistoryQuery', async () => undefined);
 
         await engine.reloadTransformer(transformerId);
 
-        expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining(testData.historyQueries.list[0].name));
-        expect(spyReloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+        assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes(testData.historyQueries.list[0].name)));
+        assert.strictEqual(spyReloadHistoryQuery.mock.calls.length, 1);
+        assert.deepStrictEqual(spyReloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
       });
 
       it('should do nothing when transformer is not used', async () => {
-        const spyReloadHistoryQuery = jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
+        const spyReloadHistoryQuery = mock.method(engine, 'reloadHistoryQuery', async () => undefined);
 
         await engine.reloadTransformer('non-existent-transformer-id');
 
-        expect(logger.warn).not.toHaveBeenCalled();
-        expect(spyReloadHistoryQuery).not.toHaveBeenCalled();
+        assert.strictEqual(logger.warn.mock.calls.length, 0);
+        assert.strictEqual(spyReloadHistoryQuery.mock.calls.length, 0);
       });
     });
 
     describe('removeAndReloadTransformer', () => {
       it('should log warning and reload affected north connectors and history queries', async () => {
-        const spyReloadHistoryQuery = jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
-        const spyUpdateNorthConfig = jest.spyOn(engine, 'updateNorthConfiguration');
+        const spyReloadHistoryQuery = mock.method(engine, 'reloadHistoryQuery', async () => undefined);
+        const spyUpdateNorthConfig = mock.method(engine, 'updateNorthConfiguration');
 
         await engine.removeAndReloadTransformer(transformerId);
 
-        expect(logger.debug).toHaveBeenCalledWith(expect.stringContaining(transformerId));
-        expect(northConnectorRepository.removeTransformersByTransformerId).toHaveBeenCalledWith(transformerId);
-        expect(historyQueryRepository.removeTransformersByTransformerId).toHaveBeenCalledWith(transformerId);
-        expect(spyUpdateNorthConfig).toHaveBeenCalledWith(testData.north.list[0].id);
-        expect(spyReloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+        assert.ok(logger.debug.mock.calls.some(c => (c.arguments[0] as string).includes(transformerId)));
+        assert.strictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls.length, 1);
+        assert.deepStrictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [transformerId]);
+        assert.strictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls.length, 1);
+        assert.deepStrictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [transformerId]);
+        assert.strictEqual(spyUpdateNorthConfig.mock.calls.length, 1);
+        assert.deepStrictEqual(spyUpdateNorthConfig.mock.calls[0].arguments, [testData.north.list[0].id]);
+        assert.strictEqual(spyReloadHistoryQuery.mock.calls.length, 1);
+        assert.deepStrictEqual(spyReloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
       });
 
       it('should not warn or reload when transformer is not used', async () => {
-        const spyReloadHistoryQuery = jest.spyOn(engine, 'reloadHistoryQuery').mockResolvedValue(undefined);
-        const spyUpdateNorthConfig = jest.spyOn(engine, 'updateNorthConfiguration');
+        const spyReloadHistoryQuery = mock.method(engine, 'reloadHistoryQuery', async () => undefined);
+        const spyUpdateNorthConfig = mock.method(engine, 'updateNorthConfiguration');
 
         await engine.removeAndReloadTransformer('non-existent-transformer-id');
 
-        expect(logger.debug).not.toHaveBeenCalled();
-        expect(northConnectorRepository.removeTransformersByTransformerId).toHaveBeenCalledWith('non-existent-transformer-id');
-        expect(historyQueryRepository.removeTransformersByTransformerId).toHaveBeenCalledWith('non-existent-transformer-id');
-        expect(spyUpdateNorthConfig).not.toHaveBeenCalled();
-        expect(spyReloadHistoryQuery).not.toHaveBeenCalled();
+        assert.strictEqual(logger.debug.mock.calls.length, 0);
+        assert.strictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls.length, 1);
+        assert.deepStrictEqual(northConnectorRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [
+          'non-existent-transformer-id'
+        ]);
+        assert.strictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls.length, 1);
+        assert.deepStrictEqual(historyQueryRepository.removeTransformersByTransformerId.mock.calls[0].arguments, [
+          'non-existent-transformer-id'
+        ]);
+        assert.strictEqual(spyUpdateNorthConfig.mock.calls.length, 0);
+        assert.strictEqual(spyReloadHistoryQuery.mock.calls.length, 0);
       });
     });
   });
@@ -652,21 +790,23 @@ describe('DataStreamEngine', () => {
 
     it('should set logger for all components', () => {
       const newLogger = new PinoLogger();
-      (newLogger.child as jest.Mock).mockReturnValue(newLogger);
+      newLogger.child = mock.fn(() => asLogger(newLogger));
 
-      engine.setLogger(newLogger);
+      engine.setLogger(asLogger(newLogger));
 
-      expect(mockedNorth1.setLogger).toHaveBeenCalled();
-      expect(mockedSouth1.setLogger).toHaveBeenCalled();
-      expect(mockedHistoryQuery1.setLogger).toHaveBeenCalled();
+      assert.strictEqual(mockedNorth1.setLogger.mock.calls.length, 1);
+      assert.strictEqual(mockedSouth1.setLogger.mock.calls.length, 1);
+      assert.strictEqual(mockedHistoryQuery1.setLogger.mock.calls.length, 1);
     });
 
     it('should update scan mode for all connectors', async () => {
       const scanMode = testData.scanMode.list[0];
       await engine.updateScanMode(scanMode);
 
-      expect(mockedNorth1.updateScanMode).toHaveBeenCalledWith(scanMode);
-      expect(mockedSouth1.updateScanModeIfUsed).toHaveBeenCalledWith(scanMode);
+      assert.strictEqual(mockedNorth1.updateScanMode.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedNorth1.updateScanMode.mock.calls[0].arguments, [scanMode]);
+      assert.strictEqual(mockedSouth1.updateScanModeIfUsed.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedSouth1.updateScanModeIfUsed.mock.calls[0].arguments, [scanMode]);
     });
 
     it('should search cache content (North)', async () => {
@@ -674,31 +814,35 @@ describe('DataStreamEngine', () => {
 
       const result = await engine.searchCacheContent('north', testData.north.list[0].id, params);
 
-      expect(mockedNorth1.searchCacheContent).toHaveBeenCalledWith(params);
-      expect(result.metrics).toBeDefined();
+      assert.strictEqual(mockedNorth1.searchCacheContent.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedNorth1.searchCacheContent.mock.calls[0].arguments, [params]);
+      assert.ok(result.metrics !== undefined && result.metrics !== null);
     });
 
     it('should search cache content (History)', async () => {
       const params = { start: 'now' } as CacheSearchParam;
 
-      (mockedHistoryQuery1.searchCacheContent as jest.Mock).mockResolvedValue({});
-      engine.getHistoryQuery = jest.fn().mockReturnValue({ historyQuery: mockedHistoryQuery1, metrics: { metrics: { north: {} } } });
+      mockedHistoryQuery1.searchCacheContent = mock.fn(async () => ({}));
+      engine.getHistoryQuery = mock.fn(() => ({ historyQuery: mockedHistoryQuery1, metrics: { metrics: { north: {} } } }));
       const result = await engine.searchCacheContent('history', testData.historyQueries.list[0].id, params);
 
-      expect(mockedHistoryQuery1.searchCacheContent).toHaveBeenCalledWith(params);
-      expect(result.metrics).toEqual({});
+      assert.strictEqual(mockedHistoryQuery1.searchCacheContent.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedHistoryQuery1.searchCacheContent.mock.calls[0].arguments, [params]);
+      assert.deepStrictEqual(result.metrics, {});
     });
 
     it('should get file from cache (North)', async () => {
-      engine.getNorth = jest.fn().mockReturnValue({ north: mockedNorth1, metrics: { metrics: {} } });
+      engine.getNorth = mock.fn(() => ({ north: mockedNorth1, metrics: { metrics: {} } }));
       await engine.getFileFromCache('north', testData.north.list[0].id, 'cache', 'file.json');
-      expect(mockedNorth1.getFileFromCache).toHaveBeenCalledWith('cache', 'file.json');
+      assert.strictEqual(mockedNorth1.getFileFromCache.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedNorth1.getFileFromCache.mock.calls[0].arguments, ['cache', 'file.json']);
     });
 
     it('should get file from cache (History)', async () => {
-      engine.getHistoryQuery = jest.fn().mockReturnValue({ historyQuery: mockedHistoryQuery1, metrics: { metrics: { north: {} } } });
+      engine.getHistoryQuery = mock.fn(() => ({ historyQuery: mockedHistoryQuery1, metrics: { metrics: { north: {} } } }));
       await engine.getFileFromCache('history', testData.historyQueries.list[0].id, 'cache', 'file.json');
-      expect(mockedHistoryQuery1.getFileFromCache).toHaveBeenCalledWith('cache', 'file.json');
+      assert.strictEqual(mockedHistoryQuery1.getFileFromCache.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedHistoryQuery1.getFileFromCache.mock.calls[0].arguments, ['cache', 'file.json']);
     });
 
     it('should update cache content (North)', async () => {
@@ -708,7 +852,8 @@ describe('DataStreamEngine', () => {
         archive: { remove: [], move: [] }
       };
       await engine.updateCacheContent('north', testData.north.list[0].id, cmd);
-      expect(mockedNorth1.updateCacheContent).toHaveBeenCalledWith(cmd);
+      assert.strictEqual(mockedNorth1.updateCacheContent.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedNorth1.updateCacheContent.mock.calls[0].arguments, [cmd]);
     });
 
     it('should update cache content (History)', async () => {
@@ -718,7 +863,8 @@ describe('DataStreamEngine', () => {
         archive: { remove: [], move: [] }
       };
       await engine.updateCacheContent('history', testData.historyQueries.list[0].id, cmd);
-      expect(mockedHistoryQuery1.updateCacheContent).toHaveBeenCalledWith(cmd);
+      assert.strictEqual(mockedHistoryQuery1.updateCacheContent.mock.calls.length, 1);
+      assert.deepStrictEqual(mockedHistoryQuery1.updateCacheContent.mock.calls[0].arguments, [cmd]);
     });
   });
 });
