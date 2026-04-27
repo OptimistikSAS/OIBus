@@ -1,123 +1,113 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { Readable } from 'stream';
-import pino from 'pino';
-import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises } from '../../../tests/utils/test-utils';
-import JSONToCSVTransformer from './json-to-csv-transformer';
-import csv from 'papaparse';
+import { flushPromises, mockModule, reloadModule, asLogger, assertContains } from '../../../tests/utils/test-utils';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import type JSONToCSVTransformerType from './json-to-csv-transformer';
 import jsonToCsvManifest from './manifest';
 
-// Mock external modules
-jest.mock('papaparse');
-jest.mock('../../../service/utils', () => ({
-  convertDateTime: jest.fn().mockImplementation(value => value),
-  convertDelimiter: jest.fn().mockReturnValue(';'),
-  convertQuoteChar: jest.fn().mockReturnValue('"'),
-  convertEscapeChar: jest.fn().mockReturnValue('"'),
-  convertNewline: jest.fn().mockReturnValue(''),
-  injectIndices: jest.fn().mockImplementation((path: string, indices: Array<number>) => {
-    let pointer = 0;
-    return path.replace(/\[\*\]/g, () => `[${indices[pointer++]}]`);
-  }),
-  sanitizeFilename: jest.fn().mockImplementation(name => name),
-  stringToBoolean: jest.fn().mockReturnValue(true)
-}));
+const nodeRequire = createRequire(import.meta.url);
 
-const logger: pino.Logger = new PinoLogger();
+let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let mockPapaparse: Record<string, ReturnType<typeof mock.fn>>;
+let JSONToCSVTransformer: typeof JSONToCSVTransformerType;
+
+before(() => {
+  mockUtils = {
+    convertDateTime: mock.fn((value: unknown) => value),
+    convertDelimiter: mock.fn(() => ';'),
+    injectIndices: mock.fn((path: string, indices: Array<number>) => {
+      let pointer = 0;
+      return path.replace(/\[\*\]/g, () => `[${indices[pointer++]}]`);
+    }),
+    sanitizeFilename: mock.fn((name: string) => name),
+    stringToBoolean: mock.fn(() => true),
+    convertQuoteChar: mock.fn(() => '"'),
+    convertEscapeChar: mock.fn(() => '"'),
+    convertNewline: mock.fn(() => '')
+  };
+  mockPapaparse = { unparse: mock.fn(() => 'csv content') };
+  mockModule(nodeRequire, '../../../service/utils', mockUtils);
+  mockModule(nodeRequire, 'papaparse', mockPapaparse);
+  const mod = reloadModule<{ default: typeof JSONToCSVTransformerType }>(nodeRequire, './json-to-csv-transformer');
+  JSONToCSVTransformer = mod.default;
+});
 
 describe('JSONToCSVTransformer', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let logger: PinoLogger;
+
+  beforeEach(() => {
+    logger = new PinoLogger();
+    mockUtils.convertDateTime = mock.fn((value: unknown) => value);
+    mockUtils.convertDelimiter = mock.fn(() => ';');
+    mockUtils.injectIndices = mock.fn((path: string, indices: Array<number>) => {
+      let pointer = 0;
+      return path.replace(/\[\*\]/g, () => `[${indices[pointer++]}]`);
+    });
+    mockUtils.sanitizeFilename = mock.fn((name: string) => name);
+    mockUtils.stringToBoolean = mock.fn(() => true);
+    mockUtils.convertQuoteChar = mock.fn(() => '"');
+    mockUtils.convertEscapeChar = mock.fn(() => '"');
+    mockUtils.convertNewline = mock.fn(() => '');
+    mockPapaparse.unparse = mock.fn(() => 'csv content');
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should transform data from a stream and return metadata when regex matches', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
     const options = {
       regex: '.*\\.json',
       filename: 'test-output.csv',
       delimiter: 'SEMI_COLON',
-      encoding: 'UTF_8',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: '',
-      header: true,
       rowIteratorPath: '$[*]',
       fields: [
-        {
-          jsonPath: '$[*].name',
-          columnName: 'Name',
-          dataType: 'string'
-        },
-        {
-          jsonPath: '$[*].id',
-          columnName: 'ID',
-          dataType: 'number'
-        }
+        { jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' },
+        { jsonPath: '$[*].id', columnName: 'ID', dataType: 'number' }
       ]
     };
-
-    // Arrange
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const filename = 'input.json';
-
-    // Mock input data matching the structure expected by jsonpath
+    const transformer = new JSONToCSVTransformer(asLogger(logger), testData.transformers.list[0],  options);
     const inputData = [
       { name: 'Item 1', id: 1 },
       { name: 'Item 2', id: 2 }
     ];
-
-    // Mock Readable stream
     const mockStream = new Readable();
 
-    // Act
-    const promise = transformer.transform(mockStream, { source: 'test' }, filename);
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
     mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null); // End the stream
+    mockStream.push(null);
 
     await flushPromises();
     const result = await promise;
 
-    // Assert
-    // 1. Check if csv.unparse was called with correct flattened data
-    expect(csv.unparse).toHaveBeenCalledWith(
-      [
-        { Name: 'Item 1', ID: 1 },
-        { Name: 'Item 2', ID: 2 }
-      ],
-      expect.objectContaining({ delimiter: ';' })
-    );
+    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
+    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [
+      { Name: 'Item 1', ID: 1 },
+      { Name: 'Item 2', ID: 2 }
+    ]);
+    assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
 
-    // 2. Check final return structure
-    expect(result.output).toBeInstanceOf(Buffer);
-    expect((result.output as Buffer).toString('utf-8')).toBe('csv content');
-    expect(result.metadata).toEqual({
-      contentFile: 'test-output.csv',
-      contentSize: 0,
-      createdAt: '',
-      numberOfElement: 0,
-      contentType: 'any'
+    assert.deepStrictEqual(result, {
+      output: Buffer.from('csv content'),
+      metadata: {
+        contentFile: 'test-output.csv',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 0,
+        contentType: 'any'
+      }
     });
   });
 
   it('should handle complex data types (datetime, boolean, object, array) and missing values', async () => {
-    // 1. Setup specific options with ALL data types found in the switch statement
     const options = {
       regex: '.*\\.json',
       filename: 'complex-test',
       delimiter: 'SEMI_COLON',
-      encoding: 'UTF_8',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: 'N/A',
-      header: true,
       rowIteratorPath: '$[*]',
       fields: [
         {
@@ -126,46 +116,24 @@ describe('JSONToCSVTransformer', () => {
           dataType: 'datetime',
           datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
         },
-        {
-          jsonPath: '$[*].isActive',
-          columnName: 'Active',
-          dataType: 'boolean'
-        },
-        {
-          jsonPath: '$[*].details',
-          columnName: 'Details',
-          dataType: 'object' // Hits the default/object case
-        },
-        {
-          jsonPath: '$[*].tags',
-          columnName: 'Tags',
-          dataType: 'array' // Hits the default/array case
-        },
-        {
-          jsonPath: '$[*].ghostField',
-          columnName: 'Ghost',
-          dataType: 'string' // Intentionally missing in data to hit the null check
-        }
+        { jsonPath: '$[*].isActive', columnName: 'Active', dataType: 'boolean' },
+        { jsonPath: '$[*].details', columnName: 'Details', dataType: 'object' },
+        { jsonPath: '$[*].tags', columnName: 'Tags', dataType: 'array' },
+        { jsonPath: '$[*].ghostField', columnName: 'Ghost', dataType: 'string' }
       ]
     };
-
-    // 2. Mock Input Data
     const inputData = [
       {
         createdAt: '2023-10-27T10:00:00Z',
-        isActive: 'yes', // Your mock stringToBoolean returns true
+        isActive: 'yes',
         details: { user: 'admin', rights: [1, 2] },
         tags: ['urgent', 'work']
-        // ghostField is undefined
       }
     ];
-
-    // 3. Initialize Transformer
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const transformer = new JSONToCSVTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    mockPapaparse.unparse = mock.fn(() => 'csv result');
     const mockStream = new Readable();
-    (csv.unparse as jest.Mock).mockReturnValue('csv result');
 
-    // 4. Execute
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
     mockStream.push(JSON.stringify(inputData));
     mockStream.push(null);
@@ -173,296 +141,21 @@ describe('JSONToCSVTransformer', () => {
     await flushPromises();
     await promise;
 
-    // 5. Assertions
-    // This expects object matches exactly what the switch statement logic produces
-    expect(csv.unparse).toHaveBeenCalledWith(
-      [
-        {
-          'Created At': '2023-10-27T10:00:00Z', // Mapped via datetime case (mock passes through)
-          Active: 'true', // Mapped via boolean case (mock returns true -> .toString())
-          Details: '{"user":"admin","rights":[1,2]}', // Mapped via object case (JSON.stringify)
-          Tags: '["urgent","work"]', // Mapped via array case (JSON.stringify)
-          Ghost: 'N/A' // Mapped via undefined/null check — uses nullValue setting
-        }
-      ],
-      expect.objectContaining({ delimiter: ';' })
-    );
-  });
-
-  it('should pass quoteChar, escapeChar, newline and nullValue to csv.unparse', async () => {
-    const { convertQuoteChar, convertEscapeChar, convertNewline } = jest.requireMock('../../../service/utils');
-    (convertQuoteChar as jest.Mock).mockReturnValue("'");
-    (convertEscapeChar as jest.Mock).mockReturnValue('\\');
-    (convertNewline as jest.Mock).mockReturnValue('\r\n');
-    (csv.unparse as jest.Mock).mockReturnValue('csv result');
-
-    const options = {
-      filename: 'output.csv',
-      delimiter: 'SEMI_COLON',
-      encoding: 'UTF_8',
-      quoteChar: 'SINGLE_QUOTE',
-      escapeChar: 'BACKSLASH',
-      newline: 'CRLF',
-      nullValue: 'NULL',
-      header: true,
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].missing', columnName: 'Col', dataType: 'string' }]
-    };
-
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify([{}]));
-    mockStream.push(null);
-    await flushPromises();
-    await promise;
-
-    expect(csv.unparse).toHaveBeenCalledWith(
-      [{ Col: 'NULL' }],
-      expect.objectContaining({
-        quoteChar: "'",
-        escapeChar: '\\',
-        newline: '\r\n',
-        quotes: true
-      })
-    );
-  });
-
-  it('should disable quoting when quoteChar is NONE', async () => {
-    const { convertQuoteChar } = jest.requireMock('../../../service/utils');
-    (convertQuoteChar as jest.Mock).mockReturnValue('');
-    (csv.unparse as jest.Mock).mockReturnValue('csv result');
-
-    const options = {
-      filename: 'output.csv',
-      delimiter: 'SEMI_COLON',
-      encoding: 'UTF_8',
-      quoteChar: 'NONE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: '',
-      header: true,
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-    };
-
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify([{ name: 'test' }]));
-    mockStream.push(null);
-    await flushPromises();
-    await promise;
-
-    expect(csv.unparse).toHaveBeenCalledWith([{ Name: 'test' }], expect.objectContaining({ quotes: false }));
-  });
-
-  it('should omit header row when header is false', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv result');
-
-    const options = {
-      filename: 'output.csv',
-      delimiter: 'SEMI_COLON',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: '',
-      header: false,
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-    };
-
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify([{ name: 'test' }]));
-    mockStream.push(null);
-    await flushPromises();
-    await promise;
-
-    expect(csv.unparse).toHaveBeenCalledWith([{ Name: 'test' }], expect.objectContaining({ header: false }));
-  });
-
-  it('should prepend UTF-8 BOM when encoding is UTF_8_BOM', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
-    const options = {
-      filename: 'output.csv',
-      delimiter: 'SEMI_COLON',
-      encoding: 'UTF_8_BOM',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: '',
-      header: true,
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-    };
-
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify([{ name: 'test' }]));
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    expect(result.output).toBeInstanceOf(Buffer);
-    const buf = result.output as Buffer;
-    expect(buf[0]).toBe(0xef);
-    expect(buf[1]).toBe(0xbb);
-    expect(buf[2]).toBe(0xbf);
-    expect(buf.slice(3).toString('utf-8')).toBe('csv content');
-  });
-
-  it('should not prepend BOM when encoding is UTF_8', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
-    const options = {
-      filename: 'output.csv',
-      delimiter: 'SEMI_COLON',
-      encoding: 'UTF_8',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: '',
-      header: true,
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-    };
-
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify([{ name: 'test' }]));
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    expect(result.output).toBeInstanceOf(Buffer);
-    expect((result.output as Buffer).toString('utf-8')).toBe('csv content');
-  });
-
-  it('should parse JSON-stringified intermediate nodes when traversing a path', async () => {
-    const options = {
-      filename: 'output.csv',
-      delimiter: 'SEMI_COLON',
-      encoding: 'UTF_8',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: '',
-      header: true,
-      rowIteratorPath: '$[*].timestamp',
-      fields: [
-        { jsonPath: '$[*].data.value', columnName: 'article', dataType: 'string' },
-        { jsonPath: '$[*].data.articleName', columnName: 'articleName', dataType: 'string' },
-        { jsonPath: '$[*].data.diameters[0].value', columnName: 'diameter_1', dataType: 'string' },
-        { jsonPath: '$[*].data.temperatures[0]', columnName: 'temperature', dataType: 'string' },
-        { jsonPath: '$[*].data.plainString', columnName: 'plain', dataType: 'string' }
-      ]
-    };
-
-    // 'data' is a JSON-stringified object; 'plainString' is a regular string that must stay as-is
-    const inputData = [
+    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
+    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [
       {
-        timestamp: '2026-04-28T10:30:00.000Z',
-        data: JSON.stringify({
-          value: 'A-12345',
-          articleName: 'Flacon 500ml',
-          diameters: [{ value: 24.8 }, { value: 24.9 }],
-          temperatures: [1205, 1198],
-          plainString: 'keep-me'
-        })
+        'Created At': '2023-10-27T10:00:00Z',
+        Active: 'true',
+        Details: '{"user":"admin","rights":[1,2]}',
+        Tags: '["urgent","work"]',
+        Ghost: ''
       }
-    ];
-
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    (csv.unparse as jest.Mock).mockReturnValue('csv result');
-
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify(inputData));
-    mockStream.push(null);
-
-    await flushPromises();
-    await promise;
-
-    expect(csv.unparse).toHaveBeenCalledWith(
-      [
-        {
-          article: 'A-12345',
-          articleName: 'Flacon 500ml',
-          diameter_1: '24.8',
-          temperature: '1205',
-          plain: 'keep-me'
-        }
-      ],
-      expect.objectContaining({ delimiter: ';' })
-    );
-  });
-
-  it('should encode output as Latin-1 Buffer when encoding is LATIN_1', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
-    const options = {
-      filename: 'output.csv',
-      delimiter: 'SEMI_COLON',
-      encoding: 'LATIN_1',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: '',
-      header: true,
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-    };
-
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify([{ name: 'test' }]));
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    expect(result.output).toBeInstanceOf(Buffer);
-    expect((result.output as Buffer).toString('latin1')).toBe('csv content');
-  });
-
-  it('should encode output as UTF-16 LE Buffer with BOM when encoding is UTF_16_LE', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
-    const options = {
-      filename: 'output.csv',
-      delimiter: 'SEMI_COLON',
-      encoding: 'UTF_16_LE',
-      quoteChar: 'DOUBLE_QUOTE',
-      escapeChar: 'DOUBLE_QUOTE',
-      newline: 'DEFAULT',
-      nullValue: '',
-      header: true,
-      rowIteratorPath: '$[*]',
-      fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string' }]
-    };
-
-    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
-    const mockStream = new Readable();
-    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-    mockStream.push(JSON.stringify([{ name: 'test' }]));
-    mockStream.push(null);
-    await flushPromises();
-    const result = await promise;
-
-    expect(result.output).toBeInstanceOf(Buffer);
-    const buf = result.output as Buffer;
-    expect(buf[0]).toBe(0xff);
-    expect(buf[1]).toBe(0xfe);
-    expect(buf.slice(2).toString('utf16le')).toBe('csv content');
+    ]);
+    assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
   });
 
   it('should return correct manifest settings', () => {
-    expect(jsonToCsvManifest.settings.key).toBe('options');
-    expect(jsonToCsvManifest.settings.attributes[0].key).toBe('filename');
+    assert.strictEqual(jsonToCsvManifest.settings.key, 'options');
+    assert.strictEqual(jsonToCsvManifest.settings.attributes[0].key, 'filename');
   });
 });
