@@ -52,6 +52,32 @@ export function asLogger(mock: LoggerMock): pino.Logger {
 }
 
 /**
+ * Fix for tsx resolving 'tsoa' to tsoa.json (the TSOA config file) rather than the
+ * tsoa npm package. This happens because tsconfig baseUrl:"./" combined with
+ * tsx's path resolution causes bare imports to match local JSON files before node_modules.
+ * Call this at the top of any controller spec's before() hook.
+ */
+export function fixTsoaModuleResolution(req: NodeJS.Require): void {
+  const tsoaKey = req.resolve('tsoa');
+  if (tsoaKey.includes('node_modules')) return;
+  const backendDir = path.dirname(tsoaKey);
+  const realTsoaPath = path.join(backendDir, 'node_modules', 'tsoa', 'dist', 'index.js');
+  const realTsoa = req(realTsoaPath);
+  if (req.cache[tsoaKey]) {
+    req.cache[tsoaKey]!.exports = realTsoa;
+  } else {
+    (req.cache as Record<string, unknown>)[tsoaKey] = {
+      id: tsoaKey,
+      filename: tsoaKey,
+      loaded: true,
+      exports: realTsoa,
+      children: [],
+      paths: []
+    };
+  }
+}
+
+/**
  * Injects exports into the require cache for a module.
  * The module is loaded first (if not already cached) to ensure it has a cache entry.
  * Use before reloadModule() to set up mocks for dependencies of the module under test.
@@ -69,7 +95,12 @@ export function mockModule(req: NodeJS.Require, modulePath: string, exports: unk
     // ensure the module has a cache entry before we replace its exports
   }
   const resolved = req.resolve(modulePath);
-  req.cache[resolved]!.exports = exports;
+  if (req.cache[resolved]) {
+    req.cache[resolved]!.exports = exports;
+  } else {
+    // Built-in Node modules (node: prefix) are not cached in require.cache; create the entry.
+    (req.cache as Record<string, unknown>)[resolved] = { id: resolved, filename: resolved, loaded: true, exports, children: [], paths: [] };
+  }
   return exports as Record<string, unknown>;
 }
 

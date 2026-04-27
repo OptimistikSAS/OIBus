@@ -1,73 +1,91 @@
-import { OIAnalyticsRegistrationController } from './oianalytics-registration.controller';
+import { describe, it, before, beforeEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import type { OIAnalyticsRegistrationController as OIAnalyticsRegistrationControllerShape } from './oianalytics-registration.controller';
 
-// Mock the services
-jest.mock('../../service/oia/oianalytics-registration.service', () => ({
-  toOIAnalyticsRegistrationDTO: jest.fn().mockImplementation(settings => settings)
-}));
+const nodeRequire = createRequire(import.meta.url);
+
+let mockRegistrationServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+let OIAnalyticsRegistrationController: typeof OIAnalyticsRegistrationControllerShape;
+
+before(() => {
+  fixTsoaModuleResolution(nodeRequire);
+  mockRegistrationServiceModule = { toOIAnalyticsRegistrationDTO: mock.fn((settings: unknown) => settings) };
+  mockModule(nodeRequire, '../../service/oia/oianalytics-registration.service', mockRegistrationServiceModule);
+  const mod = reloadModule<{ OIAnalyticsRegistrationController: typeof OIAnalyticsRegistrationControllerShape }>(
+    nodeRequire,
+    './oianalytics-registration.controller'
+  );
+  OIAnalyticsRegistrationController = mod.OIAnalyticsRegistrationController;
+});
 
 describe('OIAnalyticsRegistrationController', () => {
-  let controller: OIAnalyticsRegistrationController;
-  const mockRequest: Partial<CustomExpressRequest> = {
-    user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-    services: {
-      oIAnalyticsRegistrationService: new OIAnalyticsRegistrationServiceMock()
-    }
-  } as CustomExpressRequest;
+  let controller: OIAnalyticsRegistrationControllerShape;
+  let registrationService: OIAnalyticsRegistrationServiceMock;
+  let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    registrationService = new OIAnalyticsRegistrationServiceMock();
+    mockRequest = {
+      user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
+      services: {
+        oIAnalyticsRegistrationService: registrationService
+      }
+    } as Partial<CustomExpressRequest>;
+    mockRegistrationServiceModule.toOIAnalyticsRegistrationDTO = mock.fn((settings: unknown) => settings);
     controller = new OIAnalyticsRegistrationController();
   });
 
   it('should return registration settings', async () => {
     const mockSettings = testData.oIAnalytics.registration.completed;
-    (mockRequest.services!.oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(mockSettings);
+    registrationService.getRegistrationSettings = mock.fn(() => mockSettings);
 
     const result = await controller.getRegistrationSettings(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalled();
-    expect(result).toEqual(mockSettings);
+    assert.strictEqual(registrationService.getRegistrationSettings.mock.calls.length, 1);
+    assert.deepStrictEqual(result, mockSettings);
   });
 
   it('should register with OIAnalytics service', async () => {
     const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
-    (mockRequest.services!.oIAnalyticsRegistrationService.register as jest.Mock).mockResolvedValue(undefined);
+    registrationService.register = mock.fn(async () => undefined);
 
     await controller.register(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsRegistrationService.register).toHaveBeenCalledWith(command, testData.users.list[0].id);
+    assert.strictEqual(registrationService.register.mock.calls.length, 1);
+    assert.deepStrictEqual(registrationService.register.mock.calls[0].arguments, [command, testData.users.list[0].id]);
   });
 
   it('should update registration settings', async () => {
     const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
-    (mockRequest.services!.oIAnalyticsRegistrationService.editRegistrationSettings as jest.Mock).mockResolvedValue(undefined);
+    registrationService.editRegistrationSettings = mock.fn(async () => undefined);
 
     await controller.editRegistrationSettings(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith(
-      command,
-      testData.users.list[0].id
-    );
+    assert.strictEqual(registrationService.editRegistrationSettings.mock.calls.length, 1);
+    assert.deepStrictEqual(registrationService.editRegistrationSettings.mock.calls[0].arguments, [command, testData.users.list[0].id]);
   });
 
   it('should unregister from OIAnalytics service', async () => {
-    (mockRequest.services!.oIAnalyticsRegistrationService.unregister as jest.Mock).mockResolvedValue(undefined);
+    registrationService.unregister = mock.fn(async () => undefined);
 
     await controller.unregister(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsRegistrationService.unregister).toHaveBeenCalled();
+    assert.strictEqual(registrationService.unregister.mock.calls.length, 1);
   });
 
   it('should test connection', async () => {
     const command: RegistrationSettingsCommandDTO = testData.oIAnalytics.registration.command;
-    (mockRequest.services!.oIAnalyticsRegistrationService.testConnection as jest.Mock).mockResolvedValue(undefined);
+    registrationService.testConnection = mock.fn(async () => undefined);
 
     await controller.testConnection(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIAnalyticsRegistrationService.testConnection).toHaveBeenCalledWith(command);
+    assert.strictEqual(registrationService.testConnection.mock.calls.length, 1);
+    assert.deepStrictEqual(registrationService.testConnection.mock.calls[0].arguments, [command]);
   });
 });
