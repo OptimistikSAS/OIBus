@@ -1,15 +1,19 @@
-import { HistoryQueryController } from './history-query.controller';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs/promises';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemSearchParam } from '../../../shared/model/history-query.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
+import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import { CacheContentUpdateCommand, CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../shared/model/transformer.model';
 import { OIBusTestingError } from '../../model/types';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import fs from 'node:fs/promises';
-import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import UserService from 'src/service/user.service';
+import type { HistoryQueryController as HistoryQueryControllerShape } from './history-query.controller';
 
 interface HistorySouthItemTestRequest {
   southSettings: SouthSettings;
@@ -22,126 +26,172 @@ interface HistorySouthItemTestRequest {
   };
 }
 
-jest.mock('node:fs/promises');
-// Mock the services
-jest.mock('../../service/history-query.service', () => ({
-  toHistoryQueryDTO: jest.fn().mockImplementation((query, getUserInfo) => {
-    getUserInfo('');
-    return query;
-  }),
-  toHistoryQueryLightDTO: jest.fn().mockImplementation((query, getUserInfo) => {
-    getUserInfo('');
-    return query;
-  }),
-  toHistoryQueryItemDTO: jest.fn().mockImplementation((item, southType, getUserInfo) => {
-    getUserInfo('');
-    return item;
-  })
-}));
+const nodeRequire = createRequire(import.meta.url);
 
-jest.mock('../../service/utils', () => ({
-  itemToFlattenedCSV: jest.fn().mockReturnValue('csv content')
-}));
+let mockHistoryQueryServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+let mockUtilsModule: Record<string, ReturnType<typeof mock.fn>>;
+let HistoryQueryController: typeof HistoryQueryControllerShape;
+
+before(() => {
+  fixTsoaModuleResolution(nodeRequire);
+  mockHistoryQueryServiceModule = {
+    toHistoryQueryDTO: mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return query;
+    }),
+    toHistoryQueryLightDTO: mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return query;
+    }),
+    toHistoryQueryItemDTO: mock.fn((item: unknown, southType: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return item;
+    })
+  };
+  mockUtilsModule = {
+    itemToFlattenedCSV: mock.fn(() => 'csv content')
+  };
+  mockModule(nodeRequire, '../../service/history-query.service', mockHistoryQueryServiceModule);
+  mockModule(nodeRequire, '../../service/utils', mockUtilsModule);
+  const mod = reloadModule<{ HistoryQueryController: typeof HistoryQueryControllerShape }>(nodeRequire, './history-query.controller');
+  HistoryQueryController = mod.HistoryQueryController;
+});
 
 describe('HistoryQueryController', () => {
-  let controller: HistoryQueryController;
-  const mockRequest: Partial<CustomExpressRequest> = {
-    services: {
-      historyQueryService: new HistoryQueryServiceMock(),
-      southService: {
-        getInstalledSouthManifests: jest
-          .fn()
-          .mockReturnValue([{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }])
-      },
-      oIBusService: new OibusServiceMock(),
-      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
-    },
-    user: {
-      id: 'test',
-      login: 'testUser'
-    },
-    res: {
-      attachment: jest.fn(),
-      contentType: jest.fn(),
-      status: jest.fn().mockReturnThis(),
-      send: jest.fn(),
-      setHeader: jest.fn(),
-      pipe: jest.fn()
-    }
-  } as unknown as CustomExpressRequest;
+  let controller: HistoryQueryControllerShape;
+  let historyQueryService: HistoryQueryServiceMock;
+  let oIBusService: OIBusServiceMock;
+  let userService: UserServiceMock;
+  let mockRequest: Partial<CustomExpressRequest>;
+  let mockRes: {
+    attachment: ReturnType<typeof mock.fn>;
+    contentType: ReturnType<typeof mock.fn>;
+    status: ReturnType<typeof mock.fn>;
+    send: ReturnType<typeof mock.fn>;
+    setHeader: ReturnType<typeof mock.fn>;
+    pipe: ReturnType<typeof mock.fn>;
+  };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    historyQueryService = new HistoryQueryServiceMock();
+    oIBusService = new OIBusServiceMock();
+    userService = new UserServiceMock();
+    mockRes = {
+      attachment: mock.fn(),
+      contentType: mock.fn(),
+      send: mock.fn(),
+      setHeader: mock.fn(),
+      pipe: mock.fn(),
+      status: mock.fn()
+    };
+    mockRes.status = mock.fn(() => mockRes);
+    mockRequest = {
+      services: {
+        historyQueryService,
+        southService: {
+          getInstalledSouthManifests: mock.fn(() => [{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }])
+        },
+        oIBusService,
+        userService
+      },
+      user: { id: 'test', login: 'testUser' },
+      res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
+    } as Partial<CustomExpressRequest>;
+    mockHistoryQueryServiceModule.toHistoryQueryDTO = mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return query;
+    });
+    mockHistoryQueryServiceModule.toHistoryQueryLightDTO = mock.fn((query: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return query;
+    });
+    mockHistoryQueryServiceModule.toHistoryQueryItemDTO = mock.fn(
+      (item: unknown, southType: unknown, getUserInfo: (id: string) => void) => {
+        getUserInfo('');
+        return item;
+      }
+    );
+    mockUtilsModule.itemToFlattenedCSV = mock.fn(() => 'csv content');
     controller = new HistoryQueryController();
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('should return a list of history queries', async () => {
     const mockHistoryQueries = testData.historyQueries.list;
-    (mockRequest.services!.historyQueryService.list as jest.Mock).mockReturnValue(mockHistoryQueries);
+    historyQueryService.list = mock.fn(() => mockHistoryQueries);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.list).toHaveBeenCalled();
-    expect(result).toEqual(mockHistoryQueries);
+    assert.strictEqual(historyQueryService.list.mock.calls.length, 1);
+    assert.deepStrictEqual(result, mockHistoryQueries);
   });
 
   it('should return a history query by ID', async () => {
     const mockHistoryQuery = testData.historyQueries.list[0];
     const historyId = mockHistoryQuery.id;
-    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(mockHistoryQuery);
+    historyQueryService.findById = mock.fn(() => mockHistoryQuery);
 
     const result = await controller.findById(historyId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
-    expect(result).toEqual(mockHistoryQuery);
+    assert.strictEqual(historyQueryService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments[0], historyId);
+    assert.deepStrictEqual(result, mockHistoryQuery);
   });
 
   it('should create a new history query', async () => {
     const command: HistoryQueryCommandDTO = testData.historyQueries.command;
     const createdHistoryQuery = testData.historyQueries.list[0];
-    (mockRequest.services!.historyQueryService.create as jest.Mock).mockResolvedValue(createdHistoryQuery);
+    historyQueryService.create = mock.fn(async () => createdHistoryQuery);
 
     const result = await controller.create(command, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.create).toHaveBeenCalledWith(command, undefined, undefined, undefined, 'test');
-    expect(result).toEqual(createdHistoryQuery);
+    assert.strictEqual(historyQueryService.create.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.create.mock.calls[0].arguments, [command, undefined, undefined, undefined, 'test']);
+    assert.deepStrictEqual(result, createdHistoryQuery);
   });
 
   it('should update an existing history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const command: HistoryQueryCommandDTO = testData.historyQueries.command;
-    (mockRequest.services!.historyQueryService.update as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.update = mock.fn(async () => undefined);
 
     await controller.update(historyId, command, undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.update).toHaveBeenCalledWith(historyId, command, false, 'test');
+    assert.strictEqual(historyQueryService.update.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.update.mock.calls[0].arguments, [historyId, command, false, 'test']);
   });
 
   it('should delete a history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    (mockRequest.services!.historyQueryService.delete as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.delete = mock.fn(async () => undefined);
 
     await controller.delete(historyId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.delete).toHaveBeenCalledWith(historyId);
+    assert.strictEqual(historyQueryService.delete.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.delete.mock.calls[0].arguments[0], historyId);
   });
 
   it('should start a history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    (mockRequest.services!.historyQueryService.start as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.start = mock.fn(async () => undefined);
 
     await controller.start(historyId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.start).toHaveBeenCalledWith(historyId);
+    assert.strictEqual(historyQueryService.start.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.start.mock.calls[0].arguments[0], historyId);
   });
 
   it('should pause a history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    (mockRequest.services!.historyQueryService.pause as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.pause = mock.fn(async () => undefined);
 
     await controller.pause(historyId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.pause).toHaveBeenCalledWith(historyId);
+    assert.strictEqual(historyQueryService.pause.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.pause.mock.calls[0].arguments[0], historyId);
   });
 
   it('should test north connection', async () => {
@@ -149,12 +199,12 @@ describe('HistoryQueryController', () => {
     const northType = testData.north.command.type;
     const fromNorth = testData.north.list[0].id;
     const settings = testData.north.command.settings;
-
-    (mockRequest.services!.historyQueryService.testNorth as jest.Mock).mockResolvedValue({ items: [] });
+    historyQueryService.testNorth = mock.fn(async () => ({ items: [] }));
 
     await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.testNorth).toHaveBeenCalledWith(historyId, northType, fromNorth, settings);
+    assert.strictEqual(historyQueryService.testNorth.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings]);
   });
 
   it('should wrap errors when testing north connection', async () => {
@@ -162,16 +212,19 @@ describe('HistoryQueryController', () => {
     const northType = testData.north.command.type;
     const fromNorth = testData.north.list[0].id;
     const settings = testData.north.command.settings;
-
-    (mockRequest.services!.historyQueryService.testNorth as jest.Mock).mockRejectedValue(new Error('North test failure'));
-
-    const promise = controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
-
-    await expect(promise).rejects.toThrow('North test failure');
-    await promise.catch(error => {
-      expect(error).toBeInstanceOf(OIBusTestingError);
+    historyQueryService.testNorth = mock.fn(async () => {
+      throw new Error('North test failure');
     });
-    expect(mockRequest.services!.historyQueryService.testNorth).toHaveBeenCalledWith(historyId, northType, fromNorth, settings);
+
+    try {
+      await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual(error.message, 'North test failure');
+    }
+    assert.strictEqual(historyQueryService.testNorth.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [historyId, northType, fromNorth, settings]);
   });
 
   it('should throw OIBusTestingError when testing north connection fails', async () => {
@@ -179,13 +232,17 @@ describe('HistoryQueryController', () => {
     const northType = testData.north.command.type;
     const fromNorth = testData.north.list[0].id;
     const settings = testData.north.command.settings;
-    const error = new Error('north test failed');
-    (mockRequest.services!.historyQueryService.testNorth as jest.Mock).mockRejectedValue(error);
-
-    await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest).catch(caughtError => {
-      expect(caughtError).toBeInstanceOf(OIBusTestingError);
-      expect((caughtError as Error).message).toBe('north test failed');
+    historyQueryService.testNorth = mock.fn(async () => {
+      throw new Error('north test failed');
     });
+
+    try {
+      await controller.testNorth(historyId, northType, fromNorth, settings, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'north test failed');
+    }
   });
 
   it('should test south connection', async () => {
@@ -193,12 +250,12 @@ describe('HistoryQueryController', () => {
     const southType = testData.south.command.type;
     const fromSouth = testData.south.list[0].id;
     const settings = testData.south.command.settings;
-
-    (mockRequest.services!.historyQueryService.testSouth as jest.Mock).mockResolvedValue({ items: [] });
+    historyQueryService.testSouth = mock.fn(async () => ({ items: [] }));
 
     await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.testSouth).toHaveBeenCalledWith(historyId, southType, fromSouth, settings);
+    assert.strictEqual(historyQueryService.testSouth.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings]);
   });
 
   it('should wrap errors when testing south connection', async () => {
@@ -206,16 +263,19 @@ describe('HistoryQueryController', () => {
     const southType = testData.south.command.type;
     const fromSouth = testData.south.list[0].id;
     const settings = testData.south.command.settings;
-
-    (mockRequest.services!.historyQueryService.testSouth as jest.Mock).mockRejectedValue(new Error('South test failure'));
-
-    const promise = controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
-
-    await expect(promise).rejects.toThrow('South test failure');
-    await promise.catch(error => {
-      expect(error).toBeInstanceOf(OIBusTestingError);
+    historyQueryService.testSouth = mock.fn(async () => {
+      throw new Error('South test failure');
     });
-    expect(mockRequest.services!.historyQueryService.testSouth).toHaveBeenCalledWith(historyId, southType, fromSouth, settings);
+
+    try {
+      await controller.testSouth(historyId, southType, fromSouth, settings, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'South test failure');
+    }
+    assert.strictEqual(historyQueryService.testSouth.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [historyId, southType, fromSouth, settings]);
   });
 
   it('should test a history query item', async () => {
@@ -239,7 +299,7 @@ describe('HistoryQueryController', () => {
       filePath: '/path/to/file.json',
       content: '{"key": "value"}'
     };
-    (mockRequest.services!.historyQueryService.testItem as jest.Mock).mockReturnValueOnce(mockContent);
+    historyQueryService.testItem = mock.fn(() => mockContent);
 
     const result = await controller.testItem(
       historyId,
@@ -253,7 +313,9 @@ describe('HistoryQueryController', () => {
       } as HistorySouthItemTestRequest,
       mockRequest as CustomExpressRequest
     );
-    expect(mockRequest.services!.historyQueryService.testItem).toHaveBeenCalledWith(
+
+    assert.strictEqual(historyQueryService.testItem.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.testItem.mock.calls[0].arguments, [
       historyId,
       southType,
       itemName,
@@ -261,8 +323,8 @@ describe('HistoryQueryController', () => {
       requestBody.southSettings,
       requestBody.itemSettings,
       requestBody.testingSettings
-    );
-    expect(result).toEqual(mockContent);
+    ]);
+    assert.deepStrictEqual(result, mockContent);
   });
 
   it('should wrap errors when testing a history query item', async () => {
@@ -280,16 +342,19 @@ describe('HistoryQueryController', () => {
         }
       }
     };
-
-    (mockRequest.services!.historyQueryService.testItem as jest.Mock).mockRejectedValue(new Error('Item test failure'));
-
-    const promise = controller.testItem(historyId, southType, itemName, fromSouth, requestBody, mockRequest as CustomExpressRequest);
-
-    await expect(promise).rejects.toThrow('Item test failure');
-    await promise.catch(error => {
-      expect(error).toBeInstanceOf(OIBusTestingError);
+    historyQueryService.testItem = mock.fn(async () => {
+      throw new Error('Item test failure');
     });
-    expect(mockRequest.services!.historyQueryService.testItem).toHaveBeenCalledWith(
+
+    try {
+      await controller.testItem(historyId, southType, itemName, fromSouth, requestBody, mockRequest as CustomExpressRequest);
+      assert.fail('Expected error to be thrown');
+    } catch (error) {
+      assert.ok(error instanceof OIBusTestingError);
+      assert.strictEqual((error as OIBusTestingError).message, 'Item test failure');
+    }
+    assert.strictEqual(historyQueryService.testItem.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.testItem.mock.calls[0].arguments, [
       historyId,
       southType,
       itemName,
@@ -297,20 +362,22 @@ describe('HistoryQueryController', () => {
       requestBody.southSettings,
       requestBody.itemSettings,
       requestBody.testingSettings
-    );
+    ]);
   });
 
   it('should return a list of history query items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const mockItems = testData.historyQueries.list[0].items;
-    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (mockRequest.services!.historyQueryService.listItems as jest.Mock).mockReturnValue(mockItems);
+    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
+    historyQueryService.listItems = mock.fn(() => mockItems);
 
     const result = await controller.listItems(historyId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
-    expect(mockRequest.services!.historyQueryService.listItems).toHaveBeenCalledWith(historyId);
-    expect(result).toEqual(mockItems);
+    assert.strictEqual(historyQueryService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments[0], historyId);
+    assert.strictEqual(historyQueryService.listItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.listItems.mock.calls[0].arguments[0], historyId);
+    assert.deepStrictEqual(result, mockItems);
   });
 
   it('should search history query items', async () => {
@@ -332,14 +399,16 @@ describe('HistoryQueryController', () => {
       number: page,
       totalPages: 1
     };
-    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (mockRequest.services!.historyQueryService.searchItems as jest.Mock).mockResolvedValue(mockPageResult);
+    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
+    historyQueryService.searchItems = mock.fn(async () => mockPageResult);
 
     const result = await controller.searchItems(historyId, name, enabled, page, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
-    expect(mockRequest.services!.historyQueryService.searchItems).toHaveBeenCalledWith(historyId, searchParams);
-    expect(result).toEqual(mockPageResult);
+    assert.strictEqual(historyQueryService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments[0], historyId);
+    assert.strictEqual(historyQueryService.searchItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.searchItems.mock.calls[0].arguments, [historyId, searchParams]);
+    assert.deepStrictEqual(result, mockPageResult);
   });
 
   it('should search history query items with default params', async () => {
@@ -352,14 +421,19 @@ describe('HistoryQueryController', () => {
       number: 0,
       totalPages: 1
     };
-    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (mockRequest.services!.historyQueryService.searchItems as jest.Mock).mockResolvedValue(mockPageResult);
+    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
+    historyQueryService.searchItems = mock.fn(async () => mockPageResult);
 
     const result = await controller.searchItems(historyId, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
-    expect(mockRequest.services!.historyQueryService.searchItems).toHaveBeenCalledWith(historyId, { page: 0 });
-    expect(result).toEqual(mockPageResult);
+    assert.strictEqual(historyQueryService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments[0], historyId);
+    assert.strictEqual(historyQueryService.searchItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.searchItems.mock.calls[0].arguments, [
+      historyId,
+      { page: 0, name: undefined, enabled: undefined }
+    ]);
+    assert.deepStrictEqual(result, mockPageResult);
   });
 
   it('should return a specific history query item', async () => {
@@ -367,14 +441,16 @@ describe('HistoryQueryController', () => {
     const itemId = testData.historyQueries.list[0].items[0].id;
     const mockItem = testData.historyQueries.list[0].items[0];
 
-    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (mockRequest.services!.historyQueryService.findItemById as jest.Mock).mockReturnValue(mockItem);
+    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
+    historyQueryService.findItemById = mock.fn(() => mockItem);
 
     const result = await controller.findItemById(historyId, itemId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
-    expect(mockRequest.services!.historyQueryService.findItemById).toHaveBeenCalledWith(historyId, itemId);
-    expect(result).toEqual(mockItem);
+    assert.strictEqual(historyQueryService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments[0], historyId);
+    assert.strictEqual(historyQueryService.findItemById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.findItemById.mock.calls[0].arguments, [historyId, itemId]);
+    assert.deepStrictEqual(result, mockItem);
   });
 
   it('should create a new history query item', async () => {
@@ -382,102 +458,104 @@ describe('HistoryQueryController', () => {
     const command: HistoryQueryItemCommandDTO = testData.historyQueries.itemCommand;
     const createdItem = testData.historyQueries.list[0].items[0];
 
-    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (mockRequest.services!.historyQueryService.createItem as jest.Mock).mockResolvedValue(createdItem);
+    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
+    historyQueryService.createItem = mock.fn(async () => createdItem);
 
     const result = await controller.createItem(historyId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
-    expect(mockRequest.services!.historyQueryService.createItem).toHaveBeenCalledWith(historyId, command, 'test');
-    expect(result).toEqual(createdItem);
+    assert.strictEqual(historyQueryService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments[0], historyId);
+    assert.strictEqual(historyQueryService.createItem.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.createItem.mock.calls[0].arguments, [historyId, command, 'test']);
+    assert.deepStrictEqual(result, createdItem);
   });
 
   it('should update a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
     const command: HistoryQueryItemCommandDTO = testData.historyQueries.itemCommand;
-
-    (mockRequest.services!.historyQueryService.updateItem as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.updateItem = mock.fn(async () => undefined);
 
     await controller.updateItem(historyId, itemId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.updateItem).toHaveBeenCalledWith(historyId, itemId, command, 'test');
+    assert.strictEqual(historyQueryService.updateItem.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.updateItem.mock.calls[0].arguments, [historyId, itemId, command, 'test']);
   });
 
   it('should enable a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
-
-    (mockRequest.services!.historyQueryService.enableItem as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.enableItem = mock.fn(async () => undefined);
 
     await controller.enableItem(historyId, itemId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.enableItem).toHaveBeenCalledWith(historyId, itemId);
+    assert.strictEqual(historyQueryService.enableItem.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.enableItem.mock.calls[0].arguments, [historyId, itemId]);
   });
 
   it('should disable a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
-
-    (mockRequest.services!.historyQueryService.disableItem as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.disableItem = mock.fn(async () => undefined);
 
     await controller.disableItem(historyId, itemId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.disableItem).toHaveBeenCalledWith(historyId, itemId);
+    assert.strictEqual(historyQueryService.disableItem.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.disableItem.mock.calls[0].arguments, [historyId, itemId]);
   });
 
   it('should enable a list of history query items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
-
-    (mockRequest.services!.historyQueryService.enableItems as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.enableItems = mock.fn(async () => undefined);
 
     await controller.enableItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.enableItems).toHaveBeenCalledWith(historyId, itemIds);
+    assert.strictEqual(historyQueryService.enableItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.enableItems.mock.calls[0].arguments, [historyId, itemIds]);
   });
 
   it('should disable a list of history query items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
-
-    (mockRequest.services!.historyQueryService.disableItems as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.disableItems = mock.fn(async () => undefined);
 
     await controller.disableItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.disableItems).toHaveBeenCalledWith(historyId, itemIds);
+    assert.strictEqual(historyQueryService.disableItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.disableItems.mock.calls[0].arguments, [historyId, itemIds]);
   });
 
   it('should delete a list of history query items', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemIds = testData.historyQueries.list[0].items.map(item => item.id);
-
-    (mockRequest.services!.historyQueryService.deleteItems as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.deleteItems = mock.fn(async () => undefined);
 
     await controller.deleteItems(historyId, { itemIds }, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.deleteItems).toHaveBeenCalledWith(historyId, itemIds);
+    assert.strictEqual(historyQueryService.deleteItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.deleteItems.mock.calls[0].arguments, [historyId, itemIds]);
   });
 
   it('should delete a history query item', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const itemId = testData.historyQueries.list[0].items[0].id;
-
-    (mockRequest.services!.historyQueryService.deleteItem as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.deleteItem = mock.fn(async () => undefined);
 
     await controller.deleteItem(historyId, itemId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.deleteItem).toHaveBeenCalledWith(historyId, itemId);
+    assert.strictEqual(historyQueryService.deleteItem.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.deleteItem.mock.calls[0].arguments, [historyId, itemId]);
   });
 
   it('should delete all items from a history query', async () => {
     const historyId = testData.historyQueries.list[0].id;
-
-    (mockRequest.services!.historyQueryService.deleteAllItems as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.deleteAllItems = mock.fn(async () => undefined);
 
     await controller.deleteAllItems(historyId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.deleteAllItems).toHaveBeenCalledWith(historyId);
+    assert.strictEqual(historyQueryService.deleteAllItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.deleteAllItems.mock.calls[0].arguments[0], historyId);
   });
 
   it('should convert items to CSV', async () => {
@@ -487,16 +565,19 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
     await controller.itemsToCsv(southType, delimiter, itemsFile, mockRequest as CustomExpressRequest);
 
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv', 'utf8');
-    expect(mockRequest.res!.attachment).toHaveBeenCalledWith('items.csv');
-    expect(mockRequest.res!.contentType).toHaveBeenCalledWith('text/csv; charset=utf-8');
-    expect(mockRequest.res!.status).toHaveBeenCalledWith(200);
-    expect(mockRequest.res!.send).toHaveBeenCalledWith('csv content');
-    expect(fs.unlink).toHaveBeenCalledTimes(1);
+    assert.strictEqual(readFileMock.mock.calls.length, 1);
+    assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], 'myFile.csv');
+    assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[1], 'utf8');
+    assert.deepStrictEqual(mockRes.attachment.mock.calls[0].arguments[0], 'items.csv');
+    assert.deepStrictEqual(mockRes.contentType.mock.calls[0].arguments[0], 'text/csv; charset=utf-8');
+    assert.deepStrictEqual(mockRes.status.mock.calls[0].arguments[0], 200);
+    assert.deepStrictEqual(mockRes.send.mock.calls[0].arguments[0], 'csv content');
+    assert.strictEqual(unlinkMock.mock.calls.length, 1);
   });
 
   it('should not throw an error if items files unlink fails', async () => {
@@ -506,18 +587,21 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
-    (fs.unlink as jest.Mock).mockRejectedValueOnce('unlink error');
-    await expect(controller.itemsToCsv(southType, delimiter, itemsFile, mockRequest as CustomExpressRequest)).resolves.not.toThrow();
+    mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    mock.method(fs, 'unlink', async () => {
+      throw new Error('unlink error');
+    });
+
+    await assert.doesNotReject(controller.itemsToCsv(southType, delimiter, itemsFile, mockRequest as CustomExpressRequest));
   });
 
   it('should throw an error if items files is missing', async () => {
     const southType = testData.south.manifest.id;
     const delimiter = ',';
 
-    await expect(controller.itemsToCsv(southType, delimiter, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow(
-      'Missing "items" file'
-    );
+    await assert.rejects(controller.itemsToCsv(southType, delimiter, undefined!, mockRequest as CustomExpressRequest), {
+      message: 'Missing "items" file'
+    });
   });
 
   it('should export items to CSV', async () => {
@@ -525,15 +609,16 @@ describe('HistoryQueryController', () => {
     const delimiter = ',';
     const command = { delimiter };
 
-    (mockRequest.services!.historyQueryService.findById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
+    historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
 
     await controller.exportItems(historyId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.findById).toHaveBeenCalledWith(historyId);
-    expect(mockRequest.res!.attachment).toHaveBeenCalledWith('items.csv');
-    expect(mockRequest.res!.contentType).toHaveBeenCalledWith('text/csv; charset=utf-8');
-    expect(mockRequest.res!.status).toHaveBeenCalledWith(200);
-    expect(mockRequest.res!.send).toHaveBeenCalledWith('csv content');
+    assert.strictEqual(historyQueryService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments[0], historyId);
+    assert.deepStrictEqual(mockRes.attachment.mock.calls[0].arguments[0], 'items.csv');
+    assert.deepStrictEqual(mockRes.contentType.mock.calls[0].arguments[0], 'text/csv; charset=utf-8');
+    assert.deepStrictEqual(mockRes.status.mock.calls[0].arguments[0], 200);
+    assert.deepStrictEqual(mockRes.send.mock.calls[0].arguments[0], 'csv content');
   });
 
   it('should check CSV import and return validation results', async () => {
@@ -548,14 +633,19 @@ describe('HistoryQueryController', () => {
 
     const csvContent = 'id,name\n1,item1';
     const jsonContent = JSON.stringify([{ id: '1', name: 'item1' }]);
-    (fs.readFile as jest.Mock).mockReturnValueOnce(csvContent).mockReturnValueOnce(jsonContent);
+    let readCallCount = 0;
+    const readFileMock = mock.method(fs, 'readFile', async () => {
+      readCallCount++;
+      return readCallCount === 1 ? csvContent : jsonContent;
+    });
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
     const mockResult = {
       items: [testData.historyQueries.itemCommand],
       errors: []
     };
 
-    (mockRequest.services!.historyQueryService.checkImportItems as jest.Mock).mockReturnValue(mockResult);
+    historyQueryService.checkImportItems = mock.fn(() => mockResult);
 
     const result = await controller.checkImportItems(
       southType,
@@ -565,16 +655,20 @@ describe('HistoryQueryController', () => {
       mockRequest as CustomExpressRequest
     );
 
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv', 'utf8');
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.json', 'utf8');
-    expect(mockRequest.services!.historyQueryService.checkImportItems).toHaveBeenCalledWith(
+    assert.strictEqual(readFileMock.mock.calls.length, 2);
+    assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], 'myFile.csv');
+    assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[1], 'utf8');
+    assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], 'myFile.json');
+    assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[1], 'utf8');
+    assert.strictEqual(historyQueryService.checkImportItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
       southType,
       csvContent,
       delimiter,
       JSON.parse(jsonContent)
-    );
-    expect(result).toEqual(mockResult);
-    expect(fs.unlink).toHaveBeenCalledTimes(2);
+    ]);
+    assert.deepStrictEqual(result, mockResult);
+    assert.strictEqual(unlinkMock.mock.calls.length, 2);
   });
 
   it('should throw an error if itemsToImport or currentItems files are missing in checkImportItems', async () => {
@@ -584,9 +678,10 @@ describe('HistoryQueryController', () => {
       buffer: Buffer.from('id,name\n1,item1')
     } as Express.Multer.File;
 
-    await expect(
-      controller.checkImportItems(southType, delimiter, itemsToImportFile, undefined!, mockRequest as CustomExpressRequest)
-    ).rejects.toThrow('Missing "itemsToImport" or "currentItems"');
+    await assert.rejects(
+      controller.checkImportItems(southType, delimiter, itemsToImportFile, undefined!, mockRequest as CustomExpressRequest),
+      { message: 'Missing "itemsToImport" or "currentItems"' }
+    );
   });
 
   it('should import items from CSV', async () => {
@@ -595,24 +690,26 @@ describe('HistoryQueryController', () => {
       path: 'myFile.json'
     } as Express.Multer.File;
 
-    (mockRequest.services!.historyQueryService.importItems as jest.Mock).mockResolvedValue(undefined);
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    historyQueryService.importItems = mock.fn(async () => undefined);
+    mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    mock.method(fs, 'unlink', async () => undefined);
 
     await controller.importItems(historyId, itemsFile, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.importItems).toHaveBeenCalledWith(
+    assert.strictEqual(historyQueryService.importItems.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.importItems.mock.calls[0].arguments, [
       historyId,
       [{ id: '1', name: 'item1', scanModeName: 'scan1' }],
       'test'
-    );
+    ]);
   });
 
   it('should throw an error if items file is missing in importItems', async () => {
     const historyId = testData.historyQueries.list[0].id;
 
-    await expect(controller.importItems(historyId, undefined!, mockRequest as CustomExpressRequest)).rejects.toThrow(
-      'Missing file "items"'
-    );
+    await assert.rejects(controller.importItems(historyId, undefined!, mockRequest as CustomExpressRequest), {
+      message: 'Missing file "items"'
+    });
   });
 
   it('should not throw an error if items files unlink fails when importing items', async () => {
@@ -620,9 +717,12 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    (fs.readFile as jest.Mock).mockReturnValue(JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
-    (fs.unlink as jest.Mock).mockRejectedValueOnce('unlink error');
-    await expect(controller.importItems('southId', itemsFile, mockRequest as CustomExpressRequest)).resolves.not.toThrow();
+    mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
+    mock.method(fs, 'unlink', async () => {
+      throw new Error('unlink error');
+    });
+
+    await assert.doesNotReject(controller.importItems('southId', itemsFile, mockRequest as CustomExpressRequest));
   });
 
   it('should add or edit a transformer', async () => {
@@ -633,30 +733,30 @@ describe('HistoryQueryController', () => {
       options: {},
       items: []
     };
-
-    (mockRequest.services!.historyQueryService.addOrEditTransformer as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.addOrEditTransformer = mock.fn(async () => undefined);
 
     await controller.addOrEditTransformer(historyId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.addOrEditTransformer).toHaveBeenCalledWith(historyId, command);
+    assert.strictEqual(historyQueryService.addOrEditTransformer.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.addOrEditTransformer.mock.calls[0].arguments, [historyId, command]);
   });
 
   it('should remove a transformer', async () => {
     const historyId = testData.historyQueries.list[0].id;
     const transformerId = testData.transformers.list[0].id;
-
-    (mockRequest.services!.historyQueryService.removeTransformer as jest.Mock).mockResolvedValue(undefined);
+    historyQueryService.removeTransformer = mock.fn(async () => undefined);
 
     await controller.removeTransformer(historyId, transformerId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.historyQueryService.removeTransformer).toHaveBeenCalledWith(historyId, transformerId);
+    assert.strictEqual(historyQueryService.removeTransformer.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryService.removeTransformer.mock.calls[0].arguments, [historyId, transformerId]);
   });
 
   it('should search cache content with default params', async () => {
     const northId = testData.north.list[0].id;
 
     const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-    (mockRequest.services!.oIBusService.searchCacheContent as jest.Mock).mockResolvedValue(mockCacheMetadata);
+    oIBusService.searchCacheContent = mock.fn(async () => mockCacheMetadata);
 
     const result = await controller.searchCacheContent(
       northId,
@@ -667,13 +767,13 @@ describe('HistoryQueryController', () => {
       mockRequest as CustomExpressRequest
     );
 
-    expect(mockRequest.services!.oIBusService.searchCacheContent).toHaveBeenCalledWith('history', northId, {
-      start: undefined,
-      end: undefined,
-      nameContains: undefined,
-      maxNumberOfFilesReturned: 0
-    });
-    expect(result).toEqual(mockCacheMetadata);
+    assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
+      'history',
+      northId,
+      { start: undefined, end: undefined, nameContains: undefined, maxNumberOfFilesReturned: 0 }
+    ]);
+    assert.deepStrictEqual(result, mockCacheMetadata);
   });
 
   it('should search cache content with parameters', async () => {
@@ -696,17 +796,17 @@ describe('HistoryQueryController', () => {
       }
     ];
 
-    (mockRequest.services!.oIBusService.searchCacheContent as jest.Mock).mockResolvedValue(mockResult);
+    oIBusService.searchCacheContent = mock.fn(async () => mockResult);
 
     const result = await controller.searchCacheContent(historyId, nameContains, start, end, 1000, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.searchCacheContent).toHaveBeenCalledWith('history', historyId, {
-      start,
-      end,
-      nameContains,
-      maxNumberOfFilesReturned: 1000
-    });
-    expect(result).toEqual(mockResult);
+    assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
+      'history',
+      historyId,
+      { start, end, nameContains, maxNumberOfFilesReturned: 1000 }
+    ]);
+    assert.deepStrictEqual(result, mockResult);
   });
 
   it('should get cache file content', async () => {
@@ -714,20 +814,22 @@ describe('HistoryQueryController', () => {
     const filename = 'test.json';
     const folder = 'cache';
 
-    const mockStream = { pipe: jest.fn() };
-    (mockRequest.services!.oIBusService.getFileFromCache as jest.Mock).mockResolvedValue(mockStream);
+    const mockStream = { pipe: mock.fn() };
+    oIBusService.getFileFromCache = mock.fn(async () => mockStream);
 
     await controller.getCacheFileContent(historyId, filename, folder, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.getFileFromCache).toHaveBeenCalledWith('history', historyId, folder, filename);
+    assert.strictEqual(oIBusService.getFileFromCache.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.getFileFromCache.mock.calls[0].arguments, ['history', historyId, folder, filename]);
   });
 
   it('should update cache content', async () => {
     const historyId = testData.historyQueries.list[0].id;
-    (mockRequest.services!.oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
+    oIBusService.updateCacheContent = mock.fn(async () => undefined);
 
     await controller.updateCacheContent(historyId, {} as CacheContentUpdateCommand, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.updateCacheContent).toHaveBeenCalledWith('history', historyId, {});
+    assert.strictEqual(oIBusService.updateCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateCacheContent.mock.calls[0].arguments, ['history', historyId, {}]);
   });
 });
