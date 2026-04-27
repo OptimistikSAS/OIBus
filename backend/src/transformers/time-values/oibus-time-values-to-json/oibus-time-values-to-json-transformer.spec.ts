@@ -1,83 +1,72 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { Readable } from 'stream';
-import pino from 'pino';
-import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises } from '../../../tests/utils/test-utils';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
-import csv from 'papaparse';
-import OIBusTimeValuesToJSONTransformer from './oibus-time-values-to-json-transformer';
+import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import type OIBusTimeValuesToJSONTransformerType from './oibus-time-values-to-json-transformer';
 import timeValuesToJsonManifest from './manifest';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
-jest.mock('../../../service/utils', () => ({
-  generateRandomId: jest.fn().mockReturnValue('randomId')
-}));
-jest.mock('papaparse');
+const nodeRequire = createRequire(import.meta.url);
 
-const logger: pino.Logger = new PinoLogger();
+let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let OIBusTimeValuesToJSONTransformer: typeof OIBusTimeValuesToJSONTransformerType;
+
+before(() => {
+  mockUtils = { generateRandomId: mock.fn(() => 'randomId') };
+  mockModule(nodeRequire, '../../../service/utils', mockUtils);
+  const mod = reloadModule<{ default: typeof OIBusTimeValuesToJSONTransformerType }>(
+    nodeRequire,
+    './oibus-time-values-to-json-transformer'
+  );
+  OIBusTimeValuesToJSONTransformer = mod.default;
+});
 
 describe('OIBusTimeValuesToJSONTransformer', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let logger: PinoLogger;
+
+  beforeEach(() => {
+    logger = new PinoLogger();
+    mockUtils.generateRandomId = mock.fn(() => 'randomId');
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should transform data from a stream and return metadata', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
-    // Arrange
-    const transformer = new OIBusTimeValuesToJSONTransformer(logger, testData.transformers.list[0], {});
+    const transformer = new OIBusTimeValuesToJSONTransformer(asLogger(logger), testData.transformers.list[0], {});
     const dataChunks: Array<OIBusTimeValue> = [
-      {
-        pointId: 'reference1',
-        timestamp: testData.constants.dates.DATE_1,
-        data: {
-          value: 'value1'
-        }
-      },
-      {
-        pointId: 'reference1',
-        timestamp: testData.constants.dates.DATE_2,
-        data: {
-          value: 'value2',
-          quality: 'good'
-        }
-      },
-      {
-        pointId: 'reference2',
-        timestamp: testData.constants.dates.DATE_3,
-        data: {
-          value: 'value1'
-        }
-      }
+      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } },
+      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, data: { value: 'value2', quality: 'good' } },
+      { pointId: 'reference2', timestamp: testData.constants.dates.DATE_3, data: { value: 'value1' } }
     ];
-
-    // Mock Readable stream
     const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
-    mockStream.push(null); // End the stream
+    mockStream.push(null);
 
     await flushPromises();
     const result = await promise;
-    // Assert
-    expect(result.output).toEqual(Buffer.from(JSON.stringify(dataChunks)));
-    expect(result.metadata).toEqual({
-      contentFile: 'randomId.json',
-      contentSize: 0,
-      createdAt: '',
-      numberOfElement: 3,
-      contentType: 'any'
+
+    assert.deepStrictEqual(result, {
+      output: Buffer.from(JSON.stringify(dataChunks)),
+      metadata: {
+        contentFile: 'randomId.json',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 3,
+        contentType: 'any'
+      }
     });
   });
 
   it('should return manifest', () => {
-    expect(timeValuesToJsonManifest.settings).toEqual({
+    assert.deepStrictEqual(timeValuesToJsonManifest.settings, {
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',

@@ -1,86 +1,76 @@
+import { describe, it, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { Readable } from 'stream';
-import pino from 'pino';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import testData from '../tests/utils/test-data';
-import { flushPromises } from '../tests/utils/test-utils';
+import { flushPromises, asLogger } from '../tests/utils/test-utils';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import IsoTransformer from './iso-transformer';
 import isoManifest from './iso-transformer/manifest';
 
-jest.mock('../service/utils', () => ({
-  generateRandomId: jest.fn().mockReturnValue('randomId')
-}));
-
-const logger: pino.Logger = new PinoLogger();
-
 describe('IsoTransformer', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let logger: PinoLogger;
+
+  beforeEach(() => {
+    logger = new PinoLogger();
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should transform data from a stream and return metadata without filename', async () => {
-    // Arrange
-    const transformer = new IsoTransformer(logger, testData.transformers.list[0], {});
-    const dataChunks = ['chunk1', 'chunk2', 'chunk3'];
-
-    // Mock Readable stream
+    const transformer = new IsoTransformer(asLogger(logger), testData.transformers.list[0], {});
     const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
-    mockStream.push(dataChunks[0]);
-    mockStream.push(dataChunks[1]);
-    mockStream.push(dataChunks[2]);
-    mockStream.push(null); // End the stream
+    mockStream.push('chunk1');
+    mockStream.push('chunk2');
+    mockStream.push('chunk3');
+    mockStream.push(null);
 
     await flushPromises();
     const result = await promise;
-    // Assert
-    expect(result.output).toEqual(Buffer.alloc(0));
-    expect(result.metadata).toEqual({
-      contentFile: '',
-      contentSize: 0,
-      createdAt: '',
-      numberOfElement: 0,
-      contentType: ''
+
+    assert.deepStrictEqual(result, {
+      output: Buffer.alloc(0),
+      metadata: {
+        contentFile: '',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 0,
+        contentType: ''
+      }
     });
   });
 
   it('should transform data from a stream and return metadata', async () => {
-    // Arrange
-    const transformer = new IsoTransformer(logger, testData.transformers.list[0], {});
-    const filename = 'test-file.csv';
-    const dataChunks = ['chunk1', 'chunk2', 'chunk3'];
-
-    // Mock Readable stream
+    const transformer = new IsoTransformer(asLogger(logger), testData.transformers.list[0], {});
     const mockStream = new Readable();
 
-    // Act
-    const promise = transformer.transform(mockStream, { source: 'test' }, filename);
-    mockStream.push(dataChunks[0]);
-    mockStream.push(dataChunks[1]);
-    mockStream.push(dataChunks[2]);
-    mockStream.push(null); // End the stream
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'test-file.csv');
+    mockStream.push('chunk1');
+    mockStream.push('chunk2');
+    mockStream.push('chunk3');
+    mockStream.push(null);
 
     await flushPromises();
     const result = await promise;
-    // Assert
-    expect(result.output).toEqual(Buffer.alloc(0));
-    expect(result.metadata).toEqual({
-      contentFile: '',
-      contentSize: 0,
-      createdAt: '',
-      numberOfElement: 0,
-      contentType: ''
+
+    assert.deepStrictEqual(result, {
+      output: Buffer.alloc(0),
+      metadata: {
+        contentFile: '',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 0,
+        contentType: ''
+      }
     });
   });
 
   it('should return manifest', () => {
-    expect(isoManifest.settings).toEqual({
+    assert.deepStrictEqual(isoManifest.settings, {
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',

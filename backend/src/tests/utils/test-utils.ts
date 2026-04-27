@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
 import Database from 'better-sqlite3';
+import type pino from 'pino';
+import type LoggerMock from '../__mocks__/service/logger/logger.mock';
 import { setImmediate } from 'node:timers';
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
 import path from 'node:path';
@@ -45,6 +46,11 @@ const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(setImmediate);
 
+/** Single escape hatch for the logger mock at constructor boundaries. */
+export function asLogger(mock: LoggerMock): pino.Logger {
+  return mock as unknown as pino.Logger;
+}
+
 /**
  * Injects exports into the require cache for a module.
  * The module is loaded first (if not already cached) to ensure it has a cache entry.
@@ -56,10 +62,12 @@ export const flushPromises = () => new Promise(setImmediate);
  * To update mocks between tests, mutate the object returned by this function in-place
  * rather than calling mockModule() again.
  */
-export function mockModule(req: NodeRequire, modulePath: string, exports: unknown): Record<string, unknown> {
+export function mockModule(req: NodeJS.Require, modulePath: string, exports: unknown): Record<string, unknown> {
   try {
     req(modulePath);
-  } catch {} // ensure it has a cache entry
+  } catch {
+    // ensure the module has a cache entry before we replace its exports
+  }
   const resolved = req.resolve(modulePath);
   req.cache[resolved]!.exports = exports;
   return exports as Record<string, unknown>;
@@ -69,7 +77,7 @@ export function mockModule(req: NodeRequire, modulePath: string, exports: unknow
  * Deletes a module from the require cache and reloads it.
  * Call after all mockModule() calls to load the SUT with mocked dependencies applied.
  */
-export function reloadModule<T>(req: NodeRequire, modulePath: string): T {
+export function reloadModule<T>(req: NodeJS.Require, modulePath: string): T {
   const resolved = req.resolve(modulePath);
   delete req.cache[resolved];
   return req(modulePath) as T;
