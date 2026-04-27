@@ -1,77 +1,131 @@
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import NorthService, { northManifestList, toNorthConnectorDTO, toNorthConnectorLightDTO } from './north.service';
-import pino from 'pino';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import LogRepository from '../repository/logs/log.repository';
-import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
-import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
-import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
+import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
 import testData from '../tests/utils/test-data';
-import CertificateRepository from '../repository/config/certificate.repository';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/north-metrics-repository.mock';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
+import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import OianalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
-import DataStreamEngine from '../engine/data-stream-engine';
+import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
-import TransformerService, { toTransformerDTO } from './transformer.service';
+import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
+import type pino from 'pino';
+import type NorthServiceType from './north.service';
+import type {
+  northManifestList as northManifestListType,
+  toNorthConnectorDTO as toNorthConnectorDTOType,
+  toNorthConnectorLightDTO as toNorthConnectorLightDTOType
+} from './north.service';
 import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
-import { buildNorth } from '../north/north-connector-factory';
 import { TransformerDTO } from '../../shared/model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import { encryptionService } from './encryption.service';
-import { toScanModeDTO } from './scan-mode.service';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
+import { toScanModeDTO } from './scan-mode.service';
+import type { toTransformerDTO as toTransformerDTOType } from './transformer.service';
 
-jest.mock('./encryption.service');
-jest.mock('./utils');
-jest.mock('./metrics/north-connector-metrics.service');
-jest.mock('node:fs/promises');
-jest.mock('../web-server/controllers/validators/joi.validator');
-jest.mock('../north/north-connector-factory');
-jest.mock('./encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
+const nodeRequire = createRequire(import.meta.url);
 
-const validator = new JoiValidator();
-const logger: pino.Logger = new PinoLogger();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const northMetricsRepository: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const logRepository: LogRepository = new LogRepositoryMock();
-const southItemGroupRepository: SouthItemGroupRepository = { findById: jest.fn() } as unknown as SouthItemGroupRepository;
-const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
-const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
-const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const engine: DataStreamEngine = new DataStreamEngineMock(logger);
-const transformerService: TransformerService = new TransformerServiceMock();
+let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let mockNorthConnectorFactory: Record<string, ReturnType<typeof mock.fn>>;
+let mockEncryptionService: Record<string, unknown>;
 
-const mockedNorth1 = new NorthConnectorMock(testData.north.list[0]);
+let NorthService: new (...args: Array<unknown>) => InstanceType<typeof NorthServiceType>;
+let northManifestList: typeof northManifestListType;
+let toNorthConnectorDTO: typeof toNorthConnectorDTOType;
+let toNorthConnectorLightDTO: typeof toNorthConnectorLightDTOType;
+let toTransformerDTO: typeof toTransformerDTOType;
+let buildNorth: ReturnType<typeof mock.fn>;
 
-let service: NorthService;
+before(() => {
+  mockUtils = {
+    checkScanMode: mock.fn(),
+    resolveBypassingExports: mock.fn()
+  };
+
+  buildNorth = mock.fn();
+  mockNorthConnectorFactory = { __esModule: true, buildNorth, createNorthOrchestrator: mock.fn() };
+
+  const encryptionServiceMock = new EncryptionServiceMock('', '');
+  mockEncryptionService = { __esModule: true, encryptionService: encryptionServiceMock };
+
+  mockModule(nodeRequire, './utils', mockUtils);
+  mockModule(nodeRequire, '../north/north-connector-factory', mockNorthConnectorFactory);
+  mockModule(nodeRequire, './encryption.service', mockEncryptionService);
+
+  const mod = reloadModule<{
+    default: new (...args: Array<unknown>) => InstanceType<typeof NorthServiceType>;
+    northManifestList: typeof northManifestListType;
+    toNorthConnectorDTO: typeof toNorthConnectorDTOType;
+    toNorthConnectorLightDTO: typeof toNorthConnectorLightDTOType;
+  }>(nodeRequire, './north.service');
+  NorthService = mod.default;
+  northManifestList = mod.northManifestList;
+  toNorthConnectorDTO = mod.toNorthConnectorDTO;
+  toNorthConnectorLightDTO = mod.toNorthConnectorLightDTO;
+
+  const transformerMod = reloadModule<{
+    toTransformerDTO: typeof toTransformerDTOType;
+  }>(nodeRequire, './transformer.service');
+  toTransformerDTO = transformerMod.toTransformerDTO;
+});
+
 describe('North Service', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let service: InstanceType<typeof NorthServiceType>;
+  let northConnectorRepository: NorthConnectorRepositoryMock;
+  let southConnectorRepository: SouthConnectorRepositoryMock;
+  let northMetricsRepository: NorthMetricsRepositoryMock;
+  let scanModeRepository: ScanModeRepositoryMock;
+  let logRepository: LogRepositoryMock;
+  let certificateRepository: CertificateRepositoryMock;
+  let oIAnalyticsRegistrationRepository: OianalyticsRegistrationRepositoryMock;
+  let oIAnalyticsMessageService: OIAnalyticsMessageServiceMock;
+  let engine: DataStreamEngineMock;
+  let transformerService: TransformerServiceMock;
+  let southItemGroupRepository: { findById: ReturnType<typeof mock.fn> };
+  let validator: { validate: ReturnType<typeof mock.fn> };
+  let logger: LoggerMock;
+  let mockedNorth1: NorthConnectorMock;
 
-    (buildNorth as jest.Mock).mockReturnValue(mockedNorth1);
-    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([]);
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[0]);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(
+  beforeEach(() => {
+    mock.timers.enable({
+      apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
+      now: new Date(testData.constants.dates.FAKE_NOW).getTime()
+    });
+
+    logger = new LoggerMock();
+    northConnectorRepository = new NorthConnectorRepositoryMock();
+    southConnectorRepository = new SouthConnectorRepositoryMock();
+    northMetricsRepository = new NorthMetricsRepositoryMock();
+    scanModeRepository = new ScanModeRepositoryMock();
+    logRepository = new LogRepositoryMock();
+    certificateRepository = new CertificateRepositoryMock();
+    oIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
+    oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
+    engine = new DataStreamEngineMock(logger as unknown as pino.Logger);
+    transformerService = new TransformerServiceMock();
+    southItemGroupRepository = { findById: mock.fn() };
+    validator = {
+      validate: mock.fn(async () => undefined),
+      validateSettings: mock.fn(async () => undefined)
+    };
+
+    mockedNorth1 = new NorthConnectorMock(testData.north.list[0]);
+    buildNorth.mock.resetCalls();
+    buildNorth.mock.mockImplementation(() => mockedNorth1);
+
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => []);
+    northConnectorRepository.findNorthById.mock.mockImplementation(() => testData.north.list[0]);
+    scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
+    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() =>
       testData.south.list.map(element => ({
         id: element.id,
         name: element.name,
@@ -80,8 +134,8 @@ describe('North Service', () => {
         enabled: element.enabled
       }))
     );
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (southConnectorRepository.findAllItemsForSouth as jest.Mock).mockReturnValue(testData.south.list[0].items);
+    southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0]);
+    southConnectorRepository.findAllItemsForSouth.mock.mockImplementation(() => testData.south.list[0].items);
 
     service = new NorthService(
       validator,
@@ -100,51 +154,52 @@ describe('North Service', () => {
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.restoreAll();
+    mock.timers.reset();
   });
 
   it('should retrieve a list of north manifest', () => {
     const list = service.listManifest();
-    expect(list).toBeDefined();
+    assert.ok(list !== undefined);
   });
 
   it('should retrieve a manifest', () => {
     const consoleManifest = service.getManifest('console');
-    expect(consoleManifest).toEqual(northManifestList[0]);
+    assert.deepStrictEqual(consoleManifest, northManifestList[0]);
   });
 
   it('should throw an error if manifest is not found', () => {
-    expect(() => service.getManifest('bad')).toThrow(new NotFoundError(`North manifest "bad" not found`));
+    assert.throws(() => service.getManifest('bad'), new NotFoundError(`North manifest "bad" not found`));
   });
 
   it('should get all north connector settings', () => {
     service.list();
-    expect(northConnectorRepository.findAllNorth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(northConnectorRepository.findAllNorth.mock.calls.length, 1);
   });
 
   it('should get a north connector', () => {
     service.findById(testData.north.list[0].id);
 
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(1);
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+    assert.strictEqual(northConnectorRepository.findNorthById.mock.calls.length, 1);
+    assert.deepStrictEqual(northConnectorRepository.findNorthById.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should throw an error when north connector does not exist', () => {
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(null);
+    northConnectorRepository.findNorthById.mock.mockImplementation(() => null);
 
-    expect(() => service.findById(testData.north.list[0].id)).toThrow(new NotFoundError(`North "${testData.north.list[0].id}" not found`));
+    assert.throws(() => service.findById(testData.north.list[0].id), new NotFoundError(`North "${testData.north.list[0].id}" not found`));
 
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledTimes(1);
-    expect(northConnectorRepository.findNorthById).toHaveBeenCalledWith(testData.north.list[0].id);
+    assert.strictEqual(northConnectorRepository.findNorthById.mock.calls.length, 1);
+    assert.deepStrictEqual(northConnectorRepository.findNorthById.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should create a north connector', async () => {
     await service.create(testData.north.command, null, 'userTest');
 
-    expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.createNorth).toHaveBeenCalledTimes(1);
-    expect(engine.startNorth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(northConnectorRepository.saveNorth.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.strictEqual(engine.createNorth.mock.calls.length, 1);
+    assert.strictEqual(engine.startNorth.mock.calls.length, 1);
   });
 
   it('should create a north connector with a transformer group', async () => {
@@ -152,7 +207,7 @@ describe('North Service', () => {
     if (command.transformers[0].source.type !== 'south') {
       throw new Error('Expected south source in test data');
     }
-    (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce({
+    southItemGroupRepository.findById.mock.mockImplementationOnce(() => ({
       id: 'groupId1',
       name: '',
       southId: command.transformers[0].source.southId,
@@ -165,7 +220,7 @@ describe('North Service', () => {
       createdAt: '',
       updatedAt: '',
       items: []
-    });
+    }));
     command.transformers = [
       {
         ...command.transformers[0],
@@ -179,69 +234,69 @@ describe('North Service', () => {
     ];
     await service.create(command, null, 'userTest');
 
-    const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.transformers[0].source.group).toEqual(
-      expect.objectContaining({
-        id: 'groupId1',
-        name: '',
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      })
-    );
+    const savedEntity = northConnectorRepository.saveNorth.mock.calls[0].arguments[0] as Record<string, unknown>;
+    const transformers = savedEntity.transformers as Array<{ source: { group: Record<string, unknown> } }>;
+    assert.ok(transformers[0].source.group.id === 'groupId1');
+    assert.ok(transformers[0].source.group.name === '');
+    assert.ok(transformers[0].source.group.createdBy === '');
+    assert.ok(transformers[0].source.group.updatedBy === '');
+    assert.ok(transformers[0].source.group.createdAt === '');
+    assert.ok(transformers[0].source.group.updatedAt === '');
   });
 
   it('should create a north connector and not start it if disabled', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
     command.enabled = false;
     await service.create(command, null, 'userTest');
-    expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.createNorth).toHaveBeenCalledTimes(1);
-    expect(engine.startNorth).not.toHaveBeenCalled();
+    assert.strictEqual(northConnectorRepository.saveNorth.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.strictEqual(engine.createNorth.mock.calls.length, 1);
+    assert.strictEqual(engine.startNorth.mock.calls.length, 0);
   });
 
   it('should not create a north connector if transformer is not found', async () => {
-    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
-    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
-      `Could not find OIBus transformer "${testData.transformers.list[0].id}"`
+    transformerService.findAll.mock.mockImplementationOnce(() => []);
+    await assert.rejects(
+      () => service.create(testData.north.command, null, 'userTest'),
+      new Error(`Could not find OIBus transformer "${testData.transformers.list[0].id}"`)
     );
   });
 
   it('should not create a north connector if south is not found', async () => {
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
-    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
-      `Could not find South connector "${testData.south.list[0].id}"`
+    southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => null);
+    await assert.rejects(
+      () => service.create(testData.north.command, null, 'userTest'),
+      new Error(`Could not find South connector "${testData.south.list[0].id}"`)
     );
   });
 
   it('should not create a north connector with duplicate name', async () => {
-    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'existing-id', name: testData.north.command.name }]);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [{ id: 'existing-id', name: testData.north.command.name }]);
 
-    await expect(service.create(testData.north.command, null, 'userTest')).rejects.toThrow(
+    await assert.rejects(
+      () => service.create(testData.north.command, null, 'userTest'),
       new OIBusValidationError(`North connector name "${testData.north.command.name}" already exists`)
     );
   });
 
   it('should update a north connector', async () => {
-    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
-    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
+    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
     await service.update(testData.north.list[0].id, testData.north.command, 'userTest');
 
-    expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadNorth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(northConnectorRepository.saveNorth.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.strictEqual(engine.reloadNorth.mock.calls.length, 1);
   });
 
   it('should update a north connector with a transformer group', async () => {
-    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
-    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
+    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
     if (command.transformers[0].source.type !== 'south') {
       throw new Error('Expected south source in test data');
     }
-    (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce({
+    southItemGroupRepository.findById.mock.mockImplementationOnce(() => ({
       id: 'groupId1',
       name: '',
       southId: command.transformers[0].source.southId,
@@ -254,7 +309,7 @@ describe('North Service', () => {
       createdAt: '',
       updatedAt: '',
       items: []
-    });
+    }));
     command.transformers = [
       {
         ...command.transformers[0],
@@ -268,38 +323,36 @@ describe('North Service', () => {
     ];
     await service.update(testData.north.list[0].id, command, 'userTest');
 
-    const savedEntity = (northConnectorRepository.saveNorth as jest.Mock).mock.calls[0][0];
-    expect(savedEntity.transformers[0].source.group).toEqual(
-      expect.objectContaining({
-        id: 'groupId1',
-        name: '',
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      })
-    );
+    const savedEntity = northConnectorRepository.saveNorth.mock.calls[0].arguments[0] as Record<string, unknown>;
+    const transformers = savedEntity.transformers as Array<{ source: { group: Record<string, unknown> } }>;
+    assert.ok(transformers[0].source.group.id === 'groupId1');
+    assert.ok(transformers[0].source.group.name === '');
+    assert.ok(transformers[0].source.group.createdBy === '');
+    assert.ok(transformers[0].source.group.updatedBy === '');
+    assert.ok(transformers[0].source.group.createdAt === '');
+    assert.ok(transformers[0].source.group.updatedAt === '');
   });
 
   it('should update a north connector with a new unique name', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'Updated North Name';
-    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue(testData.north.list);
-    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
+    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
 
     await service.update(testData.north.list[0].id, command, 'userTest');
 
-    expect(northConnectorRepository.saveNorth).toHaveBeenCalledTimes(1);
-    expect(engine.reloadNorth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(northConnectorRepository.saveNorth.mock.calls.length, 1);
+    assert.strictEqual(engine.reloadNorth.mock.calls.length, 1);
   });
 
   it('should not update a north connector with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'Duplicate Name';
-    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
-    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
+    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
 
-    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
+    await assert.rejects(
+      () => service.update(testData.north.list[0].id, command, 'userTest'),
       new OIBusValidationError(`North connector name "Duplicate Name" already exists`)
     );
   });
@@ -307,71 +360,73 @@ describe('North Service', () => {
   it('should not update a north connector if transformer not found', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'New Name';
-    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
+    transformerService.findAll.mock.mockImplementationOnce(() => []);
 
-    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
-      `Could not find OIBus transformer "${testData.transformers.list[0].id}"`
+    await assert.rejects(
+      () => service.update(testData.north.list[0].id, command, 'userTest'),
+      new Error(`Could not find OIBus transformer "${testData.transformers.list[0].id}"`)
     );
   });
 
   it('should not update a north connector if south not found', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'New Name';
-    (northConnectorRepository.findAllNorth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
-    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(null);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
+    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
+    southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => null);
 
-    await expect(service.update(testData.north.list[0].id, command, 'userTest')).rejects.toThrow(
-      `Could not find South connector "${testData.south.list[0].id}"`
+    await assert.rejects(
+      () => service.update(testData.north.list[0].id, command, 'userTest'),
+      new Error(`Could not find South connector "${testData.south.list[0].id}"`)
     );
   });
 
   it('should delete a north connector', async () => {
     await service.delete(testData.north.list[0].id);
 
-    expect(engine.deleteNorth).toHaveBeenCalledWith(testData.north.list[0]);
-    expect(northConnectorRepository.deleteNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(logRepository.deleteLogsByScopeId).toHaveBeenCalledWith('north', testData.north.list[0].id);
-    expect(northMetricsRepository.removeMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(engine.deleteNorth.mock.calls[0].arguments, [testData.north.list[0]]);
+    assert.deepStrictEqual(northConnectorRepository.deleteNorth.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.deepStrictEqual(logRepository.deleteLogsByScopeId.mock.calls[0].arguments, ['north', testData.north.list[0].id]);
+    assert.deepStrictEqual(northMetricsRepository.removeMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should start north', async () => {
     await service.start(testData.north.list[0].id);
-    expect(northConnectorRepository.startNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(engine.startNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(northConnectorRepository.startNorth.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.deepStrictEqual(engine.startNorth.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should stop north', async () => {
     await service.stop(testData.north.list[0].id);
-    expect(northConnectorRepository.stopNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(engine.stopNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(northConnectorRepository.stopNorth.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.deepStrictEqual(engine.stopNorth.mock.calls[0].arguments, [testData.north.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should get a north stream for metrics', () => {
     service.getNorthDataStream(testData.north.list[0].id);
-    expect(engine.getNorthSSE).toHaveBeenCalledWith(testData.north.list[0].id);
+    assert.deepStrictEqual(engine.getNorthSSE.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should get a north metric', () => {
     service.getNorthMetric(testData.north.list[0].id);
-    expect(engine.getNorthMetrics).toHaveBeenCalledWith(testData.north.list[0].id);
+    assert.deepStrictEqual(engine.getNorthMetrics.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should test a north connector in creation mode', async () => {
     await service.testNorth('create', testData.north.command.type, testData.north.command.settings);
 
-    expect(buildNorth).toHaveBeenCalledTimes(1);
-    expect(mockedNorth1.testConnection).toHaveBeenCalled();
+    assert.strictEqual(buildNorth.mock.calls.length, 1);
+    assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 1);
   });
 
   it('should test a north connector in edit mode', async () => {
     await service.testNorth(testData.north.list[0].id, testData.north.command.type, testData.north.command.settings);
 
-    expect(buildNorth).toHaveBeenCalledTimes(1);
-    expect(mockedNorth1.testConnection).toHaveBeenCalled();
+    assert.strictEqual(buildNorth.mock.calls.length, 1);
+    assert.strictEqual(mockedNorth1.testConnection.mock.calls.length, 1);
   });
 
   it('should add or edit transformer', () => {
@@ -383,27 +438,30 @@ describe('North Service', () => {
     } as NorthTransformerWithOptions;
     service.addOrEditTransformer(testData.north.list[0].id, transformerWithOptions);
 
-    expect(northConnectorRepository.addOrEditTransformer).toHaveBeenCalledWith(testData.north.list[0].id, transformerWithOptions);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.updateNorthConfiguration).toHaveBeenCalledWith(testData.north.list[0].id);
+    assert.deepStrictEqual(northConnectorRepository.addOrEditTransformer.mock.calls[0].arguments, [
+      testData.north.list[0].id,
+      transformerWithOptions
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should remove transformer', () => {
     service.removeTransformer(testData.north.list[0].id, testData.north.list[0].transformers[0].id);
 
-    expect(northConnectorRepository.removeTransformer).toHaveBeenCalledWith(testData.north.list[0].transformers[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.updateNorthConfiguration).toHaveBeenCalledWith(testData.north.list[0].id);
+    assert.deepStrictEqual(northConnectorRepository.removeTransformer.mock.calls[0].arguments, [testData.north.list[0].transformers[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.updateNorthConfiguration.mock.calls[0].arguments, [testData.north.list[0].id]);
   });
 
   it('should execute setpoint', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
-    (northMock.isEnabled as jest.Mock).mockReturnValueOnce(true);
-    (engine.getNorth as jest.Mock).mockReturnValue({ north: northMock });
-    const callback = jest.fn();
+    northMock.isEnabled.mock.mockImplementationOnce(() => true);
+    engine.getNorth.mock.mockImplementation(() => ({ north: northMock }));
+    const callback = mock.fn();
     const commandContent = [{ reference: 'reference', value: '123456' }];
     await service.executeSetpoint('northId', commandContent, callback);
-    expect(northMock.cacheContent).toHaveBeenCalledWith(
+    assert.deepStrictEqual(northMock.cacheContent.mock.calls[0].arguments, [
       {
         type: 'setpoint',
         content: [
@@ -414,46 +472,49 @@ describe('North Service', () => {
         ]
       },
       { source: 'oianalytics-setpoints' }
-    );
-    expect(callback).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(callback.mock.calls[0].arguments, [
       `Setpoint ${JSON.stringify([{ reference: 'reference', value: '123456' }])} properly sent into the cache of northId`
-    );
+    ]);
   });
 
   it('should not execute setpoint if north disabled', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
-    (northMock.isEnabled as jest.Mock).mockReturnValueOnce(false);
-    (engine.getNorth as jest.Mock).mockReturnValue({ north: northMock });
-    const callback = jest.fn();
-    await expect(service.executeSetpoint('northId', [{ reference: 'reference', value: '123456' }], callback)).rejects.toThrow(
-      `North connector "northId" disabled`
+    northMock.isEnabled.mock.mockImplementationOnce(() => false);
+    engine.getNorth.mock.mockImplementation(() => ({ north: northMock }));
+    const callback = mock.fn();
+    await assert.rejects(
+      () => service.executeSetpoint('northId', [{ reference: 'reference', value: '123456' }], callback),
+      new Error(`North connector "northId" disabled`)
     );
-    expect(callback).not.toHaveBeenCalled();
+    assert.strictEqual(callback.mock.calls.length, 0);
   });
 
   it('should retrieve secrets from north', () => {
     const manifest = JSON.parse(JSON.stringify(testData.north.manifest));
     manifest.id = testData.north.list[0].type;
-    expect(service.retrieveSecretsFromNorth('northId', manifest)).toEqual(testData.north.list[0]);
+    assert.deepStrictEqual(service.retrieveSecretsFromNorth('northId', manifest), testData.north.list[0]);
   });
 
   it('should throw error if connector not proper type when retrieving secrets', () => {
-    (northConnectorRepository.findNorthById as jest.Mock).mockReturnValueOnce(testData.north.list[0]);
-    expect(() => service.retrieveSecretsFromNorth('northId', testData.north.manifest)).toThrow(
-      `North connector "northId" (type "${testData.north.list[0].type}") must be of the type "${testData.north.manifest.id}"`
+    northConnectorRepository.findNorthById.mock.mockImplementationOnce(() => testData.north.list[0]);
+    assert.throws(
+      () => service.retrieveSecretsFromNorth('northId', testData.north.manifest),
+      new Error(`North connector "northId" (type "${testData.north.list[0].type}") must be of the type "${testData.north.manifest.id}"`)
     );
   });
 
   it('should properly convert to DTOs', () => {
     const northEntity = testData.north.list[0];
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
-    expect(toNorthConnectorDTO(northEntity, getUserInfo)).toEqual({
+    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
+    assert.deepStrictEqual(toNorthConnectorDTO(northEntity, getUserInfo), {
       id: northEntity.id,
       name: northEntity.name,
       type: northEntity.type,
       description: northEntity.description,
       enabled: northEntity.enabled,
-      settings: encryptionService.filterSecrets(
+      settings: encryptionMock.filterSecrets(
         northEntity.settings,
         northManifestList.find(element => element.id === northEntity.type)!.settings
       ),
@@ -524,7 +585,7 @@ describe('North Service', () => {
       createdAt: northEntity.createdAt,
       updatedAt: northEntity.updatedAt
     });
-    expect(toNorthConnectorLightDTO(northEntity, getUserInfo)).toEqual({
+    assert.deepStrictEqual(toNorthConnectorLightDTO(northEntity, getUserInfo), {
       id: northEntity.id,
       name: northEntity.name,
       type: northEntity.type,
@@ -566,11 +627,11 @@ describe('North Service', () => {
       }
     ];
     const dto = toNorthConnectorDTO(northEntity, id => ({ id, friendlyName: id }));
-    expect(dto.transformers[0].source.type).toEqual('south');
+    assert.strictEqual(dto.transformers[0].source.type, 'south');
     if (dto.transformers[0].source.type !== 'south') {
       throw new Error('Expected south source');
     }
-    expect(dto.transformers[0].source.group).toEqual({
+    assert.deepStrictEqual(dto.transformers[0].source.group, {
       id: group.id,
       name: group.name
     });
