@@ -2,7 +2,7 @@ import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { ReadStream } from 'node:fs';
 import zlib from 'node:zlib';
-import FormData from 'form-data';
+import { Readable } from 'node:stream';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
 import { streamToString } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
@@ -13,6 +13,16 @@ import OIAnalyticsRegistrationRepository from '../../repository/config/oianalyti
 import { OIBusError } from '../../model/engine.model';
 import CacheService from '../../service/cache/cache.service';
 import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
+
+async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>) {
+  yield Buffer.from(
+    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: application/octet-stream\r\n\r\n`
+  );
+  for await (const chunk of dataStream) {
+    yield chunk;
+  }
+  yield Buffer.from(`\r\n--${boundary}--\r\n`);
+}
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -97,17 +107,11 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   }
 
   async handleFile(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
-    const readStream =
-      this.connector.settings.compress && !cacheMetadata.contentFile.endsWith('.gz')
-        ? fileStream.pipe(zlib.createGzip({ level: 9 }))
-        : fileStream;
-    const body = new FormData();
-    body.append('file', readStream, {
-      filename:
-        this.connector.settings.compress && !cacheMetadata.contentFile.endsWith('.gz')
-          ? `${cacheMetadata.contentFile}.gz`
-          : cacheMetadata.contentFile
-    });
+    const compress = this.connector.settings.compress && !cacheMetadata.contentFile.endsWith('.gz');
+    const readStream = compress ? fileStream.pipe(zlib.createGzip({ level: 9 })) : fileStream;
+    const filename = compress ? `${cacheMetadata.contentFile}.gz` : cacheMetadata.contentFile;
+
+    const boundary = `OIBusBoundary${Date.now()}`;
 
     const registrationSettings = this.oIAnalyticsRegistrationRepository.get()!;
     const httpOptions = await buildHttpOptions(
@@ -123,9 +127,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
-    httpOptions.body = body;
+    httpOptions.body = Readable.from(multipartStream(boundary, filename, readStream));
     httpOptions.query = { dataSourceId: this.connector.name };
-    httpOptions.headers = { ...httpOptions.headers, ...body.getHeaders() };
+    httpOptions.headers = { ...httpOptions.headers, 'content-type': `multipart/form-data; boundary=${boundary}` };
     let response: ReqResponse;
     try {
       response = await HTTPRequest(url, httpOptions);
