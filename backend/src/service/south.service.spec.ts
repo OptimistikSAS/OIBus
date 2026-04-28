@@ -1,82 +1,142 @@
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import pino from 'pino';
-import SouthService, {
-  copySouthItemCommandToSouthItemEntity,
-  southManifestList,
-  toSouthConnectorDTO,
-  toSouthConnectorItemDTO,
-  toSouthConnectorLightDTO,
-  toSouthItemGroupDTO
-} from './south.service';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import LogRepository from '../repository/logs/log.repository';
-import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
-import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
-import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
-import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
 import testData from '../tests/utils/test-data';
-import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
+import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
+import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
+import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/south-metrics-repository.mock';
+import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import OIAnalyticsRegistrationRepositoryMock from '../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import CertificateRepositoryMock from '../tests/__mocks__/repository/config/certificate-repository.mock';
-import DataStreamEngine from '../engine/data-stream-engine';
+import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
-import { buildSouth } from '../south/south-connector-factory';
-import { NotFoundError, OIBusValidationError } from '../model/types';
-import csv from 'papaparse';
-import { checkGroups, stringToBoolean } from './utils';
+import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import type pino from 'pino';
+import type SouthServiceType from './south.service';
+import type {
+  southManifestList as southManifestListType,
+  toSouthConnectorDTO as toSouthConnectorDTOType,
+  toSouthConnectorItemDTO as toSouthConnectorItemDTOType,
+  toSouthConnectorLightDTO as toSouthConnectorLightDTOType,
+  toSouthItemGroupDTO as toSouthItemGroupDTOType,
+  copySouthItemCommandToSouthItemEntity as copySouthItemCommandToSouthItemEntityType
+} from './south.service';
 import { SouthConnectorEntityLight, SouthItemGroupEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
 import { SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
-import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
-import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
+import { NotFoundError, OIBusValidationError } from '../model/types';
 import { toScanModeDTO } from './scan-mode.service';
 
-jest.mock('../south/south-opcua/south-opcua');
-jest.mock('./metrics/south-connector-metrics.service');
-jest.mock('node:fs/promises');
-jest.mock('papaparse');
-jest.mock('./utils');
-jest.mock('../south/south-connector-factory');
-jest.mock('../web-server/controllers/validators/joi.validator');
-jest.mock('./encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
+const nodeRequire = createRequire(import.meta.url);
 
-const validator = new JoiValidator();
-const logger: pino.Logger = new PinoLogger();
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const logRepository: LogRepository = new LogRepositoryMock();
-const southMetricsRepository: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
-const certificateRepository: CertificateRepository = new CertificateRepositoryMock();
-const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const engine: DataStreamEngine = new DataStreamEngineMock(logger);
-const southItemGroupRepository: SouthItemGroupRepository = new SouthItemGroupRepositoryMock();
+let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let mockBuildSouth: ReturnType<typeof mock.fn>;
+let mockSouthConnectorFactory: Record<string, unknown>;
 
-const mockedSouth1 = new SouthConnectorMock(testData.south.list[0]);
-let service: SouthService;
+let SouthService: new (...args: Array<unknown>) => InstanceType<typeof SouthServiceType>;
+let southManifestList: typeof southManifestListType;
+let toSouthConnectorDTO: typeof toSouthConnectorDTOType;
+let toSouthConnectorItemDTO: typeof toSouthConnectorItemDTOType;
+let toSouthConnectorLightDTO: typeof toSouthConnectorLightDTOType;
+let toSouthItemGroupDTO: typeof toSouthItemGroupDTOType;
+let copySouthItemCommandToSouthItemEntity: typeof copySouthItemCommandToSouthItemEntityType;
+
+before(() => {
+  mockUtils = {
+    checkScanMode: mock.fn(),
+    checkGroups: mock.fn(),
+    stringToBoolean: mock.fn(() => true)
+  };
+
+  mockBuildSouth = mock.fn();
+  mockSouthConnectorFactory = { __esModule: true, buildSouth: mockBuildSouth };
+
+  const encryptionServiceMock = new EncryptionServiceMock('', '');
+
+  mockModule(nodeRequire, './utils', mockUtils);
+  mockModule(nodeRequire, '../service/utils', mockUtils);
+  mockModule(nodeRequire, '../south/south-connector-factory', mockSouthConnectorFactory);
+  mockModule(nodeRequire, './encryption.service', { encryptionService: encryptionServiceMock });
+  mockModule(nodeRequire, '../web-server/controllers/validators/joi.validator', {
+    default: class {
+      validateSettings = mock.fn(async () => undefined);
+      validate = mock.fn(async () => undefined);
+    }
+  });
+  mockModule(nodeRequire, './metrics/south-connector-metrics.service', { default: class {} });
+  mockModule(nodeRequire, 'papaparse', { parse: mock.fn(() => ({ meta: { delimiter: ',' }, data: [] })) });
+
+  const mod = reloadModule<{
+    default: new (...args: Array<unknown>) => InstanceType<typeof SouthServiceType>;
+    southManifestList: typeof southManifestListType;
+    toSouthConnectorDTO: typeof toSouthConnectorDTOType;
+    toSouthConnectorItemDTO: typeof toSouthConnectorItemDTOType;
+    toSouthConnectorLightDTO: typeof toSouthConnectorLightDTOType;
+    toSouthItemGroupDTO: typeof toSouthItemGroupDTOType;
+    copySouthItemCommandToSouthItemEntity: typeof copySouthItemCommandToSouthItemEntityType;
+  }>(nodeRequire, './south.service');
+
+  SouthService = mod.default;
+  southManifestList = mod.southManifestList;
+  toSouthConnectorDTO = mod.toSouthConnectorDTO;
+  toSouthConnectorItemDTO = mod.toSouthConnectorItemDTO;
+  toSouthConnectorLightDTO = mod.toSouthConnectorLightDTO;
+  toSouthItemGroupDTO = mod.toSouthItemGroupDTO;
+  copySouthItemCommandToSouthItemEntity = mod.copySouthItemCommandToSouthItemEntity;
+});
 
 describe('South Service', () => {
+  let service: InstanceType<typeof SouthServiceType>;
+  let southConnectorRepository: SouthConnectorRepositoryMock;
+  let logRepository: LogRepositoryMock;
+  let southMetricsRepository: SouthMetricsRepositoryMock;
+  let southCacheRepository: SouthCacheRepositoryMock;
+  let scanModeRepository: ScanModeRepositoryMock;
+  let oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepositoryMock;
+  let certificateRepository: CertificateRepositoryMock;
+  let oIAnalyticsMessageService: OIAnalyticsMessageServiceMock;
+  let engine: DataStreamEngineMock;
+  let southItemGroupRepository: SouthItemGroupRepositoryMock;
+  let mockedSouth1: SouthConnectorMock;
+  let logger: PinoLogger;
+  let validator: { validateSettings: ReturnType<typeof mock.fn>; validate: ReturnType<typeof mock.fn> };
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    (buildSouth as jest.Mock).mockReturnValue(mockedSouth1);
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([]);
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (southConnectorRepository.findItemById as jest.Mock).mockReturnValue(testData.south.list[0].items[0]);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (stringToBoolean as jest.Mock).mockReturnValue(true);
+    logger = new PinoLogger();
+    southConnectorRepository = new SouthConnectorRepositoryMock();
+    logRepository = new LogRepositoryMock();
+    southMetricsRepository = new SouthMetricsRepositoryMock();
+    southCacheRepository = new SouthCacheRepositoryMock();
+    scanModeRepository = new ScanModeRepositoryMock();
+    oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
+    certificateRepository = new CertificateRepositoryMock();
+    oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
+    engine = new DataStreamEngineMock(logger as unknown as pino.Logger);
+    southItemGroupRepository = new SouthItemGroupRepositoryMock();
+
+    validator = {
+      validateSettings: mock.fn(async () => undefined),
+      validate: mock.fn(async () => undefined)
+    };
+
+    mockedSouth1 = new SouthConnectorMock(testData.south.list[0]);
+    mockBuildSouth.mock.resetCalls();
+    mockBuildSouth.mock.mockImplementation(() => mockedSouth1);
+    mockUtils.stringToBoolean.mock.resetCalls();
+    mockUtils.stringToBoolean.mock.mockImplementation(() => true);
+    mockUtils.checkScanMode.mock.resetCalls();
+    mockUtils.checkGroups.mock.resetCalls();
+
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => []);
+    southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0]);
+    southConnectorRepository.findItemById.mock.mockImplementation(() => testData.south.list[0].items[0]);
+    scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
 
     service = new SouthService(
       validator,
@@ -93,55 +153,57 @@ describe('South Service', () => {
     );
   });
 
-  it('should retrieve a list of north manifest', () => {
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  it('should retrieve a list of south manifest', () => {
     const list = service.listManifest();
-    expect(list).toBeDefined();
+    assert.ok(list !== undefined);
   });
 
   it('should retrieve a manifest', () => {
     const consoleManifest = service.getManifest('folder-scanner');
-    expect(consoleManifest).toEqual(southManifestList[0]);
+    assert.deepStrictEqual(consoleManifest, southManifestList[0]);
   });
 
   it('should throw an error if manifest is not found', () => {
-    expect(() => service.getManifest('bad')).toThrow(new NotFoundError(`South manifest "bad" not found`));
+    assert.throws(() => service.getManifest('bad'), new NotFoundError(`South manifest "bad" not found`));
   });
 
   it('should get all south connector settings', () => {
     service.list();
-    expect(southConnectorRepository.findAllSouth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.findAllSouth.mock.calls.length, 1);
   });
 
   it('should get a south connector', () => {
     service.findById(testData.south.list[0].id);
-
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledTimes(1);
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
+    assert.strictEqual(southConnectorRepository.findSouthById.mock.calls.length, 1);
+    assert.deepStrictEqual(southConnectorRepository.findSouthById.mock.calls[0].arguments, [testData.south.list[0].id]);
   });
 
   it('should throw an error when south connector does not exist', () => {
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(null);
+    southConnectorRepository.findSouthById.mock.mockImplementation(() => null);
 
-    expect(() => service.findById(testData.south.list[0].id)).toThrow(new NotFoundError(`South "${testData.south.list[0].id}" not found`));
-
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledTimes(1);
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
+    assert.throws(() => service.findById(testData.south.list[0].id), new NotFoundError(`South "${testData.south.list[0].id}" not found`));
+    assert.strictEqual(southConnectorRepository.findSouthById.mock.calls.length, 1);
+    assert.deepStrictEqual(southConnectorRepository.findSouthById.mock.calls[0].arguments, [testData.south.list[0].id]);
   });
 
   it('should create a south connector', async () => {
-    service.retrieveSecretsFromSouth = jest.fn().mockReturnValue(testData.south.list[0]);
+    service.retrieveSecretsFromSouth = mock.fn(() => testData.south.list[0]);
 
     await service.create(testData.south.command, testData.south.list[0].id, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(service.retrieveSecretsFromSouth).toHaveBeenCalledTimes(1);
-    expect(engine.createSouth).toHaveBeenCalledTimes(1);
-    expect(engine.startSouth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.strictEqual((service.retrieveSecretsFromSouth as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(engine.createSouth.mock.calls.length, 1);
+    assert.strictEqual(engine.startSouth.mock.calls.length, 1);
   });
 
   it('should create a south connector with items having groupName and create group when it does not exist', async () => {
-    service.retrieveSecretsFromSouth = jest.fn();
+    service.retrieveSecretsFromSouth = mock.fn(() => null);
 
     const newGroup: SouthItemGroupEntity = {
       id: 'newGroupId',
@@ -158,10 +220,9 @@ describe('South Service', () => {
       updatedAt: ''
     };
 
-    (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
-    (southItemGroupRepository.create as jest.Mock).mockReturnValue(newGroup);
-    // Mock findById to return the group when called with the new group's ID
-    (southItemGroupRepository.findById as jest.Mock).mockImplementation((id: string) => {
+    southItemGroupRepository.findByNameAndSouthId.mock.mockImplementation(() => null);
+    southItemGroupRepository.create.mock.mockImplementation(() => newGroup);
+    southItemGroupRepository.findById.mock.mockImplementation((id: string) => {
       if (id === 'newGroupId') {
         return newGroup;
       }
@@ -169,8 +230,7 @@ describe('South Service', () => {
     });
 
     let callCount = 0;
-    (southConnectorRepository.saveSouth as jest.Mock).mockImplementation((south: Record<string, unknown>) => {
-      // Set the ID on first save
+    southConnectorRepository.saveSouth.mock.mockImplementation((south: Record<string, unknown>) => {
       if (callCount === 0 && !south.id) {
         south.id = 'newSouthId';
       }
@@ -184,11 +244,11 @@ describe('South Service', () => {
 
     await service.create(command, null, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
   });
 
   it('should create a south connector with items having groupName and use existing group when it already exists', async () => {
-    service.retrieveSecretsFromSouth = jest.fn();
+    service.retrieveSecretsFromSouth = mock.fn(() => null);
 
     const existingGroup: SouthItemGroupEntity = {
       id: 'existingGroupId',
@@ -206,8 +266,7 @@ describe('South Service', () => {
     };
 
     let callCount = 0;
-    (southConnectorRepository.saveSouth as jest.Mock).mockImplementation((south: Record<string, unknown>) => {
-      // Set the ID on first save
+    southConnectorRepository.saveSouth.mock.mockImplementation((south: Record<string, unknown>) => {
       if (callCount === 0 && !south.id) {
         south.id = 'newSouthId';
       }
@@ -215,9 +274,8 @@ describe('South Service', () => {
       return south;
     });
 
-    // Mock to return existing group when searched
-    (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(existingGroup);
-    (southItemGroupRepository.findById as jest.Mock).mockReturnValue(existingGroup);
+    southItemGroupRepository.findByNameAndSouthId.mock.mockImplementation(() => existingGroup);
+    southItemGroupRepository.findById.mock.mockImplementation(() => existingGroup);
 
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.items[0].groupName = 'Existing Group';
@@ -225,97 +283,97 @@ describe('South Service', () => {
 
     await service.create(command, null, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
-    // Group should NOT be created since it already exists
-    expect(southItemGroupRepository.create).not.toHaveBeenCalled();
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
+    assert.strictEqual(southItemGroupRepository.create.mock.calls.length, 0);
   });
 
   it('should create a south connector with retrieveSecretsFromSouth when item has no id', async () => {
-    service.retrieveSecretsFromSouth = jest.fn().mockReturnValue(testData.south.list[0]);
+    service.retrieveSecretsFromSouth = mock.fn(() => testData.south.list[0]);
 
     const command = JSON.parse(JSON.stringify(testData.south.command));
-    // Set item id to null to test the branch where command.id is falsy
     command.items[0].id = null;
 
     await service.create(command, testData.south.list[0].id, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
-    expect(service.retrieveSecretsFromSouth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
+    assert.strictEqual((service.retrieveSecretsFromSouth as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should not create south connector if disabled', async () => {
-    service.retrieveSecretsFromSouth = jest.fn();
+    service.retrieveSecretsFromSouth = mock.fn(() => null);
 
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.enabled = false;
     await service.create(command, null, 'userTest');
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.createSouth).toHaveBeenCalledTimes(1);
-    expect(engine.startSouth).not.toHaveBeenCalled();
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.strictEqual(engine.createSouth.mock.calls.length, 1);
+    assert.strictEqual(engine.startSouth.mock.calls.length, 0);
   });
 
   it('should not create a south connector with duplicate name', async () => {
-    service.retrieveSecretsFromSouth = jest.fn();
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([{ id: 'existing-id', name: testData.south.command.name }]);
+    service.retrieveSecretsFromSouth = mock.fn(() => null);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => [{ id: 'existing-id', name: testData.south.command.name }]);
 
-    await expect(service.create(testData.south.command, null, 'userTest')).rejects.toThrow(
+    await assert.rejects(
+      async () => service.create(testData.south.command, null, 'userTest'),
       new OIBusValidationError(`South connector name "${testData.south.command.name}" already exists`)
     );
   });
 
   it('should update a south connector', async () => {
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
     await service.update(testData.south.list[0].id, testData.south.command, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.strictEqual(engine.reloadSouth.mock.calls.length, 1);
   });
 
   it('should update a south connector with a new unique name', async () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.name = 'Updated South Name';
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
 
     await service.update(testData.south.list[0].id, command, 'userTest');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
+    assert.strictEqual(engine.reloadSouth.mock.calls.length, 1);
   });
 
   it('should update a south connector and set createdBy on new items', async () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.items[0].id = '';
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
 
     await service.update(testData.south.list[0].id, command, 'user1');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
   });
 
   it('should update a south connector and not set createdBy on existing items', async () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.items[0].id = testData.south.list[0].items[0].id;
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue(testData.south.list);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => testData.south.list);
 
     await service.update(testData.south.list[0].id, command, 'user1');
 
-    expect(southConnectorRepository.saveSouth).toHaveBeenCalledTimes(1);
-    const savedEntity = (southConnectorRepository.saveSouth as jest.Mock).mock.calls[0][0];
-    const existingItem = savedEntity.items.find(
-      (item: { id: string; updatedBy?: string }) => item.id === testData.south.list[0].items[0].id
-    );
-    expect(existingItem).toBeDefined();
-    expect(existingItem!.updatedBy).toBe('user1');
+    assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
+    const savedEntity = southConnectorRepository.saveSouth.mock.calls[0].arguments[0] as {
+      items: Array<{ id: string; updatedBy?: string }>;
+    };
+    const existingItem = savedEntity.items.find(item => item.id === testData.south.list[0].items[0].id);
+    assert.ok(existingItem !== undefined);
+    assert.strictEqual(existingItem!.updatedBy, 'user1');
   });
 
   it('should not update a south connector with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.name = 'Duplicate Name';
-    (southConnectorRepository.findAllSouth as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
 
-    await expect(service.update(testData.south.list[0].id, command, 'userTest')).rejects.toThrow(
+    await assert.rejects(
+      async () => service.update(testData.south.list[0].id, command, 'userTest'),
       new OIBusValidationError(`South connector name "Duplicate Name" already exists`)
     );
   });
@@ -323,46 +381,46 @@ describe('South Service', () => {
   it('should delete a south connector', async () => {
     await service.delete(testData.south.list[0].id);
 
-    expect(engine.deleteSouth).toHaveBeenCalledWith(testData.south.list[0]);
-    expect(southConnectorRepository.deleteSouth).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(logRepository.deleteLogsByScopeId).toHaveBeenCalledWith('south', testData.south.list[0].id);
-    expect(southMetricsRepository.removeMetrics).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(engine.deleteSouth.mock.calls[0].arguments, [testData.south.list[0]]);
+    assert.deepStrictEqual(southConnectorRepository.deleteSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.deepStrictEqual(logRepository.deleteLogsByScopeId.mock.calls[0].arguments, ['south', testData.south.list[0].id]);
+    assert.deepStrictEqual(southMetricsRepository.removeMetrics.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should start south', async () => {
     await service.start(testData.south.list[0].id);
 
-    expect(southConnectorRepository.start).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(engine.startSouth).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(southConnectorRepository.start.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.deepStrictEqual(engine.startSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should stop south', async () => {
     await service.stop(testData.south.list[0].id);
 
-    expect(southConnectorRepository.stop).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(engine.stopSouth).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(southConnectorRepository.stop.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.deepStrictEqual(engine.stopSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should get a south data stream for metrics', () => {
     service.getSouthDataStream(testData.south.list[0].id);
-    expect(engine.getSouthSSE).toHaveBeenCalledWith(testData.south.list[0].id);
+    assert.deepStrictEqual(engine.getSouthSSE.mock.calls[0].arguments, [testData.south.list[0].id]);
   });
 
   it('should test a south connector in creation mode', async () => {
     await service.testSouth('create', testData.south.command.type, testData.south.command.settings);
 
-    expect(buildSouth).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.testConnection).toHaveBeenCalled();
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
   });
 
   it('should test a south connector in edit mode', async () => {
     await service.testSouth(testData.south.list[0].id, testData.south.command.type, testData.south.command.settings);
 
-    expect(buildSouth).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.testConnection).toHaveBeenCalled();
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.testConnection.mock.calls.length, 1);
   });
 
   it('should test item in creation mode', async () => {
@@ -375,8 +433,8 @@ describe('South Service', () => {
       testData.south.itemTestingSettings
     );
 
-    expect(buildSouth).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.testItem).toHaveBeenCalled();
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
   });
 
   it('should test item in edit mode', async () => {
@@ -389,38 +447,42 @@ describe('South Service', () => {
       testData.south.itemTestingSettings
     );
 
-    expect(buildSouth).toHaveBeenCalledTimes(1);
-    expect(mockedSouth1.testItem).toHaveBeenCalled();
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
   });
 
   it('should list items', () => {
     service.listItems(testData.south.list[0].id);
-    expect(southConnectorRepository.findAllItemsForSouth).toHaveBeenCalledWith(testData.south.list[0].id);
+    assert.deepStrictEqual(southConnectorRepository.findAllItemsForSouth.mock.calls[0].arguments, [testData.south.list[0].id]);
   });
 
   it('should search items', () => {
     service.searchItems(testData.south.list[0].id, { name: undefined, scanModeId: undefined, enabled: undefined, page: 0 });
-    expect(southConnectorRepository.searchItems).toHaveBeenCalledWith(testData.south.list[0].id, {
-      name: undefined,
-      scanModeId: undefined,
-      enabled: undefined,
-      page: 0
-    });
+    assert.deepStrictEqual(southConnectorRepository.searchItems.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      { name: undefined, scanModeId: undefined, enabled: undefined, page: 0 }
+    ]);
   });
 
   it('should find an item', () => {
     service.findItemById(testData.south.list[0].id, testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
+    assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    ]);
   });
 
-  it('should throw not found error if item does not exist', async () => {
-    (southConnectorRepository.findItemById as jest.Mock).mockReturnValueOnce(null);
+  it('should throw not found error if item does not exist', () => {
+    southConnectorRepository.findItemById.mock.mockImplementation(seq(() => null));
 
-    expect(() => service.findItemById(testData.south.list[0].id, testData.south.list[0].items[0].id)).toThrow(
+    assert.throws(
+      () => service.findItemById(testData.south.list[0].id, testData.south.list[0].items[0].id),
       new NotFoundError(`Item "${testData.south.list[0].items[0].id}" not found`)
     );
-
-    expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
+    assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    ]);
   });
 
   it('should get item last value when cache has value', () => {
@@ -432,14 +494,14 @@ describe('South Service', () => {
       value: { temperature: 42 },
       trackedInstant: '2024-01-02T00:00:00.000Z'
     };
-    (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValue(cached);
+    southCacheRepository.getItemLastValue.mock.mockImplementation(() => cached);
 
     const result = service.getItemLastValue(southId, itemId);
 
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(southId);
-    expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(southId, itemId);
-    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, null, itemId);
-    expect(result).toEqual({
+    assert.deepStrictEqual(southConnectorRepository.findSouthById.mock.calls[0].arguments, [southId]);
+    assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [southId, itemId]);
+    assert.deepStrictEqual(southCacheRepository.getItemLastValue.mock.calls[0].arguments, [southId, null, itemId]);
+    assert.deepStrictEqual(result, {
       groupId: null,
       groupName: '',
       itemId,
@@ -453,12 +515,12 @@ describe('South Service', () => {
   it('should get item last value when cache has no value', () => {
     const southId = testData.south.list[0].id;
     const itemId = testData.south.list[0].items[0].id;
-    (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValue(null);
+    southCacheRepository.getItemLastValue.mock.mockImplementation(() => null);
 
     const result = service.getItemLastValue(southId, itemId);
 
-    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, null, itemId);
-    expect(result).toEqual({
+    assert.deepStrictEqual(southCacheRepository.getItemLastValue.mock.calls[0].arguments, [southId, null, itemId]);
+    assert.deepStrictEqual(result, {
       groupId: null,
       groupName: '',
       itemId,
@@ -472,10 +534,10 @@ describe('South Service', () => {
   it('should create an item', async () => {
     await service.createItem(testData.south.list[0].id, testData.south.itemCommand, 'userTest');
 
-    expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.deepStrictEqual(southConnectorRepository.findSouthById.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should create an item with null id', async () => {
@@ -486,10 +548,9 @@ describe('South Service', () => {
 
     await service.createItem(testData.south.list[0].id, commandWithNullId, 'userTest');
 
-    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
-    // Verify that when retrieveSecretsFromSouth is false and command.id is null, id is set to empty string
-    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
-    expect(savedItemCall[1].id).toBe('');
+    assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
+    const savedItemCall = southConnectorRepository.saveItem.mock.calls[0];
+    assert.strictEqual((savedItemCall.arguments[1] as { id: string }).id, '');
   });
 
   it('should create item with group', async () => {
@@ -508,7 +569,7 @@ describe('South Service', () => {
       updatedAt: ''
     };
 
-    (southItemGroupRepository.findById as jest.Mock).mockReturnValue(group);
+    southItemGroupRepository.findById.mock.mockImplementation(() => group);
 
     const commandWithGroup: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
@@ -517,7 +578,7 @@ describe('South Service', () => {
 
     await service.createItem(testData.south.list[0].id, commandWithGroup, 'userTest');
 
-    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
   });
 
   it('should create item without group when groupId is null', async () => {
@@ -528,13 +589,13 @@ describe('South Service', () => {
 
     await service.createItem(testData.south.list[0].id, commandWithoutGroup, 'userTest');
 
-    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
-    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
-    expect(savedItemCall[1].group).toEqual(null);
+    assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
+    const savedItemCall = southConnectorRepository.saveItem.mock.calls[0];
+    assert.deepStrictEqual((savedItemCall.arguments[1] as { group: unknown }).group, null);
   });
 
   it('should create item with non-existent groupId (should set groups to empty array)', async () => {
-    (southItemGroupRepository.findById as jest.Mock).mockReturnValue(null);
+    southItemGroupRepository.findById.mock.mockImplementation(() => null);
 
     const commandWithNonExistentGroup: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
@@ -543,19 +604,21 @@ describe('South Service', () => {
 
     await service.createItem(testData.south.list[0].id, commandWithNonExistentGroup, 'userTest');
 
-    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
   });
 
   it('should update an item', async () => {
     await service.updateItem(testData.south.list[0].id, testData.south.list[0].items[0].id, testData.south.itemCommand, 'userTest');
 
-    expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
-    // Verify that when retrieveSecretsFromSouth is false and command.id is truthy, id is set to command.id
-    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
-    expect(savedItemCall[1].id).toBe(testData.south.itemCommand.id);
+    assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    ]);
+    assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
+    const savedItemCall = southConnectorRepository.saveItem.mock.calls[0];
+    assert.strictEqual((savedItemCall.arguments[1] as { id: string }).id, testData.south.itemCommand.id);
   });
 
   it('should update item with group', async () => {
@@ -574,7 +637,7 @@ describe('South Service', () => {
       updatedAt: ''
     };
 
-    (southItemGroupRepository.findById as jest.Mock).mockReturnValue(group);
+    southItemGroupRepository.findById.mock.mockImplementation(() => group);
 
     const commandWithGroup: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
@@ -583,7 +646,7 @@ describe('South Service', () => {
 
     await service.updateItem(testData.south.list[0].id, testData.south.list[0].items[0].id, commandWithGroup, 'userTest');
 
-    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
+    assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
   });
 
   it('should update item without group when groupId is null', async () => {
@@ -594,93 +657,120 @@ describe('South Service', () => {
 
     await service.updateItem(testData.south.list[0].id, testData.south.list[0].items[0].id, commandWithoutGroup, 'userTest');
 
-    expect(southConnectorRepository.saveItem).toHaveBeenCalledTimes(1);
-    const savedItemCall = (southConnectorRepository.saveItem as jest.Mock).mock.calls[0];
-    expect(savedItemCall[1].group).toEqual(null);
+    assert.strictEqual(southConnectorRepository.saveItem.mock.calls.length, 1);
+    const savedItemCall = southConnectorRepository.saveItem.mock.calls[0];
+    assert.deepStrictEqual((savedItemCall.arguments[1] as { group: unknown }).group, null);
   });
 
   it('should enable an item', async () => {
     await service.enableItem(testData.south.list[0].id, testData.south.list[0].items[0].id);
 
-    expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    ]);
+    assert.deepStrictEqual(southConnectorRepository.enableItem.mock.calls[0].arguments, [testData.south.list[0].items[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should disable an item', async () => {
     await service.disableItem(testData.south.list[0].id, testData.south.list[0].items[0].id);
 
-    expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    ]);
+    assert.deepStrictEqual(southConnectorRepository.disableItem.mock.calls[0].arguments, [testData.south.list[0].items[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should enable multiple south items', async () => {
     const southConnectorId = testData.south.list[0].id;
     const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
 
-    (southConnectorRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.south.list[0].items[0])
-      .mockReturnValueOnce(testData.south.list[0].items[1]);
+    southConnectorRepository.findItemById.mock.mockImplementation(
+      seq(
+        () => testData.south.list[0].items[0],
+        () => testData.south.list[0].items[1]
+      )
+    );
 
     await service.enableItems(southConnectorId, itemIds);
 
-    expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.enableItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.deepStrictEqual(southConnectorRepository.enableItem.mock.calls[0].arguments, [testData.south.list[0].items[0].id]);
+    assert.deepStrictEqual(southConnectorRepository.enableItem.mock.calls[1].arguments, [testData.south.list[0].items[1].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should disable multiple south items', async () => {
     const southConnectorId = testData.south.list[0].id;
     const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
 
-    (southConnectorRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.south.list[0].items[0])
-      .mockReturnValueOnce(testData.south.list[0].items[1]);
+    southConnectorRepository.findItemById.mock.mockImplementation(
+      seq(
+        () => testData.south.list[0].items[0],
+        () => testData.south.list[0].items[1]
+      )
+    );
 
     await service.disableItems(southConnectorId, itemIds);
 
-    expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.disableItem).toHaveBeenCalledWith(testData.south.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.deepStrictEqual(southConnectorRepository.disableItem.mock.calls[0].arguments, [testData.south.list[0].items[0].id]);
+    assert.deepStrictEqual(southConnectorRepository.disableItem.mock.calls[1].arguments, [testData.south.list[0].items[1].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should delete an item', async () => {
     await service.deleteItem(testData.south.list[0].id, testData.south.list[0].items[0].id);
 
-    expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.deepStrictEqual(southConnectorRepository.findItemById.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    ]);
+    assert.deepStrictEqual(southConnectorRepository.deleteItem.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should delete multiple south items', async () => {
     const southConnectorId = testData.south.list[0].id;
     const itemIds = [testData.south.list[0].items[0].id, testData.south.list[0].items[1].id];
 
-    (southConnectorRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.south.list[0].items[0])
-      .mockReturnValueOnce(testData.south.list[0].items[1]);
+    southConnectorRepository.findItemById.mock.mockImplementation(
+      seq(
+        () => testData.south.list[0].items[0],
+        () => testData.south.list[0].items[1]
+      )
+    );
 
     await service.deleteItems(southConnectorId, itemIds);
 
-    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[0].id);
-    expect(southConnectorRepository.deleteItem).toHaveBeenCalledWith(testData.south.list[0].id, testData.south.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.deepStrictEqual(southConnectorRepository.deleteItem.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[0].id
+    ]);
+    assert.deepStrictEqual(southConnectorRepository.deleteItem.mock.calls[1].arguments, [
+      testData.south.list[0].id,
+      testData.south.list[0].items[1].id
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should delete all items', async () => {
     await service.deleteAllItems(testData.south.list[0].id);
 
-    expect(southConnectorRepository.deleteAllItemsBySouth).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(southCacheRepository.dropItemValueTable).toHaveBeenCalledWith(testData.south.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.deepStrictEqual(southConnectorRepository.deleteAllItemsBySouth.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.deepStrictEqual(southCacheRepository.dropItemValueTable.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should properly check items', async () => {
@@ -720,7 +810,7 @@ describe('South Service', () => {
         enabled: 'true',
         settings_regex: '*',
         settings_preserveFiles: 'true',
-        settings_ignoreModifiedDate: 12, // bad type
+        settings_ignoreModifiedDate: 12,
         settings_minAge: 100,
         scanMode: testData.scanMode.list[0].name
       },
@@ -734,13 +824,23 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0].name
       }
     ];
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ',' },
-      data: csvData
-    });
-    (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
-      throw new Error(`validation error`);
-    });
+
+    // Get the papaparse mock from the module cache and update it for this test
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    validator.validateSettings.mock.mockImplementation(
+      seq(
+        async () => {
+          throw new Error('validation error');
+        }, // item4 reaches validateSettings first
+        async () => undefined // item5 passes
+      )
+    );
 
     const result = await service.checkImportItems(
       testData.south.list[0].type,
@@ -748,7 +848,7 @@ describe('South Service', () => {
       ',',
       testData.south.list[0].items.map(item => ({ ...item, group: null }))
     );
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       items: [
         {
           id: '',
@@ -842,17 +942,21 @@ describe('South Service', () => {
         scanMode: testData.scanMode.list[0].name
       }
     ];
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ',' },
-      data: csvData
-    });
+
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
     const result = await service.checkImportItems(
       testData.south.list[1].type,
       'file content',
       ',',
       testData.south.list[1].items.map(item => ({ ...item, group: null }))
     );
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       items: [
         {
           id: '',
@@ -897,17 +1001,21 @@ describe('South Service', () => {
         group: 'Test Group'
       }
     ];
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ',' },
-      data: csvData
-    });
+
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
     const result = await service.checkImportItems(
       testData.south.list[0].type,
       'file content',
       ',',
       testData.south.list[0].items.map(item => ({ ...item, group: null }))
     );
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       items: [
         {
           id: '',
@@ -932,12 +1040,15 @@ describe('South Service', () => {
   });
 
   it('should throw error if delimiter does not match', async () => {
-    (csv.parse as jest.Mock).mockReturnValueOnce({
-      meta: { delimiter: ';' },
-      data: []
-    });
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ';' }, data: [] }))
+      );
+    }
 
-    await expect(service.checkImportItems(testData.south.command.type, '', ',', [])).rejects.toThrow(
+    await assert.rejects(
+      async () => service.checkImportItems(testData.south.command.type, '', ',', []),
       new OIBusValidationError(`The entered delimiter "," does not correspond to the file delimiter ";"`)
     );
   });
@@ -945,9 +1056,9 @@ describe('South Service', () => {
   it('should import items', async () => {
     await service.importItems(testData.south.list[0].id, [testData.south.itemCommand], 'userTest');
 
-    expect(southConnectorRepository.saveAllItems).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+    assert.strictEqual(southConnectorRepository.saveAllItems.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });
 
   it('should import items with groupName and create group when it does not exist', async () => {
@@ -966,9 +1077,9 @@ describe('South Service', () => {
       updatedAt: ''
     };
 
-    (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(null);
-    (checkGroups as jest.Mock).mockReturnValue(newGroup);
-    (southItemGroupRepository.create as jest.Mock).mockReturnValue(newGroup);
+    southItemGroupRepository.findByNameAndSouthId.mock.mockImplementation(() => null);
+    mockUtils.checkGroups.mock.mockImplementation(() => newGroup);
+    southItemGroupRepository.create.mock.mockImplementation(() => newGroup);
 
     const itemCommandWithGroupName: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
@@ -978,13 +1089,15 @@ describe('South Service', () => {
 
     await service.importItems(testData.south.list[0].id, [itemCommandWithGroupName], 'userTest');
 
-    expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('New Import Group', testData.south.list[0].id);
-    expect(southItemGroupRepository.create).toHaveBeenCalled();
-    expect(southConnectorRepository.saveAllItems).toHaveBeenCalledTimes(1);
-    // Verify that the item command was updated to use groupId instead of groupName
-    const saveAllItemsCall = (southConnectorRepository.saveAllItems as jest.Mock).mock.calls[0];
-    const savedItems = saveAllItemsCall[1];
-    expect(savedItems[0].group).toEqual(newGroup);
+    assert.deepStrictEqual(southItemGroupRepository.findByNameAndSouthId.mock.calls[0].arguments, [
+      'New Import Group',
+      testData.south.list[0].id
+    ]);
+    assert.strictEqual(southItemGroupRepository.create.mock.calls.length, 1);
+    assert.strictEqual(southConnectorRepository.saveAllItems.mock.calls.length, 1);
+    const saveAllItemsCall = southConnectorRepository.saveAllItems.mock.calls[0];
+    const savedItems = saveAllItemsCall.arguments[1] as Array<{ group: unknown }>;
+    assert.deepStrictEqual(savedItems[0].group, newGroup);
   });
 
   it('should import items with groupName and use existing group when it exists', async () => {
@@ -1003,7 +1116,7 @@ describe('South Service', () => {
       updatedAt: ''
     };
 
-    (southItemGroupRepository.findByNameAndSouthId as jest.Mock).mockReturnValue(existingGroup);
+    southItemGroupRepository.findByNameAndSouthId.mock.mockImplementation(() => existingGroup);
 
     const itemCommandWithGroupName: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
@@ -1013,25 +1126,29 @@ describe('South Service', () => {
 
     await service.importItems(testData.south.list[0].id, [itemCommandWithGroupName], 'userTest');
 
-    expect(southItemGroupRepository.findByNameAndSouthId).toHaveBeenCalledWith('Existing Import Group', testData.south.list[0].id);
-    expect(southItemGroupRepository.create).not.toHaveBeenCalled();
-    expect(southConnectorRepository.saveAllItems).toHaveBeenCalledTimes(1);
+    assert.deepStrictEqual(southItemGroupRepository.findByNameAndSouthId.mock.calls[0].arguments, [
+      'Existing Import Group',
+      testData.south.list[0].id
+    ]);
+    assert.strictEqual(southItemGroupRepository.create.mock.calls.length, 0);
+    assert.strictEqual(southConnectorRepository.saveAllItems.mock.calls.length, 1);
   });
 
   it('should retrieve secrets from south', () => {
     const manifest = JSON.parse(JSON.stringify(testData.south.manifest));
     manifest.id = testData.south.list[0].type;
-    expect(service.retrieveSecretsFromSouth('southId', manifest)).toEqual(testData.south.list[0]);
+    assert.deepStrictEqual(service.retrieveSecretsFromSouth('southId', manifest), testData.south.list[0]);
   });
 
   it('should not retrieve secrets from south', () => {
-    expect(service.retrieveSecretsFromSouth(null, testData.south.manifest)).toEqual(null);
+    assert.deepStrictEqual(service.retrieveSecretsFromSouth(null, testData.south.manifest), null);
   });
 
   it('should throw error if connector not found when retrieving secrets from bad south type', () => {
-    (southConnectorRepository.findSouthById as jest.Mock).mockReturnValueOnce(testData.south.list[1]);
-    expect(() => service.retrieveSecretsFromSouth('southId', testData.south.manifest)).toThrow(
-      `South connector "southId" (type "${testData.south.list[1].type}") must be of the type "${testData.south.manifest.id}"`
+    southConnectorRepository.findSouthById.mock.mockImplementation(seq(() => testData.south.list[1]));
+    assert.throws(
+      () => service.retrieveSecretsFromSouth('southId', testData.south.manifest),
+      new Error(`South connector "southId" (type "${testData.south.list[1].type}") must be of the type "${testData.south.manifest.id}"`)
     );
   });
 
@@ -1049,7 +1166,7 @@ describe('South Service', () => {
       createdAt: '',
       updatedAt: ''
     };
-    expect(toSouthConnectorLightDTO(southLight, getUserInfo)).toEqual({
+    assert.deepStrictEqual(toSouthConnectorLightDTO(southLight, getUserInfo), {
       id: southLight.id,
       name: southLight.name,
       type: southLight.type,
@@ -1060,7 +1177,7 @@ describe('South Service', () => {
       createdAt: southLight.createdAt,
       updatedAt: southLight.updatedAt
     });
-    expect(toSouthConnectorDTO(southEntity, getUserInfo)).toEqual({
+    assert.deepStrictEqual(toSouthConnectorDTO(southEntity, getUserInfo), {
       id: southEntity.id,
       name: southEntity.name,
       type: southEntity.type,
@@ -1096,8 +1213,8 @@ describe('South Service', () => {
 
     const result = toSouthConnectorDTO(southEntity, getUserInfo);
 
-    expect(result.groups).toHaveLength(1);
-    expect(result.groups[0]).toEqual({
+    assert.strictEqual(result.groups.length, 1);
+    assert.deepStrictEqual(result.groups[0], {
       id: group.id,
       standardSettings: {
         name: group.name,
@@ -1148,13 +1265,13 @@ describe('South Service', () => {
         }
       ];
 
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue(mockGroups);
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => mockGroups);
 
       const groups = service.getGroups(testData.south.list[0].id);
-      expect(groups).toHaveLength(2);
-      expect(groups[0].id).toEqual('group1');
-      expect(groups[1].id).toEqual('group2');
-      expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
+      assert.strictEqual(groups.length, 2);
+      assert.strictEqual(groups[0].id, 'group1');
+      assert.strictEqual(groups[1].id, 'group2');
+      assert.deepStrictEqual(southConnectorRepository.findSouthById.mock.calls[0].arguments, [testData.south.list[0].id]);
     });
 
     it('should get a specific group by id', () => {
@@ -1173,19 +1290,20 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(mockGroup);
+      southItemGroupRepository.findById.mock.mockImplementation(() => mockGroup);
 
       const group = service.getGroup(testData.south.list[0].id, 'group1');
-      expect(group.id).toEqual('group1');
-      expect(group.name).toEqual('Group 1');
-      expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(testData.south.list[0].id);
-      expect(southItemGroupRepository.findById).toHaveBeenCalledWith('group1');
+      assert.strictEqual(group.id, 'group1');
+      assert.strictEqual(group.name, 'Group 1');
+      assert.deepStrictEqual(southConnectorRepository.findSouthById.mock.calls[0].arguments, [testData.south.list[0].id]);
+      assert.deepStrictEqual(southItemGroupRepository.findById.mock.calls[0].arguments, ['group1']);
     });
 
     it('should throw NotFoundError when group not found', () => {
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(null);
+      southItemGroupRepository.findById.mock.mockImplementation(() => null);
 
-      expect(() => service.getGroup(testData.south.list[0].id, 'nonExistentGroup')).toThrow(
+      assert.throws(
+        () => service.getGroup(testData.south.list[0].id, 'nonExistentGroup'),
         new NotFoundError('South item group "nonExistentGroup" not found')
       );
     });
@@ -1206,9 +1324,10 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(mockGroup);
+      southItemGroupRepository.findById.mock.mockImplementation(() => mockGroup);
 
-      expect(() => service.getGroup(testData.south.list[0].id, 'group1')).toThrow(
+      assert.throws(
+        () => service.getGroup(testData.south.list[0].id, 'group1'),
         new NotFoundError(`South item group "group1" does not belong to south connector "${testData.south.list[0].id}"`)
       );
     });
@@ -1242,13 +1361,13 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([]);
-      (southItemGroupRepository.create as jest.Mock).mockReturnValue(createdGroup);
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => []);
+      southItemGroupRepository.create.mock.mockImplementation(() => createdGroup);
 
       const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
-      expect(result.id).toEqual('newGroupId');
-      expect(result.name).toEqual('New Group');
-      expect(southItemGroupRepository.create).toHaveBeenCalled();
+      assert.strictEqual(result.id, 'newGroupId');
+      assert.strictEqual(result.name, 'New Group');
+      assert.strictEqual(southItemGroupRepository.create.mock.calls.length, 1);
     });
 
     it('should create a group with null overlap', () => {
@@ -1280,12 +1399,14 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([]);
-      (southItemGroupRepository.create as jest.Mock).mockReturnValue(createdGroup);
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => []);
+      southItemGroupRepository.create.mock.mockImplementation(() => createdGroup);
 
       const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
-      expect(result.overlap).toBeNull();
-      expect(southItemGroupRepository.create).toHaveBeenCalledWith(expect.objectContaining({ overlap: null }), 'testUser');
+      assert.strictEqual(result.overlap, null);
+      const createCall = southItemGroupRepository.create.mock.calls[0];
+      assert.strictEqual((createCall.arguments[0] as { overlap: unknown }).overlap, null);
+      assert.strictEqual(createCall.arguments[1], 'testUser');
     });
 
     it('should create a group with maxReadInterval and readDelay', () => {
@@ -1317,21 +1438,18 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([]);
-      (southItemGroupRepository.create as jest.Mock).mockReturnValue(createdGroup);
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => []);
+      southItemGroupRepository.create.mock.mockImplementation(() => createdGroup);
 
       const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
-      expect(result.id).toEqual('newGroupId');
-      expect(result.maxReadInterval).toEqual(3600);
-      expect(result.readDelay).toEqual(200);
-      expect(southItemGroupRepository.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'Group With Throttling',
-          maxReadInterval: 3600,
-          readDelay: 200
-        }),
-        'testUser'
-      );
+      assert.strictEqual(result.id, 'newGroupId');
+      assert.strictEqual(result.maxReadInterval, 3600);
+      assert.strictEqual(result.readDelay, 200);
+      const createCall = southItemGroupRepository.create.mock.calls[0];
+      const entity = createCall.arguments[0] as { name: string; maxReadInterval: number; readDelay: number };
+      assert.strictEqual(entity.name, 'Group With Throttling');
+      assert.strictEqual(entity.maxReadInterval, 3600);
+      assert.strictEqual(entity.readDelay, 200);
     });
 
     it('should throw error when creating group with duplicate name', () => {
@@ -1363,9 +1481,10 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup]);
 
-      expect(() => service.createGroup(testData.south.list[0].id, command, 'testUser')).toThrow(
+      assert.throws(
+        () => service.createGroup(testData.south.list[0].id, command, 'testUser'),
         new OIBusValidationError('A group with name "Existing Group" already exists for this south connector')
       );
     });
@@ -1408,17 +1527,20 @@ describe('South Service', () => {
         readDelay: 200
       };
 
-      (southItemGroupRepository.findById as jest.Mock)
-        .mockReturnValueOnce(existingGroup) // First call for validation
-        .mockReturnValueOnce(updatedGroup); // Second call after update
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
+      southItemGroupRepository.findById.mock.mockImplementation(
+        seq(
+          () => existingGroup,
+          () => updatedGroup
+        )
+      );
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup]);
 
       const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command);
-      expect(result.name).toEqual('Updated Group');
-      expect(result.scanMode.id).toEqual(testData.scanMode.list[1].id);
-      expect(result.maxReadInterval).toEqual(3600);
-      expect(result.readDelay).toEqual(200);
-      expect(southItemGroupRepository.update).toHaveBeenCalled();
+      assert.strictEqual(result.name, 'Updated Group');
+      assert.strictEqual(result.scanMode.id, testData.scanMode.list[1].id);
+      assert.strictEqual(result.maxReadInterval, 3600);
+      assert.strictEqual(result.readDelay, 200);
+      assert.strictEqual(southItemGroupRepository.update.mock.calls.length, 1);
     });
 
     it('should update a group with null maxReadInterval and zero readDelay', () => {
@@ -1459,22 +1581,25 @@ describe('South Service', () => {
         readDelay: 0
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValueOnce(existingGroup).mockReturnValueOnce(updatedGroup);
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
+      southItemGroupRepository.findById.mock.mockImplementation(
+        seq(
+          () => existingGroup,
+          () => updatedGroup
+        )
+      );
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup]);
 
       const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdateNull', 'testUser', command);
-      expect(result.name).toEqual('Updated Name Only');
-      expect(result.maxReadInterval).toBeNull();
-      expect(result.readDelay).toEqual(0);
-      expect(southItemGroupRepository.update).toHaveBeenCalledWith(
-        'groupToUpdateNull',
-        expect.objectContaining({
-          name: 'Updated Name Only',
-          maxReadInterval: null,
-          readDelay: 0
-        }),
-        'testUser'
-      );
+      assert.strictEqual(result.name, 'Updated Name Only');
+      assert.strictEqual(result.maxReadInterval, null);
+      assert.strictEqual(result.readDelay, 0);
+      const updateCall = southItemGroupRepository.update.mock.calls[0];
+      assert.strictEqual(updateCall.arguments[0], 'groupToUpdateNull');
+      const entity = updateCall.arguments[1] as { name: string; maxReadInterval: unknown; readDelay: number };
+      assert.strictEqual(entity.name, 'Updated Name Only');
+      assert.strictEqual(entity.maxReadInterval, null);
+      assert.strictEqual(entity.readDelay, 0);
+      assert.strictEqual(updateCall.arguments[2], 'testUser');
     });
 
     it('should throw error when updating non-existent group', () => {
@@ -1491,9 +1616,10 @@ describe('South Service', () => {
         }
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(null);
+      southItemGroupRepository.findById.mock.mockImplementation(() => null);
 
-      expect(() => service.updateGroup(testData.south.list[0].id, 'nonExistentGroup', 'testUser', command)).toThrow(
+      assert.throws(
+        () => service.updateGroup(testData.south.list[0].id, 'nonExistentGroup', 'testUser', command),
         new NotFoundError('South item group "nonExistentGroup" not found')
       );
     });
@@ -1527,9 +1653,10 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(groupFromDifferentSouth);
+      southItemGroupRepository.findById.mock.mockImplementation(() => groupFromDifferentSouth);
 
-      expect(() => service.updateGroup(testData.south.list[0].id, 'groupFromOtherSouth', 'testUser', command)).toThrow(
+      assert.throws(
+        () => service.updateGroup(testData.south.list[0].id, 'groupFromOtherSouth', 'testUser', command),
         new NotFoundError(`South item group "groupFromOtherSouth" does not belong to south connector "${testData.south.list[0].id}"`)
       );
     });
@@ -1563,12 +1690,16 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock)
-        .mockReturnValueOnce(existingGroup) // First call for validation
-        .mockReturnValueOnce(null); // Second call after update returns null
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup]);
+      southItemGroupRepository.findById.mock.mockImplementation(
+        seq(
+          () => existingGroup,
+          () => null
+        )
+      );
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup]);
 
-      expect(() => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command)).toThrow(
+      assert.throws(
+        () => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command),
         new NotFoundError('Failed to update south item group "groupToUpdate"')
       );
     });
@@ -1617,10 +1748,11 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(existingGroup);
-      (southItemGroupRepository.findBySouthId as jest.Mock).mockReturnValue([existingGroup, otherGroup]);
+      southItemGroupRepository.findById.mock.mockImplementation(() => existingGroup);
+      southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup, otherGroup]);
 
-      expect(() => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command)).toThrow(
+      assert.throws(
+        () => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command),
         new OIBusValidationError('A group with name "Existing Group" already exists for this south connector')
       );
     });
@@ -1641,18 +1773,19 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(groupToDelete);
-      (engine.reloadSouthItems as jest.Mock).mockResolvedValue(undefined);
+      southItemGroupRepository.findById.mock.mockImplementation(() => groupToDelete);
+      engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
 
       await service.deleteGroup(testData.south.list[0].id, 'groupToDelete');
-      expect(southItemGroupRepository.delete).toHaveBeenCalledWith('groupToDelete');
-      expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+      assert.deepStrictEqual(southItemGroupRepository.delete.mock.calls[0].arguments, ['groupToDelete']);
+      assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
 
     it('should throw error when deleting non-existent group', async () => {
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(null);
+      southItemGroupRepository.findById.mock.mockImplementation(() => null);
 
-      await expect(service.deleteGroup(testData.south.list[0].id, 'nonExistentGroup')).rejects.toThrow(
+      await assert.rejects(
+        async () => service.deleteGroup(testData.south.list[0].id, 'nonExistentGroup'),
         new NotFoundError('South item group "nonExistentGroup" not found')
       );
     });
@@ -1673,9 +1806,10 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(groupFromDifferentSouth);
+      southItemGroupRepository.findById.mock.mockImplementation(() => groupFromDifferentSouth);
 
-      await expect(service.deleteGroup(testData.south.list[0].id, 'groupFromOtherSouth')).rejects.toThrow(
+      await assert.rejects(
+        async () => service.deleteGroup(testData.south.list[0].id, 'groupFromOtherSouth'),
         new NotFoundError(`South item group "groupFromOtherSouth" does not belong to south connector "${testData.south.list[0].id}"`)
       );
     });
@@ -1696,17 +1830,17 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(group);
-      (southConnectorRepository.findItemById as jest.Mock).mockReturnValue(testData.south.list[0].items[0]);
-      (engine.reloadSouthItems as jest.Mock).mockResolvedValue(undefined);
+      southItemGroupRepository.findById.mock.mockImplementation(() => group);
+      southConnectorRepository.findItemById.mock.mockImplementation(() => testData.south.list[0].items[0]);
+      engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
 
       const itemIds = [testData.south.list[0].items[0].id];
       await service.moveItemsToGroup(testData.south.list[0].id, itemIds, 'targetGroup');
 
-      expect(southItemGroupRepository.findById).toHaveBeenCalledWith('targetGroup');
-      expect(southConnectorRepository.moveItemsToGroup).toHaveBeenCalledWith(itemIds, 'targetGroup');
-      expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-      expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+      assert.deepStrictEqual(southItemGroupRepository.findById.mock.calls[0].arguments, ['targetGroup']);
+      assert.deepStrictEqual(southConnectorRepository.moveItemsToGroup.mock.calls[0].arguments, [itemIds, 'targetGroup']);
+      assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+      assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
 
     it('should throw error when moving items to group that belongs to different south connector', async () => {
@@ -1725,48 +1859,47 @@ describe('South Service', () => {
         updatedAt: ''
       };
 
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(groupFromDifferentSouth);
+      southItemGroupRepository.findById.mock.mockImplementation(() => groupFromDifferentSouth);
 
       const itemIds = [testData.south.list[0].items[0].id];
-      await expect(service.moveItemsToGroup(testData.south.list[0].id, itemIds, 'groupFromOtherSouth')).rejects.toThrow(
+      await assert.rejects(
+        async () => service.moveItemsToGroup(testData.south.list[0].id, itemIds, 'groupFromOtherSouth'),
         new NotFoundError(`South item group "groupFromOtherSouth" does not belong to south connector "${testData.south.list[0].id}"`)
       );
     });
 
     it('should remove items from groups when groupId is null', async () => {
-      (southConnectorRepository.findItemById as jest.Mock).mockReturnValue(testData.south.list[0].items[0]);
-      (engine.reloadSouthItems as jest.Mock).mockResolvedValue(undefined);
+      southConnectorRepository.findItemById.mock.mockImplementation(() => testData.south.list[0].items[0]);
+      engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
 
       const itemIds = [testData.south.list[0].items[0].id];
       await service.moveItemsToGroup(testData.south.list[0].id, itemIds, null);
 
-      expect(southConnectorRepository.moveItemsToGroup).toHaveBeenCalledWith(itemIds, null);
-      expect(engine.reloadSouthItems).toHaveBeenCalledWith(testData.south.list[0]);
+      assert.deepStrictEqual(southConnectorRepository.moveItemsToGroup.mock.calls[0].arguments, [itemIds, null]);
+      assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
 
     it('should throw error when moving items to non-existent group', async () => {
-      (southItemGroupRepository.findById as jest.Mock).mockReturnValue(null);
+      southItemGroupRepository.findById.mock.mockImplementation(() => null);
 
       const itemIds = [testData.south.list[0].items[0].id];
-      await expect(service.moveItemsToGroup(testData.south.list[0].id, itemIds, 'nonExistentGroup')).rejects.toThrow(
+      await assert.rejects(
+        async () => service.moveItemsToGroup(testData.south.list[0].id, itemIds, 'nonExistentGroup'),
         new NotFoundError('South item group "nonExistentGroup" not found')
       );
     });
 
     it('should throw error when moving non-existent item', async () => {
-      (southConnectorRepository.findItemById as jest.Mock).mockReturnValue(null);
+      southConnectorRepository.findItemById.mock.mockImplementation(() => null);
 
       const itemIds = ['nonExistentItem'];
-      await expect(service.moveItemsToGroup(testData.south.list[0].id, itemIds, null)).rejects.toThrow(
+      await assert.rejects(
+        async () => service.moveItemsToGroup(testData.south.list[0].id, itemIds, null),
         new NotFoundError('South item "nonExistentItem" not found')
       );
     });
 
     describe('DTO conversion functions', () => {
-      beforeEach(() => {
-        jest.clearAllMocks();
-      });
-
       it('should convert SouthItemGroupEntity to SouthItemGroupDTO', () => {
         const entity: SouthItemGroupEntity = {
           id: 'group1',
@@ -1784,10 +1917,10 @@ describe('South Service', () => {
         };
 
         const dto = toSouthItemGroupDTO(entity, id => ({ id, friendlyName: id }));
-        expect(dto.id).toEqual('group1');
-        expect(dto.standardSettings.name).toEqual('Test Group');
-        expect(dto.standardSettings.scanMode.id).toEqual(testData.scanMode.list[0].id);
-        expect(dto.historySettings.overlap).toEqual(10);
+        assert.strictEqual(dto.id, 'group1');
+        assert.strictEqual(dto.standardSettings.name, 'Test Group');
+        assert.strictEqual(dto.standardSettings.scanMode.id, testData.scanMode.list[0].id);
+        assert.strictEqual(dto.historySettings.overlap, 10);
       });
 
       it('should convert SouthItemGroupEntity with null overlap to DTO', () => {
@@ -1807,10 +1940,10 @@ describe('South Service', () => {
         };
 
         const dto = toSouthItemGroupDTO(entity, id => ({ id, friendlyName: id }));
-        expect(dto.historySettings.overlap).toBeNull();
+        assert.strictEqual(dto.historySettings.overlap, null);
       });
 
-      it('should convert item with group to DTO using toSouthConnectorItemCommandDTO', async () => {
+      it('should convert item with group to DTO using toSouthConnectorItemCommandDTO', () => {
         const group: SouthItemGroupEntity = {
           id: 'group1',
           name: 'Test Group',
@@ -1826,9 +1959,8 @@ describe('South Service', () => {
           updatedAt: ''
         };
 
-        (southItemGroupRepository.findById as jest.Mock).mockReturnValue(group);
+        southItemGroupRepository.findById.mock.mockImplementation(() => group);
 
-        // Test the DTO conversion that uses groups
         const itemWithGroup: SouthConnectorItemEntity<SouthItemSettings> = {
           id: 'item1',
           name: 'Test Item',
@@ -1847,9 +1979,9 @@ describe('South Service', () => {
         };
 
         const itemDTO = toSouthConnectorItemDTO(itemWithGroup, testData.south.list[0].type, id => ({ id, friendlyName: id }));
-        expect(itemDTO.group).toBeDefined();
-        expect(itemDTO.group!.id).toEqual('group1');
-        expect(itemDTO.group!.standardSettings.name).toEqual('Test Group');
+        assert.ok(itemDTO.group !== null);
+        assert.strictEqual(itemDTO.group!.id, 'group1');
+        assert.strictEqual(itemDTO.group!.standardSettings.name, 'Test Group');
       });
 
       it('should convert item without group to DTO', () => {
@@ -1871,17 +2003,10 @@ describe('South Service', () => {
         };
 
         const itemDTO = toSouthConnectorItemDTO(itemWithoutGroup, testData.south.list[0].type, id => ({ id, friendlyName: id }));
-        expect(itemDTO.group).toBeNull();
+        assert.strictEqual(itemDTO.group, null);
       });
 
       describe('copySouthItemCommandToSouthItemEntity', () => {
-        beforeEach(() => {
-          jest.clearAllMocks();
-          // Reset default mocks
-          (southConnectorRepository.findSouthById as jest.Mock).mockReturnValue(testData.south.list[0]);
-          (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-        });
-
         it('should use default value for retrieveSecretsFromSouth when undefined is passed', async () => {
           const southItemEntity = {} as SouthConnectorItemEntity<SouthItemSettings>;
           const command: SouthConnectorItemCommandDTO = {
@@ -1889,7 +2014,6 @@ describe('South Service', () => {
             id: 'testItemId'
           };
 
-          // Pass undefined for retrieveSecretsFromSouth to exercise the default value (retrieveSecretsFromSouth = false)
           await copySouthItemCommandToSouthItemEntity(
             southItemEntity,
             command,
@@ -1897,13 +2021,12 @@ describe('South Service', () => {
             testData.south.list[0].type,
             testData.scanMode.list,
             [],
-            undefined // retrieveSecretsFromSouth - should default to false
+            undefined
           );
 
-          // When retrieveSecretsFromSouth is false (default) and command.id is truthy, id should be set to command.id
-          expect(southItemEntity.id).toBe('testItemId');
-          expect(southItemEntity.name).toBe(testData.south.itemCommand.name);
-          expect(southItemEntity.enabled).toBe(testData.south.itemCommand.enabled);
+          assert.strictEqual(southItemEntity.id, 'testItemId');
+          assert.strictEqual(southItemEntity.name, testData.south.itemCommand.name);
+          assert.strictEqual(southItemEntity.enabled, testData.south.itemCommand.enabled);
         });
 
         it('should set historian fields and syncWithGroup from command when provided', async () => {
@@ -1927,10 +2050,10 @@ describe('South Service', () => {
             false
           );
 
-          expect(southItemEntity.syncWithGroup).toBe(true);
-          expect(southItemEntity.maxReadInterval).toEqual(3600);
-          expect(southItemEntity.readDelay).toEqual(200);
-          expect(southItemEntity.overlap).toEqual(100);
+          assert.strictEqual(southItemEntity.syncWithGroup, true);
+          assert.strictEqual(southItemEntity.maxReadInterval, 3600);
+          assert.strictEqual(southItemEntity.readDelay, 200);
+          assert.strictEqual(southItemEntity.overlap, 100);
         });
 
         it('should set syncWithGroup to false when command.syncWithGroup is explicitly false', async () => {
@@ -1951,7 +2074,7 @@ describe('South Service', () => {
             false
           );
 
-          expect(southItemEntity.syncWithGroup).toBe(false);
+          assert.strictEqual(southItemEntity.syncWithGroup, false);
         });
 
         it('should default syncWithGroup to false when command.syncWithGroup is undefined', async () => {
@@ -1972,7 +2095,7 @@ describe('South Service', () => {
             false
           );
 
-          expect(southItemEntity.syncWithGroup).toBe(false);
+          assert.strictEqual(southItemEntity.syncWithGroup, false);
         });
       });
     });
