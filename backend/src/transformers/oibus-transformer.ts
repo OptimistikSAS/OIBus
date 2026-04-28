@@ -14,5 +14,5 @@ export default abstract class OIBusTransformer {
     data: ReadStream | Readable,
     source: CacheMetadataSource,
     filename: string | null
-  ): Promise<{ metadata: CacheMetadata; output: string }>;
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }>;
 }

@@ -28,6 +28,23 @@ const manifest: TransformerManifest = {
       },
       {
         type: 'string-select',
+        key: 'encoding',
+        translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.encoding',
+        defaultValue: 'UTF_8',
+        selectableValues: ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'],
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        displayProperties: { row: 0, columns: 3, displayInViewMode: true }
+      },
+      {
+        type: 'boolean',
+        key: 'header',
+        translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.header',
+        defaultValue: true,
+        validators: [],
+        displayProperties: { row: 0, columns: 3, displayInViewMode: true }
+      },
+      {
+        type: 'string-select',
         key: 'delimiter',
         translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.delimiter',
         defaultValue: 'SEMI_COLON',
@@ -39,10 +56,45 @@ const manifest: TransformerManifest = {
           }
         ],
         displayProperties: {
-          row: 0,
-          columns: 6,
+          row: 1,
+          columns: 3,
           displayInViewMode: true
         }
+      },
+      {
+        type: 'string-select',
+        key: 'newline',
+        translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.newline',
+        defaultValue: 'DEFAULT',
+        selectableValues: ['DEFAULT', 'CRLF', 'LF', 'CR'],
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+      },
+      {
+        type: 'string-select',
+        key: 'quoteChar',
+        translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.quote-char',
+        defaultValue: 'DOUBLE_QUOTE',
+        selectableValues: ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'],
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+      },
+      {
+        type: 'string-select',
+        key: 'escapeChar',
+        translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.escape-char',
+        defaultValue: 'DOUBLE_QUOTE',
+        selectableValues: ['BACKSLASH', 'DOUBLE_QUOTE'],
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        displayProperties: { row: 1, columns: 3, displayInViewMode: true }
+      },
+      {
+        type: 'string',
+        key: 'nullValue',
+        translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.null-value',
+        defaultValue: '',
+        validators: [],
+        displayProperties: { row: 2, columns: 3, displayInViewMode: true }
       },
       {
         type: 'string',
@@ -56,7 +108,7 @@ const manifest: TransformerManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 2,
           columns: 6,
           displayInViewMode: true
         }

@@ -1213,6 +1213,33 @@
               "NON_BREAKING_SPACE": "Space",
               "PIPE": "Pipe |"
             },
+            "encoding": {
+              "title": "Encoding",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "quote-char": {
+              "title": "Quote character",
+              "DOUBLE_QUOTE": "Double quote (\")",
+              "SINGLE_QUOTE": "Single quote (')",
+              "NONE": "None"
+            },
+            "escape-char": {
+              "title": "Escape character",
+              "BACKSLASH": "Backslash (\\)",
+              "DOUBLE_QUOTE": "Double quote (\")"
+            },
+            "newline": {
+              "title": "Row delimiter",
+              "DEFAULT": "Default (\\r, \\n, or \\r\\n)",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "null-value": "Null value",
+            "header": "First row as header",
             "row-iterator-path": "Row Iterator JSONPath",
             "fields": {
               "title": "Fields Mapping",
@@ -1299,6 +1326,14 @@
           },
           "time-values-to-csv": {
             "filename": "Filename",
+            "encoding": {
+              "title": "Encoding",
+              "UTF_8": "UTF-8",
+              "UTF_8_BOM": "UTF-8 BOM",
+              "LATIN_1": "Latin-1 (ISO-8859-1)",
+              "UTF_16_LE": "UTF-16 LE"
+            },
+            "header": "First row as header",
             "delimiter": {
               "title": "Delimiter",
               "DOT": "Dot .",
@@ -1309,6 +1344,24 @@
               "TAB": "Tab",
               "NON_BREAKING_SPACE": "Space",
               "PIPE": "Pipe |"
+            },
+            "newline": {
+              "title": "Newline",
+              "DEFAULT": "Default",
+              "CRLF": "CRLF (\\r\\n)",
+              "LF": "LF (\\n)",
+              "CR": "CR (\\r)"
+            },
+            "quote-char": {
+              "title": "Quote character",
+              "DOUBLE_QUOTE": "Double quote (\")",
+              "SINGLE_QUOTE": "Single quote (')",
+              "NONE": "None"
+            },
+            "escape-char": {
+              "title": "Escape character",
+              "BACKSLASH": "Backslash (\\)",
+              "DOUBLE_QUOTE": "Double quote (\")"
             },
             "compression": "Compress file",
             "point-id": "Column name for Point ID (Reference)",

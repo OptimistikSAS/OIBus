@@ -20,7 +20,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
     data: ReadStream | Readable,
     source: CacheMetadataSource,
     _filename: string
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     // 1. Read Stream
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -102,7 +102,7 @@ export default class CSVToMQTTTransformer extends OIBusTransformer {
     };
 
     return {
-      output: JSON.stringify(mqttMessages),
+      output: Buffer.from(JSON.stringify(mqttMessages)),
       metadata
     };
   }

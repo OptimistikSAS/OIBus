@@ -5,7 +5,14 @@ import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { promisify } from 'node:util';
 import { DateTime } from 'luxon';
-import { convertDelimiter, formatInstant, sanitizeFilename } from '../../../service/utils';
+import {
+  convertDelimiter,
+  convertEscapeChar,
+  convertNewline,
+  convertQuoteChar,
+  formatInstant,
+  sanitizeFilename
+} from '../../../service/utils';
 import { TransformerTimeValuesToCsvSettings } from '../../../../shared/model/transformer-settings.model';
 
 const pipelineAsync = promisify(pipeline);
@@ -17,7 +24,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
     data: ReadStream | Readable,
     _source: CacheMetadataSource,
     _filename: string | null
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     // Collect the data from the stream
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -40,24 +47,42 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
       numberOfElement: 0,
       contentType: 'any'
     };
-    return {
-      output: csv.unparse(
-        jsonData.map(value => ({
-          [this.options.pointIdColumnTitle]: value.pointId,
-          [this.options.timestampColumnTitle]: formatInstant(value.timestamp, {
-            type: this.options.timestampType,
-            timezone: this.options.timezone,
-            format: this.options.timestampFormat
-          }),
-          [this.options.valueColumnTitle]: value.data.value
-        })),
-        {
-          header: true,
-          delimiter: convertDelimiter(this.options.delimiter)
-        }
-      ),
-      metadata
-    };
+    const quoteChar = convertQuoteChar(this.options.quoteChar);
+    const outputCSV = csv.unparse(
+      jsonData.map(value => ({
+        [this.options.pointIdColumnTitle]: value.pointId,
+        [this.options.timestampColumnTitle]: formatInstant(value.timestamp, {
+          type: this.options.timestampType,
+          timezone: this.options.timezone,
+          format: this.options.timestampFormat
+        }),
+        [this.options.valueColumnTitle]: value.data.value
+      })),
+      {
+        header: this.options.header,
+        delimiter: convertDelimiter(this.options.delimiter),
+        quoteChar: quoteChar || '"',
+        escapeChar: convertEscapeChar(this.options.escapeChar),
+        newline: convertNewline(this.options.newline),
+        quotes: quoteChar !== ''
+      }
+    );
+
+    let output: Buffer;
+    switch (this.options.encoding) {
+      case 'UTF_8_BOM':
+        output = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(outputCSV)]);
+        break;
+      case 'LATIN_1':
+        output = Buffer.from(outputCSV, 'latin1');
+        break;
+      case 'UTF_16_LE':
+        output = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(outputCSV, 'utf16le')]);
+        break;
+      default:
+        output = Buffer.from(outputCSV);
+    }
+    return { output, metadata };
   }
 
   get options(): TransformerTimeValuesToCsvSettings {

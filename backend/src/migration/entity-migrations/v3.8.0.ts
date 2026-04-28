@@ -164,6 +164,7 @@ export async function up(knex: Knex): Promise<void> {
   await addItemHistorianFields(knex);
   await populateItemHistorianFields(knex);
   await removeThrottlingFieldsInConnectorSettings(knex);
+  await migrateCsvTransformerOptions(knex);
 }
 
 async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
@@ -907,6 +908,36 @@ async function createFileCacheMigrationHints(knex: Knex): Promise<void> {
 
   if (hints.length > 0) {
     await knex.batchInsert(MIGRATION_HINTS_TABLE, hints);
+  }
+}
+
+async function migrateCsvTransformerOptions(knex: Knex): Promise<void> {
+  const csvTransformers: Array<{ id: string; function_name: string }> = await knex(TRANSFORMERS_TABLE)
+    .select('id', 'function_name')
+    .whereIn('function_name', ['json-to-csv', 'time-values-to-csv']);
+
+  if (csvTransformers.length === 0) return;
+
+  const transformerIds = csvTransformers.map(t => t.id);
+
+  const tables = [NORTH_TRANSFORMERS_TABLE, HISTORY_QUERY_TRANSFORMERS_TABLE];
+  for (const table of tables) {
+    const instances: Array<{ id: string; options: string | null }> = await knex(table)
+      .select('id', 'options')
+      .whereIn('transformer_id', transformerIds)
+      .whereNotNull('options');
+
+    for (const instance of instances) {
+      const options = JSON.parse(instance.options!);
+      if (options.encoding === undefined) options.encoding = 'UTF_8';
+      if (options.quoteChar === undefined) options.quoteChar = 'DOUBLE_QUOTE';
+      if (options.escapeChar === undefined) options.escapeChar = 'DOUBLE_QUOTE';
+      if (options.newline === undefined) options.newline = 'DEFAULT';
+      if (options.header === undefined) options.header = true;
+      await knex(table)
+        .where('id', instance.id)
+        .update({ options: JSON.stringify(options) });
+    }
   }
 }
 

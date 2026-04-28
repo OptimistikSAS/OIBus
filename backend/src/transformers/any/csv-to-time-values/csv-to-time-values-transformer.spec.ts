@@ -77,7 +77,7 @@ describe('CSVToTimeValuesTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     // Assert
     expect(Papa.parse).toHaveBeenCalledWith('raw-csv-content', expect.objectContaining({ header: true, delimiter: ';' }));
@@ -110,7 +110,7 @@ describe('CSVToTimeValuesTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     // Assert
     expect(Papa.parse).toHaveBeenCalledWith('content', expect.objectContaining({ header: false, delimiter: ',' }));
@@ -144,7 +144,7 @@ describe('CSVToTimeValuesTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     // Assert
     expect(output).toHaveLength(2);
@@ -172,7 +172,7 @@ describe('CSVToTimeValuesTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     // Assert
     // extractValue -> parseInt('NotANumber') -> NaN -> returns '' -> Row skipped

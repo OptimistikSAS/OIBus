@@ -325,7 +325,7 @@ export default class CacheService {
   }
 
   async addCacheContent(
-    output: string | ReadStream | Readable,
+    output: Buffer | ReadStream | Readable,
     details: {
       contentFilename?: string;
       numberOfElement?: number;
@@ -333,10 +333,7 @@ export default class CacheService {
     }
   ): Promise<void> {
     const filename = generateRandomId(12);
-    await fs.writeFile(path.join(this.cacheFolder, CONTENT_FOLDER, filename), output, {
-      encoding: 'utf-8',
-      flag: 'w'
-    });
+    await fs.writeFile(path.join(this.cacheFolder, CONTENT_FOLDER, filename), output, { flag: 'w' });
     const fileStat = await fs.stat(path.join(this.cacheFolder, CONTENT_FOLDER, filename));
     const metadata = {
       contentFile: details.contentFilename || `${filename}.json`,

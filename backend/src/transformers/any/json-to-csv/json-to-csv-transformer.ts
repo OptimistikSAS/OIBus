@@ -4,7 +4,16 @@ import { ReadStream } from 'node:fs';
 import { pipeline, Readable, Transform } from 'node:stream';
 import { CacheMetadata, CacheMetadataSource } from '../../../../shared/model/engine.model';
 import { promisify } from 'node:util';
-import { convertDateTime, convertDelimiter, injectIndices, sanitizeFilename, stringToBoolean } from '../../../service/utils';
+import {
+  convertDateTime,
+  convertDelimiter,
+  convertEscapeChar,
+  convertNewline,
+  convertQuoteChar,
+  injectIndices,
+  sanitizeFilename,
+  stringToBoolean
+} from '../../../service/utils';
 import csv from 'papaparse';
 import { DateTime } from 'luxon';
 import { TransformerJsonToCsvSettings } from '../../../../shared/model/transformer-settings.model';
@@ -71,7 +80,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
     data: ReadStream | Readable,
     _source: CacheMetadataSource,
     _filename: string
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     // 1. Read stream into buffer
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -112,7 +121,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
         const result = resolveJsonPath(specificPath, content);
 
         if (result === undefined || result === null) {
-          csvRow[field.columnName] = '';
+          csvRow[field.columnName] = this.options.nullValue ?? '';
         } else {
           switch (field.dataType) {
             case 'datetime':
@@ -153,9 +162,14 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
       return csvRow;
     });
 
+    const quoteChar = convertQuoteChar(this.options.quoteChar);
     const outputCSV = csv.unparse(csvRows, {
-      header: true,
-      delimiter: convertDelimiter(this.options.delimiter)
+      header: this.options.header,
+      delimiter: convertDelimiter(this.options.delimiter),
+      quoteChar: quoteChar || '"',
+      escapeChar: convertEscapeChar(this.options.escapeChar),
+      newline: convertNewline(this.options.newline),
+      quotes: quoteChar !== ''
     });
 
     const metadata: CacheMetadata = {
@@ -167,10 +181,21 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
       numberOfElement: 0,
       contentType: 'any'
     };
-    return {
-      output: outputCSV,
-      metadata
-    };
+    let output: Buffer;
+    switch (this.options.encoding) {
+      case 'UTF_8_BOM':
+        output = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(outputCSV)]);
+        break;
+      case 'LATIN_1':
+        output = Buffer.from(outputCSV, 'latin1');
+        break;
+      case 'UTF_16_LE':
+        output = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(outputCSV, 'utf16le')]);
+        break;
+      default:
+        output = Buffer.from(outputCSV);
+    }
+    return { output, metadata };
   }
 
   get options(): TransformerJsonToCsvSettings {

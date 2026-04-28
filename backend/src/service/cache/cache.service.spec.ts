@@ -366,7 +366,7 @@ describe('CacheService', () => {
   });
 
   it('should properly add cache content and log state', async () => {
-    const output = 'some content';
+    const output = Buffer.from('some content');
     (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
     (fs.stat as jest.Mock).mockResolvedValue({ size: 1024, ctimeMs: Date.now() });
     (generateRandomId as jest.Mock).mockReturnValue('random');

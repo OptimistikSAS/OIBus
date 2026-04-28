@@ -72,18 +72,20 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
     await flushPromises();
     const result = await promise;
     // Assert
-    expect(result).toEqual({
-      output: JSON.stringify([
-        { nodeId: 'ns=3;i=1001', value: '1' },
-        { nodeId: 'ns=3;i=1002', value: '2' }
-      ]),
-      metadata: {
-        contentFile: 'randomId.json',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 2,
-        contentType: 'opcua'
-      }
+    expect(result.output).toEqual(
+      Buffer.from(
+        JSON.stringify([
+          { nodeId: 'ns=3;i=1001', value: '1' },
+          { nodeId: 'ns=3;i=1002', value: '2' }
+        ])
+      )
+    );
+    expect(result.metadata).toEqual({
+      contentFile: 'randomId.json',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 2,
+      contentType: 'opcua'
     });
   });
 

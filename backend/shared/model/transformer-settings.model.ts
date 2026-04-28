@@ -112,6 +112,18 @@ export const TRANSFORMER_JSON_TO_CSV_SETTINGS_DELIMITERS = [
 ] as const;
 export type TransformerJsonToCsvSettingsDelimiter = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_DELIMITERS)[number];
 
+export const TRANSFORMER_JSON_TO_CSV_SETTINGS_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
+export type TransformerJsonToCsvSettingsQuoteChar = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_QUOTE_CHARS)[number];
+
+export const TRANSFORMER_JSON_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
+export type TransformerJsonToCsvSettingsEscapeChar = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
+
+export const TRANSFORMER_JSON_TO_CSV_SETTINGS_NEWLINES = ['DEFAULT', 'CRLF', 'LF', 'CR'] as const;
+export type TransformerJsonToCsvSettingsNewline = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_NEWLINES)[number];
+
+export const TRANSFORMER_JSON_TO_CSV_SETTINGS_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
+export type TransformerJsonToCsvSettingsEncoding = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_ENCODINGS)[number];
+
 export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerSetpointToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
@@ -130,6 +142,18 @@ export type TransformerTimeValuesToCsvSettingsDelimiter = (typeof TRANSFORMER_TI
 
 export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_TIMESTAMP_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const;
 export type TransformerTimeValuesToCsvSettingsTimestampType = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_TIMESTAMP_TYPES)[number];
+
+export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
+export type TransformerTimeValuesToCsvSettingsQuoteChar = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_QUOTE_CHARS)[number];
+
+export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
+export type TransformerTimeValuesToCsvSettingsEscapeChar = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
+
+export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_NEWLINES = ['DEFAULT', 'CRLF', 'LF', 'CR'] as const;
+export type TransformerTimeValuesToCsvSettingsNewline = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_NEWLINES)[number];
+
+export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_ENCODINGS = ['UTF_8', 'UTF_8_BOM', 'LATIN_1', 'UTF_16_LE'] as const;
+export type TransformerTimeValuesToCsvSettingsEncoding = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_ENCODINGS)[number];
 
 export const TRANSFORMER_TIME_VALUES_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerTimeValuesToModbusSettingsMappingModbusType =
@@ -247,6 +271,12 @@ export interface TransformerCsvToTimeValuesSettings {
 export interface TransformerJsonToCsvSettings {
   filename: string;
   delimiter: TransformerJsonToCsvSettingsDelimiter;
+  encoding: TransformerJsonToCsvSettingsEncoding;
+  quoteChar: TransformerJsonToCsvSettingsQuoteChar;
+  escapeChar: TransformerJsonToCsvSettingsEscapeChar;
+  newline: TransformerJsonToCsvSettingsNewline;
+  nullValue: string;
+  header: boolean;
   rowIteratorPath: string;
   fields: Array<TransformerJsonToCsvSettingsFields>;
 }
@@ -270,6 +300,11 @@ export interface TransformerSetpointToOpcuaSettings {
 export interface TransformerTimeValuesToCsvSettings {
   filename: string;
   delimiter: TransformerTimeValuesToCsvSettingsDelimiter;
+  encoding: TransformerTimeValuesToCsvSettingsEncoding;
+  quoteChar: TransformerTimeValuesToCsvSettingsQuoteChar;
+  escapeChar: TransformerTimeValuesToCsvSettingsEscapeChar;
+  newline: TransformerTimeValuesToCsvSettingsNewline;
+  header: boolean;
   pointIdColumnTitle: string;
   valueColumnTitle: string;
   timestampColumnTitle: string;

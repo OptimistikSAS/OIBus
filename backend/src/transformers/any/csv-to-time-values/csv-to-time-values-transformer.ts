@@ -16,7 +16,7 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
     data: ReadStream | Readable,
     source: CacheMetadataSource,
     filename: string
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     // 1. Read stream into buffer
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -73,7 +73,7 @@ export default class CSVToTimeValuesTransformer extends OIBusTransformer {
     };
 
     return {
-      output: JSON.stringify(timeValues),
+      output: Buffer.from(JSON.stringify(timeValues)),
       metadata
     };
   }

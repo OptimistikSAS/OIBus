@@ -65,21 +65,23 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
     await flushPromises();
     const result = await promise;
     // Assert
-    expect(result).toEqual({
-      output: JSON.stringify(
-        dataChunks.map(value => ({
-          pointId: value.pointId,
-          timestamp: value.timestamp,
-          data: { value: value.data.value }
-        }))
-      ),
-      metadata: {
-        contentFile: 'randomId.json',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 3,
-        contentType: 'oianalytics'
-      }
+    expect(result.output).toEqual(
+      Buffer.from(
+        JSON.stringify(
+          dataChunks.map(value => ({
+            pointId: value.pointId,
+            timestamp: value.timestamp,
+            data: { value: value.data.value }
+          }))
+        )
+      )
+    );
+    expect(result.metadata).toEqual({
+      contentFile: 'randomId.json',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 3,
+      contentType: 'oianalytics'
     });
   });
 

@@ -66,15 +66,13 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
     await flushPromises();
     const result = await promise;
     // Assert
-    expect(result).toEqual({
-      output: JSON.stringify(dataChunks),
-      metadata: {
-        contentFile: 'randomId.json',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 3,
-        contentType: 'any'
-      }
+    expect(result.output).toEqual(Buffer.from(JSON.stringify(dataChunks)));
+    expect(result.metadata).toEqual({
+      contentFile: 'randomId.json',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 3,
+      contentType: 'any'
     });
   });
 

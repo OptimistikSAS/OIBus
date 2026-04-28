@@ -14,7 +14,7 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
     data: ReadStream | Readable,
     _source: CacheMetadataSource,
     _filename: string | null
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     // Collect the data from the stream
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -38,7 +38,7 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
       contentType: 'any'
     };
     return {
-      output: stringContent,
+      output: Buffer.from(stringContent),
       metadata
     };
   }

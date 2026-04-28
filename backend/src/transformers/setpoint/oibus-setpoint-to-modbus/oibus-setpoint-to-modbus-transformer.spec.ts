@@ -62,18 +62,20 @@ describe('OIBusSetpointToModbusTransformer', () => {
     await flushPromises();
     const result = await promise;
     // Assert
-    expect(result).toEqual({
-      output: JSON.stringify([
-        { address: 1, value: true, modbusType: 'coil' },
-        { address: 2, value: 2, modbusType: 'holding-register' }
-      ]),
-      metadata: {
-        contentFile: 'randomId.json',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 2,
-        contentType: 'modbus'
-      }
+    expect(result.output).toEqual(
+      Buffer.from(
+        JSON.stringify([
+          { address: 1, value: true, modbusType: 'coil' },
+          { address: 2, value: 2, modbusType: 'holding-register' }
+        ])
+      )
+    );
+    expect(result.metadata).toEqual({
+      contentFile: 'randomId.json',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 2,
+      contentType: 'modbus'
     });
   });
 
