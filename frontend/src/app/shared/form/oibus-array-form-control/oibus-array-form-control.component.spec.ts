@@ -12,7 +12,6 @@ import { CertificateDTO } from '../../../../../../backend/shared/model/certifica
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { MockModalService, provideModalTesting } from '../../mock-modal.service.spec';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
-import { NotificationService } from '../../notification.service';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 
 @Component({
@@ -94,8 +93,7 @@ describe('OIBusArrayFormControlComponent', () => {
         provideHttpClientTesting(),
         provideI18nTesting(),
         provideModalTesting(),
-        { provide: SouthConnectorService, useValue: createMock(SouthConnectorService) },
-        { provide: NotificationService, useValue: createMock(NotificationService) }
+        { provide: SouthConnectorService, useValue: createMock(SouthConnectorService) }
       ]
     });
 

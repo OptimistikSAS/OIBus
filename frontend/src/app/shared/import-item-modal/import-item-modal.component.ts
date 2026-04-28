@@ -20,6 +20,7 @@ export class ImportItemModalComponent {
   optionalHeaders: Array<string> = [];
   existingMqttTopics: Array<string> = [];
   isMqttConnector = false;
+  showEraseOption = false;
 
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
   initializeFile = new File([''], 'Choose a file');
@@ -28,14 +29,22 @@ export class ImportItemModalComponent {
   mqttValidationError: MqttTopicValidationError | null = null;
 
   form = this.fb.group({
-    delimiter: ['COMMA' as CsvCharacter, Validators.required]
+    delimiter: ['COMMA' as CsvCharacter, Validators.required],
+    eraseExisting: [false]
   });
 
-  prepare(expectedHeaders: Array<string>, optionalHeaders: Array<string>, existingMqttTopics: Array<string>, isMqttConnector: boolean) {
+  prepare(
+    expectedHeaders: Array<string>,
+    optionalHeaders: Array<string>,
+    existingMqttTopics: Array<string>,
+    isMqttConnector: boolean,
+    showEraseOption = false
+  ) {
     this.expectedHeaders = expectedHeaders;
     this.optionalHeaders = optionalHeaders;
     this.existingMqttTopics = existingMqttTopics;
     this.isMqttConnector = isMqttConnector;
+    this.showEraseOption = showEraseOption;
   }
 
   get canSave(): boolean {
@@ -81,7 +90,8 @@ export class ImportItemModalComponent {
 
     this.modal.close({
       delimiter: convertCsvDelimiter(formValue.delimiter!),
-      file: this.selectedFile
+      file: this.selectedFile,
+      eraseExisting: formValue.eraseExisting ?? false
     });
   }
 

@@ -17,7 +17,6 @@ import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExportItemModalComponent } from '../../export-item-modal/export-item-modal.component';
 import { ImportItemModalComponent } from '../../import-item-modal/import-item-modal.component';
-import { NotificationService } from '../../notification.service';
 import { ImportArrayValidationModalComponent } from './import-array-validation-modal/import-array-validation-modal.component';
 import { exportArrayElements, validateArrayElementsImport } from '../../utils/csv.utils';
 import { DownloadService } from '../../../services/download.service';
@@ -48,7 +47,6 @@ import { FormUtils } from '../form-utils';
 export class OIBusArrayFormControlComponent {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);
-  private notificationService = inject(NotificationService);
   private downloadService = inject(DownloadService);
 
   scanModes = input.required<Array<ScanModeDTO>>();
@@ -160,30 +158,26 @@ export class OIBusArrayFormControlComponent {
         }
       });
     }
-    modal.componentInstance.prepare(headers, optionalHeaders, [], false);
+    modal.componentInstance.prepare(headers, optionalHeaders, [], false, true);
     modal.result
       .pipe(
         switchMap(response => {
           if (!response) return of(null);
-          return this.checkImportArray(response.file, response.delimiter);
+          return this.checkImportArray(response.file, response.delimiter, response.eraseExisting);
         })
       )
       .subscribe();
   }
 
-  private async checkImportArray(file: File, delimiter: string) {
-    const { elements, errors } = await validateArrayElementsImport(file, delimiter, this.arrayAttribute(), this.control().value || []);
+  private async checkImportArray(file: File, delimiter: string, eraseExisting: boolean) {
+    const existingElements = eraseExisting ? [] : this.control().value || [];
+    const { elements, errors } = await validateArrayElementsImport(file, delimiter, this.arrayAttribute(), existingElements);
     const modalRef = this.modalService.open(ImportArrayValidationModalComponent, { size: 'xl', backdrop: 'static' });
     modalRef.componentInstance.prepare(this.arrayAttribute(), elements, errors);
-    modalRef.result.subscribe({
-      next: (importedElements: Array<Record<string, unknown>>) => {
-        this.control().setValue(importedElements);
-        this.paginatedValues().gotoPage(0);
-        this.notificationService.success('common.import-success');
-      },
-      error: () => {
-        this.notificationService.error('common.import-error');
-      }
+    modalRef.result.subscribe((importedElements: Array<Record<string, unknown>>) => {
+      const existing = eraseExisting ? [] : this.control().value || [];
+      this.control().setValue([...existing, ...importedElements]);
+      this.paginatedValues().gotoPage(0);
     });
   }
 }
