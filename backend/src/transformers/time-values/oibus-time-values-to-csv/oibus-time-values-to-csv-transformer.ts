@@ -59,7 +59,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
         [this.options.valueColumnTitle]: value.data.value
       })),
       {
-        header: this.options.header,
+        header: this.options.header || false,
         delimiter: convertDelimiter(this.options.delimiter),
         quoteChar: quoteChar || '"',
         escapeChar: convertEscapeChar(this.options.escapeChar),

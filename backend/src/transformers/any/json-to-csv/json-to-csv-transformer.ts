@@ -164,7 +164,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
 
     const quoteChar = convertQuoteChar(this.options.quoteChar);
     const outputCSV = csv.unparse(csvRows, {
-      header: this.options.header,
+      header: this.options.header || false,
       delimiter: convertDelimiter(this.options.delimiter),
       quoteChar: quoteChar || '"',
       escapeChar: convertEscapeChar(this.options.escapeChar),
