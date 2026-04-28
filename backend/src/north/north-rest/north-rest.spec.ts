@@ -9,14 +9,13 @@ import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import { ReadStream } from 'node:fs';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import { CacheMetadata } from '../../../shared/model/engine.model';
-import FormData from 'form-data';
+import { Readable } from 'node:stream';
 import EventEmitter from 'node:events';
 import { buildNorthEntity } from '../../tests/utils/test-utils';
 
 // --- Mocks ---
 jest.mock('../../service/http-request.utils');
 jest.mock('../../service/utils');
-jest.mock('form-data');
 // Mock encryption service
 jest.mock('../../service/encryption.service', () => ({
   encryptionService: {
@@ -44,6 +43,9 @@ class MockReadStream extends EventEmitter {
   }
   destroy() {
     this.destroyed = true;
+  }
+  async *[Symbol.asyncIterator]() {
+    yield Buffer.from('file-chunk');
   }
 }
 
@@ -83,10 +85,6 @@ describe('NorthREST', () => {
 
     // Default mocks
     httpRequestMock.mockResolvedValue(createMockResponse(200, 'OK'));
-    (FormData as unknown as jest.Mock).mockImplementation(() => ({
-      append: jest.fn(),
-      getHeaders: jest.fn().mockReturnValue({ 'content-type': 'multipart/form-data; boundary=---' })
-    }));
 
     north = new NorthREST(configuration, logger, cacheService);
   });
@@ -167,7 +165,7 @@ describe('NorthREST', () => {
     expect((url as URL).searchParams.get('api_key')).toBe('secret');
   });
 
-  it('should upload file successfully via FormData', async () => {
+  it('should upload file as a streaming multipart body', async () => {
     configuration.settings.queryParams = [{ key: 'q1', value: 'v1' }];
     configuration.settings.headers = [{ key: 'X-Custom', value: 'custom' }];
     configuration.settings.sendAs = 'file';
@@ -182,16 +180,21 @@ describe('NorthREST', () => {
 
     const [url, options] = httpRequestMock.mock.calls[0];
 
-    // Check URL & Query Params
     expect(url.toString()).toBe('https://api.example.com/upload');
-
-    // Check Headers
-    expect(options!.headers).toMatchObject({ 'X-Custom': 'custom', 'content-type': 'multipart/form-data; boundary=---' });
+    expect(options!.body).toBeInstanceOf(Readable);
+    expect(options!.headers).toMatchObject({
+      'X-Custom': 'custom',
+      'content-type': expect.stringContaining('multipart/form-data; boundary=OIBusBoundary')
+    });
     expect(options!.query).toMatchObject({ q1: 'v1' });
 
-    // Verify FormData append
-    const formDataInstance = (FormData as unknown as jest.Mock).mock.results[0].value;
-    expect(formDataInstance.append).toHaveBeenCalledWith('file', mockStream, { filename: 'file.txt' });
+    const chunks: Array<Buffer> = [];
+    for await (const chunk of options!.body as Readable) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
+    const bodyStr = Buffer.concat(chunks).toString();
+    expect(bodyStr).toContain('Content-Disposition: form-data; name="file"; filename="file.txt"');
+    expect(bodyStr).toContain('file-chunk');
   });
 
   it('should upload file successfully via raw body (JSON)', async () => {
