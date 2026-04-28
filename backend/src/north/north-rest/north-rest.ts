@@ -1,12 +1,12 @@
 import path from 'node:path';
 import { ReadStream } from 'node:fs';
+import { Readable } from 'node:stream';
 
 import NorthConnector from '../north-connector';
 import pino from 'pino';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import FormData from 'form-data';
 import { URL } from 'node:url';
 import { OIBusError } from '../../model/engine.model';
 import {
@@ -20,6 +20,16 @@ import {
 import CacheService from '../../service/cache/cache.service';
 import { encryptionService } from '../../service/encryption.service';
 import { UndiciHeaders } from 'undici/types/dispatcher';
+
+async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>) {
+  yield Buffer.from(
+    `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: application/octet-stream\r\n\r\n`
+  );
+  for await (const chunk of dataStream) {
+    yield chunk;
+  }
+  yield Buffer.from(`\r\n--${boundary}--\r\n`);
+}
 
 /**
  * Class Console - display values and file path into the console
@@ -81,14 +91,12 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     }
 
     let headers: UndiciHeaders = {};
-    let body: FormData | ReadStream;
+    let body: Readable | ReadStream;
 
     if (this.connector.settings.sendAs === 'file') {
-      // Create FormData with file
-      const form = new FormData();
-      form.append('file', fileStream, { filename: cacheMetadata.contentFile });
-      headers = form.getHeaders();
-      body = form;
+      const boundary = `OIBusBoundary${Date.now()}`;
+      headers['content-type'] = `multipart/form-data; boundary=${boundary}`;
+      body = Readable.from(multipartStream(boundary, cacheMetadata.contentFile, fileStream));
     } else {
       // Send raw body
       body = fileStream;
