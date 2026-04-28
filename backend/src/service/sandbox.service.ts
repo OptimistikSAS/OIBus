@@ -21,7 +21,7 @@ export default class SandboxService {
   constructor() {
     try {
       const luxonSource = fs.readFileSync(resolveBypassingExports('luxon', 'build/global/luxon.min.js'), 'utf8');
-      const jsonPathSource = fs.readFileSync(resolveBypassingExports('jsonpath-plus', 'dist/index-browser-umd.cjs'), 'utf8');
+      const jsonPathSource = fs.readFileSync(resolveBypassingExports('jsonpath-plus', 'dist/index-browser-umd.min.cjs'), 'utf8');
       const papaParseSource = fs.readFileSync(resolveBypassingExports('papaparse', 'papaparse.min.js'), 'utf8');
 
       // This script runs ONCE during service initialization to build the frozen heap.
