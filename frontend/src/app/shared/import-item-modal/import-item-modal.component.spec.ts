@@ -68,7 +68,8 @@ describe('ImportSouthItemModalComponent', () => {
 
     expect(fakeActiveModal.close).toHaveBeenCalledWith({
       delimiter: ',',
-      file
+      file,
+      eraseExisting: false
     });
   });
 

@@ -2302,7 +2302,8 @@
         "mqtt-topic-overlap-title": "MQTT Topic Overlap Error",
         "mqtt-topic-overlap-description": "The CSV file contains MQTT topics that would create overlapping subscriptions. These conflicts must be resolved before importing.",
         "validation-errors-title": "Validation errors",
-        "validation-errors-description": "The CSV file contains validation errors that need to be fixed before importing."
+        "validation-errors-description": "The CSV file contains validation errors that need to be fixed before importing.",
+        "erase-existing": "Erase existing elements"
       },
       "test": {
         "title": "Result for item {{name}}"
