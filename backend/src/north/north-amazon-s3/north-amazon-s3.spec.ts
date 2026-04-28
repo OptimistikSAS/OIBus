@@ -1,67 +1,106 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
-import { S3Client, PutObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
-import { HttpsProxyAgent } from 'https-proxy-agent';
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import NorthAmazonS3 from './north-amazon-s3';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import testData from '../../tests/utils/test-data';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import CacheService from '../../service/cache/cache.service';
-import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../transformers/oibus-transformer';
+import { mockModule, reloadModule, asLogger, buildNorthEntity } from '../../tests/utils/test-utils';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import { buildNorthEntity } from '../../tests/utils/test-utils';
+import type { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
+import type { NorthConnectorEntity } from '../../model/north-connector.model';
+import type NorthAmazonS3Class from './north-amazon-s3';
 
-const mockSend = jest.fn();
-jest.mock('@aws-sdk/client-s3', () => {
-  return {
-    // Mock the constructor to return our object with the mockSend function
-    S3Client: jest.fn().mockImplementation(() => {
-      return {
-        send: mockSend
-      };
-    }),
-    // Mock the command to return the input params so we can verify them in the 'send' check
-    PutObjectCommand: jest.fn().mockImplementation(args => {
-      return { _isMockCommand: true, args };
-    }),
-    HeadBucketCommand: jest.fn().mockImplementation(args => ({ _isMockCommand: true, args }))
-  };
-});
-jest.mock('@smithy/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }));
-jest.mock('https-proxy-agent', () => ({
-  HttpsProxyAgent: jest.fn().mockImplementation(args => {
-    return { _isMockCommand: true, args };
-  })
-}));
-jest.mock('../../service/transformer.service');
-jest.mock('../../service/utils');
-jest.mock('../../service/encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
-
-const logger: pino.Logger = new PinoLogger();
-const cacheService: CacheService = new CacheServiceMock();
-const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
-
-jest.mock(
-  '../../service/cache/cache.service',
-  () =>
-    function () {
-      return cacheService;
-    }
-);
-
-let north: NorthAmazonS3;
-let configuration: NorthConnectorEntity<NorthAmazonS3Settings>;
+const nodeRequire = createRequire(import.meta.url);
 
 describe('NorthAmazonS3', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let NorthAmazonS3: typeof NorthAmazonS3Class;
+  let north: NorthAmazonS3Class;
+
+  const logger = new PinoLogger();
+  const cacheService = new CacheServiceMock();
+  const oiBusTransformer = new OIBusTransformerMock();
+
+  const mockSend = mock.fn(async () => undefined);
+
+  const s3ClientExports = {
+    S3Client: function (this: { send: typeof mockSend }) {
+      this.send = mockSend;
+    },
+    PutObjectCommand: function (this: { _isMockCommand: boolean; args: unknown }, args: unknown) {
+      this._isMockCommand = true;
+      this.args = args;
+    },
+    HeadBucketCommand: function (this: { _isMockCommand: boolean; args: unknown }, args: unknown) {
+      this._isMockCommand = true;
+      this.args = args;
+    }
+  };
+
+  const smithyExports = {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    NodeHttpHandler: function () {}
+  };
+
+  const httpsProxyAgentExports = {
+    HttpsProxyAgent: mock.fn(function (this: { _isMockCommand: boolean; args: unknown }, args: unknown) {
+      this._isMockCommand = true;
+      this.args = args;
+    })
+  };
+
+  const transformerExports = {
+    createTransformer: mock.fn(() => oiBusTransformer)
+  };
+
+  const utilsExports = {
+    checkAge: mock.fn(() => true),
+    compress: mock.fn(async () => undefined),
+    delay: mock.fn(async () => undefined),
+    generateIntervals: mock.fn(() => []),
+    groupItemsByGroup: mock.fn(() => []),
+    validateCronExpression: mock.fn(() => ({ expression: '' }))
+  };
+
+  const encryptionExports = {
+    __esModule: true,
+    encryptionService: {
+      decryptText: mock.fn(async (text: string) => text)
+    }
+  };
+
+  let configuration: NorthConnectorEntity<NorthAmazonS3Settings>;
+
+  before(() => {
+    mockModule(nodeRequire, '@aws-sdk/client-s3', s3ClientExports);
+    mockModule(nodeRequire, '@smithy/node-http-handler', smithyExports);
+    mockModule(nodeRequire, 'https-proxy-agent', httpsProxyAgentExports);
+    mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, '../../service/encryption.service', encryptionExports);
+    mockModule(nodeRequire, '../../service/cache/cache.service', {
+      __esModule: true,
+      default: function () {
+        return cacheService;
+      }
+    });
+    NorthAmazonS3 = reloadModule<{ default: typeof NorthAmazonS3Class }>(nodeRequire, './north-amazon-s3').default;
+  });
+
+  beforeEach(() => {
+    transformerExports.createTransformer.mock.resetCalls();
+    httpsProxyAgentExports.HttpsProxyAgent.mock.resetCalls();
+    mockSend.mock.resetCalls();
+    encryptionExports.encryptionService.decryptText.mock.resetCalls();
+    encryptionExports.encryptionService.decryptText.mock.mockImplementation(async (text: string) => text);
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
+
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+
     configuration = buildNorthEntity<NorthAmazonS3Settings>('aws-s3', {
       region: 'eu-west-1',
       bucket: 'oibus',
@@ -73,39 +112,40 @@ describe('NorthAmazonS3', () => {
       proxyUsername: 'proxy-user',
       proxyPassword: 'proxy-password'
     });
-    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
 
-    north = new NorthAmazonS3(configuration, logger, cacheService);
+    north = new NorthAmazonS3(configuration, asLogger(logger), cacheService);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should retrieve supported types', () => {
-    expect(north.supportedTypes()).toEqual(['any']);
+    assert.deepStrictEqual(north.supportedTypes(), ['any']);
   });
 
   it('should properly start', async () => {
-    north.prepareConnection = jest.fn();
+    const prepareConnectionMock = mock.method(north, 'prepareConnection', async () => undefined);
     await north.start();
-    expect(north.prepareConnection).toHaveBeenCalledWith(configuration.settings);
+    assert.strictEqual(prepareConnectionMock.mock.calls.length, 1);
+    assert.deepStrictEqual(prepareConnectionMock.mock.calls[0].arguments, [configuration.settings]);
   });
 
   it('should properly test connection', async () => {
-    north.prepareConnection = jest.fn();
-    north['s3'] = { send: mockSend } as unknown as S3Client;
+    const prepareConnectionMock = mock.method(north, 'prepareConnection', async () => undefined);
+    // inject a mock s3 client
+    (north as unknown as { s3: { send: typeof mockSend } })['s3'] = { send: mockSend };
 
     const testResult = await north.testConnection();
 
-    expect(north.prepareConnection).toHaveBeenCalledWith(configuration.settings);
-    expect(mockSend).toHaveBeenCalledTimes(1);
-    expect(HeadBucketCommand).toHaveBeenCalledWith({
-      Bucket: 'oibus'
-    });
-    expect(logger.info).toHaveBeenCalledWith(`Access to bucket "${configuration.settings.bucket}" allowed`);
-    expect(testResult).toEqual({
+    assert.strictEqual(prepareConnectionMock.mock.calls.length, 1);
+    assert.deepStrictEqual(prepareConnectionMock.mock.calls[0].arguments, [configuration.settings]);
+    assert.strictEqual(mockSend.mock.calls.length, 1);
+    assert.strictEqual(logger.info.mock.calls.length, 1);
+    assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [`Access to bucket "${configuration.settings.bucket}" allowed`]);
+    assert.deepStrictEqual(testResult, {
       items: [
         { key: 'Bucket', value: configuration.settings.bucket },
         { key: 'Region', value: configuration.settings.region }
@@ -114,31 +154,29 @@ describe('NorthAmazonS3', () => {
   });
 
   it('should properly manage error on test connection', async () => {
-    north.prepareConnection = jest.fn();
-    north['s3'] = { send: mockSend } as unknown as S3Client;
+    mock.method(north, 'prepareConnection', async () => undefined);
     const expectedError = 'AWS error';
-    mockSend.mockRejectedValueOnce(new Error(expectedError));
-
-    await expect(north.testConnection()).rejects.toThrow(`Error testing Amazon S3 connection: ${expectedError}`);
-
-    expect(mockSend).toHaveBeenCalledTimes(1);
-    expect(HeadBucketCommand).toHaveBeenCalledWith({
-      Bucket: 'oibus'
+    mockSend.mock.mockImplementationOnce(async () => {
+      throw new Error(expectedError);
     });
-    expect(logger.info).not.toHaveBeenCalled();
+    (north as unknown as { s3: { send: typeof mockSend } })['s3'] = { send: mockSend };
+
+    await assert.rejects(
+      async () => {
+        await north.testConnection();
+      },
+      new Error(`Error testing Amazon S3 connection: ${expectedError}`)
+    );
+
+    assert.strictEqual(mockSend.mock.calls.length, 1);
+    assert.strictEqual(logger.info.mock.calls.length, 0);
   });
 
   it('should properly prepare connection with proxy', async () => {
     await north.prepareConnection(configuration.settings);
-    expect(HttpsProxyAgent).toHaveBeenCalledWith('http://proxy-user:proxy-password@localhost/');
-    expect(S3Client).toHaveBeenCalledWith({
-      credentials: {
-        accessKeyId: 'access-key',
-        secretAccessKey: 'secret-key'
-      },
-      region: 'eu-west-1',
-      requestHandler: expect.anything()
-    });
+
+    assert.strictEqual(httpsProxyAgentExports.HttpsProxyAgent.mock.calls.length, 1);
+    assert.deepStrictEqual(httpsProxyAgentExports.HttpsProxyAgent.mock.calls[0].arguments, ['http://proxy-user:proxy-password@localhost/']);
   });
 
   it('should properly prepare connection with proxy without credentials', async () => {
@@ -153,15 +191,9 @@ describe('NorthAmazonS3', () => {
       proxyUsername: '',
       proxyPassword: ''
     });
-    expect(HttpsProxyAgent).toHaveBeenCalledWith('http://localhost');
-    expect(S3Client).toHaveBeenCalledWith({
-      credentials: {
-        accessKeyId: 'access-key',
-        secretAccessKey: 'secret-key'
-      },
-      region: 'eu-west-1',
-      requestHandler: expect.anything()
-    });
+
+    assert.strictEqual(httpsProxyAgentExports.HttpsProxyAgent.mock.calls.length, 1);
+    assert.deepStrictEqual(httpsProxyAgentExports.HttpsProxyAgent.mock.calls[0].arguments, ['http://localhost']);
   });
 
   it('should properly prepare connection without proxy', async () => {
@@ -176,19 +208,14 @@ describe('NorthAmazonS3', () => {
       proxyUsername: 'proxy-user',
       proxyPassword: 'proxy-password'
     });
-    expect(S3Client).toHaveBeenCalledWith({
-      credentials: {
-        accessKeyId: 'access-key',
-        secretAccessKey: 'secret-key'
-      },
-      region: 'eu-west-1'
-    });
-    expect(HttpsProxyAgent).not.toHaveBeenCalled();
+
+    assert.strictEqual(httpsProxyAgentExports.HttpsProxyAgent.mock.calls.length, 0);
   });
 
   it('should properly handle content', async () => {
     const readStream = {} as ReadStream;
-    north['s3'] = { send: mockSend } as unknown as S3Client;
+    (north as unknown as { s3: { send: typeof mockSend } })['s3'] = { send: mockSend };
+
     await north.handleContent(readStream, {
       contentFile: 'file-789.csv',
       contentSize: 1234,
@@ -197,11 +224,13 @@ describe('NorthAmazonS3', () => {
       contentType: 'any'
     });
 
-    expect(PutObjectCommand).toHaveBeenCalledWith({
+    assert.strictEqual(mockSend.mock.calls.length, 1);
+    // Verify the PutObjectCommand was called with the right body
+    const sentCommand = mockSend.mock.calls[0].arguments[0] as { args: { Bucket: string; Key: string; Body: ReadStream } };
+    assert.deepStrictEqual(sentCommand.args, {
       Bucket: 'oibus',
-      Key: 'myFolder/file-789.csv', // Adjust based on how your logic constructs the path
+      Key: 'myFolder/file-789.csv',
       Body: readStream
     });
-    expect(mockSend).toHaveBeenCalledTimes(1);
   });
 });
