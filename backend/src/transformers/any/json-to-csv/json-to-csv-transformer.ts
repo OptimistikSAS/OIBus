@@ -11,6 +11,59 @@ import { TransformerJsonToCsvSettings } from '../../../../shared/model/transform
 
 const pipelineAsync = promisify(pipeline);
 
+/**
+ * Splits a JSONPath expression into its individual navigation segments.
+ * e.g. "$[0].data.diameters[1].value" → ["$", "[0]", ".data", ".diameters", "[1]", ".value"]
+ */
+function splitPathSegments(path: string): Array<string> {
+  const segments: Array<string> = [];
+  const regex = /\$|\.[^.[\]]+|\[[^\]]+\]/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(path)) !== null) {
+    segments.push(match[0]);
+  }
+  return segments;
+}
+
+/**
+ * Resolves a JSONPath expression against a value, automatically parsing any
+ * JSON-stringified intermediate node when normal traversal would otherwise fail.
+ * Strings that are not accessed via a path (leaf values) are left untouched.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function resolveJsonPath(path: string, json: unknown): any {
+  if (typeof json === 'string') {
+    try {
+      json = JSON.parse(json);
+    } catch {
+      return undefined;
+    }
+  }
+  if (json === null || json === undefined) return undefined;
+
+  const result = JSONPath({ path, json: json as object, wrap: false });
+  if (result !== undefined && result !== null) return result;
+
+  // Direct traversal returned nothing. Scan right-to-left through path segments
+  // to find the deepest JSON-stringified intermediate node, parse it, then run
+  // the remaining suffix path on the parsed value.
+  const segments = splitPathSegments(path);
+  for (let i = segments.length - 1; i >= 2; i--) {
+    const prefix = segments.slice(0, i).join('');
+    const suffix = '$' + segments.slice(i).join('');
+    const intermediate = JSONPath({ path: prefix, json: json as object, wrap: false });
+    if (typeof intermediate !== 'string') continue;
+    try {
+      const parsed = JSON.parse(intermediate);
+      return resolveJsonPath(suffix, parsed);
+    } catch {
+      continue;
+    }
+  }
+
+  return result;
+}
+
 export default class JSONToCSVTransformer extends OIBusTransformer {
   public static transformerName = 'json-to-csv';
 
@@ -55,12 +108,8 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
         // Resolve the specific path for this column
         const specificPath = injectIndices(field.jsonPath, pathIndices);
 
-        // Query the single specific value (returns the item directly, not an array)
-        const result = JSONPath({
-          path: specificPath,
-          json: content,
-          wrap: false
-        });
+        // Query the single specific value, parsing any JSON-stringified intermediate node
+        const result = resolveJsonPath(specificPath, content);
 
         if (result === undefined || result === null) {
           csvRow[field.columnName] = '';

@@ -176,6 +176,59 @@ describe('JSONToCSVTransformer', () => {
     );
   });
 
+  it('should parse JSON-stringified intermediate nodes when traversing a path', async () => {
+    const options = {
+      filename: 'output.csv',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*].timestamp',
+      fields: [
+        { jsonPath: '$[*].data.value', columnName: 'article', dataType: 'string' },
+        { jsonPath: '$[*].data.articleName', columnName: 'articleName', dataType: 'string' },
+        { jsonPath: '$[*].data.diameters[0].value', columnName: 'diameter_1', dataType: 'string' },
+        { jsonPath: '$[*].data.temperatures[0]', columnName: 'temperature', dataType: 'string' },
+        { jsonPath: '$[*].data.plainString', columnName: 'plain', dataType: 'string' }
+      ]
+    };
+
+    // 'data' is a JSON-stringified object; 'plainString' is a regular string that must stay as-is
+    const inputData = [
+      {
+        timestamp: '2026-04-28T10:30:00.000Z',
+        data: JSON.stringify({
+          value: 'A-12345',
+          articleName: 'Flacon 500ml',
+          diameters: [{ value: 24.8 }, { value: 24.9 }],
+          temperatures: [1205, 1198],
+          plainString: 'keep-me'
+        })
+      }
+    ];
+
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+    (csv.unparse as jest.Mock).mockReturnValue('csv result');
+
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
+    mockStream.push(JSON.stringify(inputData));
+    mockStream.push(null);
+
+    await flushPromises();
+    await promise;
+
+    expect(csv.unparse).toHaveBeenCalledWith(
+      [
+        {
+          article: 'A-12345',
+          articleName: 'Flacon 500ml',
+          diameter_1: '24.8',
+          temperature: '1205',
+          plain: 'keep-me'
+        }
+      ],
+      expect.objectContaining({ delimiter: ';' })
+    );
+  });
+
   it('should return correct manifest settings', () => {
     expect(jsonToCsvManifest.settings.key).toBe('options');
     expect(jsonToCsvManifest.settings.attributes[0].key).toBe('filename');
