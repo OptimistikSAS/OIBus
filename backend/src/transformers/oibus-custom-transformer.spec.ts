@@ -80,7 +80,8 @@ describe('OIBusCustomTransformer', () => {
 
     await flushPromises();
     const result = await promise;
-    expect(result).toEqual(sandboxOutput);
+    expect(result.output).toEqual(Buffer.from(sandboxOutput.output));
+    expect(result.metadata).toEqual(sandboxOutput.metadata);
     expect(sandboxService.execute).toHaveBeenCalledWith(
       JSON.stringify(dataChunks),
       { source: 'test' },

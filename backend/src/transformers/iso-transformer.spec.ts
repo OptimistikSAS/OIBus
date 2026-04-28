@@ -40,15 +40,13 @@ describe('IsoTransformer', () => {
     await flushPromises();
     const result = await promise;
     // Assert
-    expect(result).toEqual({
-      output: '',
-      metadata: {
-        contentFile: '',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 0,
-        contentType: ''
-      }
+    expect(result.output).toEqual(Buffer.alloc(0));
+    expect(result.metadata).toEqual({
+      contentFile: '',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 0,
+      contentType: ''
     });
   });
 
@@ -71,15 +69,13 @@ describe('IsoTransformer', () => {
     await flushPromises();
     const result = await promise;
     // Assert
-    expect(result).toEqual({
-      output: '',
-      metadata: {
-        contentFile: '',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 0,
-        contentType: ''
-      }
+    expect(result.output).toEqual(Buffer.alloc(0));
+    expect(result.metadata).toEqual({
+      contentFile: '',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 0,
+      contentType: ''
     });
   });
 

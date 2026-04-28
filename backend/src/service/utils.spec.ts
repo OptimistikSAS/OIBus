@@ -10,6 +10,9 @@ import {
   convertDateTime,
   convertDateTimeToInstant,
   convertDelimiter,
+  convertEscapeChar,
+  convertNewline,
+  convertQuoteChar,
   createFolder,
   createOIBusError,
   delay,
@@ -847,6 +850,48 @@ describe('Service utils', () => {
       expect(convertDelimiter('PIPE')).toEqual('|');
       expect(convertDelimiter('SEMI_COLON')).toEqual(';');
       expect(convertDelimiter('TAB')).toEqual(' ');
+    });
+  });
+
+  describe('convertQuoteChar', () => {
+    it('should convert DOUBLE_QUOTE to "', () => {
+      expect(convertQuoteChar('DOUBLE_QUOTE')).toEqual('"');
+    });
+
+    it("should convert SINGLE_QUOTE to '", () => {
+      expect(convertQuoteChar('SINGLE_QUOTE')).toEqual("'");
+    });
+
+    it('should convert NONE to empty string', () => {
+      expect(convertQuoteChar('NONE')).toEqual('');
+    });
+  });
+
+  describe('convertEscapeChar', () => {
+    it('should convert BACKSLASH to \\', () => {
+      expect(convertEscapeChar('BACKSLASH')).toEqual('\\');
+    });
+
+    it('should convert DOUBLE_QUOTE to "', () => {
+      expect(convertEscapeChar('DOUBLE_QUOTE')).toEqual('"');
+    });
+  });
+
+  describe('convertNewline', () => {
+    it('should convert CRLF to \\r\\n', () => {
+      expect(convertNewline('CRLF')).toEqual('\r\n');
+    });
+
+    it('should convert LF to \\n', () => {
+      expect(convertNewline('LF')).toEqual('\n');
+    });
+
+    it('should convert CR to \\r', () => {
+      expect(convertNewline('CR')).toEqual('\r');
+    });
+
+    it('should convert DEFAULT to empty string', () => {
+      expect(convertNewline('DEFAULT')).toEqual('');
     });
   });
 

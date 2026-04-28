@@ -23,7 +23,7 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
     data: ReadStream | Readable,
     source: CacheMetadataSource,
     filename: string | null
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     // Collect the data from the stream
     const chunks: Array<Buffer> = [];
     await pipelineAsync(
@@ -35,7 +35,7 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
         }
       })
     );
-    return await sandboxService.execute(
+    const result = await sandboxService.execute(
       Buffer.concat(chunks).toString('utf-8'),
       source,
       filename || `${generateRandomId(10)}.json`,
@@ -43,5 +43,6 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
       this._options,
       this.logger
     );
+    return { ...result, output: Buffer.from(result.output) };
   }
 }

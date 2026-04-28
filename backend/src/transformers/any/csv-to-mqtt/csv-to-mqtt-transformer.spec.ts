@@ -71,7 +71,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse((result.output as Buffer).toString());
 
     expect(output).toHaveLength(1);
     expect(output[0].topic).toBe('device/1');
@@ -101,7 +101,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     expect(output).toHaveLength(0);
   });
@@ -120,7 +120,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse((result.output as Buffer).toString());
 
     expect(output[0].payload).toBe('123');
   });
@@ -136,7 +136,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse((result.output as Buffer).toString());
 
     expect(output[0].payload).toBe('45.6'); // MQTT payload is string, but content logic handled number conversion internally
   });
@@ -152,7 +152,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse((result.output as Buffer).toString());
 
     expect(output[0].payload).toBe('true');
   });
@@ -173,7 +173,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse((result.output as Buffer).toString());
 
     expect(output[0].payload).toBe('1698400000000');
   });
@@ -200,7 +200,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse((result.output as Buffer).toString());
 
     expect(output).toHaveLength(2);
     expect(output[0]).toEqual({ topic: 'device/1', payload: '100' });
@@ -226,7 +226,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse((result.output as Buffer).toString());
 
     expect(output).toHaveLength(2);
     expect(output[0]).toEqual({ topic: 'device/1', payload: '{}' });
@@ -251,7 +251,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse((result.output as Buffer).toString());
     expect(output).toHaveLength(0);
   });
 
@@ -273,7 +273,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     // Topic extraction fails (undefined), so row is skipped
     expect(output).toHaveLength(0);
@@ -294,7 +294,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     expect(output).toHaveLength(1);
     expect(output[0].topic).toBe('device/1');
@@ -312,7 +312,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     expect(output).toHaveLength(1);
     expect(output[0].topic).toBe('device/1');
@@ -348,7 +348,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse((result.output as Buffer).toString());
 
     expect(output[0].payload).toBe('raw-content');
   });

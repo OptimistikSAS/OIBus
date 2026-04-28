@@ -72,18 +72,20 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
     await flushPromises();
     const result = await promise;
     // Assert
-    expect(result).toEqual({
-      output: JSON.stringify([
-        { topic: '/oibus/reference1', payload: JSON.stringify({ value: '1', timestamp: testData.constants.dates.DATE_1 }) },
-        { topic: '/oibus/reference2', payload: JSON.stringify({ value: '2', quality: 'good', timestamp: testData.constants.dates.DATE_2 }) }
-      ]),
-      metadata: {
-        contentFile: 'randomId.json',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 2,
-        contentType: 'mqtt'
-      }
+    expect(result.output).toEqual(
+      Buffer.from(
+        JSON.stringify([
+          { topic: '/oibus/reference1', payload: JSON.stringify({ value: '1', timestamp: testData.constants.dates.DATE_1 }) },
+          { topic: '/oibus/reference2', payload: JSON.stringify({ value: '2', quality: 'good', timestamp: testData.constants.dates.DATE_2 }) }
+        ])
+      )
+    );
+    expect(result.metadata).toEqual({
+      contentFile: 'randomId.json',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 2,
+      contentType: 'mqtt'
     });
   });
 

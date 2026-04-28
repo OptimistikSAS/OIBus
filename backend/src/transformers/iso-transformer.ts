@@ -10,9 +10,9 @@ export default class IsoTransformer extends OIBusTransformer {
     _data: ReadStream | Readable,
     _source: CacheMetadataSource,
     _filename: string | null
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     return {
-      output: '',
+      output: Buffer.alloc(0),
       metadata: {
         contentFile: '',
         contentSize: 0,

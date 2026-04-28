@@ -268,6 +268,39 @@ export const convertDelimiter = (delimiter: CsvCharacter): string => {
   }
 };
 
+export const convertQuoteChar = (quoteChar: 'DOUBLE_QUOTE' | 'SINGLE_QUOTE' | 'NONE'): string => {
+  switch (quoteChar) {
+    case 'DOUBLE_QUOTE':
+      return '"';
+    case 'SINGLE_QUOTE':
+      return "'";
+    case 'NONE':
+      return '';
+  }
+};
+
+export const convertEscapeChar = (escapeChar: 'BACKSLASH' | 'DOUBLE_QUOTE'): string => {
+  switch (escapeChar) {
+    case 'BACKSLASH':
+      return '\\';
+    case 'DOUBLE_QUOTE':
+      return '"';
+  }
+};
+
+export const convertNewline = (newline: 'DEFAULT' | 'CRLF' | 'LF' | 'CR'): string => {
+  switch (newline) {
+    case 'CRLF':
+      return '\r\n';
+    case 'LF':
+      return '\n';
+    case 'CR':
+      return '\r';
+    case 'DEFAULT':
+      return '';
+  }
+};
+
 export const persistResults = async (
   data: Array<unknown> | string,
   serializationSettings: SerializationSettings,

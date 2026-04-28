@@ -62,18 +62,20 @@ describe('OIBusSetpointToMQTTTransformer', () => {
     await flushPromises();
     const result = await promise;
     // Assert
-    expect(result).toEqual({
-      output: JSON.stringify([
-        { topic: '/oibus/reference1', payload: '1' },
-        { topic: '/oibus/reference2', payload: '2' }
-      ]),
-      metadata: {
-        contentFile: 'randomId.json',
-        contentSize: 0,
-        createdAt: '',
-        numberOfElement: 2,
-        contentType: 'mqtt'
-      }
+    expect(result.output).toEqual(
+      Buffer.from(
+        JSON.stringify([
+          { topic: '/oibus/reference1', payload: '1' },
+          { topic: '/oibus/reference2', payload: '2' }
+        ])
+      )
+    );
+    expect(result.metadata).toEqual({
+      contentFile: 'randomId.json',
+      contentSize: 0,
+      createdAt: '',
+      numberOfElement: 2,
+      contentType: 'mqtt'
     });
   });
 
