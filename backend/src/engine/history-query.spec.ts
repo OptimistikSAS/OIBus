@@ -51,7 +51,8 @@ describe('HistoryQuery enabled', () => {
     historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, asLogger(logger));
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await historyQuery.stop();
     mock.timers.reset();
     mock.restoreAll();
     mockedSouth1Mock.connectedEvent.removeAllListeners();
