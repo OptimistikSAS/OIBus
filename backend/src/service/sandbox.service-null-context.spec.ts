@@ -1,58 +1,78 @@
-/**
- * Isolated spec for the null-context branch in SandboxService.execute()'s finally block.
- *
- * jest.mock('isolated-vm') must live at the module level, which would break the main spec
- * that relies on the real ivm implementation. Hence this dedicated file.
- */
-
-jest.mock('isolated-vm', () => {
-  const MockIsolate = jest.fn().mockImplementation(() => ({
-    createContext: jest.fn().mockRejectedValue(new Error('context creation failed')),
-    isDisposed: false,
-    dispose: jest.fn(),
-    cpuTime: BigInt(0),
-    getHeapStatisticsSync: jest.fn().mockReturnValue({ used_heap_size: 0 })
-  }));
-  (MockIsolate as any).createSnapshot = jest.fn().mockReturnValue({});
-
-  return {
-    Isolate: MockIsolate,
-    ExternalCopy: jest.fn(),
-    Reference: jest.fn()
-  };
-});
-
-jest.mock('./utils', () => ({
-  resolveBypassingExports: jest.fn()
-}));
-jest.mock('node:fs');
-
-import SandboxService from './sandbox.service';
-import * as fs from 'node:fs';
-import pino from 'pino';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import { CustomTransformer } from '../model/transformer.model';
+import { mockModule, reloadModule, asLogger } from '../tests/utils/test-utils';
+import type { CustomTransformer } from '../model/transformer.model';
+import type SandboxServiceClass from './sandbox.service';
 
-const logger: pino.Logger = new PinoLogger();
+const nodeRequire = createRequire(import.meta.url);
 
 describe('SandboxService - null context in finally block', () => {
-  let sandboxService: SandboxService;
+  let SandboxService: typeof SandboxServiceClass;
+  let sandboxService: SandboxServiceClass;
+
+  const logger = new PinoLogger();
+
+  const createContextMock = mock.fn(async () => {
+    throw new Error('context creation failed');
+  });
+  const disposeMock = mock.fn();
+  const getHeapStatisticsSync = mock.fn(() => ({ used_heap_size: 0 }));
+
+  function MockIsolate() {
+    return {
+      createContext: createContextMock,
+      isDisposed: false,
+      dispose: disposeMock,
+      cpuTime: BigInt(0),
+      getHeapStatisticsSync
+    };
+  }
+
+  const ivmExports = {
+    __esModule: true,
+    default: {
+      Isolate: Object.assign(MockIsolate, { createSnapshot: mock.fn(() => ({})) }),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      ExternalCopy: function () {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      Reference: function () {}
+    }
+  };
+
+  const utilsExports = {
+    __esModule: true,
+    resolveBypassingExports: mock.fn()
+  };
+
+  before(() => {
+    mockModule(nodeRequire, 'isolated-vm', ivmExports);
+    mockModule(nodeRequire, './utils', utilsExports);
+    SandboxService = reloadModule<{ default: typeof SandboxServiceClass }>(nodeRequire, './sandbox.service').default;
+  });
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (fs.readFileSync as jest.Mock).mockReturnValue('');
+    createContextMock.mock.resetCalls();
+    disposeMock.mock.resetCalls();
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
     sandboxService = new SandboxService();
   });
 
-  afterAll(() => {
-    jest.restoreAllMocks();
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('should handle a null context gracefully when createContext fails', async () => {
     const transformer = { language: 'javascript', customCode: '' } as CustomTransformer;
 
-    await expect(sandboxService.execute('', { source: 'test' }, 'file.txt', transformer, {}, logger)).rejects.toThrow(
-      '[RUNTIME_ERROR] Custom code execution failed: context creation failed'
+    await assert.rejects(
+      async () => sandboxService.execute('', { source: 'test' }, 'file.txt', transformer, {}, asLogger(logger)),
+      /\[RUNTIME_ERROR\] Sandbox execution failed: context creation failed/
     );
   });
 });
