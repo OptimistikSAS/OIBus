@@ -9,10 +9,8 @@ let odbc: IOdbc | null = null;
 
 export async function importOdbc(): Promise<IOdbc | null> {
   try {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const mod = await import('odbc');
-    return mod.default as IOdbc;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require('odbc') as IOdbc;
   } catch (error) {
     console.error('Failed to load odbc module:', error);
     return null;
