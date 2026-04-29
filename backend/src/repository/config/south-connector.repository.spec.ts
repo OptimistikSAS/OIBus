@@ -5,7 +5,7 @@ import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils
 import testData from '../../tests/utils/test-data';
 import SouthConnectorRepository from './south-connector.repository';
 import SouthItemGroupRepository from './south-item-group.repository';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import { SouthConnectorEntity, SouthConnectorItemEntity, SouthItemGroupEntityLight } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 const TEST_DB_PATH = 'src/tests/test-config-south.db';
@@ -450,5 +450,53 @@ describe('SouthConnectorRepository', () => {
   it('should handle empty itemIds array in moveItemsToGroup', () => {
     assert.doesNotThrow(() => repository.moveItemsToGroup([], 'someGroupId'));
     assert.doesNotThrow(() => repository.moveItemsToGroup([], null));
+  });
+
+  it('should save south connector and replace temp group IDs with real IDs', () => {
+    const south: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+
+    const tempGroup: SouthItemGroupEntityLight = {
+      id: 'temp_newgroup',
+      name: 'Temp Created Group',
+      scanMode: testData.scanMode.list[0],
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    const itemWithTempGroup: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'item-with-temp-group',
+      enabled: true,
+      scanMode: testData.scanMode.list[0],
+      settings: {} as SouthItemSettings,
+      group: { ...tempGroup },
+      syncWithGroup: true,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    south.groups = [tempGroup];
+    south.items = [itemWithTempGroup];
+
+    repository.saveSouth(south);
+
+    // After save, the temp group ID is replaced with a real generated ID
+    assert.ok(!itemWithTempGroup.group!.id.startsWith('temp_'));
+    assert.ok(itemWithTempGroup.id);
+
+    const savedItem = repository.findItemById(south.id, itemWithTempGroup.id);
+    assert.ok(savedItem);
+    assert.ok(savedItem.group);
+    assert.notStrictEqual(savedItem.group.id, 'temp_newgroup');
   });
 });

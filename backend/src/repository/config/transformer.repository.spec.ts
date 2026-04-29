@@ -196,4 +196,36 @@ describe('TransformerRepository', () => {
       assert.strictEqual(t.type, 'standard');
     }
   });
+
+  it('should search with only type filter', () => {
+    const result = repository.search({ type: 'custom', inputType: undefined, outputType: undefined, page: 0 });
+    assert.ok(result.totalElements >= 1);
+    for (const t of result.content) {
+      assert.strictEqual(t.type, 'custom');
+    }
+  });
+
+  it('should search with only inputType filter', () => {
+    const result = repository.search({ type: undefined, inputType: 'time-values', outputType: undefined, page: 0 });
+    assert.ok(result.totalElements >= 1);
+  });
+
+  it('should search with only outputType filter', () => {
+    const result = repository.search({ type: undefined, inputType: undefined, outputType: 'any', page: 0 });
+    assert.ok(result.totalElements >= 1);
+  });
+
+  it('should skip creating standard transformers that already exist', () => {
+    const secondRepo = new TransformerRepository(database);
+    const all = secondRepo.list().filter(t => t.type === 'standard');
+    assert.strictEqual(all.length, 14);
+  });
+
+  it('should create all standard transformers when none exist', () => {
+    // Remove all standard transformers to force createStandardTransformers() to insert them all
+    database.prepare("DELETE FROM transformers WHERE type = 'standard'").run();
+    const freshRepo = new TransformerRepository(database);
+    const standardTransformers = freshRepo.list().filter(t => t.type === 'standard');
+    assert.strictEqual(standardTransformers.length, 14);
+  });
 });
