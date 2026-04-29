@@ -72,7 +72,7 @@ describe('SandboxService - null context in finally block', () => {
 
     await assert.rejects(
       async () => sandboxService.execute('', { source: 'test' }, 'file.txt', transformer, {}, asLogger(logger)),
-      /\[RUNTIME_ERROR\] Sandbox execution failed: context creation failed/
+      /\[RUNTIME_ERROR\] Custom code execution failed: context creation failed/
     );
   });
 });

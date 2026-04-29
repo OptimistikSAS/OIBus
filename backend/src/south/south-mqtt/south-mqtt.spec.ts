@@ -26,8 +26,9 @@ const mqttStream = new MqttStreamMock();
 const mqttExports = {
   __esModule: true,
   default: {
-    connectAsync: mock.fn(async () => mqttStream)
-  } as { connectAsync: ReturnType<typeof mock.fn>; default?: unknown }
+    connectAsync: mock.fn(async () => mqttStream),
+    connect: mock.fn((_url: string) => mqttStream)
+  } as { connectAsync: ReturnType<typeof mock.fn>; connect: ReturnType<typeof mock.fn>; default?: unknown }
 };
 mqttExports.default.default = mqttExports.default;
 
@@ -247,6 +248,7 @@ describe('SouthMQTT', () => {
     mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
     mqttStream.end = mock.fn(() => undefined);
     mqttExports.default.connectAsync = mock.fn(async () => mqttStream);
+    mqttExports.default.connect = mock.fn((_url: string) => mqttStream);
     utilsMqttExports.createConnectionOptions = mock.fn(async () => ({}));
     utilsMqttExports.getItem = mock.fn(() => undefined as unknown);
     addContentCallback.mock.resetCalls();
@@ -585,14 +587,16 @@ describe('SouthMQTT', () => {
   });
 
   it('should properly test connection', async () => {
-    mock.method(
-      south,
-      'disconnect',
-      mock.fn(async () => undefined)
-    );
+    const connackPacket = { sessionPresent: false };
+    mqttExports.default.connect = mock.fn((_url: string) => {
+      setImmediate(() => mqttStream.emit('connect', connackPacket));
+      return mqttStream;
+    });
+
     const testResult = await south.testConnection();
+
     assert.strictEqual(mqttStream.end.mock.calls.length, 1);
-    assert.deepStrictEqual(testResult, { items: [{ key: 'Broker URL', value: configuration.settings.url }] });
+    assert.deepStrictEqual(testResult, { items: [{ key: 'SessionPresent', value: 'false' }] });
   });
 
   it('should properly test item', async () => {

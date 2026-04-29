@@ -47,6 +47,10 @@ class CustomStream extends Stream {
   end() {
     return Promise.resolve();
   }
+
+  destroy() {
+    return this;
+  }
 }
 
 describe('South Modbus', () => {

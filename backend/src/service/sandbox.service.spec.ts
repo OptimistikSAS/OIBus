@@ -119,7 +119,7 @@ describe('SandboxService', () => {
 
       await assert.rejects(
         async () => brokenService.execute('test', { source: 'test' }, 'file.txt', dummyTransformer, {}, asLogger(logger)),
-        /Sandbox execution failed: global is not defined/
+        /Custom code execution failed: global is not defined/
       );
 
       const errorMessages: Array<string> = logger.error.mock.calls.map(c => String(c.arguments[0]));
@@ -137,7 +137,7 @@ describe('SandboxService', () => {
       const transformer = {
         language: 'javascript',
         customCode: `
-          function transform(content, options, source, filename) {
+          function transform(content, source, filename, options) {
             return {
               data: { originalContent: content, passedOption: options.myVar },
               filename: 'out_' + filename,
@@ -200,8 +200,8 @@ describe('SandboxService', () => {
       const result1 = await sandboxService.execute('first', defaultSource, 'f1.txt', transformer, {}, asLogger(logger));
       const result2 = await sandboxService.execute('second', defaultSource, 'f2.txt', transformer, {}, asLogger(logger));
 
-      assert.strictEqual(JSON.parse(result1.output), 'first');
-      assert.strictEqual(JSON.parse(result2.output), 'second');
+      assert.strictEqual(result1.output, 'first');
+      assert.strictEqual(result2.output, 'second');
     });
 
     it('should successfully require and use Luxon', async () => {
@@ -302,7 +302,7 @@ describe('SandboxService', () => {
 
       await assert.rejects(
         async () => sandboxService.execute('', defaultSource, 'no-fn.txt', transformer, {}, asLogger(logger)),
-        /\[RUNTIME_ERROR\].*Sandbox execution failed: transform is not defined/
+        /\[RUNTIME_ERROR\].*Custom code execution failed: transform is not defined/
       );
     });
 
@@ -435,7 +435,7 @@ describe('SandboxService', () => {
 
       await assert.rejects(
         async () => sandboxService.execute('', defaultSource, 'ts-err.txt', transformer, {}, asLogger(logger)),
-        /\[SYNTAX_ERROR\] Sandbox execution failed: TypeScript compilation failed/
+        /\[SYNTAX_ERROR\] Custom code execution failed: TypeScript compilation failed/
       );
     });
 
@@ -539,7 +539,7 @@ describe('SandboxService - failing heap stats', () => {
 
     await assert.rejects(
       async () => sandboxService.execute('', { source: 'test' }, 'heap-fail.txt', transformer, {}, asLogger(logger)),
-      /\[RUNTIME_ERROR\] Sandbox execution failed: createContext failed/
+      /\[RUNTIME_ERROR\] Custom code execution failed: createContext failed/
     );
 
     const hasMetricsLog = logger.trace.mock.calls.some(
@@ -619,7 +619,7 @@ describe('SandboxService - failing createContext', () => {
 
     await assert.rejects(
       async () => sandboxService.execute('', { source: 'test' }, 'null-ctx.txt', transformer, {}, asLogger(logger)),
-      /\[RUNTIME_ERROR\] Sandbox execution failed: createContext failed/
+      /\[RUNTIME_ERROR\] Custom code execution failed: createContext failed/
     );
   });
 });

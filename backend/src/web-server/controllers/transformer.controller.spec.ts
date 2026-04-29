@@ -202,14 +202,15 @@ describe('TransformerController', () => {
   });
 
   it('should test a transformer', async () => {
-    const transformerId = testData.transformers.list[0].id;
-    const command: TransformerTestRequest = { inputData: 'time-values', options: {} };
+    const testRequest: TransformerTestRequest = { inputData: 'time-values', options: {} };
+    const transformerCommand = testData.transformers.list[0] as unknown as CustomTransformerCommandDTO;
+    const body = { transformer: transformerCommand, testRequest };
     transformerService.test = mock.fn(async () => undefined);
 
-    await controller.test(transformerId, command, mockRequest as CustomExpressRequest);
+    await controller.test(body, mockRequest as CustomExpressRequest);
 
     assert.strictEqual(transformerService.test.mock.calls.length, 1);
-    assert.deepStrictEqual(transformerService.test.mock.calls[0].arguments, [transformerId, command]);
+    assert.deepStrictEqual(transformerService.test.mock.calls[0].arguments, [transformerCommand, testRequest]);
   });
 
   it('should get a template for transformer', async () => {

@@ -34,13 +34,15 @@ describe('NorthMQTT', () => {
   const oiBusTransformer = new OIBusTransformerMock();
 
   const connectAsyncFn = mock.fn(async () => mockMqttClient);
+  const connectFn = mock.fn((_url: string) => mockMqttClient);
   const streamToStringFn = mock.fn(async () => '[]');
   const createConnectionOptionsFn = mock.fn(async () => ({}));
 
   const mqttExports = {
     __esModule: true,
     default: {
-      connectAsync: connectAsyncFn
+      connectAsync: connectAsyncFn,
+      connect: connectFn
     }
   };
 
@@ -82,6 +84,8 @@ describe('NorthMQTT', () => {
     transformerExports.createTransformer.mock.resetCalls();
     connectAsyncFn.mock.resetCalls();
     connectAsyncFn.mock.mockImplementation(async () => mockMqttClient);
+    connectFn.mock.resetCalls();
+    connectFn.mock.mockImplementation((_url: string) => mockMqttClient);
     streamToStringFn.mock.resetCalls();
     streamToStringFn.mock.mockImplementation(async () => '[]');
     createConnectionOptionsFn.mock.resetCalls();
@@ -217,9 +221,18 @@ describe('NorthMQTT', () => {
   });
 
   it('should properly test connection', async () => {
+    const connackPacket = { sessionPresent: false };
+    connectFn.mock.mockImplementation((_url: string) => {
+      setImmediate(() => mockMqttClient.emit('connect', connackPacket));
+      return mockMqttClient;
+    });
+
     const testResult = await north.testConnection();
+
+    assert.strictEqual(connectFn.mock.calls.length, 1);
+    assert.deepStrictEqual(connectFn.mock.calls[0].arguments[0], configuration.settings.url);
     assert.strictEqual(mockMqttClient.end.mock.calls.length, 1);
-    assert.deepStrictEqual(testResult, { items: [{ key: 'Broker URL', value: configuration.settings.url }] });
+    assert.deepStrictEqual(testResult, { items: [{ key: 'SessionPresent', value: 'false' }] });
   });
 
   it('should throw error if connector is in reconnecting state', async () => {
