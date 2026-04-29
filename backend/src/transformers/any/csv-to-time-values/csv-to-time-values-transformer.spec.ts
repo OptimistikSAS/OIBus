@@ -66,11 +66,7 @@ describe('CSVToTimeValuesTransformer', () => {
   });
 
   it('should transform valid CSV with headers', async () => {
-    const transformer = new CSVToTimeValuesTransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      headerOptions
-    );
+    const transformer = new CSVToTimeValuesTransformer(asLogger(logger), testData.transformers.list[0], headerOptions);
     mockPapaparse.parse = mock.fn(() => ({
       errors: [],
       data: [
@@ -97,11 +93,7 @@ describe('CSVToTimeValuesTransformer', () => {
   });
 
   it('should transform valid CSV without headers (using indices)', async () => {
-    const transformer = new CSVToTimeValuesTransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      indexOptions
-    );
+    const transformer = new CSVToTimeValuesTransformer(asLogger(logger), testData.transformers.list[0], indexOptions);
     mockPapaparse.parse = mock.fn(() => ({
       errors: [],
       data: [
@@ -127,11 +119,7 @@ describe('CSVToTimeValuesTransformer', () => {
   });
 
   it('should skip rows with missing or invalid required fields', async () => {
-    const transformer = new CSVToTimeValuesTransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      headerOptions
-    );
+    const transformer = new CSVToTimeValuesTransformer(asLogger(logger), testData.transformers.list[0], headerOptions);
     mockPapaparse.parse = mock.fn(() => ({
       errors: [],
       data: [
@@ -158,7 +146,7 @@ describe('CSVToTimeValuesTransformer', () => {
 
   it('should handle configuration errors for Index Mode (NaN indices)', async () => {
     const badConfig = { ...indexOptions, pointIdColumn: 'NotANumber' };
-    const transformer = new CSVToTimeValuesTransformer(asLogger(logger), testData.transformers.list[0],  badConfig);
+    const transformer = new CSVToTimeValuesTransformer(asLogger(logger), testData.transformers.list[0], badConfig);
     mockPapaparse.parse = mock.fn(() => ({
       errors: [],
       data: [['S1', '2023', 10]]
@@ -176,11 +164,7 @@ describe('CSVToTimeValuesTransformer', () => {
   });
 
   it('should log warning if PapaParse reports errors', async () => {
-    const transformer = new CSVToTimeValuesTransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      headerOptions
-    );
+    const transformer = new CSVToTimeValuesTransformer(asLogger(logger), testData.transformers.list[0], headerOptions);
     mockPapaparse.parse = mock.fn(() => ({
       errors: [{ message: 'Unclosed quote', row: 0 }],
       data: []

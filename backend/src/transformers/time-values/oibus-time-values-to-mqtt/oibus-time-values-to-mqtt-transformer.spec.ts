@@ -44,11 +44,7 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
         { pointId: 'reference2', topic: '/oibus/reference2' }
       ]
     };
-    const transformer = new OIBusTimeValuesToMQTTTransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      options
-    );
+    const transformer = new OIBusTimeValuesToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } },
       { pointId: 'reference2', timestamp: testData.constants.dates.DATE_2, data: { value: '2', quality: 'good' } },
@@ -64,10 +60,15 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
     const result = await promise;
 
     assert.deepStrictEqual(result, {
-      output: Buffer.from(JSON.stringify([
-        { topic: '/oibus/reference1', payload: JSON.stringify({ value: '1', timestamp: testData.constants.dates.DATE_1 }) },
-        { topic: '/oibus/reference2', payload: JSON.stringify({ value: '2', quality: 'good', timestamp: testData.constants.dates.DATE_2 }) }
-      ])),
+      output: Buffer.from(
+        JSON.stringify([
+          { topic: '/oibus/reference1', payload: JSON.stringify({ value: '1', timestamp: testData.constants.dates.DATE_1 }) },
+          {
+            topic: '/oibus/reference2',
+            payload: JSON.stringify({ value: '2', quality: 'good', timestamp: testData.constants.dates.DATE_2 })
+          }
+        ])
+      ),
       metadata: {
         contentFile: 'randomId.json',
         contentSize: 0,
