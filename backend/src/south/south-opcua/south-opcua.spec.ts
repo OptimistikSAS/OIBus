@@ -395,8 +395,7 @@ describe('SouthOPCUA', () => {
         { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } }, // ManufacturerName
         { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } }, // ProductName
         { statusCode: { value: 0 }, value: { value: '1.2.3' } }, // SoftwareVersion
-        { statusCode: { value: 0 }, value: { value: '1234' } }, // BuildNumber
-        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } } // BuildDate
+        { statusCode: { value: 0 }, value: { value: '1234' } } // BuildNumber
       ])
     };
     south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
@@ -407,7 +406,7 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(mockedClient.read.mock.calls.length, 1);
     assert.strictEqual(mockedClient.close.mock.calls.length, 1);
     assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
-    assert.strictEqual(testResult.items.length, 6);
+    assert.strictEqual(testResult.items.length, 5);
     assert.deepStrictEqual(testResult.items[0], { key: 'State', value: 'Running' });
     fsMock.mock.restore();
   });
@@ -437,19 +436,16 @@ describe('SouthOPCUA', () => {
         { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } }, // ManufacturerName Good — included
         { statusCode: { value: 0x80350000 }, value: { value: 'bad' } }, // ProductName Bad status — skipped
         { statusCode: { value: 0 }, value: { value: null } }, // SoftwareVersion null value — skipped
-        { statusCode: { value: 0 }, value: { value: '1234' } }, // BuildNumber Good — included
-        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } } // BuildDate Good Date — included
+        { statusCode: { value: 0 }, value: { value: '1234' } } // BuildNumber Good — included
       ])
     };
     south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
     const fsMock = mock.method(fs, 'rm', async () => undefined);
     const testResult = await south.testConnection();
-    assert.strictEqual(testResult.items.length, 4);
+    assert.strictEqual(testResult.items.length, 3);
     assert.deepStrictEqual(testResult.items[0], { key: 'State', value: 'Running' });
     assert.deepStrictEqual(testResult.items[1], { key: 'ManufacturerName', value: 'Prosys OPC' });
     assert.deepStrictEqual(testResult.items[2], { key: 'BuildNumber', value: '1234' });
-    assert.strictEqual(testResult.items[3].key, 'BuildDate');
-    assert.match(testResult.items[3].value, /^\d{4}-\d{2}-\d{2}T/);
     fsMock.mock.restore();
   });
 
@@ -461,8 +457,7 @@ describe('SouthOPCUA', () => {
         { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } },
         { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } },
         { statusCode: { value: 0 }, value: { value: '1.2.3' } },
-        { statusCode: { value: 0 }, value: { value: '1234' } },
-        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } }
+        { statusCode: { value: 0 }, value: { value: '1234' } }
       ])
     };
     south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);

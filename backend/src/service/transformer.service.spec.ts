@@ -532,51 +532,45 @@ describe('Transformer Service', () => {
   });
 
   describe('test a custom transformer', () => {
+    const customCode = `
+      function transform(data, source, filename, options) {
+        return {
+          data: JSON.parse(data),
+          filename: 'test-output.json',
+          numberOfElement: 1
+        };
+      }
+    `;
+
+    const customManifest = {
+      type: 'object' as const,
+      key: 'options',
+      translationKey: 'test',
+      attributes: [] as [],
+      enablingConditions: [] as [],
+      validators: [] as [],
+      displayProperties: { visible: true, wrapInBox: false }
+    };
+
+    const baseCommand = {
+      type: 'custom' as const,
+      name: 'Test Transformer',
+      description: 'Test transformer for testing',
+      inputType: 'time-values',
+      outputType: 'any',
+      customCode,
+      language: 'javascript' as const,
+      timeout: 2000,
+      customManifest
+    };
+
     it('should test a custom transformer successfully', async () => {
-      const customTransformer: CustomTransformer = {
-        id: 'test-transformer',
-        type: 'custom',
-        name: 'Test Transformer',
-        description: 'Test transformer for testing',
-        inputType: 'time-values',
-        outputType: 'any',
-        customCode: `
-          function transform(data, source, filename, options) {
-            return {
-              data: JSON.parse(data),
-              filename: 'test-output.json',
-              numberOfElement: 1
-            };
-          }
-        `,
-        language: 'javascript',
-        timeout: 2000,
-        customManifest: {
-          type: 'object',
-          key: 'options',
-          translationKey: 'test',
-          attributes: [],
-          enablingConditions: [],
-          validators: [],
-          displayProperties: {
-            visible: true,
-            wrapInBox: false
-          }
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-
-      transformerRepository.findById.mock.mockImplementation(() => customTransformer);
-
       const testRequest = {
         inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }]),
         options: { testOption: 'value' }
       };
 
-      const result = await service.test('test-transformer', testRequest);
+      const result = await service.test(baseCommand, testRequest);
 
       assert.ok('output' in result);
       assert.ok('metadata' in result);
@@ -585,50 +579,12 @@ describe('Transformer Service', () => {
     });
 
     it('should test a custom transformer with undefined options', async () => {
-      const customTransformer: CustomTransformer = {
-        id: 'test-transformer',
-        type: 'custom',
-        name: 'Test Transformer',
-        description: 'Test transformer for testing',
-        inputType: 'time-values',
-        outputType: 'any',
-        customCode: `
-          function transform(data, source, filename, options) {
-            return {
-              data: JSON.parse(data),
-              filename: 'test-output.json',
-              numberOfElement: 1
-            };
-          }
-        `,
-        language: 'javascript',
-        timeout: 2000,
-        customManifest: {
-          type: 'object',
-          key: 'options',
-          translationKey: 'test',
-          attributes: [],
-          enablingConditions: [],
-          validators: [],
-          displayProperties: {
-            visible: true,
-            wrapInBox: false
-          }
-        },
-        createdBy: '',
-        updatedBy: '',
-        createdAt: '',
-        updatedAt: ''
-      };
-
-      transformerRepository.findById.mock.mockImplementation(() => customTransformer);
-
       const testRequest = {
         inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }])
         // options is undefined
       };
 
-      const result = await service.test('test-transformer', testRequest);
+      const result = await service.test(baseCommand, testRequest);
 
       assert.ok('output' in result);
       assert.ok('metadata' in result);
@@ -636,26 +592,12 @@ describe('Transformer Service', () => {
       assert.strictEqual(result.metadata.numberOfElement, 1);
     });
 
-    it('should throw an error if transformer is a standard one', async () => {
-      const standardTransformer: StandardTransformer = {
-        id: 'test-transformer',
-        type: 'standard',
-        functionName: 'Test Transformer',
-        inputType: 'time-values',
-        outputType: 'any'
-      };
+    it('should return output as a string', async () => {
+      const testRequest = { inputData: 'data' };
 
-      transformerRepository.findById.mock.mockImplementation(() => standardTransformer);
+      const result = await service.test(baseCommand, testRequest);
 
-      const testRequest = {
-        inputData: JSON.stringify([{ pointId: 'test', timestamp: '2023-01-01T00:00:00Z', data: { value: 42 } }])
-        // options is undefined
-      };
-
-      await assert.rejects(
-        () => service.test('test-transformer', testRequest),
-        new Error(`Cannot test standard transformer "${standardTransformer.functionName}"`)
-      );
+      assert.strictEqual(typeof result.output, 'string');
     });
   });
 

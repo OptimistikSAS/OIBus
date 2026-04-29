@@ -43,18 +43,6 @@ describe('NorthREST', () => {
   const streamToStringMock = mock.fn(async () => '');
   const encryptionDecryptTextMock = mock.fn(async (text: string) => text);
 
-  let capturedFormDataInstance: { append: ReturnType<typeof mock.fn>; getHeaders: ReturnType<typeof mock.fn> } | null = null;
-  let formDataConstructorCalls = 0;
-  let formDataAppend: ReturnType<typeof mock.fn>;
-  let formDataGetHeaders: ReturnType<typeof mock.fn>;
-
-  function FormDataMock() {
-    formDataConstructorCalls++;
-    const instance = { append: formDataAppend, getHeaders: formDataGetHeaders };
-    capturedFormDataInstance = instance;
-    return instance;
-  }
-
   const httpRequestExports = {
     __esModule: true,
     HTTPRequest: httpRequestMock,
@@ -64,11 +52,6 @@ describe('NorthREST', () => {
   const utilsExports = {
     __esModule: true,
     streamToString: streamToStringMock
-  };
-
-  const formDataExports = {
-    __esModule: true,
-    default: FormDataMock
   };
 
   const encryptionExports = {
@@ -88,7 +71,6 @@ describe('NorthREST', () => {
     mockModule(nodeRequire, 'cron', cronExports);
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, 'form-data', formDataExports);
     mockModule(nodeRequire, '../../service/encryption.service', encryptionExports);
     mockModule(nodeRequire, '../../service/cache/cache.service', {
       __esModule: true,
@@ -108,11 +90,6 @@ describe('NorthREST', () => {
     httpRequestMock.mock.resetCalls();
     streamToStringMock.mock.resetCalls();
     encryptionDecryptTextMock.mock.resetCalls();
-
-    formDataConstructorCalls = 0;
-    capturedFormDataInstance = null;
-    formDataAppend = mock.fn();
-    formDataGetHeaders = mock.fn(() => ({ 'content-type': 'multipart/form-data; boundary=---' }));
 
     httpRequestMock.mock.mockImplementation(async () => createMockResponse(200, 'OK'));
     encryptionDecryptTextMock.mock.mockImplementation(async (text: string) => text);
@@ -278,7 +255,7 @@ describe('NorthREST', () => {
     assert.strictEqual((url as URL).searchParams.get('api_key'), 'secret');
   });
 
-  it('should upload file successfully via FormData', async () => {
+  it('should upload file successfully via multipart stream', async () => {
     const configuration = buildNorthEntity<NorthRESTSettings>('rest', {
       host: 'https://api.example.com/',
       endpoint: '/upload',
@@ -303,15 +280,9 @@ describe('NorthREST', () => {
 
     const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
     assert.strictEqual(url.toString(), 'https://api.example.com/upload');
-    assertContains(options.headers as Record<string, unknown>, {
-      'X-Custom': 'custom',
-      'content-type': 'multipart/form-data; boundary=---'
-    });
+    assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
+    assertContains(options.headers as Record<string, unknown>, { 'X-Custom': 'custom' });
     assertContains(options.query as Record<string, unknown>, { q1: 'v1' });
-
-    assert.strictEqual(formDataConstructorCalls, 1);
-    const formDataInstance = capturedFormDataInstance!;
-    assert.deepStrictEqual(formDataInstance.append.mock.calls[0].arguments, ['file', mockStream, { filename: 'file.txt' }]);
   });
 
   it('should upload file successfully via raw body (JSON)', async () => {
