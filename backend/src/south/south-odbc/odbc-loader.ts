@@ -5,7 +5,6 @@ export interface IOdbc {
   }>;
 }
 
-// @ts-expect-error – odbc has no bundled type definitions
 import odbcModule from 'odbc';
 
 let odbc: IOdbc | null = null;
