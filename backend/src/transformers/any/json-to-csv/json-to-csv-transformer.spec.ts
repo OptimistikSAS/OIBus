@@ -70,7 +70,7 @@ describe('JSONToCSVTransformer', () => {
         { jsonPath: '$[*].id', columnName: 'ID', dataType: 'number' }
       ]
     };
-    const transformer = new JSONToCSVTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new JSONToCSVTransformer(asLogger(logger), testData.transformers.list[0], options);
     const inputData = [
       { name: 'Item 1', id: 1 },
       { name: 'Item 2', id: 2 }
@@ -130,7 +130,7 @@ describe('JSONToCSVTransformer', () => {
         tags: ['urgent', 'work']
       }
     ];
-    const transformer = new JSONToCSVTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new JSONToCSVTransformer(asLogger(logger), testData.transformers.list[0], options);
     mockPapaparse.unparse = mock.fn(() => 'csv result');
     const mockStream = new Readable();
 

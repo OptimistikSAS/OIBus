@@ -44,11 +44,7 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
         { pointId: 'reference2', address: 0x0002, modbusType: 'holding-register' }
       ]
     };
-    const transformer = new OIBusTimeValuesToModbusTransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      options
-    );
+    const transformer = new OIBusTimeValuesToModbusTransformer(asLogger(logger), testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } },
       { pointId: 'reference2', timestamp: testData.constants.dates.DATE_2, data: { value: '2', quality: 'good' } },
@@ -64,10 +60,12 @@ describe('OIBusTimeValuesToModbusTransformer', () => {
     const result = await promise;
 
     assert.deepStrictEqual(result, {
-      output: Buffer.from(JSON.stringify([
-        { address: 1, value: true, modbusType: 'coil' },
-        { address: 2, value: 2, modbusType: 'holding-register' }
-      ])),
+      output: Buffer.from(
+        JSON.stringify([
+          { address: 1, value: true, modbusType: 'coil' },
+          { address: 2, value: 2, modbusType: 'holding-register' }
+        ])
+      ),
       metadata: {
         contentFile: 'randomId.json',
         contentSize: 0,

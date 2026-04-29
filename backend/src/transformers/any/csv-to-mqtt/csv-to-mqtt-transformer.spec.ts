@@ -73,7 +73,7 @@ describe('CSVToMQTTTransformer', () => {
         }
       ]
     };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const csvContent = `topic,temperature,isEnabled,timestamp\ndevice/1,25.5,true,2023-01-01`;
     const mockStream = new Readable();
 
@@ -92,7 +92,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should skip object payload creation if the resulting object is empty', async () => {
     const options = { ...baseOptions, payloadType: 'object', objectFields: [] };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -107,7 +107,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should transform CSV data into a STRING payload', async () => {
     const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -122,7 +122,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should transform CSV data into a NUMBER payload', async () => {
     const options = { ...baseOptions, payloadType: 'number', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -137,7 +137,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should transform CSV data into a BOOLEAN payload', async () => {
     const options = { ...baseOptions, payloadType: 'boolean', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -157,7 +157,7 @@ describe('CSVToMQTTTransformer', () => {
       valueColumn: 'val',
       datetimeSettings: { type: 'iso-string', timezone: 'UTC', format: 'yyyy', locale: 'en' }
     };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -180,7 +180,7 @@ describe('CSVToMQTTTransformer', () => {
       payloadType: 'string',
       valueColumn: '1'
     };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -205,7 +205,7 @@ describe('CSVToMQTTTransformer', () => {
       payloadType: 'string',
       valueColumn: '1'
     };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -229,7 +229,7 @@ describe('CSVToMQTTTransformer', () => {
       topicColumn: '0',
       payloadType: 'string'
     };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -244,7 +244,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should return undefined if index is invalid (NaN)', async () => {
     const options = { ...baseOptions, hasHeader: false, topicColumn: 'not-a-number', payloadType: 'string', valueColumn: '1' };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -259,7 +259,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should skip rows where TOPIC is missing', async () => {
     const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -275,7 +275,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should skip rows where VALUE is missing or null', async () => {
     const options = { ...baseOptions, payloadType: 'string', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -291,7 +291,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should log warning if CSV parsing has errors', async () => {
     const options = { ...baseOptions, delimiter: 'COMMA', payloadType: 'string', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');
@@ -306,7 +306,7 @@ describe('CSVToMQTTTransformer', () => {
 
   it('should default to raw value if type is unknown in formatValue', async () => {
     const options = { ...baseOptions, payloadType: 'unknown', valueColumn: 'val' };
-    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0],  options);
+    const transformer = new CSVToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'data.csv');

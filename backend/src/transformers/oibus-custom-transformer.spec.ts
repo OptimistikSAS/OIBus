@@ -55,11 +55,7 @@ describe('OIBusCustomTransformer', () => {
   });
 
   it('should transform data from a stream and return sandbox result', async () => {
-    const transformer = new OIBusCustomTransformer(
-      asLogger(logger),
-      testData.transformers.list[0] as CustomTransformer,
-      {}
-    );
+    const transformer = new OIBusCustomTransformer(asLogger(logger), testData.transformers.list[0] as CustomTransformer, {});
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } },
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, data: { value: 'value2', quality: 'good' } },

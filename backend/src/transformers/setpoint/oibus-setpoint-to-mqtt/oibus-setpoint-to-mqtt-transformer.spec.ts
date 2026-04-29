@@ -41,11 +41,7 @@ describe('OIBusSetpointToMQTTTransformer', () => {
         { reference: 'reference2', topic: '/oibus/reference2' }
       ]
     };
-    const transformer = new OIBusSetpointToMQTTTransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      options
-    );
+    const transformer = new OIBusSetpointToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const dataChunks: Array<OIBusSetpoint> = [
       { reference: 'reference1', value: 1 },
       { reference: 'reference2', value: '2' },
@@ -61,10 +57,12 @@ describe('OIBusSetpointToMQTTTransformer', () => {
     const result = await promise;
 
     assert.deepStrictEqual(result, {
-      output: Buffer.from(JSON.stringify([
-        { topic: '/oibus/reference1', payload: '1' },
-        { topic: '/oibus/reference2', payload: '2' }
-      ])),
+      output: Buffer.from(
+        JSON.stringify([
+          { topic: '/oibus/reference1', payload: '1' },
+          { topic: '/oibus/reference2', payload: '2' }
+        ])
+      ),
       metadata: {
         contentFile: 'randomId.json',
         contentSize: 0,

@@ -61,11 +61,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
       timezone: 'Europe/Paris'
     };
-    const transformer = new OIBusTimeValuesToCsvTransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      options
-    );
+    const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } },
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, data: { value: 'value2', quality: 'good' } },

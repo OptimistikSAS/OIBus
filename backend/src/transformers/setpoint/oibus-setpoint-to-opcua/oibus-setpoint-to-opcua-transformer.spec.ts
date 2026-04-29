@@ -41,11 +41,7 @@ describe('OIBusSetpointToOPCUATransformer', () => {
         { reference: 'reference2', nodeId: 'ns=3;i=1002' }
       ]
     };
-    const transformer = new OIBusSetpointToOPCUATransformer(
-      asLogger(logger),
-      testData.transformers.list[0],
-      options
-    );
+    const transformer = new OIBusSetpointToOPCUATransformer(asLogger(logger), testData.transformers.list[0], options);
     const dataChunks: Array<OIBusSetpoint> = [
       { reference: 'reference1', value: '1' },
       { reference: 'reference2', value: '2' },
@@ -61,10 +57,12 @@ describe('OIBusSetpointToOPCUATransformer', () => {
     const result = await promise;
 
     assert.deepStrictEqual(result, {
-      output: Buffer.from(JSON.stringify([
-        { nodeId: 'ns=3;i=1001', value: '1' },
-        { nodeId: 'ns=3;i=1002', value: '2' }
-      ])),
+      output: Buffer.from(
+        JSON.stringify([
+          { nodeId: 'ns=3;i=1001', value: '1' },
+          { nodeId: 'ns=3;i=1002', value: '2' }
+        ])
+      ),
       metadata: {
         contentFile: 'randomId.json',
         contentSize: 0,
