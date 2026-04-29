@@ -164,6 +164,54 @@ describe('SouthFolderScanner', () => {
     });
   });
 
+  describe('testItem', () => {
+    it('should return matched files as time values', async () => {
+      mock.method(
+        fs,
+        'access',
+        mock.fn(async () => undefined)
+      );
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async (_p: string) => ({ isDirectory: () => true, mtimeMs: 1600000000000, size: 512 }))
+      );
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => ['file1.csv', 'file2.csv', 'other.txt'])
+      );
+      utilsExports.checkAge = mock.fn(() => true);
+
+      const result = await south.testItem(configuration.items[0], {});
+      assert.strictEqual(result.type, 'time-values');
+      assert.strictEqual((result as { type: string; content: Array<unknown> }).content.length, 2);
+    });
+
+    it('should return empty time values when no files match the regex', async () => {
+      mock.method(
+        fs,
+        'access',
+        mock.fn(async () => undefined)
+      );
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async () => ({ isDirectory: () => true, mtimeMs: 1600000000000, size: 512 }))
+      );
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => ['other.txt', 'another.log'])
+      );
+      utilsExports.checkAge = mock.fn(() => true);
+
+      const result = await south.testItem(configuration.items[0], {});
+      assert.strictEqual(result.type, 'time-values');
+      assert.strictEqual((result as { type: string; content: Array<unknown> }).content.length, 0);
+    });
+  });
+
   describe('listFilesRecursively', () => {
     it('should list files directly in the base dir without recursion', async () => {
       const mockDirents = [
