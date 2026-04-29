@@ -47,18 +47,6 @@ describe('NorthOIAnalytics', () => {
 
   const createGzipMock = mock.fn(() => mockGzipStream);
 
-  let formDataAppend: ReturnType<typeof mock.fn>;
-  let formDataGetHeaders: ReturnType<typeof mock.fn>;
-  let capturedFormDataInstance: { append: ReturnType<typeof mock.fn>; getHeaders: ReturnType<typeof mock.fn> } | null = null;
-  let formDataConstructorCalls = 0;
-
-  function FormDataMock() {
-    formDataConstructorCalls++;
-    const instance = { append: formDataAppend, getHeaders: formDataGetHeaders };
-    capturedFormDataInstance = instance;
-    return instance;
-  }
-
   const httpRequestExports = {
     __esModule: true,
     HTTPRequest: httpRequestMock,
@@ -78,18 +66,12 @@ describe('NorthOIAnalytics', () => {
     testOIAnalyticsConnection: testOIAnalyticsConnectionMock
   };
 
-  const formDataExports = {
-    __esModule: true,
-    default: FormDataMock
-  };
-
   let configuration: ReturnType<typeof buildNorthEntity<NorthOIAnalyticsSettings>>;
 
   before(() => {
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
     mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/utils-oianalytics', utilsOIAnalyticsExports);
-    mockModule(nodeRequire, 'form-data', formDataExports);
     mockModule(nodeRequire, 'node:fs', { __esModule: true });
     mockModule(nodeRequire, '../../service/cache/cache.service', {
       __esModule: true,
@@ -115,11 +97,6 @@ describe('NorthOIAnalytics', () => {
     createGzipMock.mock.resetCalls();
     (mockReadStream.pipe as ReturnType<typeof mock.fn>).mock.resetCalls();
     (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get.mock.resetCalls();
-
-    formDataConstructorCalls = 0;
-    capturedFormDataInstance = null;
-    formDataAppend = mock.fn();
-    formDataGetHeaders = mock.fn(() => ({ 'content-type': 'multipart/form-data; boundary=---' }));
 
     // node:zlib is a built-in module and cannot be patched via mockModule; use mock.method instead
     mock.method(zlib, 'createGzip', createGzipMock as unknown as typeof zlib.createGzip);
@@ -239,23 +216,18 @@ describe('NorthOIAnalytics', () => {
       contentType: 'any'
     };
 
-    it('should upload file using FormData', async () => {
+    it('should upload file using multipart stream', async () => {
+      mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+
       await north.handleContent(mockReadStream, metadata);
-
-      assert.strictEqual(formDataConstructorCalls, 1);
-      const formDataInstance = capturedFormDataInstance!;
-
-      assert.strictEqual(formDataInstance.append.mock.calls.length, 1);
-      assert.deepStrictEqual(formDataInstance.append.mock.calls[0].arguments, ['file', mockReadStream, { filename: 'test-file.txt' }]);
-
-      assert.strictEqual(formDataInstance.getHeaders.mock.calls.length, 1);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, Record<string, unknown>];
       assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
-      assert.deepStrictEqual(options.body, formDataInstance);
       assertContains(options.query as Record<string, unknown>, { dataSourceId: configuration.name });
-      assertContains(options.headers as Record<string, unknown>, { 'content-type': 'multipart/form-data; boundary=---' });
+      assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
+
+      mock.timers.reset();
     });
 
     it('should compress file if enabled and not .gz', async () => {
@@ -265,10 +237,12 @@ describe('NorthOIAnalytics', () => {
 
       assert.strictEqual((mockReadStream.pipe as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
+      assert.deepStrictEqual(createGzipMock.mock.calls[0].arguments, [{ level: 9 }]);
 
-      const formDataInstance = capturedFormDataInstance!;
-      assert.strictEqual(formDataInstance.append.mock.calls.length, 1);
-      assert.deepStrictEqual(formDataInstance.append.mock.calls[0].arguments, ['file', mockGzipStream, { filename: 'test-file.txt.gz' }]);
+      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
+      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
+      assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
     });
 
     it('should NOT compress file if enabled but already .gz', async () => {
@@ -278,10 +252,11 @@ describe('NorthOIAnalytics', () => {
       await north.handleContent(mockReadStream, gzMetadata);
 
       assert.strictEqual((mockReadStream.pipe as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(createGzipMock.mock.calls.length, 0);
 
-      const formDataInstance = capturedFormDataInstance!;
-      assert.strictEqual(formDataInstance.append.mock.calls.length, 1);
-      assert.deepStrictEqual(formDataInstance.append.mock.calls[0].arguments, ['file', mockReadStream, { filename: 'archive.tar.gz' }]);
+      assert.strictEqual(httpRequestMock.mock.calls.length, 1);
+      const [url] = httpRequestMock.mock.calls[0].arguments as [URL];
+      assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
     });
 
     it('should throw OIBusError on fetch failure', async () => {
