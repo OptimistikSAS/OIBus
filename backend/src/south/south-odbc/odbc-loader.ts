@@ -5,16 +5,13 @@ export interface IOdbc {
   }>;
 }
 
+// @ts-expect-error – odbc has no bundled type definitions
+import odbcModule from 'odbc';
+
 let odbc: IOdbc | null = null;
 
 export async function importOdbc(): Promise<IOdbc | null> {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('odbc') as IOdbc;
-  } catch (error) {
-    console.error('Failed to load odbc module:', error);
-    return null;
-  }
+  return (odbcModule as IOdbc | null) ?? null;
 }
 
 export async function loadOdbc(): Promise<IOdbc | null> {
