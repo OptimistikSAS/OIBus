@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { testIPOnFilter } from '../../service/utils';
-import pino from 'pino';
+import type { ILogger } from '../../model/logger.model';
 
 export default class IpFilterMiddleware {
   constructor(
     private whiteList: Array<string>,
-    private logger: pino.Logger,
+    private logger: ILogger,
     private ignoreIpFilters: boolean
   ) {}
 

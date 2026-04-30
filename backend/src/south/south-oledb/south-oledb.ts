@@ -1,6 +1,5 @@
 import SouthConnector from '../south-connector';
 import { convertDelimiter, formatInstant, generateFilenameForSerialization, logQuery, persistResults } from '../../service/utils';
-import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { SouthHistoryQuery } from '../south-interface';
@@ -11,6 +10,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import { encryptionService } from '../../service/encryption.service';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthOLEDB - Retrieve data from SQL databases with OLEDB driver and send them to the cache as CSV files.
@@ -29,7 +29,7 @@ export default class SouthOLEDB extends SouthConnector<SouthOLEDBSettings, South
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

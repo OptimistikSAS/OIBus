@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, buildSouthEntity } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule, buildSouthEntity} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -160,7 +160,7 @@ describe('SouthSQLite', () => {
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -251,7 +251,7 @@ describe('SouthSQLite', () => {
       configuration.items[0].settings.query,
       DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
       DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      asLogger(logger)
+      logger
     ]);
 
     assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
@@ -270,7 +270,7 @@ describe('SouthSQLite', () => {
       configuration.items[1].settings.query,
       startTime,
       endTime,
-      asLogger(logger)
+      logger
     ]);
 
     assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
@@ -341,7 +341,7 @@ describe('SouthSQLite test connection', () => {
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {

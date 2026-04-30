@@ -20,7 +20,6 @@ import HistoryQueryServiceMock from '../tests/__mocks__/service/history-query-se
 import UserServiceMock from '../tests/__mocks__/service/user-service.mock';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
-import type pino from 'pino';
 import { EngineSettings } from '../model/engine.model';
 import { CacheContentUpdateCommand, EngineSettingsCommandDTO } from '../../shared/model/engine.model';
 
@@ -99,7 +98,7 @@ describe('OIBus Service', () => {
     historyQueryService = new HistoryQueryServiceMock();
     userService = new UserServiceMock();
     logger = new LoggerMock();
-    engine = new DataStreamEngineMock(logger as unknown as pino.Logger);
+    engine = new DataStreamEngineMock(logger);
     validator = { validate: mock.fn(async () => undefined) };
 
     // Reset getOIBusInfo mock in-place
@@ -111,7 +110,7 @@ describe('OIBus Service', () => {
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     engineMetricsRepository.getMetrics.mock.mockImplementation(() => testData.engine.metrics);
-    loggerService.createChildLogger.mock.mockImplementation(() => logger as unknown as pino.Logger);
+    loggerService.createChildLogger.mock.mockImplementation(() => logger);
     ipFilterService.list.mock.mockImplementation(() => testData.ipFilters.list);
 
     mock.method(
@@ -240,7 +239,7 @@ describe('OIBus Service', () => {
   });
 
   it('should set logger', () => {
-    service.setLogger(logger as unknown as pino.Logger);
+    service.setLogger(logger);
     // engine.setLogger is also called once in the constructor; verify the last call used our logger
     assert.ok(engine.setLogger.mock.calls.some(c => c.arguments[0] === logger));
     assert.ok(oIAnalyticsMessageService.setLogger.mock.calls.some(c => c.arguments[0] === logger));

@@ -2,14 +2,17 @@ import OIBusTransformer from './oibus-transformer';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
-import pino from 'pino';
 import { CustomTransformer } from '../model/transformer.model';
 import { sandboxService } from '../service/sandbox.service';
-import { generateRandomId, streamToString } from '../service/utils';
+import { promisify } from 'node:util';
+import { generateRandomId } from '../service/utils';
+import type { ILogger } from '../model/logger.model';
+
+const pipelineAsync = promisify(pipeline);
 
 export default class OIBusCustomTransformer extends OIBusTransformer {
   constructor(
-    protected logger: pino.Logger,
+    protected logger: ILogger,
     protected transformer: CustomTransformer,
     protected _options: object
   ) {

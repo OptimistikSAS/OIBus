@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -243,7 +243,7 @@ describe('SouthODBC', () => {
     const configuration: SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings> = JSON.parse(JSON.stringify(configurationWithAuth));
 
     beforeEach(() => {
-      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     });
 
     it('should do nothing on connect and disconnect', async () => {
@@ -654,7 +654,7 @@ describe('SouthODBC', () => {
     };
 
     beforeEach(() => {
-      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     });
 
     it('should get data from ODBC without auth', async () => {
@@ -930,7 +930,7 @@ describe('SouthODBC', () => {
     const flattenedErrors = Object.entries(DRIVER_ERRORS).flatMap(([driver, errors]) => errors.map(error => ({ driver, error })));
 
     beforeEach(() => {
-      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {
@@ -1143,7 +1143,7 @@ describe('SouthODBC', () => {
     };
 
     beforeEach(() => {
-      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     });
 
     it('should properly connect to remote agent and disconnect', async () => {
@@ -1606,7 +1606,7 @@ describe('SouthODBC', () => {
     };
 
     beforeEach(() => {
-      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthODBC(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     });
 
     it('should test connection successfully', async () => {

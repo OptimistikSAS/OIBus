@@ -16,7 +16,6 @@ import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import type LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
 import { CustomTransformer, StandardTransformer } from '../model/transformer.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import type pino from 'pino';
 
 // Import transformer manifests
 import isoManifest from '../transformers/iso-transformer/manifest';
@@ -390,7 +389,7 @@ describe('Transformer Service', () => {
 
   it('should create standard transformers', () => {
     const PinoLogger = nodeRequire('../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock };
-    const logger = new PinoLogger.default() as unknown as pino.Logger;
+    const logger = new PinoLogger.default();
 
     const transformer: StandardTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
     transformer.type = 'standard';
@@ -517,7 +516,7 @@ describe('Transformer Service', () => {
 
   it('createTransformer() should create a custom transformer', () => {
     const PinoLogger = nodeRequire('../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock };
-    const logger = new PinoLogger.default() as unknown as pino.Logger;
+    const logger = new PinoLogger.default();
 
     const transformer: CustomTransformer = JSON.parse(JSON.stringify(testData.transformers.list[0]));
 

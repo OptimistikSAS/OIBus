@@ -151,7 +151,7 @@ describe('CacheService', () => {
 
     logger = new PinoLogger();
     service = new CacheService(
-      logger as unknown as import('pino').Logger,
+      logger,
       mockBaseFolders('northId').cache,
       mockBaseFolders('northId').error,
       mockBaseFolders('northId').archive
@@ -222,7 +222,7 @@ describe('CacheService', () => {
 
   it('should set logger', () => {
     const anotherLogger = new PinoLogger();
-    service.setLogger(anotherLogger as unknown as import('pino').Logger);
+    service.setLogger(anotherLogger);
     assert.strictEqual(priv()['logger'], anotherLogger);
   });
 

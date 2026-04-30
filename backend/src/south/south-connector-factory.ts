@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
 import { OIBusContent } from '../../shared/model/engine.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -68,6 +67,7 @@ import { createFolder } from '../service/utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { OIBusSouthType } from '../../shared/model/south-connector.model';
+import type { ILogger } from '../model/logger.model';
 
 export const buildSouth = (
   settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
@@ -77,7 +77,7 @@ export const buildSouth = (
     queryTime: Instant,
     items: Array<SouthConnectorItemEntity<SouthItemSettings>>
   ) => Promise<void>,
-  logger: pino.Logger,
+  logger: ILogger,
   southCacheFolder: string,
   southCacheRepository: SouthCacheRepository,
   certificateRepository: CertificateRepository,

@@ -2,13 +2,13 @@ import { ReadStream } from 'node:fs';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import pino from 'pino';
 import NorthConnector from '../north-connector';
 import { encryptionService } from '../../service/encryption.service';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -16,7 +16,7 @@ import CacheService from '../../service/cache/cache.service';
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
   private s3: S3Client | undefined;
 
-  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, logger: pino.Logger, cacheService: CacheService) {
+  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, logger: ILogger, cacheService: CacheService) {
     super(connector, logger, cacheService);
   }
 

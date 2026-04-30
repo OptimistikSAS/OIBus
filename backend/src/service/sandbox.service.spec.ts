@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import { mockModule, reloadModule, asLogger } from '../tests/utils/test-utils';
+import {mockModule, reloadModule} from '../tests/utils/test-utils';
 import type { CustomTransformer } from '../model/transformer.model';
 import type { CacheMetadataSource } from '../../shared/model/engine.model';
 import type SandboxServiceClass from './sandbox.service';
@@ -83,7 +83,7 @@ describe('SandboxService', () => {
         customCode: `function transform() { return { data: 'ok' }; }`
       } as CustomTransformer;
 
-      await sandboxService.execute('', { source: 'test' }, 'file', transformer, {}, asLogger(logger));
+      await sandboxService.execute('', { source: 'test' }, 'file', transformer, {}, logger);
       const infoMessages: Array<string> = logger.info.mock.calls.map(c => String(c.arguments[0]));
       assert.ok(
         infoMessages.some(m => m.includes('Sandbox snapshot created successfully')),
@@ -97,8 +97,8 @@ describe('SandboxService', () => {
         customCode: `function transform() { return { data: 'ok' }; }`
       } as CustomTransformer;
 
-      await sandboxService.execute('', { source: 'test' }, 'file1', transformer, {}, asLogger(logger));
-      await sandboxService.execute('', { source: 'test' }, 'file2', transformer, {}, asLogger(logger));
+      await sandboxService.execute('', { source: 'test' }, 'file1', transformer, {}, logger);
+      await sandboxService.execute('', { source: 'test' }, 'file2', transformer, {}, logger);
 
       const initLogCount = logger.info.mock.calls.filter(
         c => typeof c.arguments[0] === 'string' && (c.arguments[0] as string).includes('Sandbox snapshot created successfully')
@@ -118,7 +118,7 @@ describe('SandboxService', () => {
       const dummyTransformer = { customCode: '', language: 'javascript' } as CustomTransformer;
 
       await assert.rejects(
-        async () => brokenService.execute('test', { source: 'test' }, 'file.txt', dummyTransformer, {}, asLogger(logger)),
+        async () => brokenService.execute('test', { source: 'test' }, 'file.txt', dummyTransformer, {}, logger),
         /Custom code execution failed: global is not defined/
       );
 
@@ -148,7 +148,7 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('hello world', defaultSource, 'test.txt', transformer, { myVar: 42 }, asLogger(logger));
+      const result = await sandboxService.execute('hello world', defaultSource, 'test.txt', transformer, { myVar: 42 }, logger);
 
       const parsedOutput = JSON.parse(result.output);
       assert.strictEqual(parsedOutput.originalContent, 'hello world');
@@ -181,7 +181,7 @@ describe('SandboxService', () => {
         'test.txt',
         transformer,
         {},
-        asLogger(logger)
+        logger
       );
       const parsedOutput = JSON.parse(result.output);
       assert.strictEqual(parsedOutput.response, 'TYPESCRIPT WORKS');
@@ -197,8 +197,8 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      const result1 = await sandboxService.execute('first', defaultSource, 'f1.txt', transformer, {}, asLogger(logger));
-      const result2 = await sandboxService.execute('second', defaultSource, 'f2.txt', transformer, {}, asLogger(logger));
+      const result1 = await sandboxService.execute('first', defaultSource, 'f1.txt', transformer, {}, logger);
+      const result2 = await sandboxService.execute('second', defaultSource, 'f2.txt', transformer, {}, logger);
 
       assert.strictEqual(result1.output, 'first');
       assert.strictEqual(result2.output, 'second');
@@ -217,7 +217,7 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('2026-01-01', defaultSource, 'test.txt', transformer, {}, asLogger(logger));
+      const result = await sandboxService.execute('2026-01-01', defaultSource, 'test.txt', transformer, {}, logger);
       assert.strictEqual(JSON.parse(result.output).year, 2026);
     });
 
@@ -234,7 +234,7 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('{}', defaultSource, 'test.txt', transformer, {}, asLogger(logger));
+      const result = await sandboxService.execute('{}', defaultSource, 'test.txt', transformer, {}, logger);
       assert.deepStrictEqual(JSON.parse(result.output), ['Nigel Rees', 'Evelyn Waugh']);
     });
 
@@ -251,7 +251,7 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, asLogger(logger));
+      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
       assert.deepStrictEqual(JSON.parse(result.output), [
         { name: 'Alice', age: '30' },
         { name: 'Bob', age: '25' }
@@ -265,7 +265,7 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await sandboxService.execute('', defaultSource, 'metrics.txt', transformer, {}, asLogger(logger));
+      await sandboxService.execute('', defaultSource, 'metrics.txt', transformer, {}, logger);
 
       const hasMetricsLog = logger.trace.mock.calls.some(
         c =>
@@ -288,7 +288,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'syntax-err.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'syntax-err.txt', transformer, {}, logger),
         /\[RUNTIME_ERROR\]/
       );
     });
@@ -301,7 +301,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'no-fn.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'no-fn.txt', transformer, {}, logger),
         /\[RUNTIME_ERROR\].*Custom code execution failed: transform is not defined/
       );
     });
@@ -318,7 +318,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'timeout.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'timeout.txt', transformer, {}, logger),
         /\[TIMEOUT_ERROR\]/
       );
     });
@@ -340,7 +340,7 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await sandboxService.execute('', defaultSource, 'log.txt', transformer, {}, asLogger(logger));
+      await sandboxService.execute('', defaultSource, 'log.txt', transformer, {}, logger);
 
       assert.ok(
         logger.trace.mock.calls.some(c => c.arguments[0] === 'CUSTOM TRANSFORMER: This is a trace from the sandbox'),
@@ -379,7 +379,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger),
         /Module "fs" is not allowed/
       );
     });
@@ -396,7 +396,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger),
         /Transform function returned an invalid or empty result/
       );
     });
@@ -417,7 +417,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'oom.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'oom.txt', transformer, {}, logger),
         /\[MEMORY_LIMIT_EXCEEDED\]/
       );
     });
@@ -434,7 +434,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'ts-err.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'ts-err.txt', transformer, {}, logger),
         /\[SYNTAX_ERROR\] Custom code execution failed: TypeScript compilation failed/
       );
     });
@@ -449,7 +449,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger),
         /Custom code must export a "transform" function/
       );
     });
@@ -463,7 +463,7 @@ describe('SandboxService', () => {
       } as CustomTransformer;
 
       await assert.rejects(
-        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, asLogger(logger)),
+        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger),
         /Custom code must export a "transform" function/
       );
     });
@@ -538,7 +538,7 @@ describe('SandboxService - failing heap stats', () => {
     const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
 
     await assert.rejects(
-      async () => sandboxService.execute('', { source: 'test' }, 'heap-fail.txt', transformer, {}, asLogger(logger)),
+      async () => sandboxService.execute('', { source: 'test' }, 'heap-fail.txt', transformer, {}, logger),
       /\[RUNTIME_ERROR\] Custom code execution failed: createContext failed/
     );
 
@@ -618,7 +618,7 @@ describe('SandboxService - failing createContext', () => {
     const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
 
     await assert.rejects(
-      async () => sandboxService.execute('', { source: 'test' }, 'null-ctx.txt', transformer, {}, asLogger(logger)),
+      async () => sandboxService.execute('', { source: 'test' }, 'null-ctx.txt', transformer, {}, logger),
       /\[RUNTIME_ERROR\] Custom code execution failed: createContext failed/
     );
   });

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, assertContains } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule, assertContains} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -147,7 +147,7 @@ describe('SouthRestAPI connector', () => {
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     const config = createConfiguration();
-    south = new SouthRest(config, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -188,7 +188,7 @@ describe('SouthRestAPI connector', () => {
     config.settings.test.method = 'POST';
     config.settings.test.body = 'body';
 
-    south = new SouthRest(config, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, 'OK'));
 
     await south.testConnection();

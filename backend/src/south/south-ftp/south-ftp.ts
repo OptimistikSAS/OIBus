@@ -4,7 +4,6 @@ import path from 'node:path';
 import SouthConnector from '../south-connector';
 import { checkAge, compress } from '../../service/utils';
 
-import pino from 'pino';
 import { encryptionService } from '../../service/encryption.service';
 import { SouthDirectQuery } from '../south-interface';
 import { SouthFTPItemSettings, SouthFTPSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
@@ -15,6 +14,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../model/types';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthFTP - Retrieve files from a remote FTP instance
@@ -29,7 +29,7 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

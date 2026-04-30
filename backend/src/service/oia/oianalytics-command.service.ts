@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import { delay, getOIBusInfo, unzip } from '../utils';
 import { encryptionService } from '../encryption.service';
-import pino from 'pino';
 import { DateTime } from 'luxon';
 import path from 'node:path';
 import { version } from '../../../package.json';
@@ -74,6 +73,7 @@ import { OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
 import { SouthConnectorItemCommandDTO } from '../../../shared/model/south-connector.model';
 import TransformerService from '../transformer.service';
+import type { ILogger } from '../../model/logger.model';
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -96,7 +96,7 @@ export default class OIAnalyticsCommandService {
     private northService: NorthService,
     private historyQueryService: HistoryQueryService,
     private transformerService: TransformerService,
-    private logger: pino.Logger,
+    private logger: ILogger,
     private binaryFolder: string,
     private ignoreRemoteUpdate: boolean,
     launcherVersion: string
@@ -139,7 +139,7 @@ export default class OIAnalyticsCommandService {
       this.oIAnalyticsRegistrationService.getRegistrationSettings()!.commandRefreshInterval * 1000
     );
 
-    this.oIBusService.loggerEvent.on('updated', (logger: pino.Logger) => {
+    this.oIBusService.loggerEvent.on('updated', (logger: ILogger) => {
       this.logger = logger;
     });
 

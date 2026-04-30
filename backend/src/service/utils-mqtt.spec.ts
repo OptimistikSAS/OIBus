@@ -7,7 +7,6 @@ import path from 'node:path';
 import { SouthMQTTItemSettings } from '../../shared/model/south-settings.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import pino from 'pino';
 
 const scanMode = {
   id: 'subscription',
@@ -154,10 +153,10 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
 ];
 
 describe('Service utils MQTT', () => {
-  let logger: pino.Logger;
+  let logger: PinoLogger;
 
   beforeEach(() => {
-    logger = new PinoLogger() as unknown as pino.Logger;
+    logger = new PinoLogger();
     mock.method(encryptionService, 'decryptText', async (text: unknown) => text);
     mock.method(fs, 'readFile', async () => '');
   });
@@ -202,10 +201,10 @@ describe('Service utils MQTT', () => {
       assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
 
       result.log!('test');
-      assert.deepStrictEqual((logger.trace as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['test']);
+      assert.deepStrictEqual(logger.trace.mock.calls[0].arguments, ['test']);
 
       result.log!({ object: 'test' });
-      assert.deepStrictEqual((logger.trace as ReturnType<typeof mock.fn>).mock.calls[1].arguments, [JSON.stringify({ object: 'test' })]);
+      assert.deepStrictEqual(logger.trace.mock.calls[1].arguments, [JSON.stringify({ object: 'test' })]);
     });
 
     it('should create connection options with password', async () => {

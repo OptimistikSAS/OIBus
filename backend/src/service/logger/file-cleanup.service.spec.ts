@@ -2,7 +2,6 @@ import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type pino from 'pino';
 
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import FileCleanupService from './file-cleanup.service';
@@ -16,7 +15,7 @@ describe('FileCleanupService', () => {
   beforeEach(() => {
     logger = new LoggerMock();
     mock.timers.enable({ apis: ['setInterval'] });
-    fileCleanupService = new FileCleanupService('logFolder', logger as unknown as pino.Logger, 'journal.log', 2);
+    fileCleanupService = new FileCleanupService('logFolder', logger, 'journal.log', 2);
   });
 
   afterEach(() => {

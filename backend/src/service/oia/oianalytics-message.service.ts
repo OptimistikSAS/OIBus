@@ -1,5 +1,4 @@
 import { getOIBusInfo } from '../utils';
-import pino from 'pino';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
@@ -37,6 +36,7 @@ import { getStandardManifest } from '../transformer.service';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import { Language } from '../../../shared/model/types';
+import type { ILogger } from '../../model/logger.model';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -60,7 +60,7 @@ export default class OIAnalyticsMessageService {
     private historyQueryRepository: HistoryQueryRepository,
     private transformerRepository: TransformerRepository,
     private oIAnalyticsClient: OIAnalyticsClient,
-    private logger: pino.Logger
+    private logger: ILogger
   ) {}
 
   start(): void {
@@ -157,7 +157,7 @@ export default class OIAnalyticsMessageService {
     }
   }
 
-  setLogger(logger: pino.Logger) {
+  setLogger(logger: ILogger) {
     this.logger = logger;
   }
 

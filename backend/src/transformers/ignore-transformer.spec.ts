@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { Readable } from 'stream';
 import testData from '../tests/utils/test-data';
-import { asLogger } from '../tests/utils/test-utils';
+
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import IgnoreTransformer from './ignore-transformer';
 import ignoreManifest from './ignore-transformer/manifest';
@@ -20,7 +20,7 @@ describe('IgnoreTransformer', () => {
   });
 
   it('should transform data from a stream and return metadata without filename', async () => {
-    const transformer = new IgnoreTransformer(asLogger(logger), testData.transformers.list[0], {});
+    const transformer = new IgnoreTransformer(logger, testData.transformers.list[0], {});
     const mockStream = new Readable();
 
     const result = await transformer.transform(mockStream, { source: 'test' }, null);

@@ -3,7 +3,6 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import { checkAge, compress } from '../../service/utils';
-import pino from 'pino';
 import { SouthDirectQuery } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
@@ -13,6 +12,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { Instant, OIBusTestingError } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Stats } from 'node:fs';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthFolderScanner - Retrieve files from a local or remote folder
@@ -30,7 +30,7 @@ export default class SouthFolderScanner
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

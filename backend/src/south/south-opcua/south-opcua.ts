@@ -1,6 +1,5 @@
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import SouthConnector from '../south-connector';
-import pino from 'pino';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -35,6 +34,7 @@ import {
   logMessages,
   parseOPCUAValue
 } from '../../service/utils-opcua';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthOPCUA - Connect to an OPCUA server
@@ -67,7 +67,7 @@ export default class SouthOPCUA
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

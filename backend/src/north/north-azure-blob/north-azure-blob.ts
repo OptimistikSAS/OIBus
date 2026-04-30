@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import { DataLakeServiceClient, StorageSharedKeyCredential as DataLakeStorageSharedKeyCredential } from '@azure/storage-file-datalake';
@@ -10,6 +9,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
+import type { ILogger } from '../../model/logger.model';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -17,7 +17,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   private blobClient: BlobServiceClient | null = null;
   private dataLakeClient: DataLakeServiceClient | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, logger: pino.Logger, cacheService: CacheService) {
+  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, logger: ILogger, cacheService: CacheService) {
     super(connector, logger, cacheService);
   }
 
