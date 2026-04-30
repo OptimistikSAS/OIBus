@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, flushPromises } from '../tests/utils/test-utils';
+import {mockModule, reloadModule, flushPromises} from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.mock';
 import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
@@ -143,7 +143,7 @@ describe('NorthConnector', () => {
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    north = new NorthFileWriter(testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>, asLogger(logger), cacheService);
+    north = new NorthFileWriter(testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>, logger, cacheService);
   });
 
   afterEach(() => {
@@ -450,7 +450,7 @@ describe('NorthConnector', () => {
   });
 
   it('should use another logger', async () => {
-    north.setLogger(asLogger(anotherLogger));
+    north.setLogger(anotherLogger);
     (logger.debug as ReturnType<typeof mock.fn>).mock.resetCalls();
     await north.stop();
     assert.strictEqual((anotherLogger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 1);

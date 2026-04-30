@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, asLogger, assertContains } from '../../../tests/utils/test-utils';
+import {flushPromises, mockModule, reloadModule, assertContains} from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import type JSONToCSVTransformerType from './json-to-csv-transformer';
 import jsonToCsvManifest from './manifest';
@@ -70,7 +70,7 @@ describe('JSONToCSVTransformer', () => {
         { jsonPath: '$[*].id', columnName: 'ID', dataType: 'number' }
       ]
     };
-    const transformer = new JSONToCSVTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
     const inputData = [
       { name: 'Item 1', id: 1 },
       { name: 'Item 2', id: 2 }
@@ -130,7 +130,7 @@ describe('JSONToCSVTransformer', () => {
         tags: ['urgent', 'work']
       }
     ];
-    const transformer = new JSONToCSVTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
     mockPapaparse.unparse = mock.fn(() => 'csv result');
     const mockStream = new Readable();
 

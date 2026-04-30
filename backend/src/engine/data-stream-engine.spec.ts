@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, flushPromises } from '../tests/utils/test-utils';
+import {mockModule, reloadModule, flushPromises} from '../tests/utils/test-utils';
 
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
@@ -182,7 +182,7 @@ describe('DataStreamEngine', () => {
     logger.info.mock.resetCalls();
     logger.warn.mock.resetCalls();
     logger.error.mock.resetCalls();
-    logger.child = mock.fn(() => asLogger(logger));
+    logger.child = mock.fn(() => logger);
 
     // Fresh metrics service instances
     northConnectorMetricsService = new NorthConnectorMetricsServiceMock();
@@ -243,7 +243,7 @@ describe('DataStreamEngine', () => {
       certificateRepository,
       oIAnalyticsRegistrationRepository,
       oianalyticsMessageService,
-      asLogger(logger)
+      logger
     );
   });
 
@@ -790,9 +790,9 @@ describe('DataStreamEngine', () => {
 
     it('should set logger for all components', () => {
       const newLogger = new PinoLogger();
-      newLogger.child = mock.fn(() => asLogger(newLogger));
+      newLogger.child = mock.fn(() => newLogger);
 
-      engine.setLogger(asLogger(newLogger));
+      engine.setLogger(newLogger);
 
       assert.strictEqual(mockedNorth1.setLogger.mock.calls.length, 1);
       assert.strictEqual(mockedSouth1.setLogger.mock.calls.length, 1);

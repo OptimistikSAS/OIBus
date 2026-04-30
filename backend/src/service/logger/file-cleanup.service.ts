@@ -2,7 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 
 import { filesExists } from '../utils';
-import pino from 'pino';
+import type { ILogger } from '../../model/logger.model';
 
 const CLEAN_UP_INTERVAL = 24 * 3600 * 1000; // One day
 
@@ -16,7 +16,7 @@ export default class FileCleanupService {
 
   constructor(
     logFolder: string,
-    private logger: pino.Logger,
+    private logger: ILogger,
     private readonly filename: string,
     private readonly numberOfFiles: number
   ) {

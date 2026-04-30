@@ -1,32 +1,32 @@
-import pino from 'pino';
 import http from 'node:http';
 import * as stream from 'node:stream';
 import net from 'node:net';
 import httpProxy from 'http-proxy';
 import { testIPOnFilter } from '../service/utils';
+import type { ILogger } from '../model/logger.model';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
  */
 export default class ProxyServer {
-  private _logger: pino.Logger;
+  private _logger: ILogger;
   private webServer: http.Server | null = null;
   private httpProxy: httpProxy | null = null;
   private ipFilters: Array<string> = [];
 
   constructor(
-    logger: pino.Logger,
+    logger: ILogger,
     private readonly ignoreIpFilters: boolean
   ) {
     this._logger = logger;
     this.refreshIpFilters([]);
   }
 
-  get logger(): pino.Logger {
+  get logger(): ILogger {
     return this._logger;
   }
 
-  setLogger(value: pino.Logger) {
+  setLogger(value: ILogger) {
     this._logger = value;
   }
 

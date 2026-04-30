@@ -2,7 +2,6 @@ import { AdsDataType, Client } from 'ads-client';
 import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../shared/model/types';
-import pino from 'pino';
 import { SouthADSItemSettings, SouthADSSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
@@ -10,6 +9,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 import { SouthDirectQuery } from '../south-interface';
+import type { ILogger } from '../../model/logger.model';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -38,7 +38,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

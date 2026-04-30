@@ -1,7 +1,5 @@
 import assert from 'node:assert/strict';
 import Database from 'better-sqlite3';
-import type pino from 'pino';
-import type LoggerMock from '../__mocks__/service/logger/logger.mock';
 import { setImmediate } from 'node:timers';
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
 import path from 'node:path';
@@ -45,11 +43,6 @@ const METRICS_TEST_DATABASE = path.resolve('src', 'tests', 'test-metrics.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(setImmediate);
-
-/** Single escape hatch for the logger mock at constructor boundaries. */
-export function asLogger(mock: LoggerMock): pino.Logger {
-  return mock as unknown as pino.Logger;
-}
 
 /**
  * Fix for tsx resolving 'tsoa' to tsoa.json (the TSOA config file) rather than the

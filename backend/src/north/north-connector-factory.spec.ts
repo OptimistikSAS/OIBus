@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { mockModule, reloadModule } from '../tests/utils/test-utils';
-import type pino from 'pino';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import type CertificateRepository from '../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import type {
@@ -32,7 +32,7 @@ import type {
 const nodeRequire = createRequire(import.meta.url);
 
 describe('North Connector Factory', () => {
-  const mockLogger = {} as pino.Logger;
+  const mockLogger = new PinoLogger();
   const mockCertificateRepository = {} as CertificateRepository;
   const mockOIAnalyticsRegistrationRepository = {} as OIAnalyticsRegistrationRepository;
 

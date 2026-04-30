@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import {flushPromises, mockModule, reloadModule} from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import type OIBusSetpointToModbusTransformerType from './oibus-setpoint-to-modbus-transformer';
 import setpointToModbusManifest from './manifest';
@@ -41,7 +41,7 @@ describe('OIBusSetpointToModbusTransformer', () => {
         { reference: 'reference2', address: 0x0002, modbusType: 'holding-register' }
       ]
     };
-    const transformer = new OIBusSetpointToModbusTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusSetpointToModbusTransformer(logger, testData.transformers.list[0], options);
     const dataChunks: Array<OIBusSetpoint> = [
       { reference: 'reference1', value: '1' },
       { reference: 'reference2', value: '2' },

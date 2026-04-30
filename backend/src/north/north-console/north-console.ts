@@ -1,17 +1,17 @@
 import NorthConnector from '../north-connector';
-import pino from 'pino';
 import { NorthConsoleSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult, OIBusSetpoint, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, logger: pino.Logger, cacheService: CacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, logger: ILogger, cacheService: CacheService) {
     super(configuration, logger, cacheService);
   }
 

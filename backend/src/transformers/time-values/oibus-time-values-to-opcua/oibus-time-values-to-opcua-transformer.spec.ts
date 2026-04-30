@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import {flushPromises, mockModule, reloadModule} from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import type OIBusTimeValuesToOPCUATransformerType from './oibus-time-values-to-opcua-transformer';
 import timeValuesToOpcuaManifest from './manifest';
@@ -44,7 +44,7 @@ describe('OIBusTimeValuesToOPCUATransformer', () => {
         { pointId: 'reference2', nodeId: 'ns=3;i=1002' }
       ]
     };
-    const transformer = new OIBusTimeValuesToOPCUATransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusTimeValuesToOPCUATransformer(logger, testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } },
       { pointId: 'reference2', timestamp: testData.constants.dates.DATE_2, data: { value: '2', quality: 'good' } },

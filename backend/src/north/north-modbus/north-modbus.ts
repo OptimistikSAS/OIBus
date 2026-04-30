@@ -1,5 +1,4 @@
 import NorthConnector from '../north-connector';
-import pino from 'pino';
 import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -12,6 +11,7 @@ import { connectSocket } from '../../service/utils-modbus';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthModbus - Write values in a Modbus server
@@ -22,7 +22,7 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, logger: pino.Logger, cacheService: CacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, logger: ILogger, cacheService: CacheService) {
     super(configuration, logger, cacheService);
   }
 

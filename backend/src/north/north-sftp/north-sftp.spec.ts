@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, buildNorthEntity } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule, buildNorthEntity} from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
@@ -104,7 +104,7 @@ describe('NorthSFTP', () => {
       suffix: '_suffix'
     });
 
-    north = new NorthSftp(configuration, asLogger(logger), cacheService);
+    north = new NorthSftp(configuration, logger, cacheService);
     await north.start();
   });
 
@@ -271,7 +271,7 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
       suffix: ''
     });
 
-    north = new NorthSftp(configuration, asLogger(logger), cacheService);
+    north = new NorthSftp(configuration, logger, cacheService);
   });
 
   afterEach(() => {

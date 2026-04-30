@@ -1,5 +1,4 @@
 import SouthConnector from '../south-connector';
-import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { SouthHistoryQuery } from '../south-interface';
@@ -9,6 +8,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest } from '../../service/http-request.utils';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthPI - Run a PI Agent to connect to a PI server.
@@ -28,7 +28,7 @@ export default class SouthPI extends SouthConnector<SouthPISettings, SouthPIItem
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

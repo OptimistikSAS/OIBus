@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import testData from '../tests/utils/test-data';
 import { mockModule, reloadModule, assertContains } from '../tests/utils/test-utils';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
-import type pino from 'pino';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import type SouthCacheRepository from '../repository/cache/south-cache.repository';
 import type CertificateRepository from '../repository/config/certificate.repository';
 import type OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
@@ -26,7 +26,7 @@ const nodeRequire = createRequire(import.meta.url);
 
 describe('HistoryQueryFactory', () => {
   // Type-only placeholders — passed to mocked factory functions that are never actually invoked
-  const mockLogger = {} as pino.Logger;
+  const mockLogger = new PinoLogger();
   const mockSouthCacheRepository = {} as SouthCacheRepository;
   const mockCertificateRepository = {} as CertificateRepository;
   const mockOIAnalyticsRegistrationRepository = {} as OIAnalyticsRegistrationRepository;

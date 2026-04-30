@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { Readable } from 'stream';
 import testData from '../tests/utils/test-data';
-import { flushPromises, asLogger } from '../tests/utils/test-utils';
+import {flushPromises} from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import IsoTransformer from './iso-transformer';
 import isoManifest from './iso-transformer/manifest';
@@ -20,7 +20,7 @@ describe('IsoTransformer', () => {
   });
 
   it('should transform data from a stream and return metadata without filename', async () => {
-    const transformer = new IsoTransformer(asLogger(logger), testData.transformers.list[0], {});
+    const transformer = new IsoTransformer(logger, testData.transformers.list[0], {});
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
@@ -45,7 +45,7 @@ describe('IsoTransformer', () => {
   });
 
   it('should transform data from a stream and return metadata', async () => {
-    const transformer = new IsoTransformer(asLogger(logger), testData.transformers.list[0], {});
+    const transformer = new IsoTransformer(logger, testData.transformers.list[0], {});
     const mockStream = new Readable();
 
     const promise = transformer.transform(mockStream, { source: 'test' }, 'test-file.csv');

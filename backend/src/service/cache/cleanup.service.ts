@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import pino from 'pino';
 import { CacheMetadata } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
@@ -9,6 +8,7 @@ import SouthConnectorRepository from '../../repository/config/south-connector.re
 import DataStreamEngine from '../../engine/data-stream-engine';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
+import type { ILogger } from '../../model/logger.model';
 
 const CLEAN_UP_INTERVAL = 3600 * 1000; // Every hour
 
@@ -24,12 +24,12 @@ const FOLDERS = {
  * Clean up archive and error folders after retention duration
  */
 export default class CleanupService {
-  private logger: pino.Logger;
+  private logger: ILogger;
   private readonly dataFolder: string;
   private cleanUpInterval: NodeJS.Timeout | null = null;
 
   constructor(
-    logger: pino.Logger,
+    logger: ILogger,
     baseCacheFolder: string,
     private readonly historyQueryRepository: HistoryQueryRepository,
     private readonly northConnectorRepository: NorthConnectorRepository,
@@ -42,7 +42,7 @@ export default class CleanupService {
     this.dataFolder = path.resolve(baseCacheFolder);
   }
 
-  setLogger(value: pino.Logger) {
+  setLogger(value: ILogger) {
     this.logger = value;
   }
 

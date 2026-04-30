@@ -1,5 +1,4 @@
 import NorthConnector from '../north-connector';
-import pino from 'pino';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -23,6 +22,7 @@ import { createSessionConfigs, initOPCUACertificateFolders } from '../../service
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server
@@ -33,7 +33,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, logger: pino.Logger, cacheService: CacheService) {
+  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, logger: ILogger, cacheService: CacheService) {
     super(connector, logger, cacheService);
   }
 

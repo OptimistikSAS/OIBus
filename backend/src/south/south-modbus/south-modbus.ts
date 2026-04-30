@@ -3,7 +3,6 @@ import net from 'node:net';
 import { client } from 'jsmodbus';
 
 import SouthConnector from '../south-connector';
-import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { SouthDirectQuery } from '../south-interface';
 import { DateTime } from 'luxon';
@@ -14,6 +13,7 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { connectSocket, readCoil, readDiscreteInputRegister, readHoldingRegister, readInputRegister } from '../../service/utils-modbus';
 import { Instant } from '../../model/types';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -33,7 +33,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

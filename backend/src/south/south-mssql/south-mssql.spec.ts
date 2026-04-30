@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -260,7 +260,7 @@ describe('SouthMSSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -547,7 +547,7 @@ describe('SouthMSSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     });
 
     it('should manage query error', async () => {
@@ -609,7 +609,7 @@ describe('SouthMSSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import {flushPromises, mockModule, reloadModule} from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import type OIBusSetpointToOPCUATransformerType from './oibus-setpoint-to-opcua-transformer';
 import setpointToOpcuaManifest from './manifest';
@@ -41,7 +41,7 @@ describe('OIBusSetpointToOPCUATransformer', () => {
         { reference: 'reference2', nodeId: 'ns=3;i=1002' }
       ]
     };
-    const transformer = new OIBusSetpointToOPCUATransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusSetpointToOPCUATransformer(logger, testData.transformers.list[0], options);
     const dataChunks: Array<OIBusSetpoint> = [
       { reference: 'reference1', value: '1' },
       { reference: 'reference2', value: '2' },

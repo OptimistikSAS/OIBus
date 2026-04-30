@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { OIBusContent } from '../../shared/model/engine.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -18,6 +17,7 @@ import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import fs from 'node:fs/promises';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
+import type { ILogger } from '../model/logger.model';
 
 export const buildHistoryQuery = (
   settings: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
@@ -27,7 +27,7 @@ export const buildHistoryQuery = (
     queryTime: Instant,
     items: Array<HistoryQueryItemEntity<SouthItemSettings>>
   ) => Promise<void>,
-  logger: pino.Logger,
+  logger: ILogger,
   baseFolderPath: string,
   southCacheRepository: SouthCacheRepository,
   certificateRepository: CertificateRepository,
@@ -126,7 +126,7 @@ export const initHistoryQueryCache = async (id: string, northType: OIBusNorthTyp
   }
 };
 
-export const createHistoryQueryOrchestrator = (baseFolder: string, historyId: string, logger: pino.Logger): CacheService => {
+export const createHistoryQueryOrchestrator = (baseFolder: string, historyId: string, logger: ILogger): CacheService => {
   return new CacheService(
     logger,
     path.join(baseFolder, 'cache', `history-${historyId}`, 'north'),

@@ -3,7 +3,6 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
-import type pino from 'pino';
 
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
@@ -54,7 +53,7 @@ describe('CleanupService', () => {
     mock.timers.enable({ apis: ['Date', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
 
     service = new CleanupService(
-      logger as unknown as pino.Logger,
+      logger,
       'baseFolder',
       historyQueryRepository,
       northConnectorRepository,
@@ -399,7 +398,7 @@ describe('CleanupService', () => {
   });
 
   it('should use another logger', async () => {
-    service.setLogger(anotherLogger as unknown as pino.Logger);
+    service.setLogger(anotherLogger);
     priv()['cleanOrphans'] = mock.fn(async () => undefined);
     priv()['cleanNorthConnectors'] = mock.fn(async () => undefined);
     priv()['cleanHistoryQueries'] = mock.fn(async () => undefined);

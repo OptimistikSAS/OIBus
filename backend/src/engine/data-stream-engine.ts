@@ -1,4 +1,3 @@
-import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import path from 'node:path';
@@ -39,6 +38,7 @@ import HistoryQueryMetricsRepository from '../repository/metrics/history-query-m
 import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
 import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
 import { clearProxyAgentCache } from '../service/http-request.utils';
+import type { ILogger } from '../model/logger.model';
 
 export default class DataStreamEngine {
   private northConnectors = new Map<string, { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService }>();
@@ -61,7 +61,7 @@ export default class DataStreamEngine {
     private certificateRepository: CertificateRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private oianalyticsMessageService: OIAnalyticsMessageService,
-    private _logger: pino.Logger
+    private _logger: ILogger
   ) {
     this.baseFolder = path.resolve('./');
   }
@@ -412,7 +412,7 @@ export default class DataStreamEngine {
     return this._logger;
   }
 
-  setLogger(value: pino.Logger) {
+  setLogger(value: ILogger) {
     this._logger = value;
 
     for (const south of this.southConnectors.values()) {

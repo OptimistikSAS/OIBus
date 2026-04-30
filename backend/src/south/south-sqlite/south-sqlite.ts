@@ -1,7 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import db from 'better-sqlite3';
-import pino from 'pino';
 
 import SouthConnector from '../south-connector';
 import {
@@ -20,6 +19,7 @@ import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/e
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
@@ -34,7 +34,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { EventEmitter } from 'node:events';
 import { ReadStream } from 'node:fs';
-import { mockModule, reloadModule, asLogger, buildNorthEntity, assertContains } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule, buildNorthEntity, assertContains} from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
@@ -121,7 +121,7 @@ describe('NorthREST', () => {
       }
     });
 
-    north = new NorthREST(configuration, asLogger(logger), cacheService);
+    north = new NorthREST(configuration, logger, cacheService);
   });
 
   afterEach(() => {
@@ -178,7 +178,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, asLogger(logger), cacheService);
+    north = new NorthREST(configuration, logger, cacheService);
 
     await north.testConnection();
 
@@ -201,7 +201,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, asLogger(logger), cacheService);
+    north = new NorthREST(configuration, logger, cacheService);
 
     await north.testConnection();
 
@@ -224,7 +224,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, asLogger(logger), cacheService);
+    north = new NorthREST(configuration, logger, cacheService);
 
     await north.testConnection();
 
@@ -247,7 +247,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, asLogger(logger), cacheService);
+    north = new NorthREST(configuration, logger, cacheService);
 
     await north.testConnection();
 
@@ -270,7 +270,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, asLogger(logger), cacheService);
+    north = new NorthREST(configuration, logger, cacheService);
 
     httpRequestMock.mock.mockImplementationOnce(async () => createMockResponse(201, 'Created'));
 

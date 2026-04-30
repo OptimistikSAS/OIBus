@@ -6,7 +6,6 @@ import rateLimit from 'express-rate-limit';
 import authMiddleware from './middlewares/auth.middleware';
 import sseMiddleware from './middlewares/sse.middleware';
 import EncryptionService from '../service/encryption.service';
-import pino from 'pino';
 import * as Http from 'http';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
@@ -30,12 +29,13 @@ import multer from 'multer';
 import { ValidateError } from 'tsoa';
 import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model/types';
 import os from 'node:os';
+import type { ILogger } from '../model/logger.model';
 
 /**
  * OIBus web server - using express
  */
 export default class WebServer {
-  private _logger: pino.Logger;
+  private _logger: ILogger;
   private _port: number;
   private _whiteList: Array<string> = [];
   private app: Express | null = null;
@@ -58,14 +58,14 @@ export default class WebServer {
     private readonly historyQueryService: HistoryQueryService,
     private readonly homeMetricsService: HomeMetricsService,
     private readonly ignoreIpFilters: boolean,
-    logger: pino.Logger
+    logger: ILogger
   ) {
     this._port = port;
     this._logger = logger;
     this._whiteList = this.ipFilterService.list().map(filter => filter.address);
   }
 
-  get logger(): pino.Logger {
+  get logger(): ILogger {
     return this._logger;
   }
 
@@ -326,7 +326,7 @@ export default class WebServer {
   }
 
   async start(): Promise<void> {
-    this.oIBusService.loggerEvent.on('updated', (logger: pino.Logger) => {
+    this.oIBusService.loggerEvent.on('updated', (logger: ILogger) => {
       this._logger = logger;
     });
 

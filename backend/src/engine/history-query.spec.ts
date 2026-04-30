@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, flushPromises } from '../tests/utils/test-utils';
+import {mockModule, reloadModule, flushPromises} from '../tests/utils/test-utils';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -48,7 +48,7 @@ describe('HistoryQuery enabled', () => {
     mockedNorth1 = mockedNorth1Mock as unknown as NorthConnector<NorthSettings>;
     mockedSouth1 = mockedSouth1Mock as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
 
-    historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, asLogger(logger));
+    historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, logger);
   });
 
   afterEach(async () => {
@@ -255,7 +255,7 @@ describe('HistoryQuery enabled', () => {
     );
     // isCacheEmpty must return true so finish() takes the info branch
     mockedNorth1Mock.isCacheEmpty = mock.fn(() => true);
-    historyQuery.setLogger(asLogger(anotherLogger));
+    historyQuery.setLogger(anotherLogger);
     await historyQuery.finish();
     assert.strictEqual(anotherLogger.info.mock.calls.length, 1);
   });

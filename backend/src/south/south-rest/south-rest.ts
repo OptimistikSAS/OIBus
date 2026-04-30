@@ -1,6 +1,5 @@
 import SouthConnector from '../south-connector';
 import { convertDateTimeToInstant, formatInstant, generateRandomId, sanitizeFilename } from '../../service/utils';
-import pino from 'pino';
 import { JSONPath } from 'jsonpath-plus';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -19,6 +18,7 @@ import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse }
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { encryptionService } from '../../service/encryption.service';
+import type { ILogger } from '../../model/logger.model';
 
 export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRestItemSettings> implements SouthHistoryQuery {
   constructor(
@@ -30,7 +30,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

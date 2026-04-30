@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import Stream from 'node:stream';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -307,7 +307,7 @@ describe('SouthOPCUA', () => {
     nodeOPCUAMock.resolveNodeId.mock.mockImplementation((nodeId: unknown) => nodeId);
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {

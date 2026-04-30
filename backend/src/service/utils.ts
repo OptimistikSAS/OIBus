@@ -8,7 +8,6 @@ import { DateTime } from 'luxon';
 import AdmZip from 'adm-zip';
 
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
-import pino from 'pino';
 import csv from 'papaparse';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import os from 'node:os';
@@ -23,6 +22,7 @@ import { OIBusError } from '../model/engine.model';
 import Stream from 'node:stream';
 import { SouthConnectorItemEntity, SouthItemGroupEntity, SouthItemGroupEntityLight } from '../model/south-connector.model';
 import { SouthFolderScannerItemSettings, SouthItemSettings } from '../../shared/model/south-settings.model';
+import type { ILogger } from '../model/logger.model';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -309,7 +309,7 @@ export const persistResults = async (
   queryTime: Instant,
   baseFolder: string,
   addContentFn: (data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>,
-  logger: pino.Logger
+  logger: ILogger
 ): Promise<void> => {
   switch (serializationSettings.type) {
     case 'file':
@@ -411,7 +411,7 @@ export const generateCsvContent = (data: Array<Record<string, string | number>>,
 /**
  * Log the executed query with replacements values for query variables
  */
-export const logQuery = (query: string, startTime: string | number, endTime: string | number, logger: pino.Logger): void => {
+export const logQuery = (query: string, startTime: string | number, endTime: string | number, logger: ILogger): void => {
   const startTimeLog = query.indexOf('@StartTime') !== -1 ? `@StartTime = ${startTime}` : '';
   const endTimeLog = query.indexOf('@EndTime') !== -1 ? `@EndTime = ${endTime}` : '';
   let log = `Sending "${query}"`;
@@ -928,7 +928,7 @@ export const checkAge = (
   filename: string,
   mtimeMs: number,
   filesPreserved: Array<{ filename: string; modifiedTime: number }>,
-  logger: pino.Logger
+  logger: ILogger
 ): boolean => {
   const timestamp = new Date().getTime();
   logger.trace(

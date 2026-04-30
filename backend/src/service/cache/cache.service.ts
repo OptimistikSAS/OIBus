@@ -3,7 +3,6 @@ import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 
 import { determineContentTypeFromFilename, generateRandomId, processCacheFileContent } from '../utils';
-import pino from 'pino';
 import { EventEmitter } from 'node:events';
 import {
   CacheContentUpdateCommand,
@@ -17,6 +16,7 @@ import { DateTime } from 'luxon';
 import DeferredPromise from '../deferred-promise';
 import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
 import { Readable } from 'node:stream';
+import type { ILogger } from '../../model/logger.model';
 
 const DEBOUNCED_LOG_S = 10_000;
 const DEBOUNCED_SIZE_WARNING_S = 60_000;
@@ -25,7 +25,7 @@ const DEBOUNCED_SIZE_WARNING_S = 60_000;
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
 export default class CacheService {
-  private logger: pino.Logger;
+  private logger: ILogger;
   private readonly _cacheFolder: string;
   private readonly _errorFolder: string;
   private readonly _archiveFolder: string;
@@ -44,14 +44,14 @@ export default class CacheService {
   private cacheLogDebounceFlag = false;
   private cacheLogDebounceTimeout: NodeJS.Timeout | null = null;
 
-  constructor(logger: pino.Logger, baseCacheFolder: string, baseErrorFolder: string, baseArchiveFolder: string) {
+  constructor(logger: ILogger, baseCacheFolder: string, baseErrorFolder: string, baseArchiveFolder: string) {
     this.logger = logger;
     this._cacheFolder = path.resolve(baseCacheFolder);
     this._errorFolder = path.resolve(baseErrorFolder);
     this._archiveFolder = path.resolve(baseArchiveFolder);
   }
 
-  setLogger(value: pino.Logger) {
+  setLogger(value: ILogger) {
     this.logger = value;
   }
 

@@ -3,7 +3,6 @@ import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
 import NorthConnector from '../north-connector';
-import pino from 'pino';
 import { NorthRESTSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -20,6 +19,7 @@ import {
 import CacheService from '../../service/cache/cache.service';
 import { encryptionService } from '../../service/encryption.service';
 import { UndiciHeaders } from 'undici/types/dispatcher';
+import type { ILogger } from '../../model/logger.model';
 
 async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>) {
   yield Buffer.from(
@@ -35,7 +35,7 @@ async function* multipartStream(boundary: string, filename: string, dataStream: 
  * Class Console - display values and file path into the console
  */
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, logger: pino.Logger, cacheService: CacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, logger: ILogger, cacheService: CacheService) {
     super(configuration, logger, cacheService);
   }
 

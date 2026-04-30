@@ -18,7 +18,6 @@ import {
 } from './utils-opcua';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../shared/model/south-settings.model';
 import { NorthOPCUASettings } from '../../shared/model/north-settings.model';
-import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import { DateTime } from 'luxon';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
@@ -358,10 +357,10 @@ describe('Service utils OPCUA', () => {
   });
 
   describe('parseOPCUAValue', () => {
-    let logger: pino.Logger;
+    let logger: PinoLogger;
 
     beforeEach(() => {
-      logger = new PinoLogger() as unknown as pino.Logger;
+      logger = new PinoLogger();
     });
 
     it('should return the string value without null terminator for DataType.String', () => {
@@ -425,7 +424,7 @@ describe('Service utils OPCUA', () => {
     });
 
     it('should log a debug message and return an empty string for unsupported DataTypes', () => {
-      const debugLogger = { debug: mock.fn() } as unknown as pino.Logger;
+      const debugLogger = new PinoLogger();
       const testCases = [
         DataType.Variant,
         DataType.DataValue,
@@ -454,10 +453,10 @@ describe('Service utils OPCUA', () => {
   });
 
   describe('logMessages', () => {
-    let logger: pino.Logger;
+    let logger: PinoLogger;
 
     beforeEach(() => {
-      logger = new PinoLogger() as unknown as pino.Logger;
+      logger = new PinoLogger();
     });
 
     it('should log all affected nodes if their number is less than or equal to MAX_NUMBER_OF_NODE_TO_LOG', () => {

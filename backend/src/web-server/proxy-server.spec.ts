@@ -1,11 +1,10 @@
 import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import type pino from 'pino';
 import type http from 'node:http';
 import type net from 'node:net';
 import type httpProxy from 'http-proxy';
-import { mockModule, reloadModule, asLogger } from '../tests/utils/test-utils';
+import {mockModule, reloadModule} from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -38,7 +37,7 @@ const { default: ProxyServer } = reloadModule<{ default: typeof ProxyServerClass
 describe('ProxyServer', () => {
   let proxyServer: ProxyServerClass;
   const loggerMock = new PinoLogger();
-  const logger = asLogger(loggerMock);
+  const logger = loggerMock;
 
   beforeEach(() => {
     testIPOnFilterMock.mock.resetCalls();
@@ -78,7 +77,7 @@ describe('ProxyServer', () => {
   });
 
   it('should update the logger', () => {
-    const newLogger = {} as pino.Logger;
+    const newLogger = new PinoLogger();
     proxyServer.setLogger(newLogger);
     assert.strictEqual(proxyServer.logger, newLogger);
   });

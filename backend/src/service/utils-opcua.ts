@@ -28,9 +28,9 @@ import {
 } from 'node-opcua';
 import { createFolder } from './utils';
 import { Instant } from '../../shared/model/types';
-import pino from 'pino';
 import { DateTime } from 'luxon';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
+import type { ILogger } from '../model/logger.model';
 
 const NUM_VALUES_PER_NODE = 1000;
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
@@ -233,7 +233,7 @@ export const getTimestamp = (dataValue: DataValue, settings: SouthOPCUAItemSetti
   }
 };
 
-export const parseOPCUAValue = (itemName: string, opcuaVariant: Variant, logger: pino.Logger): string => {
+export const parseOPCUAValue = (itemName: string, opcuaVariant: Variant, logger: ILogger): string => {
   switch (opcuaVariant.dataType) {
     case DataType.String:
       return opcuaVariant.value ? opcuaVariant.value.split('\0')[0] : '';
@@ -290,7 +290,7 @@ export const parseOPCUAValue = (itemName: string, opcuaVariant: Variant, logger:
   }
 };
 
-export const logMessages = (logs: Map<string, { description: string; affectedNodes: Array<string> }>, logger: pino.Logger) => {
+export const logMessages = (logs: Map<string, { description: string; affectedNodes: Array<string> }>, logger: ILogger) => {
   for (const [statusCode, log] of logs.entries()) {
     if (log.affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
       logger.debug(

@@ -17,7 +17,6 @@ import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
-import type pino from 'pino';
 import type NorthServiceType from './north.service';
 import type {
   northManifestList as northManifestListType,
@@ -109,7 +108,7 @@ describe('North Service', () => {
     certificateRepository = new CertificateRepositoryMock();
     oIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
     oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-    engine = new DataStreamEngineMock(logger as unknown as pino.Logger);
+    engine = new DataStreamEngineMock(logger);
     transformerService = new TransformerServiceMock();
     southItemGroupRepository = { findById: mock.fn() };
     validator = {

@@ -1,4 +1,3 @@
-import pino from 'pino';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
 import CacheService from '../service/cache/cache.service';
@@ -32,10 +31,11 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
+import type { ILogger } from '../model/logger.model';
 
 export const buildNorth = (
   settings: NorthConnectorEntity<NorthSettings>,
-  logger: pino.Logger,
+  logger: ILogger,
   certificateRepository: CertificateRepository,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
   orchestrator: CacheService
@@ -96,7 +96,7 @@ export const deleteNorthCache = async (id: string, baseFolder: string) => {
   await fs.rm(path.join(baseFolder, 'archive', `north-${id}`), { recursive: true, force: true });
 };
 
-export const createNorthOrchestrator = (baseFolder: string, id: string, logger: pino.Logger): CacheService => {
+export const createNorthOrchestrator = (baseFolder: string, id: string, logger: ILogger): CacheService => {
   return new CacheService(
     logger,
     path.join(baseFolder, 'cache', `north-${id}`),

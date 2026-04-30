@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, assertContains } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule, assertContains} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -207,7 +207,7 @@ describe('SouthOLEDB', () => {
     utilsExports.persistResults = mock.fn(async () => undefined);
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthOLEDB(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthOLEDB(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -245,7 +245,7 @@ describe('SouthOLEDB', () => {
       configurationWithoutPassword,
       addContentCallback,
       southCacheRepository,
-      asLogger(logger),
+      logger,
       'cacheFolder'
     );
 
@@ -272,7 +272,7 @@ describe('SouthOLEDB', () => {
       configurationWithTrailingSemicolon,
       addContentCallback,
       southCacheRepository,
-      asLogger(logger),
+      logger,
       'cacheFolder'
     );
     const expectedConnectionString = `${configurationWithTrailingSemicolon.settings.connectionString}Password=encrypted-password;`;

@@ -4,7 +4,6 @@ import { delay, generateIntervals, groupItemsByGroup, validateCronExpression } f
 
 import { SOUTH_SINGLE_ITEMS, SouthConnectorItemTestingSettings, SouthItemLastValue } from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
-import pino from 'pino';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import SouthCacheService from '../service/south-cache.service';
@@ -21,6 +20,7 @@ import path from 'node:path';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
+import type { ILogger } from '../model/logger.model';
 
 /**
  * Class SouthConnector: provides general attributes and methods for South connectors.
@@ -49,7 +49,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     private readonly southCacheRepository: SouthCacheRepository,
-    protected logger: pino.Logger,
+    protected logger: ILogger,
     protected cacheFolderPath: string
   ) {
     this.cacheService = new SouthCacheService(this.southCacheRepository);
@@ -529,7 +529,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger.info(`South connector "${this.connector.name}" stopped`);
   }
 
-  setLogger(value: pino.Logger) {
+  setLogger(value: ILogger) {
     this.logger = value;
   }
 

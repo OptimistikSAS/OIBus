@@ -1,5 +1,4 @@
 import DataStreamEngine from '../engine/data-stream-engine';
-import pino from 'pino';
 import {
   CacheContentUpdateCommand,
   CacheSearchParam,
@@ -35,6 +34,7 @@ import OIAnalyticsRegistrationService from './oia/oianalytics-registration.servi
 import { EventEmitter } from 'node:events';
 import IPFilterService from './ip-filter.service';
 import UserService from './user.service';
+import type { ILogger } from '../model/logger.model';
 
 const HEALTH_SIGNAL_INTERVAL = 1_800_000; // 30 minutes
 const UPDATE_ENGINE_METRICS_INTERVAL = 1000; // every second
@@ -49,7 +49,7 @@ export default class OIBusService {
   private cpuUsageRef: NodeJS.CpuUsage = process.cpuUsage();
 
   private readonly proxyServer: ProxyServer;
-  private logger: pino.Logger;
+  private logger: ILogger;
 
   public loggerEvent: EventEmitter = new EventEmitter(); // Used to trigger logger update for Web server
   public portChangeEvent: EventEmitter = new EventEmitter(); // Used to trigger port update for Web server
@@ -217,7 +217,7 @@ export default class OIBusService {
     await this.engine.addExternalContent(northId, dataSourceId, content);
   }
 
-  setLogger(logger: pino.Logger) {
+  setLogger(logger: ILogger) {
     this.logger = logger;
     this.engine.setLogger(logger);
     this.proxyServer.setLogger(logger);

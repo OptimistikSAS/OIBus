@@ -6,7 +6,7 @@ import fs from 'node:fs/promises';
 import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
 import { DataType, StatusCodes, SecurityPolicy, AttributeIds } from 'node-opcua';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, buildNorthEntity, seq } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule, buildNorthEntity, seq} from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
@@ -148,7 +148,7 @@ describe('NorthOPCUA', () => {
     // Re-apply createSession to pick up the new mockSession
     nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => mockSession);
 
-    north = new NorthOPCUA(configuration, asLogger(logger), cacheService);
+    north = new NorthOPCUA(configuration, logger, cacheService);
   });
 
   afterEach(() => {
