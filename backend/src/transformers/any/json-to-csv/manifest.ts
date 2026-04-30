@@ -65,7 +65,7 @@ const manifest: TransformerManifest = {
         type: 'string-select',
         key: 'newline',
         translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.newline',
-        defaultValue: 'DEFAULT',
+        defaultValue: 'LF',
         selectableValues: ['DEFAULT', 'CRLF', 'LF', 'CR'],
         validators: [{ type: 'REQUIRED', arguments: [] }],
         displayProperties: { row: 1, columns: 3, displayInViewMode: true }
@@ -74,7 +74,7 @@ const manifest: TransformerManifest = {
         type: 'string-select',
         key: 'quoteChar',
         translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.quote-char',
-        defaultValue: 'DOUBLE_QUOTE',
+        defaultValue: 'NONE',
         selectableValues: ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'],
         validators: [{ type: 'REQUIRED', arguments: [] }],
         displayProperties: { row: 1, columns: 3, displayInViewMode: true }
