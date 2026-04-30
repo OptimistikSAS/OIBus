@@ -1,5 +1,4 @@
 import { delay } from '../service/utils';
-import pino from 'pino';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
@@ -16,6 +15,7 @@ import {
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { EventEmitter } from 'node:events';
 import { Instant } from '../model/types';
+import type { ILogger } from '../model/logger.model';
 
 const FINISH_INTERVAL = 5000;
 
@@ -30,7 +30,7 @@ export default class HistoryQuery {
     private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
     private north: NorthConnector<NorthSettings>,
     private south: SouthConnector<SouthSettings, SouthItemSettings>,
-    private logger: pino.Logger
+    private logger: ILogger
   ) {}
 
   async start(): Promise<void> {
@@ -166,7 +166,7 @@ export default class HistoryQuery {
     }
   }
 
-  setLogger(value: pino.Logger) {
+  setLogger(value: ILogger) {
     this.logger = value;
   }
 

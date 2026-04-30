@@ -17,7 +17,6 @@ import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import type pino from 'pino';
 import type SouthServiceType from './south.service';
 import type {
   southManifestList as southManifestListType,
@@ -117,7 +116,7 @@ describe('South Service', () => {
     oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock();
     certificateRepository = new CertificateRepositoryMock();
     oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-    engine = new DataStreamEngineMock(logger as unknown as pino.Logger);
+    engine = new DataStreamEngineMock(logger);
     southItemGroupRepository = new SouthItemGroupRepositoryMock();
 
     validator = {

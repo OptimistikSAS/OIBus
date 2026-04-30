@@ -1,10 +1,10 @@
 import ivm from 'isolated-vm';
 import ts from 'typescript';
-import { Logger } from 'pino';
 import { CustomTransformer } from '../model/transformer.model';
 import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
 import * as fs from 'node:fs';
 import { resolveBypassingExports } from './utils';
+import type { ILogger } from '../model/logger.model';
 
 interface ResultOutput {
   data: string;
@@ -65,7 +65,7 @@ export default class SandboxService {
     filename: string,
     transformer: CustomTransformer,
     options: object,
-    logger: Logger
+    logger: ILogger
   ): Promise<{ metadata: CacheMetadata; output: string }> {
     if (!this.initLogged) {
       logger[this.initMessage.level](this.initMessage.text);

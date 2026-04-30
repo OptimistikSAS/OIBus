@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import {flushPromises, mockModule, reloadModule} from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import type OIBusTimeValuesToJSONTransformerType from './oibus-time-values-to-json-transformer';
 import timeValuesToJsonManifest from './manifest';
@@ -38,7 +38,7 @@ describe('OIBusTimeValuesToJSONTransformer', () => {
   });
 
   it('should transform data from a stream and return metadata', async () => {
-    const transformer = new OIBusTimeValuesToJSONTransformer(asLogger(logger), testData.transformers.list[0], {});
+    const transformer = new OIBusTimeValuesToJSONTransformer(logger, testData.transformers.list[0], {});
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } },
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, data: { value: 'value2', quality: 'good' } },

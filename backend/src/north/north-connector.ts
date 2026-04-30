@@ -1,4 +1,3 @@
-import pino from 'pino';
 import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
@@ -27,6 +26,7 @@ import IgnoreTransformer from '../transformers/ignore-transformer';
 import IsoTransformer from '../transformers/iso-transformer';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { CONTENT_FOLDER } from '../model/engine.model';
+import type { ILogger } from '../model/logger.model';
 
 /**
  * Base class for every North connector.
@@ -80,7 +80,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
-    protected logger: pino.Logger,
+    protected logger: ILogger,
     private cacheService: CacheService
   ) {}
 
@@ -703,7 +703,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.logger.info(`"${this.connector.name}" stopped`);
   }
 
-  setLogger(value: pino.Logger) {
+  setLogger(value: ILogger) {
     this.logger = value;
     this.cacheService.setLogger(value);
   }

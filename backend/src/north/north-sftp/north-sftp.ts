@@ -2,7 +2,6 @@ import path from 'node:path';
 
 import NorthConnector from '../north-connector';
 import { encryptionService } from '../../service/encryption.service';
-import pino from 'pino';
 import { DateTime } from 'luxon';
 import { NorthSFTPSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
@@ -12,12 +11,13 @@ import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CacheService from '../../service/cache/cache.service';
 import { ReadStream } from 'node:fs';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthSFTP - Write files in an output folder
  */
 export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthSFTPSettings>, logger: pino.Logger, cacheService: CacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthSFTPSettings>, logger: ILogger, cacheService: CacheService) {
     super(configuration, logger, cacheService);
   }
 

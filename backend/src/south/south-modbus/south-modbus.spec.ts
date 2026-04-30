@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import Stream from 'node:stream';
 import net from 'node:net';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -296,7 +296,7 @@ describe('South Modbus', () => {
     utilsModbusExports.readInputRegister = mock.fn(async () => undefined);
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {

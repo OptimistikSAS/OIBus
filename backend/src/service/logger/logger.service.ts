@@ -7,6 +7,7 @@ import { encryptionService } from '../encryption.service';
 import { EngineSettings } from '../../model/engine.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { ScopeType } from '../../../shared/model/logs.model';
+import type { ILogger } from '../../model/logger.model';
 
 const LOG_DB_NAME = 'logs.db';
 const LOG_FILE_NAME = 'journal.log';
@@ -60,7 +61,7 @@ const computeParentLevel = (targets: ReadonlyArray<{ level: string }>): pino.Lev
  * @class LoggerService
  */
 class LoggerService {
-  logger: pino.Logger | null = null;
+  logger: ILogger | null = null;
   fileCleanUpService: FileCleanupService | null = null;
 
   constructor(private readonly folder: string) {}
@@ -157,7 +158,7 @@ class LoggerService {
   /**
    * Create a child logger from the main logger already set up, with the appropriate scope (South, North, Engine...)
    */
-  createChildLogger(scopeType: ScopeType, scopeId?: string, scopeName?: string): pino.Logger {
+  createChildLogger(scopeType: ScopeType, scopeId?: string, scopeName?: string): ILogger {
     return this.logger!.child({ scopeType, scopeId, scopeName });
   }
 

@@ -1,7 +1,6 @@
 import { testOIAnalyticsConnection } from '../utils-oianalytics';
 import { getOIBusInfo } from '../utils';
 import { encryptionService } from '../encryption.service';
-import pino from 'pino';
 import { DateTime } from 'luxon';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import EngineRepository from '../../repository/config/engine.repository';
@@ -14,6 +13,7 @@ import OIAnalyticsClient from './oianalytics-client.service';
 import { EventEmitter } from 'node:events';
 import { NotFoundError } from '../../model/types';
 import { GetUserInfo } from '../../../shared/model/types';
+import type { ILogger } from '../../model/logger.model';
 
 const CHECK_REGISTRATION_INTERVAL = 10_000;
 export default class OIAnalyticsRegistrationService {
@@ -26,7 +26,7 @@ export default class OIAnalyticsRegistrationService {
     private oIAnalyticsClient: OIAnalyticsClient,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private engineRepository: EngineRepository,
-    private logger: pino.Logger
+    private logger: ILogger
   ) {}
 
   start() {

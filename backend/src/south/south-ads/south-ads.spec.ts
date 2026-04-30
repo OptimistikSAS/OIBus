@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -130,7 +130,7 @@ describe('South ADS', () => {
       return adsInstance;
     });
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthADS(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthADS(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     // Reset boolAsText and enumAsText to their original values in case a test mutated them
     configuration.settings.boolAsText = 'integer';
     configuration.settings.enumAsText = 'text';

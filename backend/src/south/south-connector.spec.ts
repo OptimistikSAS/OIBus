@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, flushPromises } from '../tests/utils/test-utils';
+import {mockModule, reloadModule, flushPromises} from '../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
@@ -134,7 +134,7 @@ describe('SouthConnector', () => {
         SouthFolderScannerSettings,
         SouthFolderScannerItemSettings
       >;
-      south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+      south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
       await south.start();
     });
 
@@ -234,7 +234,7 @@ describe('SouthConnector', () => {
 
     it('should use another logger', async () => {
       (logger.info as ReturnType<typeof mock.fn>).mock.resetCalls();
-      south.setLogger(asLogger(anotherLogger));
+      south.setLogger(anotherLogger);
       await south.stop();
       assert.strictEqual((anotherLogger.info as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.strictEqual((logger.info as ReturnType<typeof mock.fn>).mock.calls.length, 0);
@@ -368,7 +368,7 @@ describe('SouthConnector', () => {
         testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
         addContentCallback,
         southCacheRepository,
-        asLogger(logger),
+        logger,
         'cacheFolder'
       );
       await south.start();
@@ -423,7 +423,7 @@ describe('SouthConnector', () => {
         testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
         addContentCallback,
         southCacheRepository,
-        asLogger(logger),
+        logger,
         'cacheFolder'
       );
 

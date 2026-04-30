@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import {flushPromises, mockModule, reloadModule} from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import type OIBusTimeValuesToCsvTransformerType from './oibus-time-values-to-csv-transformer';
 import timeValuesToCsvManifest from './manifest';
@@ -61,7 +61,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
       timezone: 'Europe/Paris'
     };
-    const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: 'value1' } },
       { pointId: 'reference1', timestamp: testData.constants.dates.DATE_2, data: { value: 'value2', quality: 'good' } },

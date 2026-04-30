@@ -16,7 +16,6 @@ import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import { GetUserInfo, Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import pino from 'pino';
 import OibusTransformer from '../transformers/oibus-transformer';
 import OIBusTimeValuesToCsvTransformer from '../transformers/time-values/oibus-time-values-to-csv/oibus-time-values-to-csv-transformer';
 import OIBusTimeValuesToJSONTransformer from '../transformers/time-values/oibus-time-values-to-json/oibus-time-values-to-json-transformer';
@@ -50,11 +49,12 @@ import timeValuesToOpcuaManifest from '../transformers/time-values/oibus-time-va
 import setpointToModbusManifest from '../transformers/setpoint/oibus-setpoint-to-modbus/manifest';
 import setpointToMqttManifest from '../transformers/setpoint/oibus-setpoint-to-mqtt/manifest';
 import setpointToOpcuaManifest from '../transformers/setpoint/oibus-setpoint-to-opcua/manifest';
+import type { ILogger } from '../model/logger.model';
 
 interface TransformerReloadEngine {
   reloadTransformer(transformerId: string): Promise<void>;
   removeAndReloadTransformer(transformerId: string): Promise<void>;
-  logger: pino.Logger;
+  logger: ILogger;
 }
 
 export const transformerManifestList: Array<TransformerManifest> = [
@@ -350,7 +350,7 @@ export const toTransformerDTO = (transformer: Transformer, getUserInfo: GetUserI
 export const createTransformer = (
   transformerWithOptions: NorthTransformerWithOptions,
   northConnector: NorthConnectorEntity<NorthSettings>,
-  logger: pino.Logger
+  logger: ILogger
 ): OibusTransformer => {
   if (transformerWithOptions.transformer.type === 'standard') {
     switch (transformerWithOptions.transformer.functionName) {

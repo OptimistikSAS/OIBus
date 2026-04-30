@@ -6,7 +6,7 @@ import crypto from 'node:crypto';
 import os from 'node:os';
 
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, flushPromises, asLogger, seq } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule, flushPromises, seq} from '../../tests/utils/test-utils';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
@@ -226,7 +226,7 @@ function makeService(ignoreRemoteUpdate = false, launcherVersion = testData.engi
     northService,
     historyQueryService,
     transformerService,
-    asLogger(logger),
+    logger,
     'binaryFolder',
     ignoreRemoteUpdate,
     launcherVersion
@@ -2294,7 +2294,7 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
     mock.method(process, 'kill', () => undefined as unknown as void);
 
     await service.start();
-    oIBusService.loggerEvent.emit('updated', asLogger(anotherLogger));
+    oIBusService.loggerEvent.emit('updated', anotherLogger);
     await service.stop();
     await flushPromises();
 

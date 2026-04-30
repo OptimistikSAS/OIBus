@@ -11,7 +11,6 @@ import {
   persistResults
 } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
-import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { SouthHistoryQuery } from '../south-interface';
 import { DateTime } from 'luxon';
@@ -20,6 +19,7 @@ import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/e
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
@@ -34,7 +34,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

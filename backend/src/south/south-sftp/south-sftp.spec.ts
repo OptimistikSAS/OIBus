@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule} from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -182,7 +182,7 @@ describe('SouthSFTP', () => {
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
 
-    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -235,7 +235,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     await southWithLimit.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -270,7 +270,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     await southWithLimit.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -309,7 +309,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     await southWithLimit.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -343,7 +343,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     await southWithLimit.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -443,7 +443,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southRecursive = new SouthSftp(configRecursive, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    const southRecursive = new SouthSftp(configRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     await southRecursive.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -606,7 +606,7 @@ describe('SouthFTP with preserve file and compression', () => {
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
 
-    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
     await south.start();
   });
 
@@ -823,7 +823,7 @@ describe('SouthSFTP test connection with private key', () => {
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
 
-    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
 
   afterEach(() => {

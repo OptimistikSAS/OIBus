@@ -8,7 +8,6 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { SouthHistoryQuery } from '../south-interface';
@@ -20,6 +19,7 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
 import { loadOdbc } from './odbc-loader';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import { encryptionService } from '../../service/encryption.service';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
@@ -37,7 +37,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);

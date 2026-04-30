@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
 import EventEmitter from 'node:events';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, asLogger, buildNorthEntity } from '../../tests/utils/test-utils';
+import {mockModule, reloadModule, buildNorthEntity} from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
@@ -115,7 +115,7 @@ describe('NorthMQTT', () => {
       rejectUnauthorized: false
     });
 
-    north = new NorthMQTT(configuration, asLogger(logger), cacheService);
+    north = new NorthMQTT(configuration, logger, cacheService);
   });
 
   afterEach(() => {

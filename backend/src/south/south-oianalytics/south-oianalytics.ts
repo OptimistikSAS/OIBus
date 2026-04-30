@@ -1,6 +1,5 @@
 import SouthConnector from '../south-connector';
 import { formatQueryParams, persistResults } from '../../service/utils';
-import pino from 'pino';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { SouthHistoryQuery } from '../south-interface';
@@ -13,6 +12,7 @@ import CertificateRepository from '../../repository/config/certificate.repositor
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest } from '../../service/http-request.utils';
 import { buildHttpOptions, getHost, getUrl, OIATimeValues, parseData, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
+import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthOIAnalytics - Retrieve data from OIAnalytics REST API
@@ -30,7 +30,7 @@ export default class SouthOIAnalytics
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: pino.Logger,
+    logger: ILogger,
     cacheFolderPath: string,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
