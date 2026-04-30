@@ -1,10 +1,14 @@
-import NorthConnector from './north-connector';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import testData from '../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger, flushPromises } from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-
-import pino from 'pino';
 import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.mock';
-import { createOIBusError, delay, dirSize, generateRandomId, validateCronExpression } from '../service/utils';
-import {
+import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
+import type { NorthConnectorEntity } from '../model/north-connector.model';
+import type {
   CacheContentUpdateCommand,
   CacheMetadata,
   CacheMetadataSource,
@@ -12,152 +16,231 @@ import {
   OIBusContent,
   OIBusFileContent
 } from '../../shared/model/engine.model';
-import testData from '../tests/utils/test-data';
-import { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
-import NorthFileWriter from './north-file-writer/north-file-writer';
-import { NorthConnectorEntity } from '../model/north-connector.model';
-import { flushPromises } from '../tests/utils/test-utils';
-import CacheService from '../service/cache/cache.service';
-import { OIBusError } from '../model/engine.model';
-import path from 'node:path';
-import { DateTime } from 'luxon';
-import { createReadStream, ReadStream } from 'node:fs';
-import { Readable } from 'node:stream';
-import { createTransformer } from '../service/transformer.service';
-import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import OIBusTransformer from '../transformers/oibus-transformer';
-import { NorthTransformerWithOptions, SourceOriginSouth } from '../model/transformer.model';
-import {
+import type { NorthTransformerWithOptions, SourceOriginSouth } from '../model/transformer.model';
+import type {
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
   SouthConnectorItemEntityLight,
   SouthItemGroupEntity
 } from '../model/south-connector.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
-import { HistoryQueryItemEntity } from '../model/histor-query.model';
+import type { SouthItemSettings } from '../../shared/model/south-settings.model';
+import type { HistoryQueryItemEntity } from '../model/histor-query.model';
+import type NorthConnectorClass from './north-connector';
+import type NorthFileWriterClass from './north-file-writer/north-file-writer';
+import { OIBusError } from '../model/engine.model';
+import path from 'node:path';
+import { DateTime } from 'luxon';
 
-// Mock fs
-jest.mock('node:stream');
-jest.mock('node:fs', () => {
-  const real = jest.requireActual<typeof import('node:fs')>('node:fs');
-  return { ...real, createReadStream: jest.fn() };
-});
-jest.mock('node:fs/promises');
+const nodeRequire = createRequire(import.meta.url);
 
-// Mock services
-jest.mock('../service/utils');
-jest.mock('../service/transformer.service');
+// Grab the real node:fs and node:stream exports objects and mutate them in-place.
+// tsx compiles `import { createReadStream } from 'node:fs'` as namespace access,
+// so the SUT holds a reference to the same exports object.
+const realFs = nodeRequire('node:fs') as Record<string, unknown>;
+const realStream = nodeRequire('node:stream') as Record<string, unknown>;
+const realReadable = realStream['Readable'] as Record<string, unknown>;
 
-const cacheService: CacheService = new CacheServiceMock();
-const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
-
-jest.mock(
-  '../service/cache/cache.service',
-  () =>
-    function () {
-      return cacheService;
-    }
-);
-
-const logger: pino.Logger = new PinoLogger();
-const anotherLogger: pino.Logger = new PinoLogger();
-
-const contentToHandle: { filename: string; metadata: CacheMetadata } = {
-  filename: 'file1.json',
-  metadata: {
-    contentFile: 'file1-123456.json',
-    contentSize: 100,
-    numberOfElement: 3,
-    createdAt: testData.constants.dates.DATE_1,
-    contentType: 'time-values'
-  }
-};
-
-let north: NorthConnector<NorthSettings>;
-let mockStream: ReadStream;
 describe('NorthConnector', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let NorthFileWriter: typeof NorthFileWriterClass;
 
-    (dirSize as jest.Mock).mockReturnValue(123);
-    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
-    (createOIBusError as jest.Mock).mockImplementation(error => error);
-    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValue(0);
-    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValue(0);
+  const logger = new PinoLogger();
+  const anotherLogger = new PinoLogger();
 
-    // Mock readable stream creation
-    mockStream = { close: jest.fn() } as unknown as ReadStream;
-    (Readable.from as jest.Mock).mockReturnValue(mockStream);
-    (createReadStream as jest.Mock).mockReturnValue(mockStream);
+  // Shared mutable mock instances
+  let cacheService: CacheServiceMock;
+  const oiBusTransformer = new OIBusTransformerMock();
 
-    north = new NorthFileWriter(testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>, logger, cacheService);
+  const cronMockInstance = { stop: mock.fn() };
+  const cronExports = {
+    CronJob: mock.fn(function (_cron: unknown, _callback: () => void) {
+      return cronMockInstance;
+    })
+  };
+
+  // Mock stream object returned by createReadStream and Readable.from
+  const mockStream = { close: mock.fn() };
+
+  // Original references to restore after tests
+  const origCreateReadStream = realFs['createReadStream'];
+  const origReadableFrom = realReadable['from'];
+
+  const utilsExports = {
+    createOIBusError: mock.fn((error: unknown) => error),
+    delay: mock.fn(async () => undefined),
+    dirSize: mock.fn(() => 123),
+    generateRandomId: mock.fn(() => '1234567890'),
+    validateCronExpression: mock.fn(() => ({ expression: '' }))
+  };
+
+  const transformerServiceExports = {
+    createTransformer: mock.fn(() => oiBusTransformer)
+  };
+
+  before(() => {
+    // Patch built-ins in-place before loading the SUT
+    realFs['createReadStream'] = mock.fn(() => mockStream);
+    realReadable['from'] = mock.fn(() => mockStream);
+
+    mockModule(nodeRequire, 'cron', cronExports);
+    mockModule(nodeRequire, '../service/utils', utilsExports);
+    mockModule(nodeRequire, '../service/transformer.service', transformerServiceExports);
+
+    // Mock CacheService constructor to return our instance
+    mockModule(nodeRequire, '../service/cache/cache.service', {
+      __esModule: true,
+      default: function () {
+        return cacheService;
+      }
+    });
+
+    NorthFileWriter = reloadModule<{ default: typeof NorthFileWriterClass }>(nodeRequire, './north-file-writer/north-file-writer').default;
+  });
+
+  const contentToHandle: { filename: string; metadata: CacheMetadata } = {
+    filename: 'file1.json',
+    metadata: {
+      contentFile: 'file1-123456.json',
+      contentSize: 100,
+      numberOfElement: 3,
+      createdAt: testData.constants.dates.DATE_1,
+      contentType: 'time-values'
+    }
+  };
+
+  let north: NorthConnectorClass<NorthSettings>;
+
+  beforeEach(() => {
+    cacheService = new CacheServiceMock();
+
+    // Reset logger mock calls
+    for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
+      (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+    }
+    for (const fn of [anotherLogger.trace, anotherLogger.debug, anotherLogger.info, anotherLogger.warn, anotherLogger.error]) {
+      (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+    }
+
+    cronMockInstance.stop.mock.resetCalls();
+    cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
+      return cronMockInstance;
+    });
+
+    // Reset util mocks
+    utilsExports.createOIBusError = mock.fn((error: unknown) => error);
+    utilsExports.delay = mock.fn(async () => undefined);
+    utilsExports.dirSize = mock.fn(() => 123);
+    utilsExports.generateRandomId = mock.fn(() => '1234567890');
+    utilsExports.validateCronExpression = mock.fn(() => ({ expression: '' }));
+
+    // Reset transformer service
+    transformerServiceExports.createTransformer = mock.fn(() => oiBusTransformer);
+    (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.resetCalls();
+
+    // Reset in-place fs/stream mocks
+    realFs['createReadStream'] = mock.fn(() => mockStream);
+    realReadable['from'] = mock.fn(() => mockStream);
+    mockStream.close.mock.resetCalls();
+
+    mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
+
+    north = new NorthFileWriter(testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>, asLogger(logger), cacheService);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
+    // Restore real fs/stream exports after each test (mock.restoreAll won't touch these)
+    realFs['createReadStream'] = origCreateReadStream;
+    realReadable['from'] = origReadableFrom;
   });
 
   it('should be properly initialized', async () => {
     await north.start();
-    expect(north.isEnabled()).toEqual(true);
-    expect(logger.debug).toHaveBeenCalledWith(`North connector "${testData.north.list[0].name}" enabled`);
-    expect(logger.error).not.toHaveBeenCalled();
-    expect(logger.info).toHaveBeenCalledWith(
-      `North connector "${testData.north.list[0].name}" of type ${testData.north.list[0].type} started`
+    assert.strictEqual(north.isEnabled(), true);
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `North connector "${testData.north.list[0].name}" enabled`
+      )
     );
-    expect(north.connectorConfiguration).toEqual(testData.north.list[0]);
+    assert.strictEqual((logger.error as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.ok(
+      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `North connector "${testData.north.list[0].name}" of type ${testData.north.list[0].type} started`
+      )
+    );
+    assert.deepStrictEqual(north.connectorConfiguration, testData.north.list[0]);
   });
 
   it('should set and get connector configuration', async () => {
     const newConfig = JSON.parse(JSON.stringify(testData.north.list[0]));
     newConfig.name = 'Updated Name';
     newConfig.enabled = false;
-    north.connect = jest.fn();
+    north.connect = mock.fn(async () => undefined);
     north.connectorConfiguration = newConfig;
     await north.start();
-    expect(cacheService.start).toHaveBeenCalled();
-    expect(north.connect).not.toHaveBeenCalled();
-    expect(north.connectorConfiguration).toEqual(newConfig);
+    assert.strictEqual((cacheService.start as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((north.connect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.deepStrictEqual(north.connectorConfiguration, newConfig);
   });
 
   it('should properly update cache size', async () => {
-    const mockListener = jest.fn();
+    const mockListener = mock.fn();
     await north.start();
     north.metricsEvent.on('cache-size', mockListener);
 
     cacheService.cacheSizeEventEmitter.emit('cache-size', { cache: 1, error: 2, archive: 3 });
-    expect(mockListener).toHaveBeenCalledWith({
-      cache: 1,
-      error: 2,
-      archive: 3
-    });
+    assert.strictEqual(mockListener.mock.calls.length, 1);
+    assert.deepStrictEqual(mockListener.mock.calls[0].arguments[0], { cache: 1, error: 2, archive: 3 });
   });
 
   it('should properly create cron job and add to queue', async () => {
-    north.addTaskToQueue = jest.fn();
+    north.addTaskToQueue = mock.fn();
     await north.connect();
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+      )
     );
 
     await north.connect();
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] ===
+          `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+      )
     );
 
-    jest.advanceTimersByTime(1000);
-    expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
-    expect(north.addTaskToQueue).toHaveBeenCalledWith({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
+    // Retrieve the CronJob callback and trigger it
+    const cronJobCalls = cronExports.CronJob.mock.calls;
+    assert.ok(cronJobCalls.length > 0);
+    const lastCallArgs = cronJobCalls[cronJobCalls.length - 1].arguments;
+    const cronCallback = lastCallArgs[1] as () => void;
+    cronCallback();
+
+    assert.strictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      id: testData.scanMode.list[0].id,
+      name: testData.scanMode.list[0].name
+    });
 
     await north.updateScanMode(testData.scanMode.list[0]);
     await north.updateScanMode(testData.scanMode.list[1]);
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+      )
     );
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] ===
+          `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
+      )
     );
 
     await north.stop();
@@ -165,50 +248,71 @@ describe('NorthConnector', () => {
 
   it('should not create a cron job when the cron expression is invalid', () => {
     const error = new Error('Invalid cron expression');
-    (validateCronExpression as jest.Mock).mockImplementationOnce(() => {
+    utilsExports.validateCronExpression = mock.fn(() => {
       throw error;
     });
 
     north.createCronJob({ ...testData.scanMode.list[0], cron: '* * * * * *L' });
 
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error when creating cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
+    assert.ok(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] ===
+          `Error when creating cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
+      )
     );
   });
 
   it('should properly add to queue a new task and trigger next run', async () => {
     await north.start();
-    north.run = jest.fn();
-    north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
-    expect(logger.debug).not.toHaveBeenCalledWith(`Task "${testData.scanMode.list[0].name}" is already in queue`);
-
-    expect(north.run).toHaveBeenCalledWith({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
-    expect(north.run).toHaveBeenCalledTimes(1);
+    north.run = mock.fn(async () => undefined);
     north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
 
-    expect(logger.debug).toHaveBeenCalledWith(`Task "${testData.scanMode.list[0].name}" is already in queue`);
-    expect(north.run).toHaveBeenCalledTimes(1);
+    assert.ok(
+      !(logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `Task "${testData.scanMode.list[0].name}" is already in queue`
+      )
+    );
+    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+      id: testData.scanMode.list[0].id,
+      name: testData.scanMode.list[0].name
+    });
+
+    north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `Task "${testData.scanMode.list[0].name}" is already in queue`
+      )
+    );
+    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 1);
 
     north.addTaskToQueue({ id: 'other id', name: testData.scanMode.list[0].name });
-    expect(north.run).toHaveBeenCalledTimes(1);
+    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should properly run a task', async () => {
-    north.handleContentWrapper = jest.fn();
-    north['triggerRunIfNecessary'] = jest.fn();
+    north.handleContentWrapper = mock.fn(async () => undefined);
+    north['triggerRunIfNecessary'] = mock.fn(async () => undefined);
     await north.run({ id: 'scanModeId1', name: 'scan' });
 
-    expect(north.handleContentWrapper).toHaveBeenCalledTimes(1);
-    expect(north['triggerRunIfNecessary']).toHaveBeenCalledTimes(1);
-    expect(north['triggerRunIfNecessary']).toHaveBeenCalledWith(north['connector'].caching.throttling.runMinDelay);
+    assert.strictEqual((north.handleContentWrapper as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual(
+      (north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      north['connector'].caching.throttling.runMinDelay
+    );
   });
 
   it('should properly run a task and trigger next after error', async () => {
     north['errorCount'] = 1;
-    north.handleContentWrapper = jest.fn();
-    north['triggerRunIfNecessary'] = jest.fn();
+    north.handleContentWrapper = mock.fn(async () => undefined);
+    north['triggerRunIfNecessary'] = mock.fn(async () => undefined);
     await north.run({ id: 'scanModeId1', name: 'scan' });
-    expect(north['triggerRunIfNecessary']).toHaveBeenCalledWith(north['connector'].caching.error.retryInterval);
+    assert.deepStrictEqual(
+      (north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      north['connector'].caching.error.retryInterval
+    );
   });
 
   it('should properly run two times if a task is already in queue', async () => {
@@ -217,55 +321,95 @@ describe('NorthConnector', () => {
       { id: 'scanModeId1', name: 'scan' },
       { id: 'previous-task', name: 'previous task' }
     ];
-    north.handleContentWrapper = jest.fn();
-    north['triggerRunIfNecessary'] = jest.fn();
+    north.handleContentWrapper = mock.fn(async () => undefined);
+    north['triggerRunIfNecessary'] = mock.fn(async () => undefined);
     await north.run({ id: 'scanModeId1', name: 'scan' });
-    expect(logger.trace).toHaveBeenCalledWith(`North run triggered by task "scan" (scanModeId1)`);
-    expect(logger.trace).toHaveBeenCalledWith(`North run triggered by task "previous task" (previous-task)`);
-    expect(north.handleContentWrapper).toHaveBeenCalledTimes(2);
-    expect(north['triggerRunIfNecessary']).toHaveBeenCalledTimes(1);
+    assert.ok(
+      (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `North run triggered by task "scan" (scanModeId1)`
+      )
+    );
+    assert.ok(
+      (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `North run triggered by task "previous task" (previous-task)`
+      )
+    );
+    assert.strictEqual((north.handleContentWrapper as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual((north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should properly disconnect', async () => {
     await north.disconnect();
-    expect(logger.info).toHaveBeenCalledWith(`"${testData.north.list[0].name}" (${testData.north.list[0].id}) disconnected`);
+    assert.ok(
+      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `"${testData.north.list[0].name}" (${testData.north.list[0].id}) disconnected`
+      )
+    );
   });
 
   it('should properly stop', async () => {
-    north.disconnect = jest.fn();
+    north.disconnect = mock.fn(async () => undefined);
     await north.stop();
-    expect(logger.debug).toHaveBeenCalledWith(`Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
-    expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(`"${testData.north.list[0].name}" stopped`);
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`
+      )
+    );
+    assert.strictEqual((north.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.ok(
+      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `"${testData.north.list[0].name}" stopped`
+      )
+    );
   });
 
-  it('should properly stop with running task ', async () => {
+  it('should properly stop with running task', async () => {
+    let resolvePromise!: () => void;
     const promise = new Promise<void>(resolve => {
-      setTimeout(resolve, 1000);
+      resolvePromise = resolve;
     });
-    north.handleContentWrapper = jest.fn(async () => promise);
-
-    north.disconnect = jest.fn();
+    north.handleContentWrapper = mock.fn(async () => promise);
+    north.disconnect = mock.fn(async () => undefined);
 
     north.run({ id: 'scanModeId1', name: 'scan' });
 
     north.stop();
-    expect(logger.debug).toHaveBeenCalledWith(`Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`);
-    expect(logger.debug).toHaveBeenCalledWith('Waiting for task to finish');
-    expect(north.disconnect).not.toHaveBeenCalled();
-    north.run({ id: 'trigger1', name: 'Another trigger' });
-    expect(logger.debug).toHaveBeenCalledWith(
-      'Task "Another trigger" not run because the connector is stopping or a run is already in progress'
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`
+      )
     );
-    jest.advanceTimersByTime(1000);
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Waiting for task to finish'
+      )
+    );
+    assert.strictEqual((north.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+
+    north.run({ id: 'trigger1', name: 'Another trigger' });
+    assert.ok(
+      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === 'Task "Another trigger" not run because the connector is stopping or a run is already in progress'
+      )
+    );
+
+    resolvePromise();
     await flushPromises();
-    expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(`"${testData.north.list[0].name}" stopped`);
+    assert.strictEqual((north.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.ok(
+      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `"${testData.north.list[0].name}" stopped`
+      )
+    );
   });
 
   it('should check if North caches are empty', async () => {
-    (cacheService.cacheIsEmpty as jest.Mock).mockReturnValueOnce(true);
-    expect(north.isCacheEmpty()).toBeTruthy();
+    (cacheService.cacheIsEmpty as ReturnType<typeof mock.fn>).mock.mockImplementation(() => true);
+    assert.strictEqual(north.isCacheEmpty(), true);
   });
 
   it('should search cache content', async () => {
@@ -276,17 +420,22 @@ describe('NorthConnector', () => {
       maxNumberOfFilesReturned: 1000
     };
     await north.searchCacheContent(searchParams);
-    expect(cacheService.searchCacheContent).toHaveBeenCalledWith(searchParams);
+    assert.strictEqual((cacheService.searchCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.searchCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], searchParams);
   });
 
   it('should reset cache', async () => {
     await north.resetCache();
-    expect(cacheService.removeAllCacheContent).toHaveBeenCalledTimes(1);
+    assert.strictEqual((cacheService.removeAllCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should get file from cache', async () => {
     await north.getFileFromCache('cache', 'file1.queue.tmp');
-    expect(cacheService.getFileFromCache).toHaveBeenCalledWith('cache', 'file1.queue.tmp');
+    assert.strictEqual((cacheService.getFileFromCache as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.getFileFromCache as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      'cache',
+      'file1.queue.tmp'
+    ]);
   });
 
   it('should update cache content', async () => {
@@ -296,54 +445,63 @@ describe('NorthConnector', () => {
       error: { remove: [], move: [] }
     };
     await north.updateCacheContent(updateCommand);
-    expect(cacheService.updateCacheContent).toHaveBeenCalledWith(updateCommand);
+    assert.strictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], updateCommand);
   });
 
   it('should use another logger', async () => {
-    north.setLogger(anotherLogger);
-    (logger.debug as jest.Mock).mockClear();
+    north.setLogger(asLogger(anotherLogger));
+    (logger.debug as ReturnType<typeof mock.fn>).mock.resetCalls();
     await north.stop();
-    expect(anotherLogger.debug).toHaveBeenCalledTimes(1);
-    expect(logger.debug).not.toHaveBeenCalled();
+    assert.strictEqual((anotherLogger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should trigger run if necessary because of retry', async () => {
-    north.addTaskToQueue = jest.fn();
-    north.run = jest.fn();
+    north.addTaskToQueue = mock.fn();
+    north.run = mock.fn(async () => undefined);
     north['errorCount'] = 1;
     await north['triggerRunIfNecessary'](0);
-    expect(delay).not.toHaveBeenCalled();
-    expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
-    expect(north.addTaskToQueue).toHaveBeenCalledWith({
+    assert.strictEqual((utilsExports.delay as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
       id: 'retry',
       name: `Retry content after 1 errors`
     });
-    expect(north.run).not.toHaveBeenCalled();
+    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should trigger run if necessary because of group count', async () => {
-    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce(
-      north.connectorConfiguration.caching.trigger.numberOfElements
-    );
-    north.addTaskToQueue = jest.fn();
-    north.run = jest.fn();
+    let callCount = 0;
+    (cacheService.getNumberOfElementsInQueue as ReturnType<typeof mock.fn>).mock.mockImplementation(() => {
+      callCount += 1;
+      if (callCount === 1) return north.connectorConfiguration.caching.trigger.numberOfElements;
+      return 0;
+    });
+    north.addTaskToQueue = mock.fn();
+    north.run = mock.fn(async () => undefined);
     await north['triggerRunIfNecessary'](0);
-    expect(delay).not.toHaveBeenCalled();
-    expect(north.addTaskToQueue).toHaveBeenCalledTimes(1);
-    expect(north.addTaskToQueue).toHaveBeenCalledWith({
+    assert.strictEqual((utilsExports.delay as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
       id: 'limit-reach',
       name: `Limit reach: ${north.connectorConfiguration.caching.trigger.numberOfElements} elements in queue >= ${north.connectorConfiguration.caching.trigger.numberOfElements}`
     });
-    expect(north.run).not.toHaveBeenCalled();
+    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should handle content and remove it when handled', async () => {
-    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
-    north.handleContent = jest.fn();
+    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => contentToHandle);
+    north.handleContent = mock.fn(async () => undefined);
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
-    expect(north.handleContent).toHaveBeenCalledWith(expect.anything(), contentToHandle.metadata);
-    expect(cacheService.updateCacheContent).toHaveBeenCalledWith({
+    assert.strictEqual((cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual(
+      (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      north.connectorConfiguration.caching.throttling.maxNumberOfElements
+    );
+    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
       cache: { remove: [contentToHandle.filename], move: [] },
       archive: { remove: [], move: [] },
       error: { remove: [], move: [] }
@@ -361,12 +519,16 @@ describe('NorthConnector', () => {
         contentType: 'opcua'
       }
     };
-    north.handleContent = jest.fn();
+    north.handleContent = mock.fn(async () => undefined);
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).not.toHaveBeenCalled();
-    expect(north.handleContent).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(`Unsupported data type: opcua (file file1.json)`);
-    expect(cacheService.updateCacheContent).toHaveBeenCalledWith({
+    assert.strictEqual((cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.ok(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `Unsupported data type: opcua (file file1.json)`
+      )
+    );
+    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
       cache: { remove: [], move: [{ to: 'error', filename: contentToHandle.filename }] },
       archive: { remove: [], move: [] },
       error: { remove: [], move: [] }
@@ -375,12 +537,15 @@ describe('NorthConnector', () => {
 
   it('should handle content and archive it when handled', async () => {
     north.connectorConfiguration.caching.archive.enabled = true;
-    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
-    north.handleContent = jest.fn();
+    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => contentToHandle);
+    north.handleContent = mock.fn(async () => undefined);
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
-    expect(north.handleContent).toHaveBeenCalledWith(expect.anything(), contentToHandle.metadata);
-    expect(cacheService.updateCacheContent).toHaveBeenCalledWith({
+    assert.deepStrictEqual(
+      (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      north.connectorConfiguration.caching.throttling.maxNumberOfElements
+    );
+    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
       cache: { remove: [], move: [{ to: 'archive', filename: contentToHandle.filename }] },
       archive: { remove: [], move: [] },
       error: { remove: [], move: [] }
@@ -388,24 +553,26 @@ describe('NorthConnector', () => {
   });
 
   it('should not handle content if no content to handle', async () => {
-    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(null);
-    north.handleContent = jest.fn();
+    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => null);
+    north.handleContent = mock.fn(async () => undefined);
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
-    expect(north.handleContent).not.toHaveBeenCalled();
+    assert.deepStrictEqual(
+      (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      north.connectorConfiguration.caching.throttling.maxNumberOfElements
+    );
+    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should handle content and manage errors', async () => {
     north.connectorConfiguration.caching.error.retryCount = 0;
-    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
-    north.handleContent = jest.fn().mockImplementationOnce(() => {
+    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => contentToHandle);
+    north.handleContent = mock.fn(async () => {
       throw new OIBusError('handle error', false);
     });
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
-    expect(north.handleContent).toHaveBeenCalledWith(expect.anything(), contentToHandle.metadata);
-    // Should move to error folder since retry count exceeded
-    expect(cacheService.updateCacheContent).toHaveBeenCalledWith({
+    assert.strictEqual((cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
       cache: { remove: [], move: [{ to: 'error', filename: contentToHandle.filename }] },
       archive: { remove: [], move: [] },
       error: { remove: [], move: [] }
@@ -414,22 +581,32 @@ describe('NorthConnector', () => {
 
   it('should handle content and do not move into error folder', async () => {
     north.connectorConfiguration.caching.error.retryCount = 0;
-    (cacheService.getCacheContentToSend as jest.Mock).mockReturnValueOnce(contentToHandle);
-    north.handleContent = jest.fn().mockImplementationOnce(() => {
+    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => contentToHandle);
+    north.handleContent = mock.fn(async () => {
       throw new OIBusError('handle error', true);
     });
     await north.handleContentWrapper();
-    expect(cacheService.getCacheContentToSend).toHaveBeenCalledWith(north.connectorConfiguration.caching.throttling.maxNumberOfElements);
-    expect(north.handleContent).toHaveBeenCalledWith(expect.anything(), contentToHandle.metadata);
-    expect(cacheService.updateCacheContent).not.toHaveBeenCalled();
+    assert.strictEqual((cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should cache json content without maxSendCount', async () => {
     north['connector'].caching.throttling.maxNumberOfElements = 0;
 
-    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
-    (cacheService.getNumberOfElementsInQueue as jest.Mock).mockReturnValueOnce((testData.oibusContent[0].content as Array<object>).length);
-    (cacheService.getNumberOfRawFilesInQueue as jest.Mock).mockReturnValueOnce(1);
+    utilsExports.generateRandomId = mock.fn(() => '1234567890');
+    let elemCallCount = 0;
+    (cacheService.getNumberOfElementsInQueue as ReturnType<typeof mock.fn>).mock.mockImplementation(() => {
+      elemCallCount += 1;
+      if (elemCallCount === 1) return (testData.oibusContent[0].content as Array<object>).length;
+      return 0;
+    });
+    let rawFilesCallCount = 0;
+    (cacheService.getNumberOfRawFilesInQueue as ReturnType<typeof mock.fn>).mock.mockImplementation(() => {
+      rawFilesCallCount += 1;
+      if (rawFilesCallCount === 1) return 1;
+      return 0;
+    });
 
     const metadata: CacheMetadata = {
       contentFile: '1234567890.json',
@@ -439,7 +616,7 @@ describe('NorthConnector', () => {
       contentType: 'time-values'
     };
     const outputStream = 'outputStream';
-    (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: outputStream });
+    (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ metadata, output: outputStream }));
 
     await north.cacheContent(testData.oibusContent[0], {
       source: 'south',
@@ -447,22 +624,23 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    // Verify stream creation from content
-    expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
-
-    // Verify transformer call with stream
-    expect(oiBusTransformer.transform).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        source: 'south',
-        southId: testData.south.list[1].id,
-        items: []
-      },
-      null
+    assert.strictEqual((realReadable['from'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual(
+      (realReadable['from'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      JSON.stringify(testData.oibusContent[0].content)
     );
 
-    // Verify CacheService call with output stream
-    expect(cacheService.addCacheContent).toHaveBeenCalledWith(outputStream, {
+    assert.strictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+      source: 'south',
+      southId: testData.south.list[1].id,
+      items: []
+    });
+    assert.strictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], null);
+
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], outputStream);
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
       contentType: metadata.contentType,
       contentFilename: metadata.contentFile,
       numberOfElement: metadata.numberOfElement
@@ -472,7 +650,11 @@ describe('NorthConnector', () => {
   it('should cache json content with maxSendCount', async () => {
     north['connector'].caching.throttling.maxNumberOfElements = testData.oibusContent[0].content!.length - 1;
 
-    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890').mockReturnValueOnce('0987654321');
+    let genIdCount = 0;
+    utilsExports.generateRandomId = mock.fn(() => {
+      genIdCount += 1;
+      return genIdCount === 1 ? '1234567890' : '0987654321';
+    });
 
     const metadata: CacheMetadata = {
       contentFile: '1234567890.json',
@@ -484,9 +666,11 @@ describe('NorthConnector', () => {
     const outputStream1 = 'outputStream1';
     const outputStream2 = 'outputStream2';
 
-    (oiBusTransformer.transform as jest.Mock)
-      .mockReturnValueOnce({ metadata, output: outputStream1 })
-      .mockReturnValueOnce({ metadata, output: outputStream2 });
+    let transformCallCount = 0;
+    (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.mockImplementation(() => {
+      transformCallCount += 1;
+      return { metadata, output: transformCallCount === 1 ? outputStream1 : outputStream2 };
+    });
 
     await north.cacheContent(testData.oibusContent[0], {
       source: 'south',
@@ -494,55 +678,58 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    // Verify chunking logic
-    expect(Readable.from).toHaveBeenCalledTimes(2);
-    expect(createTransformer).toHaveBeenCalledTimes(1);
+    assert.strictEqual((realReadable['from'] as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual((transformerServiceExports.createTransformer as ReturnType<typeof mock.fn>).mock.calls.length, 1);
 
-    expect(cacheService.addCacheContent).toHaveBeenCalledTimes(2);
-    expect(cacheService.addCacheContent).toHaveBeenCalledWith(outputStream1, expect.anything());
-    expect(cacheService.addCacheContent).toHaveBeenCalledWith(outputStream2, expect.anything());
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], outputStream1);
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[1].arguments[0], outputStream2);
   });
 
   it('should not cache json content if cache is full', async () => {
-    (cacheService.cacheIsFull as jest.Mock).mockReturnValueOnce(true);
-    north['findTransformer'] = jest.fn();
+    (cacheService.cacheIsFull as ReturnType<typeof mock.fn>).mock.mockImplementation(() => true);
+    north['findTransformer'] = mock.fn();
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    expect(north['findTransformer']).not.toHaveBeenCalled();
+    assert.strictEqual((north['findTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should cache json content and handle no transform', async () => {
-    north['findTransformer'] = jest.fn().mockReturnValueOnce(null);
-    north['handleNoTransformer'] = jest.fn();
+    north['findTransformer'] = mock.fn(() => null);
+    north['handleNoTransformer'] = mock.fn(async () => undefined);
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    expect(north['findTransformer']).toHaveBeenCalledTimes(1);
-    expect(north['handleNoTransformer']).toHaveBeenCalledTimes(1);
+    assert.strictEqual((north['findTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((north['handleNoTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should cache json content and handle ignore transform', async () => {
-    north['findTransformer'] = jest.fn().mockReturnValueOnce({ transformer: { type: 'standard', functionName: 'ignore' } });
-    north['handleNoTransformer'] = jest.fn();
+    north['findTransformer'] = mock.fn(() => ({ transformer: { type: 'standard', functionName: 'ignore' } }));
+    north['handleNoTransformer'] = mock.fn(async () => undefined);
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    expect(north['findTransformer']).toHaveBeenCalledTimes(1);
-    expect(north['handleNoTransformer']).not.toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(`Ignoring data of type ${testData.oibusContent[0].type}`);
+    assert.strictEqual((north['findTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((north['handleNoTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.ok(
+      (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `Ignoring data of type ${testData.oibusContent[0].type}`
+      )
+    );
   });
 
   it('should cache json content and handle iso transform', async () => {
-    north['findTransformer'] = jest.fn().mockReturnValueOnce({ transformer: { type: 'standard', functionName: 'iso' } });
-    north['handleNoTransformer'] = jest.fn();
-    north['cacheWithoutTransformAndTrigger'] = jest.fn();
+    north['findTransformer'] = mock.fn(() => ({ transformer: { type: 'standard', functionName: 'iso' } }));
+    north['handleNoTransformer'] = mock.fn(async () => undefined);
+    north['cacheWithoutTransformAndTrigger'] = mock.fn(async () => undefined);
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    expect(north['findTransformer']).toHaveBeenCalledTimes(1);
-    expect(north['handleNoTransformer']).not.toHaveBeenCalled();
-    expect(north['cacheWithoutTransformAndTrigger']).toHaveBeenCalled();
+    assert.strictEqual((north['findTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((north['handleNoTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((north['cacheWithoutTransformAndTrigger'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should cache file content', async () => {
-    (generateRandomId as jest.Mock).mockReturnValueOnce('1234567890');
+    utilsExports.generateRandomId = mock.fn(() => '1234567890');
 
     const metadata: CacheMetadata = {
       contentFile: `${path.parse((testData.oibusContent[1] as OIBusFileContent).filePath).name}-1234567890.csv`,
@@ -552,7 +739,7 @@ describe('NorthConnector', () => {
       contentType: 'any'
     };
     const outputStream = 'outputStream';
-    (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: outputStream });
+    (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ metadata, output: outputStream }));
 
     await north.cacheContent(testData.oibusContent[1], {
       source: 'south',
@@ -560,19 +747,27 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    expect(createReadStream).toHaveBeenCalledWith((testData.oibusContent[1] as OIBusFileContent).filePath);
-
-    expect(oiBusTransformer.transform).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        source: 'south',
-        southId: testData.south.list[1].id,
-        items: []
-      },
-      expect.stringContaining('1234567890') // cacheFilename generated inside
+    assert.strictEqual((realFs['createReadStream'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual(
+      (realFs['createReadStream'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      (testData.oibusContent[1] as OIBusFileContent).filePath
     );
 
-    expect(cacheService.addCacheContent).toHaveBeenCalledWith(outputStream, {
+    assert.strictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+      source: 'south',
+      southId: testData.south.list[1].id,
+      items: []
+    });
+    // Third arg (cacheFilename) should contain '1234567890'
+    assert.ok(
+      typeof (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2] === 'string' &&
+        ((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2] as string).includes('1234567890')
+    );
+
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], outputStream);
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
       contentType: metadata.contentType,
       contentFilename: metadata.contentFile,
       numberOfElement: metadata.numberOfElement
@@ -580,45 +775,52 @@ describe('NorthConnector', () => {
   });
 
   it('should cache any data without transform', async () => {
-    (createReadStream as jest.Mock).mockReturnValueOnce('readStream');
+    const readStream = 'readStream';
+    realFs['createReadStream'] = mock.fn(() => readStream);
 
     await north['cacheWithoutTransform']({
       type: 'any',
       filePath: 'path/file.csv'
-    });
+    } as OIBusContent);
 
-    expect(createReadStream).toHaveBeenCalledWith('path/file.csv');
-    expect(cacheService.addCacheContent).toHaveBeenCalledWith('readStream', {
+    assert.strictEqual((realFs['createReadStream'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((realFs['createReadStream'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'path/file.csv');
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], readStream);
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
       contentType: 'any',
       contentFilename: 'path/file.csv'
     });
   });
 
   it('should find transformer from south metadata', () => {
-    expect(
+    assert.deepStrictEqual(
       north['findTransformer']({
         source: 'south',
         southId: testData.south.list[0].id,
         items: [testData.south.list[0].items[0]]
-      } as CacheMetadataSource)
-    ).toEqual(north['connector'].transformers[0]);
+      } as CacheMetadataSource),
+      north['connector'].transformers[0]
+    );
 
     (north['connector'].transformers[0].source as SourceOriginSouth).items = [];
-    expect(
+    assert.deepStrictEqual(
       north['findTransformer']({
         source: 'south',
         southId: testData.south.list[0].id,
         items: [testData.south.list[0].items[0]]
-      } as CacheMetadataSource)
-    ).toEqual(north['connector'].transformers[0]);
+      } as CacheMetadataSource),
+      north['connector'].transformers[0]
+    );
 
     north['connector'].transformers[0].source = { type: 'oibus-api', dataSourceId: 'id' };
-    expect(
+    assert.deepStrictEqual(
       north['findTransformer']({
         source: 'oibus-api',
         dataSourceId: 'id'
-      } as CacheMetadataSource)
-    ).toEqual(north['connector'].transformers[0]);
+      } as CacheMetadataSource),
+      north['connector'].transformers[0]
+    );
   });
 
   it('should find transformer from south metadata at group level', () => {
@@ -645,70 +847,95 @@ describe('NorthConnector', () => {
       items: []
     };
 
-    expect(
+    // Suppress unused variable warning
+    void itemWithMatchingGroup;
+
+    assert.deepStrictEqual(
       north['findTransformer']({
         source: 'south',
         southId: testData.south.list[0].id,
         items: [{ id: testData.south.list[0].items[0].id }]
-      } as CacheMetadataSource)
-    ).toEqual(north['connector'].transformers[0]);
+      } as CacheMetadataSource),
+      north['connector'].transformers[0]
+    );
 
-    expect(
-      north['findTransformer']({ source: 'south', southId: 'southId1', items: [{ id: 'anotherId' }] } as CacheMetadataSource)
-    ).not.toEqual(north['connector'].transformers[0]);
+    assert.notDeepStrictEqual(
+      north['findTransformer']({ source: 'south', southId: 'southId1', items: [{ id: 'anotherId' }] } as CacheMetadataSource),
+      north['connector'].transformers[0]
+    );
   });
 
   it('should handle no transformer when not supporting type', async () => {
-    north['cacheWithoutTransformAndTrigger'] = jest.fn();
+    north['cacheWithoutTransformAndTrigger'] = mock.fn(async () => undefined);
     await north['handleNoTransformer']({ type: 'bad' } as unknown as OIBusContent);
-    expect(logger.trace).toHaveBeenCalledWith(`Data type "bad" not supported by the connector. Data will be ignored.`);
-    expect(north['cacheWithoutTransformAndTrigger']).not.toHaveBeenCalled();
+    assert.ok(
+      (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (c: { arguments: Array<unknown> }) => c.arguments[0] === `Data type "bad" not supported by the connector. Data will be ignored.`
+      )
+    );
+    assert.strictEqual((north['cacheWithoutTransformAndTrigger'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should handle no transformer when supporting type', async () => {
-    north['cacheWithoutTransform'] = jest.fn();
-    north['triggerRunIfNecessary'] = jest.fn();
+    north['cacheWithoutTransform'] = mock.fn(async () => undefined);
+    north['triggerRunIfNecessary'] = mock.fn(async () => undefined);
     await north['handleNoTransformer']({ type: 'time-values' } as OIBusContent);
-    expect(north['cacheWithoutTransform']).toHaveBeenCalledTimes(1);
-    expect(north['triggerRunIfNecessary']).toHaveBeenCalledTimes(1);
+    assert.strictEqual((north['cacheWithoutTransform'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
-  it('should transformer any-content payload', async () => {
+  it('should transform any-content payload', async () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
-    const transform = jest.fn().mockReturnValueOnce({
+    const transform = mock.fn(() => ({
       output: 'output',
       metadata: {
+        contentFile: undefined,
         contentType: 'opcua',
         numberOfElement: 1
       }
-    });
-    (createTransformer as jest.Mock).mockReturnValueOnce({ transform });
-    await north['executeTransformation']({ type: 'any-content', content: '' }, options, { source: 'oianalytics-setpoints' });
-    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics-setpoints' }, null);
-    expect(cacheService.addCacheContent).toHaveBeenCalledWith('output', {
+    }));
+    transformerServiceExports.createTransformer = mock.fn(() => ({ transform }));
+    await north['executeTransformation']({ type: 'any-content', content: '' } as OIBusContent, options, {
+      source: 'oianalytics-setpoints'
+    } as CacheMetadataSource);
+    assert.strictEqual(transform.mock.calls.length, 1);
+    assert.deepStrictEqual(transform.mock.calls[0].arguments[1], { source: 'oianalytics-setpoints' });
+    assert.strictEqual(transform.mock.calls[0].arguments[2], null);
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'output');
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
       contentType: 'opcua',
+      contentFilename: undefined,
       numberOfElement: 1
     });
   });
 
-  it('should transformer setpoint payload', async () => {
+  it('should transform setpoint payload', async () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
-    const transform = jest.fn().mockReturnValueOnce({
+    const transform = mock.fn(() => ({
       output: 'output',
       metadata: {
+        contentFile: undefined,
         contentType: 'opcua',
         numberOfElement: 1
       }
-    });
-    (createTransformer as jest.Mock).mockReturnValueOnce({ transform });
-    await north['executeTransformation']({ type: 'setpoint', content: [] }, options, { source: 'oianalytics-setpoints' });
-    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics-setpoints' }, null);
-    expect(cacheService.addCacheContent).toHaveBeenCalledWith('output', {
+    }));
+    transformerServiceExports.createTransformer = mock.fn(() => ({ transform }));
+    await north['executeTransformation']({ type: 'setpoint', content: [] } as OIBusContent, options, {
+      source: 'oianalytics-setpoints'
+    } as CacheMetadataSource);
+    assert.strictEqual(transform.mock.calls.length, 1);
+    assert.deepStrictEqual(transform.mock.calls[0].arguments[1], { source: 'oianalytics-setpoints' });
+    assert.strictEqual(transform.mock.calls[0].arguments[2], null);
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'output');
+    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
       contentType: 'opcua',
+      contentFilename: undefined,
       numberOfElement: 1
     });
   });
@@ -716,22 +943,22 @@ describe('NorthConnector', () => {
   it('should cache without transform with max number of elements', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
     await north['cacheWithoutTransform']({ type: 'time-values', content: [{}, {}] } as OIBusContent);
-    expect(cacheService.addCacheContent).toHaveBeenCalledTimes(2);
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 2);
   });
 
   it('should cache without transform with any-content', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
     await north['cacheWithoutTransform']({ type: 'any-content', content: '' } as OIBusContent);
-    expect(cacheService.addCacheContent).toHaveBeenCalledTimes(1);
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should cache without transform', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 0;
     await north['cacheWithoutTransform']({ type: 'time-values', content: [{}, {}] } as OIBusContent);
-    expect(cacheService.addCacheContent).toHaveBeenCalledTimes(1);
+    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should get cache folder', () => {
-    expect(north['getCacheFolder']()).toEqual('cache');
+    assert.strictEqual(north['getCacheFolder'](), 'cache');
   });
 });

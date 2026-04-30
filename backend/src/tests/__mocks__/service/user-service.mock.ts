@@ -1,15 +1,17 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for User Service
  */
-export default jest.fn().mockImplementation(() => ({
-  findAll: jest.fn(),
-  findById: jest.fn(),
-  findByLogin: jest.fn(),
-  getHashedPasswordByLogin: jest.fn(),
-  getUserInfo: jest.fn(),
-  search: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  updatePassword: jest.fn(),
-  delete: jest.fn()
-}));
+export default class UserServiceMock {
+  findAll = mock.fn();
+  findById = mock.fn();
+  findByLogin = mock.fn();
+  getHashedPasswordByLogin = mock.fn();
+  getUserInfo = mock.fn();
+  search = mock.fn();
+  create = mock.fn();
+  update = mock.fn();
+  updatePassword = mock.fn();
+  delete = mock.fn();
+}

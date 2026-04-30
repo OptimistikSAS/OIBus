@@ -1,118 +1,129 @@
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import testData from '../tests/utils/test-data';
 import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import IPFilterService, { toIPFilterDTO } from './ip-filter.service';
-import IpFilterRepository from '../repository/config/ip-filter.repository';
 import IpFilterRepositoryMock from '../tests/__mocks__/repository/config/ip-filter-repository.mock';
-import testData from '../tests/utils/test-data';
-import { NotFoundError } from '../model/types';
+import OianalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
+import IpFilterRepository from '../repository/config/ip-filter.repository';
+import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 
-jest.mock('./utils');
-jest.mock('../web-server/controllers/validators/joi.validator');
-
-const validator = new JoiValidator();
-const ipFilterRepository: IpFilterRepository = new IpFilterRepositoryMock();
-const oIAnalyticsMessageService: OIAnalyticsMessageService = new OianalyticsMessageServiceMock();
-
+let validator: { validate: ReturnType<typeof mock.fn> };
+let ipFilterRepository: IpFilterRepositoryMock;
+let oIAnalyticsMessageService: OianalyticsMessageServiceMock;
 let service: IPFilterService;
+
 describe('IP Filter Service', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    validator = { validate: mock.fn() };
+    ipFilterRepository = new IpFilterRepositoryMock();
+    oIAnalyticsMessageService = new OianalyticsMessageServiceMock();
+    service = new IPFilterService(
+      validator as unknown as JoiValidator,
+      ipFilterRepository as unknown as IpFilterRepository,
+      oIAnalyticsMessageService as unknown as OIAnalyticsMessageService
+    );
+  });
 
-    service = new IPFilterService(validator, ipFilterRepository, oIAnalyticsMessageService);
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('should list all ip filters', () => {
-    (ipFilterRepository.list as jest.Mock).mockReturnValueOnce(testData.ipFilters.list);
+    ipFilterRepository.list.mock.mockImplementationOnce(() => testData.ipFilters.list);
 
     const result = service.list();
 
-    expect(ipFilterRepository.list).toHaveBeenCalled();
-    expect(result).toEqual(testData.ipFilters.list);
+    assert.ok(ipFilterRepository.list.mock.calls.length > 0);
+    assert.deepStrictEqual(result, testData.ipFilters.list);
   });
 
   it('should find an ip filter by id', () => {
-    (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(testData.ipFilters.list[0]);
+    ipFilterRepository.findById.mock.mockImplementationOnce(() => testData.ipFilters.list[0]);
 
     const result = service.findById(testData.ipFilters.list[0].id);
 
-    expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(result).toEqual(testData.ipFilters.list[0]);
+    assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
+    assert.deepStrictEqual(result, testData.ipFilters.list[0]);
   });
 
-  it('should not get if the ip filter is not found', async () => {
-    (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(null);
+  it('should not get if the ip filter is not found', () => {
+    ipFilterRepository.findById.mock.mockImplementationOnce(() => null);
 
-    expect(() => service.findById(testData.ipFilters.list[0].id)).toThrow(
-      new NotFoundError(`IP filter "${testData.ipFilters.list[0].id}" not found`)
-    );
-    expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
+    assert.throws(() => service.findById(testData.ipFilters.list[0].id), {
+      message: `IP filter "${testData.ipFilters.list[0].id}" not found`
+    });
+    assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
   });
 
   it('should create an ip filter', async () => {
-    (ipFilterRepository.create as jest.Mock).mockReturnValueOnce(testData.ipFilters.list[0]);
-    (ipFilterRepository.list as jest.Mock).mockReturnValueOnce(testData.ipFilters.list);
+    ipFilterRepository.create.mock.mockImplementationOnce(() => testData.ipFilters.list[0]);
+    ipFilterRepository.list.mock.mockImplementationOnce(() => testData.ipFilters.list);
 
     const result = await service.create(testData.ipFilters.command, 'userTest');
 
-    expect(validator.validate).toHaveBeenCalledWith(ipFilterSchema, testData.ipFilters.command);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
-    expect(result).toEqual(testData.ipFilters.list[0]);
+    assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [ipFilterSchema, testData.ipFilters.command]);
+    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
+    assert.deepStrictEqual(result, testData.ipFilters.list[0]);
   });
 
   it('should update an ip filter', async () => {
-    (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(testData.ipFilters.list[0]);
-    (ipFilterRepository.list as jest.Mock).mockReturnValueOnce(testData.ipFilters.list);
+    ipFilterRepository.findById.mock.mockImplementationOnce(() => testData.ipFilters.list[0]);
+    ipFilterRepository.list.mock.mockImplementationOnce(() => testData.ipFilters.list);
 
     await service.update(testData.ipFilters.list[0].id, testData.ipFilters.command, 'userTest');
 
-    expect(validator.validate).toHaveBeenCalledWith(ipFilterSchema, testData.ipFilters.command);
-    expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(ipFilterRepository.list).toHaveBeenCalled();
-    expect(ipFilterRepository.update).toHaveBeenCalledWith(testData.ipFilters.list[0].id, testData.ipFilters.command, 'userTest');
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(validator.validate.mock.calls[0].arguments, [ipFilterSchema, testData.ipFilters.command]);
+    assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
+    assert.ok(ipFilterRepository.list.mock.calls.length > 0);
+    assert.deepStrictEqual(ipFilterRepository.update.mock.calls[0].arguments, [
+      testData.ipFilters.list[0].id,
+      testData.ipFilters.command,
+      'userTest'
+    ]);
+    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
 
   it('should not update if the ip filter is not found', async () => {
-    (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(null);
+    ipFilterRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await expect(service.update(testData.ipFilters.list[0].id, testData.ipFilters.command, 'userTest')).rejects.toThrow(
-      new NotFoundError(`IP filter "${testData.ipFilters.list[0].id}" not found`)
-    );
+    await assert.rejects(() => service.update(testData.ipFilters.list[0].id, testData.ipFilters.command, 'userTest'), {
+      message: `IP filter "${testData.ipFilters.list[0].id}" not found`
+    });
 
-    expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(ipFilterRepository.update).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+    assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
+    assert.strictEqual(ipFilterRepository.update.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
   });
 
   it('should delete an ip filter', async () => {
-    (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(testData.ipFilters.list[0]);
-    (ipFilterRepository.list as jest.Mock).mockReturnValueOnce(testData.ipFilters.list);
+    ipFilterRepository.findById.mock.mockImplementationOnce(() => testData.ipFilters.list[0]);
+    ipFilterRepository.list.mock.mockImplementationOnce(() => testData.ipFilters.list);
 
     await service.delete(testData.ipFilters.list[0].id);
 
-    expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(ipFilterRepository.delete).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
+    assert.deepStrictEqual(ipFilterRepository.delete.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
+    assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
 
   it('should not delete if the IP filter is not found', async () => {
-    (ipFilterRepository.findById as jest.Mock).mockReturnValueOnce(null);
+    ipFilterRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await expect(service.delete(testData.ipFilters.list[0].id)).rejects.toThrow(
-      new NotFoundError(`IP filter "${testData.ipFilters.list[0].id}" not found`)
-    );
+    await assert.rejects(() => service.delete(testData.ipFilters.list[0].id), {
+      message: `IP filter "${testData.ipFilters.list[0].id}" not found`
+    });
 
-    expect(ipFilterRepository.findById).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
-    expect(ipFilterRepository.delete).not.toHaveBeenCalled();
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).not.toHaveBeenCalled();
+    assert.deepStrictEqual(ipFilterRepository.findById.mock.calls[0].arguments, [testData.ipFilters.list[0].id]);
+    assert.strictEqual(ipFilterRepository.delete.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
   });
 
   it('should properly convert to DTO', () => {
     const ipFilter = testData.ipFilters.list[0];
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
-    expect(toIPFilterDTO(ipFilter, getUserInfo)).toEqual({
+    assert.deepStrictEqual(toIPFilterDTO(ipFilter, getUserInfo), {
       id: ipFilter.id,
       address: ipFilter.address,
       description: ipFilter.description,

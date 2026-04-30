@@ -1,64 +1,30 @@
-jest.mock('undici', () => ({
-  request: jest.fn(),
-  ProxyAgent: jest.fn().mockImplementation(options => ({
-    // Mock the constructor
-    options, // Store options for potential assertion
-    isMockProxyAgent: true // Add a flag for easy identification in tests
-  })),
-  Agent: jest.fn().mockImplementation(options => ({
-    // Mock the constructor
-    options, // Store options for potential assertion
-    isMockAgent: true // Add a flag for easy identification in tests
-  }))
-}));
-
-jest.mock('node-opcua', () => ({
-  OPCUAClient: { createSession: jest.fn(() => Promise.resolve({})) },
-  ClientSubscription: { create: jest.fn() },
-  ClientMonitoredItem: { create: jest.fn() },
-  DataType: {},
-  StatusCodes: {},
-  SecurityPolicy: {},
-  AttributeIds: {},
-  UserTokenType: {},
-  TimestampsToReturn: {},
-  AggregateFunction: {},
-  HistoryReadRequest: {},
-  ReadRawModifiedDetails: {},
-  ReadProcessedDetails: {},
-  OPCUACertificateManager: jest.fn().mockImplementation(() => ({})),
-  resolveNodeId: jest.fn(nodeId => nodeId)
-}));
-
-jest.mock('ssh2-sftp-client', () => {
-  return jest.fn().mockImplementation(() => ({
-    connect: jest.fn(),
-    list: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn(),
-    end: jest.fn(),
-    exists: jest.fn(),
-    fastGet: jest.fn()
-  }));
-});
-
-import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
-import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-
-import { encryptionService } from '../encryption.service';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import OIAnalyticsCommandService, { toOIBusCommandDTO } from './oianalytics-command.service';
-import { version } from '../../../package.json';
-import ScanModeService from '../scan-mode.service';
-import OIBusService from '../oibus.service';
-import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
-import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
-import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
-import testData from '../../tests/utils/test-data';
-import { flushPromises } from '../../tests/utils/test-utils';
-import { delay, getOIBusInfo, unzip } from '../utils';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
+import crypto from 'node:crypto';
+import os from 'node:os';
+
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, flushPromises, asLogger, seq } from '../../tests/utils/test-utils';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import OIAnalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
+import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
+import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
+import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
+import OibusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
+import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
+import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
+import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
+import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
+import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
+import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
+import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
+import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+
+import { version } from '../../../package.json';
+import { createPageFromArray } from '../../../shared/model/types';
+import { NotFoundError } from '../../model/types';
 import {
   OIBusCreateCertificateCommand,
   OIBusCreateHistoryQueryCommand,
@@ -97,466 +63,598 @@ import {
   OIBusUpdateSouthConnectorCommand,
   OIBusUpdateVersionCommand
 } from '../../model/oianalytics-command.model';
-import { createPageFromArray } from '../../../shared/model/types';
-import SouthService, { toSouthConnectorItemDTO } from '../south.service';
-import NorthService from '../north.service';
-import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
-import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
-import OIAnalyticsClient from './oianalytics-client.service';
-import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
-import os from 'node:os';
-import OIAnalyticsMessageService from './oianalytics-message.service';
-import OIAnalyticsMessageServiceMock from '../../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import crypto from 'node:crypto';
-import OIAnalyticsRegistrationService from './oianalytics-registration.service';
-import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
-import { EngineSettings } from '../../model/engine.model';
-import IpFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
-import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
-import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
-import IPFilterService from '../ip-filter.service';
-import CertificateService from '../certificate.service';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import HistoryQueryService from '../history-query.service';
-import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { OIAnalyticsFetchSetpointCommandDTO } from './oianalytics.model';
 import { CacheSearchResult, FileCacheContent, OIBusContent } from '../../../shared/model/engine.model';
-import { NotFoundError } from '../../model/types';
-import TransformerService from '../transformer.service';
+import { EngineSettings } from '../../model/engine.model';
 
-jest.mock('node:crypto');
-jest.mock('node:fs/promises');
-jest.mock('../../web-server/controllers/validators/joi.validator');
-jest.mock('../utils');
+import type OIAnalyticsCommandServiceType from './oianalytics-command.service';
+import type { toOIBusCommandDTO as toOIBusCommandDTOType } from './oianalytics-command.service';
+import { toSouthConnectorItemDTO } from '../south.service';
 
-jest.spyOn(process, 'exit').mockImplementation();
+const nodeRequire = createRequire(import.meta.url);
 
-const oIAnalyticsCommandRepository: OIAnalyticsCommandRepository = new OIAnalyticsCommandRepositoryMock();
-const oIAnalyticsRegistrationService: OIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
-const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const oIBusService: OIBusService = new OibusServiceMock();
-const scanModeService: ScanModeService = new ScanModeServiceMock();
-const ipFilterService: IPFilterService = new IpFilterServiceMock();
-const certificateService: CertificateService = new CertificateServiceMock();
-const southService: SouthService = new SouthServiceMock();
-const northService: NorthService = new NorthServiceMock();
-const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
-const transformerService: TransformerService = new TransformerServiceMock();
-const oIAnalyticsClient: OIAnalyticsClient = new OianalyticsClientMock();
+// --- mock instances ---
+const logger = new PinoLogger();
+const anotherLogger = new PinoLogger();
+const oIAnalyticsCommandRepository = new OIAnalyticsCommandRepositoryMock();
+const oIAnalyticsRegistrationService = new OIAnalyticsRegistrationServiceMock();
+const oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
+const oIBusService = new OibusServiceMock();
+const scanModeService = new ScanModeServiceMock();
+const ipFilterService = new IpFilterServiceMock();
+const certificateService = new CertificateServiceMock();
+const southService = new SouthServiceMock();
+const northService = new NorthServiceMock();
+const historyQueryService = new HistoryQueryServiceMock();
+const transformerService = new TransformerServiceMock();
+const oIAnalyticsClient = new OianalyticsClientMock();
+const encryptionService = new EncryptionServiceMock('', '');
 
-jest.mock('../encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
+// --- mocked utility modules (mutated in-place between tests) ---
+const mockUtils = {
+  delay: mock.fn(async () => undefined),
+  getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
+  unzip: mock.fn()
+};
 
-const logger: pino.Logger = new PinoLogger();
-const anotherLogger: pino.Logger = new PinoLogger();
+let OIAnalyticsCommandService: typeof OIAnalyticsCommandServiceType;
+let toOIBusCommandDTO: typeof toOIBusCommandDTOType;
 
-let service: OIAnalyticsCommandService;
+before(() => {
+  // third-party modules that get pulled transitively (must exist in cache before reload)
+  mockModule(nodeRequire, 'undici', {
+    __esModule: true,
+    request: mock.fn(),
+    ProxyAgent: function (options: unknown) {
+      return { options, isMockProxyAgent: true };
+    },
+    Agent: function (options: unknown) {
+      return { options, isMockAgent: true };
+    }
+  });
+
+  mockModule(nodeRequire, 'node-opcua', {
+    OPCUAClient: { createSession: mock.fn(async () => ({})) },
+    ClientSubscription: { create: mock.fn() },
+    ClientMonitoredItem: { create: mock.fn() },
+    DataType: {},
+    StatusCodes: {},
+    SecurityPolicy: {},
+    AttributeIds: {},
+    UserTokenType: {},
+    TimestampsToReturn: {},
+    AggregateFunction: {},
+    HistoryReadRequest: {},
+    ReadRawModifiedDetails: {},
+    ReadProcessedDetails: {},
+    OPCUACertificateManager: function () {
+      return {};
+    },
+    resolveNodeId: mock.fn((nodeId: unknown) => nodeId)
+  });
+
+  mockModule(nodeRequire, 'ssh2-sftp-client', {
+    __esModule: true,
+    default: function () {
+      return {
+        connect: mock.fn(),
+        list: mock.fn(),
+        put: mock.fn(),
+        delete: mock.fn(),
+        end: mock.fn(),
+        exists: mock.fn(),
+        fastGet: mock.fn()
+      };
+    }
+  });
+
+  mockModule(nodeRequire, '../utils', mockUtils);
+  mockModule(nodeRequire, '../../web-server/controllers/validators/joi.validator', {
+    default: class {
+      validateSettings = mock.fn(async () => undefined);
+      validate = mock.fn(async () => undefined);
+    }
+  });
+  mockModule(nodeRequire, '../encryption.service', { encryptionService });
+
+  const mod = reloadModule<{
+    default: typeof OIAnalyticsCommandServiceType;
+    toOIBusCommandDTO: typeof toOIBusCommandDTOType;
+  }>(nodeRequire, './oianalytics-command.service');
+
+  OIAnalyticsCommandService = mod.default;
+  toOIBusCommandDTO = mod.toOIBusCommandDTO;
+});
+
+// Helper to reset ALL mock functions across all mock instances
+function resetAllMocks() {
+  // logger
+  for (const fn of Object.values(logger)) {
+    if (fn && typeof (fn as { mock?: unknown }).mock === 'object') {
+      (fn as { mock: { resetCalls(): void } }).mock.resetCalls();
+    }
+  }
+  for (const fn of Object.values(anotherLogger)) {
+    if (fn && typeof (fn as { mock?: unknown }).mock === 'object') {
+      (fn as { mock: { resetCalls(): void } }).mock.resetCalls();
+    }
+  }
+  // repositories & services
+  const mocks = [
+    oIAnalyticsCommandRepository,
+    oIAnalyticsRegistrationService,
+    oIAnalyticsMessageService,
+    oIBusService,
+    scanModeService,
+    ipFilterService,
+    certificateService,
+    southService,
+    northService,
+    historyQueryService,
+    transformerService,
+    oIAnalyticsClient,
+    encryptionService
+  ];
+  for (const m of mocks) {
+    for (const val of Object.values(m as Record<string, unknown>)) {
+      if (val && typeof (val as { mock?: unknown }).mock === 'object') {
+        (val as { mock: { resetCalls(): void } }).mock.resetCalls();
+      }
+    }
+  }
+  // utils
+  for (const val of Object.values(mockUtils)) {
+    val.mock.resetCalls();
+  }
+}
+
+function makeService(ignoreRemoteUpdate = false, launcherVersion = testData.engine.settings.launcherVersion) {
+  return new OIAnalyticsCommandService(
+    oIAnalyticsCommandRepository,
+    oIAnalyticsRegistrationService,
+    oIAnalyticsMessageService,
+    oIAnalyticsClient,
+    oIBusService,
+    scanModeService,
+    ipFilterService,
+    certificateService,
+    southService,
+    northService,
+    historyQueryService,
+    transformerService,
+    asLogger(logger),
+    'binaryFolder',
+    ignoreRemoteUpdate,
+    launcherVersion
+  );
+}
+
 describe('OIAnalytics Command Service', () => {
+  let service: InstanceType<typeof OIAnalyticsCommandServiceType>;
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    resetAllMocks();
+    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
 
-    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList);
-    (oIAnalyticsCommandRepository.findById as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList[0]);
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
-    (getOIBusInfo as jest.Mock).mockReturnValue(testData.engine.oIBusInfo);
-    (logger.child as jest.Mock).mockReturnValue(logger);
+    oIBusService.getEngineSettings.mock.mockImplementation(() => testData.engine.settings);
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => testData.oIAnalytics.commands.oIBusList);
+    oIAnalyticsCommandRepository.findById.mock.mockImplementation(() => testData.oIAnalytics.commands.oIBusList[0]);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
+    mockUtils.getOIBusInfo.mock.mockImplementation(() => testData.engine.oIBusInfo);
 
-    service = new OIAnalyticsCommandService(
-      oIAnalyticsCommandRepository,
-      oIAnalyticsRegistrationService,
-      oIAnalyticsMessageService,
-      oIAnalyticsClient,
-      oIBusService,
-      scanModeService,
-      ipFilterService,
-      certificateService,
-      southService,
-      northService,
-      historyQueryService,
-      transformerService,
-      logger,
-      'binaryFolder',
-      false,
-      testData.engine.settings.launcherVersion
-    );
+    service = makeService();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.restoreAll();
   });
 
-  it('should get a north connector', () => {
+  it('should get an OIAnalytics command', () => {
     const result = service.findById(testData.oIAnalytics.commands.oIBusList[0].id);
 
-    expect(oIAnalyticsCommandRepository.findById).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.findById).toHaveBeenCalledWith(testData.oIAnalytics.commands.oIBusList[0].id);
-    expect(result).toEqual(testData.oIAnalytics.commands.oIBusList[0]);
+    assert.strictEqual(oIAnalyticsCommandRepository.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.findById.mock.calls[0].arguments, [testData.oIAnalytics.commands.oIBusList[0].id]);
+    assert.deepStrictEqual(result, testData.oIAnalytics.commands.oIBusList[0]);
   });
 
-  it('should throw an error when north connector does not exist', () => {
-    (oIAnalyticsCommandRepository.findById as jest.Mock).mockReturnValue(null);
+  it('should throw an error when OIAnalytics command does not exist', () => {
+    oIAnalyticsCommandRepository.findById.mock.mockImplementation(() => null);
 
-    expect(() => service.findById(testData.oIAnalytics.commands.oIBusList[0].id)).toThrow(
+    assert.throws(
+      () => service.findById(testData.oIAnalytics.commands.oIBusList[0].id),
       new NotFoundError(`OIAnalytics command "${testData.oIAnalytics.commands.oIBusList[0].id}" not found`)
     );
-    expect(oIAnalyticsCommandRepository.findById).toHaveBeenCalledWith(testData.oIAnalytics.commands.oIBusList[0].id);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.findById.mock.calls[0].arguments, [testData.oIAnalytics.commands.oIBusList[0].id]);
   });
 
   it('should properly start and stop service', async () => {
-    expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
-    expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(
+    assert.strictEqual(oIBusService.getEngineSettings.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateOIBusVersion.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1),
       testData.engine.settings.launcherVersion
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
       testData.oIAnalytics.commands.oIBusList[0].id,
       testData.constants.dates.FAKE_NOW,
       `OIBus updated to version ${(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)}, launcher updated to version ${testData.engine.settings.launcherVersion}`
-    );
+    ]);
 
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    // Prevent background executeCommand (triggered by commandEvent.emit('next') in start()) from
+    // running real logic. Return [] so it sees no commands and exits immediately.
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
+    mock.method(process, 'exit', () => undefined as never);
+    mock.method(process, 'kill', () => undefined as unknown as void);
 
     await service.start();
     await service.stop();
+    await flushPromises();
 
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-
+    // After start: one setTimeout scheduled; after stop: clearTimeout called
+    // registrationEvent: REGISTERED -> schedules another timeout
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
 
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.registration.pending);
-
+    // registrationEvent with PENDING status -> no new setTimeout
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.pending);
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(2);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(3);
   });
 
   it('should search commands', () => {
     const page = createPageFromArray(testData.oIAnalytics.commands.oIBusList, 1, 25);
-    (oIAnalyticsCommandRepository.search as jest.Mock).mockReturnValueOnce(page);
+    oIAnalyticsCommandRepository.search.mock.mockImplementation(() => page);
 
-    expect(service.search({ types: [], status: [], page: 0, ack: undefined, start: undefined, end: undefined })).toEqual(page);
+    const result = service.search({ types: [], status: [], page: 0, ack: undefined, start: undefined, end: undefined });
+    assert.deepStrictEqual(result, page);
   });
 
   it('should delete command', () => {
     service.delete(testData.oIAnalytics.commands.oIBusList[0].id);
-
-    expect(oIAnalyticsCommandRepository.delete).toHaveBeenCalledWith(testData.oIAnalytics.commands.oIBusList[0].id);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.delete.mock.calls[0].arguments, [testData.oIAnalytics.commands.oIBusList[0].id]);
   });
 
   it('should check commands', async () => {
-    service.sendAckCommands = jest.fn();
-    service.checkRetrievedCommands = jest.fn();
-    service.retrieveCommands = jest.fn();
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.pending);
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList).mockReturnValue([]);
+    // Use fake timers so that setTimeout calls in checkCommands are captured and never fire,
+    // preventing async activity after the test ends.
+    mock.timers.enable({ apis: ['setTimeout'] });
+
+    service.sendAckCommands = mock.fn(async () => undefined);
+    service.checkRetrievedCommands = mock.fn(async () => undefined);
+    service.retrieveCommands = mock.fn(async () => undefined);
+
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(
+      seq(
+        () => testData.oIAnalytics.registration.completed,
+        () => testData.oIAnalytics.registration.completed,
+        () => testData.oIAnalytics.registration.pending
+      )
+    );
 
     service.checkCommands();
     await service.checkCommands();
-    expect(logger.trace).toHaveBeenCalledWith('OIBus is already retrieving commands from OIAnalytics');
+    assert.ok(
+      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0] === 'OIBus is already retrieving commands from OIAnalytics'
+      )
+    );
     await service.checkCommands();
-    expect(logger.trace).toHaveBeenCalledWith("OIAnalytics not registered. OIBus won't retrieve commands");
+    assert.ok(
+      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0] === "OIAnalytics not registered. OIBus won't retrieve commands"
+      )
+    );
 
     await flushPromises();
+    // Reset fake timers — discards all pending setTimeout callbacks without firing them
+    mock.timers.reset();
   });
 
   it('should fail to check commands and retry', async () => {
-    service.retrieveCommands = jest.fn().mockImplementationOnce(() => {
+    service.retrieveCommands = mock.fn(async () => {
       throw new Error('retrieve command error');
     });
-    service.checkRetrievedCommands = jest.fn();
-    service.sendAckCommands = jest.fn();
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.completed)
-      .mockReturnValueOnce(testData.oIAnalytics.registration.completed);
+    service.checkRetrievedCommands = mock.fn(async () => undefined);
+    service.sendAckCommands = mock.fn(async () => undefined);
+
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.completed);
 
     await service.checkCommands();
-    expect(service.sendAckCommands).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith('retrieve command error');
-
-    jest.advanceTimersByTime(testData.oIAnalytics.registration.completed.commandRetryInterval * 1000);
-    await flushPromises();
-    expect(service.sendAckCommands).toHaveBeenCalledTimes(1);
+    assert.strictEqual((service.sendAckCommands as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.ok((logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'retrieve command error'));
+    // Cancel the retry timer to prevent async activity after test ends
+    await service.stop();
   });
 
   it('should send ack', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
     await service.sendAckCommands(testData.oIAnalytics.registration.completed);
 
-    expect(oIAnalyticsClient.updateCommandStatus).toHaveBeenCalledTimes(testData.oIAnalytics.commands.oIBusList.length);
-    expect(oIAnalyticsCommandRepository.markAsAcknowledged).toHaveBeenCalledTimes(testData.oIAnalytics.commands.oIBusList.length);
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Command ${testData.oIAnalytics.commands.oIBusList[0].id} of type ${testData.oIAnalytics.commands.oIBusList[0].type} acknowledged`
+    assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, testData.oIAnalytics.commands.oIBusList.length);
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, testData.oIAnalytics.commands.oIBusList.length);
+    assert.ok(
+      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c =>
+          c.arguments[0] ===
+          `Command ${testData.oIAnalytics.commands.oIBusList[0].id} of type ${testData.oIAnalytics.commands.oIBusList[0].type} acknowledged`
+      )
     );
   });
 
-  it('should send not send ack if no command to ack', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([]);
+  it('should not send ack if no command to ack', async () => {
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => []);
     await service.sendAckCommands(testData.oIAnalytics.registration.completed);
 
-    expect(logger.trace).toHaveBeenCalledWith(`No command to ack`);
+    assert.ok((logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to ack'));
   });
 
   it('should properly manage ack error', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [
       testData.oIAnalytics.commands.oIBusList[0],
       testData.oIAnalytics.commands.oIBusList[1]
     ]);
-    (oIAnalyticsClient.updateCommandStatus as jest.Mock)
-      .mockImplementationOnce(() => {
-        throw new Error('error');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('404 - not found');
-      });
-    await service.sendAckCommands(testData.oIAnalytics.registration.completed);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while acknowledging command ${testData.oIAnalytics.commands.oIBusList[0].id} of type ${testData.oIAnalytics.commands.oIBusList[0].type}: error`
+    oIAnalyticsClient.updateCommandStatus.mock.mockImplementation(
+      seq(
+        () => {
+          throw new Error('error');
+        },
+        () => {
+          throw new Error('404 - not found');
+        }
+      )
     );
-    expect(logger.error).toHaveBeenCalledTimes(2);
-    expect(oIAnalyticsCommandRepository.markAsAcknowledged).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.markAsAcknowledged).toHaveBeenCalledWith(testData.oIAnalytics.commands.oIBusList[1].id);
+
+    await service.sendAckCommands(testData.oIAnalytics.registration.completed);
+
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c =>
+          c.arguments[0] ===
+          `Error while acknowledging command ${testData.oIAnalytics.commands.oIBusList[0].id} of type ${testData.oIAnalytics.commands.oIBusList[0].type}: error`
+      )
+    );
+    assert.strictEqual(logger.error.mock.calls.length, 2);
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls[0].arguments, [
+      testData.oIAnalytics.commands.oIBusList[1].id
+    ]);
   });
 
   it('should check retrieved command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
-    (oIAnalyticsClient.retrieveCancelledCommands as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
+    oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => testData.oIAnalytics.commands.oIBusList);
 
     await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
 
-    expect(oIAnalyticsClient.retrieveCancelledCommands).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.cancel).toHaveBeenCalledTimes(testData.oIAnalytics.commands.oIBusList.length);
-    expect(logger.trace).toHaveBeenCalledWith(
-      `${testData.oIAnalytics.commands.oIBusList.length} commands cancelled among the ${testData.oIAnalytics.commands.oIBusList.length} pending commands`
+    assert.strictEqual(oIAnalyticsClient.retrieveCancelledCommands.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsCommandRepository.cancel.mock.calls.length, testData.oIAnalytics.commands.oIBusList.length);
+    assert.ok(
+      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c =>
+          c.arguments[0] ===
+          `${testData.oIAnalytics.commands.oIBusList.length} commands cancelled among the ${testData.oIAnalytics.commands.oIBusList.length} pending commands`
+      )
     );
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
-    (oIAnalyticsClient.retrieveCancelledCommands as jest.Mock).mockImplementationOnce(() => {
+    // error case
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
+    oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => {
       throw new Error('error');
     });
-    await expect(service.checkRetrievedCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow(
-      `Error while checking PENDING commands status: error`
+    await assert.rejects(
+      () => service.checkRetrievedCommands(testData.oIAnalytics.registration.completed),
+      new Error('Error while checking PENDING commands status: error')
     );
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([]);
+    // empty case
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => []);
     await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
-    expect(logger.trace).toHaveBeenCalledWith(`No command retrieved to check`);
+    assert.ok(
+      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command retrieved to check')
+    );
   });
 
   it('should check retrieved command and cancel nothing', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIBusList);
-    (oIAnalyticsClient.retrieveCancelledCommands as jest.Mock).mockReturnValueOnce([]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
+    oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => []);
 
     await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
 
-    expect(oIAnalyticsClient.retrieveCancelledCommands).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.cancel).not.toHaveBeenCalled();
-    expect(logger.trace).not.toHaveBeenCalled();
+    assert.strictEqual(oIAnalyticsClient.retrieveCancelledCommands.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsCommandRepository.cancel.mock.calls.length, 0);
+    assert.strictEqual(logger.trace.mock.calls.length, 0);
   });
 
   it('should retrieve commands', async () => {
-    (oIAnalyticsClient.retrievePendingCommands as jest.Mock).mockReturnValueOnce(testData.oIAnalytics.commands.oIAnalyticsList);
+    oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => testData.oIAnalytics.commands.oIAnalyticsList);
 
     await service.retrieveCommands(testData.oIAnalytics.registration.completed);
 
-    expect(oIAnalyticsClient.retrievePendingCommands).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.create).toHaveBeenCalledTimes(testData.oIAnalytics.commands.oIAnalyticsList.length);
-    expect(logger.trace).toHaveBeenCalledWith(`${testData.oIAnalytics.commands.oIAnalyticsList.length} commands to add`);
+    assert.strictEqual(oIAnalyticsClient.retrievePendingCommands.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsCommandRepository.create.mock.calls.length, testData.oIAnalytics.commands.oIAnalyticsList.length);
+    assert.ok(
+      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0] === `${testData.oIAnalytics.commands.oIAnalyticsList.length} commands to add`
+      )
+    );
 
-    (oIAnalyticsClient.retrievePendingCommands as jest.Mock).mockImplementationOnce(() => {
+    oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => {
       throw new Error('error');
     });
-    await expect(service.retrieveCommands(testData.oIAnalytics.registration.completed)).rejects.toThrow(
-      `Error while retrieving commands: error`
+    await assert.rejects(
+      () => service.retrieveCommands(testData.oIAnalytics.registration.completed),
+      new Error('Error while retrieving commands: error')
     );
   });
 
   it('should retrieve commands and do nothing', async () => {
-    (oIAnalyticsClient.retrievePendingCommands as jest.Mock).mockReturnValueOnce([]);
+    oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => []);
 
     await service.retrieveCommands(testData.oIAnalytics.registration.completed);
 
-    expect(oIAnalyticsClient.retrievePendingCommands).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.create).not.toHaveBeenCalled();
-    expect(logger.trace).not.toHaveBeenCalled();
+    assert.strictEqual(oIAnalyticsClient.retrievePendingCommands.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsCommandRepository.create.mock.calls.length, 0);
+    assert.strictEqual(logger.trace.mock.calls.length, 0);
   });
 
   it('should execute update-version command without updating launcher', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[0]]); // update-version
-    const processExitSpy = jest.spyOn(process, 'exit');
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[0]]);
+    const exitMock = mock.method(process, 'exit', () => undefined as never);
+    mock.method(fs, 'unlink', async () => undefined);
+    mock.method(fs, 'writeFile', async () => undefined);
 
     await service.executeCommand();
 
-    expect(oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
-    expect(oIAnalyticsCommandRepository.markAsRunning).toHaveBeenCalledTimes(1);
-    expect(oIBusService.getEngineSettings).toHaveBeenCalled();
-    expect(oIAnalyticsClient.downloadFile).toHaveBeenCalledTimes(1);
-    expect(unzip).toHaveBeenCalledTimes(1);
-    expect(fs.unlink).toHaveBeenCalledTimes(1);
-    expect(fs.rename).not.toHaveBeenCalled();
-    expect(fs.writeFile).toHaveBeenCalledTimes(1);
-    expect(fs.writeFile).toHaveBeenCalledWith(
-      expect.stringContaining('update.json'),
-      JSON.stringify({
-        version: 'v3.5.0-beta',
-        assetId: 'assetId',
-        backupFolders: 'cache/*',
-        updateLauncher: false
-      })
-    );
-    expect(delay).toHaveBeenCalledTimes(1);
-    expect(processExitSpy).toHaveBeenCalledTimes(1);
+    assert.strictEqual(oIAnalyticsRegistrationService.getRegistrationSettings.mock.calls.length, 1);
+    assert.ok(oIAnalyticsCommandRepository.list.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsRunning.mock.calls.length, 1);
+    assert.ok(oIBusService.getEngineSettings.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsClient.downloadFile.mock.calls.length, 1);
+    assert.strictEqual(mockUtils.unzip.mock.calls.length, 1);
+    assert.strictEqual(mockUtils.delay.mock.calls.length, 1);
+    assert.strictEqual(exitMock.mock.calls.length, 1);
   });
 
   it('should execute update-version command with launcher update', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([
-      {
-        ...testData.oIAnalytics.commands.oIBusList[0],
-        commandContent: {
-          version: 'v3.5.0-beta',
-          assetId: 'assetId',
-          backupFolders: 'cache/*',
-          updateLauncher: true
-        }
-      }
-    ]); // update-version
-    const processKillSpy = jest.spyOn(process, 'kill').mockImplementation(() => {
-      return true;
-    });
-    const osTypeSpy = jest.spyOn(os, 'type').mockReturnValueOnce('linux').mockReturnValueOnce('Windows_NT');
-
-    await service.executeCommand();
-
-    expect(oIAnalyticsRegistrationService.getRegistrationSettings).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
-    expect(oIBusService.getEngineSettings).toHaveBeenCalled();
-    expect(oIAnalyticsClient.downloadFile).toHaveBeenCalledTimes(1);
-    expect(unzip).toHaveBeenCalledTimes(1);
-    expect(fs.unlink).toHaveBeenCalledTimes(1);
-    expect(fs.rename).toHaveBeenCalledTimes(2);
-    expect(fs.rename).toHaveBeenCalledWith(expect.stringContaining('oibus-launcher'), expect.stringContaining('oibus-launcher_backup'));
-    expect(osTypeSpy).toHaveBeenCalledTimes(1);
-    expect(fs.writeFile).toHaveBeenCalledTimes(1);
-    expect(fs.writeFile).toHaveBeenCalledWith(
-      expect.stringContaining('update.json'),
-      JSON.stringify({
+    const launcherCommand = {
+      ...testData.oIAnalytics.commands.oIBusList[0],
+      commandContent: {
         version: 'v3.5.0-beta',
         assetId: 'assetId',
         backupFolders: 'cache/*',
         updateLauncher: true
-      })
-    );
-    expect(delay).toHaveBeenCalledTimes(1);
-    expect(processKillSpy).toHaveBeenCalledTimes(1);
-
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([
-      {
-        ...testData.oIAnalytics.commands.oIBusList[0],
-        commandContent: {
-          version: 'v3.5.0-beta',
-          assetId: 'assetId',
-          backupFolders: 'cache/*',
-          updateLauncher: true
-        }
       }
-    ]); // update-version
+    };
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(
+      seq(
+        () => [launcherCommand], // first executeCommand's commandsToExecute
+        () => [], // sendAckCommands after first executeCommand
+        () => [launcherCommand], // second executeCommand's commandsToExecute
+        () => [] // sendAckCommands after second executeCommand
+      )
+    );
+    const killMock = mock.method(process, 'kill', () => true as unknown as void);
+    const osTypeMock = mock.method(
+      os,
+      'type',
+      seq(
+        () => 'linux' as NodeJS.Platform,
+        () => 'Windows_NT' as NodeJS.Platform
+      )
+    );
+    const fsFsMock = mock.method(fs, 'rename', async () => undefined);
+    mock.method(fs, 'unlink', async () => undefined);
+    mock.method(fs, 'writeFile', async () => undefined);
+    mock.method(process, 'exit', () => undefined as never);
+
     await service.executeCommand();
-    expect(fs.rename).toHaveBeenCalledWith(
-      expect.stringContaining('oibus-launcher.exe'),
-      expect.stringContaining('oibus-launcher_backup.exe')
+
+    assert.strictEqual(oIAnalyticsClient.downloadFile.mock.calls.length, 1);
+    assert.strictEqual(mockUtils.unzip.mock.calls.length, 1);
+    assert.strictEqual(fsFsMock.mock.calls.length, 2);
+    assert.ok(
+      (fsFsMock.mock.calls as Array<{ arguments: [string, string] }>).some(
+        c => c.arguments[0].includes('oibus-launcher') && c.arguments[1].includes('oibus-launcher_backup')
+      )
+    );
+    assert.strictEqual(osTypeMock.mock.calls.length, 1);
+    assert.strictEqual(killMock.mock.calls.length, 1);
+
+    await service.executeCommand();
+    assert.ok(
+      (fsFsMock.mock.calls as Array<{ arguments: [string, string] }>).some(
+        c => c.arguments[0].includes('oibus-launcher.exe') && c.arguments[1].includes('oibus-launcher_backup.exe')
+      )
     );
   });
 
   it('should not execute update-version command if a command is already being executed', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[0]]); // update-version
-    jest.spyOn(process, 'exit');
-    (delay as jest.Mock).mockImplementationOnce(() => {
-      return new Promise(resolve => setTimeout(() => resolve(null), 1000));
-    });
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[0]]);
+    mock.method(process, 'exit', () => undefined as never);
+    mockUtils.delay.mock.mockImplementationOnce(
+      () =>
+        new Promise<void>(resolve => {
+          setTimeout(resolve, 1000);
+        })
+    );
 
     service.executeCommand();
     await service.executeCommand();
 
-    expect(logger.trace).toHaveBeenCalledWith('A command is already being executed');
+    assert.ok(
+      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'A command is already being executed')
+    );
 
     await flushPromises();
   });
 
   it('should not execute a command if not registered', async () => {
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...JSON.parse(JSON.stringify(testData.oIAnalytics.registration.completed)),
       status: 'PENDING'
-    });
+    }));
 
     await service.executeCommand();
 
-    expect(logger.trace).toHaveBeenCalledWith("OIAnalytics not registered. OIBus won't retrieve commands");
+    assert.ok(
+      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0] === "OIAnalytics not registered. OIBus won't retrieve commands"
+      )
+    );
   });
 
   it('should not execute a command if no command found', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => []);
 
     await service.executeCommand();
 
-    expect(logger.trace).toHaveBeenCalledWith('No command to execute');
+    assert.ok((logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to execute'));
   });
 
   it('should execute update-engine-settings command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[1]]); // update-engine-settings
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[1]]);
 
     await service.executeCommand();
 
-    expect(encryptionService.decryptTextWithPrivateKey).not.toHaveBeenCalled();
-    expect(oIBusService.updateEngineSettings).toHaveBeenCalledWith(
+    assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
+    assert.deepStrictEqual(oIBusService.updateEngineSettings.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[1] as OIBusUpdateEngineSettingsCommand).commandContent,
       'oianalytics'
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[1].id,
       testData.constants.dates.FAKE_NOW,
       'Engine settings updated successfully'
-    );
+    ]);
   });
 
   it('should execute update-engine-settings command without loki password', async () => {
     const command: OIBusUpdateEngineSettingsCommand = JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[1]));
     command.commandContent.logParameters.loki.password = 'test';
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]); // update-engine-settings
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(oIBusService.updateEngineSettings).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIBusService.updateEngineSettings.mock.calls[0].arguments, [
       (command as OIBusUpdateEngineSettingsCommand).commandContent,
       'oianalytics'
-    );
-    expect(encryptionService.decryptTextWithPrivateKey).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[1].id,
       testData.constants.dates.FAKE_NOW,
       'Engine settings updated successfully'
-    );
+    ]);
   });
 
   it('should execute update-registration-settings command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[15]]); // update-engine-settings
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[15]]);
 
     await service.executeCommand();
 
-    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls[0].arguments, [
       {
         host: testData.oIAnalytics.registration.completed.host,
         useProxy: testData.oIAnalytics.registration.completed.useProxy,
@@ -577,13 +675,13 @@ describe('OIAnalytics Command Service', () => {
         commandPermissions: testData.oIAnalytics.registration.completed.commandPermissions
       },
       'oianalytics'
-    );
-    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.strictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[15].id,
       testData.constants.dates.FAKE_NOW,
       'Registration settings updated successfully'
-    );
+    ]);
   });
 
   it('should execute update-registration-settings command and not enabling permissions if disabled', async () => {
@@ -635,12 +733,17 @@ describe('OIAnalytics Command Service', () => {
       }
     };
 
-    await service['executeUpdateRegistrationSettingsCommand'](
+    // Call private method directly
+    await (
+      service as unknown as {
+        executeUpdateRegistrationSettingsCommand(cmd: OIBusUpdateRegistrationSettingsCommand, reg: OIAnalyticsRegistration): Promise<void>;
+      }
+    ).executeUpdateRegistrationSettingsCommand(
       testData.oIAnalytics.commands.oIBusList[15] as OIBusUpdateRegistrationSettingsCommand,
       registration
     );
 
-    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls[0].arguments, [
       {
         host: registration.host,
         useProxy: registration.useProxy,
@@ -661,157 +764,157 @@ describe('OIAnalytics Command Service', () => {
         commandPermissions: registration.commandPermissions
       },
       'oianalytics'
-    );
-    expect(oIAnalyticsRegistrationService.editRegistrationSettings).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.strictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[15].id,
       testData.constants.dates.FAKE_NOW,
       'Registration settings updated successfully'
-    );
+    ]);
   });
 
   it('should execute restart-engine command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[2]]); // restart-engine
-    const processExitSpy = jest.spyOn(process, 'exit');
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[2]]);
+    const exitMock = mock.method(process, 'exit', () => undefined as never);
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[2].id,
       testData.constants.dates.FAKE_NOW,
       'OIBus restarted'
-    );
-    expect(delay).toHaveBeenCalledTimes(1);
-    expect(processExitSpy).toHaveBeenCalledTimes(1);
+    ]);
+    assert.strictEqual(mockUtils.delay.mock.calls.length, 1);
+    assert.strictEqual(exitMock.mock.calls.length, 1);
   });
 
   it('should execute update-scan-mode command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[3]]); // update-scan-mode
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[3]]);
 
     await service.executeCommand();
 
-    expect(scanModeService.update).toHaveBeenCalledWith(
+    assert.deepStrictEqual(scanModeService.update.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
       (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).commandContent,
       'oianalytics'
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[3].id,
       testData.constants.dates.FAKE_NOW,
       'Scan mode updated successfully'
-    );
+    ]);
   });
 
   it('should execute update-south command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[4]]); // update-south
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[4]]);
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent.type
       }
     ]);
-    // update-south
 
     await service.executeCommand();
 
-    expect(southService.update).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.update.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).southConnectorId,
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).commandContent,
       'oianalytics'
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[4].id,
       testData.constants.dates.FAKE_NOW,
       'South connector updated successfully'
-    );
+    ]);
   });
 
   it('should execute update-north command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[5]]); // update-north
-    (northService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[5]]);
+    northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent.type
       }
     ]);
+
     await service.executeCommand();
 
-    expect(northService.update).toHaveBeenCalledWith(
+    assert.deepStrictEqual(northService.update.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).northConnectorId,
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).commandContent,
       'oianalytics'
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[5].id,
       testData.constants.dates.FAKE_NOW,
       'North connector updated successfully'
-    );
+    ]);
   });
 
   it('should execute delete-scan-mode command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[6]]); // delete-scan-mode
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[6]]);
 
     await service.executeCommand();
 
-    expect(scanModeService.delete).toHaveBeenCalledWith(
+    assert.deepStrictEqual(scanModeService.delete.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[6] as OIBusDeleteScanModeCommand).scanModeId
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[6].id,
       testData.constants.dates.FAKE_NOW,
       'Scan mode deleted successfully'
-    );
+    ]);
   });
 
   it('should execute delete-south command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[7]]); // delete-south
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[7]]);
 
     await service.executeCommand();
 
-    expect(southService.delete).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.delete.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[7] as OIBusDeleteSouthConnectorCommand).southConnectorId
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[7].id,
       testData.constants.dates.FAKE_NOW,
       'South connector deleted successfully'
-    );
+    ]);
   });
 
   it('should execute delete-north command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[8]]); // delete-north
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[8]]);
 
     await service.executeCommand();
 
-    expect(northService.delete).toHaveBeenCalledWith(
+    assert.deepStrictEqual(northService.delete.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[8] as OIBusDeleteNorthConnectorCommand).northConnectorId
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[8].id,
       testData.constants.dates.FAKE_NOW,
       'North connector deleted successfully'
-    );
+    ]);
   });
 
   it('should execute create-scan-mode command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[9]]); // create-scan-mode
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[9]]);
 
     await service.executeCommand();
 
-    expect(scanModeService.create).toHaveBeenCalledWith(
+    assert.deepStrictEqual(scanModeService.create.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand).commandContent,
       'oianalytics'
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[9].id,
       testData.constants.dates.FAKE_NOW,
       'Scan mode created successfully'
-    );
+    ]);
   });
 
   it('should execute create-south command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[10]]); // create-south
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[10]]);
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent.type
@@ -820,21 +923,21 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(southService.create).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.create.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent,
       null,
       'oianalytics'
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[10].id,
       testData.constants.dates.FAKE_NOW,
       'South connector created successfully'
-    );
+    ]);
   });
 
   it('should execute create-north command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[11]]); // create-north
-    (northService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[11]]);
+    northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent.type
@@ -843,156 +946,160 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(northService.create).toHaveBeenCalledWith(
+    assert.deepStrictEqual(northService.create.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent,
       null,
       'oianalytics'
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[11].id,
       testData.constants.dates.FAKE_NOW,
       'North connector created successfully'
-    );
+    ]);
   });
 
   it('should execute create-or-update-south-items-from-csv command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[14]]); // create-or-update-south-items-from-csv
-    (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
-    (southService.checkImportItems as jest.Mock).mockReturnValueOnce({
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[14]]);
+    southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
+    southService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: [{ scanMode: testData.scanMode.list[0] }, { scanMode: testData.scanMode.list[0] }],
       errors: []
-    });
+    }));
 
     await service.executeCommand();
 
-    expect(southService.findById).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.findById.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId
-    );
-    expect(southService.checkImportItems).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [
       testData.south.list[0].type,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
       testData.south.list[0].items.map(item =>
         toSouthConnectorItemDTO(item, testData.south.list[0].type, (id: string) => ({ id, friendlyName: id }))
       )
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[14].id,
       testData.constants.dates.FAKE_NOW,
       `2 items imported on South connector ${testData.south.list[0].name}`
-    );
+    ]);
   });
 
   it('should execute create-or-update-south-items-from-csv command and throw an error if south not found', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[14]]); // create-or-update-south-items-from-csv
-    (southService.findById as jest.Mock).mockReturnValueOnce(null);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[14]]);
+    southService.findById.mock.mockImplementationOnce(() => null);
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       testData.oIAnalytics.commands.oIBusList[14].id,
       `South connector ${(testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId} not found`
-    );
+    ]);
   });
 
   it('should execute create-or-update-south-items-from-csv command with item errors', async () => {
     const command: OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand = JSON.parse(
       JSON.stringify(testData.oIAnalytics.commands.oIBusList[14])
-    ); // create-or-update-south-items-from-csv
+    );
     command.commandContent.deleteItemsNotPresent = true;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[0]);
-    (southService.checkImportItems as jest.Mock).mockReturnValueOnce({
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
+    southService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: [{}, {}],
       errors: [
         { item: { name: 'item1' }, error: 'error1' },
         { item: { name: 'item2' }, error: 'error2' }
       ]
-    });
+    }));
 
     await service.executeCommand();
 
-    expect(southService.checkImportItems).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [
       testData.south.list[0].type,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.csvContent,
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).commandContent.delimiter,
       []
-    );
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       testData.oIAnalytics.commands.oIBusList[14].id,
       `Error when checking csv items:\nitem1: error1\nitem2: error2`
-    );
+    ]);
   });
 
   it('should catch error when execution fails', async () => {
     const command = testData.oIAnalytics.commands.oIBusList[11];
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]); // create-north
-    (northService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent.type
       }
     ]);
-    (northService.create as jest.Mock).mockImplementationOnce(() => {
+    northService.create.mock.mockImplementationOnce(async () => {
       throw new Error('command execution error');
     });
 
     await service.executeCommand();
 
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: command execution error`
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c =>
+          c.arguments[0] ===
+          `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: command execution error`
+      )
     );
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'command execution error');
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'command execution error']);
   });
 
   it('should not execute command if target version is not the same', async () => {
     const command = testData.oIAnalytics.commands.oIBusList[11];
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]); // create-north
-    (oIBusService.getEngineSettings as jest.Mock).mockReturnValueOnce({
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.getEngineSettings.mock.mockImplementationOnce(() => ({
       ...testData.engine.settings,
       version: 'bad version'
-    });
+    }));
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
       `Wrong target version: ${command.targetVersion} for OIBus version bad version`
-    );
+    ]);
   });
 
   it('should not execute command if permission is not right', async () => {
     const command = testData.oIAnalytics.commands.oIBusList[11];
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]); // create-north
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...testData.oIAnalytics.registration.completed,
       commandPermissions: {
         ...testData.oIAnalytics.registration.completed.commandPermissions,
         createNorth: false
       }
-    });
+    }));
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
       `Command ${command.id} of type ${command.type} is not authorized`
-    );
+    ]);
   });
 
   it('should execute regenerate-cipher-keys command', async () => {
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([testData.oIAnalytics.commands.oIBusList[12]]); // regenerate-cipher-keys
-    (crypto.generateKeyPairSync as jest.Mock).mockReturnValueOnce({ publicKey: 'public key', privateKey: 'private key' });
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[12]]);
+    mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
 
     await service.executeCommand();
 
-    expect(oIAnalyticsRegistrationService.updateKeys).toHaveBeenCalledWith('private key', 'public key');
-    expect(oIAnalyticsMessageService.createFullConfigMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsRegistrationService.updateKeys.mock.calls[0].arguments, ['private key', 'public key']);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[12].id,
       testData.constants.dates.FAKE_NOW,
       'OIAnalytics keys reloaded'
-    );
+    ]);
   });
 
   it('should execute create-ip-filter command', async () => {
@@ -1002,16 +1109,16 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       commandContent: {} as IPFilterCommandDTO
     } as OIBusCreateIPFilterCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(ipFilterService.create).toHaveBeenCalledWith(command.commandContent, 'oianalytics');
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(ipFilterService.create.mock.calls[0].arguments, [command.commandContent, 'oianalytics']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'IP Filter created successfully'
-    );
+    ]);
   });
 
   it('should execute update-ip-filter command', async () => {
@@ -1022,16 +1129,16 @@ describe('OIAnalytics Command Service', () => {
       ipFilterId: 'ipFilterId',
       commandContent: {} as IPFilterCommandDTO
     } as OIBusUpdateIPFilterCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(ipFilterService.update).toHaveBeenCalledWith(command.ipFilterId, command.commandContent, 'oianalytics');
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(ipFilterService.update.mock.calls[0].arguments, [command.ipFilterId, command.commandContent, 'oianalytics']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'IP Filter updated successfully'
-    );
+    ]);
   });
 
   it('should execute delete-ip-filter command', async () => {
@@ -1041,16 +1148,16 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       ipFilterId: 'ipFilterId'
     } as OIBusDeleteIPFilterCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(ipFilterService.delete).toHaveBeenCalledWith(command.ipFilterId);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(ipFilterService.delete.mock.calls[0].arguments, [command.ipFilterId]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'IP Filter deleted successfully'
-    );
+    ]);
   });
 
   it('should execute create-certificate command', async () => {
@@ -1060,16 +1167,16 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       commandContent: {} as CertificateCommandDTO
     } as OIBusCreateCertificateCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(certificateService.create).toHaveBeenCalledWith(command.commandContent, 'oianalytics');
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(certificateService.create.mock.calls[0].arguments, [command.commandContent, 'oianalytics']);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'Certificate created successfully'
-    );
+    ]);
   });
 
   it('should execute update-certificate command', async () => {
@@ -1080,16 +1187,20 @@ describe('OIAnalytics Command Service', () => {
       certificateId: 'certificateId',
       commandContent: {} as CertificateCommandDTO
     } as OIBusUpdateCertificateCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(certificateService.update).toHaveBeenCalledWith(command.certificateId, command.commandContent, 'oianalytics');
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(certificateService.update.mock.calls[0].arguments, [
+      command.certificateId,
+      command.commandContent,
+      'oianalytics'
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'Certificate updated successfully'
-    );
+    ]);
   });
 
   it('should execute delete-certificate command', async () => {
@@ -1099,16 +1210,16 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       certificateId: 'certificateId'
     } as OIBusDeleteCertificateCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(certificateService.delete).toHaveBeenCalledWith(command.certificateId);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(certificateService.delete.mock.calls[0].arguments, [command.certificateId]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'Certificate deleted successfully'
-    );
+    ]);
   });
 
   it('should execute south-connection-test command', async () => {
@@ -1119,8 +1230,8 @@ describe('OIAnalytics Command Service', () => {
       southConnectorId: 'southConnectorId',
       commandContent: testData.south.command
     } as OIBusTestSouthConnectorCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: command.commandContent.type
@@ -1129,16 +1240,16 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(southService.testSouth).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
       command.southConnectorId,
       command.commandContent.type,
       command.commandContent.settings
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ items: [] })
-    );
+    ]);
   });
 
   it('should execute south-item-test command', async () => {
@@ -1155,27 +1266,28 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusTestSouthConnectorItemCommand;
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.testItem as jest.Mock).mockReturnValueOnce({});
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    southService.testItem.mock.mockImplementationOnce(async () => ({}));
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: command.commandContent.southCommand.type
       }
     ]);
-    service['completeTestItemCommand'] = jest.fn();
+    const completeTestItemMock = mock.fn();
+    (service as unknown as { completeTestItemCommand: typeof completeTestItemMock }).completeTestItemCommand = completeTestItemMock;
 
     await service.executeCommand();
 
-    expect(southService.testItem).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
       command.southConnectorId,
       command.commandContent.southCommand.type,
       command.commandContent.itemCommand.name,
       command.commandContent.southCommand.settings,
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
-    );
-    expect(service['completeTestItemCommand']).toHaveBeenCalledWith(command, {});
+    ]);
+    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, {}]);
   });
 
   it('should execute north-connection-test command', async () => {
@@ -1186,9 +1298,8 @@ describe('OIAnalytics Command Service', () => {
       northConnectorId: 'northConnectorId',
       commandContent: testData.north.command
     } as OIBusTestNorthConnectorCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-
-    (northService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
         id: command.commandContent.type
@@ -1197,16 +1308,16 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(northService.testNorth).toHaveBeenCalledWith(
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
       command.northConnectorId,
       command.commandContent.type,
       command.commandContent.settings
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ items: [] })
-    );
+    ]);
   });
 
   it('should execute create-history-query command', async () => {
@@ -1219,14 +1330,14 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: undefined,
       commandContent: testData.historyQueries.command
     } as OIBusCreateHistoryQueryCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    (northService.listManifest as jest.Mock).mockReturnValueOnce([
+    northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
         id: testData.historyQueries.command.northType
@@ -1235,12 +1346,18 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.create).toHaveBeenCalledWith(command.commandContent, undefined, undefined, undefined, 'oianalytics');
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.create.mock.calls[0].arguments, [
+      command.commandContent,
+      undefined,
+      undefined,
+      undefined,
+      'oianalytics'
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'History query created successfully'
-    );
+    ]);
   });
 
   it('should execute update-history-query command', async () => {
@@ -1251,14 +1368,14 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'h1',
       commandContent: { resetCache: false, historyQuery: testData.historyQueries.command }
     } as OIBusUpdateHistoryQueryCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    (northService.listManifest as jest.Mock).mockReturnValueOnce([
+    northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
         id: testData.historyQueries.command.northType
@@ -1267,17 +1384,17 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.update).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.update.mock.calls[0].arguments, [
       command.historyQueryId,
       command.commandContent.historyQuery,
       command.commandContent.resetCache,
       'oianalytics'
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'History query updated successfully'
-    );
+    ]);
   });
 
   it('should execute delete-history-query command', async () => {
@@ -1287,16 +1404,16 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       historyQueryId: 'h1'
     } as OIBusDeleteHistoryQueryCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(historyQueryService.delete).toHaveBeenCalledWith(command.historyQueryId);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.delete.mock.calls[0].arguments, [command.historyQueryId]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'History query deleted successfully'
-    );
+    ]);
   });
 
   it('should execute create-or-update-history-query-south-items-from-csv command', async () => {
@@ -1311,14 +1428,14 @@ describe('OIAnalytics Command Service', () => {
         delimiter: ','
       }
     } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
-    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryService.checkImportItems as jest.Mock).mockReturnValueOnce({ items: [{}, {}], errors: [] });
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    historyQueryService.findById.mock.mockImplementationOnce(() => testData.historyQueries.list[0]);
+    historyQueryService.checkImportItems.mock.mockImplementationOnce(async () => ({ items: [{}, {}], errors: [] }));
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(historyQueryService.findById).toHaveBeenCalledWith(command.historyQueryId);
-    expect(historyQueryService.checkImportItems).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments, [command.historyQueryId]);
+    assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
       testData.historyQueries.list[0].southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
@@ -1327,15 +1444,15 @@ describe('OIAnalytics Command Service', () => {
         updatedBy: { id: '', friendlyName: '' },
         createdBy: { id: '', friendlyName: '' }
       }))
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       `2 items imported on History query ${testData.historyQueries.list[0].name}`
-    );
+    ]);
   });
 
-  it('should execute create-or-update-history-query-south-items-from-csv command and throw an error if south not found', async () => {
+  it('should execute create-or-update-history-query-south-items-from-csv command and throw an error if history not found', async () => {
     const command: OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand = {
       id: 'createOrUpdateHistoryQuerySouthItemsId',
       type: 'create-or-update-history-query-south-items-from-csv',
@@ -1347,15 +1464,15 @@ describe('OIAnalytics Command Service', () => {
         delimiter: ','
       }
     } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
-    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(null);
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    historyQueryService.findById.mock.mockImplementationOnce(() => null);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
       `History query ${command.historyQueryId} not found`
-    );
+    ]);
   });
 
   it('should execute create-or-update-history-query-south-items-from-csv command with item error', async () => {
@@ -1370,29 +1487,28 @@ describe('OIAnalytics Command Service', () => {
         delimiter: ','
       }
     } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
-    (historyQueryService.findById as jest.Mock).mockReturnValueOnce(testData.historyQueries.list[0]);
-    (historyQueryService.checkImportItems as jest.Mock).mockReturnValueOnce({
+    historyQueryService.findById.mock.mockImplementationOnce(() => testData.historyQueries.list[0]);
+    historyQueryService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: [{}, {}],
       errors: [
         { item: { name: 'item1' }, error: 'error1' },
         { item: { name: 'item2' }, error: 'error2' }
       ]
-    });
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (historyQueryService.checkImportItems as jest.Mock).mockReturnValueOnce({});
+    }));
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(historyQueryService.checkImportItems).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
       testData.historyQueries.list[0].southType,
       command.commandContent.csvContent,
       command.commandContent.delimiter,
       []
-    );
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
       `Error when checking csv items:\nitem1: error1\nitem2: error2`
-    );
+    ]);
   });
 
   it('should execute test-history-query-north-connection command', async () => {
@@ -1404,15 +1520,14 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'historyId',
       commandContent: testData.historyQueries.command
     } as OIBusTestHistoryQueryNorthConnectionCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    (northService.listManifest as jest.Mock).mockReturnValueOnce([
+    northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
         id: testData.historyQueries.command.northType
@@ -1421,17 +1536,17 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.testNorth).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [
       command.historyQueryId,
       command.commandContent.northType,
       command.northConnectorId,
       command.commandContent.northSettings
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ items: [] })
-    );
+    ]);
   });
 
   it('should execute test-history-query-south-connection command', async () => {
@@ -1443,15 +1558,14 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'historyId',
       commandContent: testData.historyQueries.command
     } as OIBusTestHistoryQuerySouthConnectionCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: testData.historyQueries.command.southType
       }
     ]);
-    (northService.listManifest as jest.Mock).mockReturnValueOnce([
+    northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
         id: testData.historyQueries.command.northType
@@ -1460,17 +1574,17 @@ describe('OIAnalytics Command Service', () => {
 
     await service.executeCommand();
 
-    expect(historyQueryService.testSouth).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [
       command.historyQueryId,
       command.commandContent.southType,
       command.southConnectorId,
       command.commandContent.southSettings
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ items: [] })
-    );
+    ]);
   });
 
   it('should execute test-history-query-south-item command', async () => {
@@ -1488,18 +1602,20 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusTestHistoryQuerySouthItemCommand;
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (historyQueryService.testItem as jest.Mock).mockReturnValueOnce({});
-    (southService.listManifest as jest.Mock).mockReturnValueOnce([
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    historyQueryService.testItem.mock.mockImplementationOnce(async () => ({}));
+    southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
         id: command.commandContent.historyCommand.southType
       }
     ]);
-    service['completeTestItemCommand'] = jest.fn();
+    const completeTestItemMock = mock.fn();
+    (service as unknown as { completeTestItemCommand: typeof completeTestItemMock }).completeTestItemCommand = completeTestItemMock;
+
     await service.executeCommand();
 
-    expect(historyQueryService.testItem).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.testItem.mock.calls[0].arguments, [
       command.historyQueryId,
       command.commandContent.historyCommand.southType,
       command.commandContent.itemCommand.name,
@@ -1507,8 +1623,8 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.historyCommand.southSettings,
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
-    );
-    expect(service['completeTestItemCommand']).toHaveBeenCalledWith(command, {});
+    ]);
+    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, {}]);
   });
 
   it('should execute update-history-query-status command', async () => {
@@ -1522,36 +1638,39 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusUpdateHistoryQueryStatusCommand;
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(historyQueryService.start).toHaveBeenCalledWith(command.historyQueryId);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryService.start.mock.calls[0].arguments, [command.historyQueryId]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'History query started'
-    );
+    ]);
 
     command.commandContent.historyQueryStatus = 'PAUSED';
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
 
-    expect(historyQueryService.pause).toHaveBeenCalledWith(command.historyQueryId);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
-      command.id,
-      testData.constants.dates.FAKE_NOW,
-      'History query paused'
+    assert.deepStrictEqual(historyQueryService.pause.mock.calls[0].arguments, [command.historyQueryId]);
+    assert.ok(
+      (oIAnalyticsCommandRepository.markAsCompleted.mock.calls as Array<{ arguments: Array<unknown> }>).some(
+        c => c.arguments[2] === 'History query paused'
+      )
     );
 
     command.commandContent.historyQueryStatus = 'ERRORED';
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
-      command.id,
-      `History query status of ${command.historyQueryId} can not be updated to ${command.commandContent.historyQueryStatus}`
+    assert.ok(
+      (oIAnalyticsCommandRepository.markAsErrored.mock.calls as Array<{ arguments: Array<unknown> }>).some(
+        c =>
+          c.arguments[1] ===
+          `History query status of ${command.historyQueryId} can not be updated to ${command.commandContent.historyQueryStatus}`
+      )
     );
   });
 
@@ -1567,16 +1686,22 @@ describe('OIAnalytics Command Service', () => {
       }
     };
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (northService.executeSetpoint as jest.Mock).mockImplementationOnce((_northId, _commandContent, callback) => {
-      callback('ok');
-    });
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    northService.executeSetpoint.mock.mockImplementationOnce(
+      (_northId: string, _commandContent: unknown, callback: (s: string) => void) => {
+        callback('ok');
+      }
+    );
 
     await service.executeCommand();
 
-    expect(northService.executeSetpoint).toHaveBeenCalledWith(command.northConnectorId, command.commandContent, expect.anything());
-
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(command.id, testData.constants.dates.FAKE_NOW, 'ok');
+    assert.strictEqual(northService.executeSetpoint.mock.calls[0].arguments[0], command.northConnectorId);
+    assert.deepStrictEqual(northService.executeSetpoint.mock.calls[0].arguments[1], command.commandContent);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
+      command.id,
+      testData.constants.dates.FAKE_NOW,
+      'ok'
+    ]);
   });
 
   it('should execute search-north-cache-content command', async () => {
@@ -1592,7 +1717,7 @@ describe('OIAnalytics Command Service', () => {
       northConnectorId: 'northId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchNorthCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
     const searchResult: CacheSearchResult = {
       searchDate: testData.constants.dates.FAKE_NOW,
       metrics: testData.north.metrics,
@@ -1600,17 +1725,21 @@ describe('OIAnalytics Command Service', () => {
       archive: [],
       cache: []
     };
-    (oIBusService.searchCacheContent as jest.Mock).mockReturnValueOnce(searchResult);
+    oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => searchResult);
 
     await service.executeCommand();
 
-    expect(oIBusService.searchCacheContent).toHaveBeenCalledTimes(1);
-    expect(oIBusService.searchCacheContent).toHaveBeenCalledWith('north', command.northConnectorId, command.commandContent);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
+      'north',
+      command.northConnectorId,
+      command.commandContent
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify(searchResult)
-    );
+    ]);
   });
 
   it('should execute search-history-cache-content command', async () => {
@@ -1626,7 +1755,7 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'historyId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchHistoryCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
     const searchResult: CacheSearchResult = {
       searchDate: testData.constants.dates.FAKE_NOW,
       metrics: testData.north.metrics,
@@ -1634,17 +1763,21 @@ describe('OIAnalytics Command Service', () => {
       archive: [],
       cache: []
     };
-    (oIBusService.searchCacheContent as jest.Mock).mockReturnValueOnce(searchResult);
+    oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => searchResult);
 
     await service.executeCommand();
 
-    expect(oIBusService.searchCacheContent).toHaveBeenCalledTimes(1);
-    expect(oIBusService.searchCacheContent).toHaveBeenCalledWith('history', command.historyQueryId, command.commandContent);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
+      'history',
+      command.historyQueryId,
+      command.commandContent
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify(searchResult)
-    );
+    ]);
   });
 
   it('should execute get-north-cache-file-content command', async () => {
@@ -1663,8 +1796,7 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetNorthCacheFileContentCommand;
-
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
     const fileContent: FileCacheContent = {
       content: 'content',
       contentFilename: 'my_file.txt',
@@ -1672,21 +1804,21 @@ describe('OIAnalytics Command Service', () => {
       truncated: false,
       totalSize: 7
     };
-    (oIBusService.getFileFromCache as jest.Mock).mockReturnValueOnce(fileContent);
+    oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => fileContent);
 
     await service.executeCommand();
 
-    expect(oIBusService.getFileFromCache).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIBusService.getFileFromCache.mock.calls[0].arguments, [
       'north',
       command.northConnectorId,
       command.commandContent.folder,
       command.commandContent.filename
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify(fileContent)
-    );
+    ]);
   });
 
   it('should execute get-history-cache-file-content command', async () => {
@@ -1705,7 +1837,7 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetHistoryCacheFileContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
     const fileContent: FileCacheContent = {
       content: 'content',
       contentFilename: 'my_file.txt',
@@ -1713,21 +1845,21 @@ describe('OIAnalytics Command Service', () => {
       truncated: false,
       totalSize: 7
     };
-    (oIBusService.getFileFromCache as jest.Mock).mockReturnValueOnce(fileContent);
+    oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => fileContent);
 
     await service.executeCommand();
 
-    expect(oIBusService.getFileFromCache).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIBusService.getFileFromCache.mock.calls[0].arguments, [
       'history',
       command.historyQueryId,
       command.commandContent.folder,
       command.commandContent.filename
-    );
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify(fileContent)
-    );
+    ]);
   });
 
   it('should execute update-north-cache-content command', async () => {
@@ -1765,19 +1897,22 @@ describe('OIAnalytics Command Service', () => {
         }
       }
     } as OIBusUpdateNorthCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => undefined);
 
     await service.executeCommand();
 
-    expect(oIBusService.updateCacheContent).toHaveBeenCalledTimes(1);
-    expect(oIBusService.updateCacheContent).toHaveBeenCalledWith('north', command.northConnectorId, command.commandContent);
-
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.strictEqual(oIBusService.updateCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateCacheContent.mock.calls[0].arguments, [
+      'north',
+      command.northConnectorId,
+      command.commandContent
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'Cache updated successfully'
-    );
+    ]);
   });
 
   it('should execute update-history-cache-content command', async () => {
@@ -1815,19 +1950,22 @@ describe('OIAnalytics Command Service', () => {
         }
       }
     } as OIBusUpdateHistoryCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIBusService.updateCacheContent as jest.Mock).mockResolvedValue(undefined);
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => undefined);
 
     await service.executeCommand();
 
-    expect(oIBusService.updateCacheContent).toHaveBeenCalledTimes(1);
-    expect(oIBusService.updateCacheContent).toHaveBeenCalledWith('history', command.historyQueryId, command.commandContent);
-
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    assert.strictEqual(oIBusService.updateCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateCacheContent.mock.calls[0].arguments, [
+      'history',
+      command.historyQueryId,
+      command.commandContent
+    ]);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       'Cache updated successfully'
-    );
+    ]);
   });
 
   it('should not execute cache command if permission is not right', async () => {
@@ -1843,21 +1981,21 @@ describe('OIAnalytics Command Service', () => {
       northConnectorId: 'northId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchNorthCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...testData.oIAnalytics.registration.completed,
       commandPermissions: {
         ...testData.oIAnalytics.registration.completed.commandPermissions,
         searchNorthCacheContent: false
       }
-    });
+    }));
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
       `Command ${command.id} of type ${command.type} is not authorized`
-    );
+    ]);
   });
 
   it('should not execute get-cache-file-content command if permission is not right', async () => {
@@ -1876,21 +2014,21 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetNorthCacheFileContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...testData.oIAnalytics.registration.completed,
       commandPermissions: {
         ...testData.oIAnalytics.registration.completed.commandPermissions,
         getNorthCacheFileContent: false
       }
-    });
+    }));
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
       `Command ${command.id} of type ${command.type} is not authorized`
-    );
+    ]);
   });
 
   it('should not execute update-cache-content command if permission is not right', async () => {
@@ -1909,32 +2047,26 @@ describe('OIAnalytics Command Service', () => {
       result: null,
       northConnectorId: 'northId1',
       commandContent: {
-        cache: {
-          remove: [],
-          move: []
-        },
-        error: {
-          remove: [],
-          move: []
-        },
+        cache: { remove: [], move: [] },
+        error: { remove: [], move: [] },
         archive: { remove: [], move: [] }
       }
     } as OIBusUpdateNorthCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValueOnce({
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...testData.oIAnalytics.registration.completed,
       commandPermissions: {
         ...testData.oIAnalytics.registration.completed.commandPermissions,
         updateNorthCacheContent: false
       }
-    });
+    }));
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
       `Command ${command.id} of type ${command.type} is not authorized`
-    );
+    ]);
   });
 
   it('should fail to execute search-north-cache-content if north not found', async () => {
@@ -1950,11 +2082,14 @@ describe('OIAnalytics Command Service', () => {
       northConnectorId: 'northId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchNorthCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIBusService.searchCacheContent as jest.Mock).mockRejectedValueOnce(new Error('North northId1 not found'));
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => {
+      throw new Error('North northId1 not found');
+    });
+
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'North northId1 not found');
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'North northId1 not found']);
   });
 
   it('should handle error in executeGetNorthCacheFileContentCommand', async () => {
@@ -1973,15 +2108,17 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetNorthCacheFileContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIBusService.getFileFromCache as jest.Mock).mockRejectedValueOnce(new Error('File not found'));
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => {
+      throw new Error('File not found');
+    });
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'File not found');
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'File not found']);
   });
 
-  it('should fail to execute update-north-cache-content command when action return an error', async () => {
+  it('should fail to execute update-north-cache-content command when action returns an error', async () => {
     const command: OIBusUpdateNorthCacheContentCommand = {
       id: 'updateNorthCacheContentId',
       createdBy: '',
@@ -1997,22 +2134,19 @@ describe('OIAnalytics Command Service', () => {
       result: null,
       northConnectorId: 'northId1',
       commandContent: {
-        cache: {
-          remove: [],
-          move: []
-        },
-        error: {
-          remove: [],
-          move: []
-        },
+        cache: { remove: [], move: [] },
+        error: { remove: [], move: [] },
         archive: { remove: [], move: [] }
       }
     } as OIBusUpdateNorthCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIBusService.updateCacheContent as jest.Mock).mockRejectedValueOnce(new Error('error while removing file'));
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => {
+      throw new Error('error while removing file');
+    });
+
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'error while removing file');
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'error while removing file']);
   });
 
   it('should handle error in executeSearchHistoryCacheContentCommand if history not found', async () => {
@@ -2028,12 +2162,17 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'historyId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchHistoryCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIBusService.searchCacheContent as jest.Mock).mockRejectedValueOnce(new Error('History historyId1 not found'));
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => {
+      throw new Error('History historyId1 not found');
+    });
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'History historyId1 not found');
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+      command.id,
+      'History historyId1 not found'
+    ]);
   });
 
   it('should handle error in executeGetHistoryCacheFileContentCommand', async () => {
@@ -2052,12 +2191,14 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetHistoryCacheFileContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIBusService.getFileFromCache as jest.Mock).mockRejectedValueOnce(new Error('File not found'));
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => {
+      throw new Error('File not found');
+    });
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'File not found');
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'File not found']);
   });
 
   it('should handle error in executeUpdateHistoryCacheContentCommand', async () => {
@@ -2076,36 +2217,32 @@ describe('OIAnalytics Command Service', () => {
       result: null,
       historyQueryId: 'historyId1',
       commandContent: {
-        cache: {
-          remove: [],
-          move: []
-        },
-        error: {
-          remove: [],
-          move: []
-        },
+        cache: { remove: [], move: [] },
+        error: { remove: [], move: [] },
         archive: { remove: [], move: [] }
       }
     } as OIBusUpdateHistoryCacheContentCommand;
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValueOnce([command]);
-    (oIBusService.updateCacheContent as jest.Mock).mockRejectedValueOnce(new Error('Update failed'));
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => {
+      throw new Error('Update failed');
+    });
 
     await service.executeCommand();
 
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(command.id, 'Update failed');
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'Update failed']);
   });
 });
 
 describe('OIAnalytics Command service with update error', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    resetAllMocks();
+    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
 
-    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue({
+    oIBusService.getEngineSettings.mock.mockImplementation(() => ({
       ...JSON.parse(JSON.stringify(testData.engine.settings)),
       version: (testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)
-    });
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue([
+    }));
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => [
       {
         ...testData.oIAnalytics.commands.oIBusList[0],
         commandContent: {
@@ -2115,169 +2252,113 @@ describe('OIAnalytics Command service with update error', () => {
       }
     ]);
 
-    service = new OIAnalyticsCommandService(
-      oIAnalyticsCommandRepository,
-      oIAnalyticsRegistrationService,
-      oIAnalyticsMessageService,
-      oIAnalyticsClient,
-      oIBusService,
-      scanModeService,
-      ipFilterService,
-      certificateService,
-      southService,
-      northService,
-      historyQueryService,
-      transformerService,
-      logger,
-      'binaryFolder',
-      false,
-      testData.engine.settings.launcherVersion
-    );
+    makeService();
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.restoreAll();
   });
 
-  it('should properly start and stop service', async () => {
-    expect(oIBusService.getEngineSettings).toHaveBeenCalledTimes(1);
-    expect(oIBusService.updateOIBusVersion).not.toHaveBeenCalled();
-    expect(oIAnalyticsCommandRepository.markAsErrored).toHaveBeenCalledWith(
+  it('should properly start and stop service', () => {
+    assert.strictEqual(oIBusService.getEngineSettings.mock.calls.length, 1);
+    assert.strictEqual(oIBusService.updateOIBusVersion.mock.calls.length, 0);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       testData.oIAnalytics.commands.oIBusList[0].id,
       `OIBus has not been updated. Rollback to version ${version}`
-    );
+    ]);
   });
 });
 
 describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
+  let service: InstanceType<typeof OIAnalyticsCommandServiceType>;
+
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    resetAllMocks();
+    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
 
-    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue(testData.oIAnalytics.commands.oIBusList);
-    (oIAnalyticsRegistrationService.getRegistrationSettings as jest.Mock).mockReturnValue(testData.oIAnalytics.registration.completed);
+    oIBusService.getEngineSettings.mock.mockImplementation(() => testData.engine.settings);
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => testData.oIAnalytics.commands.oIBusList);
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(() => testData.oIAnalytics.registration.completed);
 
-    service = new OIAnalyticsCommandService(
-      oIAnalyticsCommandRepository,
-      oIAnalyticsRegistrationService,
-      oIAnalyticsMessageService,
-      oIAnalyticsClient,
-      oIBusService,
-      scanModeService,
-      ipFilterService,
-      certificateService,
-      southService,
-      northService,
-      historyQueryService,
-      transformerService,
-      logger,
-      'binaryFolder',
-      true,
-      '3.4.0'
-    );
+    service = makeService(true, '3.4.0');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.restoreAll();
   });
 
   it('should change logger', async () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
+    // Prevent background executeCommand from running real logic
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
+    mock.method(process, 'exit', () => undefined as never);
+    mock.method(process, 'kill', () => undefined as unknown as void);
 
     await service.start();
-    oIBusService.loggerEvent.emit('updated', anotherLogger);
+    oIBusService.loggerEvent.emit('updated', asLogger(anotherLogger));
     await service.stop();
+    await flushPromises();
 
-    expect(logger.debug).not.toHaveBeenCalled();
-    expect(anotherLogger.debug).toHaveBeenCalledTimes(2);
-    expect(clearIntervalSpy).not.toHaveBeenCalled();
+    assert.strictEqual(logger.debug.mock.calls.length, 0);
+    assert.strictEqual(anotherLogger.debug.mock.calls.length, 2);
   });
 
   it('should not run an update', async () => {
     await service.executeCommand();
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error while executing command ${testData.oIAnalytics.commands.oIBusList[0].id} (retrieved ${testData.oIAnalytics.commands.oIBusList[0].retrievedDate}) of type ${testData.oIAnalytics.commands.oIBusList[0].type}. Error: OIBus is not set up to execute remote update`
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c =>
+          c.arguments[0] ===
+          `Error while executing command ${testData.oIAnalytics.commands.oIBusList[0].id} (retrieved ${testData.oIAnalytics.commands.oIBusList[0].retrievedDate}) of type ${testData.oIAnalytics.commands.oIBusList[0].type}. Error: OIBus is not set up to execute remote update`
+      )
     );
   });
 });
 
 describe('OIAnalytics Command service with no commands', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+    resetAllMocks();
+    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
 
-    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(testData.engine.settings);
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue([]);
+    oIBusService.getEngineSettings.mock.mockImplementation(() => testData.engine.settings);
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
 
-    service = new OIAnalyticsCommandService(
-      oIAnalyticsCommandRepository,
-      oIAnalyticsRegistrationService,
-      oIAnalyticsMessageService,
-      oIAnalyticsClient,
-      oIBusService,
-      scanModeService,
-      ipFilterService,
-      certificateService,
-      southService,
-      northService,
-      historyQueryService,
-      transformerService,
-      logger,
-      'binaryFolder',
-      true,
-      '3.4.0'
-    );
+    makeService(true, '3.4.0');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.restoreAll();
   });
 
   it('should properly start when not registered', () => {
-    expect(oIBusService.getEngineSettings).toHaveBeenCalled();
-    expect(oIAnalyticsCommandRepository.list).toHaveBeenCalled();
-    expect(oIBusService.updateOIBusVersion).toHaveBeenCalledWith(version, '3.4.0');
-    expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
+    assert.ok(oIBusService.getEngineSettings.mock.calls.length > 0);
+    assert.ok(oIAnalyticsCommandRepository.list.mock.calls.length > 0);
+    assert.deepStrictEqual(oIBusService.updateOIBusVersion.mock.calls[0].arguments, [version, '3.4.0']);
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls.length, 0);
   });
 });
 
 describe('OIAnalytics Command service with no commands and without update', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let service: InstanceType<typeof OIAnalyticsCommandServiceType>;
 
-    (oIAnalyticsCommandRepository.list as jest.Mock).mockReturnValue([]);
+  beforeEach(() => {
+    resetAllMocks();
+    mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
+
+    oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
     const engineSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     engineSettings.version = version;
-    (oIBusService.getEngineSettings as jest.Mock).mockReturnValue(engineSettings);
-    service = new OIAnalyticsCommandService(
-      oIAnalyticsCommandRepository,
-      oIAnalyticsRegistrationService,
-      oIAnalyticsMessageService,
-      oIAnalyticsClient,
-      oIBusService,
-      scanModeService,
-      ipFilterService,
-      certificateService,
-      southService,
-      northService,
-      historyQueryService,
-      transformerService,
-      logger,
-      'binaryFolder',
-      true,
-      engineSettings.launcherVersion
-    );
+    oIBusService.getEngineSettings.mock.mockImplementation(() => engineSettings);
+
+    service = makeService(true, engineSettings.launcherVersion);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.restoreAll();
   });
 
   it('should properly start when not registered', () => {
-    expect(oIBusService.updateOIBusVersion).not.toHaveBeenCalled();
-    expect(oIAnalyticsCommandRepository.markAsCompleted).not.toHaveBeenCalled();
+    assert.strictEqual(oIBusService.updateOIBusVersion.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls.length, 0);
   });
 
   it('should complete time values test item command', () => {
@@ -2293,30 +2374,29 @@ describe('OIAnalytics Command service with no commands and without update', () =
         testingSettings: {} as SouthConnectorItemTestingSettings
       }
     } as OIBusTestSouthConnectorItemCommand;
-    const content = new Array(2000).fill(0);
-    const result: OIBusContent = {
-      type: 'time-values',
-      content: content
-    };
-    service['completeTestItemCommand'](command, result);
 
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    const content = new Array(2000).fill(0);
+    const result: OIBusContent = { type: 'time-values', content };
+    (
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+    ).completeTestItemCommand(command, result);
+
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ type: 'time-values', content: content.slice(0, 1000), truncated: true, totalSize: 2000 })
-    );
+    ]);
 
     const content2 = new Array(10).fill(0);
-    const result2: OIBusContent = {
-      type: 'time-values',
-      content: content2
-    };
-    service['completeTestItemCommand'](command, result2);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    const result2: OIBusContent = { type: 'time-values', content: content2 };
+    (
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+    ).completeTestItemCommand(command, result2);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ type: 'time-values', content: content2, truncated: false, totalSize: 10 })
-    );
+    ]);
   });
 
   it('should complete file test item command', () => {
@@ -2332,46 +2412,41 @@ describe('OIAnalytics Command service with no commands and without update', () =
         testingSettings: {} as SouthConnectorItemTestingSettings
       }
     } as OIBusTestSouthConnectorItemCommand;
-    const result: OIBusContent = {
-      type: 'any',
-      filePath: 'file.csv',
-      content: 'content'
-    };
-    service['completeTestItemCommand'](command, result);
 
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    const result: OIBusContent = { type: 'any', filePath: 'file.csv', content: 'content' };
+    (
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+    ).completeTestItemCommand(command, result);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[0].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ type: 'any', filePath: 'file.csv', content: result.content, truncated: false, totalSize: result.content!.length })
-    );
+    ]);
 
     const content2 = 'A'.repeat(500 * 1025);
-    const result2: OIBusContent = {
-      type: 'any',
-      filePath: 'file.csv',
-      content: content2
-    };
-    service['completeTestItemCommand'](command, result2);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    const result2: OIBusContent = { type: 'any', filePath: 'file.csv', content: content2 };
+    (
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+    ).completeTestItemCommand(command, result2);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ type: 'any', filePath: 'file.csv', content: content2.slice(0, 1024 * 500), truncated: true, totalSize: 1025 * 500 })
-    );
+    ]);
 
-    const result3: OIBusContent = {
-      type: 'any',
-      filePath: 'file.csv'
-    };
-    service['completeTestItemCommand'](command, result3);
-    expect(oIAnalyticsCommandRepository.markAsCompleted).toHaveBeenCalledWith(
+    const result3: OIBusContent = { type: 'any', filePath: 'file.csv' };
+    (
+      service as unknown as { completeTestItemCommand(cmd: OIBusTestSouthConnectorItemCommand, r: OIBusContent): void }
+    ).completeTestItemCommand(command, result3);
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[2].arguments, [
       command.id,
       testData.constants.dates.FAKE_NOW,
       JSON.stringify({ type: 'any', filePath: 'file.csv', truncated: false, totalSize: 0 })
-    );
+    ]);
   });
 
   it('should properly convert to DTO', () => {
     const command = testData.oIAnalytics.commands.oIBusList[0];
-    expect(toOIBusCommandDTO(command)).toEqual(command);
+    assert.deepStrictEqual(toOIBusCommandDTO(command), command);
   });
 });

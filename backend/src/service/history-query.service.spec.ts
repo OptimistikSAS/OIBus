@@ -1,85 +1,176 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
+import testData from '../tests/utils/test-data';
+import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
-import HistoryQueryService, { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from './history-query.service';
-import { toScanModeDTO } from './scan-mode.service';
-import { toTransformerDTO } from './transformer.service';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryRepositoryMock from '../tests/__mocks__/repository/config/history-query-repository.mock';
-import LogRepository from '../repository/logs/log.repository';
 import LogRepositoryMock from '../tests/__mocks__/repository/log/log-repository.mock';
-import SouthService, { southManifestList } from './south.service';
-import NorthService, { northManifestList } from './north.service';
-import pino from 'pino';
+import ScanModeRepositoryMock from '../tests/__mocks__/repository/config/scan-mode-repository.mock';
 import SouthServiceMock from '../tests/__mocks__/service/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/service/north-service.mock';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianalytics-message-service.mock';
-import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import HistoryQueryMetricsRepositoryMock from '../tests/__mocks__/repository/metrics/history-query-metrics-repository.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import testData from '../tests/utils/test-data';
-import csv from 'papaparse';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/north-connector-repository.mock';
-import TransformerService from './transformer.service';
+import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
-import DataStreamEngine from '../engine/data-stream-engine';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import { TransformerDTO } from '../../shared/model/transformer.model';
-import { stringToBoolean } from './utils';
-import { HistoryQueryEntityLight } from '../model/histor-query.model';
-import { NotFoundError, OIBusValidationError } from '../model/types';
+import { southManifestList } from './south.service';
+import { northManifestList } from './north.service';
 import manifest from '../south/south-mssql/manifest';
-import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
-import { HistoryTransformerWithOptions } from '../model/transformer.model';
+import type HistoryQueryServiceType from './history-query.service';
+import type {
+  toHistoryQueryDTO as toHistoryQueryDTOType,
+  toHistoryQueryItemDTO as toHistoryQueryItemDTOType,
+  toHistoryQueryLightDTO as toHistoryQueryLightDTOType
+} from './history-query.service';
+import type { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
+import type { HistoryQueryEntityLight } from '../model/histor-query.model';
+import type { TransformerDTO } from '../../shared/model/transformer.model';
+import type { HistoryTransformerWithOptions } from '../model/transformer.model';
+import { NotFoundError, OIBusValidationError } from '../model/types';
+import { toScanModeDTO } from './scan-mode.service';
 
-jest.mock('papaparse');
-jest.mock('node:fs/promises');
-jest.mock('../web-server/controllers/validators/joi.validator');
-jest.mock('./utils');
-jest.mock('./encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
-jest.mock('./transformer.service', () => ({
-  toTransformerDTO: jest.fn().mockImplementation(transformer => transformer)
-}));
+const nodeRequire = createRequire(import.meta.url);
 
-const validator = new JoiValidator();
-const logger: pino.Logger = new PinoLogger();
-const historyQueryRepository: HistoryQueryRepository = new HistoryQueryRepositoryMock();
-const northConnectorRepository: NorthConnectorRepository = new NorthConnectorRepositoryMock();
-const southConnectorRepository: SouthConnectorRepository = new SouthConnectorRepositoryMock();
-const scanModeRepository: ScanModeRepository = new ScanModeRepositoryMock();
-const logRepository: LogRepository = new LogRepositoryMock();
-const historyQueryMetricsRepository: HistoryQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
-const southService: SouthService = new SouthServiceMock();
-const northService: NorthService = new NorthServiceMock();
-const oIAnalyticsMessageService: OIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
-const engine: DataStreamEngine = new DataStreamEngineMock(logger);
-const transformerService: TransformerService = new TransformerServiceMock();
+const logger = new PinoLogger();
+const historyQueryRepository = new HistoryQueryRepositoryMock();
+const northConnectorRepository = new NorthConnectorRepositoryMock();
+const southConnectorRepository = new SouthConnectorRepositoryMock();
+const scanModeRepository = new ScanModeRepositoryMock();
+const logRepository = new LogRepositoryMock();
+const historyQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
+const southService = new SouthServiceMock();
+const northService = new NorthServiceMock();
+const oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
+const engine = new DataStreamEngineMock(logger);
+const transformerService = new TransformerServiceMock();
 
-let service: HistoryQueryService;
+const encryptionService = new EncryptionServiceMock('', '');
+
+const validatorMock = {
+  validateSettings: mock.fn(async () => undefined),
+  validate: mock.fn(async () => undefined)
+};
+
+const mockPapaparse = {
+  parse: mock.fn(() => ({ meta: { delimiter: ',' }, data: [] }))
+};
+
+const mockUtils = {
+  stringToBoolean: mock.fn(() => true),
+  checkScanMode: mock.fn(),
+  checkGroups: mock.fn()
+};
+
+const mockTransformerService = {
+  toTransformerDTO: mock.fn((transformer: unknown) => transformer)
+};
+
+let HistoryQueryService: typeof HistoryQueryServiceType;
+let toHistoryQueryDTO: typeof toHistoryQueryDTOType;
+let toHistoryQueryItemDTO: typeof toHistoryQueryItemDTOType;
+let toHistoryQueryLightDTO: typeof toHistoryQueryLightDTOType;
+
 describe('History Query service', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  let service: InstanceType<typeof HistoryQueryServiceType>;
 
-    (northService.getManifest as jest.Mock).mockReturnValue(northManifestList[4]); // file-writer
-    (northService.findById as jest.Mock).mockReturnValue(testData.north.list[0]);
-    (southService.getManifest as jest.Mock).mockReturnValue(southManifestList[0]); // folder-scanner
-    (southService.findById as jest.Mock).mockReturnValue(testData.south.list[0]);
-    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (historyQueryRepository.findItemById as jest.Mock).mockReturnValue(testData.historyQueries.list[0].items[0]);
-    (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValue([]);
-    (transformerService.findAll as jest.Mock).mockReturnValue(testData.transformers.list);
-    (scanModeRepository.findAll as jest.Mock).mockReturnValue(testData.scanMode.list);
-    (stringToBoolean as jest.Mock).mockReturnValue(true);
+  before(() => {
+    mockModule(nodeRequire, 'papaparse', mockPapaparse);
+    mockModule(nodeRequire, '../service/utils', mockUtils);
+    mockModule(nodeRequire, './utils', mockUtils);
+    mockModule(nodeRequire, '../web-server/controllers/validators/joi.validator', {
+      default: class {
+        validateSettings = validatorMock.validateSettings;
+        validate = validatorMock.validate;
+      }
+    });
+    mockModule(nodeRequire, './encryption.service', {
+      encryptionService
+    });
+    mockModule(nodeRequire, './transformer.service', {
+      default: class {},
+      toTransformerDTO: mockTransformerService.toTransformerDTO
+    });
+
+    const mod = reloadModule<{
+      default: typeof HistoryQueryServiceType;
+      toHistoryQueryDTO: typeof toHistoryQueryDTOType;
+      toHistoryQueryItemDTO: typeof toHistoryQueryItemDTOType;
+      toHistoryQueryLightDTO: typeof toHistoryQueryLightDTOType;
+    }>(nodeRequire, './history-query.service');
+    HistoryQueryService = mod.default;
+    toHistoryQueryDTO = mod.toHistoryQueryDTO;
+    toHistoryQueryItemDTO = mod.toHistoryQueryItemDTO;
+    toHistoryQueryLightDTO = mod.toHistoryQueryLightDTO;
+  });
+
+  beforeEach(() => {
+    // Reset all mock calls
+    historyQueryRepository.findAllHistoriesLight.mock.resetCalls();
+    historyQueryRepository.findHistoryById.mock.resetCalls();
+    historyQueryRepository.findItemById.mock.resetCalls();
+    historyQueryRepository.saveHistory.mock.resetCalls();
+    historyQueryRepository.updateHistoryStatus.mock.resetCalls();
+    historyQueryRepository.deleteHistory.mock.resetCalls();
+    historyQueryRepository.saveItem.mock.resetCalls();
+    historyQueryRepository.saveAllItems.mock.resetCalls();
+    historyQueryRepository.deleteItem.mock.resetCalls();
+    historyQueryRepository.deleteAllItemsByHistory.mock.resetCalls();
+    historyQueryRepository.enableItem.mock.resetCalls();
+    historyQueryRepository.disableItem.mock.resetCalls();
+    historyQueryRepository.findAllItemsForHistory.mock.resetCalls();
+    historyQueryRepository.searchItems.mock.resetCalls();
+    historyQueryRepository.addOrEditTransformer.mock.resetCalls();
+    historyQueryRepository.removeTransformer.mock.resetCalls();
+    historyQueryMetricsRepository.removeMetrics.mock.resetCalls();
+    oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.resetCalls();
+    engine.createHistoryQuery.mock.resetCalls();
+    engine.reloadHistoryQuery.mock.resetCalls();
+    engine.stopHistoryQuery.mock.resetCalls();
+    engine.deleteHistoryQuery.mock.resetCalls();
+    engine.getHistoryQuerySSE.mock.resetCalls();
+    engine.getHistoryMetrics.mock.resetCalls();
+    northService.getManifest.mock.resetCalls();
+    northService.findById.mock.resetCalls();
+    northService.testNorth.mock.resetCalls();
+    southService.getManifest.mock.resetCalls();
+    southService.findById.mock.resetCalls();
+    southService.testSouth.mock.resetCalls();
+    southService.testItem.mock.resetCalls();
+    transformerService.findAll.mock.resetCalls();
+    scanModeRepository.findAll.mock.resetCalls();
+    validatorMock.validateSettings.mock.resetCalls();
+    mockPapaparse.parse.mock.resetCalls();
+    mockUtils.stringToBoolean.mock.resetCalls();
+    mockUtils.checkScanMode.mock.resetCalls();
+    logRepository.deleteLogsByScopeId.mock.resetCalls();
+
+    // Default implementations
+    northService.getManifest.mock.mockImplementation(() => northManifestList[4]); // file-writer
+    northService.findById.mock.mockImplementation(() => testData.north.list[0]);
+    southService.getManifest.mock.mockImplementation(() => southManifestList[0]); // folder-scanner
+    southService.findById.mock.mockImplementation(() => testData.south.list[0]);
+    historyQueryRepository.findHistoryById.mock.mockImplementation(() => testData.historyQueries.list[0]);
+    historyQueryRepository.findItemById.mock.mockImplementation(() => testData.historyQueries.list[0].items[0]);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => []);
+    transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
+    scanModeRepository.findAll.mock.mockImplementation(() => testData.scanMode.list);
+    mockUtils.stringToBoolean.mock.mockImplementation(() => true);
+    mockUtils.checkScanMode.mock.mockImplementation(() => testData.scanMode.list[0]);
+    validatorMock.validateSettings.mock.mockImplementation(async () => undefined);
+    encryptionService.encryptConnectorSecrets.mock.mockImplementation((secrets: unknown) => secrets);
+    encryptionService.decryptConnectorSecrets.mock.mockImplementation((secrets: unknown) => secrets);
+    encryptionService.filterSecrets.mock.mockImplementation((secrets: unknown) => secrets);
 
     service = new HistoryQueryService(
-      validator,
+      validatorMock as unknown as InstanceType<typeof HistoryQueryServiceType>['validator' extends keyof InstanceType<
+        typeof HistoryQueryServiceType
+      >
+        ? never
+        : never],
       historyQueryRepository,
       northConnectorRepository,
       southConnectorRepository,
@@ -94,78 +185,85 @@ describe('History Query service', () => {
     );
   });
 
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
   it('should get all History queries', () => {
-    (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValueOnce([]);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementationOnce(() => []);
     const result = service.list();
-    expect(historyQueryRepository.findAllHistoriesLight).toHaveBeenCalledTimes(1);
-    expect(result).toEqual([]);
+    assert.strictEqual(historyQueryRepository.findAllHistoriesLight.mock.calls.length, 1);
+    assert.deepStrictEqual(result, []);
   });
 
   it('should get a History query', () => {
     const result = service.findById(testData.historyQueries.list[0].id);
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledTimes(1);
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(result).toEqual(testData.historyQueries.list[0]);
+    assert.strictEqual(historyQueryRepository.findHistoryById.mock.calls.length, 1);
+    assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.deepStrictEqual(result, testData.historyQueries.list[0]);
   });
 
   it('should throw not found error if history query does not exist', () => {
-    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValueOnce(null);
+    historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => null);
 
-    expect(() => service.findById(testData.historyQueries.list[0].id)).toThrow(
+    assert.throws(
+      () => service.findById(testData.historyQueries.list[0].id),
       new NotFoundError(`History query "${testData.historyQueries.list[0].id}" not found`)
     );
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should create a history query', async () => {
-    service.retrieveSecrets = jest.fn();
+    service.retrieveSecrets = mock.fn(() => null);
 
     await service.create(testData.historyQueries.command, testData.south.list[0].id, undefined, undefined, 'userTest');
-    expect(service.retrieveSecrets).toHaveBeenCalledTimes(1);
-    expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.createHistoryQuery).toHaveBeenCalledTimes(1);
+    assert.strictEqual((service.retrieveSecrets as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.strictEqual(engine.createHistoryQuery.mock.calls.length, 1);
   });
 
   it('should fail to create a history query when transformer is not found', async () => {
-    (transformerService.findAll as jest.Mock).mockReturnValueOnce([]);
-    service.retrieveSecrets = jest.fn();
+    transformerService.findAll.mock.mockImplementationOnce(() => []);
+    service.retrieveSecrets = mock.fn(() => null);
 
-    await expect(service.create(testData.historyQueries.command, undefined, undefined, undefined, 'userTest')).rejects.toThrow(
-      `Could not find OIBus transformer "${testData.transformers.list[0].id}"`
+    await assert.rejects(
+      async () => service.create(testData.historyQueries.command, undefined, undefined, undefined, 'userTest'),
+      new Error(`Could not find OIBus transformer "${testData.transformers.list[0].id}"`)
     );
   });
 
   it('should not create a history query with duplicate name', async () => {
-    service.retrieveSecrets = jest.fn();
-    (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValue([
+    service.retrieveSecrets = mock.fn(() => null);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => [
       { id: 'existing-id', name: testData.historyQueries.command.name }
     ]);
 
-    await expect(service.create(testData.historyQueries.command, undefined, undefined, undefined, 'userTest')).rejects.toThrow(
+    await assert.rejects(
+      async () => service.create(testData.historyQueries.command, undefined, undefined, undefined, 'userTest'),
       new OIBusValidationError(`History query name "${testData.historyQueries.command.name}" already exists`)
     );
   });
 
   it('should update a history query', async () => {
-    (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValue(testData.historyQueries.list);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.list);
     await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false, 'userTest');
 
-    expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.strictEqual(engine.reloadHistoryQuery.mock.calls.length, 1);
   });
 
   it('should update a history query without changing the name', async () => {
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.name = testData.historyQueries.list[0].name;
-    (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockClear();
+    historyQueryRepository.findAllHistoriesLight.mock.resetCalls();
 
     await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
 
-    expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
-    expect(historyQueryRepository.findAllHistoriesLight).not.toHaveBeenCalled();
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
+    assert.strictEqual(engine.reloadHistoryQuery.mock.calls.length, 1);
+    assert.strictEqual(historyQueryRepository.findAllHistoriesLight.mock.calls.length, 0);
   });
 
   it('should update a history query and preserve createdBy for existing items', async () => {
@@ -174,7 +272,7 @@ describe('History Query service', () => {
 
     await service.update(testData.historyQueries.list[0].id, command, false, 'user1');
 
-    expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
   });
 
   it('should update a history query with an item id not found in previous settings', async () => {
@@ -183,26 +281,27 @@ describe('History Query service', () => {
 
     await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
 
-    expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
   });
 
   it('should update a history query with a new unique name', async () => {
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.name = 'Updated History Query Name';
-    (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValue(testData.historyQueries.list);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.list);
 
     await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
 
-    expect(historyQueryRepository.saveHistory).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledTimes(1);
+    assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
+    assert.strictEqual(engine.reloadHistoryQuery.mock.calls.length, 1);
   });
 
   it('should not update a history query with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.name = 'Duplicate Name';
-    (historyQueryRepository.findAllHistoriesLight as jest.Mock).mockReturnValue([{ id: 'other-id', name: 'Duplicate Name' }]);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
 
-    await expect(service.update(testData.historyQueries.list[0].id, command, false, 'userTest')).rejects.toThrow(
+    await assert.rejects(
+      async () => service.update(testData.historyQueries.list[0].id, command, false, 'userTest'),
       new OIBusValidationError(`History query name "Duplicate Name" already exists`)
     );
   });
@@ -212,7 +311,8 @@ describe('History Query service', () => {
     command.name = 'New Name';
     command.northTransformers = [{ transformerId: 'bad-id' }];
 
-    await expect(service.update(testData.historyQueries.list[0].id, command, false, 'userTest')).rejects.toThrow(
+    await assert.rejects(
+      async () => service.update(testData.historyQueries.list[0].id, command, false, 'userTest'),
       new NotFoundError(`Could not find OIBus transformer "bad-id"`)
     );
   });
@@ -220,72 +320,102 @@ describe('History Query service', () => {
   it('should delete history query', async () => {
     await service.delete(testData.historyQueries.list[0].id);
 
-    expect(engine.deleteHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0]);
-    expect(historyQueryRepository.deleteHistory).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(historyQueryMetricsRepository.removeMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
+    assert.deepStrictEqual(engine.deleteHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0]]);
+    assert.deepStrictEqual(historyQueryRepository.deleteHistory.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.deepStrictEqual(historyQueryMetricsRepository.removeMetrics.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
   });
 
   it('should start history query', async () => {
     await service.start(testData.historyQueries.list[0].id);
 
-    expect(historyQueryRepository.updateHistoryStatus).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'RUNNING');
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    assert.deepStrictEqual(historyQueryRepository.updateHistoryStatus.mock.calls[0].arguments, [
+      testData.historyQueries.list[0].id,
+      'RUNNING'
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should pause history query', async () => {
     await service.pause(testData.historyQueries.list[0].id);
 
-    expect(historyQueryRepository.updateHistoryStatus).toHaveBeenCalledWith(testData.historyQueries.list[0].id, 'PAUSED');
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    assert.deepStrictEqual(historyQueryRepository.updateHistoryStatus.mock.calls[0].arguments, [
+      testData.historyQueries.list[0].id,
+      'PAUSED'
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.stopHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should get history query data stream', () => {
     service.getHistoryDataStream(testData.historyQueries.list[0].id);
-    expect(engine.getHistoryQuerySSE).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    assert.deepStrictEqual(engine.getHistoryQuerySSE.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should get history query metric', () => {
     service.getHistoryMetric(testData.historyQueries.list[0].id);
-    expect(engine.getHistoryMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    assert.deepStrictEqual(engine.getHistoryMetrics.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should test north connection in creation mode', async () => {
     await service.testNorth('create', testData.north.command.type, undefined, testData.north.command.settings);
 
-    expect(northService.testNorth).toHaveBeenCalledWith('history', testData.north.command.type, testData.north.command.settings);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
+      'history',
+      testData.north.command.type,
+      testData.north.command.settings
+    ]);
   });
 
   it('should test north connection in creation mode and retrieve secrets', async () => {
     await service.testNorth('create', testData.north.command.type, testData.north.list[0].id, testData.north.command.settings);
 
-    expect(northService.testNorth).toHaveBeenCalledWith('history', testData.north.command.type, testData.north.command.settings);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
+      'history',
+      testData.north.command.type,
+      testData.north.command.settings
+    ]);
   });
 
   it('should test north connection in edit mode', async () => {
     await service.testNorth(testData.historyQueries.list[0].id, testData.north.command.type, undefined, testData.north.command.settings);
 
-    expect(northService.testNorth).toHaveBeenCalledWith('history', testData.north.command.type, testData.north.command.settings);
+    assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
+      'history',
+      testData.north.command.type,
+      testData.north.command.settings
+    ]);
   });
 
   it('should test south connection in creation mode', async () => {
     await service.testSouth('create', testData.south.command.type, undefined, testData.south.command.settings);
 
-    expect(southService.testSouth).toHaveBeenCalledWith('history', testData.south.command.type, testData.south.command.settings);
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
   });
 
   it('should test south connection in creation mode and retrieve secrets', async () => {
     await service.testSouth('create', testData.south.command.type, testData.south.list[0].id, testData.south.command.settings);
 
-    expect(southService.testSouth).toHaveBeenCalledWith('history', testData.south.command.type, testData.south.command.settings);
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
   });
 
   it('should test south connection in edit mode', async () => {
     await service.testSouth(testData.historyQueries.list[0].id, testData.south.command.type, undefined, testData.south.command.settings);
 
-    expect(southService.testSouth).toHaveBeenCalledWith('history', testData.south.command.type, testData.south.command.settings);
+    assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
+      'history',
+      testData.south.command.type,
+      testData.south.command.settings
+    ]);
   });
 
   it('should test item in creation mode', async () => {
@@ -299,14 +429,14 @@ describe('History Query service', () => {
       testData.south.itemTestingSettings
     );
 
-    expect(southService.testItem).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings
-    );
+    ]);
   });
 
   it('should test item in creation mode and retrieve secrets', async () => {
@@ -320,14 +450,14 @@ describe('History Query service', () => {
       testData.south.itemTestingSettings
     );
 
-    expect(southService.testItem).toHaveBeenCalledWith(
+    assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
       'history',
       testData.south.command.type,
       testData.south.itemCommand.name,
       testData.south.command.settings,
       testData.south.itemCommand.settings,
       testData.south.itemTestingSettings
-    );
+    ]);
   });
 
   it('should test item in edit mode', async () => {
@@ -341,52 +471,52 @@ describe('History Query service', () => {
       testData.south.itemTestingSettings
     );
 
-    expect(southService.testItem).toHaveBeenCalled();
+    assert.strictEqual(southService.testItem.mock.calls.length, 1);
   });
 
   it('should list items', async () => {
     service.listItems(testData.historyQueries.list[0].id);
-    expect(historyQueryRepository.findAllItemsForHistory).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    assert.deepStrictEqual(historyQueryRepository.findAllItemsForHistory.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should search items', async () => {
     service.searchItems(testData.historyQueries.list[0].id, { name: undefined, enabled: undefined, page: 0 });
-    expect(historyQueryRepository.searchItems).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      name: undefined,
-      enabled: undefined,
-      page: 0
-    });
+    assert.deepStrictEqual(historyQueryRepository.searchItems.mock.calls[0].arguments, [
+      testData.historyQueries.list[0].id,
+      { name: undefined, enabled: undefined, page: 0 }
+    ]);
   });
 
   it('should find an item', async () => {
     service.findItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id);
 
-    expect(historyQueryRepository.findItemById).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryRepository.findItemById.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
-    );
+    ]);
   });
 
   it('should throw not found error if item does not exist', async () => {
-    (historyQueryRepository.findItemById as jest.Mock).mockReturnValueOnce(null);
+    historyQueryRepository.findItemById.mock.mockImplementationOnce(() => null);
 
-    expect(() => service.findItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id)).toThrow(
+    assert.throws(
+      () => service.findItemById(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id),
       new NotFoundError(`Item "${testData.historyQueries.list[0].items[0].id}" not found`)
     );
 
-    expect(historyQueryRepository.findItemById).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryRepository.findItemById.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
-    );
+    ]);
   });
 
   it('should create an item', async () => {
     await service.createItem(testData.historyQueries.list[0].id, testData.historyQueries.itemCommand, 'userTest');
 
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(historyQueryRepository.saveItem).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.strictEqual(historyQueryRepository.saveItem.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should update an item', async () => {
@@ -397,115 +527,124 @@ describe('History Query service', () => {
       'userTest'
     );
 
-    expect(historyQueryRepository.findItemById).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryRepository.findItemById.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
-    );
-    expect(historyQueryRepository.saveItem).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    ]);
+    assert.strictEqual(historyQueryRepository.saveItem.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should enable an item', async () => {
     await service.enableItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id);
 
-    expect(historyQueryRepository.findItemById).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryRepository.findItemById.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
-    );
-    expect(historyQueryRepository.enableItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    ]);
+    assert.deepStrictEqual(historyQueryRepository.enableItem.mock.calls[0].arguments, [testData.historyQueries.list[0].items[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should disable an item', async () => {
     await service.disableItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id);
 
-    expect(historyQueryRepository.findItemById).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryRepository.findItemById.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
-    );
-    expect(historyQueryRepository.disableItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    ]);
+    assert.deepStrictEqual(historyQueryRepository.disableItem.mock.calls[0].arguments, [testData.historyQueries.list[0].items[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should enable multiple history query items', async () => {
     const historyQueryId = testData.historyQueries.list[0].id;
     const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
 
-    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValue(testData.historyQueries.list[0]);
-    (historyQueryRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
+    historyQueryRepository.findHistoryById.mock.mockImplementation(() => testData.historyQueries.list[0]);
+    historyQueryRepository.findItemById.mock.mockImplementation(
+      seq(
+        () => testData.historyQueries.list[0].items[0],
+        () => testData.historyQueries.list[0].items[1]
+      )
+    );
 
     await service.enableItems(historyQueryId, itemIds);
 
-    expect(historyQueryRepository.enableItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
-    expect(historyQueryRepository.enableItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    assert.deepStrictEqual(historyQueryRepository.enableItem.mock.calls[0].arguments, [testData.historyQueries.list[0].items[0].id]);
+    assert.deepStrictEqual(historyQueryRepository.enableItem.mock.calls[1].arguments, [testData.historyQueries.list[0].items[1].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should disable multiple history query items', async () => {
     const historyQueryId = testData.historyQueries.list[0].id;
     const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
 
-    (historyQueryRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
+    historyQueryRepository.findItemById.mock.mockImplementation(
+      seq(
+        () => testData.historyQueries.list[0].items[0],
+        () => testData.historyQueries.list[0].items[1]
+      )
+    );
 
     await service.disableItems(historyQueryId, itemIds);
 
-    expect(historyQueryRepository.disableItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[0].id);
-    expect(historyQueryRepository.disableItem).toHaveBeenCalledWith(testData.historyQueries.list[0].items[1].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    assert.deepStrictEqual(historyQueryRepository.disableItem.mock.calls[0].arguments, [testData.historyQueries.list[0].items[0].id]);
+    assert.deepStrictEqual(historyQueryRepository.disableItem.mock.calls[1].arguments, [testData.historyQueries.list[0].items[1].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should delete an item', async () => {
     await service.deleteItem(testData.historyQueries.list[0].id, testData.historyQueries.list[0].items[0].id);
 
-    expect(historyQueryRepository.findItemById).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryRepository.findItemById.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
-    );
-    expect(historyQueryRepository.deleteItem).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(historyQueryRepository.deleteItem.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
-    );
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should delete multiple history query items', async () => {
     const historyQueryId = testData.historyQueries.list[0].id;
     const itemIds = [testData.historyQueries.list[0].items[0].id, testData.historyQueries.list[0].items[1].id];
 
-    (historyQueryRepository.findItemById as jest.Mock)
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[0])
-      .mockReturnValueOnce(testData.historyQueries.list[0].items[1]);
+    historyQueryRepository.findItemById.mock.mockImplementation(
+      seq(
+        () => testData.historyQueries.list[0].items[0],
+        () => testData.historyQueries.list[0].items[1]
+      )
+    );
 
     await service.deleteItems(historyQueryId, itemIds);
 
-    expect(historyQueryRepository.deleteItem).toHaveBeenCalledWith(
+    assert.deepStrictEqual(historyQueryRepository.deleteItem.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[0].id
-    );
-    expect(historyQueryRepository.deleteItem).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(historyQueryRepository.deleteItem.mock.calls[1].arguments, [
       testData.historyQueries.list[0].id,
       testData.historyQueries.list[0].items[1].id
-    );
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should delete all items', async () => {
     await service.deleteAllItems(testData.historyQueries.list[0].id);
 
-    expect(historyQueryRepository.deleteAllItemsByHistory).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], true);
+    assert.deepStrictEqual(historyQueryRepository.deleteAllItemsByHistory.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], true]);
   });
 
   it('should properly check items', async () => {
@@ -544,12 +683,12 @@ describe('History Query service', () => {
         settings_minAge: 100
       }
     ];
-    (csv.parse as jest.Mock).mockReturnValueOnce({
+    mockPapaparse.parse.mock.mockImplementationOnce(() => ({
       meta: { delimiter: ',' },
       data: csvData
-    });
-    (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
-      throw new Error(`validation error`);
+    }));
+    validatorMock.validateSettings.mock.mockImplementationOnce(async () => {
+      throw new Error('validation error');
     });
 
     const result = await service.checkImportItems(
@@ -558,7 +697,7 @@ describe('History Query service', () => {
       ',',
       testData.historyQueries.list[0].items as unknown as Array<HistoryQueryItemDTO>
     );
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       items: [
         {
           id: '',
@@ -612,7 +751,7 @@ describe('History Query service', () => {
   });
 
   it('should properly check items with array or object', async () => {
-    (southService.getManifest as jest.Mock).mockReturnValueOnce(manifest);
+    southService.getManifest.mock.mockImplementationOnce(() => manifest);
     const csvData = [
       {
         name: 'item',
@@ -629,17 +768,17 @@ describe('History Query service', () => {
         })
       }
     ];
-    (csv.parse as jest.Mock).mockReturnValueOnce({
+    mockPapaparse.parse.mock.mockImplementationOnce(() => ({
       meta: { delimiter: ',' },
       data: csvData
-    });
+    }));
     const result = await service.checkImportItems(
       testData.historyQueries.command.southType,
       'file content',
       ',',
       testData.historyQueries.list[1].items as unknown as Array<HistoryQueryItemDTO>
     );
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       items: [
         {
           id: '',
@@ -664,12 +803,13 @@ describe('History Query service', () => {
   });
 
   it('should throw error if delimiter does not match', async () => {
-    (csv.parse as jest.Mock).mockReturnValueOnce({
+    mockPapaparse.parse.mock.mockImplementationOnce(() => ({
       meta: { delimiter: ';' },
       data: []
-    });
+    }));
 
-    await expect(service.checkImportItems(testData.historyQueries.command.southType, '', ',', [])).rejects.toThrow(
+    await assert.rejects(
+      async () => service.checkImportItems(testData.historyQueries.command.southType, '', ',', []),
       new OIBusValidationError(`The entered delimiter "," does not correspond to the file delimiter ";"`)
     );
   });
@@ -677,9 +817,9 @@ describe('History Query service', () => {
   it('should import items', async () => {
     await service.importItems(testData.historyQueries.list[0].id, [testData.historyQueries.itemCommand], 'userTest');
 
-    expect(historyQueryRepository.saveAllItems).toHaveBeenCalledTimes(1);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalledTimes(1);
-    expect(engine.reloadHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0], false);
+    assert.strictEqual(historyQueryRepository.saveAllItems.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.reloadHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0], false]);
   });
 
   it('should add or edit transformer', async () => {
@@ -693,24 +833,29 @@ describe('History Query service', () => {
 
     await service.addOrEditTransformer(testData.historyQueries.list[0].id, transformerWithOptions);
 
-    expect(historyQueryRepository.addOrEditTransformer).toHaveBeenCalledWith(testData.historyQueries.list[0].id, transformerWithOptions);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    assert.deepStrictEqual(historyQueryRepository.addOrEditTransformer.mock.calls[0].arguments, [
+      testData.historyQueries.list[0].id,
+      transformerWithOptions
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.stopHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should remove transformer', async () => {
     await service.removeTransformer(testData.historyQueries.list[0].id, testData.historyQueries.list[0].northTransformers[0].id);
 
-    expect(historyQueryRepository.removeTransformer).toHaveBeenCalledWith(testData.historyQueries.list[0].northTransformers[0].id);
-    expect(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending).toHaveBeenCalled();
-    expect(engine.stopHistoryQuery).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    assert.deepStrictEqual(historyQueryRepository.removeTransformer.mock.calls[0].arguments, [
+      testData.historyQueries.list[0].northTransformers[0].id
+    ]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
+    assert.deepStrictEqual(engine.stopHistoryQuery.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should retrieve secrets from history query', () => {
     const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
     historySource.southType = southManifestList[4].id;
     historySource.northType = northManifestList[4].id;
-    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValueOnce(historySource);
+    historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
     const result = service.retrieveSecrets(
       undefined,
       undefined,
@@ -718,19 +863,20 @@ describe('History Query service', () => {
       southManifestList[4],
       northManifestList[4]
     );
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
-    expect(result).toEqual(historySource);
+    assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
+    assert.deepStrictEqual(result, historySource);
   });
 
   it('should throw an error if history query south type does not match manifest', () => {
     const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
     historySource.southType = 'bad';
-    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValueOnce(historySource);
+    historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
 
-    expect(() =>
-      service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4])
-    ).toThrow(
-      `History query "${historySource.id}" (South type "${historySource.southType}") must be of the South type "${southManifestList[4].id}"`
+    assert.throws(
+      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4]),
+      new Error(
+        `History query "${historySource.id}" (South type "${historySource.southType}") must be of the South type "${southManifestList[4].id}"`
+      )
     );
   });
 
@@ -738,18 +884,19 @@ describe('History Query service', () => {
     const historySource = JSON.parse(JSON.stringify(testData.historyQueries.list[0]));
     historySource.southType = southManifestList[4].id;
     historySource.northType = 'bad';
-    (historyQueryRepository.findHistoryById as jest.Mock).mockReturnValueOnce(historySource);
+    historyQueryRepository.findHistoryById.mock.mockImplementationOnce(() => historySource);
 
-    expect(() =>
-      service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4])
-    ).toThrow(
-      `History query "${historySource.id}" (North type "${historySource.northType}") must be of the North type "${northManifestList[4].id}"`
+    assert.throws(
+      () => service.retrieveSecrets(undefined, undefined, testData.historyQueries.list[0].id, southManifestList[4], northManifestList[4]),
+      new Error(
+        `History query "${historySource.id}" (North type "${historySource.northType}") must be of the North type "${northManifestList[4].id}"`
+      )
     );
-    expect(historyQueryRepository.findHistoryById).toHaveBeenCalledWith(testData.historyQueries.list[0].id);
+    assert.deepStrictEqual(historyQueryRepository.findHistoryById.mock.calls[0].arguments, [testData.historyQueries.list[0].id]);
   });
 
   it('should retrieve secrets from south and north connectors', () => {
-    (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[1]); // retrieve the mssql connector
+    southService.findById.mock.mockImplementationOnce(() => testData.south.list[1]); // retrieve the mssql connector
     const result = service.retrieveSecrets(
       testData.south.list[1].id,
       testData.north.list[0].id,
@@ -758,7 +905,7 @@ describe('History Query service', () => {
       northManifestList[4]
     );
 
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       southType: testData.south.list[1].type,
       southSettings: testData.south.list[1].settings,
       items: testData.south.list[1].items,
@@ -768,11 +915,11 @@ describe('History Query service', () => {
   });
 
   it('should retrieve secrets from south only', () => {
-    (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[1]); // retrieve the mssql connector
+    southService.findById.mock.mockImplementationOnce(() => testData.south.list[1]); // retrieve the mssql connector
 
     const result = service.retrieveSecrets(testData.south.list[1].id, undefined, undefined, southManifestList[4], northManifestList[4]);
 
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       southType: testData.south.list[1].type,
       southSettings: testData.south.list[1].settings,
       items: testData.south.list[1].items
@@ -782,7 +929,7 @@ describe('History Query service', () => {
   it('should retrieve secrets from north only', () => {
     const result = service.retrieveSecrets(undefined, testData.north.list[0].id, undefined, southManifestList[4], northManifestList[4]);
 
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       items: [],
       northType: testData.north.list[0].type,
       northSettings: testData.north.list[0].settings
@@ -792,33 +939,49 @@ describe('History Query service', () => {
   it('should fail to retrieve secrets from south if does not match type', () => {
     const south = JSON.parse(JSON.stringify(testData.south.list[0]));
     south.type = 'bad';
-    (southService.findById as jest.Mock).mockReturnValueOnce(south);
+    southService.findById.mock.mockImplementationOnce(() => south);
 
-    expect(() =>
-      service.retrieveSecrets(testData.south.list[0].id, testData.north.list[0].id, undefined, southManifestList[4], northManifestList[4])
-    ).toThrow(`South connector "${testData.south.list[0].id}" (type "${south.type}") must be of the type "${southManifestList[4].id}"`);
+    assert.throws(
+      () =>
+        service.retrieveSecrets(
+          testData.south.list[0].id,
+          testData.north.list[0].id,
+          undefined,
+          southManifestList[4],
+          northManifestList[4]
+        ),
+      new Error(`South connector "${testData.south.list[0].id}" (type "${south.type}") must be of the type "${southManifestList[4].id}"`)
+    );
   });
 
   it('should fail to retrieve secrets from north if does not match type', () => {
-    (southService.findById as jest.Mock).mockReturnValueOnce(testData.south.list[1]); // retrieve the mssql connector
+    southService.findById.mock.mockImplementationOnce(() => testData.south.list[1]); // retrieve the mssql connector
 
     const north = JSON.parse(JSON.stringify(testData.north.list[0]));
     north.type = 'bad';
-    (northService.findById as jest.Mock).mockReturnValueOnce(north);
+    northService.findById.mock.mockImplementationOnce(() => north);
 
-    expect(() =>
-      service.retrieveSecrets(testData.north.list[0].id, testData.north.list[0].id, undefined, southManifestList[4], northManifestList[4])
-    ).toThrow(`North connector "${testData.north.list[0].id}" (type "${north.type}") must be of the type "${northManifestList[4].id}"`);
+    assert.throws(
+      () =>
+        service.retrieveSecrets(
+          testData.north.list[0].id,
+          testData.north.list[0].id,
+          undefined,
+          southManifestList[4],
+          northManifestList[4]
+        ),
+      new Error(`North connector "${testData.north.list[0].id}" (type "${north.type}") must be of the type "${northManifestList[4].id}"`)
+    );
   });
 
   it('should return null', () => {
-    expect(service.retrieveSecrets(undefined, undefined, undefined, southManifestList[4], northManifestList[4])).toEqual(null);
+    assert.strictEqual(service.retrieveSecrets(undefined, undefined, undefined, southManifestList[4], northManifestList[4]), null);
   });
 
   it('should properly convert to DTO', () => {
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
     const historyQuery = testData.historyQueries.list[0];
-    expect(toHistoryQueryDTO(historyQuery, getUserInfo)).toEqual({
+    assert.deepStrictEqual(toHistoryQueryDTO(historyQuery, getUserInfo), {
       id: historyQuery.id,
       name: historyQuery.name,
       description: historyQuery.description,
@@ -857,7 +1020,7 @@ describe('History Query service', () => {
       items: historyQuery.items.map(item => toHistoryQueryItemDTO(item, historyQuery.southType, getUserInfo)),
       northTransformers: historyQuery.northTransformers.map(transformerWithOptions => ({
         id: transformerWithOptions.id,
-        transformer: toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
+        transformer: mockTransformerService.toTransformerDTO(transformerWithOptions.transformer, getUserInfo),
         options: transformerWithOptions.options,
         items: transformerWithOptions.items.map(item => ({
           id: item.id,
@@ -888,7 +1051,7 @@ describe('History Query service', () => {
       createdAt: '',
       updatedAt: ''
     };
-    expect(toHistoryQueryLightDTO(historyQueryLight, getUserInfo)).toEqual({
+    assert.deepStrictEqual(toHistoryQueryLightDTO(historyQueryLight, getUserInfo), {
       id: historyQuery.id,
       name: historyQuery.name,
       description: historyQuery.description,

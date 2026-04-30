@@ -1,77 +1,91 @@
-import { EngineController } from './engine.controller';
+import { describe, it, before, beforeEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type { EngineController as EngineControllerShape } from './engine.controller';
 
-// Mock the services
-jest.mock('../../service/oibus.service', () => ({
-  toEngineSettingsDTO: jest.fn().mockImplementation(settings => settings)
-}));
+const nodeRequire = createRequire(import.meta.url);
+
+let mockOIBusServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+let EngineController: typeof EngineControllerShape;
+
+before(() => {
+  fixTsoaModuleResolution(nodeRequire);
+  mockOIBusServiceModule = { toEngineSettingsDTO: mock.fn((settings: unknown) => settings) };
+  mockModule(nodeRequire, '../../service/oibus.service', mockOIBusServiceModule);
+  const mod = reloadModule<{ EngineController: typeof EngineControllerShape }>(nodeRequire, './engine.controller');
+  EngineController = mod.EngineController;
+});
 
 describe('EngineController', () => {
-  let controller: EngineController;
-  const mockRequest: Partial<CustomExpressRequest> = {
-    user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-    services: {
-      oIBusService: new OIBusServiceMock(),
-      userService: new UserServiceMock()
-    }
-  } as CustomExpressRequest;
+  let controller: EngineControllerShape;
+  let oIBusService: OIBusServiceMock;
+  let userService: UserServiceMock;
+  let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    oIBusService = new OIBusServiceMock();
+    userService = new UserServiceMock();
+    mockRequest = {
+      user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
+      services: { oIBusService, userService }
+    } as Partial<CustomExpressRequest>;
+    mockOIBusServiceModule.toEngineSettingsDTO = mock.fn((settings: unknown) => settings);
     controller = new EngineController();
   });
 
   it('should return engine settings', async () => {
     const mockSettings = testData.engine.settings;
-    (mockRequest.services!.oIBusService.getEngineSettings as jest.Mock).mockReturnValue(mockSettings);
+    oIBusService.getEngineSettings = mock.fn(() => mockSettings);
 
     const result = await controller.getEngineSettings(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.getEngineSettings).toHaveBeenCalled();
-    expect(result).toEqual(mockSettings);
+    assert.strictEqual(oIBusService.getEngineSettings.mock.calls.length, 1);
+    assert.deepStrictEqual(result, mockSettings);
   });
 
   it('should update engine settings', async () => {
     const command: EngineSettingsCommandDTO = testData.engine.command;
-    (mockRequest.services!.oIBusService.updateEngineSettings as jest.Mock).mockResolvedValue(undefined);
+    oIBusService.updateEngineSettings = mock.fn(async () => undefined);
 
     await controller.updateEngineSettings(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.updateEngineSettings).toHaveBeenCalledWith(command, testData.users.list[0].id);
+    assert.strictEqual(oIBusService.updateEngineSettings.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateEngineSettings.mock.calls[0].arguments, [command, testData.users.list[0].id]);
   });
 
   it('should reset engine metrics', async () => {
-    (mockRequest.services!.oIBusService.resetEngineMetrics as jest.Mock).mockResolvedValue(undefined);
+    oIBusService.resetEngineMetrics = mock.fn(async () => undefined);
 
     await controller.resetEngineMetrics(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.resetEngineMetrics).toHaveBeenCalled();
+    assert.strictEqual(oIBusService.resetEngineMetrics.mock.calls.length, 1);
   });
 
   it('should restart OIBus', async () => {
-    (mockRequest.services!.oIBusService.restart as jest.Mock).mockResolvedValue(undefined);
+    oIBusService.restart = mock.fn(async () => undefined);
 
     await controller.restart(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.restart).toHaveBeenCalled();
+    assert.strictEqual(oIBusService.restart.mock.calls.length, 1);
   });
 
   it('should return OIBus info', async () => {
     const mockInfo = testData.engine.oIBusInfo;
-    (mockRequest.services!.oIBusService.getInfo as jest.Mock).mockReturnValue(mockInfo);
+    oIBusService.getInfo = mock.fn(() => mockInfo);
 
     const result = await controller.getInfo(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.oIBusService.getInfo).toHaveBeenCalled();
-    expect(result).toEqual(mockInfo);
+    assert.strictEqual(oIBusService.getInfo.mock.calls.length, 1);
+    assert.deepStrictEqual(result, mockInfo);
   });
 
   it('should check OIBus status', async () => {
     await controller.getOIBusStatus(mockRequest as CustomExpressRequest);
-    // No assertions needed as the method doesn't return anything
   });
 });

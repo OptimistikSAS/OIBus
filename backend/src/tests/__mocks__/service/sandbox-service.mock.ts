@@ -1,8 +1,8 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for Sandbox Service
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    execute: jest.fn()
-  };
-});
+export default class SandboxServiceMock {
+  execute = mock.fn();
+}

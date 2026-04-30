@@ -1,84 +1,104 @@
-import { IPFilterController } from './ip-filter.controller';
+import { describe, it, before, beforeEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import IPFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
-import UserService from 'src/service/user.service';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type { IPFilterController as IPFilterControllerShape } from './ip-filter.controller';
 
-// Mock the services
-jest.mock('../../service/ip-filter.service', () => ({
-  toIPFilterDTO: jest.fn().mockImplementation((ipFilter, getUserInfo) => {
-    getUserInfo('');
-    return ipFilter;
-  })
-}));
+const nodeRequire = createRequire(import.meta.url);
+
+let mockIPFilterServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+let IPFilterController: typeof IPFilterControllerShape;
+
+before(() => {
+  fixTsoaModuleResolution(nodeRequire);
+  mockIPFilterServiceModule = {
+    toIPFilterDTO: mock.fn((ipFilter: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return ipFilter;
+    })
+  };
+  mockModule(nodeRequire, '../../service/ip-filter.service', mockIPFilterServiceModule);
+  const mod = reloadModule<{ IPFilterController: typeof IPFilterControllerShape }>(nodeRequire, './ip-filter.controller');
+  IPFilterController = mod.IPFilterController;
+});
 
 describe('IPFilterController', () => {
-  let controller: IPFilterController;
-  const mockRequest: Partial<CustomExpressRequest> = {
-    services: {
-      ipFilterService: new IPFilterServiceMock(),
-      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
-    },
-    user: {
-      id: 'test',
-      login: 'testUser'
-    }
-  } as CustomExpressRequest;
+  let controller: IPFilterControllerShape;
+  let ipFilterService: IPFilterServiceMock;
+  let userService: UserServiceMock;
+  let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    ipFilterService = new IPFilterServiceMock();
+    userService = new UserServiceMock();
+    mockRequest = {
+      services: { ipFilterService, userService },
+      user: { id: 'test', login: 'testUser' }
+    } as Partial<CustomExpressRequest>;
+    mockIPFilterServiceModule.toIPFilterDTO = mock.fn((ipFilter: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return ipFilter;
+    });
     controller = new IPFilterController();
   });
 
   it('should return a list of IP filters', async () => {
     const mockIPFilters = testData.ipFilters.list;
-    (mockRequest.services!.ipFilterService.list as jest.Mock).mockReturnValue(mockIPFilters);
+    ipFilterService.list = mock.fn(() => mockIPFilters);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.ipFilterService.list).toHaveBeenCalled();
-    expect(result).toEqual(mockIPFilters);
+    assert.strictEqual(ipFilterService.list.mock.calls.length, 1);
+    assert.deepStrictEqual(result, mockIPFilters);
   });
 
   it('should return an IP filter by ID', async () => {
     const mockIPFilter = testData.ipFilters.list[0];
     const ipFilterId = mockIPFilter.id;
-    (mockRequest.services!.ipFilterService.findById as jest.Mock).mockReturnValue(mockIPFilter);
+    ipFilterService.findById = mock.fn(() => mockIPFilter);
 
     const result = await controller.findById(ipFilterId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.ipFilterService.findById).toHaveBeenCalledWith(ipFilterId);
-    expect(result).toEqual(mockIPFilter);
+    assert.strictEqual(ipFilterService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(ipFilterService.findById.mock.calls[0].arguments[0], ipFilterId);
+    assert.deepStrictEqual(result, mockIPFilter);
   });
 
   it('should create a new IP filter', async () => {
     const command: IPFilterCommandDTO = testData.ipFilters.command;
     const createdIPFilter = testData.ipFilters.list[0];
-    (mockRequest.services!.ipFilterService.create as jest.Mock).mockResolvedValue(createdIPFilter);
+    ipFilterService.create = mock.fn(async () => createdIPFilter);
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.ipFilterService.create).toHaveBeenCalledWith(command, 'test');
-    expect(result).toEqual(createdIPFilter);
+    assert.strictEqual(ipFilterService.create.mock.calls.length, 1);
+    assert.deepStrictEqual(ipFilterService.create.mock.calls[0].arguments, [command, 'test']);
+    assert.deepStrictEqual(result, createdIPFilter);
   });
 
   it('should update an existing IP filter', async () => {
     const ipFilterId = testData.ipFilters.list[0].id;
     const command: IPFilterCommandDTO = testData.ipFilters.command;
-    (mockRequest.services!.ipFilterService.update as jest.Mock).mockResolvedValue(undefined);
+    ipFilterService.update = mock.fn(async () => undefined);
 
     await controller.update(ipFilterId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.ipFilterService.update).toHaveBeenCalledWith(ipFilterId, command, 'test');
+    assert.strictEqual(ipFilterService.update.mock.calls.length, 1);
+    assert.deepStrictEqual(ipFilterService.update.mock.calls[0].arguments, [ipFilterId, command, 'test']);
   });
 
   it('should delete an IP filter', async () => {
     const ipFilterId = testData.ipFilters.list[0].id;
-    (mockRequest.services!.ipFilterService.delete as jest.Mock).mockResolvedValue(undefined);
+    ipFilterService.delete = mock.fn(async () => undefined);
 
     await controller.delete(ipFilterId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.ipFilterService.delete).toHaveBeenCalledWith(ipFilterId);
+    assert.strictEqual(ipFilterService.delete.mock.calls.length, 1);
+    assert.deepStrictEqual(ipFilterService.delete.mock.calls[0].arguments[0], ipFilterId);
   });
 });

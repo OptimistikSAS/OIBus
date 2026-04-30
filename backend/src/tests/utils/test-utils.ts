@@ -1,4 +1,8 @@
+import assert from 'node:assert/strict';
 import Database from 'better-sqlite3';
+import type pino from 'pino';
+import type LoggerMock from '../__mocks__/service/logger/logger.mock';
+import { setImmediate } from 'node:timers';
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
 import path from 'node:path';
 import knex from 'knex';
@@ -40,7 +44,95 @@ const LOGS_TEST_DATABASE = path.resolve('src', 'tests', 'test-logs.db');
 const METRICS_TEST_DATABASE = path.resolve('src', 'tests', 'test-metrics.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
-export const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
+export const flushPromises = () => new Promise(setImmediate);
+
+/** Single escape hatch for the logger mock at constructor boundaries. */
+export function asLogger(mock: LoggerMock): pino.Logger {
+  return mock as unknown as pino.Logger;
+}
+
+/**
+ * Fix for tsx resolving 'tsoa' to tsoa.json (the TSOA config file) rather than the
+ * tsoa npm package. This happens because tsconfig baseUrl:"./" combined with
+ * tsx's path resolution causes bare imports to match local JSON files before node_modules.
+ * Call this at the top of any controller spec's before() hook.
+ */
+export function fixTsoaModuleResolution(req: NodeJS.Require): void {
+  const tsoaKey = req.resolve('tsoa');
+  if (tsoaKey.includes('node_modules')) return;
+  const backendDir = path.dirname(tsoaKey);
+  const realTsoaPath = path.join(backendDir, 'node_modules', 'tsoa', 'dist', 'index.js');
+  const realTsoa = req(realTsoaPath);
+  if (req.cache[tsoaKey]) {
+    req.cache[tsoaKey]!.exports = realTsoa;
+  } else {
+    (req.cache as Record<string, unknown>)[tsoaKey] = {
+      id: tsoaKey,
+      filename: tsoaKey,
+      loaded: true,
+      exports: realTsoa,
+      children: [],
+      paths: []
+    };
+  }
+}
+
+/**
+ * Injects exports into the require cache for a module.
+ * The module is loaded first (if not already cached) to ensure it has a cache entry.
+ * Use before reloadModule() to set up mocks for dependencies of the module under test.
+ *
+ * IMPORTANT: tsx compiles `import { fn } from './mod'` as namespace access (`import_mod.fn()`),
+ * so the SUT holds a reference to the exports OBJECT, not individual bindings.
+ * This means replacing the cache entry works only when the SUT is loaded AFTER this call.
+ * To update mocks between tests, mutate the object returned by this function in-place
+ * rather than calling mockModule() again.
+ */
+export function mockModule(req: NodeJS.Require, modulePath: string, exports: unknown): Record<string, unknown> {
+  try {
+    req(modulePath);
+  } catch {
+    // ensure the module has a cache entry before we replace its exports
+  }
+  const resolved = req.resolve(modulePath);
+  if (req.cache[resolved]) {
+    req.cache[resolved]!.exports = exports;
+  } else {
+    // Built-in Node modules (node: prefix) are not cached in require.cache; create the entry.
+    (req.cache as Record<string, unknown>)[resolved] = { id: resolved, filename: resolved, loaded: true, exports, children: [], paths: [] };
+  }
+  return exports as Record<string, unknown>;
+}
+
+/**
+ * Deletes a module from the require cache and reloads it.
+ * Call after all mockModule() calls to load the SUT with mocked dependencies applied.
+ */
+export function reloadModule<T>(req: NodeJS.Require, modulePath: string): T {
+  const resolved = req.resolve(modulePath);
+  delete req.cache[resolved];
+  return req(modulePath) as T;
+}
+
+/**
+ * Creates a FIFO sequential mock implementation for node:test.
+ * node:test's mockImplementationOnce overwrites prior "once" impls, so this helper
+ * provides Jest-compatible sequential behaviour with multiple staged return values.
+ */
+export function seq<T>(...impls: Array<() => T>): () => T {
+  let i = 0;
+  return () => (i < impls.length ? impls[i++]() : (undefined as unknown as T));
+}
+
+/**
+ * Asserts that `actual` contains all properties from `expected` (partial match).
+ * Equivalent to Jest's expect(actual).toEqual(expect.objectContaining(expected)).
+ */
+export function assertContains(actual: unknown, expected: Record<string, unknown>): void {
+  for (const [key, value] of Object.entries(expected)) {
+    assert.deepStrictEqual((actual as Record<string, unknown>)[key], value, `Property '${key}' mismatch`);
+  }
+}
 
 export function stripAuditFields<T>(obj: T): T {
   if (Array.isArray(obj)) {

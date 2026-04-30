@@ -1,18 +1,18 @@
+import { before, after, beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { Database } from 'better-sqlite3';
 import { emptyDatabase, initDatabase } from '../../tests/utils/test-utils';
 import CryptoRepository from './crypto.repository';
 import testData from '../../tests/utils/test-data';
 
-jest.mock('node:crypto');
-
 let database: Database;
 describe('Repository with populated database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('crypto');
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('crypto');
   });
@@ -21,51 +21,58 @@ describe('Repository with populated database', () => {
     let repository: CryptoRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
-
       repository = new CryptoRepository(database);
     });
 
+    afterEach(() => {
+      mock.restoreAll();
+    });
+
     it('should not create crypto if already init', () => {
-      (crypto.randomBytes as jest.Mock).mockReturnValueOnce('init vector').mockReturnValueOnce('security key');
+      const randomBytesMock = mock.method(crypto, 'randomBytes');
 
       repository.createCryptoSettings(testData.engine.settings.id);
-      expect(crypto.randomBytes).not.toHaveBeenCalled();
+      assert.strictEqual(randomBytesMock.mock.calls.length, 0);
     });
 
     it('should properly get crypto settings', () => {
-      expect(repository.getCryptoSettings(testData.engine.settings.id)).toEqual(testData.engine.crypto);
+      assert.deepStrictEqual(repository.getCryptoSettings(testData.engine.settings.id), testData.engine.crypto);
     });
   });
 });
 
 describe('Repository with empty database', () => {
-  beforeAll(async () => {
+  before(async () => {
     database = await initDatabase('crypto', false);
   });
 
-  afterAll(async () => {
+  after(async () => {
     database.close();
     await emptyDatabase('crypto');
   });
+
   describe('Crypto', () => {
     let repository: CryptoRepository;
 
     beforeEach(() => {
-      jest.clearAllMocks();
-
       repository = new CryptoRepository(database);
     });
 
+    afterEach(() => {
+      mock.restoreAll();
+    });
+
     it('should properly init crypto settings table', () => {
-      (crypto.randomBytes as jest.Mock).mockReturnValueOnce('init vector').mockReturnValueOnce('security key');
+      const randomBytesMock = mock.method(crypto, 'randomBytes');
+      randomBytesMock.mock.mockImplementationOnce(() => 'init vector', 0);
+      randomBytesMock.mock.mockImplementationOnce(() => 'security key', 1);
 
       repository.createCryptoSettings('id1');
-      expect(crypto.randomBytes).toHaveBeenCalledTimes(2);
-      expect(crypto.randomBytes).toHaveBeenCalledWith(16);
-      expect(crypto.randomBytes).toHaveBeenCalledWith(32);
+      assert.strictEqual(randomBytesMock.mock.calls.length, 2);
+      assert.deepStrictEqual(randomBytesMock.mock.calls[0].arguments, [16]);
+      assert.deepStrictEqual(randomBytesMock.mock.calls[1].arguments, [32]);
 
-      expect(repository.getCryptoSettings('id1')).toEqual({
+      assert.deepStrictEqual(repository.getCryptoSettings('id1'), {
         algorithm: 'aes-256-cbc',
         initVector: 'init vector',
         securityKey: 'security key'

@@ -1,54 +1,56 @@
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { Database } from 'better-sqlite3';
 import SouthCacheRepository from './south-cache.repository';
 
-// Mock better-sqlite3
-const mockDatabase = {
-  prepare: jest.fn().mockReturnThis(),
-  run: jest.fn(),
-  get: jest.fn(),
-  all: jest.fn()
-};
-
-jest.mock('better-sqlite3', () => {
-  return jest.fn().mockImplementation(() => mockDatabase);
-});
-
 describe('SouthCacheRepository', () => {
   let repository: SouthCacheRepository;
+  let runMock: ReturnType<typeof mock.fn>;
+  let getMock: ReturnType<typeof mock.fn>;
+  let allMock: ReturnType<typeof mock.fn>;
+  let prepareMock: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
+    runMock = mock.fn();
+    getMock = mock.fn();
+    allMock = mock.fn();
+    prepareMock = mock.fn(() => ({ run: runMock, get: getMock, all: allMock }));
+    const mockDatabase = { prepare: prepareMock, run: runMock, get: getMock, all: allMock };
     repository = new SouthCacheRepository(mockDatabase as unknown as Database);
-    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   it('createItemValueTable() should create table with correct schema', () => {
     repository.createItemValueTable('south1');
-    expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('south_item_cache_south1'));
-    expect(mockDatabase.run).toHaveBeenCalled();
+    assert.ok(prepareMock.mock.calls.some(c => (c.arguments[0] as string).includes('south_item_cache_south1')));
+    assert.ok(runMock.mock.calls.length > 0);
   });
 
   it('dropItemValueTable() should drop table', () => {
     repository.dropItemValueTable('south1');
-    expect(mockDatabase.prepare).toHaveBeenCalledWith('DROP TABLE IF EXISTS "south_item_cache_south1";');
-    expect(mockDatabase.run).toHaveBeenCalled();
+    assert.deepStrictEqual(prepareMock.mock.calls[0].arguments, ['DROP TABLE IF EXISTS "south_item_cache_south1";']);
+    assert.ok(runMock.mock.calls.length > 0);
   });
 
   describe('getItemLastValue', () => {
     it('should return null if result is undefined', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce(undefined);
+      getMock.mock.mockImplementationOnce(() => undefined);
       const result = repository.getItemLastValue('south1', 'group1', 'item1');
-      expect(result).toBeNull();
+      assert.strictEqual(result, null);
     });
 
     it('should return parsed value', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({
+      getMock.mock.mockImplementationOnce(() => ({
         item_id: 'item1',
         query_time: '2023-01-01',
         value: '{"a":1}',
         tracked_instant: '2023-01-01'
-      });
+      }));
       const result = repository.getItemLastValue('south1', 'group1', 'item1');
-      expect(result).toEqual({
+      assert.deepStrictEqual(result, {
         itemId: 'item1',
         groupId: null,
         queryTime: '2023-01-01',
@@ -58,81 +60,93 @@ describe('SouthCacheRepository', () => {
     });
 
     it('should return raw value if parse fails', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({
+      getMock.mock.mockImplementationOnce(() => ({
         item_id: 'item1',
         value: 'invalid-json'
-      });
+      }));
       const result = repository.getItemLastValue('south1', 'group1', 'item1');
-      expect(result?.value).toBe('invalid-json');
+      assert.strictEqual(result?.value, 'invalid-json');
     });
 
     it('should return null on db error', () => {
-      (mockDatabase.prepare as jest.Mock).mockImplementationOnce(() => {
+      prepareMock.mock.mockImplementationOnce(() => {
         throw new Error('DB Error');
       });
       const result = repository.getItemLastValue('south1', 'group1', 'item1');
-      expect(result).toBeNull();
+      assert.strictEqual(result, null);
     });
   });
 
   describe('saveItemLastValue', () => {
     it('should insert if not exists', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce(undefined); // getItemLastValue returns null
+      getMock.mock.mockImplementationOnce(() => undefined);
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO'));
+      assert.ok(prepareMock.mock.calls.some(c => (c.arguments[0] as string).includes('INSERT INTO')));
     });
 
     it('should update if exists with group id', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({});
+      getMock.mock.mockImplementationOnce(() => ({}));
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'UPDATE "south_item_cache_south1" SET query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ? AND group_id = ?'
+      assert.ok(
+        prepareMock.mock.calls.some(c =>
+          (c.arguments[0] as string).includes(
+            'UPDATE "south_item_cache_south1" SET query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ? AND group_id = ?'
+          )
         )
       );
-      expect(mockDatabase.run).toHaveBeenCalledWith('now', '1', 'now', 'item1', 'group1');
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['now', '1', 'now', 'item1', 'group1']);
     });
 
     it('should update with IS NULL when group id is null', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({});
+      getMock.mock.mockImplementationOnce(() => ({}));
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: null, value: 1, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'UPDATE "south_item_cache_south1" SET query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ? AND group_id IS NULL'
+      assert.ok(
+        prepareMock.mock.calls.some(c =>
+          (c.arguments[0] as string).includes(
+            'UPDATE "south_item_cache_south1" SET query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ? AND group_id IS NULL'
+          )
         )
       );
-      expect(mockDatabase.run).toHaveBeenCalledWith('now', '1', 'now', 'item1');
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['now', '1', 'now', 'item1']);
     });
 
     it('should store null when value is null', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce(undefined); // getItemLastValue returns null → INSERT path
+      getMock.mock.mockImplementationOnce(() => undefined);
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: null, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'item1', 'now', null, 'now');
+      // prepareMock calls: [0] = SELECT (getItemLastValue), [1] = INSERT
+      // runMock calls: [0] = INSERT run args
+      const insertCall = prepareMock.mock.calls.find(c => (c.arguments[0] as string).includes('INSERT INTO'));
+      assert.ok(insertCall, 'INSERT INTO query not found');
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['group1', 'item1', 'now', null, 'now']);
     });
   });
 
   describe('deleteItemValue', () => {
     it('should delete item with group id', () => {
       repository.deleteItemValue('south1', 'group1', 'item1');
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM "south_item_cache_south1" WHERE item_id = ? AND group_id = ?')
+      assert.ok(
+        prepareMock.mock.calls.some(c =>
+          (c.arguments[0] as string).includes('DELETE FROM "south_item_cache_south1" WHERE item_id = ? AND group_id = ?')
+        )
       );
-      expect(mockDatabase.run).toHaveBeenCalledWith('item1', 'group1');
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['item1', 'group1']);
     });
 
     it('should delete item without group id using IS NULL', () => {
       repository.deleteItemValue('south1', null, 'item1');
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM "south_item_cache_south1" WHERE item_id = ? AND group_id IS NULL')
+      assert.ok(
+        prepareMock.mock.calls.some(c =>
+          (c.arguments[0] as string).includes('DELETE FROM "south_item_cache_south1" WHERE item_id = ? AND group_id IS NULL')
+        )
       );
-      expect(mockDatabase.run).toHaveBeenCalledWith('item1');
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['item1']);
     });
 
     it('should catch error', () => {
-      (mockDatabase.prepare as jest.Mock).mockImplementationOnce(() => {
+      prepareMock.mock.mockImplementationOnce(() => {
         throw new Error('DB Error');
       });
-      expect(() => repository.deleteItemValue('south1', 'group1', 'item1')).not.toThrow();
+      assert.doesNotThrow(() => repository.deleteItemValue('south1', 'group1', 'item1'));
     });
   });
 });

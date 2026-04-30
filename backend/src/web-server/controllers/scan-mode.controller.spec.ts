@@ -1,85 +1,105 @@
-import { ScanModeController } from './scan-mode.controller';
+import { describe, it, before, beforeEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
-import UserService from 'src/service/user.service';
+import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
+import type { ScanModeController as ScanModeControllerShape } from './scan-mode.controller';
 
-// Mock the services
-jest.mock('../../service/scan-mode.service', () => ({
-  toScanModeDTO: jest.fn().mockImplementation((scanMode, getUserInfo) => {
-    getUserInfo('');
-    return scanMode;
-  })
-}));
+const nodeRequire = createRequire(import.meta.url);
+
+let mockScanModeServiceModule: Record<string, ReturnType<typeof mock.fn>>;
+let ScanModeController: typeof ScanModeControllerShape;
+
+before(() => {
+  fixTsoaModuleResolution(nodeRequire);
+  mockScanModeServiceModule = {
+    toScanModeDTO: mock.fn((scanMode: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return scanMode;
+    })
+  };
+  mockModule(nodeRequire, '../../service/scan-mode.service', mockScanModeServiceModule);
+  const mod = reloadModule<{ ScanModeController: typeof ScanModeControllerShape }>(nodeRequire, './scan-mode.controller');
+  ScanModeController = mod.ScanModeController;
+});
 
 describe('ScanModeController', () => {
-  let controller: ScanModeController;
-  const mockRequest: Partial<CustomExpressRequest> = {
-    services: {
-      scanModeService: new ScanModeServiceMock(),
-      userService: { getUserInfo: jest.fn().mockReturnValue({ id: 'test', friendlyName: 'Test' }) } as unknown as UserService
-    },
-    user: {
-      id: 'test',
-      login: 'testUser'
-    }
-  } as CustomExpressRequest;
+  let controller: ScanModeControllerShape;
+  let scanModeService: ScanModeServiceMock;
+  let userService: UserServiceMock;
+  let mockRequest: Partial<CustomExpressRequest>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    scanModeService = new ScanModeServiceMock();
+    userService = new UserServiceMock();
+    mockRequest = {
+      services: { scanModeService, userService },
+      user: { id: 'test', login: 'testUser' }
+    } as Partial<CustomExpressRequest>;
+    mockScanModeServiceModule.toScanModeDTO = mock.fn((scanMode: unknown, getUserInfo: (id: string) => void) => {
+      getUserInfo('');
+      return scanMode;
+    });
     controller = new ScanModeController();
   });
 
   it('should return a list of scan modes', async () => {
     const mockScanModes = testData.scanMode.list;
-    (mockRequest.services!.scanModeService.list as jest.Mock).mockReturnValue(mockScanModes);
+    scanModeService.list = mock.fn(() => mockScanModes);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.list).toHaveBeenCalled();
-    expect(result).toEqual(mockScanModes);
+    assert.strictEqual(scanModeService.list.mock.calls.length, 1);
+    assert.deepStrictEqual(result, mockScanModes);
   });
 
   it('should return a scan mode by ID', async () => {
     const mockScanMode = testData.scanMode.list[0];
     const scanModeId = mockScanMode.id;
-    (mockRequest.services!.scanModeService.findById as jest.Mock).mockReturnValue(mockScanMode);
+    scanModeService.findById = mock.fn(() => mockScanMode);
 
     const result = await controller.findById(scanModeId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.findById).toHaveBeenCalledWith(scanModeId);
-    expect(result).toEqual(mockScanMode);
+    assert.strictEqual(scanModeService.findById.mock.calls.length, 1);
+    assert.deepStrictEqual(scanModeService.findById.mock.calls[0].arguments[0], scanModeId);
+    assert.deepStrictEqual(result, mockScanMode);
   });
 
   it('should create a new scan mode', async () => {
     const command: ScanModeCommandDTO = testData.scanMode.command;
     const createdScanMode = testData.scanMode.list[0];
-    (mockRequest.services!.scanModeService.create as jest.Mock).mockResolvedValue(createdScanMode);
+    scanModeService.create = mock.fn(async () => createdScanMode);
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.create).toHaveBeenCalledWith(command, 'test');
-    expect(result).toEqual(createdScanMode);
+    assert.strictEqual(scanModeService.create.mock.calls.length, 1);
+    assert.deepStrictEqual(scanModeService.create.mock.calls[0].arguments, [command, 'test']);
+    assert.deepStrictEqual(result, createdScanMode);
   });
 
   it('should update an existing scan mode', async () => {
     const scanModeId = testData.scanMode.list[0].id;
     const command: ScanModeCommandDTO = testData.scanMode.command;
-    (mockRequest.services!.scanModeService.update as jest.Mock).mockResolvedValue(undefined);
+    scanModeService.update = mock.fn(async () => undefined);
 
     await controller.update(scanModeId, command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.update).toHaveBeenCalledWith(scanModeId, command, 'test');
+    assert.strictEqual(scanModeService.update.mock.calls.length, 1);
+    assert.deepStrictEqual(scanModeService.update.mock.calls[0].arguments, [scanModeId, command, 'test']);
   });
 
   it('should delete a scan mode', async () => {
     const scanModeId = testData.scanMode.list[0].id;
-    (mockRequest.services!.scanModeService.delete as jest.Mock).mockResolvedValue(undefined);
+    scanModeService.delete = mock.fn(async () => undefined);
 
     await controller.delete(scanModeId, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.delete).toHaveBeenCalledWith(scanModeId);
+    assert.strictEqual(scanModeService.delete.mock.calls.length, 1);
+    assert.deepStrictEqual(scanModeService.delete.mock.calls[0].arguments[0], scanModeId);
   });
 
   it('should validate a cron expression', async () => {
@@ -90,12 +110,13 @@ describe('ScanModeController', () => {
       nextExecutions: [],
       humanReadableForm: ''
     };
-    (mockRequest.services!.scanModeService.verifyCron as jest.Mock).mockReturnValue(validatedCronExpression);
+    scanModeService.verifyCron = mock.fn(() => validatedCronExpression);
 
     const result = await controller.verifyCron(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.verifyCron).toHaveBeenCalledWith(command);
-    expect(result).toEqual(validatedCronExpression);
+    assert.strictEqual(scanModeService.verifyCron.mock.calls.length, 1);
+    assert.deepStrictEqual(scanModeService.verifyCron.mock.calls[0].arguments[0], command);
+    assert.deepStrictEqual(result, validatedCronExpression);
   });
 
   it('should return invalid result when cron expression is not valid', async () => {
@@ -106,11 +127,11 @@ describe('ScanModeController', () => {
       nextExecutions: [],
       humanReadableForm: ''
     };
-    (mockRequest.services!.scanModeService.verifyCron as jest.Mock).mockReturnValue(validatedCronExpression);
+    scanModeService.verifyCron = mock.fn(() => validatedCronExpression);
 
     const result = await controller.verifyCron(command, mockRequest as CustomExpressRequest);
 
-    expect(mockRequest.services!.scanModeService.verifyCron).toHaveBeenCalledWith(command);
-    expect(result).toEqual(validatedCronExpression);
+    assert.strictEqual(scanModeService.verifyCron.mock.calls.length, 1);
+    assert.deepStrictEqual(result, validatedCronExpression);
   });
 });

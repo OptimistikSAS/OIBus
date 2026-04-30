@@ -1,3 +1,5 @@
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 import JoiValidator from './joi.validator';
 import { ipFilterSchema } from './oibus-validation-schema';
 
@@ -52,13 +54,17 @@ const dataProviders: Array<DataProvider> = [
 ];
 
 describe('Ip filter validator', () => {
-  const validator: JoiValidator = new JoiValidator();
+  const validator = new JoiValidator();
 
-  it.each(dataProviders)(`$# Should be valid: $isValid`, async dataProvider => {
-    if (dataProvider.isValid) {
-      await expect(validator.validate(ipFilterSchema, dataProvider.dto)).resolves.not.toThrow();
-    } else {
-      await expect(validator.validate(ipFilterSchema, dataProvider.dto)).rejects.toThrow(new Error(dataProvider.errorMessage as string));
-    }
-  });
+  for (const [index, dataProvider] of dataProviders.entries()) {
+    it(`${index} Should be valid: ${dataProvider.isValid}`, async () => {
+      if (dataProvider.isValid) {
+        await assert.doesNotReject(validator.validate(ipFilterSchema, dataProvider.dto));
+      } else {
+        await assert.rejects(validator.validate(ipFilterSchema, dataProvider.dto), {
+          message: dataProvider.errorMessage as string
+        });
+      }
+    });
+  }
 });

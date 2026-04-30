@@ -1,13 +1,14 @@
 import { EventEmitter } from 'node:events';
+import { mock } from 'node:test';
 
 /**
  * Create a mock object for IP Filter Service
  */
-export default jest.fn().mockImplementation(() => ({
-  list: jest.fn(),
-  findById: jest.fn(),
-  create: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  whiteListEvent: new EventEmitter()
-}));
+export default class IpFilterServiceMock {
+  list = mock.fn();
+  findById = mock.fn();
+  create = mock.fn();
+  update = mock.fn();
+  delete = mock.fn();
+  whiteListEvent = new EventEmitter();
+}

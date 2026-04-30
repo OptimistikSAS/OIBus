@@ -1,3 +1,5 @@
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import HomeMetricsService from './home-metrics.service';
 import OIBusService from '../oibus.service';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
@@ -5,49 +7,45 @@ import DataStreamEngine from '../../engine/data-stream-engine';
 import DataStreamEngineMock from '../../tests/__mocks__/data-stream-engine.mock';
 import testData from '../../tests/utils/test-data';
 
-jest.mock('../utils');
-jest.mock('../oibus.service');
-
-const oIBusService: OIBusService = new OIBusServiceMock();
-const dataStreamEngine: DataStreamEngine = new DataStreamEngineMock();
+let oIBusService: OIBusServiceMock;
+let dataStreamEngine: DataStreamEngineMock;
+let service: HomeMetricsService;
 
 describe('HomeMetricsService', () => {
-  let service: HomeMetricsService;
-
   beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-
-    service = new HomeMetricsService(oIBusService, dataStreamEngine);
+    oIBusService = new OIBusServiceMock();
+    dataStreamEngine = new DataStreamEngineMock(null);
+    mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+    service = new HomeMetricsService(oIBusService as unknown as OIBusService, dataStreamEngine as unknown as DataStreamEngine);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should send metrics', () => {
-    (dataStreamEngine.getAllSouthMetrics as jest.Mock).mockReturnValue({});
-    (dataStreamEngine.getAllNorthMetrics as jest.Mock).mockReturnValue({});
+    dataStreamEngine.getAllSouthMetrics.mock.mockImplementation(() => ({}));
+    dataStreamEngine.getAllNorthMetrics.mock.mockImplementation(() => ({}));
     oIBusService.stream.emit('data', `data: ${JSON.stringify(testData.engine.metrics)}`);
     const stream = service.stream;
-    stream.write = jest.fn();
+    stream.write = mock.fn();
     oIBusService.stream.emit('data', `data: ${JSON.stringify(testData.engine.metrics)}`);
-    expect(stream.write).toHaveBeenCalledTimes(1);
-    expect(stream.write).toHaveBeenCalledWith(
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       `data: ${JSON.stringify({
         norths: {},
         engine: testData.engine.metrics,
         souths: {}
       })}\n\n`
-    );
+    ]);
   });
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = jest.fn();
-    jest.advanceTimersByTime(100);
-    expect(stream.write).toHaveBeenCalledTimes(1);
-
-    expect(service.stream).toBeDefined();
+    stream.write = mock.fn();
+    mock.timers.tick(100);
+    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.ok(service.stream);
   });
 });

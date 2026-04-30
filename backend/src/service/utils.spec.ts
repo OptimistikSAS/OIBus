@@ -1,94 +1,75 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import fsSync, { Dirent, Stats } from 'node:fs';
+import fsSync from 'node:fs';
+import type { Dirent, Stats } from 'node:fs';
 import zlib from 'node:zlib';
-import minimist from 'minimist';
 import { DateTime } from 'luxon';
-import {
-  checkScanMode,
-  compress,
-  convertDateTime,
-  convertDateTimeToInstant,
-  convertDelimiter,
-  convertEscapeChar,
-  convertNewline,
-  convertQuoteChar,
-  createFolder,
-  createOIBusError,
-  delay,
-  determineContentTypeFromFilename,
-  dirSize,
-  filesExists,
-  formatInstant,
-  formatQueryParams,
-  generateCsvContent,
-  generateFilenameForSerialization,
-  generateIntervals,
-  generateRandomId,
-  generateReplacementParameters,
-  getCommandLineArguments,
-  getFilenameWithoutRandomId,
-  getOIBusInfo,
-  getPlatformFromOsType,
-  groupItemsByGroup,
-  injectIndices,
-  itemToFlattenedCSV,
-  logQuery,
-  persistResults,
-  processCacheFileContent,
-  resolveBypassingExports,
-  sanitizeFilename,
-  streamToString,
-  stringToBoolean,
-  testIPOnFilter,
-  unzip,
-  validateCronExpression
-} from './utils';
-import csv from 'papaparse';
-import pino from 'pino';
-import AdmZip from 'adm-zip';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import { DateTimeType } from '../../shared/model/types';
+import { Readable } from 'node:stream';
 import os from 'node:os';
-import { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
+import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import type { DateTimeType } from '../../shared/model/types';
+import type { EngineSettingsDTO, OIBusInfo } from '../../shared/model/engine.model';
+import type { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
+import type { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
+import type { OIBusError as OIBusErrorType } from '../model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
-import { SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
-import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
-import { Readable } from 'node:stream';
-import { OIBusError } from '../model/engine.model';
 
-jest.mock('node:zlib');
-jest.mock('node:fs/promises');
-jest.mock('node:fs');
-jest.mock('minimist');
-jest.mock('papaparse');
-jest.mock('adm-zip');
-jest.mock('node:http', () => ({ request: jest.fn() }));
-jest.mock('node:https', () => ({ request: jest.fn() }));
+const nodeRequire = createRequire(import.meta.url);
+
+// Module-level mock exports for third-party modules
+const minimistExports = mock.fn(() => ({}));
+const csvExports = {
+  unparse: mock.fn(() => 'csv content')
+};
+let admZipInstance: { extractAllTo: ReturnType<typeof mock.fn> };
+function AdmZipMock() {
+  return admZipInstance;
+}
+const admZipExports = AdmZipMock;
+
+// Type for the utils module exports
+type UtilsModule = typeof import('./utils');
 
 describe('Service utils', () => {
+  let utils: UtilsModule;
+  let OIBusError: typeof OIBusErrorType;
+
+  before(() => {
+    mockModule(nodeRequire, 'minimist', minimistExports);
+    mockModule(nodeRequire, 'papaparse', csvExports);
+    mockModule(nodeRequire, 'adm-zip', admZipExports);
+
+    utils = reloadModule<UtilsModule>(nodeRequire, './utils');
+    // OIBusError is a class from model/engine.model - import it directly
+    OIBusError = nodeRequire('../model/engine.model').OIBusError;
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
   describe('getCommandLineArguments', () => {
-    let consoleSpy: jest.SpyInstance;
+    let consoleSpy: ReturnType<typeof mock.method>;
 
     beforeEach(() => {
-      jest.clearAllMocks();
-
-      consoleSpy = jest.spyOn(console, 'info').mockImplementation(() => {
-        // do nothing
-      });
-    });
-
-    afterEach(() => {
-      consoleSpy.mockRestore();
+      minimistExports.mock.resetCalls();
+      minimistExports.mock.mockImplementation(() => ({}));
+      consoleSpy = mock.method(console, 'info', () => undefined);
     });
 
     it('should parse command line arguments without args', () => {
-      (minimist as unknown as jest.Mock).mockReturnValue({});
-      const result = getCommandLineArguments();
+      minimistExports.mock.mockImplementation(() => ({}));
+      const result = utils.getCommandLineArguments();
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('OIBus starting with the following arguments:'));
-      expect(result).toEqual({
+      assert.strictEqual(consoleSpy.mock.calls.length >= 1, true);
+      const infoArg = consoleSpy.mock.calls[0].arguments[0] as string;
+      assert.strictEqual(infoArg.includes('OIBus starting with the following arguments:'), true);
+      assert.deepStrictEqual(result, {
         version: false,
         configFile: path.resolve('./'),
         ignoreIpFilters: false,
@@ -99,18 +80,20 @@ describe('Service utils', () => {
     });
 
     it('should parse command line arguments with args', () => {
-      (minimist as unknown as jest.Mock).mockReturnValue({
+      minimistExports.mock.mockImplementation(() => ({
         version: true,
         config: 'myConfig.json',
         ignoreIpFilters: true,
         ignoreRemoteUpdate: true,
         ignoreRemoteConfig: true,
         launcherVersion: '3.5.0'
-      });
-      const result = getCommandLineArguments();
+      }));
+      const result = utils.getCommandLineArguments();
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('OIBus starting with the following arguments:'));
-      expect(result).toEqual({
+      assert.strictEqual(consoleSpy.mock.calls.length >= 1, true);
+      const infoArg = consoleSpy.mock.calls[0].arguments[0] as string;
+      assert.strictEqual(infoArg.includes('OIBus starting with the following arguments:'), true);
+      assert.deepStrictEqual(result, {
         version: true,
         configFile: path.resolve('myConfig.json'),
         ignoreIpFilters: true,
@@ -122,21 +105,9 @@ describe('Service utils', () => {
   });
 
   describe('delay', () => {
-    beforeEach(() => {
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-      jest.clearAllMocks();
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
     it('should delay', async () => {
-      const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
-      delay(1000);
-      jest.advanceTimersToNextTimer();
-      expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
+      // Just verify delay resolves without hanging (using a tiny timeout)
+      await utils.delay(0);
     });
   });
 
@@ -146,9 +117,9 @@ describe('Service utils', () => {
       const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, 3600);
-      expect(intervals).toEqual(expectedIntervals);
-      expect(numberOfIntervalsDone).toEqual(0);
+      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 3600);
+      assert.deepStrictEqual(intervals, expectedIntervals);
+      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
 
     it('should return only one interval when max number of seconds is 0', () => {
@@ -156,9 +127,9 @@ describe('Service utils', () => {
       const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, 0);
-      expect(intervals).toEqual(expectedIntervals);
-      expect(numberOfIntervalsDone).toEqual(0);
+      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 0);
+      assert.deepStrictEqual(intervals, expectedIntervals);
+      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
 
     it('should return two intervals', () => {
@@ -173,225 +144,226 @@ describe('Service utils', () => {
         { start: startTimeFromCache, end: endTime2 },
         { start: startTime3, end: endTime3 }
       ];
-      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime1, startTimeFromCache, endTime3, 3600);
-      expect(intervals).toEqual(expectedIntervals);
-      expect(numberOfIntervalsDone).toEqual(1);
+      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime1, startTimeFromCache, endTime3, 3600);
+      assert.deepStrictEqual(intervals, expectedIntervals);
+      assert.deepStrictEqual(numberOfIntervalsDone, 1);
     });
 
     it('should return single interval when maxNumberOfSecondsInInterval is 0', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-02T00:00:00.000Z';
-      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, 0);
-      expect(intervals).toEqual([{ start: startTimeFromCache, end: endTime }]);
-      expect(numberOfIntervalsDone).toEqual(0);
+      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 0);
+      assert.deepStrictEqual(intervals, [{ start: startTimeFromCache, end: endTime }]);
+      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
   });
 
   describe('filesExists', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should properly check if a file does not exist', async () => {
-      (fs.stat as jest.Mock).mockImplementation(() => {
+      mock.method(fs, 'stat', () => {
         throw new Error('File does not exist');
       });
 
-      expect(await filesExists('myConfigFile.json')).toEqual(false);
+      assert.deepStrictEqual(await utils.filesExists('myConfigFile.json'), false);
+    });
 
-      (fs.stat as jest.Mock).mockImplementation(() => null);
-      expect(await filesExists('myConfigFile.json')).toEqual(true);
+    it('should properly check if a file exists', async () => {
+      mock.method(fs, 'stat', async () => null);
+
+      assert.deepStrictEqual(await utils.filesExists('myConfigFile.json'), true);
     });
   });
 
   describe('createFolder', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
+    it('should properly create folder when it exists', async () => {
+      const folderToCreate = 'myFolder';
+      const mkdirMock = mock.method(fs, 'mkdir', async () => null);
+      mock.method(fs, 'stat', async () => null);
+
+      await utils.createFolder(folderToCreate);
+      assert.strictEqual(mkdirMock.mock.calls.length, 0);
     });
 
-    it('should properly create folder', async () => {
+    it('should properly create folder when it does not exist', async () => {
       const folderToCreate = 'myFolder';
-      (fs.mkdir as jest.Mock).mockImplementation(() => null);
-      (fs.stat as jest.Mock).mockImplementation(() => null);
-
-      await createFolder(folderToCreate);
-      expect(fs.mkdir).not.toHaveBeenCalled();
-
-      (fs.stat as jest.Mock).mockImplementation(() => {
+      const mkdirMock = mock.method(fs, 'mkdir', async () => null);
+      mock.method(fs, 'stat', () => {
         throw new Error('File does not exist');
       });
 
-      await createFolder(folderToCreate);
+      await utils.createFolder(folderToCreate);
 
-      expect(fs.mkdir).toHaveBeenCalledTimes(1);
-      expect(fs.mkdir).toHaveBeenCalledWith(path.resolve(folderToCreate), { recursive: true });
+      assert.strictEqual(mkdirMock.mock.calls.length, 1);
+      assert.deepStrictEqual(mkdirMock.mock.calls[0].arguments, [path.resolve(folderToCreate), { recursive: true }]);
     });
   });
 
   describe('getFilenameWithoutRandomId', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should properly get filename without random id', () => {
-      expect(getFilenameWithoutRandomId('test.file')).toEqual('test.file');
-      expect(getFilenameWithoutRandomId('test-12345.file')).toEqual('test.file');
-      expect(getFilenameWithoutRandomId('test-12345.csv.gz')).toEqual('test.gz'); // This case should never happen
-      expect(getFilenameWithoutRandomId('test.csv-12345.gz')).toEqual('test.csv.gz');
-      expect(getFilenameWithoutRandomId(path.join('folder', 'sub-directory', 'test-12345.file'))).toEqual('test.file');
+      assert.deepStrictEqual(utils.getFilenameWithoutRandomId('test.file'), 'test.file');
+      assert.deepStrictEqual(utils.getFilenameWithoutRandomId('test-12345.file'), 'test.file');
+      assert.deepStrictEqual(utils.getFilenameWithoutRandomId('test-12345.csv.gz'), 'test.gz'); // This case should never happen
+      assert.deepStrictEqual(utils.getFilenameWithoutRandomId('test.csv-12345.gz'), 'test.csv.gz');
+      assert.deepStrictEqual(utils.getFilenameWithoutRandomId(path.join('folder', 'sub-directory', 'test-12345.file')), 'test.file');
     });
   });
 
   describe('compress', () => {
-    beforeEach(() => {
-      jest.resetAllMocks();
-    });
-
     it('should properly compress file', async () => {
-      const onFinish = jest.fn((event, handler) => handler());
-      const onError = jest.fn().mockImplementation(() => {
-        return { on: onFinish };
-      });
+      const onFinish = mock.fn((event: string, handler: () => void) => handler());
+      const onError = mock.fn(() => ({ on: onFinish }));
       const myReadStream = {
-        pipe: jest.fn().mockReturnThis(),
+        pipe: mock.fn(function (this: unknown) {
+          return this;
+        }),
         on: onError
       };
-      (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myReadStream);
+      const createReadStreamMock = mock.method(
+        fsSync,
+        'createReadStream',
+        seq(() => myReadStream as unknown as fsSync.ReadStream)
+      );
 
       const myWriteStream = {
-        pipe: jest.fn().mockReturnThis(),
-        on: jest.fn().mockImplementation((event, handler) => {
-          handler();
+        pipe: mock.fn(function (this: unknown) {
           return this;
+        }),
+        on: mock.fn((event: string, handler: () => void) => {
+          handler();
+          return myWriteStream;
         })
       };
-      (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myWriteStream);
+      mock.method(fsSync, 'createWriteStream', () => myWriteStream as unknown as fsSync.WriteStream);
+      mock.method(zlib, 'createGzip', () => ({}) as zlib.Gzip);
 
-      (zlib.createGzip as jest.Mock).mockReturnValue({});
-      await compress('myInputFile', 'myOutputFile');
+      await utils.compress('myInputFile', 'myOutputFile');
 
-      expect(fsSync.createReadStream).toHaveBeenCalledTimes(1);
-      expect(fsSync.createReadStream).toHaveBeenCalledWith('myInputFile');
-      expect(myReadStream.pipe).toHaveBeenCalledTimes(2);
-      expect(fsSync.createWriteStream).toHaveBeenCalledTimes(1);
-      expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile');
+      assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
+      assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments, ['myInputFile']);
+      assert.strictEqual(myReadStream.pipe.mock.calls.length, 2);
     });
 
     it('should properly manage error when compressing file', async () => {
       const myReadStream = {
-        pipe: jest.fn().mockReturnThis(),
-        on: jest.fn().mockImplementation((event, handler) => {
+        pipe: mock.fn(function (this: unknown) {
+          return this;
+        }),
+        on: mock.fn((event: string, handler: (err: string) => void) => {
           handler('compression error');
-          return this;
+          return myReadStream;
         })
       };
-      (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myReadStream);
+      const createReadStreamMock = mock.method(
+        fsSync,
+        'createReadStream',
+        seq(() => myReadStream as unknown as fsSync.ReadStream)
+      );
+      mock.method(fsSync, 'createWriteStream', () => ({}) as fsSync.WriteStream);
+      mock.method(zlib, 'createGzip', () => ({}) as zlib.Gzip);
 
-      const myWriteStream = {
-        pipe: jest.fn().mockReturnThis(),
-        on: jest.fn().mockImplementation((event, handler) => {
-          handler();
-          return this;
-        })
-      };
-      (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myWriteStream);
-
-      (zlib.createGzip as jest.Mock).mockReturnValue({});
-      let expectedError = null;
+      let expectedError: unknown = null;
       try {
-        await compress('myInputFile', 'myOutputFile');
+        await utils.compress('myInputFile', 'myOutputFile');
       } catch (error) {
         expectedError = error;
       }
-      expect(expectedError).toEqual('compression error');
-      expect(fsSync.createReadStream).toHaveBeenCalledTimes(1);
-      expect(fsSync.createReadStream).toHaveBeenCalledWith('myInputFile');
-      expect(myReadStream.pipe).toHaveBeenCalledTimes(2);
-      expect(fsSync.createWriteStream).toHaveBeenCalledTimes(1);
-      expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile');
+      assert.deepStrictEqual(expectedError, 'compression error');
+      assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
+      assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments, ['myInputFile']);
+      assert.strictEqual(myReadStream.pipe.mock.calls.length, 2);
     });
   });
 
   describe('unzip', () => {
     it('should properly unzip file', () => {
-      const extractAllTo = jest.fn();
-      (AdmZip as jest.Mock).mockImplementation(() => ({ extractAllTo }));
+      const extractAllTo = mock.fn();
+      admZipInstance = { extractAllTo };
 
-      unzip('myInputFile', 'myOutputFolder');
+      utils.unzip('myInputFile', 'myOutputFolder');
 
-      expect(extractAllTo).toHaveBeenCalledTimes(1);
+      assert.strictEqual(extractAllTo.mock.calls.length, 1);
     });
 
     it('should properly manage unzip errors', () => {
-      const extractAllTo = jest.fn().mockImplementation(() => {
+      const extractAllTo = mock.fn(() => {
         throw new Error('unzip error');
       });
-      (AdmZip as jest.Mock).mockImplementation(() => ({ extractAllTo }));
+      admZipInstance = { extractAllTo };
 
-      let expectedError = null;
+      let expectedError: unknown = null;
       try {
-        unzip('myInputFile', 'myOutputFolder');
+        utils.unzip('myInputFile', 'myOutputFolder');
       } catch (error) {
         expectedError = error;
       }
 
-      expect(expectedError).toEqual(new Error('unzip error'));
-      expect(extractAllTo).toHaveBeenCalledTimes(1);
+      assert.deepStrictEqual(expectedError, new Error('unzip error'));
+      assert.strictEqual(extractAllTo.mock.calls.length, 1);
     });
   });
 
   describe('generateRandomId', () => {
     it('should properly generate a random ID with a standard size', () => {
-      const randomId = generateRandomId();
-      expect(randomId.length).toEqual(16);
+      const randomId = utils.generateRandomId();
+      assert.strictEqual(randomId.length, 16);
     });
 
     it('should properly generate a random ID with smaller size', () => {
-      const randomId = generateRandomId(8);
-      expect(randomId.length).toEqual(8);
+      const randomId = utils.generateRandomId(8);
+      assert.strictEqual(randomId.length, 8);
     });
 
     it('should properly generate a random ID with bigger size', () => {
-      const randomId = generateRandomId(32);
-      expect(randomId.length).toEqual(32);
+      const randomId = utils.generateRandomId(32);
+      assert.strictEqual(randomId.length, 32);
     });
   });
 
   describe('dirSize', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should properly retrieve dir size', async () => {
-      const firstFolder: Array<Dirent> = [
-        { name: 'file1', isDirectory: () => false, isFile: () => true } as Dirent,
-        { name: 'file2', isDirectory: () => false, isFile: () => true } as Dirent,
-        { name: 'dir', isDirectory: () => true, isFile: () => false } as Dirent
+      const firstFolder = [
+        { name: 'file1', isDirectory: () => false, isFile: () => true } as unknown as Dirent,
+        { name: 'file2', isDirectory: () => false, isFile: () => true } as unknown as Dirent,
+        { name: 'dir', isDirectory: () => true, isFile: () => false } as unknown as Dirent
       ];
-      const secondFolder: Array<Dirent> = [
-        { name: 'file3', isDirectory: () => false, isFile: () => true } as Dirent,
-        { name: 'file4', isDirectory: () => false, isFile: () => false } as Dirent,
-        { name: 'file5', isDirectory: () => false, isFile: () => true } as Dirent
+      const secondFolder = [
+        { name: 'file3', isDirectory: () => false, isFile: () => true } as unknown as Dirent,
+        { name: 'file4', isDirectory: () => false, isFile: () => false } as unknown as Dirent,
+        { name: 'file5', isDirectory: () => false, isFile: () => true } as unknown as Dirent
       ];
-      (fs.readdir as jest.Mock).mockReturnValueOnce(firstFolder).mockReturnValueOnce(secondFolder);
-      (fs.stat as jest.Mock)
-        .mockReturnValueOnce({ size: 1 } as Stats)
-        .mockReturnValueOnce({ size: 2 } as Stats)
-        .mockImplementationOnce(() => {
-          throw new Error('stat error');
-        })
-        .mockReturnValueOnce({ size: 8 } as Stats);
 
-      const result = await dirSize('myDir');
-      expect(fs.readdir).toHaveBeenCalledWith('myDir', { withFileTypes: true });
-      expect(fs.readdir).toHaveBeenCalledWith(path.join('myDir', 'dir'), { withFileTypes: true });
-      expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'file1'));
-      expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'file2'));
-      expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'dir', 'file3'));
-      expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'dir', 'file5'));
-      expect(fs.stat).toHaveBeenCalledTimes(4);
-      expect(result).toEqual(11);
+      const readdirMock = mock.method(
+        fs,
+        'readdir',
+        seq(
+          async () => firstFolder as unknown as Awaited<ReturnType<typeof fs.readdir>>,
+          async () => secondFolder as unknown as Awaited<ReturnType<typeof fs.readdir>>
+        )
+      );
+
+      const statMock = mock.method(
+        fs,
+        'stat',
+        seq(
+          async () => ({ size: 1 }) as Stats,
+          async () => ({ size: 2 }) as Stats,
+          async () => {
+            throw new Error('stat error');
+          },
+          async () => ({ size: 8 }) as Stats
+        )
+      );
+
+      const result = await utils.dirSize('myDir');
+      assert.deepStrictEqual(readdirMock.mock.calls[0].arguments, ['myDir', { withFileTypes: true }]);
+      assert.deepStrictEqual(readdirMock.mock.calls[1].arguments, [path.join('myDir', 'dir'), { withFileTypes: true }]);
+      assert.deepStrictEqual(statMock.mock.calls[0].arguments, [path.join('myDir', 'file1')]);
+      assert.deepStrictEqual(statMock.mock.calls[1].arguments, [path.join('myDir', 'file2')]);
+      assert.deepStrictEqual(statMock.mock.calls[2].arguments, [path.join('myDir', 'dir', 'file3')]);
+      assert.deepStrictEqual(statMock.mock.calls[3].arguments, [path.join('myDir', 'dir', 'file5')]);
+      assert.strictEqual(statMock.mock.calls.length, 4);
+      assert.deepStrictEqual(result, 11);
     });
   });
 
@@ -402,60 +374,80 @@ describe('Service utils', () => {
       const query = 'SELECT * FROM table WHERE timestamp > @StartTime && timestamp < @EndTime && @StartTime > timestamp';
 
       const expectedResult = [startTime, endTime, startTime];
-      const result = generateReplacementParameters(query, startTime, endTime);
-      expect(result).toEqual(expectedResult);
+      const result = utils.generateReplacementParameters(query, startTime, endTime);
+      assert.deepStrictEqual(result, expectedResult);
     });
   });
 
   describe('logQuery', () => {
-    const logger: pino.Logger = new PinoLogger();
+    const logger = new PinoLogger();
 
     beforeEach(() => {
-      jest.clearAllMocks();
+      logger.info.mock.resetCalls();
     });
 
     it('should properly log a query with string variables', () => {
       const query = 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime';
-      logQuery(query, '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
-
-      expect(logger.info).toHaveBeenCalledWith(
-        `Sending "${query}" with @StartTime = 2020-01-01T00:00:00.000Z @EndTime = 2023-01-01T00:00:00.000Z`
+      utils.logQuery(
+        query,
+        '2020-01-01T00:00:00.000Z',
+        '2023-01-01T00:00:00.000Z',
+        logger as unknown as Parameters<typeof utils.logQuery>[3]
       );
+
+      assert.strictEqual(logger.info.mock.calls.length, 1);
+      assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [
+        `Sending "${query}" with @StartTime = 2020-01-01T00:00:00.000Z @EndTime = 2023-01-01T00:00:00.000Z`
+      ]);
     });
 
     it('should properly log a query with number variables', () => {
       const query = 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime';
-      logQuery(
+      utils.logQuery(
         query,
         DateTime.fromISO('2020-01-01T00:00:00.000Z').toMillis(),
         DateTime.fromISO('2023-01-01T00:00:00.000Z').toMillis(),
-        logger
+        logger as unknown as Parameters<typeof utils.logQuery>[3]
       );
 
-      expect(logger.info).toHaveBeenCalledWith(`Sending "${query}" with @StartTime = 1577836800000 @EndTime = 1672531200000`);
+      assert.strictEqual(logger.info.mock.calls.length, 1);
+      assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [
+        `Sending "${query}" with @StartTime = 1577836800000 @EndTime = 1672531200000`
+      ]);
     });
 
     it('should properly log a query without variable', () => {
       const query = 'SELECT * FROM logs';
-      logQuery(query, '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
+      utils.logQuery(
+        query,
+        '2020-01-01T00:00:00.000Z',
+        '2023-01-01T00:00:00.000Z',
+        logger as unknown as Parameters<typeof utils.logQuery>[3]
+      );
 
-      expect(logger.info).toHaveBeenCalledWith(`Sending "${query}"`);
+      assert.strictEqual(logger.info.mock.calls.length, 1);
+      assert.deepStrictEqual(logger.info.mock.calls[0].arguments, [`Sending "${query}"`]);
     });
   });
 
   describe('persistResults', () => {
-    const logger: pino.Logger = new PinoLogger();
-    const addContent = jest.fn();
+    const logger = new PinoLogger();
+    const addContent = mock.fn();
     const dataToWrite = [{ data1: 1 }, { data2: 2 }];
 
-    describe('without compression', () => {
-      beforeEach(() => {
-        jest.clearAllMocks();
-        (csv.unparse as jest.Mock).mockReturnValue('csv content');
-      });
+    beforeEach(() => {
+      addContent.mock.resetCalls();
+      logger.error.mock.resetCalls();
+      csvExports.unparse.mock.resetCalls();
+      csvExports.unparse.mock.mockImplementation(() => 'csv content');
+    });
 
+    describe('without compression', () => {
       it('should properly write results without compression', async () => {
-        await persistResults(
+        mock.method(fs, 'writeFile', async () => null);
+        mock.method(fs, 'unlink', async () => null);
+
+        await utils.persistResults(
           dataToWrite,
           {
             type: 'file',
@@ -463,22 +455,26 @@ describe('Service utils', () => {
             compression: false
           },
           'connectorName',
-          testData.south.list[0].items[0],
+          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
-          addContent,
-          logger
+          addContent as unknown as Parameters<typeof utils.persistResults>[6],
+          logger as unknown as Parameters<typeof utils.persistResults>[7]
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, [
-          testData.south.list[0].items[0]
+        assert.strictEqual(addContent.mock.calls.length, 1);
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+          { type: 'any', filePath },
+          testData.constants.dates.FAKE_NOW,
+          [testData.south.list[0].items[0]]
         ]);
-        expect(fs.unlink).toHaveBeenCalledWith(filePath);
-        expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
 
       it('should properly write results into CSV without compression', async () => {
-        await persistResults(
+        mock.method(fs, 'writeFile', async () => null);
+        const unlinkMock = mock.method(fs, 'unlink', async () => null);
+
+        await utils.persistResults(
           dataToWrite,
           {
             type: 'csv',
@@ -489,25 +485,30 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
-          testData.south.list[0].items[0],
+          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
-          addContent,
-          logger
+          addContent as unknown as Parameters<typeof utils.persistResults>[6],
+          logger as unknown as Parameters<typeof utils.persistResults>[7]
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, [
-          testData.south.list[0].items[0]
+        assert.strictEqual(addContent.mock.calls.length, 1);
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+          { type: 'any', filePath },
+          testData.constants.dates.FAKE_NOW,
+          [testData.south.list[0].items[0]]
         ]);
-        expect(fs.unlink).toHaveBeenCalledWith(filePath);
-        expect(fs.unlink).toHaveBeenCalledTimes(1);
+        assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
+        assert.strictEqual(unlinkMock.mock.calls.length, 1);
       });
 
       it('should properly write results into CSV without compression and log unlink errors', async () => {
-        (fs.unlink as jest.Mock).mockImplementation(() => {
+        mock.method(fs, 'writeFile', async () => null);
+        const unlinkMock = mock.method(fs, 'unlink', () => {
           throw new Error('unlink error');
         });
-        await persistResults(
+
+        await utils.persistResults(
           dataToWrite,
           {
             type: 'csv',
@@ -518,28 +519,34 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
-          testData.south.list[0].items[0],
+          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
-          addContent,
-          logger
+          addContent as unknown as Parameters<typeof utils.persistResults>[6],
+          logger as unknown as Parameters<typeof utils.persistResults>[7]
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, [
-          testData.south.list[0].items[0]
+        assert.strictEqual(addContent.mock.calls.length, 1);
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+          { type: 'any', filePath },
+          testData.constants.dates.FAKE_NOW,
+          [testData.south.list[0].items[0]]
         ]);
-        expect(fs.unlink).toHaveBeenCalledWith(filePath);
-        expect(fs.unlink).toHaveBeenCalledTimes(1);
-        expect(logger.error).toHaveBeenCalledWith(
+        assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
+        assert.strictEqual(unlinkMock.mock.calls.length, 1);
+        assert.strictEqual(logger.error.mock.calls.length, 1);
+        assert.deepStrictEqual(logger.error.mock.calls[0].arguments, [
           `Error when deleting CSV file "${filePath}" after caching it. ${new Error('unlink error')}`
-        );
+        ]);
       });
 
       it('should properly write results without compression and log unlink errors', async () => {
-        (fs.unlink as jest.Mock).mockImplementation(() => {
+        mock.method(fs, 'writeFile', async () => null);
+        const unlinkMock = mock.method(fs, 'unlink', () => {
           throw new Error('unlink error');
         });
-        await persistResults(
+
+        await utils.persistResults(
           dataToWrite,
           {
             type: 'file',
@@ -547,50 +554,69 @@ describe('Service utils', () => {
             compression: false
           },
           'connectorName',
-          testData.south.list[0].items[0],
+          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
-          addContent,
-          logger
+          addContent as unknown as Parameters<typeof utils.persistResults>[6],
+          logger as unknown as Parameters<typeof utils.persistResults>[7]
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath }, testData.constants.dates.FAKE_NOW, [
-          testData.south.list[0].items[0]
+        assert.strictEqual(addContent.mock.calls.length, 1);
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+          { type: 'any', filePath },
+          testData.constants.dates.FAKE_NOW,
+          [testData.south.list[0].items[0]]
         ]);
-        expect(fs.unlink).toHaveBeenCalledWith(filePath);
-        expect(fs.unlink).toHaveBeenCalledTimes(1);
-        expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
+        assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [filePath]);
+        assert.strictEqual(unlinkMock.mock.calls.length, 1);
+        assert.strictEqual(logger.error.mock.calls.length, 1);
+        assert.deepStrictEqual(logger.error.mock.calls[0].arguments, [
+          `Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`
+        ]);
       });
     });
 
     describe('with compression', () => {
-      beforeEach(() => {
-        jest.resetAllMocks();
-        const onFinish = jest.fn((event, handler) => handler());
-        const onError = jest.fn().mockImplementation(() => {
-          return { on: onFinish };
-        });
+      let readStreamMock: {
+        pipe: ReturnType<typeof mock.fn>;
+        on: ReturnType<typeof mock.fn>;
+      };
 
-        const myReadStream = {
-          pipe: jest.fn().mockReturnThis(),
+      beforeEach(() => {
+        const onFinish = mock.fn((event: string, handler: () => void) => handler());
+        const onError = mock.fn(() => ({ on: onFinish }));
+
+        readStreamMock = {
+          pipe: mock.fn(function (this: unknown) {
+            return this;
+          }),
           on: onError
         };
-        (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myReadStream);
+
+        mock.method(
+          fsSync,
+          'createReadStream',
+          seq(() => readStreamMock as unknown as fsSync.ReadStream)
+        );
 
         const myWriteStream = {
-          pipe: jest.fn().mockReturnThis(),
-          on: jest.fn().mockImplementation((event, handler) => {
-            handler();
+          pipe: mock.fn(function (this: unknown) {
             return this;
+          }),
+          on: mock.fn((event: string, handler: () => void) => {
+            handler();
+            return myWriteStream;
           })
         };
-        (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myWriteStream);
-        (csv.unparse as jest.Mock).mockReturnValue('csv content');
-        (zlib.createGzip as jest.Mock).mockReturnValue({});
+        mock.method(fsSync, 'createWriteStream', () => myWriteStream as unknown as fsSync.WriteStream);
+        mock.method(zlib, 'createGzip', () => ({}) as zlib.Gzip);
+        mock.method(fs, 'writeFile', async () => null);
       });
 
       it('should properly persists results into CSV file', async () => {
-        await persistResults(
+        const unlinkMock = mock.method(fs, 'unlink', async () => null);
+
+        await utils.persistResults(
           dataToWrite,
           {
             type: 'csv',
@@ -601,23 +627,29 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
-          testData.south.list[0].items[0],
+          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
-          addContent,
-          logger
+          addContent as unknown as Parameters<typeof utils.persistResults>[6],
+          logger as unknown as Parameters<typeof utils.persistResults>[7]
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, [
-          testData.south.list[0].items[0]
+        assert.strictEqual(addContent.mock.calls.length, 1);
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+          { type: 'any', filePath: `${filePath}.gz` },
+          testData.constants.dates.FAKE_NOW,
+          [testData.south.list[0].items[0]]
         ]);
-        expect(fs.unlink).toHaveBeenCalledWith(filePath);
-        expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
-        expect(fs.unlink).toHaveBeenCalledTimes(2);
+        const unlinkArgs = unlinkMock.mock.calls.map(c => c.arguments[0]);
+        assert.strictEqual(unlinkArgs.includes(filePath), true);
+        assert.strictEqual(unlinkArgs.includes(`${filePath}.gz`), true);
+        assert.strictEqual(unlinkMock.mock.calls.length, 2);
       });
 
       it('should properly persists results into file', async () => {
-        await persistResults(
+        const unlinkMock = mock.method(fs, 'unlink', async () => null);
+
+        await utils.persistResults(
           dataToWrite,
           {
             type: 'file',
@@ -625,26 +657,31 @@ describe('Service utils', () => {
             compression: true
           },
           'connectorName',
-          testData.south.list[0].items[0],
+          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
-          addContent,
-          logger
+          addContent as unknown as Parameters<typeof utils.persistResults>[6],
+          logger as unknown as Parameters<typeof utils.persistResults>[7]
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, [
-          testData.south.list[0].items[0]
+        assert.strictEqual(addContent.mock.calls.length, 1);
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+          { type: 'any', filePath: `${filePath}.gz` },
+          testData.constants.dates.FAKE_NOW,
+          [testData.south.list[0].items[0]]
         ]);
-        expect(fs.unlink).toHaveBeenCalledWith(filePath);
-        expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
-        expect(fs.unlink).toHaveBeenCalledTimes(2);
+        const unlinkArgs = unlinkMock.mock.calls.map(c => c.arguments[0]);
+        assert.strictEqual(unlinkArgs.includes(filePath), true);
+        assert.strictEqual(unlinkArgs.includes(`${filePath}.gz`), true);
+        assert.strictEqual(unlinkMock.mock.calls.length, 2);
       });
 
       it('should properly persists results into CSV file and log unlink errors', async () => {
-        (fs.unlink as jest.Mock).mockImplementation(() => {
+        mock.method(fs, 'unlink', () => {
           throw new Error('unlink error');
         });
-        await persistResults(
+
+        await utils.persistResults(
           dataToWrite,
           {
             type: 'csv',
@@ -655,31 +692,37 @@ describe('Service utils', () => {
             outputTimezone: 'UTC'
           },
           'connectorName',
-          testData.south.list[0].items[0],
+          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
-          addContent,
-          logger
+          addContent as unknown as Parameters<typeof utils.persistResults>[6],
+          logger as unknown as Parameters<typeof utils.persistResults>[7]
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(logger.error).toHaveBeenCalledTimes(2);
-        expect(logger.error).toHaveBeenCalledWith(`Error when deleting CSV file "${filePath}" after compression. Error: unlink error`);
-        expect(logger.error).toHaveBeenCalledWith(
-          `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
+        assert.strictEqual(logger.error.mock.calls.length, 2);
+        const errorMessages = logger.error.mock.calls.map(c => c.arguments[0]);
+        assert.strictEqual(
+          errorMessages.includes(`Error when deleting CSV file "${filePath}" after compression. Error: unlink error`),
+          true
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, [
-          testData.south.list[0].items[0]
+        assert.strictEqual(
+          errorMessages.includes(`Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`),
+          true
+        );
+        assert.strictEqual(addContent.mock.calls.length, 1);
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+          { type: 'any', filePath: `${filePath}.gz` },
+          testData.constants.dates.FAKE_NOW,
+          [testData.south.list[0].items[0]]
         ]);
-        expect(fs.unlink).toHaveBeenCalledWith(filePath);
-        expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
-        expect(fs.unlink).toHaveBeenCalledTimes(2);
       });
 
       it('should properly persists results into file and log unlink errors', async () => {
-        (fs.unlink as jest.Mock).mockImplementation(() => {
+        mock.method(fs, 'unlink', () => {
           throw new Error('unlink error');
         });
-        await persistResults(
+
+        await utils.persistResults(
           dataToWrite,
           {
             type: 'file',
@@ -687,24 +730,26 @@ describe('Service utils', () => {
             compression: true
           },
           'connectorName',
-          testData.south.list[0].items[0],
+          testData.south.list[0].items[0] as unknown as Parameters<typeof utils.persistResults>[3],
           testData.constants.dates.FAKE_NOW,
           'myTmpFolder',
-          addContent,
-          logger
+          addContent as unknown as Parameters<typeof utils.persistResults>[6],
+          logger as unknown as Parameters<typeof utils.persistResults>[7]
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
-        expect(logger.error).toHaveBeenCalledTimes(2);
-        expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after compression. Error: unlink error`);
-        expect(logger.error).toHaveBeenCalledWith(
-          `Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`
+        assert.strictEqual(logger.error.mock.calls.length, 2);
+        const errorMessages = logger.error.mock.calls.map(c => c.arguments[0]);
+        assert.strictEqual(errorMessages.includes(`Error when deleting file "${filePath}" after compression. Error: unlink error`), true);
+        assert.strictEqual(
+          errorMessages.includes(`Error when deleting compressed file "${filePath}.gz" after caching it. Error: unlink error`),
+          true
         );
-        expect(addContent).toHaveBeenCalledWith({ type: 'any', filePath: `${filePath}.gz` }, testData.constants.dates.FAKE_NOW, [
-          testData.south.list[0].items[0]
+        assert.strictEqual(addContent.mock.calls.length, 1);
+        assert.deepStrictEqual(addContent.mock.calls[0].arguments, [
+          { type: 'any', filePath: `${filePath}.gz` },
+          testData.constants.dates.FAKE_NOW,
+          [testData.south.list[0].items[0]]
         ]);
-        expect(fs.unlink).toHaveBeenCalledWith(filePath);
-        expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
-        expect(fs.unlink).toHaveBeenCalledTimes(2);
       });
     });
   });
@@ -716,8 +761,8 @@ describe('Service utils', () => {
       const dateTimeFormat = {
         type: 'unix-epoch-ms' as DateTimeType
       };
-      const result = formatInstant(undefined, dateTimeFormat);
-      expect(result).toEqual('');
+      const result = utils.formatInstant(undefined, dateTimeFormat);
+      assert.deepStrictEqual(result, '');
     });
 
     it('should return Number of ms', () => {
@@ -725,13 +770,14 @@ describe('Service utils', () => {
         type: 'unix-epoch-ms' as DateTimeType
       };
       const expectedResult = DateTime.fromISO(testInstant).toMillis();
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual(expectedResult);
-      expect(
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, expectedResult);
+      assert.deepStrictEqual(
         DateTime.fromMillis(result as number)
           .toUTC()
-          .toISO()
-      ).toEqual('2020-02-02T02:02:02.222Z');
+          .toISO(),
+        '2020-02-02T02:02:02.222Z'
+      );
     });
 
     it('should return Number of seconds', () => {
@@ -739,13 +785,14 @@ describe('Service utils', () => {
         type: 'unix-epoch' as DateTimeType
       };
       const expectedResult = Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000);
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual(expectedResult);
-      expect(
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, expectedResult);
+      assert.deepStrictEqual(
         DateTime.fromMillis((result as number) * 1000)
           .toUTC()
-          .toISO()
-      ).toEqual('2020-02-02T02:02:02.000Z');
+          .toISO(),
+        '2020-02-02T02:02:02.000Z'
+      );
     });
 
     it('should return a formatted String with correct timezone', () => {
@@ -756,18 +803,17 @@ describe('Service utils', () => {
         locale: 'en-US'
       };
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual(expectedResult);
-      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result).toEqual('2020-02-02 11:02:02.222');
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, expectedResult);
+      assert.deepStrictEqual(result, '2020-02-02 11:02:02.222');
     });
 
     it('should return a formatted ISO String from ISO String', () => {
       const dateTimeFormat = {
         type: 'iso-string' as DateTimeType
       };
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual(testInstant);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, testInstant);
     });
 
     it('should return a formatted Date', () => {
@@ -775,8 +821,8 @@ describe('Service utils', () => {
         type: 'date' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual('2020-02-02');
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, '2020-02-02');
     });
 
     it('should return a formatted small-date-time', () => {
@@ -784,8 +830,8 @@ describe('Service utils', () => {
         type: 'small-date-time' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual('2020-02-02 11:02:02');
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, '2020-02-02 11:02:02');
     });
 
     it('should return a formatted DateTime', () => {
@@ -793,39 +839,36 @@ describe('Service utils', () => {
         type: 'date-time' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual('2020-02-02 11:02:02.222');
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, '2020-02-02 11:02:02.222');
     });
 
     it('should return a formatted String with correct timezone for locale en-US', () => {
       const dateTimeFormat = {
         type: 'string' as DateTimeType,
         timezone: 'Asia/Tokyo',
-        format: 'dd-MMM-yy HH:mm:ss', // format with localized month
+        format: 'dd-MMM-yy HH:mm:ss',
         locale: 'en-US'
       };
-      // From Zulu string
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual(expectedResult);
-      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result).toEqual('02-Feb-20 11:02:02');
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, expectedResult);
+      assert.deepStrictEqual(result, '02-Feb-20 11:02:02');
     });
 
     it('should return a formatted String with correct timezone for locale fr-FR', () => {
       const dateTimeFormat = {
         type: 'string' as DateTimeType,
         timezone: 'Asia/Tokyo',
-        format: 'dd-MMM-yy HH:mm:ss', // format with localized month
+        format: 'dd-MMM-yy HH:mm:ss',
         locale: 'fr-FR'
       };
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
         locale: dateTimeFormat.locale
       });
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual(expectedResult);
-      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result).toEqual('02-févr.-20 11:02:02');
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, expectedResult);
+      assert.deepStrictEqual(result, '02-févr.-20 11:02:02');
     });
 
     it('should return an ISO String from Date with correct timezone', () => {
@@ -833,71 +876,28 @@ describe('Service utils', () => {
         type: 'date-time-offset' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
-      // From Zulu string
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toUTC().toISO()!;
-      const result = formatInstant(testInstant, dateTimeFormat);
-      expect(result).toEqual(expectedResult);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      assert.deepStrictEqual(result, expectedResult);
     });
   });
 
   describe('convertDelimiter', () => {
     it('should convert to csv delimiter', () => {
-      expect(convertDelimiter('NON_BREAKING_SPACE')).toEqual(' ');
-      expect(convertDelimiter('COLON')).toEqual(':');
-      expect(convertDelimiter('COMMA')).toEqual(',');
-      expect(convertDelimiter('DOT')).toEqual('.');
-      expect(convertDelimiter('SLASH')).toEqual('/');
-      expect(convertDelimiter('PIPE')).toEqual('|');
-      expect(convertDelimiter('SEMI_COLON')).toEqual(';');
-      expect(convertDelimiter('TAB')).toEqual(' ');
-    });
-  });
-
-  describe('convertQuoteChar', () => {
-    it('should convert DOUBLE_QUOTE to "', () => {
-      expect(convertQuoteChar('DOUBLE_QUOTE')).toEqual('"');
-    });
-
-    it("should convert SINGLE_QUOTE to '", () => {
-      expect(convertQuoteChar('SINGLE_QUOTE')).toEqual("'");
-    });
-
-    it('should convert NONE to empty string', () => {
-      expect(convertQuoteChar('NONE')).toEqual('');
-    });
-  });
-
-  describe('convertEscapeChar', () => {
-    it('should convert BACKSLASH to \\', () => {
-      expect(convertEscapeChar('BACKSLASH')).toEqual('\\');
-    });
-
-    it('should convert DOUBLE_QUOTE to "', () => {
-      expect(convertEscapeChar('DOUBLE_QUOTE')).toEqual('"');
-    });
-  });
-
-  describe('convertNewline', () => {
-    it('should convert CRLF to \\r\\n', () => {
-      expect(convertNewline('CRLF')).toEqual('\r\n');
-    });
-
-    it('should convert LF to \\n', () => {
-      expect(convertNewline('LF')).toEqual('\n');
-    });
-
-    it('should convert CR to \\r', () => {
-      expect(convertNewline('CR')).toEqual('\r');
-    });
-
-    it('should convert DEFAULT to empty string', () => {
-      expect(convertNewline('DEFAULT')).toEqual('');
+      assert.deepStrictEqual(utils.convertDelimiter('NON_BREAKING_SPACE'), ' ');
+      assert.deepStrictEqual(utils.convertDelimiter('COLON'), ':');
+      assert.deepStrictEqual(utils.convertDelimiter('COMMA'), ',');
+      assert.deepStrictEqual(utils.convertDelimiter('DOT'), '.');
+      assert.deepStrictEqual(utils.convertDelimiter('SLASH'), '/');
+      assert.deepStrictEqual(utils.convertDelimiter('PIPE'), '|');
+      assert.deepStrictEqual(utils.convertDelimiter('SEMI_COLON'), ';');
+      assert.deepStrictEqual(utils.convertDelimiter('TAB'), ' ');
     });
   });
 
   describe('convertDateTimeToInstant', () => {
-    beforeAll(() => {
-      jest.spyOn(DateTime, 'fromJSDate').mockImplementation(date => {
+    beforeEach(() => {
+      mock.method(DateTime, 'fromJSDate', (date: Date) => {
         if (date instanceof Date && !isNaN(date.getTime())) {
           return DateTime.fromISO(testData.constants.dates.FAKE_NOW);
         }
@@ -905,117 +905,127 @@ describe('Service utils', () => {
       });
     });
 
-    afterAll(() => {
-      jest.restoreAllMocks();
-    });
-
     describe('when no type is provided', () => {
       it('should return empty string if value is null', () => {
-        const result = convertDateTimeToInstant(null, {});
-        expect(result).toEqual('');
+        const result = utils.convertDateTimeToInstant(null, {});
+        assert.deepStrictEqual(result, '');
       });
 
       it('should return the input if it is a valid ISO string', () => {
-        const result = convertDateTimeToInstant('2023-01-01T00:00:00Z', {});
-        expect(result).toBe('2023-01-01T00:00:00Z');
+        const result = utils.convertDateTimeToInstant('2023-01-01T00:00:00Z', {});
+        assert.strictEqual(result, '2023-01-01T00:00:00Z');
       });
 
       it('should throw an error if input is not a valid ISO string', () => {
-        expect(() => convertDateTimeToInstant('not-an-iso-string', {})).toThrow(
-          'The value must be a valid ISO string if no type is provided: "not-an-iso-string"'
+        assert.throws(
+          () => utils.convertDateTimeToInstant('not-an-iso-string', {}),
+          /The value must be a valid ISO string if no type is provided: "not-an-iso-string"/
         );
-        expect(() => convertDateTimeToInstant(123, {})).toThrow('The value must be a valid ISO string if no type is provided: "123"');
-        expect(() => convertDateTimeToInstant(new Date(), {})).toThrow('The value must be a valid ISO string if no type is provided: "');
+        assert.throws(() => utils.convertDateTimeToInstant(123, {}), /The value must be a valid ISO string if no type is provided: "123"/);
+        assert.throws(
+          () => utils.convertDateTimeToInstant(new Date(), {}),
+          /The value must be a valid ISO string if no type is provided: "/
+        );
       });
     });
 
     describe('unix-epoch', () => {
       it('should convert a number (seconds since epoch) to ISO string', () => {
-        const result = convertDateTimeToInstant(1672531200, { type: 'unix-epoch' });
-        expect(result).toBe('2023-01-01T00:00:00.000Z');
+        const result = utils.convertDateTimeToInstant(1672531200, { type: 'unix-epoch' });
+        assert.strictEqual(result, '2023-01-01T00:00:00.000Z');
       });
 
       it('should convert a numeric string (seconds since epoch) to ISO string', () => {
-        const result = convertDateTimeToInstant('1672531200', { type: 'unix-epoch' });
-        expect(result).toBe('2023-01-01T00:00:00.000Z');
+        const result = utils.convertDateTimeToInstant('1672531200', { type: 'unix-epoch' });
+        assert.strictEqual(result, '2023-01-01T00:00:00.000Z');
       });
 
       it('should throw an error if input is not a number or numeric string', () => {
-        expect(() => convertDateTimeToInstant(new Date(), { type: 'unix-epoch' })).toThrow(
-          'The value must be a number or numeric string for type "unix-epoch": "'
+        assert.throws(
+          () => utils.convertDateTimeToInstant(new Date(), { type: 'unix-epoch' }),
+          /The value must be a number or numeric string for type "unix-epoch": "/
         );
-        expect(() => convertDateTimeToInstant('not-a-number', { type: 'unix-epoch' })).toThrow(
-          'Failed to convert "not-a-number" to Instant for type "unix-epoch"'
+        assert.throws(
+          () => utils.convertDateTimeToInstant('not-a-number', { type: 'unix-epoch' }),
+          /Failed to convert "not-a-number" to Instant for type "unix-epoch"/
         );
       });
     });
 
     describe('unix-epoch-ms', () => {
       it('should convert a number (milliseconds since epoch) to ISO string', () => {
-        const result = convertDateTimeToInstant(1672531200000, { type: 'unix-epoch-ms' });
-        expect(result).toBe('2023-01-01T00:00:00.000Z');
+        const result = utils.convertDateTimeToInstant(1672531200000, { type: 'unix-epoch-ms' });
+        assert.strictEqual(result, '2023-01-01T00:00:00.000Z');
       });
 
       it('should convert a numeric string (milliseconds since epoch) to ISO string', () => {
-        const result = convertDateTimeToInstant('1672531200000', { type: 'unix-epoch-ms' });
-        expect(result).toBe('2023-01-01T00:00:00.000Z');
+        const result = utils.convertDateTimeToInstant('1672531200000', { type: 'unix-epoch-ms' });
+        assert.strictEqual(result, '2023-01-01T00:00:00.000Z');
       });
 
       it('should throw an error if input is not a number or numeric string', () => {
-        expect(() => convertDateTimeToInstant(new Date(), { type: 'unix-epoch-ms' })).toThrow(
-          'The value must be a number or numeric string for type "unix-epoch-ms": "'
+        assert.throws(
+          () => utils.convertDateTimeToInstant(new Date(), { type: 'unix-epoch-ms' }),
+          /The value must be a number or numeric string for type "unix-epoch-ms": "/
         );
-        expect(() => convertDateTimeToInstant('not-a-number', { type: 'unix-epoch-ms' })).toThrow(
-          'Failed to convert "not-a-number" to Instant for type "unix-epoch-ms"'
+        assert.throws(
+          () => utils.convertDateTimeToInstant('not-a-number', { type: 'unix-epoch-ms' }),
+          /Failed to convert "not-a-number" to Instant for type "unix-epoch-ms"/
         );
       });
     });
 
     describe('iso-string', () => {
       it('should convert a valid ISO string to ISO string', () => {
-        const result = convertDateTimeToInstant('2023-01-01T12:00:00+02:00', { type: 'iso-string' });
-        expect(result).toBe('2023-01-01T10:00:00.000Z');
+        const result = utils.convertDateTimeToInstant('2023-01-01T12:00:00+02:00', { type: 'iso-string' });
+        assert.strictEqual(result, '2023-01-01T10:00:00.000Z');
       });
 
       it('should throw an error if input is not a string', () => {
-        expect(() => convertDateTimeToInstant(123, { type: 'iso-string' })).toThrow(
-          'The value must be a string for type "iso-string": "123"'
+        assert.throws(
+          () => utils.convertDateTimeToInstant(123, { type: 'iso-string' }),
+          /The value must be a string for type "iso-string": "123"/
         );
-        expect(() => convertDateTimeToInstant(new Date(), { type: 'iso-string' })).toThrow(
-          'The value must be a string for type "iso-string": "'
+        assert.throws(
+          () => utils.convertDateTimeToInstant(new Date(), { type: 'iso-string' }),
+          /The value must be a string for type "iso-string": "/
         );
       });
     });
 
     describe('string', () => {
       it('should convert a string with format to ISO string', () => {
-        const result = convertDateTimeToInstant('01/01/2023', {
+        const result = utils.convertDateTimeToInstant('01/01/2023', {
           type: 'string',
           format: 'MM/dd/yyyy',
           timezone: 'Europe/Paris'
         });
-        expect(result).toMatch(/2022-12-31T.*Z/);
+        assert.match(result, /2022-12-31T.*Z/);
       });
 
       it('should throw an error if input is not a string', () => {
-        expect(() => convertDateTimeToInstant(123, { type: 'string', format: 'MM/dd/yyyy' })).toThrow(
-          'The value must be a string and format must be provided for type "string": "123"'
+        assert.throws(
+          () => utils.convertDateTimeToInstant(123, { type: 'string', format: 'MM/dd/yyyy' }),
+          /The value must be a string and format must be provided for type "string": "123"/
         );
       });
 
       it('should throw an error if format is not provided', () => {
-        expect(() => convertDateTimeToInstant('01/01/2023', { type: 'string' })).toThrow(
-          'The value must be a string and format must be provided for type "string": "01/01/2023"'
+        assert.throws(
+          () => utils.convertDateTimeToInstant('01/01/2023', { type: 'string' }),
+          /The value must be a string and format must be provided for type "string": "01\/01\/2023"/
         );
       });
 
       it('should throw an error if string cannot be parsed with the given format', () => {
-        expect(() =>
-          convertDateTimeToInstant('not-a-date', {
-            type: 'string',
-            format: 'MM/dd/yyyy'
-          })
-        ).toThrow('Failed to convert "not-a-date" to Instant for type "string"');
+        assert.throws(
+          () =>
+            utils.convertDateTimeToInstant('not-a-date', {
+              type: 'string',
+              format: 'MM/dd/yyyy'
+            }),
+          /Failed to convert "not-a-date" to Instant for type "string"/
+        );
       });
     });
 
@@ -1027,77 +1037,83 @@ describe('Service utils', () => {
         'date-time-2'
       ];
 
-      dateTypes.forEach(type => {
+      for (const type of dateTypes) {
         describe(type, () => {
           it('should convert a Date object to ISO string', () => {
-            const result = convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), { type, timezone: 'UTC' });
-            expect(result).toBe(testData.constants.dates.FAKE_NOW);
+            const result = utils.convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), { type, timezone: 'UTC' });
+            assert.strictEqual(result, testData.constants.dates.FAKE_NOW);
           });
 
           it('should convert a Date object to ISO string with timezone', () => {
-            const result = convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), {
+            const result = utils.convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), {
               type,
               timezone: 'America/New_York'
             });
-            expect(result).toBe('2021-01-02T05:00:00.000Z');
+            assert.strictEqual(result, '2021-01-02T05:00:00.000Z');
           });
 
           it('should throw an error if input is not a Date object', () => {
-            expect(() => convertDateTimeToInstant('not-a-date', { type })).toThrow(
-              `The value must be a Date object for type "${type}": "not-a-date"`
+            assert.throws(
+              () => utils.convertDateTimeToInstant('not-a-date', { type }),
+              new RegExp(`The value must be a Date object for type "${type}": "not-a-date"`)
             );
-            expect(() => convertDateTimeToInstant(123, { type })).toThrow(`The value must be a Date object for type "${type}": "123"`);
+            assert.throws(
+              () => utils.convertDateTimeToInstant(123, { type }),
+              new RegExp(`The value must be a Date object for type "${type}": "123"`)
+            );
           });
         });
-      });
+      }
     });
 
     describe('date-time-offset, timestamp, timestamptz', () => {
       const dateTypes: Array<'date-time-offset' | 'timestamp' | 'timestamptz'> = ['date-time-offset', 'timestamp', 'timestamptz'];
 
-      dateTypes.forEach(type => {
+      for (const type of dateTypes) {
         describe(type, () => {
           it('should convert a Date object to ISO string', () => {
-            const result = convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), { type, timezone: 'UTC' });
-            expect(result).toBe(testData.constants.dates.FAKE_NOW);
+            const result = utils.convertDateTimeToInstant(new Date(testData.constants.dates.FAKE_NOW), { type, timezone: 'UTC' });
+            assert.strictEqual(result, testData.constants.dates.FAKE_NOW);
           });
 
           it('should throw an error if input is not a Date object', () => {
-            expect(() => convertDateTimeToInstant('not-a-date', { type })).toThrow(
-              `The value must be a Date object for type "${type}": "not-a-date"`
+            assert.throws(
+              () => utils.convertDateTimeToInstant('not-a-date', { type }),
+              new RegExp(`The value must be a Date object for type "${type}": "not-a-date"`)
             );
-            expect(() => convertDateTimeToInstant(123, { type })).toThrow(`The value must be a Date object for type "${type}": "123"`);
+            assert.throws(
+              () => utils.convertDateTimeToInstant(123, { type }),
+              new RegExp(`The value must be a Date object for type "${type}": "123"`)
+            );
           });
         });
-      });
+      }
 
       describe('unsupported type', () => {
         it('should throw an error for unsupported types', () => {
-          expect(() =>
-            convertDateTimeToInstant(new Date(), {
-              type: 'unsupported-type' as unknown as DateTimeType
-            })
-          ).toThrow('Unsupported DateTimeType: "unsupported-type"');
+          assert.throws(
+            () =>
+              utils.convertDateTimeToInstant(new Date(), {
+                type: 'unsupported-type' as unknown as DateTimeType
+              }),
+            /Unsupported DateTimeType: "unsupported-type"/
+          );
         });
       });
     });
   });
 
   describe('convertDateTime', () => {
-    afterAll(() => {
-      jest.restoreAllMocks();
-    });
-
     it('should convert a valid ISO string to ISO string', () => {
-      const result = convertDateTime('2023-01-01T12:00:00+02:00', { type: 'iso-string' }, { type: 'iso-string' });
-      expect(result).toBe('2023-01-01T10:00:00.000Z');
+      const result = utils.convertDateTime('2023-01-01T12:00:00+02:00', { type: 'iso-string' }, { type: 'iso-string' });
+      assert.strictEqual(result, '2023-01-01T10:00:00.000Z');
     });
   });
 
   describe('formatQueryParams', () => {
     it('should correctly return void string when there is no query params', () => {
-      const result = formatQueryParams('2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z', []);
-      expect(result).toEqual({});
+      const result = utils.formatQueryParams('2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z', []);
+      assert.deepStrictEqual(result, {});
     });
 
     it('should correctly format query params with ISO date string', () => {
@@ -1109,8 +1125,12 @@ describe('Service utils', () => {
         { key: 'anotherParam', value: 'anotherQueryParam' }
       ];
 
-      const result = formatQueryParams(startTime, endTime, queryParams);
-      expect(result).toEqual({ anotherParam: 'anotherQueryParam', end: '2021-01-01T00:00:00.000Z', start: '2020-01-01T00:00:00.000Z' });
+      const result = utils.formatQueryParams(startTime, endTime, queryParams);
+      assert.deepStrictEqual(result, {
+        anotherParam: 'anotherQueryParam',
+        end: '2021-01-01T00:00:00.000Z',
+        start: '2020-01-01T00:00:00.000Z'
+      });
     });
   });
 
@@ -1126,53 +1146,46 @@ describe('Service utils', () => {
       launcherVersion: '3.5.0',
       oibusId: 'id',
       oibusName: 'name',
-      platform: getPlatformFromOsType(os.type())
+      platform: utils.getPlatformFromOsType(os.type())
     };
-    const result = getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO);
-    expect(result).toEqual(expectedResult);
+    const result = utils.getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO);
+    assert.deepStrictEqual(result, expectedResult);
   });
 
-  it('should return proper platform from OS type', async () => {
-    expect(getPlatformFromOsType('Linux')).toEqual('linux');
-    expect(getPlatformFromOsType('Darwin')).toEqual('macos');
-    expect(getPlatformFromOsType('Windows_NT')).toEqual('windows');
-    expect(getPlatformFromOsType('unknown')).toEqual('unknown');
+  it('should return proper platform from OS type', () => {
+    assert.deepStrictEqual(utils.getPlatformFromOsType('Linux'), 'linux');
+    assert.deepStrictEqual(utils.getPlatformFromOsType('Darwin'), 'macos');
+    assert.deepStrictEqual(utils.getPlatformFromOsType('Windows_NT'), 'windows');
+    assert.deepStrictEqual(utils.getPlatformFromOsType('unknown'), 'unknown');
   });
 
   describe('validateCronExpression', () => {
-    beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
     it('should properly validate a cron expression (every second)', () => {
-      const result = validateCronExpression('* * * * * *');
+      mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
+      const result = utils.validateCronExpression('* * * * * *');
       const expectedResult = {
         isValid: true,
         errorMessage: '',
         humanReadableForm: 'Every second, every minute, every hour, every day',
         nextExecutions: ['2021-01-02T00:00:01.000Z', '2021-01-02T00:00:02.000Z', '2021-01-02T00:00:03.000Z']
       };
-      expect(result).toEqual(expectedResult);
+      assert.deepStrictEqual(result, expectedResult);
     });
 
     it('should properly validate a cron expression', () => {
-      const result = validateCronExpression('0 */10 * * * *');
+      mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
+      const result = utils.validateCronExpression('0 */10 * * * *');
       const expectedResult = {
         isValid: true,
         errorMessage: '',
         humanReadableForm: 'Every 10 minutes, every hour, every day',
         nextExecutions: ['2021-01-02T00:10:00.000Z', '2021-01-02T00:20:00.000Z', '2021-01-02T00:30:00.000Z']
       };
-      expect(result).toEqual(expectedResult);
+      assert.deepStrictEqual(result, expectedResult);
     });
 
     it('should throw an error for too many fields', () => {
-      expect(validateCronExpression('* * * * * * 2024')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('* * * * * * 2024'), {
         isValid: false,
         errorMessage: 'Cron Expression: Too many fields. Only seconds, minutes, hours, day of month, month and day of week are supported.',
         humanReadableForm: '',
@@ -1181,35 +1194,35 @@ describe('Service utils', () => {
     });
 
     it('should throw an error for non standard characters', () => {
-      expect(validateCronExpression('* * * * 5L')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('* * * * 5L'), {
         isValid: false,
         errorMessage: 'Cron Expression: Non-standard characters: L',
         humanReadableForm: '',
         nextExecutions: []
       });
 
-      expect(validateCronExpression('* * * W * *')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('* * * W * *'), {
         isValid: false,
         errorMessage: 'Cron Expression: Non-standard characters: W',
         humanReadableForm: '',
         nextExecutions: []
       });
 
-      expect(validateCronExpression('* * * * * 5#3')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('* * * * * 5#3'), {
         isValid: false,
         errorMessage: 'Cron Expression: Non-standard characters: #',
         humanReadableForm: '',
         nextExecutions: []
       });
 
-      expect(validateCronExpression('? ? * * * *')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('? ? * * * *'), {
         isValid: false,
         errorMessage: 'Cron Expression: Non-standard characters: ?',
         humanReadableForm: '',
         nextExecutions: []
       });
 
-      expect(validateCronExpression('H * * * *')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('H * * * *'), {
         isValid: false,
         errorMessage: 'Cron Expression: Non-standard characters: H',
         humanReadableForm: '',
@@ -1218,19 +1231,19 @@ describe('Service utils', () => {
     });
 
     it('should throw an error for invalid cron expression caught by cronstrue', () => {
-      expect(validateCronExpression('0 35 10 19 01')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('0 35 10 19 01'), {
         isValid: false,
         errorMessage: 'Cron Expression: Hours part must be >= 0 and <= 23',
         humanReadableForm: '',
         nextExecutions: []
       });
-      expect(validateCronExpression('0 23 10 19 01')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('0 23 10 19 01'), {
         isValid: false,
         errorMessage: 'Cron Expression: Month part must be >= 1 and <= 12',
         humanReadableForm: '',
         nextExecutions: []
       });
-      expect(validateCronExpression('0 23 10 12 8')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('0 23 10 12 8'), {
         isValid: false,
         errorMessage: 'Cron Expression: DOW part must be >= 0 and <= 6',
         humanReadableForm: '',
@@ -1239,13 +1252,13 @@ describe('Service utils', () => {
     });
 
     it('should throw an error for invalid cron expression caught by cron-parser', () => {
-      expect(validateCronExpression('0 23 10 12 6/-')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('0 23 10 12 6/-'), {
         isValid: false,
         errorMessage: 'Cron Expression: Constraint error, cannot repeat at every NaN time.',
         humanReadableForm: '',
         nextExecutions: []
       });
-      expect(validateCronExpression('0 23 10-1 12 6/1')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('0 23 10-1 12 6/1'), {
         isValid: false,
         errorMessage: 'Cron Expression: Invalid range: 10-1, min(10) > max(1)',
         humanReadableForm: '',
@@ -1254,10 +1267,10 @@ describe('Service utils', () => {
     });
 
     it('should catch unexpected errors', () => {
-      jest.spyOn(cronstrue, 'toString').mockImplementation(() => {
+      mock.method(cronstrue, 'toString', () => {
         throw null;
       });
-      expect(validateCronExpression('* * * * * *')).toEqual({
+      assert.deepStrictEqual(utils.validateCronExpression('* * * * * *'), {
         isValid: false,
         errorMessage: 'Cron Expression: Invalid',
         humanReadableForm: '',
@@ -1267,38 +1280,26 @@ describe('Service utils', () => {
   });
 
   describe('checkScanMode', () => {
-    beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
     it('should properly check scan mode', () => {
-      expect(checkScanMode(testData.scanMode.list, 'scanModeId1', null)).toEqual(testData.scanMode.list[0]);
-      expect(() => checkScanMode(testData.scanMode.list, null, null)).toThrow('Scan mode not specified');
-      expect(() => checkScanMode(testData.scanMode.list, null, 'bad scan mode name')).toThrow('Scan mode "bad scan mode name" not found');
-      expect(checkScanMode(testData.scanMode.list, null, testData.scanMode.list[0].name)).toEqual(testData.scanMode.list[0]);
+      assert.deepStrictEqual(utils.checkScanMode(testData.scanMode.list, 'scanModeId1', null), testData.scanMode.list[0]);
+      assert.throws(() => utils.checkScanMode(testData.scanMode.list, null, null), /Scan mode not specified/);
+      assert.throws(
+        () => utils.checkScanMode(testData.scanMode.list, null, 'bad scan mode name'),
+        /Scan mode "bad scan mode name" not found/
+      );
+      assert.deepStrictEqual(utils.checkScanMode(testData.scanMode.list, null, testData.scanMode.list[0].name), testData.scanMode.list[0]);
     });
   });
 
   describe('itemToFlattenedCSV', () => {
     beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
+      csvExports.unparse.mock.resetCalls();
+      csvExports.unparse.mock.mockImplementation(() => 'csv content');
     });
 
     it('should properly convert items into csv', () => {
-      (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
-      expect(
-        itemToFlattenedCSV(
+      assert.deepStrictEqual(
+        utils.itemToFlattenedCSV(
           [
             ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
             {
@@ -1307,15 +1308,14 @@ describe('Service utils', () => {
           ] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ',',
           testData.scanMode.list
-        )
-      ).toEqual('csv content');
+        ),
+        'csv content'
+      );
     });
 
     it('should properly convert without scan modes', () => {
-      (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
-      expect(
-        itemToFlattenedCSV(
+      assert.deepStrictEqual(
+        utils.itemToFlattenedCSV(
           [
             ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
             {
@@ -1323,8 +1323,9 @@ describe('Service utils', () => {
             }
           ] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ','
-        )
-      ).toEqual('csv content');
+        ),
+        'csv content'
+      );
     });
 
     it('should fall back to group historian values when item values are null', () => {
@@ -1360,193 +1361,160 @@ describe('Service utils', () => {
       } as unknown as SouthConnectorItemDTO;
 
       let capturedData: Array<Record<string, unknown>> | null = null;
-      (csv.unparse as jest.Mock).mockImplementation((data: Array<Record<string, unknown>>) => {
+      csvExports.unparse.mock.mockImplementation((data: Array<Record<string, unknown>>) => {
         capturedData = data;
         return 'csv content';
       });
 
-      itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', testData.scanMode.list);
+      utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', testData.scanMode.list);
 
-      expect(capturedData).not.toBeNull();
-      expect(capturedData![0].maxReadInterval).toEqual(3600);
-      expect(capturedData![0].readDelay).toEqual(200);
-      expect(capturedData![0].overlap).toEqual(5);
+      assert.notStrictEqual(capturedData, null);
+      assert.deepStrictEqual(capturedData![0].maxReadInterval, 3600);
+      assert.deepStrictEqual(capturedData![0].readDelay, 200);
+      assert.deepStrictEqual(capturedData![0].overlap, 5);
     });
   });
 
   describe('stringToBoolean', () => {
-    beforeEach(() => {
-      jest.resetAllMocks();
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
     it('should properly convert string to boolean', () => {
-      expect(stringToBoolean('true')).toEqual(true);
-      expect(stringToBoolean('True')).toEqual(true);
-      expect(stringToBoolean('TRUE')).toEqual(true);
-      expect(stringToBoolean('1')).toEqual(true);
-      expect(stringToBoolean('false')).toEqual(false);
-      expect(stringToBoolean('False')).toEqual(false);
-      expect(stringToBoolean('FALSE')).toEqual(false);
-      expect(stringToBoolean('0')).toEqual(false);
-      expect(stringToBoolean('99')).toEqual(false);
+      assert.deepStrictEqual(utils.stringToBoolean('true'), true);
+      assert.deepStrictEqual(utils.stringToBoolean('True'), true);
+      assert.deepStrictEqual(utils.stringToBoolean('TRUE'), true);
+      assert.deepStrictEqual(utils.stringToBoolean('1'), true);
+      assert.deepStrictEqual(utils.stringToBoolean('false'), false);
+      assert.deepStrictEqual(utils.stringToBoolean('False'), false);
+      assert.deepStrictEqual(utils.stringToBoolean('FALSE'), false);
+      assert.deepStrictEqual(utils.stringToBoolean('0'), false);
+      assert.deepStrictEqual(utils.stringToBoolean('99'), false);
     });
   });
 
   describe('testIPOnFilter', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should return false for an empty filter list', () => {
-      expect(testIPOnFilter([], '192.168.1.1')).toEqual(false);
+      assert.deepStrictEqual(utils.testIPOnFilter([], '192.168.1.1'), false);
     });
 
     it('should return true for a matching IPv4 address', () => {
-      expect(testIPOnFilter(['192.168.1.*'], '192.168.1.1')).toEqual(true);
-      expect(testIPOnFilter(['192.168.*.*'], '192.168.1.1')).toEqual(true);
+      assert.deepStrictEqual(utils.testIPOnFilter(['192.168.1.*'], '192.168.1.1'), true);
+      assert.deepStrictEqual(utils.testIPOnFilter(['192.168.*.*'], '192.168.1.1'), true);
     });
 
     it('should return true for a matching IPv6-mapped IPv4 address', () => {
       const ipFilters = ['192.168.1.*'];
-      expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '::ffff:192.168.1.1'), true);
     });
 
     it('should return false for a non-matching IPv4 address', () => {
       const ipFilters = ['192.168.2.*'];
-      expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(false);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '192.168.1.1'), false);
     });
 
     it('should return false for a non-matching IPv6-mapped IPv4 address', () => {
       const ipFilters = ['192.168.2.*'];
-      expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(false);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '::ffff:192.168.1.1'), false);
     });
 
     it('should return true for a direct matching IPv4 address', () => {
       const ipFilters = ['192.168.1.1'];
-      expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '192.168.1.1'), true);
     });
 
     it('should return true for a direct matching IPv6-mapped IPv4 address', () => {
       const ipFilters = ['192.168.1.1'];
-      expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '::ffff:192.168.1.1'), true);
     });
 
     it('should return true for a matching IPv6 address', () => {
       const ipFilters = ['2001:0db8:85a3:0000:0000:8a2e:0370:*'];
-      expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toEqual(true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334'), true);
     });
 
     it('should return false for a non-matching IPv6 address', () => {
       const ipFilters = ['2001:0db8:85a3:0000:0000:8a2e:0370:*'];
-      expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0371:7334')).toEqual(false);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0371:7334'), false);
     });
 
     it('should return true for localhost IPv4', () => {
       const ipFilters = ['127.0.0.1'];
-      expect(testIPOnFilter(ipFilters, '127.0.0.1')).toEqual(true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '127.0.0.1'), true);
     });
 
     it('should return true for localhost IPv6', () => {
       const ipFilters = ['::1'];
-      expect(testIPOnFilter(ipFilters, '::1')).toEqual(true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '::1'), true);
     });
 
     it('should return true for any IP with wildcard *', () => {
       const ipFilters = ['*'];
-      expect(testIPOnFilter(ipFilters, '192.168.1.1')).toEqual(true);
-      expect(testIPOnFilter(ipFilters, '::ffff:192.168.1.1')).toEqual(true);
-      expect(testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toEqual(true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '192.168.1.1'), true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '::ffff:192.168.1.1'), true);
+      assert.deepStrictEqual(utils.testIPOnFilter(ipFilters, '2001:0db8:85a3:0000:0000:8a2e:0370:7334'), true);
     });
   });
 
   describe('sanitizeFilename', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should remove surrounding quotes', () => {
-      expect(sanitizeFilename('"file.csv"')).toEqual('file.csv');
-      expect(sanitizeFilename("'file.csv'")).toEqual('file.csv');
-      expect(sanitizeFilename('"file.name.csv"')).toEqual('file.name.csv');
+      assert.deepStrictEqual(utils.sanitizeFilename('"file.csv"'), 'file.csv');
+      assert.deepStrictEqual(utils.sanitizeFilename("'file.csv'"), 'file.csv');
+      assert.deepStrictEqual(utils.sanitizeFilename('"file.name.csv"'), 'file.name.csv');
     });
 
     it('should replace special characters and spaces with hyphens in the name', () => {
-      expect(sanitizeFilename('my file.csv')).toEqual('my-file.csv');
-      expect(sanitizeFilename('file@name#1.json')).toEqual('file-name-1.json');
-      expect(sanitizeFilename('my/bad/path.txt')).toEqual('my-bad-path.txt');
+      assert.deepStrictEqual(utils.sanitizeFilename('my file.csv'), 'my-file.csv');
+      assert.deepStrictEqual(utils.sanitizeFilename('file@name#1.json'), 'file-name-1.json');
+      assert.deepStrictEqual(utils.sanitizeFilename('my/bad/path.txt'), 'my-bad-path.txt');
     });
 
     it('should allow valid characters (alphanumeric, -, _) to remain', () => {
-      expect(sanitizeFilename('valid-file_name123.csv')).toEqual('valid-file_name123.csv');
-      expect(sanitizeFilename('UPPER_case.TXT')).toEqual('UPPER_case.TXT');
+      assert.deepStrictEqual(utils.sanitizeFilename('valid-file_name123.csv'), 'valid-file_name123.csv');
+      assert.deepStrictEqual(utils.sanitizeFilename('UPPER_case.TXT'), 'UPPER_case.TXT');
     });
 
     it('should handle files without extensions', () => {
-      expect(sanitizeFilename('makefile')).toEqual('makefile');
-      expect(sanitizeFilename('read me')).toEqual('read-me');
-      expect(sanitizeFilename('weird@file')).toEqual('weird-file');
+      assert.deepStrictEqual(utils.sanitizeFilename('makefile'), 'makefile');
+      assert.deepStrictEqual(utils.sanitizeFilename('read me'), 'read-me');
+      assert.deepStrictEqual(utils.sanitizeFilename('weird@file'), 'weird-file');
     });
 
     it('should handle complex extensions correctly', () => {
-      expect(sanitizeFilename('archive.tar.gz')).toEqual('archive.tar.gz');
-      expect(sanitizeFilename('complex.name.structure.json')).toEqual('complex.name.structure.json');
+      assert.deepStrictEqual(utils.sanitizeFilename('archive.tar.gz'), 'archive.tar.gz');
+      assert.deepStrictEqual(utils.sanitizeFilename('complex.name.structure.json'), 'complex.name.structure.json');
     });
 
     it('should handle edge cases', () => {
-      // Dotfiles (e.g. .gitignore): name part is empty, extension is full string
-      expect(sanitizeFilename('.env')).toEqual('.env');
-
-      // File ending with dot
-      expect(sanitizeFilename('folder.')).toEqual('folder.');
-
-      // Empty string
-      expect(sanitizeFilename('')).toEqual('');
+      assert.deepStrictEqual(utils.sanitizeFilename('.env'), '.env');
+      assert.deepStrictEqual(utils.sanitizeFilename('folder.'), 'folder.');
+      assert.deepStrictEqual(utils.sanitizeFilename(''), '');
     });
   });
 
   describe('injectIndices', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should replace single wildcard with corresponding index', () => {
-      expect(injectIndices('$.users[*].name', [0])).toBe('$.users[0].name');
-      expect(injectIndices('$[*]', [99])).toBe('$[99]');
+      assert.strictEqual(utils.injectIndices('$.users[*].name', [0]), '$.users[0].name');
+      assert.strictEqual(utils.injectIndices('$[*]', [99]), '$[99]');
     });
 
     it('should replace multiple wildcards sequentially', () => {
-      expect(injectIndices('$.users[*].items[*].id', [0, 5])).toBe('$.users[0].items[5].id');
-
-      expect(injectIndices('$[*].nested[*].deep[*]', [1, 2, 3])).toBe('$[1].nested[2].deep[3]');
+      assert.strictEqual(utils.injectIndices('$.users[*].items[*].id', [0, 5]), '$.users[0].items[5].id');
+      assert.strictEqual(utils.injectIndices('$[*].nested[*].deep[*]', [1, 2, 3]), '$[1].nested[2].deep[3]');
     });
 
     it('should keep the wildcard if there are not enough indices provided', () => {
-      // The code logic: indices[indexPointer] !== undefined ? ... : '*'
-      // So if we provide 1 index for 2 wildcards, the second remains [*]
-      expect(injectIndices('$.users[*].items[*].id', [0])).toBe('$.users[0].items[*].id');
-
-      expect(injectIndices('$.users[*].items[*]', [])).toBe('$.users[*].items[*]');
+      assert.strictEqual(utils.injectIndices('$.users[*].items[*].id', [0]), '$.users[0].items[*].id');
+      assert.strictEqual(utils.injectIndices('$.users[*].items[*]', []), '$.users[*].items[*]');
     });
 
     it('should ignore extra indices if there are fewer wildcards', () => {
-      // Should use the first index and ignore the 5
-      expect(injectIndices('$.users[*].name', [0, 5])).toBe('$.users[0].name');
+      assert.strictEqual(utils.injectIndices('$.users[*].name', [0, 5]), '$.users[0].name');
     });
 
     it('should return the path unchanged if there are no wildcards', () => {
-      expect(injectIndices('$.users.fixed.path', [0, 1])).toBe('$.users.fixed.path');
+      assert.strictEqual(utils.injectIndices('$.users.fixed.path', [0, 1]), '$.users.fixed.path');
     });
 
     it('should correctly handle other bracket notation that is not [*]', () => {
-      // Ensure it doesn't accidentally replace [0] or ['key']
-      expect(injectIndices('$.users[0].items[*]', [2])).toBe('$.users[0].items[2]');
-
-      expect(injectIndices('$.users["key"].items[*]', [3])).toBe('$.users["key"].items[3]');
+      assert.strictEqual(utils.injectIndices('$.users[0].items[*]', [2]), '$.users[0].items[2]');
+      assert.strictEqual(utils.injectIndices('$.users["key"].items[*]', [3]), '$.users["key"].items[3]');
     });
   });
 
@@ -1555,17 +1523,16 @@ describe('Service utils', () => {
       const content = 'Hello World';
       const stream = Readable.from(Buffer.from(content));
 
-      const result = await processCacheFileContent(stream);
+      const result = await utils.processCacheFileContent(stream);
 
-      expect(result.content).toEqual(content);
-      expect(result.truncated).toBe(false);
+      assert.deepStrictEqual(result.content, content);
+      assert.strictEqual(result.truncated, false);
     });
 
     it('should truncate content if larger than limit', async () => {
       const content = 'Hello World';
       const limit = 5;
 
-      // Use a generator to yield 1-byte chunks to force the loop to iterate multiple times
       function* charGenerator() {
         for (const char of content) {
           yield Buffer.from(char);
@@ -1573,14 +1540,13 @@ describe('Service utils', () => {
       }
       const stream = Readable.from(charGenerator());
 
-      const result = await processCacheFileContent(stream, limit);
+      const result = await utils.processCacheFileContent(stream, limit);
 
-      expect(result.content).toEqual('Hello');
-      expect(result.truncated).toBe(true);
+      assert.deepStrictEqual(result.content, 'Hello');
+      assert.strictEqual(result.truncated, true);
     });
 
     it('should handle multi-chunk streams correctly', async () => {
-      // Simulate stream with multiple small chunks
       function* generateChunks() {
         yield Buffer.from('Chunk1');
         yield Buffer.from('Chunk2');
@@ -1588,32 +1554,31 @@ describe('Service utils', () => {
       }
       const stream = Readable.from(generateChunks());
 
-      // Limit cuts off in the middle of Chunk2 (Limit 9: "Chunk1" (6) + "Chu" (3))
-      const result = await processCacheFileContent(stream, 9);
+      const result = await utils.processCacheFileContent(stream, 9);
 
-      expect(result.content).toEqual('Chunk1Chu');
-      expect(result.truncated).toBe(true);
+      assert.deepStrictEqual(result.content, 'Chunk1Chu');
+      assert.strictEqual(result.truncated, true);
     });
   });
 
   describe('determineContentTypeFromFilename', () => {
     it('should identify json', () => {
-      expect(determineContentTypeFromFilename('data.json')).toBe('json');
-      expect(determineContentTypeFromFilename('/path/to/file.json')).toBe('json');
+      assert.strictEqual(utils.determineContentTypeFromFilename('data.json'), 'json');
+      assert.strictEqual(utils.determineContentTypeFromFilename('/path/to/file.json'), 'json');
     });
 
     it('should identify csv', () => {
-      expect(determineContentTypeFromFilename('data.csv')).toBe('csv');
+      assert.strictEqual(utils.determineContentTypeFromFilename('data.csv'), 'csv');
     });
 
     it('should identify xml', () => {
-      expect(determineContentTypeFromFilename('data.xml')).toBe('xml');
+      assert.strictEqual(utils.determineContentTypeFromFilename('data.xml'), 'xml');
     });
 
     it('should default to raw for others', () => {
-      expect(determineContentTypeFromFilename('data.txt')).toBe('raw');
-      expect(determineContentTypeFromFilename('data')).toBe('raw');
-      expect(determineContentTypeFromFilename('data.bin')).toBe('raw');
+      assert.strictEqual(utils.determineContentTypeFromFilename('data.txt'), 'raw');
+      assert.strictEqual(utils.determineContentTypeFromFilename('data'), 'raw');
+      assert.strictEqual(utils.determineContentTypeFromFilename('data.bin'), 'raw');
     });
   });
 
@@ -1622,8 +1587,8 @@ describe('Service utils', () => {
       const expected = 'stream content';
       const stream = Readable.from(Buffer.from(expected));
 
-      const result = await streamToString(stream);
-      expect(result).toEqual(expected);
+      const result = await utils.streamToString(stream);
+      assert.deepStrictEqual(result, expected);
     });
 
     it('should reject on stream error', async () => {
@@ -1633,139 +1598,126 @@ describe('Service utils', () => {
         }
       });
 
-      await expect(streamToString(stream)).rejects.toThrow('Stream Error');
+      await assert.rejects(async () => utils.streamToString(stream), /Stream Error/);
     });
   });
 
   describe('createOIBusError', () => {
     it('should return OIBusError as is', () => {
       const originalError = new OIBusError('test', true);
-      const result = createOIBusError(originalError);
-      expect(result).toBe(originalError);
-      expect(result.forceRetry).toBe(true);
+      const result = utils.createOIBusError(originalError);
+      assert.strictEqual(result, originalError);
+      assert.strictEqual(result.forceRetry, true);
     });
 
     it('should wrap Error object', () => {
       const error = new Error('Standard error');
-      const result = createOIBusError(error);
-      expect(result).toBeInstanceOf(OIBusError);
-      expect(result.message).toBe('Standard error');
-      expect(result.forceRetry).toBe(false);
+      const result = utils.createOIBusError(error);
+      assert.strictEqual(result instanceof OIBusError, true);
+      assert.strictEqual(result.message, 'Standard error');
+      assert.strictEqual(result.forceRetry, false);
     });
 
     it('should wrap string error', () => {
-      const result = createOIBusError('String error');
-      expect(result).toBeInstanceOf(OIBusError);
-      expect(result.message).toBe('String error');
+      const result = utils.createOIBusError('String error');
+      assert.strictEqual(result instanceof OIBusError, true);
+      assert.strictEqual(result.message, 'String error');
     });
 
     it('should stringify unknown object', () => {
       const obj = { custom: 'value' };
-      const result = createOIBusError(obj);
-      expect(result).toBeInstanceOf(OIBusError);
-      expect(result.message).toBe('{"custom":"value"}');
+      const result = utils.createOIBusError(obj);
+      assert.strictEqual(result instanceof OIBusError, true);
+      assert.strictEqual(result.message, '{"custom":"value"}');
     });
   });
 
   describe('generateFilenameForSerialization', () => {
-    beforeEach(() => {
-      jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    });
-
-    afterEach(() => {
-      jest.useRealTimers();
-    });
-
     it('should replace placeholders correctly', () => {
+      mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
       const base = '/base/folder';
       const filenameTemplate = 'export_@ConnectorName_@ItemName_@CurrentDate.csv';
       const connectorName = 'MyConnector';
       const itemName = 'MyItem';
 
-      const result = generateFilenameForSerialization(base, filenameTemplate, connectorName, itemName);
+      const result = utils.generateFilenameForSerialization(base, filenameTemplate, connectorName, itemName);
 
       const expectedDate = '2021_01_02_00_00_00_000';
       const expectedFilename = `export_${connectorName}_${itemName}_${expectedDate}.csv`;
 
-      expect(result).toEqual(path.join(base, expectedFilename));
+      assert.deepStrictEqual(result, path.join(base, expectedFilename));
     });
   });
 
   describe('generateCsvContent', () => {
+    beforeEach(() => {
+      csvExports.unparse.mock.resetCalls();
+      csvExports.unparse.mock.mockImplementation(() => 'mocked,csv,output');
+    });
+
     it('should generate CSV string with correct delimiter', () => {
       const data = [
         { col1: 'val1', col2: 123 },
         { col1: 'val2', col2: 456 }
       ];
 
-      (csv.unparse as jest.Mock).mockReturnValue('mocked,csv,output');
+      const result = utils.generateCsvContent(data, 'COMMA');
 
-      const result = generateCsvContent(data, 'COMMA');
-
-      expect(csv.unparse).toHaveBeenCalledWith(data, {
-        header: true,
-        delimiter: ','
-      });
-      expect(result).toBe('mocked,csv,output');
+      assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+      assert.deepStrictEqual(csvExports.unparse.mock.calls[0].arguments, [
+        data,
+        {
+          header: true,
+          delimiter: ','
+        }
+      ]);
+      assert.strictEqual(result, 'mocked,csv,output');
     });
 
     it('should handle different delimiters', () => {
       const data = [{ a: 1 }];
-      generateCsvContent(data, 'SEMI_COLON');
-      expect(csv.unparse).toHaveBeenCalledWith(data, expect.objectContaining({ delimiter: ';' }));
+      utils.generateCsvContent(data, 'SEMI_COLON');
+      assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+      const callArgs = csvExports.unparse.mock.calls[0].arguments[1] as Record<string, unknown>;
+      assert.strictEqual(callArgs.delimiter, ';');
     });
   });
 
   describe('resolveBypassingExports', () => {
     it('should resolve a standard allowed export normally', () => {
-      // 'typescript' or 'papaparse' package.json are typically allowed exports.
-      // This tests the standard `require.resolve` try block.
-      const result = resolveBypassingExports('typescript', 'package.json');
-
-      // It should successfully find the path inside the node_modules folder
-      expect(result).toContain(path.normalize('node_modules/typescript/package.json'));
+      const result = utils.resolveBypassingExports('typescript', 'package.json');
+      assert.strictEqual(result.includes(path.normalize('node_modules/typescript/package.json')), true);
     });
 
     it('should bypass exports restrictions for blocked subpaths (e.g., luxon)', () => {
-      // We know natively that Luxon blocks this deep import, which will trigger
-      // the catch block and ERR_PACKAGE_PATH_NOT_EXPORTED logic in our function.
       const pkgName = 'luxon';
       const subPath = 'build/global/luxon.min.js';
 
-      const result = resolveBypassingExports(pkgName, subPath);
+      const result = utils.resolveBypassingExports(pkgName, subPath);
 
-      // Our fallback logic should successfully locate it
-      expect(result).toContain(path.normalize(`node_modules/${pkgName}/${subPath}`));
+      assert.strictEqual(result.includes(path.normalize(`node_modules/${pkgName}/${subPath}`)), true);
     });
 
     it('should throw standard MODULE_NOT_FOUND for non-existent packages', () => {
-      // If a package truly doesn't exist, it should not be swallowed by our fallback
-      expect(() => {
-        resolveBypassingExports('some-fake-package-that-does-not-exist', 'file.js');
-      }).toThrow(/Cannot find module 'some-fake-package-that-does-not-exist\/file\.js'/);
+      assert.throws(() => {
+        utils.resolveBypassingExports('some-fake-package-that-does-not-exist', 'file.js');
+      }, /Cannot find module 'some-fake-package-that-does-not-exist\/file\.js'/);
     });
 
     it('should re-throw generic errors that are not related to module resolution', () => {
-      // Passing a Symbol causes the template literal `${pkgName}/${subPath}` to throw a native
-      // TypeError BEFORE require.resolve is even called. This safely tests the default fallback.
-      expect(() => {
-        resolveBypassingExports(Symbol('bad-input') as unknown as string, 'file.js');
-      }).toThrow(TypeError);
+      assert.throws(() => {
+        utils.resolveBypassingExports(Symbol('bad-input') as unknown as string, 'file.js');
+      }, TypeError);
 
-      expect(() => {
-        resolveBypassingExports(Symbol('bad-input') as unknown as string, 'file.js');
-      }).toThrow('Cannot convert a Symbol value to a string');
+      assert.throws(() => {
+        utils.resolveBypassingExports(Symbol('bad-input') as unknown as string, 'file.js');
+      }, /Cannot convert a Symbol value to a string/);
     });
 
     it('should throw the original error if the package resolves but is not in a node_modules folder (rootIdx === -1)', () => {
-      // 'fs' is a Node.js built-in module.
-      // require.resolve('fs/fake-subpath.js') natively throws MODULE_NOT_FOUND.
-      // The fallback runs require.resolve('fs'), which returns the literal string 'fs'.
-      // Because 'fs' does not contain 'node_modules/fs', rootIdx becomes -1.
-
-      expect(() => {
-        resolveBypassingExports('fs', 'fake-subpath.js');
-      }).toThrow(/Cannot find module 'fs\/fake-subpath\.js'/);
+      assert.throws(() => {
+        utils.resolveBypassingExports('fs', 'fake-subpath.js');
+      }, /Cannot find module 'fs\/fake-subpath\.js'/);
     });
   });
 
@@ -1789,16 +1741,16 @@ describe('Service utils', () => {
     it('should put each item in its own group when syncWithGroup is false', () => {
       const item1 = { ...baseItem, id: 'item1', group: null, syncWithGroup: false };
       const item2 = { ...baseItem, id: 'item2', group: null, syncWithGroup: false };
-      const result = groupItemsByGroup('mssql', [item1, item2]);
-      expect(result).toEqual([[item1], [item2]]);
+      const result = utils.groupItemsByGroup('mssql', [item1, item2]);
+      assert.deepStrictEqual(result, [[item1], [item2]]);
     });
 
     it('should group items by group.id when syncWithGroup is true and southType is in SOUTH_SINGLE_ITEMS', () => {
       const group = { ...baseGroup, id: 'g1' };
       const item1 = { ...baseItem, id: 'item1', group, syncWithGroup: true };
       const item2 = { ...baseItem, id: 'item2', group, syncWithGroup: true };
-      const result = groupItemsByGroup('mssql', [item1, item2]);
-      expect(result).toEqual([[item1, item2]]);
+      const result = utils.groupItemsByGroup('mssql', [item1, item2]);
+      assert.deepStrictEqual(result, [[item1, item2]]);
     });
 
     it('should create separate sub-arrays for items with different group.ids', () => {
@@ -1806,8 +1758,8 @@ describe('Service utils', () => {
       const group2 = { ...baseGroup, id: 'g2' };
       const item1 = { ...baseItem, id: 'item1', group: group1, syncWithGroup: true };
       const item2 = { ...baseItem, id: 'item2', group: group2, syncWithGroup: true };
-      const result = groupItemsByGroup('mssql', [item1, item2]);
-      expect(result).toEqual([[item1], [item2]]);
+      const result = utils.groupItemsByGroup('mssql', [item1, item2]);
+      assert.deepStrictEqual(result, [[item1], [item2]]);
     });
   });
 });

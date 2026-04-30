@@ -1,14 +1,16 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for South Cache Service
  */
 export default class SouthCacheServiceMock {
-  getSouthCache = jest.fn();
-  saveSouthCache = jest.fn();
-  dropItemValueTable = jest.fn();
-  createCustomTable = jest.fn();
-  createItemValueTable = jest.fn();
-  getQueryOnCustomTable = jest.fn();
-  runQueryOnCustomTable = jest.fn();
-  getItemLastValue = jest.fn();
-  saveItemLastValue = jest.fn();
+  getSouthCache = mock.fn();
+  saveSouthCache = mock.fn();
+  dropItemValueTable = mock.fn();
+  createCustomTable = mock.fn();
+  createItemValueTable = mock.fn();
+  getQueryOnCustomTable = mock.fn();
+  runQueryOnCustomTable = mock.fn();
+  getItemLastValue = mock.fn();
+  saveItemLastValue = mock.fn();
 }

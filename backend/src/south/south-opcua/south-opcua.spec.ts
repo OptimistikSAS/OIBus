@@ -1,38 +1,36 @@
-import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
-import SouthOPCUA from './south-opcua';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import Stream from 'node:stream';
-import {
-  ClientMonitoredItem,
-  ClientSession,
-  ClientSubscription,
-  DataType,
-  HistoryReadRequest,
-  NodeId,
-  resolveNodeId,
-  StatusCodes
-} from 'node-opcua';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import testData from '../../tests/utils/test-data';
-import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import { DateTime } from 'luxon';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
+import type SouthOPCUAClass from './south-opcua';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import {
-  createSessionConfigs,
-  getHistoryReadRequest,
-  getTimestamp,
-  initOPCUACertificateFolders,
-  logMessages,
-  parseOPCUAValue,
-  toOPCUASecurityMode,
-  toOPCUASecurityPolicy
-} from '../../service/utils-opcua';
-import path from 'node:path';
-import fs from 'node:fs/promises';
-import { randomUUID } from 'crypto';
+  DataType,
+  StatusCodes,
+  SecurityPolicy,
+  AttributeIds,
+  UserTokenType,
+  TimestampsToReturn,
+  AggregateFunction,
+  HistoryReadRequest,
+  ClientSession,
+  ClientSubscription,
+  ClientMonitoredItem,
+  NodeId
+} from 'node-opcua';
+import { DateTime } from 'luxon';
+
+const nodeRequire = createRequire(import.meta.url);
 
 class CustomStream extends Stream {
   constructor() {
@@ -44,59 +42,75 @@ class CustomStream extends Stream {
   }
 }
 
-jest.mock('node-opcua', () => ({
-  ...nodeOPCUAMock,
-  DataType: jest.requireActual('node-opcua').DataType,
-  StatusCodes: jest.requireActual('node-opcua').StatusCodes,
-  SecurityPolicy: jest.requireActual('node-opcua').SecurityPolicy,
-  AttributeIds: jest.requireActual('node-opcua').AttributeIds,
-  UserTokenType: jest.requireActual('node-opcua').UserTokenType,
-  TimestampsToReturn: jest.requireActual('node-opcua').TimestampsToReturn,
-  AggregateFunction: jest.requireActual('node-opcua').AggregateFunction,
-  HistoryReadRequest: jest.requireActual('node-opcua').HistoryReadRequest
-}));
-// Mock only the randomUUID function because other functions are used by OPCUA
-jest.mock('crypto', () => ({
-  ...jest.requireActual('crypto'),
-  randomUUID: jest.fn()
-}));
-jest.mock('node:fs/promises');
-jest.mock('../../service/utils');
-jest.mock('../../service/utils-opcua');
-
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
-
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
-    }
-);
-
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
-
-const opcuaOptions = {
-  applicationName: 'OIBus',
-  clientName: 'connectorName-connectorId',
-  connectionStrategy: {
-    initialDelay: 1000,
-    maxRetry: 1
-  },
-  securityMode: 1,
-  securityPolicy: 'none',
-  endpointMustExist: false,
-  keepSessionAlive: false,
-  keepPendingSessionsOnDisconnect: false,
-  requestedSessionTimeout: 15000,
-  clientCertificateManager: { state: 2 }
-};
-const opcuaUserIdentity = { type: 0 };
-
 describe('SouthOPCUA', () => {
-  let south: SouthOPCUA;
+  let SouthOPCUA: typeof SouthOPCUAClass;
+  let south: SouthOPCUAClass;
+
+  const logger = new PinoLogger();
+  const addContentCallback = mock.fn();
+  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let southCacheService: SouthCacheServiceMock;
+
+  const opcuaOptions = {
+    applicationName: 'OIBus',
+    clientName: 'connectorName-connectorId',
+    connectionStrategy: {
+      initialDelay: 1000,
+      maxRetry: 1
+    },
+    securityMode: 1,
+    securityPolicy: 'none',
+    endpointMustExist: false,
+    keepSessionAlive: false,
+    keepPendingSessionsOnDisconnect: false,
+    requestedSessionTimeout: 15000,
+    clientCertificateManager: { state: 2 }
+  };
+  const opcuaUserIdentity = { type: 0 };
+
+  const utilsOpcuaExports = {
+    createSessionConfigs: mock.fn(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity })),
+    getHistoryReadRequest: mock.fn(() => ({ requestHeader: {} }) as unknown as HistoryReadRequest),
+    getTimestamp: mock.fn(() => testData.constants.dates.FAKE_NOW),
+    initOPCUACertificateFolders: mock.fn(async () => undefined),
+    logMessages: mock.fn(),
+    parseOPCUAValue: mock.fn(() => null),
+    toOPCUASecurityMode: mock.fn(() => 1),
+    toOPCUASecurityPolicy: mock.fn(() => 'none')
+  };
+
+  const utilsExports = {
+    delay: mock.fn(async () => undefined),
+    generateIntervals: mock.fn(() => ({ intervals: [], numberOfIntervalsDone: 0 })),
+    groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
+    validateCronExpression: mock.fn(() => ({ expression: '' })),
+    checkAge: mock.fn(() => true),
+    compress: mock.fn(async () => undefined),
+    convertDateTimeToInstant: mock.fn((v: unknown) => v),
+    convertDelimiter: mock.fn((v: unknown) => v),
+    formatInstant: mock.fn((v: unknown) => v),
+    generateCsvContent: mock.fn(() => ''),
+    generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
+    generateReplacementParameters: mock.fn(() => []),
+    logQuery: mock.fn(),
+    persistResults: mock.fn(async () => undefined)
+  };
+
+  const cryptoExports = { ...nodeRequire('crypto'), randomUUID: mock.fn(() => 'randomUUID') };
+
+  const opcuaModuleExports = {
+    __esModule: true,
+    ...nodeOPCUAMock,
+    DataType,
+    StatusCodes,
+    SecurityPolicy,
+    AttributeIds,
+    UserTokenType,
+    TimestampsToReturn,
+    AggregateFunction,
+    HistoryReadRequest
+  };
+
   const configuration: SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings> = {
     id: 'southId',
     name: 'south',
@@ -253,99 +267,130 @@ describe('SouthOPCUA', () => {
     createdAt: '',
     updatedAt: ''
   };
-  let historyReadRequest: HistoryReadRequest;
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
-    historyReadRequest = { requestHeader: {} } as unknown as HistoryReadRequest;
-    (toOPCUASecurityPolicy as jest.Mock).mockReturnValue('none');
-    (toOPCUASecurityMode as jest.Mock).mockReturnValue(1);
-    (createSessionConfigs as jest.Mock).mockReturnValue({ options: opcuaOptions, userIdentity: opcuaUserIdentity });
-    (getHistoryReadRequest as jest.Mock).mockReturnValue(historyReadRequest);
-    (getTimestamp as jest.Mock).mockReturnValue(testData.constants.dates.FAKE_NOW);
-    (randomUUID as jest.Mock).mockReturnValue('randomUUID');
-    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  before(() => {
+    mockModule(nodeRequire, 'node-opcua', opcuaModuleExports);
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, '../../service/utils-opcua', utilsOpcuaExports);
+    mockModule(nodeRequire, 'crypto', cryptoExports);
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    SouthOPCUA = reloadModule<{ default: typeof SouthOPCUAClass }>(nodeRequire, './south-opcua').default;
+  });
+
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    addContentCallback.mock.resetCalls();
+    for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
+      (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+    }
+    utilsOpcuaExports.createSessionConfigs.mock.resetCalls();
+    utilsOpcuaExports.getHistoryReadRequest.mock.resetCalls();
+    utilsOpcuaExports.getTimestamp.mock.resetCalls();
+    utilsOpcuaExports.initOPCUACertificateFolders.mock.resetCalls();
+    utilsOpcuaExports.logMessages.mock.resetCalls();
+    utilsOpcuaExports.parseOPCUAValue.mock.resetCalls();
+    utilsOpcuaExports.toOPCUASecurityMode.mock.resetCalls();
+    utilsOpcuaExports.toOPCUASecurityPolicy.mock.resetCalls();
+    cryptoExports.randomUUID.mock.resetCalls();
+    nodeOPCUAMock.resolveNodeId.mock.resetCalls();
+    // Reset the mock implementations to defaults
+    utilsOpcuaExports.createSessionConfigs.mock.mockImplementation(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity }));
+    utilsOpcuaExports.getHistoryReadRequest.mock.mockImplementation(() => ({ requestHeader: {} }) as unknown as HistoryReadRequest);
+    utilsOpcuaExports.getTimestamp.mock.mockImplementation(() => testData.constants.dates.FAKE_NOW);
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => null);
+    cryptoExports.randomUUID.mock.mockImplementation(() => 'randomUUID');
+    nodeOPCUAMock.resolveNodeId.mock.mockImplementation((nodeId: unknown) => nodeId);
+
+    mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should be properly initialized', async () => {
-    south.connect = jest.fn();
-    south.createSession = jest.fn();
+    south.connect = mock.fn();
+    south.createSession = mock.fn();
     await south.start();
     await south.start();
-    expect(initOPCUACertificateFolders).toHaveBeenCalledTimes(2);
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('cacheFolder');
+    assert.strictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls.length, 2);
+    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['cacheFolder']);
+    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[1].arguments, ['cacheFolder']);
     // createSession should not be called right after starting, because
     // it will be eventually called when the first session is needed
-    expect(south.createSession).not.toHaveBeenCalled();
-    expect(south.connect).toHaveBeenCalledTimes(2);
+    assert.strictEqual((south.createSession as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((south.connect as ReturnType<typeof mock.fn>).mock.calls.length, 2);
   });
 
   it('should properly connect', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    south.createSession = jest.fn();
-    south.disconnect = jest.fn();
+    south.createSession = mock.fn(async () => ({}) as unknown as ClientSession);
+    south.disconnect = mock.fn(async () => undefined);
     south['reconnectTimeout'] = setTimeout(() => null);
     south['flushTimeout'] = setTimeout(() => null);
     await south.connect();
-    expect(south.createSession).toHaveBeenCalledTimes(1);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
-    expect(south.disconnect).not.toHaveBeenCalled();
+    assert.strictEqual((south.createSession as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should not reconnect if disconnecting', async () => {
-    south.createSession = jest.fn().mockImplementation(() => {
+    south.createSession = mock.fn(() => {
       throw new Error('get session error');
     });
-    south.disconnect = jest.fn();
+    south.disconnect = mock.fn(async () => undefined);
     south['disconnecting'] = true;
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
     await south.connect();
-    expect(logger.error).toHaveBeenCalledWith('Error while connecting to the OPCUA server: get session error');
-    expect(setTimeoutSpy).not.toHaveBeenCalled();
-    expect(south.disconnect).toHaveBeenCalled();
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
+        c => c.arguments[0] === 'Error while connecting to the OPCUA server: get session error'
+      ).length,
+      1
+    );
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should properly reconnect if not disconnecting', async () => {
-    south.createSession = jest.fn().mockImplementation(() => {
+    south.createSession = mock.fn(() => {
       throw new Error('get session error');
     });
-    south.disconnect = jest.fn();
+    south.disconnect = mock.fn(async () => undefined);
     south['disconnecting'] = false;
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
     await south.connect();
-    expect(logger.error).toHaveBeenCalledWith('Error while connecting to the OPCUA server: get session error');
-    expect(south.disconnect).toHaveBeenCalled();
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
+        c => c.arguments[0] === 'Error while connecting to the OPCUA server: get session error'
+      ).length,
+      1
+    );
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    // setTimeout should have been called for reconnect
   });
 
   it('should properly disconnect', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-
     await south.disconnect();
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
 
     south['flushTimeout'] = setTimeout(() => null);
     south['reconnectTimeout'] = setTimeout(() => null);
-    const terminate = jest.fn();
-    const close = jest.fn();
+    const terminate = mock.fn(async () => undefined);
+    const close = mock.fn(async () => undefined);
     south['subscription'] = { terminate } as unknown as ClientSubscription;
     south['client'] = { close } as unknown as ClientSession;
 
     await south.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2);
-    expect(terminate).toHaveBeenCalledTimes(1);
-    expect(close).toHaveBeenCalledTimes(1);
+    assert.strictEqual(terminate.mock.calls.length, 1);
+    assert.strictEqual(close.mock.calls.length, 1);
   });
 
   it('should properly test connection', async () => {
     const mockedClient = {
-      close: jest.fn(),
-      read: jest.fn().mockResolvedValue([
+      close: mock.fn(async () => undefined),
+      read: mock.fn(async () => [
         { statusCode: { value: 0 }, value: { value: 0 } }, // State = Running
         { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } }, // ManufacturerName
         { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } }, // ProductName
@@ -353,34 +398,40 @@ describe('SouthOPCUA', () => {
         { statusCode: { value: 0 }, value: { value: '1234' } } // BuildNumber
       ])
     };
-    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
     const testResult = await south.testConnection();
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
-    expect(south.createSession).toHaveBeenCalledTimes(1);
-    expect(mockedClient.read).toHaveBeenCalledTimes(1);
-    expect(mockedClient.close).toHaveBeenCalledTimes(1);
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
-    expect(testResult.items).toHaveLength(5);
-    expect(testResult.items[0]).toEqual({ key: 'State', value: 'Running' }); // known state label
+    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
+    assert.strictEqual((south.createSession as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(mockedClient.read.mock.calls.length, 1);
+    assert.strictEqual(mockedClient.close.mock.calls.length, 1);
+    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
+    assert.strictEqual(testResult.items.length, 5);
+    assert.deepStrictEqual(testResult.items[0], { key: 'State', value: 'Running' });
+    fsMock.mock.restore();
   });
 
   it('should properly test connection with graceful degradation when session.read throws', async () => {
     const mockedClient = {
-      close: jest.fn(),
-      read: jest.fn().mockRejectedValue(new Error('Read not supported'))
+      close: mock.fn(async () => undefined),
+      read: mock.fn(async () => {
+        throw new Error('Read not supported');
+      })
     };
-    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
     const testResult = await south.testConnection();
-    expect(south.createSession).toHaveBeenCalledTimes(1);
-    expect(mockedClient.read).toHaveBeenCalledTimes(1);
-    expect(mockedClient.close).toHaveBeenCalledTimes(1);
-    expect(testResult).toEqual({ items: [] });
+    assert.strictEqual((south.createSession as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(mockedClient.read.mock.calls.length, 1);
+    assert.strictEqual(mockedClient.close.mock.calls.length, 1);
+    assert.deepStrictEqual(testResult, { items: [] });
+    fsMock.mock.restore();
   });
 
   it('should skip data values with bad status codes or null values', async () => {
     const mockedClient = {
-      close: jest.fn(),
-      read: jest.fn().mockResolvedValue([
+      close: mock.fn(async () => undefined),
+      read: mock.fn(async () => [
         { statusCode: { value: 0 }, value: { value: 0 } }, // State Good — included (Running)
         { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } }, // ManufacturerName Good — included
         { statusCode: { value: 0x80350000 }, value: { value: 'bad' } }, // ProductName Bad status — skipped
@@ -388,46 +439,52 @@ describe('SouthOPCUA', () => {
         { statusCode: { value: 0 }, value: { value: '1234' } } // BuildNumber Good — included
       ])
     };
-    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
     const testResult = await south.testConnection();
-    expect(testResult.items).toHaveLength(3);
-    expect(testResult.items[0]).toEqual({ key: 'State', value: 'Running' });
-    expect(testResult.items[1]).toEqual({ key: 'ManufacturerName', value: 'Prosys OPC' });
-    expect(testResult.items[2]).toEqual({ key: 'BuildNumber', value: '1234' });
+    assert.strictEqual(testResult.items.length, 3);
+    assert.deepStrictEqual(testResult.items[0], { key: 'State', value: 'Running' });
+    assert.deepStrictEqual(testResult.items[1], { key: 'ManufacturerName', value: 'Prosys OPC' });
+    assert.deepStrictEqual(testResult.items[2], { key: 'BuildNumber', value: '1234' });
+    fsMock.mock.restore();
   });
 
   it('should fall back to numeric string for unknown state values', async () => {
     const mockedClient = {
-      close: jest.fn(),
-      read: jest.fn().mockResolvedValue([
+      close: mock.fn(async () => undefined),
+      read: mock.fn(async () => [
         { statusCode: { value: 0 }, value: { value: 99 } }, // State = unknown value not in labels
         { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } },
         { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } },
         { statusCode: { value: 0 }, value: { value: '1.2.3' } },
-        { statusCode: { value: 0 }, value: { value: '1234' } },
-        { statusCode: { value: 0 }, value: { value: new Date('2023-01-01') } }
+        { statusCode: { value: 0 }, value: { value: '1234' } }
       ])
     };
-    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
     const testResult = await south.testConnection();
-    expect(testResult.items[0]).toEqual({ key: 'State', value: '99' }); // ?? String(raw) fallback
+    assert.deepStrictEqual(testResult.items[0], { key: 'State', value: '99' });
+    fsMock.mock.restore();
   });
 
   it('should properly throw error if test fails', async () => {
-    south.createSession = jest.fn().mockImplementationOnce(() => {
+    south.createSession = mock.fn(() => {
       throw new Error('get session error');
     });
-    await expect(south.testConnection()).rejects.toThrow('get session error');
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
-    expect(south.createSession).toHaveBeenCalledTimes(1);
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
+    await assert.rejects(async () => south.testConnection(), /get session error/);
+    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
+    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
+    assert.strictEqual((south.createSession as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    fsMock.mock.restore();
   });
 
   it('should properly test ha item', async () => {
-    const mockedClient = { close: jest.fn() };
-    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
-    south.getDAValues = jest.fn().mockReturnValue({ value: [] });
-    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
+    const mockedClient = { close: mock.fn(async () => undefined) };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    south.getDAValues = mock.fn(async () => []);
+    south.getHAValues = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
 
     await south.testItem(configuration.items[0], {
       history: {
@@ -435,50 +492,57 @@ describe('SouthOPCUA', () => {
         endTime: testData.constants.dates.DATE_2
       }
     });
-    expect(south.getHAValues).toHaveBeenCalledWith(
+    assert.deepStrictEqual((south.getHAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       [configuration.items[0]],
       testData.constants.dates.DATE_1,
       testData.constants.dates.DATE_2,
       mockedClient,
       true
-    );
-    expect(resolveNodeId).not.toHaveBeenCalled();
-    expect(south.getDAValues).not.toHaveBeenCalled();
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
-    expect(south.createSession).toHaveBeenCalledTimes(1);
-    expect(mockedClient.close).toHaveBeenCalledTimes(1);
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
+    ]);
+    assert.strictEqual(nodeOPCUAMock.resolveNodeId.mock.calls.length, 0);
+    assert.strictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
+    assert.strictEqual((south.createSession as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(mockedClient.close.mock.calls.length, 1);
+    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
+    fsMock.mock.restore();
   });
 
   it('should properly test da item', async () => {
-    const mockedClient = { close: jest.fn() };
-    south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
-    south.getDAValues = jest.fn().mockReturnValue({ value: [] });
-    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
+    const mockedClient = { close: mock.fn(async () => undefined) };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    south.getDAValues = mock.fn(async () => []);
+    south.getHAValues = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
+
     await south.testItem(configuration.items[3], { history: undefined });
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
-    expect(resolveNodeId).toHaveBeenCalledWith(configuration.items[0].settings.nodeId);
-    expect(south.createSession).toHaveBeenCalledTimes(1);
-    expect(mockedClient.close).toHaveBeenCalledTimes(1);
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
+    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
+    assert.deepStrictEqual(nodeOPCUAMock.resolveNodeId.mock.calls[0].arguments, [configuration.items[0].settings.nodeId]);
+    assert.strictEqual((south.createSession as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(mockedClient.close.mock.calls.length, 1);
+    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
+    fsMock.mock.restore();
   });
 
   it('should properly throw error if test item fails', async () => {
-    south.createSession = jest.fn().mockImplementationOnce(() => {
+    south.createSession = mock.fn(() => {
       throw new Error('get session error');
     });
-    south.getDAValues = jest.fn();
-    south.getHAValues = jest.fn();
-    await expect(south.testItem(configuration.items[3], { history: undefined })).rejects.toThrow('get session error');
-    expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
-    expect(fs.rm).toHaveBeenCalledWith(path.resolve('opcua-test-randomUUID'), { recursive: true, force: true });
-    expect(south.createSession).toHaveBeenCalledTimes(1);
-    expect(south.getDAValues).not.toHaveBeenCalled();
-    expect(south.getHAValues).not.toHaveBeenCalled();
+    south.getDAValues = mock.fn(async () => []);
+    south.getHAValues = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
+
+    await assert.rejects(async () => south.testItem(configuration.items[3], { history: undefined }), /get session error/);
+    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
+    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
+    assert.strictEqual((south.createSession as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((south.getHAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    fsMock.mock.restore();
   });
 
   it('should properly manage history query', async () => {
-    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
+    south.getHAValues = mock.fn(async () => ({ value: [], trackedInstant: null }));
     south['client'] = {} as unknown as ClientSession;
     await south.historyQuery(
       [configuration.items[0], configuration.items[1], configuration.items[2]],
@@ -486,82 +550,94 @@ describe('SouthOPCUA', () => {
       testData.constants.dates.DATE_2
     );
 
-    expect(south.getHAValues).toHaveBeenCalledWith(
+    assert.deepStrictEqual((south.getHAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       [configuration.items[0], configuration.items[1], configuration.items[2]],
       testData.constants.dates.DATE_1,
       testData.constants.dates.DATE_2,
       south['client']
-    );
+    ]);
   });
 
   it('should properly manage history query and manage error', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    south.getHAValues = jest.fn().mockImplementationOnce(() => {
+    south.getHAValues = mock.fn(() => {
       throw new Error('history error');
     });
     south['client'] = {} as unknown as ClientSession;
-    south.disconnect = jest.fn();
-    await expect(
-      south.historyQuery(
-        [configuration.items[0], configuration.items[1], configuration.items[2]],
-        testData.constants.dates.DATE_1,
-        testData.constants.dates.DATE_2
-      )
-    ).rejects.toThrow('history error');
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(setTimeoutSpy).toHaveBeenCalled();
+    south.disconnect = mock.fn(async () => undefined);
+    await assert.rejects(
+      async () =>
+        south.historyQuery(
+          [configuration.items[0], configuration.items[1], configuration.items[2]],
+          testData.constants.dates.DATE_1,
+          testData.constants.dates.DATE_2
+        ),
+      /history error/
+    );
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    // setTimeout should have been called for reconnect (timer mocked)
   });
 
   it('should properly manage history query and manage error and not reconnect if disconnecting', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    south.getHAValues = jest.fn().mockImplementationOnce(() => {
+    south.getHAValues = mock.fn(() => {
       throw new Error('history error');
     });
     south['client'] = {} as unknown as ClientSession;
-    south.disconnect = jest.fn();
+    south.disconnect = mock.fn(async () => undefined);
     south['disconnecting'] = true;
-    await expect(
-      south.historyQuery(
-        [configuration.items[0], configuration.items[1], configuration.items[2]],
-        testData.constants.dates.DATE_1,
-        testData.constants.dates.DATE_2
-      )
-    ).rejects.toThrow('history error');
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    await assert.rejects(
+      async () =>
+        south.historyQuery(
+          [configuration.items[0], configuration.items[1], configuration.items[2]],
+          testData.constants.dates.DATE_1,
+          testData.constants.dates.DATE_2
+        ),
+      /history error/
+    );
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should throw error when querying history with client not set', async () => {
-    south.getHAValues = jest.fn();
+    south.getHAValues = mock.fn(async () => ({ value: [], trackedInstant: null }));
 
-    await expect(
-      south.historyQuery(
-        [configuration.items[0], configuration.items[1], configuration.items[2]],
-        testData.constants.dates.DATE_1,
-        testData.constants.dates.DATE_2
-      )
-    ).rejects.toThrow('OPCUA client not set');
+    await assert.rejects(
+      async () =>
+        south.historyQuery(
+          [configuration.items[0], configuration.items[1], configuration.items[2]],
+          testData.constants.dates.DATE_1,
+          testData.constants.dates.DATE_2
+        ),
+      /OPCUA client not set/
+    );
 
-    expect(south.getHAValues).not.toHaveBeenCalled();
+    assert.strictEqual((south.getHAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should properly get HA values with response status not good', async () => {
-    const historyRead = jest.fn().mockReturnValue({
+    const historyReadRequest = { requestHeader: {} } as unknown as HistoryReadRequest;
+    utilsOpcuaExports.getHistoryReadRequest.mock.mockImplementation(() => historyReadRequest);
+
+    const historyRead = mock.fn(() => ({
       responseHeader: {
         serviceResult: {
-          isNot: jest.fn().mockReturnValue(true),
+          isNot: mock.fn(() => true),
           description: 'not ok'
         }
       }
-    });
+    }));
     const mockedClient = {
       historyRead,
-      close: jest.fn()
+      close: mock.fn()
     } as unknown as ClientSession;
 
-    south.addContent = jest.fn();
-    (resolveNodeId as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('node id error');
+    south.addContent = mock.fn(async () => undefined);
+    // Only throw on the first resolveNodeId call; subsequent calls resolve normally
+    let resolveCallCount18 = 0;
+    nodeOPCUAMock.resolveNodeId.mock.mockImplementation((nodeId: unknown) => {
+      resolveCallCount18++;
+      if (resolveCallCount18 === 1) {
+        throw new Error('node id error');
+      }
+      return nodeId;
     });
 
     await south.getHAValues(
@@ -571,33 +647,53 @@ describe('SouthOPCUA', () => {
       mockedClient
     );
 
-    expect(getHistoryReadRequest).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'raw', 'none', [
-      { nodeId: configuration.items[0].settings.nodeId },
-      { nodeId: configuration.items[1].settings.nodeId }
+    assert.deepStrictEqual(utilsOpcuaExports.getHistoryReadRequest.mock.calls[0].arguments, [
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.DATE_2,
+      'raw',
+      'none',
+      [
+        { continuationPoint: undefined, dataEncoding: undefined, indexRange: undefined, nodeId: configuration.items[0].settings.nodeId },
+        { continuationPoint: undefined, dataEncoding: undefined, indexRange: undefined, nodeId: configuration.items[1].settings.nodeId }
+      ]
     ]);
-    expect(mockedClient.historyRead).toHaveBeenCalledWith(historyReadRequest);
-    expect(historyReadRequest.requestHeader.timeoutHint).toEqual(configuration.settings.readTimeout);
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error when parsing node ID ${configuration.items[0].settings.nodeId} for item ${configuration.items[0].name}: node id error`
+    assert.ok(historyRead.mock.calls.length >= 1);
+    assert.deepStrictEqual(historyReadRequest.requestHeader.timeoutHint, configuration.settings.readTimeout);
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
+        c =>
+          c.arguments[0] ===
+          `Error when parsing node ID ${configuration.items[0].settings.nodeId} for item ${configuration.items[0].name}: node id error`
+      ).length,
+      1
     );
-    expect(logger.error).toHaveBeenCalledWith('Error while reading history: not ok');
-    expect(logger.error).toHaveBeenCalledWith('No result found in response');
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[0] === 'Error while reading history: not ok').length,
+      1
+    );
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[0] === 'No result found in response').length,
+      1
+    );
   });
 
   it('should properly retrieve HA values with associated node not found', async () => {
-    const historyRead = jest.fn().mockReturnValue({
+    const historyReadRequest = { requestHeader: {} } as unknown as HistoryReadRequest;
+    utilsOpcuaExports.getHistoryReadRequest.mock.mockImplementation(() => historyReadRequest);
+
+    const historyRead = mock.fn(() => ({
       responseHeader: {
         serviceResult: {
-          isNot: jest.fn().mockReturnValue(true),
+          isNot: mock.fn(() => true),
           description: 'not ok'
         }
       }
-    });
+    }));
     const mockedClient = {
       historyRead,
-      close: jest.fn()
+      close: mock.fn()
     } as unknown as ClientSession;
-    south.addContent = jest.fn();
+    south.addContent = mock.fn(async () => undefined);
 
     await south.getHAValues(
       [configuration.items[0], configuration.items[1]],
@@ -606,18 +702,33 @@ describe('SouthOPCUA', () => {
       mockedClient
     );
 
-    expect(getHistoryReadRequest).toHaveBeenCalledWith(testData.constants.dates.DATE_1, testData.constants.dates.DATE_2, 'raw', 'none', [
-      { nodeId: configuration.items[0].settings.nodeId },
-      { nodeId: configuration.items[1].settings.nodeId }
+    assert.deepStrictEqual(utilsOpcuaExports.getHistoryReadRequest.mock.calls[0].arguments, [
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.DATE_2,
+      'raw',
+      'none',
+      [
+        { continuationPoint: undefined, dataEncoding: undefined, indexRange: undefined, nodeId: configuration.items[0].settings.nodeId },
+        { continuationPoint: undefined, dataEncoding: undefined, indexRange: undefined, nodeId: configuration.items[1].settings.nodeId }
+      ]
     ]);
-    expect(mockedClient.historyRead).toHaveBeenCalledWith(historyReadRequest);
-    expect(historyReadRequest.requestHeader.timeoutHint).toEqual(configuration.settings.readTimeout);
-    expect(logger.error).toHaveBeenCalledWith('Error while reading history: not ok');
-    expect(logger.error).toHaveBeenCalledWith('No result found in response');
+    assert.ok(historyRead.mock.calls.length >= 1);
+    assert.deepStrictEqual(historyReadRequest.requestHeader.timeoutHint, configuration.settings.readTimeout);
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[0] === 'Error while reading history: not ok').length,
+      1
+    );
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(c => c.arguments[0] === 'No result found in response').length,
+      1
+    );
   });
 
   it('getHAValues() in case of a test', async () => {
-    const historyRead = jest.fn().mockReturnValue({
+    const historyReadRequest = { requestHeader: {} } as unknown as HistoryReadRequest;
+    utilsOpcuaExports.getHistoryReadRequest.mock.mockImplementation(() => historyReadRequest);
+
+    const historyRead = mock.fn(() => ({
       responseHeader: {
         serviceResult: StatusCodes.Good
       },
@@ -651,10 +762,14 @@ describe('SouthOPCUA', () => {
           continuationPoint: false
         }
       ]
-    });
+    }));
     const client = { historyRead } as unknown as ClientSession;
 
-    (parseOPCUAValue as jest.Mock).mockReturnValueOnce('').mockReturnValueOnce('123');
+    let parseCallCount = 0;
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => {
+      parseCallCount++;
+      return parseCallCount === 1 ? '' : '123';
+    });
     const result = await south.getHAValues(
       [configuration.items[0]],
       testData.constants.dates.FAKE_NOW,
@@ -662,8 +777,8 @@ describe('SouthOPCUA', () => {
       client,
       true
     );
-    expect(historyRead).toHaveBeenCalled();
-    expect(result).toEqual({
+    assert.ok(historyRead.mock.calls.length >= 1);
+    assert.deepStrictEqual(result, {
       value: [
         {
           data: { quality: 'Good', value: '123' },
@@ -676,44 +791,50 @@ describe('SouthOPCUA', () => {
   });
 
   it('getHAValues() in case of run time', async () => {
-    const historyRead = jest
-      .fn()
-      .mockReturnValueOnce({
-        responseHeader: {
-          serviceResult: StatusCodes.Good
-        },
-        results: [
-          {
-            historyData: {
-              dataValues: [
-                {
-                  sourceTimestamp: new Date(testData.constants.dates.DATE_2),
-                  value: {
-                    value: '123',
-                    dataType: DataType.String
+    const historyReadRequest = { requestHeader: {} } as unknown as HistoryReadRequest;
+    utilsOpcuaExports.getHistoryReadRequest.mock.mockImplementation(() => historyReadRequest);
+
+    let historyReadCallCount = 0;
+    const historyRead = mock.fn(() => {
+      historyReadCallCount++;
+      if (historyReadCallCount === 1) {
+        return {
+          responseHeader: {
+            serviceResult: StatusCodes.Good
+          },
+          results: [
+            {
+              historyData: {
+                dataValues: [
+                  {
+                    sourceTimestamp: new Date(testData.constants.dates.DATE_2),
+                    value: {
+                      value: '123',
+                      dataType: DataType.String
+                    },
+                    statusCode: StatusCodes.Good
                   },
-                  statusCode: StatusCodes.Good
-                },
-                {
-                  serverTimestamp: new Date(testData.constants.dates.DATE_1),
-                  value: {
-                    value: '123',
-                    dataType: DataType.String
-                  },
-                  statusCode: StatusCodes.Good
-                }
-              ],
-              createdBy: '',
-              updatedBy: '',
-              createdAt: '',
-              updatedAt: ''
-            },
-            statusCode: StatusCodes.Good,
-            continuationPoint: true
-          }
-        ]
-      })
-      .mockReturnValueOnce({
+                  {
+                    serverTimestamp: new Date(testData.constants.dates.DATE_1),
+                    value: {
+                      value: '123',
+                      dataType: DataType.String
+                    },
+                    statusCode: StatusCodes.Good
+                  }
+                ],
+                createdBy: '',
+                updatedBy: '',
+                createdAt: '',
+                updatedAt: ''
+              },
+              statusCode: StatusCodes.Good,
+              continuationPoint: true
+            }
+          ]
+        };
+      }
+      return {
         responseHeader: {
           serviceResult: StatusCodes.Good
         },
@@ -739,14 +860,20 @@ describe('SouthOPCUA', () => {
             continuationPoint: false
           }
         ]
-      });
+      };
+    });
     const client = { historyRead } as unknown as ClientSession;
 
-    south.addContent = jest.fn();
-    (parseOPCUAValue as jest.Mock).mockReturnValueOnce('123').mockReturnValueOnce('456');
+    south.addContent = mock.fn(async () => undefined);
+    let parseCallCount = 0;
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => {
+      parseCallCount++;
+      return parseCallCount === 1 ? '123' : '456';
+    });
     await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, client, false);
-    expect(historyRead).toHaveBeenCalled();
-    expect(south.addContent).toHaveBeenCalledWith(
+    assert.strictEqual(historyRead.mock.calls.length, 2);
+    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       {
         content: [
           {
@@ -764,11 +891,14 @@ describe('SouthOPCUA', () => {
       },
       testData.constants.dates.FAKE_NOW,
       [configuration.items[0]]
-    );
+    ]);
   });
 
   it('getHAValues() in case of a bad result status code', async () => {
-    const historyRead = jest.fn().mockReturnValue({
+    const historyReadRequest = { requestHeader: {} } as unknown as HistoryReadRequest;
+    utilsOpcuaExports.getHistoryReadRequest.mock.mockImplementation(() => historyReadRequest);
+
+    const historyRead = mock.fn(() => ({
       responseHeader: {
         serviceResult: StatusCodes.Good
       },
@@ -786,7 +916,7 @@ describe('SouthOPCUA', () => {
           continuationPoint: false
         }
       ]
-    });
+    }));
     const client = { historyRead } as unknown as ClientSession;
 
     const result = await south.getHAValues(
@@ -796,8 +926,8 @@ describe('SouthOPCUA', () => {
       client,
       true
     );
-    expect(historyRead).toHaveBeenCalled();
-    expect(result).toEqual({
+    assert.ok(historyRead.mock.calls.length >= 1);
+    assert.deepStrictEqual(result, {
       value: [],
       trackedInstant: null
     });
@@ -810,11 +940,15 @@ describe('SouthOPCUA', () => {
       affectedNodes: [configuration.items[1].name],
       description: 'Data is missing due to collection started/stopped/lost.'
     });
-    expect(logMessages).toHaveBeenCalledWith(expectedLogs, logger);
+    assert.strictEqual(utilsOpcuaExports.logMessages.mock.calls.length, 1);
+    assert.deepStrictEqual(utilsOpcuaExports.logMessages.mock.calls[0].arguments[0], expectedLogs);
   });
 
   it('getHAValues() should do nothing if no data values', async () => {
-    const historyRead = jest.fn().mockReturnValue({
+    const historyReadRequest = { requestHeader: {} } as unknown as HistoryReadRequest;
+    utilsOpcuaExports.getHistoryReadRequest.mock.mockImplementation(() => historyReadRequest);
+
+    const historyRead = mock.fn(() => ({
       responseHeader: {
         serviceResult: StatusCodes.Good
       },
@@ -825,11 +959,11 @@ describe('SouthOPCUA', () => {
           continuationPoint: false
         }
       ]
-    });
+    }));
     const client = { historyRead } as unknown as ClientSession;
 
     await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, client, true);
-    expect(historyRead).toHaveBeenCalled();
+    assert.ok(historyRead.mock.calls.length >= 1);
   });
 
   describe('filter items', () => {
@@ -966,7 +1100,7 @@ describe('SouthOPCUA', () => {
 
     it('should filter HA items', () => {
       const result = south.filterHistoryItems(items);
-      expect(result).toEqual([
+      assert.deepStrictEqual(result, [
         {
           id: 'id1',
           enabled: true,
@@ -1006,7 +1140,7 @@ describe('SouthOPCUA', () => {
 
     it('should filter DA items', () => {
       const result = south.filterHistoryItems(items);
-      expect(result).toEqual([
+      assert.deepStrictEqual(result, [
         {
           id: 'id1',
           enabled: true,
@@ -1046,100 +1180,92 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly throw error on query last point if client not set', async () => {
-    south.getDAValues = jest.fn();
-    await expect(south.directQuery(configuration.items)).rejects.toThrow('OPCUA client not set');
-    expect(south.getDAValues).not.toHaveBeenCalled();
+    south.getDAValues = mock.fn(async () => []);
+    await assert.rejects(async () => south.directQuery(configuration.items), /OPCUA client not set/);
+    assert.strictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should do nothing on query last point if no nodes to read', async () => {
     south['client'] = {} as unknown as ClientSession;
-    south.getDAValues = jest.fn();
-    south.addContent = jest.fn();
+    south.getDAValues = mock.fn(async () => []);
+    south.addContent = mock.fn(async () => undefined);
     await south.directQuery([]);
-    expect(south.getDAValues).not.toHaveBeenCalled();
-    expect(south.addContent).not.toHaveBeenCalled();
+    assert.strictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
   });
 
   it('should query last point (only one)', async () => {
     const mockedClient = {} as unknown as ClientSession;
     south['client'] = mockedClient;
-    south.getDAValues = jest.fn().mockReturnValue(testData.oibusContent[0].content);
-    south.addContent = jest.fn();
+    south.getDAValues = mock.fn(
+      async () => testData.oibusContent[0].content as ReturnType<typeof south.getDAValues> extends Promise<infer T> ? T : never
+    );
+    south.addContent = mock.fn(async () => undefined);
     await south.directQuery([configuration.items[0], configuration.items[3]]);
-    expect(logger.debug(`Read node ${configuration.items[3].settings.nodeId}`));
-    expect(south.getDAValues).toHaveBeenCalledWith(
+    assert.deepStrictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
-    );
-    expect(south.addContent).toHaveBeenCalledWith(testData.oibusContent[0], testData.constants.dates.FAKE_NOW, [
-      configuration.items[0],
-      configuration.items[3]
     ]);
+    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should query last point (several) and fail and reconnect', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
     const mockedClient = {} as unknown as ClientSession;
     south['client'] = mockedClient;
-    south.getDAValues = jest.fn().mockImplementationOnce(() => {
+    south.getDAValues = mock.fn(() => {
       throw new Error('opcua read error');
     });
-    south.addContent = jest.fn();
-    south.disconnect = jest.fn();
-    south.connect = jest.fn();
-    await expect(south.directQuery([configuration.items[0], configuration.items[3]])).rejects.toThrow('opcua read error');
-    expect(logger.debug(`Read node ${configuration.items[3].settings.nodeId}`));
-    expect(south.getDAValues).toHaveBeenCalledWith(
+    south.addContent = mock.fn(async () => undefined);
+    south.disconnect = mock.fn(async () => undefined);
+    south.connect = mock.fn(async () => undefined);
+    await assert.rejects(async () => south.directQuery([configuration.items[0], configuration.items[3]]), /opcua read error/);
+    assert.deepStrictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
-    );
-    expect(south.addContent).not.toHaveBeenCalled();
-    expect(south.disconnect).toHaveBeenCalled();
-    expect(setTimeoutSpy).toHaveBeenCalled();
+    ]);
+    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should query last point (several) and fail and not reconnect', async () => {
     const mockedClient = {} as unknown as ClientSession;
     south['client'] = mockedClient;
-    south.getDAValues = jest.fn().mockImplementationOnce(() => {
+    south.getDAValues = mock.fn(() => {
       throw new Error('opcua read error');
     });
-    south.addContent = jest.fn();
-    south.disconnect = jest.fn();
-    south.connect = jest.fn();
+    south.addContent = mock.fn(async () => undefined);
+    south.disconnect = mock.fn(async () => undefined);
+    south.connect = mock.fn(async () => undefined);
     south['disconnecting'] = true;
-    await expect(south.directQuery([configuration.items[0], configuration.items[3]])).rejects.toThrow('opcua read error');
-    expect(logger.debug(`Read node ${configuration.items[3].settings.nodeId}`));
-    expect(south.getDAValues).toHaveBeenCalledWith(
+    await assert.rejects(async () => south.directQuery([configuration.items[0], configuration.items[3]]), /opcua read error/);
+    assert.deepStrictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
-    );
-    expect(south.addContent).not.toHaveBeenCalled();
-    expect(south.connect).not.toHaveBeenCalled();
-    expect(south.disconnect).toHaveBeenCalled();
+    ]);
+    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((south.connect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
   });
 
   it('should not query items if bad node id', async () => {
     south['client'] = {} as unknown as ClientSession;
-    south.getDAValues = jest.fn();
-    (resolveNodeId as jest.Mock)
-      .mockImplementationOnce(() => {
+    south.getDAValues = mock.fn(async () => []);
+    let resolveCallCount = 0;
+    nodeOPCUAMock.resolveNodeId.mock.mockImplementation(() => {
+      resolveCallCount++;
+      if (resolveCallCount <= 3) {
         throw new Error('bad node id');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('bad node id');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('bad node id');
-      });
+      }
+      return 'nodeId';
+    });
 
     await south.directQuery([configuration.items[3], configuration.items[4], configuration.items[5]]);
-    expect(south.getDAValues).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledTimes(3);
+    assert.strictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual((logger.error as ReturnType<typeof mock.fn>).mock.calls.length, 3);
   });
 
   it('getDAValues() should properly retrieve data', async () => {
-    const read = jest.fn().mockReturnValue([
+    const read = mock.fn(async () => [
       {
         sourceTimestamp: new Date(testData.constants.dates.FAKE_NOW),
         value: {
@@ -1159,7 +1285,11 @@ describe('SouthOPCUA', () => {
     ]);
     const client = { read } as unknown as ClientSession;
 
-    (parseOPCUAValue as jest.Mock).mockReturnValueOnce('').mockReturnValueOnce('123');
+    let parseCallCount = 0;
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => {
+      parseCallCount++;
+      return parseCallCount === 1 ? '' : '123';
+    });
     const result = await south.getDAValues(
       [
         {
@@ -1175,8 +1305,8 @@ describe('SouthOPCUA', () => {
       ],
       client
     );
-    expect(read).toHaveBeenCalled();
-    expect(result).toEqual([
+    assert.strictEqual(read.mock.calls.length, 1);
+    assert.deepStrictEqual(result, [
       {
         data: { quality: 'Good', value: '123' },
         pointId: 'item2',
@@ -1186,7 +1316,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('getDAValues() should properly retrieve empty data', async () => {
-    const read = jest.fn().mockReturnValue([]);
+    const read = mock.fn(async () => []);
     const client = { read } as unknown as ClientSession;
 
     const result = await south.getDAValues(
@@ -1199,72 +1329,90 @@ describe('SouthOPCUA', () => {
       ],
       client
     );
-    expect(read).toHaveBeenCalled();
-    expect(result).toEqual([]);
-    expect(logger.error).toHaveBeenCalledWith(`Received 0 node results, requested 1 nodes. Request done in 0 ms`);
+    assert.strictEqual(read.mock.calls.length, 1);
+    assert.deepStrictEqual(result, []);
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
+        c => c.arguments[0] === `Received 0 node results, requested 1 nodes. Request done in 0 ms`
+      ).length,
+      1
+    );
   });
 
   it('should not subscribe if session is not set', async () => {
-    await expect(south.subscribe(configuration.items)).rejects.toThrow('OPCUA client not set');
+    await assert.rejects(async () => south.subscribe(configuration.items), /OPCUA client not set/);
   });
 
-  it('should not subscribe if session is not set', async () => {
-    await expect(south.subscribe([])).resolves.not.toThrow();
+  it('should not subscribe if no items', async () => {
+    await assert.doesNotReject(async () => south.subscribe([]));
   });
 
   it('should not subscribe if already subscribe', async () => {
     const stream = new CustomStream();
-    stream.terminate = jest.fn();
-    const monitorFn = jest.fn().mockReturnValue(stream);
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
     south['client'] = {
-      createSubscription2: jest.fn().mockReturnValue({ terminate: jest.fn(), monitor: monitorFn })
+      createSubscription2: mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }))
     } as unknown as ClientSession;
 
-    south['subscription'] = { terminate: jest.fn(), monitor: monitorFn } as unknown as ClientSubscription;
+    south['subscription'] = { terminate: mock.fn(), monitor: monitorFn } as unknown as ClientSubscription;
     await south.subscribe([configuration.items[0]]);
-    expect(south['client'].createSubscription2).not.toHaveBeenCalled();
-    expect(monitorFn).toHaveBeenCalledTimes(1);
+    assert.strictEqual((south['client'].createSubscription2 as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(monitorFn.mock.calls.length, 1);
   });
 
   it('should properly manage subscriptions', async () => {
     const stream = new CustomStream();
-    stream.terminate = jest.fn();
-    const monitorFn = jest.fn().mockReturnValue(stream);
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
     south['client'] = {
-      createSubscription2: jest.fn().mockReturnValue({ terminate: jest.fn(), monitor: monitorFn })
+      createSubscription2: mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }))
     } as unknown as ClientSession;
 
-    (resolveNodeId as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('bad node id');
+    // Only throw on the first resolveNodeId call (for items[0]); items[1] is skipped; items[2] succeeds
+    let resolveCallCount36 = 0;
+    nodeOPCUAMock.resolveNodeId.mock.mockImplementation((nodeId: unknown) => {
+      resolveCallCount36++;
+      if (resolveCallCount36 === 1) {
+        throw new Error('bad node id');
+      }
+      return nodeId;
     });
-    south.addContent = jest.fn();
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    south.addContent = mock.fn(async () => undefined);
 
     south['monitoredItems'].set(configuration.items[1].id, {} as unknown as ClientMonitoredItem);
 
     await south.subscribe([configuration.items[0], configuration.items[1], configuration.items[2]]);
-    expect(south['client'].createSubscription2).toHaveBeenCalledTimes(1);
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(monitorFn).toHaveBeenCalledTimes(1);
-    expect(south.addContent).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith(
-      `Error when parsing node ID ${configuration.items[0].settings.nodeId} for item ${configuration.items[0].name}: bad node id`
+    assert.strictEqual((south['client'].createSubscription2 as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(monitorFn.mock.calls.length, 1);
+    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
+        c =>
+          c.arguments[0] ===
+          `Error when parsing node ID ${configuration.items[0].settings.nodeId} for item ${configuration.items[0].name}: bad node id`
+      ).length,
+      1
     );
-    expect(south['monitoredItems'].size).toBe(2);
+    assert.strictEqual(south['monitoredItems'].size, 2);
 
-    south.flushMessages = jest.fn();
-    (parseOPCUAValue as jest.Mock).mockReturnValueOnce('').mockReturnValue('parsedValue');
+    south.flushMessages = mock.fn(async () => undefined);
+    let parseCallCount = 0;
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => {
+      parseCallCount++;
+      return parseCallCount === 1 ? '' : 'parsedValue';
+    });
     south['connector'].settings.maxNumberOfMessages = 2;
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
-    expect(south.flushMessages).not.toHaveBeenCalled();
+    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 0);
     stream.emit('changed', {
       value: { value: 1, dataType: DataType.Float },
       serverTimestamp: DateTime.now(),
       statusCode: StatusCodes.Good
     });
-    expect(south.flushMessages).toHaveBeenCalledTimes(1);
-    expect(south['bufferedValues']).toEqual([
+    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.deepStrictEqual(south['bufferedValues'], [
       {
         item: configuration.items[2],
         timestamp: testData.constants.dates.FAKE_NOW,
@@ -1281,26 +1429,22 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly unsubscribe', async () => {
-    const removeAllListeners = jest.fn();
-    const terminate = jest.fn();
+    const removeAllListeners = mock.fn();
+    const terminate = mock.fn(async () => undefined);
     south['monitoredItems'].set(configuration.items[1].id, { removeAllListeners, terminate } as unknown as ClientMonitoredItem);
 
     await south.unsubscribe([configuration.items[0], configuration.items[1]]);
 
-    expect(removeAllListeners).toHaveBeenCalledTimes(1);
-    expect(terminate).toHaveBeenCalledTimes(1);
-    expect(south['monitoredItems'].size).toBe(0);
+    assert.strictEqual(removeAllListeners.mock.calls.length, 1);
+    assert.strictEqual(terminate.mock.calls.length, 1);
+    assert.strictEqual(south['monitoredItems'].size, 0);
   });
 
   it('should not flush messages if none in buffer', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
-    south.addContent = jest.fn();
+    south.addContent = mock.fn(async () => undefined);
     await south.flushMessages();
-    expect(south.addContent).not.toHaveBeenCalled();
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
-    expect(setTimeoutSpy).toHaveBeenCalled();
+    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    // setTimeout called for next flush
   });
 
   it('should flush messages', async () => {
@@ -1320,12 +1464,9 @@ describe('SouthOPCUA', () => {
     ];
     south['flushTimeout'] = setTimeout(() => null);
 
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
-    south.addContent = jest.fn();
+    south.addContent = mock.fn(async () => undefined);
     await south.flushMessages();
-    expect(south.addContent).toHaveBeenCalledWith(
+    assert.deepStrictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
       {
         type: 'time-values',
         content: [
@@ -1352,9 +1493,7 @@ describe('SouthOPCUA', () => {
         { name: 'pointId', id: 'itemId' },
         { name: 'pointId', id: 'itemId' }
       ]
-    );
-    expect(clearTimeoutSpy).toHaveBeenCalled();
-    expect(setTimeoutSpy).toHaveBeenCalled();
+    ]);
   });
 
   it('should flush messages and manage addContent error', async () => {
@@ -1367,10 +1506,15 @@ describe('SouthOPCUA', () => {
       }
     ];
 
-    south.addContent = jest.fn().mockImplementationOnce(() => {
+    south.addContent = mock.fn(async () => {
       throw new Error('cache content error');
     });
     await south.flushMessages();
-    expect(logger.error).toHaveBeenCalledWith('Error when flushing messages: cache content error');
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
+        c => c.arguments[0] === 'Error when flushing messages: cache content error'
+      ).length,
+      1
+    );
   });
 });

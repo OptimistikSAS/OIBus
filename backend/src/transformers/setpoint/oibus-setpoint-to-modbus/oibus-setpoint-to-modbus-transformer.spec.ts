@@ -1,86 +1,80 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { Readable } from 'stream';
-import pino from 'pino';
-import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises } from '../../../tests/utils/test-utils';
-import { OIBusSetpoint } from '../../../../shared/model/engine.model';
-import csv from 'papaparse';
-import OIBusSetpointToModbusTransformer from './oibus-setpoint-to-modbus-transformer';
+import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import type OIBusSetpointToModbusTransformerType from './oibus-setpoint-to-modbus-transformer';
 import setpointToModbusManifest from './manifest';
+import { OIBusSetpoint } from '../../../../shared/model/engine.model';
 
-jest.mock('../../../service/utils', () => ({
-  generateRandomId: jest.fn().mockReturnValue('randomId')
-}));
-jest.mock('papaparse');
+const nodeRequire = createRequire(import.meta.url);
 
-const logger: pino.Logger = new PinoLogger();
+let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let OIBusSetpointToModbusTransformer: typeof OIBusSetpointToModbusTransformerType;
+
+before(() => {
+  mockUtils = { generateRandomId: mock.fn(() => 'randomId') };
+  mockModule(nodeRequire, '../../../service/utils', mockUtils);
+  const mod = reloadModule<{ default: typeof OIBusSetpointToModbusTransformerType }>(nodeRequire, './oibus-setpoint-to-modbus-transformer');
+  OIBusSetpointToModbusTransformer = mod.default;
+});
 
 describe('OIBusSetpointToModbusTransformer', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let logger: PinoLogger;
+
+  beforeEach(() => {
+    logger = new PinoLogger();
+    mockUtils.generateRandomId = mock.fn(() => 'randomId');
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should transform data from a stream and return metadata', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
     const options = {
       mapping: [
         { reference: 'reference1', address: 0x0001, modbusType: 'coil' },
         { reference: 'reference2', address: 0x0002, modbusType: 'holding-register' }
       ]
     };
-    // Arrange
-    const transformer = new OIBusSetpointToModbusTransformer(logger, testData.transformers.list[0], options);
+    const transformer = new OIBusSetpointToModbusTransformer(asLogger(logger), testData.transformers.list[0], options);
     const dataChunks: Array<OIBusSetpoint> = [
-      {
-        reference: 'reference1',
-        value: '1'
-      },
-      {
-        reference: 'reference2',
-        value: '2'
-      },
-      {
-        reference: 'reference3',
-        value: 'value1'
-      }
+      { reference: 'reference1', value: '1' },
+      { reference: 'reference2', value: '2' },
+      { reference: 'reference3', value: 'value1' }
     ];
-
-    // Mock Readable stream
     const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
-    mockStream.push(null); // End the stream
+    mockStream.push(null);
 
     await flushPromises();
     const result = await promise;
-    // Assert
-    expect(result.output).toEqual(
-      Buffer.from(
+
+    assert.deepStrictEqual(result, {
+      output: Buffer.from(
         JSON.stringify([
           { address: 1, value: true, modbusType: 'coil' },
           { address: 2, value: 2, modbusType: 'holding-register' }
         ])
-      )
-    );
-    expect(result.metadata).toEqual({
-      contentFile: 'randomId.json',
-      contentSize: 0,
-      createdAt: '',
-      numberOfElement: 2,
-      contentType: 'modbus'
+      ),
+      metadata: {
+        contentFile: 'randomId.json',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 2,
+        contentType: 'modbus'
+      }
     });
   });
 
   it('should return manifest', () => {
-    expect(setpointToModbusManifest.settings).toEqual({
+    assert.deepStrictEqual(setpointToModbusManifest.settings, {
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
@@ -91,20 +85,12 @@ describe('OIBusSetpointToModbusTransformer', () => {
           translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
+          validators: [{ type: 'REQUIRED', arguments: [] }],
           rootAttribute: {
             type: 'object',
             key: 'item',
             translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.title',
-            displayProperties: {
-              visible: true,
-              wrapInBox: false
-            },
+            displayProperties: { visible: true, wrapInBox: false },
             enablingConditions: [],
             validators: [],
             attributes: [
@@ -113,34 +99,16 @@ describe('OIBusSetpointToModbusTransformer', () => {
                 key: 'reference',
                 translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.reference',
                 defaultValue: null,
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 0,
-                  columns: 4,
-                  displayInViewMode: true
-                }
+                validators: [{ type: 'REQUIRED', arguments: [] }],
+                displayProperties: { row: 0, columns: 4, displayInViewMode: true }
               },
               {
                 type: 'string',
                 key: 'address',
                 translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.address',
                 defaultValue: null,
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 0,
-                  columns: 4,
-                  displayInViewMode: true
-                }
+                validators: [{ type: 'REQUIRED', arguments: [] }],
+                displayProperties: { row: 0, columns: 4, displayInViewMode: true }
               },
               {
                 type: 'string-select',
@@ -148,17 +116,8 @@ describe('OIBusSetpointToModbusTransformer', () => {
                 translationKey: 'configuration.oibus.manifest.transformers.setpoint-to-modbus.mapping.modbus-type',
                 defaultValue: 'register',
                 selectableValues: ['coil', 'register'],
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 0,
-                  columns: 4,
-                  displayInViewMode: true
-                }
+                validators: [{ type: 'REQUIRED', arguments: [] }],
+                displayProperties: { row: 0, columns: 4, displayInViewMode: true }
               }
             ]
           }
@@ -166,10 +125,7 @@ describe('OIBusSetpointToModbusTransformer', () => {
       ],
       enablingConditions: [],
       validators: [],
-      displayProperties: {
-        visible: true,
-        wrapInBox: false
-      }
+      displayProperties: { visible: true, wrapInBox: false }
     });
   });
 });

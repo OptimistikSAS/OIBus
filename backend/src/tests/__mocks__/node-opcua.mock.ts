@@ -1,16 +1,18 @@
+import { mock } from 'node:test';
+
 // Mock the constructors
-export const HistoryReadRequest = jest.fn().mockImplementation(options => ({
-  ...options,
+export const HistoryReadRequest = mock.fn((options: unknown) => ({
+  ...(options as object),
   toString: () => 'HistoryReadRequest'
 }));
 
-export const ReadRawModifiedDetails = jest.fn().mockImplementation(options => ({
-  ...options,
+export const ReadRawModifiedDetails = mock.fn((options: unknown) => ({
+  ...(options as object),
   toString: () => 'ReadRawModifiedDetails'
 }));
 
-export const ReadProcessedDetails = jest.fn().mockImplementation(options => ({
-  ...options,
+export const ReadProcessedDetails = mock.fn((options: unknown) => ({
+  ...(options as object),
   toString: () => 'ReadProcessedDetails'
 }));
 
@@ -26,9 +28,9 @@ export const TimestampsToReturn = {
 };
 
 export default {
-  OPCUAClient: { createSession: jest.fn(() => Promise.resolve({})) },
-  ClientSubscription: { create: jest.fn() },
-  ClientMonitoredItem: { create: jest.fn() },
+  OPCUAClient: { createSession: mock.fn(async () => ({})) },
+  ClientSubscription: { create: mock.fn() },
+  ClientMonitoredItem: { create: mock.fn() },
   DataType: {},
   StatusCodes: {},
   SecurityPolicy: {},
@@ -39,6 +41,9 @@ export default {
   HistoryReadRequest,
   ReadRawModifiedDetails,
   ReadProcessedDetails,
-  OPCUACertificateManager: jest.fn().mockImplementation(() => ({})),
-  resolveNodeId: jest.fn(nodeId => nodeId)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  OPCUACertificateManager: function OPCUACertificateManagerMock(this: any) {
+    this.state = 0;
+  },
+  resolveNodeId: mock.fn((nodeId: unknown) => nodeId)
 };

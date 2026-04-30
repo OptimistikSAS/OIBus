@@ -1,96 +1,86 @@
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { Readable } from 'stream';
-import pino from 'pino';
-import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../../tests/utils/test-data';
-import { flushPromises } from '../../../tests/utils/test-utils';
-import { OIBusTimeValue } from '../../../../shared/model/engine.model';
-import csv from 'papaparse';
-import OIBusTimeValuesToMQTTTransformer from './oibus-time-values-to-mqtt-transformer';
+import { flushPromises, mockModule, reloadModule, asLogger } from '../../../tests/utils/test-utils';
+import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import type OIBusTimeValuesToMQTTTransformerType from './oibus-time-values-to-mqtt-transformer';
 import timeValuesToMqttManifest from './manifest';
+import { OIBusTimeValue } from '../../../../shared/model/engine.model';
 
-jest.mock('../../../service/utils', () => ({
-  generateRandomId: jest.fn().mockReturnValue('randomId')
-}));
-jest.mock('papaparse');
+const nodeRequire = createRequire(import.meta.url);
 
-const logger: pino.Logger = new PinoLogger();
+let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let OIBusTimeValuesToMQTTTransformer: typeof OIBusTimeValuesToMQTTTransformerType;
+
+before(() => {
+  mockUtils = { generateRandomId: mock.fn(() => 'randomId') };
+  mockModule(nodeRequire, '../../../service/utils', mockUtils);
+  const mod = reloadModule<{ default: typeof OIBusTimeValuesToMQTTTransformerType }>(
+    nodeRequire,
+    './oibus-time-values-to-mqtt-transformer'
+  );
+  OIBusTimeValuesToMQTTTransformer = mod.default;
+});
 
 describe('OIBusTimeValuesToMQTTTransformer', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  let logger: PinoLogger;
+
+  beforeEach(() => {
+    logger = new PinoLogger();
+    mockUtils.generateRandomId = mock.fn(() => 'randomId');
+    mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
   });
 
   it('should transform data from a stream and return metadata', async () => {
-    (csv.unparse as jest.Mock).mockReturnValue('csv content');
-
     const options = {
       mapping: [
         { pointId: 'reference1', topic: '/oibus/reference1' },
         { pointId: 'reference2', topic: '/oibus/reference2' }
       ]
     };
-    // Arrange
-    const transformer = new OIBusTimeValuesToMQTTTransformer(logger, testData.transformers.list[0], options);
+    const transformer = new OIBusTimeValuesToMQTTTransformer(asLogger(logger), testData.transformers.list[0], options);
     const dataChunks: Array<OIBusTimeValue> = [
-      {
-        pointId: 'reference1',
-        timestamp: testData.constants.dates.DATE_1,
-        data: {
-          value: '1'
-        }
-      },
-      {
-        pointId: 'reference2',
-        timestamp: testData.constants.dates.DATE_2,
-        data: {
-          value: '2',
-          quality: 'good'
-        }
-      },
-      {
-        pointId: 'reference3',
-        timestamp: testData.constants.dates.DATE_3,
-        data: {
-          value: 'value1'
-        }
-      }
+      { pointId: 'reference1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } },
+      { pointId: 'reference2', timestamp: testData.constants.dates.DATE_2, data: { value: '2', quality: 'good' } },
+      { pointId: 'reference3', timestamp: testData.constants.dates.DATE_3, data: { value: 'value1' } }
     ];
-
-    // Mock Readable stream
     const mockStream = new Readable();
 
-    // Act
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify(dataChunks));
-    mockStream.push(null); // End the stream
+    mockStream.push(null);
 
     await flushPromises();
     const result = await promise;
-    // Assert
-    expect(result.output).toEqual(
-      Buffer.from(
+
+    assert.deepStrictEqual(result, {
+      output: Buffer.from(
         JSON.stringify([
           { topic: '/oibus/reference1', payload: JSON.stringify({ value: '1', timestamp: testData.constants.dates.DATE_1 }) },
-          { topic: '/oibus/reference2', payload: JSON.stringify({ value: '2', quality: 'good', timestamp: testData.constants.dates.DATE_2 }) }
+          {
+            topic: '/oibus/reference2',
+            payload: JSON.stringify({ value: '2', quality: 'good', timestamp: testData.constants.dates.DATE_2 })
+          }
         ])
-      )
-    );
-    expect(result.metadata).toEqual({
-      contentFile: 'randomId.json',
-      contentSize: 0,
-      createdAt: '',
-      numberOfElement: 2,
-      contentType: 'mqtt'
+      ),
+      metadata: {
+        contentFile: 'randomId.json',
+        contentSize: 0,
+        createdAt: '',
+        numberOfElement: 2,
+        contentType: 'mqtt'
+      }
     });
   });
 
   it('should return manifest', () => {
-    expect(timeValuesToMqttManifest.settings).toEqual({
+    assert.deepStrictEqual(timeValuesToMqttManifest.settings, {
       type: 'object',
       key: 'options',
       translationKey: 'configuration.oibus.manifest.transformers.options',
@@ -101,20 +91,12 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
           translationKey: 'configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.title',
           paginate: true,
           numberOfElementPerPage: 20,
-          validators: [
-            {
-              type: 'REQUIRED',
-              arguments: []
-            }
-          ],
+          validators: [{ type: 'REQUIRED', arguments: [] }],
           rootAttribute: {
             type: 'object',
             key: 'item',
             translationKey: 'configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.title',
-            displayProperties: {
-              visible: true,
-              wrapInBox: false
-            },
+            displayProperties: { visible: true, wrapInBox: false },
             enablingConditions: [],
             validators: [],
             attributes: [
@@ -123,34 +105,16 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
                 key: 'pointId',
                 translationKey: 'configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.point-id',
                 defaultValue: null,
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 0,
-                  columns: 6,
-                  displayInViewMode: true
-                }
+                validators: [{ type: 'REQUIRED', arguments: [] }],
+                displayProperties: { row: 0, columns: 6, displayInViewMode: true }
               },
               {
                 type: 'string',
                 key: 'topic',
                 translationKey: 'configuration.oibus.manifest.transformers.time-values-to-mqtt.mapping.topic',
                 defaultValue: null,
-                validators: [
-                  {
-                    type: 'REQUIRED',
-                    arguments: []
-                  }
-                ],
-                displayProperties: {
-                  row: 0,
-                  columns: 6,
-                  displayInViewMode: true
-                }
+                validators: [{ type: 'REQUIRED', arguments: [] }],
+                displayProperties: { row: 0, columns: 6, displayInViewMode: true }
               }
             ]
           }
@@ -158,10 +122,7 @@ describe('OIBusTimeValuesToMQTTTransformer', () => {
       ],
       enablingConditions: [],
       validators: [],
-      displayProperties: {
-        visible: true,
-        wrapInBox: false
-      }
+      displayProperties: { visible: true, wrapInBox: false }
     });
   });
 });

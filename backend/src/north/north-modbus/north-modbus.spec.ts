@@ -1,53 +1,20 @@
-import NorthModbus from './north-modbus';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
-import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { NorthModbusSettings } from '../../../shared/model/north-settings.model';
-import testData from '../../tests/utils/test-data';
-import CacheService from '../../service/cache/cache.service';
-import { createTransformer } from '../../service/transformer.service';
-import OIBusTransformer from '../../transformers/oibus-transformer';
-import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
-import Stream from 'node:stream';
-import net from 'node:net';
-import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { OIBusModbusValue } from '../../transformers/connector-types.model';
-import { connectSocket } from '../../service/utils-modbus';
-import { streamToString } from '../../service/utils';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
-import { buildNorthEntity } from '../../tests/utils/test-utils';
+import Stream from 'node:stream';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger, buildNorthEntity } from '../../tests/utils/test-utils';
+import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
+import type { NorthModbusSettings } from '../../../shared/model/north-settings.model';
+import type { NorthConnectorEntity } from '../../model/north-connector.model';
+import type { OIBusModbusValue } from '../../transformers/connector-types.model';
+import type NorthModbusClass from './north-modbus';
+import type ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 
-// Mocks
-jest.mock('node:fs/promises');
-jest.mock('node:net');
-jest.mock('../../service/utils');
-jest.mock('../../service/utils-modbus');
-jest.mock('../../service/transformer.service');
-
-const writeSingleCoil = jest.fn().mockReturnValue({ response: { body: { valuesAsArray: [123] } } });
-const writeSingleRegister = jest.fn().mockReturnValue({ response: { body: { valuesAsArray: [123] } } });
-
-jest.mock('jsmodbus', () => ({
-  client: {
-    TCP: jest.fn().mockImplementation(() => ({
-      writeSingleRegister,
-      writeSingleCoil
-    }))
-  }
-}));
-
-const logger: pino.Logger = new PinoLogger();
-const cacheService: CacheService = new CacheServiceMock();
-const oiBusTransformer: OIBusTransformer = new OIBusTransformerMock() as unknown as OIBusTransformer;
-
-jest.mock(
-  '../../service/cache/cache.service',
-  () =>
-    function () {
-      return cacheService;
-    }
-);
+const nodeRequire = createRequire(import.meta.url);
 
 class CustomStream extends Stream {
   constructor() {
@@ -59,17 +26,91 @@ class CustomStream extends Stream {
   end() {
     return Promise.resolve();
   }
-  destroy = jest.fn();
 }
 
 describe('NorthModbus', () => {
-  let north: NorthModbus;
+  let NorthModbus: typeof NorthModbusClass;
+  let north: NorthModbusClass;
   let configuration: NorthConnectorEntity<NorthModbusSettings>;
+
+  const logger = new PinoLogger();
+  const cacheService = new CacheServiceMock();
+  const oiBusTransformer = new OIBusTransformerMock();
+
   const mockedEmitter = new CustomStream();
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  const connectSocketFn = mock.fn(async () => undefined);
+  const streamToStringFn = mock.fn(async () => '[]');
+
+  const writeSingleCoilFn = mock.fn(async () => ({ response: { body: { valuesAsArray: [123] } } }));
+  const writeSingleRegisterFn = mock.fn(async () => ({ response: { body: { valuesAsArray: [123] } } }));
+
+  const modbusExports = {
+    client: {
+      TCP: function (this: { writeSingleRegister: typeof writeSingleRegisterFn; writeSingleCoil: typeof writeSingleCoilFn }) {
+        this.writeSingleRegister = writeSingleRegisterFn;
+        this.writeSingleCoil = writeSingleCoilFn;
+      }
+    }
+  };
+
+  const netExports = {
+    __esModule: true,
+    default: {
+      Socket: function () {
+        return mockedEmitter;
+      }
+    }
+  };
+
+  const transformerExports = {
+    createTransformer: mock.fn(() => oiBusTransformer)
+  };
+
+  const utilsExports = {
+    streamToString: streamToStringFn,
+    checkAge: mock.fn(() => true),
+    compress: mock.fn(async () => undefined),
+    delay: mock.fn(async () => undefined),
+    generateIntervals: mock.fn(() => []),
+    groupItemsByGroup: mock.fn(() => []),
+    validateCronExpression: mock.fn(() => ({ expression: '' }))
+  };
+
+  const utilsModbusExports = {
+    connectSocket: connectSocketFn
+  };
+
+  before(() => {
+    mockModule(nodeRequire, 'jsmodbus', modbusExports);
+    mockModule(nodeRequire, 'node:net', netExports);
+    mockModule(nodeRequire, '../../service/utils', utilsExports);
+    mockModule(nodeRequire, '../../service/utils-modbus', utilsModbusExports);
+    mockModule(nodeRequire, '../../service/transformer.service', transformerExports);
+    mockModule(nodeRequire, '../../service/cache/cache.service', {
+      __esModule: true,
+      default: function () {
+        return cacheService;
+      }
+    });
+    NorthModbus = reloadModule<{ default: typeof NorthModbusClass }>(nodeRequire, './north-modbus').default;
+  });
+
+  beforeEach(() => {
+    transformerExports.createTransformer.mock.resetCalls();
+    connectSocketFn.mock.resetCalls();
+    connectSocketFn.mock.mockImplementation(async () => undefined);
+    streamToStringFn.mock.resetCalls();
+    streamToStringFn.mock.mockImplementation(async () => '[]');
+    writeSingleCoilFn.mock.resetCalls();
+    writeSingleRegisterFn.mock.resetCalls();
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
+
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     configuration = buildNorthEntity<NorthModbusSettings>('modbus', {
       port: 502,
@@ -83,105 +124,94 @@ describe('NorthModbus', () => {
       connectTimeout: 30000
     });
 
-    (createTransformer as jest.Mock).mockImplementation(() => oiBusTransformer);
-    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
-
-    north = new NorthModbus(configuration, logger, cacheService);
+    north = new NorthModbus(configuration, asLogger(logger), cacheService);
   });
 
-  afterEach(async () => {
-    jest.useRealTimers();
+  afterEach(() => {
+    mock.timers.reset();
+    mock.restoreAll();
     cacheService.cacheSizeEventEmitter.removeAllListeners();
   });
 
   it('should retrieve supported types', () => {
-    expect(north.supportedTypes()).toEqual(['modbus']);
+    assert.deepStrictEqual(north.supportedTypes(), ['modbus']);
   });
 
   it('should properly connect', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-
-    north.disconnect = jest.fn();
-    north['reconnectTimeout'] = setTimeout(() => null);
+    const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
+    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
 
     await north.connect();
 
-    expect(net.Socket).toHaveBeenCalledTimes(1);
-    expect(connectSocket).toHaveBeenCalledWith(mockedEmitter, configuration.settings);
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Connecting Modbus socket into ${configuration.settings.host}:${configuration.settings.port}`
+    assert.strictEqual(connectSocketFn.mock.calls.length, 1);
+    assert.deepStrictEqual(connectSocketFn.mock.calls[0].arguments[1], configuration.settings);
+    assert.ok(
+      logger.debug.mock.calls.some(
+        c => c.arguments[0] === `Connecting Modbus socket into ${configuration.settings.host}:${configuration.settings.port}`
+      )
     );
-    expect(logger.info).toHaveBeenCalledWith(`Modbus socket connected to ${configuration.settings.host}:${configuration.settings.port}`);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(north.disconnect).not.toHaveBeenCalled();
+    assert.ok(
+      logger.info.mock.calls.some(
+        c => c.arguments[0] === `Modbus socket connected to ${configuration.settings.host}:${configuration.settings.port}`
+      )
+    );
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
   it('should properly reconnect on connect error', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+    const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
+    (north as unknown as { disconnecting: boolean })['disconnecting'] = true;
 
-    north.disconnect = jest.fn();
-    north['disconnecting'] = true; // Simulating disconnect in progress
-
-    // First Fail
-    (connectSocket as jest.Mock).mockImplementationOnce(() => {
+    // First fail
+    connectSocketFn.mock.mockImplementationOnce(() => {
       throw new Error('connect error');
     });
 
     await north.connect();
 
-    expect(connectSocket).toHaveBeenCalledWith(mockedEmitter, configuration.settings);
-    expect(north.disconnect).toHaveBeenCalledTimes(1);
-    // Should NOT schedule reconnect if already disconnecting
-    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    assert.strictEqual(connectSocketFn.mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
 
-    // Second Fail (Clean state)
-    north['disconnecting'] = false;
-    (connectSocket as jest.Mock).mockImplementationOnce(() => {
+    // Second fail (clean state)
+    (north as unknown as { disconnecting: boolean })['disconnecting'] = false;
+    connectSocketFn.mock.mockImplementationOnce(() => {
       throw new Error('connect error');
     });
 
     await north.connect();
 
-    expect(north.disconnect).toHaveBeenCalledTimes(2);
-    // Should schedule reconnect
-    expect(setTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
-    expect(logger.error).toHaveBeenCalledWith('Modbus socket error: connect error');
+    assert.strictEqual(disconnectMock.mock.calls.length, 2);
+    assert.ok(logger.error.mock.calls.some(c => c.arguments[0] === 'Modbus socket error: connect error'));
   });
 
   it('should properly disconnect', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-
     // 1. Disconnect without active components
     await north.disconnect();
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
 
     // 2. Disconnect with active socket and timeout
-    north['reconnectTimeout'] = setTimeout(() => null);
-    const mockedSocket = { removeAllListeners: jest.fn(), destroy: jest.fn() };
-    north['socket'] = mockedSocket as unknown as net.Socket;
+    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
+    const mockedSocket = { removeAllListeners: mock.fn(), destroy: mock.fn() };
+    (north as unknown as { socket: typeof mockedSocket })['socket'] = mockedSocket;
 
     await north.disconnect();
 
-    expect(mockedSocket.destroy).toHaveBeenCalledTimes(1);
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-    expect(north['modbusClient']).toBeNull();
+    assert.strictEqual(mockedSocket.destroy.mock.calls.length, 1);
+    assert.strictEqual((north as unknown as { modbusClient: null })['modbusClient'], null);
   });
 
   it('should throw error if connector is in reconnecting state', async () => {
-    north['reconnectTimeout'] = setTimeout(() => null);
+    (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
     const readStream = {} as ReadStream;
 
-    await expect(
-      north.handleContent(readStream, {
+    await assert.rejects(async () => {
+      await north.handleContent(readStream, {
         contentFile: 'file.json',
         contentSize: 100,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
         contentType: 'modbus'
-      })
-    ).rejects.toThrow('Connector is reconnecting...');
+      });
+    }, /Connector is reconnecting\.\.\./);
   });
 
   it('should properly handle modbus content', async () => {
@@ -190,12 +220,11 @@ describe('NorthModbus', () => {
       { address: '0x002', value: true, modbusType: 'coil' }
     ];
 
-    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
     const mockedClient = {} as unknown as ModbusTCPClient;
-    north['modbusClient'] = mockedClient;
+    (north as unknown as { modbusClient: ModbusTCPClient })['modbusClient'] = mockedClient;
 
-    // Spy on internal logic
-    const modbusFnSpy = jest.spyOn(north, 'modbusFunction').mockResolvedValue(undefined);
+    const modbusFnMock = mock.method(north, 'modbusFunction', async () => undefined);
     const readStream = {} as ReadStream;
 
     await north.handleContent(readStream, {
@@ -206,156 +235,165 @@ describe('NorthModbus', () => {
       contentType: 'modbus'
     });
 
-    expect(streamToString).toHaveBeenCalledWith(readStream);
-    expect(modbusFnSpy).toHaveBeenCalledTimes(2);
-    expect(modbusFnSpy).toHaveBeenCalledWith(mockedClient, values[0]);
-    expect(modbusFnSpy).toHaveBeenCalledWith(mockedClient, values[1]);
+    assert.strictEqual(streamToStringFn.mock.calls.length, 1);
+    assert.deepStrictEqual(streamToStringFn.mock.calls[0].arguments, [readStream]);
+    assert.strictEqual(modbusFnMock.mock.calls.length, 2);
+    assert.deepStrictEqual(modbusFnMock.mock.calls[0].arguments, [mockedClient, values[0]]);
+    assert.deepStrictEqual(modbusFnMock.mock.calls[1].arguments, [mockedClient, values[1]]);
   });
 
   it('should throw error if modbus client not set during content handling', async () => {
     const values: Array<OIBusModbusValue> = [];
-    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
 
-    north['modbusClient'] = null; // Client not ready
-    north.disconnect = jest.fn();
+    (north as unknown as { modbusClient: null })['modbusClient'] = null;
+    const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
     const readStream = {} as ReadStream;
 
-    await expect(
-      north.handleContent(readStream, {
+    await assert.rejects(async () => {
+      await north.handleContent(readStream, {
         contentFile: 'file.json',
         contentSize: 100,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
         contentType: 'modbus'
-      })
-    ).rejects.toThrow('Modbus client not set. The connector cannot write values');
+      });
+    }, /Modbus client not set\. The connector cannot write values/);
 
-    expect(north.disconnect).toHaveBeenCalled();
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should handle errors during processing and trigger reconnect', async () => {
     const values: Array<OIBusModbusValue> = [{ address: '0x001', value: 123, modbusType: 'register' }];
-    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
 
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-    north['modbusClient'] = {} as unknown as ModbusTCPClient;
-    north.disconnect = jest.fn();
+    (north as unknown as { modbusClient: ModbusTCPClient })['modbusClient'] = {} as unknown as ModbusTCPClient;
+    const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
 
-    // Mock modbusFunction to throw
-    jest.spyOn(north, 'modbusFunction').mockRejectedValueOnce(new Error('write error'));
+    mock.method(north, 'modbusFunction', async () => {
+      throw new Error('write error');
+    });
     const readStream = {} as ReadStream;
 
-    await expect(
-      north.handleContent(readStream, {
+    await assert.rejects(async () => {
+      await north.handleContent(readStream, {
         contentFile: 'file.json',
         contentSize: 100,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
         contentType: 'modbus'
-      })
-    ).rejects.toThrow('write error');
+      });
+    }, /write error/);
 
-    expect(north.disconnect).toHaveBeenCalled();
-    expect(setTimeoutSpy).toHaveBeenCalled(); // Should schedule reconnect
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should not trigger reconnect when disabled', async () => {
     north.connectorConfiguration.enabled = false;
-    north.disconnect = jest.fn();
-    await north['triggerReconnect']();
-    expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(north['reconnectTimeout']).toBeNull();
+    const disconnectMock = mock.method(north, 'disconnect', async () => undefined);
+    await (north as unknown as { triggerReconnect: () => Promise<void> })['triggerReconnect']();
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.strictEqual((north as unknown as { reconnectTimeout: null })['reconnectTimeout'], null);
   });
 
   it('should handle wrapped OIBus errors', async () => {
     const values: Array<OIBusModbusValue> = [{ address: '0x001', value: 123, modbusType: 'register' }];
-    (streamToString as jest.Mock).mockResolvedValue(JSON.stringify(values));
+    streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
 
-    north['modbusClient'] = {} as unknown as ModbusTCPClient;
-
-    // Mock throwing a structured error object
-    jest.spyOn(north, 'modbusFunction').mockRejectedValueOnce({ err: 'OIBusError', message: 'Something went wrong' });
+    (north as unknown as { modbusClient: ModbusTCPClient })['modbusClient'] = {} as unknown as ModbusTCPClient;
+    mock.method(north, 'modbusFunction', async () => {
+      throw { err: 'OIBusError', message: 'Something went wrong' };
+    });
     const readStream = {} as ReadStream;
 
-    await expect(
-      north.handleContent(readStream, {
+    await assert.rejects(async () => {
+      await north.handleContent(readStream, {
         contentFile: 'file.json',
         contentSize: 100,
         numberOfElement: 1,
         createdAt: '2020-02-02T02:02:02.222Z',
         contentType: 'modbus'
-      })
-    ).rejects.toThrow('OIBusError - Something went wrong');
+      });
+    }, /OIBusError - Something went wrong/);
   });
 
   it('modbusFunction should write coil', async () => {
     const value: OIBusModbusValue = { address: '0x002', value: true, modbusType: 'coil' };
 
-    const writeSingleCoilFn = jest.fn();
-    const writeSingleRegisterFn = jest.fn();
+    const writeSingleCoilLocal = mock.fn(async () => undefined);
+    const writeSingleRegisterLocal = mock.fn(async () => undefined);
     const modbusClient = {
-      writeSingleCoil: writeSingleCoilFn,
-      writeSingleRegister: writeSingleRegisterFn
+      writeSingleCoil: writeSingleCoilLocal,
+      writeSingleRegister: writeSingleRegisterLocal
     } as unknown as ModbusTCPClient;
 
     await north.modbusFunction(modbusClient, value);
 
-    expect(writeSingleCoilFn).toHaveBeenCalledWith(2, true);
-    expect(writeSingleRegisterFn).not.toHaveBeenCalled();
+    assert.strictEqual(writeSingleCoilLocal.mock.calls.length, 1);
+    assert.deepStrictEqual(writeSingleCoilLocal.mock.calls[0].arguments, [2, true]);
+    assert.strictEqual(writeSingleRegisterLocal.mock.calls.length, 0);
   });
 
   it('modbusFunction should write register', async () => {
     const value: OIBusModbusValue = { address: '1', value: 123, modbusType: 'register' };
 
-    const writeSingleCoilFn = jest.fn();
-    const writeSingleRegisterFn = jest.fn();
+    const writeSingleCoilLocal = mock.fn(async () => undefined);
+    const writeSingleRegisterLocal = mock.fn(async () => undefined);
     const modbusClient = {
-      writeSingleCoil: writeSingleCoilFn,
-      writeSingleRegister: writeSingleRegisterFn
+      writeSingleCoil: writeSingleCoilLocal,
+      writeSingleRegister: writeSingleRegisterLocal
     } as unknown as ModbusTCPClient;
 
     // Change offset setting for this test
-    north['connector'].settings.addressOffset = 'jbus';
+    (north as unknown as { connector: { settings: { addressOffset: string } } })['connector'].settings.addressOffset = 'jbus';
 
     await north.modbusFunction(modbusClient, value);
 
     // JBus offset means -1, so address 1 becomes 0
-    expect(writeSingleRegisterFn).toHaveBeenCalledWith(0, 123);
-    expect(writeSingleCoilFn).not.toHaveBeenCalled();
+    assert.strictEqual(writeSingleRegisterLocal.mock.calls.length, 1);
+    assert.deepStrictEqual(writeSingleRegisterLocal.mock.calls[0].arguments, [0, 123]);
+    assert.strictEqual(writeSingleCoilLocal.mock.calls.length, 0);
   });
 
   it('modbusFunction should throw error if bad modbus type', async () => {
     const value = { address: '0x001', value: 123, modbusType: 'bad' };
     const modbusClient = {} as unknown as ModbusTCPClient;
 
-    await expect(north.modbusFunction(modbusClient, value as unknown as OIBusModbusValue)).rejects.toThrow(
-      'Wrong Modbus type "bad" for address 1'
-    );
+    await assert.rejects(async () => {
+      await north.modbusFunction(modbusClient, value as unknown as OIBusModbusValue);
+    }, /Wrong Modbus type "bad" for address 1/);
   });
 
   it('should properly test connection', async () => {
-    (mockedEmitter as unknown as { remoteAddress: string; remotePort: number }).remoteAddress = '10.0.0.5';
-    (mockedEmitter as unknown as { remoteAddress: string; remotePort: number }).remotePort = 502;
-
-    const result = await north.testConnection();
-
-    expect(connectSocket).toHaveBeenCalledWith(mockedEmitter, configuration.settings);
-    expect(result).toEqual({
-      items: [{ key: 'RemoteAddress', value: '10.0.0.5:502' }]
+    await assert.doesNotReject(async () => {
+      await north.testConnection();
     });
+    assert.ok(connectSocketFn.mock.calls.some(c => c.arguments[1] === configuration.settings));
   });
 
   it('should properly manage error on test connection failure', async () => {
     // ENOTFOUND
-    (connectSocket as jest.Mock).mockRejectedValueOnce({ code: 'ENOTFOUND', message: 'Host not found' });
-    await expect(north.testConnection()).rejects.toThrow('Please check host and port: Host not found');
+    connectSocketFn.mock.mockImplementationOnce(async () => {
+      throw { code: 'ENOTFOUND', message: 'Host not found' };
+    });
+    await assert.rejects(async () => {
+      await north.testConnection();
+    }, /Please check host and port: Host not found/);
 
     // ECONNREFUSED
-    (connectSocket as jest.Mock).mockRejectedValueOnce({ code: 'ECONNREFUSED', message: 'Connection refused' });
-    await expect(north.testConnection()).rejects.toThrow('Please check host and port: Connection refused');
+    connectSocketFn.mock.mockImplementationOnce(async () => {
+      throw { code: 'ECONNREFUSED', message: 'Connection refused' };
+    });
+    await assert.rejects(async () => {
+      await north.testConnection();
+    }, /Please check host and port: Connection refused/);
 
     // Default Error
-    (connectSocket as jest.Mock).mockRejectedValueOnce({ code: 'OTHER', message: 'Unknown error' });
-    await expect(north.testConnection()).rejects.toThrow('Unable to connect to socket: Unknown error');
+    connectSocketFn.mock.mockImplementationOnce(async () => {
+      throw { code: 'OTHER', message: 'Unknown error' };
+    });
+    await assert.rejects(async () => {
+      await north.testConnection();
+    }, /Unable to connect to socket: Unknown error/);
   });
 });

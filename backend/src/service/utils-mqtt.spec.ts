@@ -1,19 +1,13 @@
-import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
+import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { encryptionService } from './encryption.service';
 import * as utils from './utils-mqtt';
 import fs from 'node:fs/promises';
-import pino from 'pino';
-import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import path from 'node:path';
 import { SouthMQTTItemSettings } from '../../shared/model/south-settings.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
-
-jest.mock('node:fs/promises');
-jest.mock('./utils');
-jest.mock('./encryption.service', () => ({
-  encryptionService: new EncryptionServiceMock('', '')
-}));
-const logger: pino.Logger = new PinoLogger();
+import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import pino from 'pino';
 
 const scanMode = {
   id: 'subscription',
@@ -105,7 +99,6 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     readDelay: null,
     overlap: null
   },
-  // Additional test items for edge cases
   {
     id: 'id7',
     name: 'item7',
@@ -159,12 +152,21 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
     overlap: null
   }
 ];
-describe('Service utils MQTT', () => {
-  describe('createConnectionOptions', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
 
+describe('Service utils MQTT', () => {
+  let logger: pino.Logger;
+
+  beforeEach(() => {
+    logger = new PinoLogger() as unknown as pino.Logger;
+    mock.method(encryptionService, 'decryptText', async (text: unknown) => text);
+    mock.method(fs, 'readFile', async () => '');
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  describe('createConnectionOptions', () => {
     it('should create connection options without auth', async () => {
       const result = await utils.createConnectionOptions(
         'connectorId',
@@ -183,23 +185,27 @@ describe('Service utils MQTT', () => {
         },
         logger
       );
-      expect(result).toEqual({
-        reconnectPeriod: 0, // managed by OIBus
-        connectTimeout: 10_000,
-        rejectUnauthorized: false,
-        queueQoSZero: false,
-        clean: true,
-        log: expect.any(Function),
-        resubscribe: false,
-        clientId: 'connectorId'
-      });
+      assert.deepStrictEqual(
+        { ...result, log: undefined },
+        {
+          reconnectPeriod: 0,
+          connectTimeout: 10_000,
+          rejectUnauthorized: false,
+          queueQoSZero: false,
+          clean: true,
+          log: undefined,
+          resubscribe: false,
+          clientId: 'connectorId'
+        }
+      );
+      assert.strictEqual(typeof result.log, 'function');
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
 
-      expect(encryptionService.decryptText).not.toHaveBeenCalled();
       result.log!('test');
-      expect(logger.trace).toHaveBeenCalledWith('test');
+      assert.deepStrictEqual((logger.trace as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['test']);
 
       result.log!({ object: 'test' });
-      expect(logger.trace).toHaveBeenCalledWith(JSON.stringify({ object: 'test' }));
+      assert.deepStrictEqual((logger.trace as ReturnType<typeof mock.fn>).mock.calls[1].arguments, [JSON.stringify({ object: 'test' })]);
     });
 
     it('should create connection options with password', async () => {
@@ -222,24 +228,32 @@ describe('Service utils MQTT', () => {
         },
         logger
       );
-      expect(result).toEqual({
-        reconnectPeriod: 0, // managed by OIBus
-        connectTimeout: 10_000,
-        rejectUnauthorized: false,
-        queueQoSZero: false,
-        log: expect.any(Function),
-        resubscribe: true,
-        clean: false,
-        clientId: 'connectorId',
-        username: 'username',
-        password: 'password'
-      });
-
-      expect(encryptionService.decryptText).toHaveBeenCalledWith('password');
+      assert.deepStrictEqual(
+        { ...result, log: undefined },
+        {
+          reconnectPeriod: 0,
+          connectTimeout: 10_000,
+          rejectUnauthorized: false,
+          queueQoSZero: false,
+          log: undefined,
+          resubscribe: true,
+          clean: false,
+          clientId: 'connectorId',
+          username: 'username',
+          password: 'password'
+        }
+      );
+      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['password']);
     });
 
     it('should create connection options with cert', async () => {
-      (fs.readFile as jest.Mock).mockReturnValueOnce('cert').mockReturnValueOnce('key').mockReturnValueOnce('ca');
+      (fs.readFile as ReturnType<typeof mock.fn>).mock.mockImplementation(async (filePath: unknown) => {
+        const p = String(filePath);
+        if (p.endsWith('cert')) return 'cert';
+        if (p.endsWith('key')) return 'key';
+        if (p.endsWith('ca')) return 'ca';
+        return '';
+      });
       const result = await utils.createConnectionOptions(
         'connectorId',
         {
@@ -260,25 +274,27 @@ describe('Service utils MQTT', () => {
         },
         logger
       );
-      expect(result).toEqual({
-        reconnectPeriod: 0, // managed by OIBus
-        connectTimeout: 10_000,
-        rejectUnauthorized: false,
-        queueQoSZero: false,
-        log: expect.any(Function),
-        resubscribe: false,
-        clean: true,
-        clientId: 'connectorId',
-        cert: 'cert',
-        key: 'key',
-        ca: 'ca'
-      });
-
-      expect(encryptionService.decryptText).not.toHaveBeenCalled();
-      expect(fs.readFile).toHaveBeenCalledTimes(3);
-      expect(fs.readFile).toHaveBeenCalledWith(path.resolve('cert'));
-      expect(fs.readFile).toHaveBeenCalledWith(path.resolve('key'));
-      expect(fs.readFile).toHaveBeenCalledWith(path.resolve('ca'));
+      assert.deepStrictEqual(
+        { ...result, log: undefined },
+        {
+          reconnectPeriod: 0,
+          connectTimeout: 10_000,
+          rejectUnauthorized: false,
+          queueQoSZero: false,
+          log: undefined,
+          resubscribe: false,
+          clean: true,
+          clientId: 'connectorId',
+          cert: 'cert',
+          key: 'key',
+          ca: 'ca'
+        }
+      );
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 3);
+      assert.deepStrictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], path.resolve('cert'));
+      assert.deepStrictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments[0], path.resolve('key'));
+      assert.deepStrictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls[2].arguments[0], path.resolve('ca'));
     });
 
     it('should create connection options without cert', async () => {
@@ -302,118 +318,102 @@ describe('Service utils MQTT', () => {
         },
         logger
       );
-      expect(result).toEqual({
-        reconnectPeriod: 0, // managed by OIBus
-        connectTimeout: 10_000,
-        rejectUnauthorized: false,
-        queueQoSZero: false,
-        log: expect.any(Function),
-        resubscribe: false,
-        clean: true,
-        clientId: 'connectorId',
-        cert: '',
-        key: '',
-        ca: ''
-      });
-
-      expect(encryptionService.decryptText).not.toHaveBeenCalled();
-      expect(fs.readFile).not.toHaveBeenCalled();
+      assert.deepStrictEqual(
+        { ...result, log: undefined },
+        {
+          reconnectPeriod: 0,
+          connectTimeout: 10_000,
+          rejectUnauthorized: false,
+          queueQoSZero: false,
+          log: undefined,
+          resubscribe: false,
+          clean: true,
+          clientId: 'connectorId',
+          cert: '',
+          key: '',
+          ca: ''
+        }
+      );
+      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 0);
     });
   });
 
   describe('getItem', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should return the correct item for an exact topic match (id1)', () => {
-      const result = utils.getItem('my/first/topic', items);
-      expect(result).toEqual(items[0]);
+      assert.deepStrictEqual(utils.getItem('my/first/topic', items), items[0]);
     });
 
     it('should return the correct item for a complex wildcard topic match (id2)', () => {
-      const result = utils.getItem('my/level1/level2/topic/with/wildcard/extra/levels', items);
-      expect(result).toEqual(items[1]);
+      assert.deepStrictEqual(utils.getItem('my/level1/level2/topic/with/wildcard/extra/levels', items), items[1]);
     });
 
     it('should handle topics with consecutive slashes (id3)', () => {
-      const result = utils.getItem('my/wrong/topic////', items);
-      expect(result).toEqual(items[2]);
+      assert.deepStrictEqual(utils.getItem('my/wrong/topic////', items), items[2]);
     });
 
     it('should return the correct item for json/topic (id4, id5, or id6)', () => {
-      // Note: id4, id5, and id6 all have the same topic, which would cause an error
-      // This test would fail, demonstrating the duplicate topic issue
-      expect(() => utils.getItem('json/topic', items)).toThrow(/Topic "json\/topic" should be subscribed only once/);
+      assert.throws(() => utils.getItem('json/topic', items), /Topic "json\/topic" should be subscribed only once/);
     });
 
     it('should throw an error when no item matches the topic', () => {
-      expect(() => utils.getItem('non/existent/topic', items)).toThrow("Item can't be determined from topic non/existent/topic");
+      assert.throws(() => utils.getItem('non/existent/topic', items), {
+        message: "Item can't be determined from topic non/existent/topic"
+      });
     });
 
     it('should throw an error when multiple items match the topic (id8 and id9)', () => {
-      expect(() => utils.getItem('my/second/topic', items)).toThrow(/Topic "my\/second\/topic" should be subscribed only once/);
+      assert.throws(() => utils.getItem('my/second/topic', items), /Topic "my\/second\/topic" should be subscribed only once/);
     });
 
     it('should throw an error when trying to match a disabled item (id7)', () => {
-      expect(() => utils.getItem('disabled/topic', items)).toThrow("Item can't be determined from topic disabled/topic");
+      assert.throws(() => utils.getItem('disabled/topic', items), { message: "Item can't be determined from topic disabled/topic" });
     });
 
     it('should return the correct item for a simple wildcard match (id10)', () => {
-      const result = utils.getItem('simple/match', items);
-      expect(result).toEqual(items[9]);
+      assert.deepStrictEqual(utils.getItem('simple/match', items), items[9]);
     });
 
     it('should match when wildcard count matches path chunks (id2)', () => {
-      // Topic has 3 wildcards (+/+/#) which should match 3+ path chunks
-      const result = utils.getItem('my/level1/level2/topic/with/wildcard/extra', items);
-      expect(result).toEqual(items[1]);
+      assert.deepStrictEqual(utils.getItem('my/level1/level2/topic/with/wildcard/extra', items), items[1]);
     });
 
     it('should not match when wildcard count does not match path chunks (id2)', () => {
-      // This should fail because the topic has 3 wildcards but we're only providing 2 path chunks
-      expect(() => utils.getItem('my/level1/topic/with/wildcard', items)).toThrow(
-        "Item can't be determined from topic my/level1/topic/with/wildcard"
-      );
+      assert.throws(() => utils.getItem('my/level1/topic/with/wildcard', items), {
+        message: "Item can't be determined from topic my/level1/topic/with/wildcard"
+      });
     });
 
     it('should handle empty items array', () => {
-      expect(() => utils.getItem('any/topic', [])).toThrow("Item can't be determined from topic any/topic");
+      assert.throws(() => utils.getItem('any/topic', []), { message: "Item can't be determined from topic any/topic" });
     });
 
     describe('Testing with a filtered items list to avoid duplicates', () => {
-      const filteredItems = [items[0], items[1], items[2], items[6], items[9]]; // Exclude duplicate topics
+      const filteredItems = [items[0], items[1], items[2], items[6], items[9]];
 
       it('should return the correct item for an exact topic match', () => {
-        const result = utils.getItem('my/first/topic', filteredItems);
-        expect(result).toEqual(items[0]);
+        assert.deepStrictEqual(utils.getItem('my/first/topic', filteredItems), items[0]);
       });
 
       it('should return the correct item for a complex wildcard topic match', () => {
-        const result = utils.getItem('my/level1/level2/topic/with/wildcard/extra/levels', filteredItems);
-        expect(result).toEqual(items[1]);
+        assert.deepStrictEqual(utils.getItem('my/level1/level2/topic/with/wildcard/extra/levels', filteredItems), items[1]);
       });
 
       it('should return the correct item for a simple wildcard match', () => {
-        const result = utils.getItem('simple/match', filteredItems);
-        expect(result).toEqual(items[9]);
+        assert.deepStrictEqual(utils.getItem('simple/match', filteredItems), items[9]);
       });
     });
   });
 
   describe('wildcardTopic', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should check wildcard', () => {
-      expect(utils.wildcardTopic('/my/topic', '/my/topic')).toEqual([]);
-      expect(utils.wildcardTopic('/my/topic', '#')).toEqual(['/my/topic']);
-      expect(utils.wildcardTopic('/my/test/topic', '/my/+/topic')).toEqual(['test']);
-      expect(utils.wildcardTopic('/my/topic/test', '/my/topic/#')).toEqual(['test']);
-      expect(utils.wildcardTopic('/my/topic/test/leaf', '/my/topic/#')).toEqual(['test/leaf']);
-      expect(utils.wildcardTopic('/my/topic/test', '/my/topic/wrong/with/more/fields')).toEqual(null);
-      expect(utils.wildcardTopic('/my/topic/test', '/my/topic/test/with/more/fields')).toEqual(null);
+      assert.deepStrictEqual(utils.wildcardTopic('/my/topic', '/my/topic'), []);
+      assert.deepStrictEqual(utils.wildcardTopic('/my/topic', '#'), ['/my/topic']);
+      assert.deepStrictEqual(utils.wildcardTopic('/my/test/topic', '/my/+/topic'), ['test']);
+      assert.deepStrictEqual(utils.wildcardTopic('/my/topic/test', '/my/topic/#'), ['test']);
+      assert.deepStrictEqual(utils.wildcardTopic('/my/topic/test/leaf', '/my/topic/#'), ['test/leaf']);
+      assert.strictEqual(utils.wildcardTopic('/my/topic/test', '/my/topic/wrong/with/more/fields'), null);
+      assert.strictEqual(utils.wildcardTopic('/my/topic/test', '/my/topic/test/with/more/fields'), null);
     });
   });
 });

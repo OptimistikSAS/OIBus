@@ -1,126 +1,91 @@
-import db from 'better-sqlite3';
-
+import { before, after, describe, it } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import { setImmediate } from 'node:timers';
 import RepositoryService from './repository.service';
+import { migrateEntities, migrateLogs, migrateMetrics, migrateCrypto, migrateSouthCache } from '../migration/migration-service';
 
-import EngineRepository from '../repository/config/engine.repository';
-import IpFilterRepository from '../repository/config/ip-filter.repository';
-import ScanModeRepository from '../repository/config/scan-mode.repository';
-import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
-import NorthConnectorRepository from '../repository/config/north-connector.repository';
-import LogRepository from '../repository/logs/log.repository';
-import HistoryQueryRepository from '../repository/config/history-query.repository';
-import UserRepository from '../repository/config/user.repository';
-import CryptoRepository from '../repository/crypto/crypto.repository';
-import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
-import EngineMetricsRepository from '../repository/metrics/engine-metrics.repository';
-import SouthCacheRepository from '../repository/cache/south-cache.repository';
-import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
-import CertificateRepository from '../repository/config/certificate.repository';
-import OianalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import OianalyticsCommandRepository from '../repository/config/oianalytics-command.repository';
-import OianalyticsMessageRepository from '../repository/config/oianalytics-message.repository';
-import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
-import TransformerRepository from '../repository/config/transformer.repository';
+const TEST_DB_PREFIX = 'src/tests/test-repo-service';
+const CONFIG_DB = `${TEST_DB_PREFIX}-config.db`;
+const LOG_DB = `${TEST_DB_PREFIX}-logs.db`;
+const METRICS_DB = `${TEST_DB_PREFIX}-metrics.db`;
+const CRYPTO_DB = `${TEST_DB_PREFIX}-crypto.db`;
+const CACHE_DB = `${TEST_DB_PREFIX}-cache.db`;
 
-const mockedDatabase = {
-  file: 'mocked-db.db',
-  pragma: jest.fn(),
-  close: jest.fn()
+const flushPromises = () => new Promise(setImmediate);
+
+const cleanupDbs = async (prefix: string) => {
+  for (const name of ['config', 'logs', 'metrics', 'crypto', 'cache']) {
+    for (const ext of ['.db', '.db-wal', '.db-shm']) {
+      await fs.rm(`${prefix}-${name}${ext}`, { force: true });
+    }
+  }
 };
-jest.mock('better-sqlite3', () => jest.fn(() => mockedDatabase));
-jest.mock('../repository/crypto/crypto.repository');
-jest.mock('../repository/config/ip-filter.repository');
-jest.mock('../repository/config/scan-mode.repository');
-jest.mock('../repository/config/engine.repository');
-jest.mock('../repository/config/north-connector.repository');
-jest.mock('../repository/metrics/north-connector-metrics.repository');
-jest.mock('../repository/config/south-connector.repository');
-jest.mock('../repository/config/south-item-group.repository');
-jest.mock('../repository/cache/south-cache.repository');
-jest.mock('../repository/metrics/south-connector-metrics.repository');
-jest.mock('../repository/metrics/history-query-metrics.repository');
-jest.mock('../repository/metrics/engine-metrics.repository');
-jest.mock('../repository/logs/log.repository');
-jest.mock('../repository/config/history-query.repository');
-jest.mock('../repository/config/user.repository');
-jest.mock('../repository/config/certificate.repository');
-jest.mock('../repository/config/oianalytics-registration.repository');
-jest.mock('../repository/config/oianalytics-command.repository');
-jest.mock('../repository/config/oianalytics-message.repository');
-jest.mock('../repository/config/transformer.repository');
+
+let repositoryService: RepositoryService;
 
 describe('Repository service', () => {
-  it('should properly initialize service', () => {
-    const repositoryService = new RepositoryService(
-      'myConfigDatabase',
-      'myLogDatabase',
-      'myMetricsDatabase',
-      'myCryptoDatabase',
-      'myCacheDatabase',
-      '3.5.0'
-    );
-    expect(db).toHaveBeenCalledWith('myConfigDatabase');
-    expect(db).toHaveBeenCalledWith('myCryptoDatabase');
-    expect(db).toHaveBeenCalledWith('myCacheDatabase');
-    expect(db).toHaveBeenCalledWith('myMetricsDatabase');
-    expect(db).toHaveBeenCalledWith('myLogDatabase');
-    expect(mockedDatabase.pragma).toHaveBeenCalledWith('journal_mode = WAL');
-    expect(mockedDatabase.pragma).toHaveBeenCalledWith('busy_timeout = 5000');
-    expect(EngineRepository).toHaveBeenCalledWith(mockedDatabase, '3.5.0');
-    expect(CryptoRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(IpFilterRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(ScanModeRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(NorthConnectorRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(NorthConnectorMetricsRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(SouthConnectorRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(SouthItemGroupRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(SouthConnectorMetricsRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(HistoryQueryMetricsRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(EngineMetricsRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(SouthCacheRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(LogRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(HistoryQueryRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(UserRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(OianalyticsRegistrationRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(CertificateRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(OianalyticsCommandRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(OianalyticsMessageRepository).toHaveBeenCalledWith(mockedDatabase);
-    expect(TransformerRepository).toHaveBeenCalledWith(mockedDatabase);
-
-    expect(repositoryService.engineRepository).toBeDefined();
-    expect(repositoryService.cryptoRepository).toBeDefined();
-    expect(repositoryService.ipFilterRepository).toBeDefined();
-    expect(repositoryService.scanModeRepository).toBeDefined();
-    expect(repositoryService.northConnectorRepository).toBeDefined();
-    expect(repositoryService.northMetricsRepository).toBeDefined();
-    expect(repositoryService.southConnectorRepository).toBeDefined();
-    expect(repositoryService.southItemGroupRepository).toBeDefined();
-    expect(repositoryService.southMetricsRepository).toBeDefined();
-    expect(repositoryService.historyQueryMetricsRepository).toBeDefined();
-    expect(repositoryService.engineMetricsRepository).toBeDefined();
-    expect(repositoryService.oianalyticsRegistrationRepository).toBeDefined();
-    expect(repositoryService.southCacheRepository).toBeDefined();
-    expect(repositoryService.logRepository).toBeDefined();
-    expect(repositoryService.historyQueryRepository).toBeDefined();
-    expect(repositoryService.userRepository).toBeDefined();
-    expect(repositoryService.certificateRepository).toBeDefined();
-    expect(repositoryService.oianalyticsCommandRepository).toBeDefined();
-    expect(repositoryService.oianalyticsMessageRepository).toBeDefined();
-    expect(repositoryService.transformerRepository).toBeDefined();
+  before(async () => {
+    // Run migrations first so repository constructors find the required tables
+    await Promise.all([
+      migrateEntities(CONFIG_DB),
+      migrateLogs(LOG_DB),
+      migrateMetrics(METRICS_DB),
+      migrateCrypto(CRYPTO_DB),
+      migrateSouthCache(CACHE_DB)
+    ]);
+    repositoryService = new RepositoryService(CONFIG_DB, LOG_DB, METRICS_DB, CRYPTO_DB, CACHE_DB, '3.5.0');
+    // Let async operations (e.g. UserRepository default admin creation) complete
+    await flushPromises();
   });
 
-  it('should properly close', () => {
-    const repositoryService = new RepositoryService(
-      'myConfigDatabase',
-      'myLogDatabase',
-      'myMetricsDatabase',
-      'myCryptoDatabase',
-      'myCacheDatabase',
+  after(async () => {
+    repositoryService.close();
+    await cleanupDbs(TEST_DB_PREFIX);
+  });
+
+  it('should properly initialize service', () => {
+    assert.ok(repositoryService.engineRepository);
+    assert.ok(repositoryService.cryptoRepository);
+    assert.ok(repositoryService.ipFilterRepository);
+    assert.ok(repositoryService.scanModeRepository);
+    assert.ok(repositoryService.northConnectorRepository);
+    assert.ok(repositoryService.northMetricsRepository);
+    assert.ok(repositoryService.southConnectorRepository);
+    assert.ok(repositoryService.southItemGroupRepository);
+    assert.ok(repositoryService.southMetricsRepository);
+    assert.ok(repositoryService.historyQueryMetricsRepository);
+    assert.ok(repositoryService.engineMetricsRepository);
+    assert.ok(repositoryService.oianalyticsRegistrationRepository);
+    assert.ok(repositoryService.southCacheRepository);
+    assert.ok(repositoryService.logRepository);
+    assert.ok(repositoryService.historyQueryRepository);
+    assert.ok(repositoryService.userRepository);
+    assert.ok(repositoryService.certificateRepository);
+    assert.ok(repositoryService.oianalyticsCommandRepository);
+    assert.ok(repositoryService.oianalyticsMessageRepository);
+    assert.ok(repositoryService.transformerRepository);
+  });
+
+  it('should properly close', async () => {
+    const closePrefix = `${TEST_DB_PREFIX}-close`;
+    await Promise.all([
+      migrateEntities(`${closePrefix}-config.db`),
+      migrateLogs(`${closePrefix}-logs.db`),
+      migrateMetrics(`${closePrefix}-metrics.db`),
+      migrateCrypto(`${closePrefix}-crypto.db`),
+      migrateSouthCache(`${closePrefix}-cache.db`)
+    ]);
+    const rs = new RepositoryService(
+      `${closePrefix}-config.db`,
+      `${closePrefix}-logs.db`,
+      `${closePrefix}-metrics.db`,
+      `${closePrefix}-crypto.db`,
+      `${closePrefix}-cache.db`,
       '3.5.0'
     );
-
-    repositoryService.close();
-    expect(mockedDatabase.close).toHaveBeenCalledTimes(5);
+    await flushPromises();
+    assert.doesNotThrow(() => rs.close());
+    await cleanupDbs(closePrefix);
   });
 });

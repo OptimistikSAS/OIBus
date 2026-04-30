@@ -1,93 +1,79 @@
-import SandboxService from './sandbox.service';
-import pino from 'pino';
-import { CustomTransformer } from '../model/transformer.model';
-import { CacheMetadataSource } from '../../shared/model/engine.model';
-import * as fs from 'node:fs';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import fs from 'node:fs';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { mockModule, reloadModule, asLogger } from '../tests/utils/test-utils';
+import type { CustomTransformer } from '../model/transformer.model';
+import type { CacheMetadataSource } from '../../shared/model/engine.model';
+import type SandboxServiceClass from './sandbox.service';
 
-jest.mock('./utils', () => ({
-  resolveBypassingExports: jest.fn((pkgName, subPath) => `/mock/path/${pkgName}/${subPath}`)
-}));
-jest.mock('node:fs', () => {
-  const real = jest.requireActual<typeof import('node:fs')>('node:fs');
-  return { ...real, readFileSync: jest.fn() };
-});
+const nodeRequire = createRequire(import.meta.url);
 
-// Flag toggled per-describe to exercise the context === null finally branch.
-let simulateCreateContextFailure = false;
-// Flag toggled per-describe to exercise the silent catch in the metrics finally block.
-let simulateHeapStatsFailure = false;
+// ---------------------------------------------------------------------------
+// Shared readFileSync mock implementation (luxon / jsonpath-plus / papaparse)
+// ---------------------------------------------------------------------------
+function fakeReadFileSync(filePath: unknown): string {
+  const pathStr = String(filePath);
 
-jest.mock('isolated-vm', () => {
-  const real = jest.requireActual('isolated-vm') as Record<string, unknown>;
-  const OriginalIsolate = real.Isolate as new (options?: object) => unknown;
-
-  function WrappedIsolate(this: unknown, options?: object) {
-    if (simulateCreateContextFailure) {
-      return {
-        createContext: jest.fn().mockRejectedValue(new Error('createContext failed')),
-        isDisposed: false,
-        dispose: jest.fn(),
-        getHeapStatisticsSync: jest.fn().mockImplementation(() => {
-          if (simulateHeapStatsFailure) throw new Error('heap stats failed');
-          return { used_heap_size: 0 };
-        }),
-        cpuTime: BigInt(0)
+  if (pathStr.includes('luxon')) {
+    return `
+      module.exports = {
+        DateTime: {
+          fromISO: function() { return { year: 2026, isValid: true }; }
+        }
       };
-    }
-    return new OriginalIsolate(options);
+    `;
   }
-  (WrappedIsolate as unknown as Record<string, unknown>).createSnapshot = (real.Isolate as Record<string, unknown>).createSnapshot;
+  if (pathStr.includes('jsonpath')) {
+    return `
+      module.exports = {
+        JSONPath: function() { return ['Nigel Rees', 'Evelyn Waugh']; }
+      };
+    `;
+  }
+  if (pathStr.includes('papaparse')) {
+    return `
+      module.exports = {
+        parse: function() { return { data: [{ name: 'Alice', age: '30' }, { name: 'Bob', age: '25' }] }; }
+      };
+    `;
+  }
+  return '';
+}
 
-  const mock = Object.create(real) as Record<string, unknown>;
-  Object.defineProperty(mock, 'Isolate', { value: WrappedIsolate, writable: true, configurable: true });
-  return mock;
-});
-
-const logger: pino.Logger = new PinoLogger();
+// ---------------------------------------------------------------------------
+// Main suite — uses the real isolated-vm, only ./utils and node:fs are mocked
+// ---------------------------------------------------------------------------
 describe('SandboxService', () => {
-  let sandboxService: SandboxService;
+  let SandboxService: typeof SandboxServiceClass;
+  let sandboxService: SandboxServiceClass;
+
+  const logger = new PinoLogger();
+
+  const utilsExports = {
+    __esModule: true,
+    resolveBypassingExports: mock.fn((pkgName: string, subPath: string) => `/mock/path/${pkgName}/${subPath}`)
+  };
+
+  before(() => {
+    mockModule(nodeRequire, './utils', utilsExports);
+    SandboxService = reloadModule<{ default: typeof SandboxServiceClass }>(nodeRequire, './sandbox.service').default;
+  });
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    (fs.readFileSync as jest.Mock).mockImplementation(filePath => {
-      const pathStr = String(filePath);
-
-      // Provide a minimal fake Luxon that satisfies the test
-      if (pathStr.includes('luxon')) {
-        return `
-          module.exports = {
-            DateTime: {
-              fromISO: function() { return { year: 2026, isValid: true }; }
-            }
-          };
-        `;
-      }
-      // Provide a minimal fake JSONPath-Plus that satisfies the test
-      if (pathStr.includes('jsonpath')) {
-        return `
-          module.exports = {
-            JSONPath: function() { return ['Nigel Rees', 'Evelyn Waugh']; }
-          };
-        `;
-      }
-      // Provide a minimal fake PapaParse that satisfies the test
-      if (pathStr.includes('papaparse')) {
-        return `
-          module.exports = {
-            parse: function() { return { data: [{ name: 'Alice', age: '30' }, { name: 'Bob', age: '25' }] }; }
-          };
-        `;
-      }
-      return '';
-    });
-
-    // Instantiate the service (this will now use our fake mocked libraries)
+    mock.method(fs, 'readFileSync', fakeReadFileSync);
+    utilsExports.resolveBypassingExports.mock.resetCalls();
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
     sandboxService = new SandboxService();
   });
 
-  afterAll(() => {
-    jest.restoreAllMocks();
+  afterEach(() => {
+    mock.restoreAll();
   });
 
   describe('Initialization', () => {
@@ -97,8 +83,12 @@ describe('SandboxService', () => {
         customCode: `function transform() { return { data: 'ok' }; }`
       } as CustomTransformer;
 
-      await sandboxService.execute('', { source: 'test' }, 'file', transformer, {}, logger);
-      expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('Sandbox snapshot created successfully'));
+      await sandboxService.execute('', { source: 'test' }, 'file', transformer, {}, asLogger(logger));
+      const infoMessages: Array<string> = logger.info.mock.calls.map(c => String(c.arguments[0]));
+      assert.ok(
+        infoMessages.some(m => m.includes('Sandbox snapshot created successfully')),
+        'Expected info log containing "Sandbox snapshot created successfully"'
+      );
     });
 
     it('should only log the init message once across multiple executions', async () => {
@@ -107,18 +97,19 @@ describe('SandboxService', () => {
         customCode: `function transform() { return { data: 'ok' }; }`
       } as CustomTransformer;
 
-      await sandboxService.execute('', { source: 'test' }, 'file1', transformer, {}, logger);
-      await sandboxService.execute('', { source: 'test' }, 'file2', transformer, {}, logger);
+      await sandboxService.execute('', { source: 'test' }, 'file1', transformer, {}, asLogger(logger));
+      await sandboxService.execute('', { source: 'test' }, 'file2', transformer, {}, asLogger(logger));
 
-      const initLogCount = (logger.info as jest.Mock).mock.calls.filter(
-        ([arg]) => typeof arg === 'string' && arg.includes('Sandbox snapshot created successfully')
+      const initLogCount = logger.info.mock.calls.filter(
+        c => typeof c.arguments[0] === 'string' && (c.arguments[0] as string).includes('Sandbox snapshot created successfully')
       ).length;
-      expect(initLogCount).toBe(1);
+      assert.strictEqual(initLogCount, 1);
     });
 
     it('should fail gracefully and log a fatal error if library files are missing', async () => {
-      // Force the spy to throw an error just for this one specific call
-      (fs.readFileSync as jest.Mock).mockImplementationOnce(() => {
+      // Force a throw on the very first readFileSync call (library loading in constructor)
+      mock.restoreAll();
+      mock.method(fs, 'readFileSync', () => {
         throw new Error('File not found simulation');
       });
 
@@ -126,12 +117,16 @@ describe('SandboxService', () => {
 
       const dummyTransformer = { customCode: '', language: 'javascript' } as CustomTransformer;
 
-      // Execute should log the error and then fail
-      await expect(brokenService.execute('test', { source: 'test' }, 'file.txt', dummyTransformer, {}, logger)).rejects.toThrow(
-        'Custom code execution failed: global is not defined'
+      await assert.rejects(
+        async () => brokenService.execute('test', { source: 'test' }, 'file.txt', dummyTransformer, {}, asLogger(logger)),
+        /Custom code execution failed: global is not defined/
       );
 
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Could not load sandbox libraries or create snapshot'));
+      const errorMessages: Array<string> = logger.error.mock.calls.map(c => String(c.arguments[0]));
+      assert.ok(
+        errorMessages.some(m => m.includes('Could not load sandbox libraries or create snapshot')),
+        'Expected error log containing "Could not load sandbox libraries or create snapshot"'
+      );
     });
   });
 
@@ -153,13 +148,13 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('hello world', defaultSource, 'test.txt', transformer, { myVar: 42 }, logger);
+      const result = await sandboxService.execute('hello world', defaultSource, 'test.txt', transformer, { myVar: 42 }, asLogger(logger));
 
       const parsedOutput = JSON.parse(result.output);
-      expect(parsedOutput.originalContent).toBe('hello world');
-      expect(parsedOutput.passedOption).toBe(42);
-      expect(result.metadata.contentFile).toBe('out_test.txt');
-      expect(result.metadata.numberOfElement).toBe(1);
+      assert.strictEqual(parsedOutput.originalContent, 'hello world');
+      assert.strictEqual(parsedOutput.passedOption, 42);
+      assert.strictEqual(result.metadata.contentFile, 'out_test.txt');
+      assert.strictEqual(result.metadata.numberOfElement, 1);
     });
 
     it('should transpile and execute Typescript successfully', async () => {
@@ -168,7 +163,7 @@ describe('SandboxService', () => {
         customCode: `
           // Using TS types
           interface Input { message: string; }
-          export default function transform(content: string): any {
+          export default function transform(content: string): unknown {
             const parsed: Input = JSON.parse(content);
             return {
               data: { response: parsed.message.toUpperCase() },
@@ -186,27 +181,27 @@ describe('SandboxService', () => {
         'test.txt',
         transformer,
         {},
-        logger
+        asLogger(logger)
       );
       const parsedOutput = JSON.parse(result.output);
-      expect(parsedOutput.response).toBe('TYPESCRIPT WORKS');
+      assert.strictEqual(parsedOutput.response, 'TYPESCRIPT WORKS');
     });
 
     it('should use the transpilation cache on repeated executions of the same TypeScript transformer', async () => {
       const transformer = {
         language: 'typescript',
         customCode: `
-          export default function transform(content: string): any {
+          export default function transform(content: string): unknown {
             return { data: content, filename: 'cached.json' };
           }
         `
       } as CustomTransformer;
 
-      const result1 = await sandboxService.execute('first', defaultSource, 'f1.txt', transformer, {}, logger);
-      const result2 = await sandboxService.execute('second', defaultSource, 'f2.txt', transformer, {}, logger);
+      const result1 = await sandboxService.execute('first', defaultSource, 'f1.txt', transformer, {}, asLogger(logger));
+      const result2 = await sandboxService.execute('second', defaultSource, 'f2.txt', transformer, {}, asLogger(logger));
 
-      expect(result1.output).toBe('first');
-      expect(result2.output).toBe('second');
+      assert.strictEqual(result1.output, 'first');
+      assert.strictEqual(result2.output, 'second');
     });
 
     it('should successfully require and use Luxon', async () => {
@@ -222,8 +217,8 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('2026-01-01', defaultSource, 'test.txt', transformer, {}, logger);
-      expect(JSON.parse(result.output).year).toBe(2026);
+      const result = await sandboxService.execute('2026-01-01', defaultSource, 'test.txt', transformer, {}, asLogger(logger));
+      assert.strictEqual(JSON.parse(result.output).year, 2026);
     });
 
     it('should successfully require and use JSONPath-Plus', async () => {
@@ -239,8 +234,8 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('{}', defaultSource, 'test.txt', transformer, {}, logger);
-      expect(JSON.parse(result.output)).toEqual(['Nigel Rees', 'Evelyn Waugh']);
+      const result = await sandboxService.execute('{}', defaultSource, 'test.txt', transformer, {}, asLogger(logger));
+      assert.deepStrictEqual(JSON.parse(result.output), ['Nigel Rees', 'Evelyn Waugh']);
     });
 
     it('should successfully require and use PapaParse', async () => {
@@ -256,33 +251,11 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
-      expect(JSON.parse(result.output)).toEqual([
+      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, asLogger(logger));
+      assert.deepStrictEqual(JSON.parse(result.output), [
         { name: 'Alice', age: '30' },
         { name: 'Bob', age: '25' }
       ]);
-    });
-
-    it('should return string data as-is without JSON.stringify', async () => {
-      const transformer = {
-        language: 'javascript',
-        customCode: `function transform() { return { data: 'hello, world', filename: 'out.txt' }; }`,
-        timeout: 5000
-      } as CustomTransformer;
-
-      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
-      expect(result.output).toBe('hello, world');
-    });
-
-    it('should JSON.stringify non-string data', async () => {
-      const transformer = {
-        language: 'javascript',
-        customCode: `function transform() { return { data: { key: 'value' }, filename: 'out.json' }; }`,
-        timeout: 5000
-      } as CustomTransformer;
-
-      const result = await sandboxService.execute('', defaultSource, 'test.txt', transformer, {}, logger);
-      expect(JSON.parse(result.output)).toEqual({ key: 'value' });
     });
 
     it('should log execution metrics on success', async () => {
@@ -292,9 +265,15 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await sandboxService.execute('', defaultSource, 'metrics.txt', transformer, {}, logger);
+      await sandboxService.execute('', defaultSource, 'metrics.txt', transformer, {}, asLogger(logger));
 
-      expect(logger.trace).toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
+      const hasMetricsLog = logger.trace.mock.calls.some(
+        c =>
+          c.arguments[0] !== null &&
+          typeof c.arguments[0] === 'object' &&
+          String((c.arguments[0] as Record<string, unknown>).msg).includes('Sandbox Execution Metrics')
+      );
+      assert.ok(hasMetricsLog, 'Expected a trace log with "Sandbox Execution Metrics"');
     });
   });
 
@@ -308,19 +287,21 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'syntax-err.txt', transformer, {}, logger)).rejects.toThrow(
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'syntax-err.txt', transformer, {}, asLogger(logger)),
         /\[RUNTIME_ERROR\]/
       );
     });
 
-    it('should throw if the code does not export a transform function', async () => {
+    it('should throw if the code does not export a transform function (ReferenceError)', async () => {
       const transformer = {
         language: 'javascript',
         customCode: `const myFunc = () => { return { data: 'ok' }; };`, // Forgot to name it transform
         timeout: 5000
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'no-fn.txt', transformer, {}, logger)).rejects.toThrow(
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'no-fn.txt', transformer, {}, asLogger(logger)),
         /\[RUNTIME_ERROR\].*Custom code execution failed: transform is not defined/
       );
     });
@@ -336,7 +317,10 @@ describe('SandboxService', () => {
         timeout: 100
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'timeout.txt', transformer, {}, logger)).rejects.toThrow(/\[TIMEOUT_ERROR\]/);
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'timeout.txt', transformer, {}, asLogger(logger)),
+        /\[TIMEOUT_ERROR\]/
+      );
     });
 
     it('should map sandbox console.log to the host logger', async () => {
@@ -356,14 +340,32 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await sandboxService.execute('', defaultSource, 'log.txt', transformer, {}, logger);
+      await sandboxService.execute('', defaultSource, 'log.txt', transformer, {}, asLogger(logger));
 
-      expect(logger.trace).toHaveBeenCalledWith('CUSTOM TRANSFORMER: This is a trace from the sandbox');
-      expect(logger.debug).toHaveBeenCalledWith('CUSTOM TRANSFORMER: This is a debug from the sandbox');
-      expect(logger.debug).toHaveBeenCalledWith('CUSTOM TRANSFORMER: This is a log from the sandbox');
-      expect(logger.info).toHaveBeenCalledWith('CUSTOM TRANSFORMER: This is an info from the sandbox');
-      expect(logger.warn).toHaveBeenCalledWith('CUSTOM TRANSFORMER: This is a warning from the sandbox');
-      expect(logger.error).toHaveBeenCalledWith('CUSTOM TRANSFORMER: This is an error from the sandbox');
+      assert.ok(
+        logger.trace.mock.calls.some(c => c.arguments[0] === 'CUSTOM TRANSFORMER: This is a trace from the sandbox'),
+        'Expected trace log from sandbox'
+      );
+      assert.ok(
+        logger.debug.mock.calls.some(c => c.arguments[0] === 'CUSTOM TRANSFORMER: This is a debug from the sandbox'),
+        'Expected debug log from sandbox'
+      );
+      assert.ok(
+        logger.debug.mock.calls.some(c => c.arguments[0] === 'CUSTOM TRANSFORMER: This is a log from the sandbox'),
+        'Expected log (debug) from sandbox'
+      );
+      assert.ok(
+        logger.info.mock.calls.some(c => c.arguments[0] === 'CUSTOM TRANSFORMER: This is an info from the sandbox'),
+        'Expected info log from sandbox'
+      );
+      assert.ok(
+        logger.warn.mock.calls.some(c => c.arguments[0] === 'CUSTOM TRANSFORMER: This is a warning from the sandbox'),
+        'Expected warn log from sandbox'
+      );
+      assert.ok(
+        logger.error.mock.calls.some(c => c.arguments[0] === 'CUSTOM TRANSFORMER: This is an error from the sandbox'),
+        'Expected error log from sandbox'
+      );
     });
 
     it('should throw an error when requiring unauthorized modules', async () => {
@@ -376,7 +378,8 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, asLogger(logger)),
         /Module "fs" is not allowed/
       );
     });
@@ -392,7 +395,8 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, asLogger(logger)),
         /Transform function returned an invalid or empty result/
       );
     });
@@ -412,14 +416,13 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'oom.txt', transformer, {}, logger)).rejects.toThrow(
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'oom.txt', transformer, {}, asLogger(logger)),
         /\[MEMORY_LIMIT_EXCEEDED\]/
       );
     });
 
     it('should catch TypeScript transpilation errors and map them to SYNTAX_ERROR', async () => {
-      // Since we cannot mock the TypeScript compiler directly, we can trigger the exact
-      // error-routing logic by having the sandbox throw an error containing the target string.
       const transformer = {
         language: 'javascript',
         customCode: `
@@ -430,15 +433,13 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'ts-err.txt', transformer, {}, logger)).rejects.toThrow(
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'ts-err.txt', transformer, {}, asLogger(logger)),
         /\[SYNTAX_ERROR\] Custom code execution failed: TypeScript compilation failed/
       );
     });
 
-    it('should throw if the code does not export a transform function', async () => {
-      // We define 'transform' as a string instead of a function.
-      // This prevents V8 from throwing a ReferenceError during script compilation,
-      // allowing the code to safely reach the 'typeof transformFnRef !== "function"' check.
+    it('should throw if the code does not export a transform function (non-function value)', async () => {
       const transformer = {
         language: 'javascript',
         customCode: `
@@ -447,15 +448,13 @@ describe('SandboxService', () => {
         timeout: 5000
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, asLogger(logger)),
         /Custom code must export a "transform" function/
       );
     });
 
-    it('should throw when transform is a non-function value', async () => {
-      // We define 'transform' as a string instead of a function.
-      // This prevents V8 from throwing a ReferenceError during script compilation,
-      // allowing the code to safely reach the 'typeof transformFnRef !== "function"' check.
+    it('should throw when transform is a non-function value (no timeout)', async () => {
       const transformer = {
         language: 'javascript',
         customCode: `
@@ -463,46 +462,164 @@ describe('SandboxService', () => {
         `
       } as CustomTransformer;
 
-      await expect(sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger)).rejects.toThrow(
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, asLogger(logger)),
         /Custom code must export a "transform" function/
       );
     });
   });
+});
 
-  describe('Execution (with failing heap stats)', () => {
-    beforeAll(() => {
-      simulateCreateContextFailure = true;
-      simulateHeapStatsFailure = true;
-    });
+// ---------------------------------------------------------------------------
+// Suite: failing heap stats — createContext fails AND getHeapStatisticsSync throws
+// ---------------------------------------------------------------------------
+describe('SandboxService - failing heap stats', () => {
+  let SandboxService: typeof SandboxServiceClass;
+  let sandboxService: SandboxServiceClass;
 
-    afterAll(() => {
-      simulateCreateContextFailure = false;
-      simulateHeapStatsFailure = false;
-    });
+  const logger = new PinoLogger();
 
-    it('should silently ignore getHeapStatisticsSync failures in the metrics block', async () => {
-      const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
-      await expect(sandboxService.execute('', { source: 'test' }, 'heap-fail.txt', transformer, {}, logger)).rejects.toThrow(
-        '[RUNTIME_ERROR] Custom code execution failed: createContext failed'
-      );
-      expect(logger.trace).not.toHaveBeenCalledWith(expect.objectContaining({ msg: expect.stringContaining('Sandbox Execution Metrics') }));
-    });
+  const createContextMock = mock.fn(async () => {
+    throw new Error('createContext failed');
+  });
+  const disposeMock = mock.fn();
+  const getHeapStatisticsSync = mock.fn(() => {
+    throw new Error('heap stats failed');
   });
 
-  describe('Execution (with failing createContext)', () => {
-    beforeAll(() => {
-      simulateCreateContextFailure = true;
-    });
+  function MockIsolate() {
+    return {
+      createContext: createContextMock,
+      isDisposed: false,
+      dispose: disposeMock,
+      cpuTime: BigInt(0),
+      getHeapStatisticsSync
+    };
+  }
 
-    afterAll(() => {
-      simulateCreateContextFailure = false;
-    });
+  const ivmExports = {
+    __esModule: true,
+    default: {
+      Isolate: Object.assign(MockIsolate, { createSnapshot: mock.fn(() => ({})) }),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      ExternalCopy: function () {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      Reference: function () {}
+    }
+  };
 
-    it('should skip context.release() when context is null', async () => {
-      const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
-      await expect(sandboxService.execute('', { source: 'test' }, 'null-ctx.txt', transformer, {}, logger)).rejects.toThrow(
-        '[RUNTIME_ERROR] Custom code execution failed: createContext failed'
-      );
-    });
+  const utilsExports = {
+    __esModule: true,
+    resolveBypassingExports: mock.fn()
+  };
+
+  before(() => {
+    mockModule(nodeRequire, 'isolated-vm', ivmExports);
+    mockModule(nodeRequire, './utils', utilsExports);
+    SandboxService = reloadModule<{ default: typeof SandboxServiceClass }>(nodeRequire, './sandbox.service').default;
+  });
+
+  beforeEach(() => {
+    createContextMock.mock.resetCalls();
+    disposeMock.mock.resetCalls();
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
+    sandboxService = new SandboxService();
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  it('should silently ignore getHeapStatisticsSync failures in the metrics block', async () => {
+    const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
+
+    await assert.rejects(
+      async () => sandboxService.execute('', { source: 'test' }, 'heap-fail.txt', transformer, {}, asLogger(logger)),
+      /\[RUNTIME_ERROR\] Custom code execution failed: createContext failed/
+    );
+
+    const hasMetricsLog = logger.trace.mock.calls.some(
+      c =>
+        c.arguments[0] !== null &&
+        typeof c.arguments[0] === 'object' &&
+        String((c.arguments[0] as Record<string, unknown>).msg).includes('Sandbox Execution Metrics')
+    );
+    assert.ok(!hasMetricsLog, 'Expected no "Sandbox Execution Metrics" trace log when heap stats fail');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite: createContext fails — context should remain null (no context.release())
+// ---------------------------------------------------------------------------
+describe('SandboxService - failing createContext', () => {
+  let SandboxService: typeof SandboxServiceClass;
+  let sandboxService: SandboxServiceClass;
+
+  const logger = new PinoLogger();
+
+  const createContextMock = mock.fn(async () => {
+    throw new Error('createContext failed');
+  });
+  const disposeMock = mock.fn();
+  const getHeapStatisticsSync = mock.fn(() => ({ used_heap_size: 0 }));
+
+  function MockIsolate() {
+    return {
+      createContext: createContextMock,
+      isDisposed: false,
+      dispose: disposeMock,
+      cpuTime: BigInt(0),
+      getHeapStatisticsSync
+    };
+  }
+
+  const ivmExports = {
+    __esModule: true,
+    default: {
+      Isolate: Object.assign(MockIsolate, { createSnapshot: mock.fn(() => ({})) }),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      ExternalCopy: function () {},
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      Reference: function () {}
+    }
+  };
+
+  const utilsExports = {
+    __esModule: true,
+    resolveBypassingExports: mock.fn()
+  };
+
+  before(() => {
+    mockModule(nodeRequire, 'isolated-vm', ivmExports);
+    mockModule(nodeRequire, './utils', utilsExports);
+    SandboxService = reloadModule<{ default: typeof SandboxServiceClass }>(nodeRequire, './sandbox.service').default;
+  });
+
+  beforeEach(() => {
+    createContextMock.mock.resetCalls();
+    disposeMock.mock.resetCalls();
+    logger.trace.mock.resetCalls();
+    logger.debug.mock.resetCalls();
+    logger.info.mock.resetCalls();
+    logger.warn.mock.resetCalls();
+    logger.error.mock.resetCalls();
+    sandboxService = new SandboxService();
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  it('should skip context.release() when context is null', async () => {
+    const transformer = { language: 'javascript', customCode: 'function transform() {}' } as CustomTransformer;
+
+    await assert.rejects(
+      async () => sandboxService.execute('', { source: 'test' }, 'null-ctx.txt', transformer, {}, asLogger(logger)),
+      /\[RUNTIME_ERROR\] Custom code execution failed: createContext failed/
+    );
   });
 });

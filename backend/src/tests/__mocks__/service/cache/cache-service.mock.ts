@@ -1,26 +1,28 @@
 import { EventEmitter } from 'node:events';
+import { mock } from 'node:test';
 
-export default jest.fn().mockImplementation(() => {
-  return {
-    setLogger: jest.fn(),
-    start: jest.fn(),
-    stop: jest.fn(),
-    getCacheContentToSend: jest.fn(),
-    removeCacheContentFromQueue: jest.fn(),
-    compactQueue: jest.fn(),
-    getNumberOfElementsInQueue: jest.fn(),
-    getNumberOfRawFilesInQueue: jest.fn(),
-    cacheIsEmpty: jest.fn(),
-    cacheIsFull: jest.fn(),
-    getCacheSize: jest.fn(),
-    searchCacheContent: jest.fn(),
-    getFileFromCache: jest.fn(),
-    updateCacheContent: jest.fn(),
-    addCacheContent: jest.fn(),
-    removeAllCacheContent: jest.fn(),
-    errorFolder: 'cache',
-    archiveFolder: 'error',
-    cacheFolder: 'cache',
-    cacheSizeEventEmitter: new EventEmitter()
-  };
-});
+/**
+ * Create a mock object for Cache Service
+ */
+export default class CacheServiceMock {
+  setLogger = mock.fn();
+  start = mock.fn();
+  stop = mock.fn();
+  getCacheContentToSend = mock.fn();
+  removeCacheContentFromQueue = mock.fn();
+  compactQueue = mock.fn();
+  getNumberOfElementsInQueue = mock.fn();
+  getNumberOfRawFilesInQueue = mock.fn();
+  cacheIsEmpty = mock.fn();
+  cacheIsFull = mock.fn();
+  getCacheSize = mock.fn();
+  searchCacheContent = mock.fn();
+  getFileFromCache = mock.fn();
+  updateCacheContent = mock.fn();
+  addCacheContent = mock.fn();
+  removeAllCacheContent = mock.fn();
+  errorFolder = 'cache';
+  archiveFolder = 'error';
+  cacheFolder = 'cache';
+  cacheSizeEventEmitter = new EventEmitter();
+}

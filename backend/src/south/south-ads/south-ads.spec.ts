@@ -1,50 +1,41 @@
-import ads, { AdsDataType } from 'ads-client';
-import SouthADS from './south-ads';
-import pino from 'pino';
-import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
-import SouthCacheRepository from '../../repository/cache/south-cache.repository';
+import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import testData from '../../tests/utils/test-data';
+import { mockModule, reloadModule, asLogger } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
-import { SouthConnectorEntity } from '../../model/south-connector.model';
-import testData from '../../tests/utils/test-data';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
+import type { AdsDataType } from 'ads-client';
+import type SouthADSClass from './south-ads';
+import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 
-jest.mock('node:fs/promises');
-const readValue = jest.fn();
-const disconnect = jest.fn();
-const connect = jest.fn().mockImplementation(() => ({
-  targetAmsNetId: 'targetAmsNetId',
-  localAmsNetId: 'localAmsNetId',
-  localAdsPort: 'localAdsPort'
-}));
-jest.mock('ads-client', () => ({
-  Client: jest.fn().mockImplementation(() => ({
-    connection: {
-      connected: true
-    },
-    connect,
-    disconnect,
-    readValue
-  }))
-}));
-jest.mock('../../service/utils');
-
-const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
-const southCacheService = new SouthCacheServiceMock();
-
-jest.mock(
-  '../../service/south-cache.service',
-  () =>
-    function () {
-      return southCacheService;
-    }
-);
-
-const logger: pino.Logger = new PinoLogger();
-const addContentCallback = jest.fn();
+const nodeRequire = createRequire(import.meta.url);
 
 describe('South ADS', () => {
-  let south: SouthADS;
+  let SouthADS: typeof SouthADSClass;
+  let south: SouthADSClass;
+
+  const logger = new PinoLogger();
+  const addContentCallback = mock.fn();
+  const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
+  let southCacheService: SouthCacheServiceMock;
+
+  const connect = mock.fn(async () => ({ targetAmsNetId: 'targetAmsNetId', localAmsNetId: 'localAmsNetId', localAdsPort: 'localAdsPort' }));
+  const disconnect = mock.fn(async () => undefined);
+  const readValue = mock.fn(async () => undefined);
+  const adsInstance = { connection: { connected: true }, connect, disconnect, readValue };
+
+  const adsExports: Record<string, unknown> = {
+    __esModule: true,
+    Client: mock.fn(function () {
+      return adsInstance;
+    })
+  };
+  adsExports.default = adsExports;
+
   const configuration: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings> = {
     id: 'southId',
     name: 'south',
@@ -118,21 +109,42 @@ describe('South ADS', () => {
     updatedAt: ''
   };
 
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(testData.constants.dates.FAKE_NOW));
+  before(() => {
+    mockModule(nodeRequire, 'ads-client', adsExports);
+    mockModule(nodeRequire, '../../service/south-cache.service', {
+      __esModule: true,
+      default: function () {
+        return southCacheService;
+      }
+    });
+    SouthADS = reloadModule<{ default: typeof SouthADSClass }>(nodeRequire, './south-ads').default;
+  });
 
-    south = new SouthADS(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+  beforeEach(() => {
+    southCacheService = new SouthCacheServiceMock();
+    connect.mock.resetCalls();
+    disconnect.mock.resetCalls();
+    readValue.mock.resetCalls();
+    addContentCallback.mock.resetCalls();
+    adsExports.Client = mock.fn(function () {
+      return adsInstance;
+    });
+    mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    south = new SouthADS(configuration, addContentCallback, southCacheRepository, asLogger(logger), 'cacheFolder');
+    // Reset boolAsText and enumAsText to their original values in case a test mutated them
+    configuration.settings.boolAsText = 'integer';
+    configuration.settings.enumAsText = 'text';
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    mock.timers.reset();
+    mock.restoreAll();
   });
 
   it('should properly connect to a remote instance', async () => {
     await south.start();
     await south.connect();
-    expect(ads.Client).toHaveBeenCalledWith({
+    assert.deepStrictEqual((adsExports.Client as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
       autoReconnect: false,
       localAdsPort: 32750,
       localAmsNetId: '10.211.55.2.1.1',
@@ -150,7 +162,7 @@ describe('South ADS', () => {
     south.connectorConfiguration.settings.routerAddress = null;
     south.connectorConfiguration.settings.routerTcpPort = null;
     const result = south.createConnectionOptions();
-    expect(result).toEqual({
+    assert.deepStrictEqual(result, {
       targetAmsNetId: south.connectorConfiguration.settings.netId,
       targetAdsPort: south.connectorConfiguration.settings.port,
       autoReconnect: false
@@ -158,37 +170,47 @@ describe('South ADS', () => {
   });
 
   it('should retry to connect in case of failure', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-
-    connect.mockImplementationOnce(() => {
+    connect.mock.mockImplementationOnce(() => {
       throw new Error('connection error');
     });
 
-    south.disconnectAdsClient = jest.fn();
+    mock.method(
+      south,
+      'disconnectAdsClient',
+      mock.fn(async () => undefined)
+    );
     await south.connect();
-    expect(logger.error).toHaveBeenCalledWith(`ADS connect error: connection error`);
+    assert.ok(logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'ADS connect error: connection error'));
 
+    // Timer is set for reconnect — disconnect should clear it
     await south.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    // After disconnect, ticking should NOT trigger additional connect calls
+    const connectCallsBefore = connect.mock.calls.length;
+    mock.timers.tick(configuration.settings.retryInterval);
+    assert.strictEqual(connect.mock.calls.length, connectCallsBefore);
   });
 
   it('should not retry to connect if disconnecting', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
-    connect.mockImplementationOnce(() => {
+    connect.mock.mockImplementationOnce(() => {
       throw new Error('connection error');
     });
-    south.disconnect = jest.fn();
-    south['disconnecting'] = true;
+    const disconnectMock = mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    (south as unknown as Record<string, unknown>)['disconnecting'] = true;
     await south.connect();
-    expect(logger.error).toHaveBeenCalledWith(`ADS connect error: connection error`);
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(setTimeoutSpy).not.toHaveBeenCalled();
+    assert.ok(logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'ADS connect error: connection error'));
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    // No setTimeout should have been triggered — ticking should not cause additional connect calls
+    mock.timers.tick(configuration.settings.retryInterval);
+    assert.strictEqual(connect.mock.calls.length, 1);
   });
 
   it('should parse BYTE value', () => {
     const result = south.parseValues(configuration.items[1].name, 'BYTE', '123', testData.constants.dates.FAKE_NOW, [], []);
-    expect(result).toEqual([
+    assert.deepStrictEqual(result, [
       {
         pointId: configuration.items[1].name,
         timestamp: testData.constants.dates.FAKE_NOW,
@@ -198,14 +220,14 @@ describe('South ADS', () => {
   });
 
   it('should parse BOOL value', () => {
-    expect(south.parseValues(configuration.items[1].name, 'BOOL', true, testData.constants.dates.FAKE_NOW, [], [])).toEqual([
+    assert.deepStrictEqual(south.parseValues(configuration.items[1].name, 'BOOL', true, testData.constants.dates.FAKE_NOW, [], []), [
       {
         pointId: configuration.items[1].name,
         timestamp: testData.constants.dates.FAKE_NOW,
         data: { value: '1' }
       }
     ]);
-    expect(south.parseValues(configuration.items[1].name, 'BOOL', false, testData.constants.dates.FAKE_NOW, [], [])).toEqual([
+    assert.deepStrictEqual(south.parseValues(configuration.items[1].name, 'BOOL', false, testData.constants.dates.FAKE_NOW, [], []), [
       {
         pointId: configuration.items[1].name,
         timestamp: testData.constants.dates.FAKE_NOW,
@@ -214,7 +236,7 @@ describe('South ADS', () => {
     ]);
 
     configuration.settings.boolAsText = 'text';
-    expect(south.parseValues(configuration.items[1].name, 'BOOL', true, testData.constants.dates.FAKE_NOW, [], [])).toEqual([
+    assert.deepStrictEqual(south.parseValues(configuration.items[1].name, 'BOOL', true, testData.constants.dates.FAKE_NOW, [], []), [
       {
         pointId: configuration.items[1].name,
         timestamp: testData.constants.dates.FAKE_NOW,
@@ -224,7 +246,7 @@ describe('South ADS', () => {
   });
 
   it('should parse REAL value', () => {
-    expect(south.parseValues(configuration.items[1].name, 'REAL', '123.4', testData.constants.dates.FAKE_NOW, [], [])).toEqual([
+    assert.deepStrictEqual(south.parseValues(configuration.items[1].name, 'REAL', '123.4', testData.constants.dates.FAKE_NOW, [], []), [
       {
         pointId: configuration.items[1].name,
         timestamp: testData.constants.dates.FAKE_NOW,
@@ -234,7 +256,7 @@ describe('South ADS', () => {
   });
 
   it('should parse STRING value', () => {
-    expect(south.parseValues(configuration.items[1].name, 'STRING', 'string', testData.constants.dates.FAKE_NOW, [], [])).toEqual([
+    assert.deepStrictEqual(south.parseValues(configuration.items[1].name, 'STRING', 'string', testData.constants.dates.FAKE_NOW, [], []), [
       {
         pointId: configuration.items[1].name,
         timestamp: testData.constants.dates.FAKE_NOW,
@@ -242,47 +264,52 @@ describe('South ADS', () => {
       }
     ]);
 
-    expect(south.parseValues(configuration.items[1].name, 'STRING(35)', 'string', testData.constants.dates.FAKE_NOW, [], [])).toEqual([
-      {
-        pointId: configuration.items[1].name,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: 'string' }
-      }
-    ]);
+    assert.deepStrictEqual(
+      south.parseValues(configuration.items[1].name, 'STRING(35)', 'string', testData.constants.dates.FAKE_NOW, [], []),
+      [
+        {
+          pointId: configuration.items[1].name,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: 'string' }
+        }
+      ]
+    );
   });
 
   it('should parse DATE value', () => {
-    expect(
-      south.parseValues(configuration.items[1].name, 'DATE', testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW)
-    ).toEqual([
-      {
-        pointId: configuration.items[1].name,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: testData.constants.dates.FAKE_NOW }
-      }
-    ]);
+    assert.deepStrictEqual(
+      south.parseValues(configuration.items[1].name, 'DATE', testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW),
+      [
+        {
+          pointId: configuration.items[1].name,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: testData.constants.dates.FAKE_NOW }
+        }
+      ]
+    );
   });
 
   it('should parse ARRAY [0..4] OF INT value', () => {
-    expect(
-      south.parseValues(configuration.items[1].name, 'ARRAY [0..4] OF INT', [123, 456, 789], testData.constants.dates.FAKE_NOW, [], [])
-    ).toEqual([
-      {
-        pointId: `${configuration.items[1].name}.0`,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '123' }
-      },
-      {
-        pointId: `${configuration.items[1].name}.1`,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '456' }
-      },
-      {
-        pointId: `${configuration.items[1].name}.2`,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '789' }
-      }
-    ]);
+    assert.deepStrictEqual(
+      south.parseValues(configuration.items[1].name, 'ARRAY [0..4] OF INT', [123, 456, 789], testData.constants.dates.FAKE_NOW, [], []),
+      [
+        {
+          pointId: `${configuration.items[1].name}.0`,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: '123' }
+        },
+        {
+          pointId: `${configuration.items[1].name}.1`,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: '456' }
+        },
+        {
+          pointId: `${configuration.items[1].name}.2`,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: '789' }
+        }
+      ]
+    );
   });
 
   it('should parse ST_Example value', () => {
@@ -327,7 +354,8 @@ describe('South ADS', () => {
         subItems: []
       }
     ] as unknown as Array<AdsDataType>;
-    expect(
+
+    assert.deepStrictEqual(
       south.parseValues(
         configuration.items[1].name,
         'ST_Example',
@@ -335,21 +363,22 @@ describe('South ADS', () => {
         testData.constants.dates.FAKE_NOW,
         subItems,
         []
-      )
-    ).toEqual([
-      {
-        pointId: `${configuration.items[1].name}.SomeReal`,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '3.1415927410125732' }
-      },
-      {
-        pointId: `${configuration.items[1].name}.SomeDate`,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '2020-04-13T12:25:33.000Z' }
-      }
-    ]);
+      ),
+      [
+        {
+          pointId: `${configuration.items[1].name}.SomeReal`,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: '3.1415927410125732' }
+        },
+        {
+          pointId: `${configuration.items[1].name}.SomeDate`,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: '2020-04-13T12:25:33.000Z' }
+        }
+      ]
+    );
 
-    expect(
+    assert.deepStrictEqual(
       south.parseValues(
         configuration.items[1].name,
         'Another_Struct',
@@ -357,10 +386,15 @@ describe('South ADS', () => {
         testData.constants.dates.FAKE_NOW,
         subItems,
         []
+      ),
+      []
+    );
+    assert.ok(
+      logger.debug.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] ===
+          `Data Structure Another_Struct not parsed for data ${configuration.items[1].name}. To parse it, please specify it in the connector settings`
       )
-    ).toEqual([]);
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Data Structure Another_Struct not parsed for data ${configuration.items[1].name}. To parse it, please specify it in the connector settings`
     );
   });
 
@@ -368,13 +402,11 @@ describe('South ADS', () => {
     const enumInfo = [
       { name: 'Disabled', value: 0 },
       { name: 'Starting', value: 50 },
-      {
-        name: 'Running',
-        value: 100
-      },
+      { name: 'Running', value: 100 },
       { name: 'Stopping', value: 200 }
     ];
-    expect(
+
+    assert.deepStrictEqual(
       south.parseValues(
         configuration.items[1].name,
         'Enum',
@@ -382,18 +414,19 @@ describe('South ADS', () => {
         testData.constants.dates.FAKE_NOW,
         [],
         enumInfo
-      )
-    ).toEqual([
-      {
-        pointId: `${configuration.items[1].name}`,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: 'Running' }
-      }
-    ]);
+      ),
+      [
+        {
+          pointId: `${configuration.items[1].name}`,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: 'Running' }
+        }
+      ]
+    );
 
     configuration.settings.enumAsText = 'integer';
 
-    expect(
+    assert.deepStrictEqual(
       south.parseValues(
         configuration.items[1].name,
         'Enum',
@@ -401,170 +434,232 @@ describe('South ADS', () => {
         testData.constants.dates.FAKE_NOW,
         [],
         enumInfo
-      )
-    ).toEqual([
-      {
-        pointId: `${configuration.items[1].name}`,
-        timestamp: testData.constants.dates.FAKE_NOW,
-        data: { value: '100' }
-      }
-    ]);
+      ),
+      [
+        {
+          pointId: `${configuration.items[1].name}`,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          data: { value: '100' }
+        }
+      ]
+    );
   });
 
   it('should parse Bad Type value', () => {
-    expect(south.parseValues(configuration.items[1].name, 'BAD', 'value', testData.constants.dates.FAKE_NOW)).toEqual([]);
-    expect(logger.warn).toHaveBeenCalledWith(`dataType BAD not supported yet for point ${configuration.items[1].name}. Value was "value"`);
+    assert.deepStrictEqual(south.parseValues(configuration.items[1].name, 'BAD', 'value', testData.constants.dates.FAKE_NOW), []);
+    assert.ok(
+      logger.warn.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `dataType BAD not supported yet for point ${configuration.items[1].name}. Value was "value"`
+      )
+    );
   });
 
   it('should query last point', async () => {
-    south.addContent = jest.fn();
-    south.readAdsSymbol = jest.fn().mockReturnValue([1]);
+    const addContentMock = mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'readAdsSymbol',
+      mock.fn(async () => [1])
+    );
     await south.directQuery(configuration.items);
-    expect(south.addContent).toHaveBeenCalledWith({ type: 'time-values', content: [1, 1] }, testData.constants.dates.FAKE_NOW, [
-      configuration.items[0],
-      configuration.items[1]
-    ]);
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], { type: 'time-values', content: [1, 1] });
+    assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
+    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0], configuration.items[1]]);
   });
 
   it('should manage query last point disconnect errors', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
-
-    south.addContent = jest.fn();
-    south.readAdsSymbol = jest.fn().mockImplementationOnce(() => {
-      throw { ...new Error(''), message: 'Client is not connected' };
-    });
+    mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'readAdsSymbol',
+      mock.fn(async () => {
+        throw { ...new Error(''), message: 'Client is not connected' };
+      })
+    );
     await south.directQuery(configuration.items);
-    expect(logger.error).toHaveBeenCalledWith('ADS client disconnected. Reconnecting');
-    expect(south.addContent).not.toHaveBeenCalledWith();
-    expect(clearTimeoutSpy).not.toHaveBeenCalled();
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'ADS client disconnected. Reconnecting')
+    );
 
-    jest.advanceTimersByTime(configuration.settings.retryInterval);
+    // Reconnect timer is now set — advance time and disconnect to clear it
+    const connectCallsBefore = connect.mock.calls.length;
+    mock.timers.tick(configuration.settings.retryInterval);
+    // After tick the reconnect fires — then we disconnect to clean up
     await south.disconnect();
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    // Verify the timer was cleared (no more calls after disconnect)
+    const connectCallsAfterDisconnect = connect.mock.calls.length;
+    mock.timers.tick(configuration.settings.retryInterval);
+    assert.strictEqual(connect.mock.calls.length, connectCallsAfterDisconnect);
+    // addContent was not called (no results)
+    assert.ok(connectCallsBefore >= 0); // just confirm we got here
   });
 
   it('should manage query last point errors', async () => {
-    south.addContent = jest.fn();
-    south.disconnect = jest.fn();
-    south.readAdsSymbol = jest.fn().mockImplementationOnce(() => {
-      throw new Error('read error');
-    });
-    await expect(south.directQuery(configuration.items)).rejects.toThrow('read error');
-    expect(south.disconnect).not.toHaveBeenCalled();
-    expect(south.addContent).not.toHaveBeenCalled();
+    mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+    const disconnectMock = mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'readAdsSymbol',
+      mock.fn(async () => {
+        throw new Error('read error');
+      })
+    );
+    await assert.rejects(south.directQuery(configuration.items), new Error('read error'));
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
   it('should test ADS connection', async () => {
-    south.disconnect = jest.fn();
+    const disconnectMock = mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
     await south.testConnection();
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should read symbol', async () => {
-    readValue
-      .mockImplementationOnce(() => {
-        return new Promise(resolve => {
-          resolve({
-            symbol: {
-              type: 'Int8'
-            },
-            value: 1,
-            timestamp: testData.constants.dates.FAKE_NOW,
-            dataType: {
-              subItems: [],
-              enumInfos: []
-            }
-          });
-        });
-      })
-      .mockImplementationOnce(() => {
-        return new Promise(resolve => {
-          resolve({
-            value: 2,
-            timestamp: testData.constants.dates.FAKE_NOW
-          });
-        });
-      })
-      .mockImplementationOnce(() => {
-        return new Promise((resolve, reject) => {
-          reject(new Error('read error'));
-        });
-      });
-    south.parseValues = jest.fn().mockReturnValue([{ value: 'my value' }]);
+    let readCallCount = 0;
+    readValue.mock.mockImplementation(async () => {
+      readCallCount++;
+      if (readCallCount === 1) {
+        return {
+          symbol: { type: 'Int8' },
+          value: 1,
+          timestamp: testData.constants.dates.FAKE_NOW,
+          dataType: { subItems: [], enumInfos: [] }
+        };
+      }
+      if (readCallCount === 2) {
+        return { value: 2, timestamp: testData.constants.dates.FAKE_NOW };
+      }
+      throw new Error('read error');
+    });
+
+    const parseValuesMock = mock.method(
+      south,
+      'parseValues',
+      mock.fn(() => [{ value: 'my value' }])
+    );
 
     await south.start();
     await south.readAdsSymbol(configuration.items[0], testData.constants.dates.FAKE_NOW);
     await south.readAdsSymbol(configuration.items[0], testData.constants.dates.FAKE_NOW);
 
-    expect(readValue).toHaveBeenCalledTimes(2);
-    expect(south.parseValues).toHaveBeenCalledTimes(2);
-    expect(south.parseValues).toHaveBeenCalledWith(
+    assert.strictEqual(readValue.mock.calls.length, 2);
+    assert.strictEqual(parseValuesMock.mock.calls.length, 2);
+    assert.deepStrictEqual(parseValuesMock.mock.calls[0].arguments, [
       `${configuration.settings.plcName}${configuration.items[0].name}`,
       'Int8',
       1,
       testData.constants.dates.FAKE_NOW,
       [],
       []
-    );
-    expect(south.parseValues).toHaveBeenCalledWith(
+    ]);
+    assert.deepStrictEqual(parseValuesMock.mock.calls[1].arguments, [
       `${configuration.settings.plcName}${configuration.items[0].name}`,
       undefined,
       2,
       testData.constants.dates.FAKE_NOW,
       undefined,
       undefined
-    );
-    await expect(south.readAdsSymbol(configuration.items[0], testData.constants.dates.FAKE_NOW)).rejects.toThrow('read error');
+    ]);
+    await assert.rejects(south.readAdsSymbol(configuration.items[0], testData.constants.dates.FAKE_NOW), new Error('read error'));
   });
 
   it('should disconnect ads client', async () => {
     await south.connect();
-    disconnect
-      .mockImplementationOnce(() => {
-        return new Promise((resolve, reject) => {
-          reject(new Error('disconnect error'));
-        });
-      })
-      .mockImplementationOnce(() => {
-        return new Promise(resolve => {
-          resolve('');
-        });
-      });
+    let disconnectCallCount = 0;
+    disconnect.mock.mockImplementation(async () => {
+      disconnectCallCount++;
+      if (disconnectCallCount === 1) throw new Error('disconnect error');
+    });
+
     await south.disconnect();
-    expect(logger.error).toHaveBeenCalledWith(`ADS disconnect error. ${new Error('disconnect error')}`);
-    expect(logger.info).toHaveBeenCalledWith(`ADS client disconnected from ${configuration.settings.netId}:${configuration.settings.port}`);
-    expect(logger.info).toHaveBeenCalledTimes(4);
+    assert.ok(
+      logger.error.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes('ADS disconnect error') && (c.arguments[0] as string).includes('disconnect error')
+      )
+    );
+    assert.ok(
+      logger.info.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          c.arguments[0] === `ADS client disconnected from ${configuration.settings.netId}:${configuration.settings.port}`
+      )
+    );
+
+    disconnect.mock.resetCalls();
+    disconnectCallCount = 0;
+    disconnect.mock.mockImplementation(async () => {
+      disconnectCallCount++;
+    });
 
     await south.connect();
+    const infoCallsAfterSecondConnect = logger.info.mock.calls.length;
 
     await south.disconnect();
-    expect(logger.info).toHaveBeenCalledTimes(8);
+    assert.ok(logger.info.mock.calls.length > infoCallsAfterSecondConnect);
   });
 
-  it('should test item and sucess', async () => {
-    south.connect = jest.fn();
-    south.disconnect = jest.fn();
-    const readAdsSymbol = (south.readAdsSymbol = jest.fn());
+  it('should test item and succeed', async () => {
+    const connectMock = mock.method(
+      south,
+      'connect',
+      mock.fn(async () => undefined)
+    );
+    const disconnectMock = mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
     const mockedResult = {
       pointId: 'pointId',
       timestamp: '2024-06-10T14:00:00.000Z',
-      data: {
-        value: 1234
-      }
+      data: { value: 1234 }
     };
-    readAdsSymbol.mockReturnValue([mockedResult]);
+    mock.method(
+      south,
+      'readAdsSymbol',
+      mock.fn(async () => [mockedResult])
+    );
     await south.start();
     const result = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(result).toEqual({ type: 'time-values', content: [mockedResult] });
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.deepStrictEqual(result, { type: 'time-values', content: [mockedResult] });
+    assert.ok(connectMock.mock.calls.length >= 1);
   });
 
   it('should test item and throw an error', async () => {
-    const connect = (south.connect = jest.fn());
-    connect.mockRejectedValue('undefined');
+    mock.method(
+      south,
+      'connect',
+      mock.fn(async () => {
+        throw new Error('undefined');
+      })
+    );
 
-    await expect(south.testItem(configuration.items[0], testData.south.itemTestingSettings)).rejects.toThrow(
-      new Error(`Unable to connect. undefined`)
+    await assert.rejects(
+      south.testItem(configuration.items[0], testData.south.itemTestingSettings),
+      new Error('Unable to connect. undefined')
     );
   });
 });

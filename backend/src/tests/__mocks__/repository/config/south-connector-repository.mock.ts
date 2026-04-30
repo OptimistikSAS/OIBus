@@ -1,24 +1,24 @@
+import { mock } from 'node:test';
+
 /**
  * Create a mock object for South Connector repository
  */
-export default jest.fn().mockImplementation(() => {
-  return {
-    findAllSouth: jest.fn(),
-    findSouthById: jest.fn(),
-    saveSouth: jest.fn(),
-    start: jest.fn(),
-    stop: jest.fn(),
-    deleteSouth: jest.fn(),
-    listItems: jest.fn(),
-    searchItems: jest.fn(),
-    findAllItemsForSouth: jest.fn(),
-    findItemById: jest.fn(),
-    saveItem: jest.fn(),
-    saveAllItems: jest.fn(),
-    deleteItem: jest.fn(),
-    deleteAllItemsBySouth: jest.fn(),
-    enableItem: jest.fn(),
-    disableItem: jest.fn(),
-    moveItemsToGroup: jest.fn()
-  };
-});
+export default class SouthConnectorRepositoryMock {
+  findAllSouth = mock.fn();
+  findSouthById = mock.fn();
+  saveSouth = mock.fn();
+  start = mock.fn();
+  stop = mock.fn();
+  deleteSouth = mock.fn();
+  listItems = mock.fn();
+  searchItems = mock.fn();
+  findAllItemsForSouth = mock.fn();
+  findItemById = mock.fn();
+  saveItem = mock.fn();
+  saveAllItems = mock.fn();
+  deleteItem = mock.fn();
+  deleteAllItemsBySouth = mock.fn();
+  enableItem = mock.fn();
+  disableItem = mock.fn();
+  moveItemsToGroup = mock.fn();
+}
