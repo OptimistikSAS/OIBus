@@ -9,12 +9,14 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type {
+  SouthItemSettings,
   SouthOLEDBItemSettings,
   SouthOLEDBItemSettingsDateTimeFields,
   SouthOLEDBSettings
 } from '../../../shared/model/south-settings.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
 import type SouthOLEDBClass from './south-oledb';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 
@@ -25,12 +27,12 @@ describe('SouthOLEDB', () => {
   let south: SouthOLEDBClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
   const httpRequestExports = {
-    HTTPRequest: mock.fn(async () => createMockResponse(200))
+    HTTPRequest: mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200))
   };
 
   const utilsExports = {
@@ -199,7 +201,7 @@ describe('SouthOLEDB', () => {
 
   beforeEach(() => {
     southCacheService = new SouthCacheServiceMock();
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     utilsExports.convertDelimiter = mock.fn((value: unknown) => value);
     utilsExports.formatInstant = mock.fn((value: unknown) => value);
     utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
@@ -293,7 +295,7 @@ describe('SouthOLEDB', () => {
 
   it('should properly reconnect when connection fails', async () => {
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1) throw new Error('connection failed');
       return createMockResponse(200);
@@ -311,7 +313,7 @@ describe('SouthOLEDB', () => {
 
   it('should properly clear reconnect timeout on disconnect', async () => {
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1) throw new Error('connection failed');
       if (callCount === 2) return createMockResponse(200);
@@ -368,7 +370,7 @@ describe('SouthOLEDB', () => {
     const endTime = '2022-01-01T00:00:00.000Z';
 
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1)
         return createMockResponse(200, {
@@ -440,7 +442,7 @@ describe('SouthOLEDB', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    httpRequestExports.HTTPRequest = mock.fn(async () =>
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
       createMockResponse(200, {
         recordCount: 2,
         content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
@@ -477,7 +479,7 @@ describe('SouthOLEDB', () => {
     const endTime = '2022-01-01T00:00:00.000Z';
 
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1) return createMockResponse(400, 'bad request');
       return createMockResponse(500);
@@ -539,7 +541,7 @@ describe('SouthOLEDB', () => {
     const endTime = '2022-01-01T00:00:00.000Z';
 
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1)
         return createMockResponse(200, {
@@ -574,7 +576,7 @@ describe('SouthOLEDB', () => {
   });
 
   it('should test connection successfully', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     await assert.doesNotReject(south.testConnection());
     assert.ok(
       logger.info.mock.calls.some((c: { arguments: Array<unknown> }) =>
@@ -585,7 +587,7 @@ describe('SouthOLEDB', () => {
 
   it('should test connection fail', async () => {
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1) return createMockResponse(400, 'bad request');
       return createMockResponse(500, 'another error');

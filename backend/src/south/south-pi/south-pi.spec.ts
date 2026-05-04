@@ -8,8 +8,9 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
-import type { SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { SouthItemSettings, SouthPIItemSettings, SouthPISettings } from '../../../shared/model/south-settings.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
 import type SouthPiClass from './south-pi';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -19,7 +20,7 @@ describe('South PI', () => {
   let south: SouthPiClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -31,7 +32,7 @@ describe('South PI', () => {
   };
 
   const httpRequestExports = {
-    HTTPRequest: mock.fn(async () => createMockResponse(200))
+    HTTPRequest: mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200))
   };
 
   before(() => {
@@ -99,7 +100,7 @@ describe('South PI', () => {
 
   beforeEach(() => {
     southCacheService = new SouthCacheServiceMock();
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthPi(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
@@ -132,7 +133,7 @@ describe('South PI', () => {
 
   it('should properly reconnect when connection fails', async () => {
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1) throw new Error('connection failed');
       return createMockResponse(200);
@@ -150,21 +151,22 @@ describe('South PI', () => {
   });
 
   it('should not reconnect when disconnecting', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       throw new Error('connection failed');
     });
     (south as unknown as Record<string, unknown>)['disconnecting'] = true;
-    south.disconnect = mock.fn(async () => undefined);
+    const disconnectMock1 = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock1;
 
     await south.connect();
 
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(disconnectMock1.mock.calls.length, 0);
     mock.timers.tick(configuration.settings.retryInterval);
     assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
   });
 
   it('should properly clear reconnect timeout on disconnect when not connected', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       throw new Error('connection failed');
     });
 
@@ -185,7 +187,7 @@ describe('South PI', () => {
 
   it('should properly clear reconnect timeout on disconnect when connected', async () => {
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1) return createMockResponse(200);
       throw new Error('disconnection failed');
@@ -205,18 +207,18 @@ describe('South PI', () => {
   });
 
   it('should test connection successfully', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     await assert.doesNotReject(south.testConnection());
   });
 
   it('should test connection fail', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(400, 'bad request'));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(400, 'bad request'));
     await assert.rejects(
       south.testConnection(),
       new Error('Error occurred when sending connect command to remote agent with status 400. bad request')
     );
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(500, 'another error'));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(500, 'another error'));
     await assert.rejects(south.testConnection(), new Error('Error occurred when sending connect command to remote agent with status 500'));
   });
 
@@ -230,7 +232,7 @@ describe('South PI', () => {
       mock.fn(async () => undefined)
     );
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1)
         return createMockResponse(200, {
@@ -300,7 +302,7 @@ describe('South PI', () => {
     const endTime = '2022-01-01T00:00:00.000Z';
 
     let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       callCount++;
       if (callCount === 1) return createMockResponse(400, 'bad request');
       return createMockResponse(500);
@@ -320,7 +322,7 @@ describe('South PI', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
       throw new Error('bad request');
     });
 
@@ -331,7 +333,7 @@ describe('South PI', () => {
   });
 
   it('should test item', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () =>
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
       createMockResponse(200, {
         recordCount: 2,
         content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
@@ -339,8 +341,10 @@ describe('South PI', () => {
       })
     );
 
-    south.connect = mock.fn(async () => undefined);
-    south.disconnect = mock.fn(async () => undefined);
+    const connectMock = mock.fn(async () => undefined);
+    south.connect = connectMock;
+    const disconnectMock2 = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock2;
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     const fetchOptions = {
@@ -361,30 +365,32 @@ describe('South PI', () => {
     };
 
     await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-    assert.strictEqual((south.connect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(connectMock.mock.calls.length, 1);
+    assert.strictEqual(disconnectMock2.mock.calls.length, 1);
     assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
       href: `${configuration.settings.agentUrl}/api/pi/${configuration.id}/read`
     });
     assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], fetchOptions);
 
     await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-    assert.strictEqual((south.connect as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(connectMock.mock.calls.length, 2);
+    assert.strictEqual(disconnectMock2.mock.calls.length, 2);
   });
 
   it('should test item and throw error if bad status', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(400));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(400));
 
-    south.connect = mock.fn(async () => undefined);
-    south.disconnect = mock.fn(async () => undefined);
+    const connectMock3 = mock.fn(async () => undefined);
+    south.connect = connectMock3;
+    const disconnectMock3 = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock3;
 
     await assert.rejects(
       south.testItem(configuration.items[0], testData.south.itemTestingSettings),
       new Error('Error occurred when sending connect command to remote agent. 400')
     );
-    assert.strictEqual((south.connect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(connectMock3.mock.calls.length, 1);
+    assert.strictEqual(disconnectMock3.mock.calls.length, 1);
 
     const { startTime, endTime } = testData.south.itemTestingSettings.history!;
     assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
