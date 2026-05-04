@@ -48,7 +48,7 @@ const manifest: TransformerManifest = {
         key: 'newline',
         translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.newline',
         defaultValue: 'LF',
-        selectableValues: ['DEFAULT', 'CRLF', 'LF', 'CR'],
+        selectableValues: ['CRLF', 'LF', 'CR'],
         validators: [{ type: 'REQUIRED', arguments: [] }],
         displayProperties: { row: 1, columns: 3, displayInViewMode: false }
       },
