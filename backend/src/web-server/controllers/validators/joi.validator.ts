@@ -228,7 +228,7 @@ export default class JoiValidator {
     return schema;
   }
 
-  private applyArrayLevelValidators(schema: Joi.ArraySchema, validators?: Array<OIBusAttributeValidator>): Joi.ArraySchema {
+  protected applyArrayLevelValidators(schema: Joi.ArraySchema, validators?: Array<OIBusAttributeValidator>): Joi.ArraySchema {
     if (!validators) return schema;
 
     validators.forEach(validator => {
@@ -242,7 +242,7 @@ export default class JoiValidator {
     return schema;
   }
 
-  private generateSingleTrueValidator(fieldKey: string): Joi.CustomValidator {
+  protected generateSingleTrueValidator(fieldKey: string): Joi.CustomValidator {
     return (value: Array<Record<string, unknown>>, helpers: Joi.CustomHelpers) => {
       if (!Array.isArray(value)) {
         return value;
@@ -254,11 +254,11 @@ export default class JoiValidator {
     };
   }
 
-  private isMqttItemsArray(formControl: OIBusArrayAttribute): boolean {
+  protected isMqttItemsArray(formControl: OIBusArrayAttribute): boolean {
     return formControl.rootAttribute.attributes.some(control => control.key === 'topic');
   }
 
-  private mqttTopicOverlapValidator: Joi.CustomValidator = (value: Array<Record<string, unknown>>, helpers: Joi.CustomHelpers) => {
+  protected mqttTopicOverlapValidator: Joi.CustomValidator = (value: Array<Record<string, unknown>>, helpers: Joi.CustomHelpers) => {
     if (!Array.isArray(value)) {
       return value;
     }
@@ -285,14 +285,14 @@ export default class JoiValidator {
       : value;
   };
 
-  private doMqttTopicsOverlap(topic1: string, topic2: string): boolean {
+  protected doMqttTopicsOverlap(topic1: string, topic2: string): boolean {
     if (topic1 === topic2) {
       return true;
     }
     return this.mqttTopicMatches(topic1, topic2) || this.mqttTopicMatches(topic2, topic1);
   }
 
-  private mqttTopicMatches(topic: string, pattern: string): boolean {
+  protected mqttTopicMatches(topic: string, pattern: string): boolean {
     if (!pattern.includes('+') && !pattern.includes('#')) {
       return topic === pattern;
     }
