@@ -26,7 +26,7 @@ import { OIAnalyticsMessage } from '../../model/oianalytics-message.model';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthMSSQLItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import { HistoryQueryEntity } from '../../model/histor-query.model';
+import { HistoryQueryEntity, HistoryQueryEntityLight } from '../../model/histor-query.model';
 import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO } from '../../../shared/model/history-query.model';
 import { User } from '../../model/user.model';
 import { Certificate } from '../../model/certificate.model';
@@ -1226,6 +1226,20 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     northTransformers: []
   }
 ];
+const historyQueriesLight: Array<HistoryQueryEntityLight> = historyQueries.map(hq => ({
+  id: hq.id,
+  name: hq.name,
+  description: hq.description,
+  status: hq.status,
+  southType: hq.southType,
+  northType: hq.northType,
+  startTime: hq.queryTimeRange.startTime,
+  endTime: hq.queryTimeRange.endTime,
+  createdBy: hq.createdBy,
+  updatedBy: hq.updatedBy,
+  createdAt: hq.createdAt,
+  updatedAt: hq.updatedAt
+}));
 const historyQueryCommand: HistoryQueryCommandDTO = {
   name: 'name',
   description: 'description',
@@ -2262,6 +2276,7 @@ export default Object.freeze({
   },
   historyQueries: {
     list: historyQueries,
+    listLight: historyQueriesLight,
     command: historyQueryCommand,
     itemCommand: historyQueryItemCommand,
     metrics: historyQueryMetrics

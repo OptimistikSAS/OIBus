@@ -7,7 +7,7 @@ import { NorthAzureBlobSettings } from '../../../shared/model/north-settings.mod
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
-import CacheService from '../../service/cache/cache.service';
+import type { ICacheService } from '../../model/cache.service.model';
 import { ReadStream } from 'node:fs';
 import type { ILogger } from '../../model/logger.model';
 
@@ -17,7 +17,7 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   private blobClient: BlobServiceClient | null = null;
   private dataLakeClient: DataLakeServiceClient | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, logger: ILogger, cacheService: CacheService) {
+  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, logger: ILogger, cacheService: ICacheService) {
     super(connector, logger, cacheService);
   }
 

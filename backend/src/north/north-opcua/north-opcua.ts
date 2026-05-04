@@ -17,7 +17,7 @@ import {
 } from 'node-opcua';
 import { randomUUID } from 'crypto';
 import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
-import CacheService from '../../service/cache/cache.service';
+import type { ICacheService } from '../../model/cache.service.model';
 import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
@@ -33,7 +33,7 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, logger: ILogger, cacheService: CacheService) {
+  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, logger: ILogger, cacheService: ICacheService) {
     super(connector, logger, cacheService);
   }
 

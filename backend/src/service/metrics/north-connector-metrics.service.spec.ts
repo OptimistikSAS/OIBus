@@ -54,8 +54,8 @@ describe('NorthConnectorMetricsService', () => {
       metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'sent'
     });
-    const call3 = northConnectorMetricsRepository.updateMetrics.mock.calls[3].arguments[1] as Record<string, unknown>;
-    assert.strictEqual(call3.contentSentSize as number, testData.north.metrics.contentSentSize + 10);
+    const call3 = northConnectorMetricsRepository.updateMetrics.mock.calls[3].arguments[1];
+    assert.strictEqual(call3.contentSentSize, testData.north.metrics.contentSentSize + 10);
     assert.strictEqual(call3.lastContentSent, 'file.csv');
 
     northMock.metricsEvent.emit('run-end', {
@@ -63,20 +63,20 @@ describe('NorthConnectorMetricsService', () => {
       metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'archived'
     });
-    const call4 = northConnectorMetricsRepository.updateMetrics.mock.calls[4].arguments[1] as Record<string, unknown>;
-    assert.strictEqual(call4.contentArchivedSize as number, testData.north.metrics.contentArchivedSize + 10);
+    const call4 = northConnectorMetricsRepository.updateMetrics.mock.calls[4].arguments[1];
+    assert.strictEqual(call4.contentArchivedSize, testData.north.metrics.contentArchivedSize + 10);
 
     northMock.metricsEvent.emit('run-end', {
       lastRunDuration: 888,
       metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'errored'
     });
-    const call5 = northConnectorMetricsRepository.updateMetrics.mock.calls[5].arguments[1] as Record<string, unknown>;
-    assert.strictEqual(call5.contentErroredSize as number, testData.north.metrics.contentErroredSize + 10);
+    const call5 = northConnectorMetricsRepository.updateMetrics.mock.calls[5].arguments[1];
+    assert.strictEqual(call5.contentErroredSize, testData.north.metrics.contentErroredSize + 10);
 
     northMock.metricsEvent.emit('cache-content-size', 123);
-    const call6 = northConnectorMetricsRepository.updateMetrics.mock.calls[6].arguments[1] as Record<string, unknown>;
-    assert.strictEqual(call6.contentCachedSize as number, testData.north.metrics.contentCachedSize + 123);
+    const call6 = northConnectorMetricsRepository.updateMetrics.mock.calls[6].arguments[1];
+    assert.strictEqual(call6.contentCachedSize, testData.north.metrics.contentCachedSize + 123);
   });
 
   it('should reset metrics', () => {
@@ -87,20 +87,20 @@ describe('NorthConnectorMetricsService', () => {
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
     mock.timers.tick(100);
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
     assert.ok(service.stream);
   });
 
   it('should write on stream', () => {
     const stream = service.stream;
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
 
     service.updateMetrics();
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
     service.initMetrics();
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(writeSpy.mock.calls.length, 2);
   });
 
   it('should properly clean up listeners on destroy', () => {

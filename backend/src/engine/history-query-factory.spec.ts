@@ -39,7 +39,7 @@ describe('HistoryQueryFactory', () => {
   let deleteHistoryQueryCache: typeof DeleteHistoryQueryCacheFn;
 
   // Mutable exports objects — SUT holds references to these objects, so property mutation is picked up
-  const utilsExports = { createFolder: mock.fn(async () => undefined) };
+  const utilsExports = { createFolder: mock.fn(async (_path: string) => undefined) };
   const northFactoryExports: Record<string, unknown> = {
     buildNorth: mock.fn(() => null),
     initNorthCache: mock.fn(async () => undefined),

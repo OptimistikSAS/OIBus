@@ -19,7 +19,7 @@ import { NorthSettings } from '../../shared/model/north-settings.model';
 import { createOIBusError, delay, generateRandomId, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
-import CacheService from '../service/cache/cache.service';
+import type { ICacheService } from '../model/cache.service.model';
 import { Readable } from 'node:stream';
 import { createTransformer } from '../service/transformer.service';
 import IgnoreTransformer from '../transformers/ignore-transformer';
@@ -63,7 +63,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
     protected logger: ILogger,
-    private cacheService: CacheService
+    private cacheService: ICacheService
   ) {}
 
   private onCacheSize = (cacheSize: { cache: number; error: number; archive: number }) => {

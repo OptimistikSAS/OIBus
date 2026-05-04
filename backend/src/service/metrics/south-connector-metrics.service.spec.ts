@@ -103,20 +103,20 @@ describe('SouthConnectorMetricsService', () => {
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
     mock.timers.tick(100);
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
     assert.ok(service.stream);
   });
 
   it('should write on stream', () => {
     const stream = service.stream;
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
 
     service.updateMetrics();
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
     service.initMetrics();
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(writeSpy.mock.calls.length, 2);
   });
 
   it('should properly clean up listeners on destroy', () => {

@@ -51,6 +51,10 @@ describe('NorthOPCUA', () => {
   let north: NorthOPCUAClass;
   let configuration: NorthConnectorEntity<NorthOPCUASettings>;
   let mockSession: ClientSession;
+  let sessionCloseMock: ReturnType<typeof mock.fn>;
+  let sessionReadMock: ReturnType<typeof mock.fn>;
+  let sessionWriteMock: ReturnType<typeof mock.fn>;
+  let fsRmMock: ReturnType<typeof mock.fn>;
 
   const logger = new PinoLogger();
   const cacheService = new CacheServiceMock();
@@ -123,7 +127,7 @@ describe('NorthOPCUA', () => {
     logger.error.mock.resetCalls();
 
     // Mock node:fs/promises methods in-place so the SUT's imported fs object is intercepted
-    mock.method(fs, 'rm', async () => undefined);
+    fsRmMock = mock.method(fs, 'rm', async () => undefined) as ReturnType<typeof mock.fn>;
 
     // Mock crypto.randomUUID in-place
     mock.method(nodeRequire('crypto'), 'randomUUID', () => 'randomUUID');
@@ -139,10 +143,16 @@ describe('NorthOPCUA', () => {
       keepSessionAlive: false
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sessionCloseMock = mock.fn(async (..._args: Array<any>) => undefined);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sessionReadMock = mock.fn(async (..._args: Array<any>) => ({}));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    sessionWriteMock = mock.fn(async (..._args: Array<any>) => ({ isGood: () => true, name: 'Good' }));
     mockSession = {
-      close: mock.fn(async () => undefined),
-      read: mock.fn(async () => ({})),
-      write: mock.fn(async () => ({ isGood: () => true, name: 'Good' }))
+      close: sessionCloseMock,
+      read: sessionReadMock,
+      write: sessionWriteMock
     } as unknown as ClientSession;
 
     // Re-apply createSession to pick up the new mockSession
@@ -226,7 +236,7 @@ describe('NorthOPCUA', () => {
 
     await north.disconnect();
 
-    assert.strictEqual((mockSession.close as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(sessionCloseMock.mock.calls.length, 1);
     assert.strictEqual((north as unknown as { client: null })['client'], null);
   });
 
@@ -281,8 +291,7 @@ describe('NorthOPCUA', () => {
     // Tag2: returns value but DataType string not in enum → "Invalid data type"
     // Tag3: valid DataType.Double but write fails
     // Tag4: valid DataType.Double and write succeeds
-    const readMock = mockSession.read as ReturnType<typeof mock.fn>;
-    readMock.mock.mockImplementation(
+    sessionReadMock.mock.mockImplementation(
       seq(
         async () => ({ value: 'bad' }),
         async () => ({ value: { value: { value: 'Bad' } } }),
@@ -291,8 +300,7 @@ describe('NorthOPCUA', () => {
       )
     );
 
-    const writeMock = mockSession.write as ReturnType<typeof mock.fn>;
-    writeMock.mock.mockImplementation(
+    sessionWriteMock.mock.mockImplementation(
       seq(
         async () => ({ isGood: () => false, name: 'Bad' }),
         async () => ({ isGood: () => true, name: 'Good' })
@@ -311,10 +319,10 @@ describe('NorthOPCUA', () => {
     });
 
     // Tag1: read called with correct args
-    assert.deepStrictEqual(readMock.mock.calls[0].arguments[0], { nodeId: 'ns=1;s=Tag1', attributeId: AttributeIds.DataType });
+    assert.deepStrictEqual(sessionReadMock.mock.calls[0].arguments[0], { nodeId: 'ns=1;s=Tag1', attributeId: AttributeIds.DataType });
 
     // Tag4: write called with correct args (second write call, index 1)
-    assert.deepStrictEqual(writeMock.mock.calls[1].arguments[0], {
+    assert.deepStrictEqual(sessionWriteMock.mock.calls[1].arguments[0], {
       nodeId: 'ns=1;s=Tag4',
       attributeId: AttributeIds.Value,
       value: { value: { dataType: DataType.Double, value: 111 } }
@@ -357,8 +365,7 @@ describe('NorthOPCUA', () => {
     const values = [{ nodeId: 'bad-node', value: 123 }];
     streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
 
-    const readMock = mockSession.read as ReturnType<typeof mock.fn>;
-    readMock.mock.mockImplementation(async () => {
+    sessionReadMock.mock.mockImplementation(async () => {
       throw new Error('BadNodeId');
     });
     (north as unknown as { client: ClientSession })['client'] = mockSession;
@@ -380,8 +387,7 @@ describe('NorthOPCUA', () => {
     const values = [{ nodeId: 'tag1', value: 123 }];
     streamToStringFn.mock.mockImplementation(async () => JSON.stringify(values));
 
-    const readMock = mockSession.read as ReturnType<typeof mock.fn>;
-    readMock.mock.mockImplementation(async () => {
+    sessionReadMock.mock.mockImplementation(async () => {
       throw new Error('Connection Lost');
     });
 
@@ -416,7 +422,7 @@ describe('NorthOPCUA', () => {
     assert.ok((initOPCUACertificateFoldersFn.mock.calls[0].arguments[0] as string).includes('opcua-test-'));
     assert.strictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls.length, 1);
     assert.strictEqual(mockSessionClose.mock.calls.length, 1);
-    assert.strictEqual((fs.rm as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(fsRmMock.mock.calls.length, 1);
   });
 
   it('should throw error if test fails', async () => {
@@ -426,6 +432,6 @@ describe('NorthOPCUA', () => {
 
     await assert.rejects(async () => north.testConnection(), /Auth failed/);
     // cleanup should still be called even on error
-    assert.strictEqual((fs.rm as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(fsRmMock.mock.calls.length, 1);
   });
 });

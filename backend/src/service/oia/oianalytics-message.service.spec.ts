@@ -138,9 +138,10 @@ describe('OIAnalytics Message Service', () => {
 
   it('should properly start and stop', async () => {
     (service as Record<string, unknown>)['retryMessageInterval'] = setTimeout(() => null);
-    service.run = mock.fn();
+    const runMock = mock.fn();
+    service.run = runMock;
     service.start();
-    assert.strictEqual((service.run as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(runMock.mock.calls.length, 1);
     assert.ok(
       oIAnalyticsMessageRepository.list.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
@@ -158,11 +159,12 @@ describe('OIAnalytics Message Service', () => {
   });
 
   it('should properly create full config message on registration', () => {
-    service.createFullConfigMessageIfNotPending = mock.fn();
+    const createFullConfigMock = mock.fn();
+    service.createFullConfigMessageIfNotPending = createFullConfigMock;
     service.start();
-    assert.strictEqual((service.createFullConfigMessageIfNotPending as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(createFullConfigMock.mock.calls.length, 1);
     oIAnalyticsRegistrationService.registrationEvent.emit('updated');
-    assert.strictEqual((service.createFullConfigMessageIfNotPending as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(createFullConfigMock.mock.calls.length, 2);
   });
 
   it('should properly send message and wait for it to finish before stopping', async () => {
@@ -340,9 +342,10 @@ describe('OIAnalytics message service without message', () => {
   it('should properly start when no message retrieved', () => {
     assert.strictEqual(oIAnalyticsMessageRepository.markAsCompleted.mock.calls.length, 0);
 
-    service.run = mock.fn();
+    const runMock = mock.fn();
+    service.run = runMock;
     service.start();
-    assert.strictEqual((service.run as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(runMock.mock.calls.length, 0);
   });
 
   it('should change logger', () => {

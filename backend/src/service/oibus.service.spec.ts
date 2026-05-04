@@ -30,6 +30,9 @@ let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let mockProxyServer: Record<string, unknown>;
 let mockEncryptionService: Record<string, unknown>;
 
+// Captured mock proxy instance — set by MockProxyServer constructor in before()
+let lastProxyRefreshIpFilters: ReturnType<typeof mock.fn>;
+
 let OIBusService: new (...args: Array<unknown>) => InstanceType<typeof OIBusServiceType>;
 let toEngineSettingsDTO: typeof toEngineSettingsDTOType;
 
@@ -45,6 +48,9 @@ before(() => {
     stop = mock.fn(async () => undefined);
     refreshIpFilters = mock.fn();
     setLogger = mock.fn();
+    constructor() {
+      lastProxyRefreshIpFilters = this.refreshIpFilters;
+    }
   }
   mockProxyServer = { __esModule: true, default: MockProxyServer };
 
@@ -140,7 +146,7 @@ describe('OIBus Service', () => {
     );
 
     service = new OIBusService(
-      validator as unknown as Parameters<typeof OIBusService>[0],
+      validator,
       engineRepository,
       engineMetricsRepository,
       ipFilterService,
@@ -166,15 +172,15 @@ describe('OIBus Service', () => {
   it('should start OIBus and stop it', async () => {
     northService.list.mock.mockImplementation(() => testData.north.list);
     southService.list.mock.mockImplementation(() => testData.south.list);
-    historyQueryService.list.mock.mockImplementation(() => testData.historyQueries.list);
-    southService.findById.mock.mockImplementation((id: unknown) => testData.south.list.find(el => el.id === id));
-    northService.findById.mock.mockImplementation((id: unknown) => testData.north.list.find(el => el.id === id));
-    historyQueryService.findById.mock.mockImplementation((id: unknown) => testData.historyQueries.list.find(el => el.id === id));
+    historyQueryService.list.mock.mockImplementation(() => testData.historyQueries.listLight);
+    southService.findById.mock.mockImplementation((id: string) => testData.south.list.find(el => el.id === id) ?? testData.south.list[0]);
+    northService.findById.mock.mockImplementation((id: string) => testData.north.list.find(el => el.id === id) ?? testData.north.list[0]);
+    historyQueryService.findById.mock.mockImplementation((id: string) => testData.historyQueries.list.find(el => el.id === id) ?? testData.historyQueries.list[0]);
 
     await service.start();
 
     assert.strictEqual(engine.start.mock.calls.length, 1);
-    assert.deepStrictEqual(engine.start.mock.calls[0].arguments, [testData.north.list, testData.south.list, testData.historyQueries.list]);
+    assert.deepStrictEqual(engine.start.mock.calls[0].arguments, [testData.north.list, testData.south.list, testData.historyQueries.listLight]);
     assert.ok((logger.info.mock.calls[0].arguments[0] as string).includes('Starting OIBus...'));
     assert.ok(service.getProxyServer() !== undefined && service.getProxyServer() !== null);
     assert.strictEqual(ipFilterService.list.mock.calls.length, 1);
@@ -198,14 +204,14 @@ describe('OIBus Service', () => {
     engineRepository.get.mock.mockImplementation(() => settingsWithoutOIAlog);
     const proxyServer = service.getProxyServer();
     // refreshIpFilters was called once in start() — reset before the new assertions
-    (proxyServer.refreshIpFilters as ReturnType<typeof mock.fn>).mock.resetCalls();
+    lastProxyRefreshIpFilters.mock.resetCalls();
 
     ipFilterService.whiteListEvent.emit('update-white-list');
-    assert.strictEqual((proxyServer.refreshIpFilters as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(lastProxyRefreshIpFilters.mock.calls.length, 0);
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     ipFilterService.whiteListEvent.emit('update-white-list');
-    assert.strictEqual((proxyServer.refreshIpFilters as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(lastProxyRefreshIpFilters.mock.calls.length, 1);
 
     await service.stop();
     assert.strictEqual(engine.stop.mock.calls.length, 1);
@@ -315,7 +321,7 @@ describe('OIBus Service', () => {
     engineRepository.get.mock.mockImplementation(() => {
       getCallCount++;
       if (getCallCount === 1) return testData.engine.settings;
-      return specificTestCommand;
+      return { ...testData.engine.settings, ...specificTestCommand };
     });
 
     const result = await service.updateEngineSettings(specificTestCommand, testData.users.list[0].id);
@@ -440,9 +446,9 @@ describe('OIBus Service', () => {
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
     mock.timers.tick(100);
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
 
     // The timer tick wrote this.metrics (= testData.engine.metrics) as the first call.
     // updateEngineMetrics() writes newly computed values as the second call.
@@ -450,7 +456,7 @@ describe('OIBus Service', () => {
     // the first write (index 0) which has the unmodified testData.engine.metrics values.
     service.updateEngineMetrics();
     assert.strictEqual(
-      (stream.write as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      writeSpy.mock.calls[0].arguments[0],
       `data: ${JSON.stringify({
         metricsStart: '2020-01-01T00:00:00.000',
         processCpuUsageInstant: 0,

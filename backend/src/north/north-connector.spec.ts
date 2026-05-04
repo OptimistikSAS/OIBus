@@ -30,6 +30,8 @@ import type NorthFileWriterClass from './north-file-writer/north-file-writer';
 import { OIBusError } from '../model/engine.model';
 import path from 'node:path';
 import { DateTime } from 'luxon';
+import type { ReadStream } from 'node:fs';
+import type { Readable } from 'node:stream';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -114,10 +116,10 @@ describe('NorthConnector', () => {
 
     // Reset logger mock calls
     for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
-      (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+      fn.mock.resetCalls();
     }
     for (const fn of [anotherLogger.trace, anotherLogger.debug, anotherLogger.info, anotherLogger.warn, anotherLogger.error]) {
-      (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+      fn.mock.resetCalls();
     }
 
     cronMockInstance.stop.mock.resetCalls();
@@ -134,7 +136,7 @@ describe('NorthConnector', () => {
 
     // Reset transformer service
     transformerServiceExports.createTransformer = mock.fn(() => oiBusTransformer);
-    (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.resetCalls();
+    oiBusTransformer.transform.mock.resetCalls();
 
     // Reset in-place fs/stream mocks
     realFs['createReadStream'] = mock.fn(() => mockStream);
@@ -159,13 +161,13 @@ describe('NorthConnector', () => {
     await north.start();
     assert.strictEqual(north.isEnabled(), true);
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `North connector "${testData.north.list[0].name}" enabled`
       )
     );
-    assert.strictEqual((logger.error as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(logger.error.mock.calls.length, 0);
     assert.ok(
-      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.info.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] === `North connector "${testData.north.list[0].name}" of type ${testData.north.list[0].type} started`
       )
@@ -177,11 +179,12 @@ describe('NorthConnector', () => {
     const newConfig = JSON.parse(JSON.stringify(testData.north.list[0]));
     newConfig.name = 'Updated Name';
     newConfig.enabled = false;
-    north.connect = mock.fn(async () => undefined);
+    const connectMock = mock.fn(async () => undefined);
+    north.connect = connectMock;
     north.connectorConfiguration = newConfig;
     await north.start();
-    assert.strictEqual((cacheService.start as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((north.connect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(cacheService.start.mock.calls.length, 1);
+    assert.strictEqual(connectMock.mock.calls.length, 0);
     assert.deepStrictEqual(north.connectorConfiguration, newConfig);
   });
 
@@ -196,10 +199,11 @@ describe('NorthConnector', () => {
   });
 
   it('should properly create cron job and add to queue', async () => {
-    north.addTaskToQueue = mock.fn();
+    const addTaskToQueueMock = mock.fn((_taskDescription: { id: string; name: string }) => undefined);
+    north.addTaskToQueue = addTaskToQueueMock;
     await north.connect();
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] === `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
       )
@@ -207,7 +211,7 @@ describe('NorthConnector', () => {
 
     await north.connect();
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] ===
           `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
@@ -221,8 +225,8 @@ describe('NorthConnector', () => {
     const cronCallback = lastCallArgs[1] as () => void;
     cronCallback();
 
-    assert.strictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.strictEqual(addTaskToQueueMock.mock.calls.length, 1);
+    assert.deepStrictEqual(addTaskToQueueMock.mock.calls[0].arguments[0], {
       id: testData.scanMode.list[0].id,
       name: testData.scanMode.list[0].name
     });
@@ -230,13 +234,13 @@ describe('NorthConnector', () => {
     await north.updateScanMode(testData.scanMode.list[0]);
     await north.updateScanMode(testData.scanMode.list[1]);
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] === `Creating cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
       )
     );
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] ===
           `Removing existing cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
@@ -255,7 +259,7 @@ describe('NorthConnector', () => {
     north.createCronJob({ ...testData.scanMode.list[0], cron: '* * * * * *L' });
 
     assert.ok(
-      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.error.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] ===
           `Error when creating cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
@@ -265,41 +269,44 @@ describe('NorthConnector', () => {
 
   it('should properly add to queue a new task and trigger next run', async () => {
     await north.start();
-    north.run = mock.fn(async () => undefined);
+    const runMock = mock.fn(async (_taskDescription: { id: string; name: string }) => undefined);
+    north.run = runMock;
     north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
 
     assert.ok(
-      !(logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      !logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `Task "${testData.scanMode.list[0].name}" is already in queue`
       )
     );
-    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.strictEqual(runMock.mock.calls.length, 1);
+    assert.deepStrictEqual(runMock.mock.calls[0].arguments[0], {
       id: testData.scanMode.list[0].id,
       name: testData.scanMode.list[0].name
     });
 
     north.addTaskToQueue({ id: testData.scanMode.list[0].id, name: testData.scanMode.list[0].name });
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `Task "${testData.scanMode.list[0].name}" is already in queue`
       )
     );
-    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(runMock.mock.calls.length, 1);
 
     north.addTaskToQueue({ id: 'other id', name: testData.scanMode.list[0].name });
-    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(runMock.mock.calls.length, 1);
   });
 
   it('should properly run a task', async () => {
-    north.handleContentWrapper = mock.fn(async () => undefined);
-    north['triggerRunIfNecessary'] = mock.fn(async () => undefined);
+    const handleContentWrapperMock = mock.fn(async () => undefined);
+    north.handleContentWrapper = handleContentWrapperMock;
+    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.run({ id: 'scanModeId1', name: 'scan' });
 
-    assert.strictEqual((north.handleContentWrapper as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(handleContentWrapperMock.mock.calls.length, 1);
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
     assert.deepStrictEqual(
-      (north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      triggerRunIfNecessaryMock.mock.calls[0].arguments[0],
       north['connector'].caching.throttling.runMinDelay
     );
   });
@@ -307,10 +314,11 @@ describe('NorthConnector', () => {
   it('should properly run a task and trigger next after error', async () => {
     north['errorCount'] = 1;
     north.handleContentWrapper = mock.fn(async () => undefined);
-    north['triggerRunIfNecessary'] = mock.fn(async () => undefined);
+    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.run({ id: 'scanModeId1', name: 'scan' });
     assert.deepStrictEqual(
-      (north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      triggerRunIfNecessaryMock.mock.calls[0].arguments[0],
       north['connector'].caching.error.retryInterval
     );
   });
@@ -321,27 +329,29 @@ describe('NorthConnector', () => {
       { id: 'scanModeId1', name: 'scan' },
       { id: 'previous-task', name: 'previous task' }
     ];
-    north.handleContentWrapper = mock.fn(async () => undefined);
-    north['triggerRunIfNecessary'] = mock.fn(async () => undefined);
+    const handleContentWrapperMock = mock.fn(async () => undefined);
+    north.handleContentWrapper = handleContentWrapperMock;
+    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.run({ id: 'scanModeId1', name: 'scan' });
     assert.ok(
-      (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.trace.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `North run triggered by task "scan" (scanModeId1)`
       )
     );
     assert.ok(
-      (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.trace.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `North run triggered by task "previous task" (previous-task)`
       )
     );
-    assert.strictEqual((north.handleContentWrapper as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-    assert.strictEqual((north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(handleContentWrapperMock.mock.calls.length, 2);
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
   });
 
   it('should properly disconnect', async () => {
     await north.disconnect();
     assert.ok(
-      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.info.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] === `"${testData.north.list[0].name}" (${testData.north.list[0].id}) disconnected`
       )
@@ -349,17 +359,18 @@ describe('NorthConnector', () => {
   });
 
   it('should properly stop', async () => {
-    north.disconnect = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async () => undefined);
+    north.disconnect = disconnectMock;
     await north.stop();
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] === `Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`
       )
     );
-    assert.strictEqual((north.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
     assert.ok(
-      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.info.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `"${testData.north.list[0].name}" stopped`
       )
     );
@@ -371,27 +382,28 @@ describe('NorthConnector', () => {
       resolvePromise = resolve;
     });
     north.handleContentWrapper = mock.fn(async () => promise);
-    north.disconnect = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async () => undefined);
+    north.disconnect = disconnectMock;
 
     north.run({ id: 'scanModeId1', name: 'scan' });
 
     north.stop();
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] === `Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`
       )
     );
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Waiting for task to finish'
       )
     );
-    assert.strictEqual((north.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
 
     north.run({ id: 'trigger1', name: 'Another trigger' });
     assert.ok(
-      (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.debug.mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
           c.arguments[0] === 'Task "Another trigger" not run because the connector is stopping or a run is already in progress'
       )
@@ -399,16 +411,16 @@ describe('NorthConnector', () => {
 
     resolvePromise();
     await flushPromises();
-    assert.strictEqual((north.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
     assert.ok(
-      (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.info.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `"${testData.north.list[0].name}" stopped`
       )
     );
   });
 
   it('should check if North caches are empty', async () => {
-    (cacheService.cacheIsEmpty as ReturnType<typeof mock.fn>).mock.mockImplementation(() => true);
+    cacheService.cacheIsEmpty.mock.mockImplementation(() => true);
     assert.strictEqual(north.isCacheEmpty(), true);
   });
 
@@ -420,19 +432,19 @@ describe('NorthConnector', () => {
       maxNumberOfFilesReturned: 1000
     };
     await north.searchCacheContent(searchParams);
-    assert.strictEqual((cacheService.searchCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.searchCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], searchParams);
+    assert.strictEqual(cacheService.searchCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.searchCacheContent.mock.calls[0].arguments[0], searchParams);
   });
 
   it('should reset cache', async () => {
     await north.resetCache();
-    assert.strictEqual((cacheService.removeAllCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(cacheService.removeAllCacheContent.mock.calls.length, 1);
   });
 
   it('should get file from cache', async () => {
     await north.getFileFromCache('cache', 'file1.queue.tmp');
-    assert.strictEqual((cacheService.getFileFromCache as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.getFileFromCache as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.strictEqual(cacheService.getFileFromCache.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.getFileFromCache.mock.calls[0].arguments, [
       'cache',
       'file1.queue.tmp'
     ]);
@@ -445,63 +457,68 @@ describe('NorthConnector', () => {
       error: { remove: [], move: [] }
     };
     await north.updateCacheContent(updateCommand);
-    assert.strictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], updateCommand);
+    assert.strictEqual(cacheService.updateCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.updateCacheContent.mock.calls[0].arguments[0], updateCommand);
   });
 
   it('should use another logger', async () => {
     north.setLogger(anotherLogger);
-    (logger.debug as ReturnType<typeof mock.fn>).mock.resetCalls();
+    logger.debug.mock.resetCalls();
     await north.stop();
-    assert.strictEqual((anotherLogger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(anotherLogger.debug.mock.calls.length, 1);
+    assert.strictEqual(logger.debug.mock.calls.length, 0);
   });
 
   it('should trigger run if necessary because of retry', async () => {
-    north.addTaskToQueue = mock.fn();
-    north.run = mock.fn(async () => undefined);
+    const addTaskToQueueMock = mock.fn((_taskDescription: { id: string; name: string }) => undefined);
+    north.addTaskToQueue = addTaskToQueueMock;
+    const runMock = mock.fn(async (_taskDescription: { id: string; name: string }) => undefined);
+    north.run = runMock;
     north['errorCount'] = 1;
     await north['triggerRunIfNecessary'](0);
-    assert.strictEqual((utilsExports.delay as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.strictEqual(utilsExports.delay.mock.calls.length, 0);
+    assert.strictEqual(addTaskToQueueMock.mock.calls.length, 1);
+    assert.deepStrictEqual(addTaskToQueueMock.mock.calls[0].arguments[0], {
       id: 'retry',
       name: `Retry content after 1 errors`
     });
-    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(runMock.mock.calls.length, 0);
   });
 
   it('should trigger run if necessary because of group count', async () => {
     let callCount = 0;
-    (cacheService.getNumberOfElementsInQueue as ReturnType<typeof mock.fn>).mock.mockImplementation(() => {
+    cacheService.getNumberOfElementsInQueue.mock.mockImplementation(() => {
       callCount += 1;
       if (callCount === 1) return north.connectorConfiguration.caching.trigger.numberOfElements;
       return 0;
     });
-    north.addTaskToQueue = mock.fn();
-    north.run = mock.fn(async () => undefined);
+    const addTaskToQueueMock = mock.fn((_taskDescription: { id: string; name: string }) => undefined);
+    north.addTaskToQueue = addTaskToQueueMock;
+    const runMock = mock.fn(async (_taskDescription: { id: string; name: string }) => undefined);
+    north.run = runMock;
     await north['triggerRunIfNecessary'](0);
-    assert.strictEqual((utilsExports.delay as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((north.addTaskToQueue as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.strictEqual(utilsExports.delay.mock.calls.length, 0);
+    assert.strictEqual(addTaskToQueueMock.mock.calls.length, 1);
+    assert.deepStrictEqual(addTaskToQueueMock.mock.calls[0].arguments[0], {
       id: 'limit-reach',
       name: `Limit reach: ${north.connectorConfiguration.caching.trigger.numberOfElements} elements in queue >= ${north.connectorConfiguration.caching.trigger.numberOfElements}`
     });
-    assert.strictEqual((north.run as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(runMock.mock.calls.length, 0);
   });
 
   it('should handle content and remove it when handled', async () => {
-    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => contentToHandle);
-    north.handleContent = mock.fn(async () => undefined);
+    cacheService.getCacheContentToSend.mock.mockImplementation(async () => contentToHandle);
+    const handleContentMock = mock.fn(async () => undefined);
+    north.handleContent = handleContentMock;
     await north.handleContentWrapper();
-    assert.strictEqual((cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(cacheService.getCacheContentToSend.mock.calls.length, 1);
     assert.deepStrictEqual(
-      (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      cacheService.getCacheContentToSend.mock.calls[0].arguments[0],
       north.connectorConfiguration.caching.throttling.maxNumberOfElements
     );
-    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.strictEqual(handleContentMock.mock.calls.length, 1);
+    assert.strictEqual(cacheService.updateCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.updateCacheContent.mock.calls[0].arguments[0], {
       cache: { remove: [contentToHandle.filename], move: [] },
       archive: { remove: [], move: [] },
       error: { remove: [], move: [] }
@@ -519,16 +536,17 @@ describe('NorthConnector', () => {
         contentType: 'opcua'
       }
     };
-    north.handleContent = mock.fn(async () => undefined);
+    const handleContentMock = mock.fn(async () => undefined);
+    north.handleContent = handleContentMock;
     await north.handleContentWrapper();
-    assert.strictEqual((cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(cacheService.getCacheContentToSend.mock.calls.length, 0);
+    assert.strictEqual(handleContentMock.mock.calls.length, 0);
     assert.ok(
-      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.error.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `Unsupported data type: opcua (file file1.json)`
       )
     );
-    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.deepStrictEqual(cacheService.updateCacheContent.mock.calls[0].arguments[0], {
       cache: { remove: [], move: [{ to: 'error', filename: contentToHandle.filename }] },
       archive: { remove: [], move: [] },
       error: { remove: [], move: [] }
@@ -537,15 +555,16 @@ describe('NorthConnector', () => {
 
   it('should handle content and archive it when handled', async () => {
     north.connectorConfiguration.caching.archive.enabled = true;
-    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => contentToHandle);
-    north.handleContent = mock.fn(async () => undefined);
+    cacheService.getCacheContentToSend.mock.mockImplementation(async () => contentToHandle);
+    const handleContentMock = mock.fn(async () => undefined);
+    north.handleContent = handleContentMock;
     await north.handleContentWrapper();
     assert.deepStrictEqual(
-      (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      cacheService.getCacheContentToSend.mock.calls[0].arguments[0],
       north.connectorConfiguration.caching.throttling.maxNumberOfElements
     );
-    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.strictEqual(handleContentMock.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.updateCacheContent.mock.calls[0].arguments[0], {
       cache: { remove: [], move: [{ to: 'archive', filename: contentToHandle.filename }] },
       archive: { remove: [], move: [] },
       error: { remove: [], move: [] }
@@ -553,26 +572,28 @@ describe('NorthConnector', () => {
   });
 
   it('should not handle content if no content to handle', async () => {
-    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => null);
-    north.handleContent = mock.fn(async () => undefined);
+    cacheService.getCacheContentToSend.mock.mockImplementation(async () => null);
+    const handleContentMock = mock.fn(async () => undefined);
+    north.handleContent = handleContentMock;
     await north.handleContentWrapper();
     assert.deepStrictEqual(
-      (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      cacheService.getCacheContentToSend.mock.calls[0].arguments[0],
       north.connectorConfiguration.caching.throttling.maxNumberOfElements
     );
-    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(handleContentMock.mock.calls.length, 0);
   });
 
   it('should handle content and manage errors', async () => {
     north.connectorConfiguration.caching.error.retryCount = 0;
-    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => contentToHandle);
-    north.handleContent = mock.fn(async () => {
+    cacheService.getCacheContentToSend.mock.mockImplementation(async () => contentToHandle);
+    const handleContentMock = mock.fn(async () => {
       throw new OIBusError('handle error', false);
     });
+    north.handleContent = handleContentMock;
     await north.handleContentWrapper();
-    assert.strictEqual((cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.strictEqual(cacheService.getCacheContentToSend.mock.calls.length, 1);
+    assert.strictEqual(handleContentMock.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.updateCacheContent.mock.calls[0].arguments[0], {
       cache: { remove: [], move: [{ to: 'error', filename: contentToHandle.filename }] },
       archive: { remove: [], move: [] },
       error: { remove: [], move: [] }
@@ -581,14 +602,15 @@ describe('NorthConnector', () => {
 
   it('should handle content and do not move into error folder', async () => {
     north.connectorConfiguration.caching.error.retryCount = 0;
-    (cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.mockImplementation(() => contentToHandle);
-    north.handleContent = mock.fn(async () => {
+    cacheService.getCacheContentToSend.mock.mockImplementation(async () => contentToHandle);
+    const handleContentMock = mock.fn(async () => {
       throw new OIBusError('handle error', true);
     });
+    north.handleContent = handleContentMock;
     await north.handleContentWrapper();
-    assert.strictEqual((cacheService.getCacheContentToSend as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((north.handleContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((cacheService.updateCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(cacheService.getCacheContentToSend.mock.calls.length, 1);
+    assert.strictEqual(handleContentMock.mock.calls.length, 1);
+    assert.strictEqual(cacheService.updateCacheContent.mock.calls.length, 0);
   });
 
   it('should cache json content without maxSendCount', async () => {
@@ -596,13 +618,13 @@ describe('NorthConnector', () => {
 
     utilsExports.generateRandomId = mock.fn(() => '1234567890');
     let elemCallCount = 0;
-    (cacheService.getNumberOfElementsInQueue as ReturnType<typeof mock.fn>).mock.mockImplementation(() => {
+    cacheService.getNumberOfElementsInQueue.mock.mockImplementation(() => {
       elemCallCount += 1;
       if (elemCallCount === 1) return (testData.oibusContent[0].content as Array<object>).length;
       return 0;
     });
     let rawFilesCallCount = 0;
-    (cacheService.getNumberOfRawFilesInQueue as ReturnType<typeof mock.fn>).mock.mockImplementation(() => {
+    cacheService.getNumberOfRawFilesInQueue.mock.mockImplementation(() => {
       rawFilesCallCount += 1;
       if (rawFilesCallCount === 1) return 1;
       return 0;
@@ -615,8 +637,8 @@ describe('NorthConnector', () => {
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
       contentType: 'time-values'
     };
-    const outputStream = 'outputStream';
-    (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ metadata, output: outputStream }));
+    const outputStream = Buffer.from('outputStream');
+    oiBusTransformer.transform.mock.mockImplementation(async () => ({ metadata, output: outputStream }));
 
     await north.cacheContent(testData.oibusContent[0], {
       source: 'south',
@@ -624,23 +646,24 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    assert.strictEqual((realReadable['from'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    const readableFromMock = realReadable['from'] as ReturnType<typeof mock.fn>;
+    assert.strictEqual(readableFromMock.mock.calls.length, 1);
     assert.deepStrictEqual(
-      (realReadable['from'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      readableFromMock.mock.calls[0].arguments[0],
       JSON.stringify(testData.oibusContent[0].content)
     );
 
-    assert.strictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+    assert.strictEqual(oiBusTransformer.transform.mock.calls.length, 1);
+    assert.deepStrictEqual(oiBusTransformer.transform.mock.calls[0].arguments[1], {
       source: 'south',
       southId: testData.south.list[1].id,
       items: []
     });
-    assert.strictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], null);
+    assert.strictEqual(oiBusTransformer.transform.mock.calls[0].arguments[2], null);
 
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], outputStream);
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], outputStream);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: metadata.contentType,
       contentFilename: metadata.contentFile,
       numberOfElement: metadata.numberOfElement
@@ -663,11 +686,11 @@ describe('NorthConnector', () => {
       createdAt: '',
       contentType: 'time-values'
     };
-    const outputStream1 = 'outputStream1';
-    const outputStream2 = 'outputStream2';
+    const outputStream1 = Buffer.from('outputStream1');
+    const outputStream2 = Buffer.from('outputStream2');
 
     let transformCallCount = 0;
-    (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.mockImplementation(() => {
+    oiBusTransformer.transform.mock.mockImplementation(async () => {
       transformCallCount += 1;
       return { metadata, output: transformCallCount === 1 ? outputStream1 : outputStream2 };
     });
@@ -678,54 +701,67 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    assert.strictEqual((realReadable['from'] as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-    assert.strictEqual((transformerServiceExports.createTransformer as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    const readableFromMock = realReadable['from'] as ReturnType<typeof mock.fn>;
+    assert.strictEqual(readableFromMock.mock.calls.length, 2);
+    assert.strictEqual(transformerServiceExports.createTransformer.mock.calls.length, 1);
 
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], outputStream1);
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[1].arguments[0], outputStream2);
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 2);
+    assert.strictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], outputStream1);
+    assert.strictEqual(cacheService.addCacheContent.mock.calls[1].arguments[0], outputStream2);
   });
 
   it('should not cache json content if cache is full', async () => {
-    (cacheService.cacheIsFull as ReturnType<typeof mock.fn>).mock.mockImplementation(() => true);
-    north['findTransformer'] = mock.fn();
+    cacheService.cacheIsFull.mock.mockImplementation(() => true);
+    const findTransformerMock = mock.fn((_metadataSource: CacheMetadataSource) => undefined as NorthTransformerWithOptions | undefined);
+    north['findTransformer'] = findTransformerMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    assert.strictEqual((north['findTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(findTransformerMock.mock.calls.length, 0);
   });
 
   it('should cache json content and handle no transform', async () => {
-    north['findTransformer'] = mock.fn(() => null);
-    north['handleNoTransformer'] = mock.fn(async () => undefined);
+    const findTransformerMock = mock.fn((_metadataSource: CacheMetadataSource) => undefined as NorthTransformerWithOptions | undefined);
+    north['findTransformer'] = findTransformerMock;
+    const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['handleNoTransformer'] = handleNoTransformerMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    assert.strictEqual((north['findTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((north['handleNoTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(findTransformerMock.mock.calls.length, 1);
+    assert.strictEqual(handleNoTransformerMock.mock.calls.length, 1);
   });
 
   it('should cache json content and handle ignore transform', async () => {
-    north['findTransformer'] = mock.fn(() => ({ transformer: { type: 'standard', functionName: 'ignore' } }));
-    north['handleNoTransformer'] = mock.fn(async () => undefined);
+    const findTransformerMock = mock.fn(
+      (_metadataSource: CacheMetadataSource) => ({ transformer: { type: 'standard', functionName: 'ignore' } }) as NorthTransformerWithOptions
+    );
+    north['findTransformer'] = findTransformerMock;
+    const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['handleNoTransformer'] = handleNoTransformerMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    assert.strictEqual((north['findTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((north['handleNoTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(findTransformerMock.mock.calls.length, 1);
+    assert.strictEqual(handleNoTransformerMock.mock.calls.length, 0);
     assert.ok(
-      (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.trace.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `Ignoring data of type ${testData.oibusContent[0].type}`
       )
     );
   });
 
   it('should cache json content and handle iso transform', async () => {
-    north['findTransformer'] = mock.fn(() => ({ transformer: { type: 'standard', functionName: 'iso' } }));
-    north['handleNoTransformer'] = mock.fn(async () => undefined);
-    north['cacheWithoutTransformAndTrigger'] = mock.fn(async () => undefined);
+    const findTransformerMock = mock.fn(
+      (_metadataSource: CacheMetadataSource) => ({ transformer: { type: 'standard', functionName: 'iso' } }) as NorthTransformerWithOptions
+    );
+    north['findTransformer'] = findTransformerMock;
+    const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['handleNoTransformer'] = handleNoTransformerMock;
+    const cacheWithoutTransformAndTriggerMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['cacheWithoutTransformAndTrigger'] = cacheWithoutTransformAndTriggerMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
-    assert.strictEqual((north['findTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((north['handleNoTransformer'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((north['cacheWithoutTransformAndTrigger'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(findTransformerMock.mock.calls.length, 1);
+    assert.strictEqual(handleNoTransformerMock.mock.calls.length, 0);
+    assert.strictEqual(cacheWithoutTransformAndTriggerMock.mock.calls.length, 1);
   });
 
   it('should cache file content', async () => {
@@ -738,8 +774,8 @@ describe('NorthConnector', () => {
       createdAt: DateTime.fromMillis(123).toUTC().toISO()!,
       contentType: 'any'
     };
-    const outputStream = 'outputStream';
-    (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ metadata, output: outputStream }));
+    const outputStream = Buffer.from('outputStream');
+    oiBusTransformer.transform.mock.mockImplementation(async () => ({ metadata, output: outputStream }));
 
     await north.cacheContent(testData.oibusContent[1], {
       source: 'south',
@@ -747,27 +783,28 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    assert.strictEqual((realFs['createReadStream'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    const createReadStreamMock = realFs['createReadStream'] as ReturnType<typeof mock.fn>;
+    assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
     assert.deepStrictEqual(
-      (realFs['createReadStream'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      createReadStreamMock.mock.calls[0].arguments[0],
       (testData.oibusContent[1] as OIBusFileContent).filePath
     );
 
-    assert.strictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+    assert.strictEqual(oiBusTransformer.transform.mock.calls.length, 1);
+    assert.deepStrictEqual(oiBusTransformer.transform.mock.calls[0].arguments[1], {
       source: 'south',
       southId: testData.south.list[1].id,
       items: []
     });
     // Third arg (cacheFilename) should contain '1234567890'
     assert.ok(
-      typeof (oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2] === 'string' &&
-        ((oiBusTransformer.transform as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2] as string).includes('1234567890')
+      typeof oiBusTransformer.transform.mock.calls[0].arguments[2] === 'string' &&
+        (oiBusTransformer.transform.mock.calls[0].arguments[2] as string).includes('1234567890')
     );
 
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], outputStream);
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], outputStream);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: metadata.contentType,
       contentFilename: metadata.contentFile,
       numberOfElement: metadata.numberOfElement
@@ -776,18 +813,19 @@ describe('NorthConnector', () => {
 
   it('should cache any data without transform', async () => {
     const readStream = 'readStream';
-    realFs['createReadStream'] = mock.fn(() => readStream);
+    const createReadStreamMock = mock.fn((_path: unknown) => readStream);
+    realFs['createReadStream'] = createReadStreamMock;
 
     await north['cacheWithoutTransform']({
       type: 'any',
       filePath: 'path/file.csv'
     } as OIBusContent);
 
-    assert.strictEqual((realFs['createReadStream'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((realFs['createReadStream'] as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'path/file.csv');
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], readStream);
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+    assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
+    assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments[0], 'path/file.csv');
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], readStream);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'any',
       contentFilename: 'path/file.csv'
     });
@@ -866,48 +904,54 @@ describe('NorthConnector', () => {
   });
 
   it('should handle no transformer when not supporting type', async () => {
-    north['cacheWithoutTransformAndTrigger'] = mock.fn(async () => undefined);
+    const cacheWithoutTransformAndTriggerMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['cacheWithoutTransformAndTrigger'] = cacheWithoutTransformAndTriggerMock;
     await north['handleNoTransformer']({ type: 'bad' } as unknown as OIBusContent);
     assert.ok(
-      (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+      logger.trace.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `Data type "bad" not supported by the connector. Data will be ignored.`
       )
     );
-    assert.strictEqual((north['cacheWithoutTransformAndTrigger'] as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(cacheWithoutTransformAndTriggerMock.mock.calls.length, 0);
   });
 
   it('should handle no transformer when supporting type', async () => {
-    north['cacheWithoutTransform'] = mock.fn(async () => undefined);
-    north['triggerRunIfNecessary'] = mock.fn(async () => undefined);
+    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['cacheWithoutTransform'] = cacheWithoutTransformMock;
+    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
+    north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north['handleNoTransformer']({ type: 'time-values' } as OIBusContent);
-    assert.strictEqual((north['cacheWithoutTransform'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.strictEqual((north['triggerRunIfNecessary'] as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 1);
+    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
   });
 
   it('should transform any-content payload', async () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
-    const transform = mock.fn(() => ({
-      output: 'output',
+    const outputBuffer = Buffer.from('output');
+    const transform = mock.fn(async (_data: ReadStream | Readable, _source: CacheMetadataSource, _filename: string | null) => ({
+      output: outputBuffer,
       metadata: {
-        contentFile: undefined,
+        contentFile: '',
         contentType: 'opcua',
-        numberOfElement: 1
-      }
+        numberOfElement: 1,
+        contentSize: 0,
+        createdAt: ''
+      } satisfies CacheMetadata
     }));
-    transformerServiceExports.createTransformer = mock.fn(() => ({ transform }));
+    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transform } as OIBusTransformerMock));
     await north['executeTransformation']({ type: 'any-content', content: '' } as OIBusContent, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);
     assert.strictEqual(transform.mock.calls.length, 1);
     assert.deepStrictEqual(transform.mock.calls[0].arguments[1], { source: 'oianalytics-setpoints' });
     assert.strictEqual(transform.mock.calls[0].arguments[2], null);
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'output');
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], outputBuffer);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'opcua',
-      contentFilename: undefined,
+      contentFilename: '',
       numberOfElement: 1
     });
   });
@@ -916,26 +960,29 @@ describe('NorthConnector', () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
-    const transform = mock.fn(() => ({
-      output: 'output',
+    const outputBuffer = Buffer.from('output');
+    const transform = mock.fn(async (_data: ReadStream | Readable, _source: CacheMetadataSource, _filename: string | null) => ({
+      output: outputBuffer,
       metadata: {
-        contentFile: undefined,
+        contentFile: '',
         contentType: 'opcua',
-        numberOfElement: 1
-      }
+        numberOfElement: 1,
+        contentSize: 0,
+        createdAt: ''
+      } satisfies CacheMetadata
     }));
-    transformerServiceExports.createTransformer = mock.fn(() => ({ transform }));
+    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transform } as OIBusTransformerMock));
     await north['executeTransformation']({ type: 'setpoint', content: [] } as OIBusContent, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);
     assert.strictEqual(transform.mock.calls.length, 1);
     assert.deepStrictEqual(transform.mock.calls[0].arguments[1], { source: 'oianalytics-setpoints' });
     assert.strictEqual(transform.mock.calls[0].arguments[2], null);
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'output');
-    assert.deepStrictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], outputBuffer);
+    assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'opcua',
-      contentFilename: undefined,
+      contentFilename: '',
       numberOfElement: 1
     });
   });
@@ -943,19 +990,19 @@ describe('NorthConnector', () => {
   it('should cache without transform with max number of elements', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
     await north['cacheWithoutTransform']({ type: 'time-values', content: [{}, {}] } as OIBusContent);
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 2);
   });
 
   it('should cache without transform with any-content', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
     await north['cacheWithoutTransform']({ type: 'any-content', content: '' } as OIBusContent);
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
   });
 
   it('should cache without transform', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 0;
     await north['cacheWithoutTransform']({ type: 'time-values', content: [{}, {}] } as OIBusContent);
-    assert.strictEqual((cacheService.addCacheContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
   });
 
   it('should get cache folder', () => {

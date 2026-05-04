@@ -123,7 +123,7 @@ describe('NorthSFTP', () => {
     const expectedFileName = 'prefix_example-123_suffix.file';
     const expectedTarget = `remoteFolder/${expectedFileName}`;
 
-    mock.method(north, 'sendToSftpServer', async () => undefined);
+    const sendSpy = mock.method(north, 'sendToSftpServer', async () => undefined) as ReturnType<typeof mock.fn>;
 
     await north.handleContent(mockStream, {
       contentFile: 'path/to/file/example-123.file',
@@ -133,7 +133,6 @@ describe('NorthSFTP', () => {
       contentType: 'any'
     });
 
-    const sendSpy = north.sendToSftpServer as ReturnType<typeof mock.fn>;
     assert.strictEqual(sendSpy.mock.calls.length, 1);
     assert.deepStrictEqual(sendSpy.mock.calls[0].arguments, [mockStream, expectedTarget]);
   });
@@ -188,8 +187,9 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
   const cacheService = new CacheServiceMock();
   const oiBusTransformer = new OIBusTransformerMock();
 
+  type SftpConnectConfig = { username?: string; privateKey?: Buffer | string; passphrase?: string };
   const mockSftpClient = {
-    connect: mock.fn(async () => undefined),
+    connect: mock.fn(async (_config: SftpConnectConfig) => undefined),
     list: mock.fn(async () => []),
     put: mock.fn(async () => undefined),
     delete: mock.fn(async () => undefined),
@@ -216,6 +216,7 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
   };
 
   let configuration: NorthConnectorEntity<NorthSFTPSettings>;
+  let readFileMock: ReturnType<typeof mock.fn>;
 
   before(() => {
     mockModule(nodeRequire, 'ssh2-sftp-client', sftpExports);
@@ -249,14 +250,14 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
     encryptionExports.encryptionService.decryptText.mock.resetCalls();
     encryptionExports.encryptionService.decryptText.mock.mockImplementation(async (text: string) => text);
 
-    mockSftpClient.connect = mock.fn(async () => undefined);
+    mockSftpClient.connect = mock.fn(async (_config: SftpConnectConfig) => undefined);
     mockSftpClient.list = mock.fn(async () => []);
     mockSftpClient.put = mock.fn(async () => undefined);
     mockSftpClient.delete = mock.fn(async () => undefined);
     mockSftpClient.end = mock.fn(async () => undefined);
     mockSftpClient.exists = mock.fn(async () => 'd' as false | 'd' | '-' | 'l');
 
-    mock.method(fs, 'readFile', async () => 'actual-private-key-content');
+    readFileMock = mock.method(fs, 'readFile', async () => 'actual-private-key-content') as ReturnType<typeof mock.fn>;
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     configuration = buildNorthEntity<NorthSFTPSettings>('sftp', {
@@ -281,7 +282,7 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
   });
 
   it('should properly handle files (Direct Naming)', async () => {
-    mock.method(north, 'sendToSftpServer', async () => undefined);
+    const sendSpy2 = mock.method(north, 'sendToSftpServer', async () => undefined) as ReturnType<typeof mock.fn>;
     const mockStream = {} as ReadStream;
 
     await north.handleContent(mockStream, {
@@ -292,25 +293,23 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
       contentType: 'any'
     });
 
-    const sendSpy = north.sendToSftpServer as ReturnType<typeof mock.fn>;
-    assert.strictEqual(sendSpy.mock.calls.length, 1);
-    assert.deepStrictEqual(sendSpy.mock.calls[0].arguments, [mockStream, 'remoteFolder/example-123.file']);
+    assert.strictEqual(sendSpy2.mock.calls.length, 1);
+    assert.deepStrictEqual(sendSpy2.mock.calls[0].arguments, [mockStream, 'remoteFolder/example-123.file']);
   });
 
   it('should use private key for connection', async () => {
     const mockStream = {} as ReadStream;
     await north.sendToSftpServer(mockStream, 'target');
 
-    const readFileSpy = fs.readFile as ReturnType<typeof mock.fn>;
-    assert.deepStrictEqual(readFileSpy.mock.calls[0].arguments, ['path/to/private.key', 'utf8']);
+    assert.deepStrictEqual(readFileMock.mock.calls[0].arguments, ['path/to/private.key', 'utf8']);
     assert.strictEqual(encryptionExports.encryptionService.decryptText.mock.calls.length, 1);
     assert.deepStrictEqual(encryptionExports.encryptionService.decryptText.mock.calls[0].arguments, ['myPassphrase']);
 
     assert.strictEqual(mockSftpClient.connect.mock.calls.length, 1);
-    const connectArg = mockSftpClient.connect.mock.calls[0].arguments[0] as Record<string, unknown>;
-    assert.strictEqual(connectArg.username, 'user');
-    assert.strictEqual(connectArg.privateKey, 'actual-private-key-content');
-    assert.strictEqual(connectArg.passphrase, 'myPassphrase');
+    const connectConfig = mockSftpClient.connect.mock.calls[0].arguments[0];
+    assert.strictEqual(connectConfig.username, 'user');
+    assert.strictEqual(connectConfig.privateKey, 'actual-private-key-content');
+    assert.strictEqual(connectConfig.passphrase, 'myPassphrase');
   });
 
   it('should have access to output folder', async () => {

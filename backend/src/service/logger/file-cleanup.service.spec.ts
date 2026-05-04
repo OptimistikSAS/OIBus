@@ -64,7 +64,7 @@ describe('FileCleanupService', () => {
       })
     );
 
-    mock.method(
+    const readdirMock1 = mock.method(
       fs,
       'readdir',
       mock.fn(async () => [
@@ -75,14 +75,14 @@ describe('FileCleanupService', () => {
         'journal.db',
         'migration-journal.log'
       ])
-    );
+    ) as ReturnType<typeof mock.fn>;
 
     const unlinkMock = mock.fn(async () => undefined);
     mock.method(fs, 'unlink', unlinkMock);
 
     await fileCleanupService.cleanUpLogFiles();
 
-    assert.deepStrictEqual((fs.readdir as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [LOG_FOLDER]);
+    assert.deepStrictEqual(readdirMock1.mock.calls[0].arguments, [LOG_FOLDER]);
     assert.deepStrictEqual(logger.trace.mock.calls[0].arguments, [
       `Found 3 log files with RegExp /^journal.log\\.[0-9]*$/ in folder "${LOG_FOLDER}".`
     ]);
@@ -91,29 +91,25 @@ describe('FileCleanupService', () => {
   });
 
   it('should not clean up folder if not enough files', async () => {
-    mock.method(
-      fs,
-      'stat',
-      mock.fn(async () => ({}))
-    ); // filesExists — folder exists
+    const statMock2 = mock.method(fs, 'stat', mock.fn(async () => ({}))) as ReturnType<typeof mock.fn>;
 
-    mock.method(
+    const readdirMock2 = mock.method(
       fs,
       'readdir',
       mock.fn(async () => ['journal.log.1', 'journal.log.2'])
-    );
+    ) as ReturnType<typeof mock.fn>;
 
     const unlinkMock = mock.fn(async () => undefined);
     mock.method(fs, 'unlink', unlinkMock);
 
     await fileCleanupService.cleanUpLogFiles();
 
-    assert.deepStrictEqual((fs.readdir as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [LOG_FOLDER]);
+    assert.deepStrictEqual(readdirMock2.mock.calls[0].arguments, [LOG_FOLDER]);
     assert.deepStrictEqual(logger.trace.mock.calls[0].arguments, [
       `Found 2 log files with RegExp /^journal.log\\.[0-9]*$/ in folder "${LOG_FOLDER}".`
     ]);
     // Only the filesExists stat call — no per-file stat calls, no unlinks
-    assert.strictEqual((fs.stat as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(statMock2.mock.calls.length, 1);
     assert.strictEqual(unlinkMock.mock.calls.length, 0);
   });
 
@@ -133,7 +129,7 @@ describe('FileCleanupService', () => {
       })
     );
 
-    mock.method(
+    const readdirMock3 = mock.method(
       fs,
       'readdir',
       mock.fn(async () => [
@@ -146,7 +142,7 @@ describe('FileCleanupService', () => {
         'journal.db',
         'migration-journal.log'
       ])
-    );
+    ) as ReturnType<typeof mock.fn>;
 
     let unlinkCallCount = 0;
     const unlinkMock = mock.fn(async () => {
@@ -157,7 +153,7 @@ describe('FileCleanupService', () => {
 
     await fileCleanupService.cleanUpLogFiles();
 
-    assert.deepStrictEqual((fs.readdir as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [LOG_FOLDER]);
+    assert.deepStrictEqual(readdirMock3.mock.calls[0].arguments, [LOG_FOLDER]);
     assert.deepStrictEqual(logger.trace.mock.calls[0].arguments, [
       `Found 5 log files with RegExp /^journal.log\\.[0-9]*$/ in folder "${LOG_FOLDER}".`
     ]);

@@ -34,9 +34,12 @@ describe('utils-oianalytics', () => {
   let mockGetTokenCSC: ReturnType<typeof mock.fn>;
   let mockGetTokenCCC: ReturnType<typeof mock.fn>;
 
+  let encryptTextMock: ReturnType<typeof mock.fn>;
+  let decryptTextMock: ReturnType<typeof mock.fn>;
+
   beforeEach(() => {
-    mock.method(encryptionService, 'encryptText', async (_text: unknown) => 'encrypted-token');
-    mock.method(encryptionService, 'decryptText', async (text: unknown) => `decrypted-${text}`);
+    encryptTextMock = mock.method(encryptionService, 'encryptText', async (_text: unknown) => 'encrypted-token') as ReturnType<typeof mock.fn>;
+    decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => `decrypted-${text}`) as ReturnType<typeof mock.fn>;
 
     mockCertRepo = { findById: mock.fn() };
 
@@ -102,10 +105,10 @@ describe('utils-oianalytics', () => {
 
       const result = await getAuthorizationOptions(false, mockRegistration, settings, mockCertRepo as unknown as CertificateRepository);
 
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['secret']);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['secret']);
       assert.strictEqual(mockGetTokenCSC.mock.calls.length, 1);
       assert.deepStrictEqual(mockGetTokenCSC.mock.calls[0].arguments, ['scope']);
-      assert.deepStrictEqual((encryptionService.encryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['Bearer azure-token']);
+      assert.deepStrictEqual(encryptTextMock.mock.calls[0].arguments, ['Bearer azure-token']);
       assert.deepStrictEqual(result, { type: 'bearer', token: 'encrypted-token' });
     });
 
@@ -123,7 +126,7 @@ describe('utils-oianalytics', () => {
       const result = await getAuthorizationOptions(false, mockRegistration, settings, mockCertRepo as unknown as CertificateRepository);
 
       assert.deepStrictEqual(mockCertRepo.findById.mock.calls[0].arguments, ['cert-1']);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['pk']);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['pk']);
       assert.strictEqual(mockGetTokenCCC.mock.calls.length, 1);
       assert.deepStrictEqual(mockGetTokenCCC.mock.calls[0].arguments, ['scope']);
       assert.deepStrictEqual(result, { type: 'bearer', token: 'encrypted-token' });
@@ -167,7 +170,7 @@ describe('utils-oianalytics', () => {
 
       const result = await getHeaders(true, reg);
 
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-val']);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['encrypted-val']);
       assert.deepStrictEqual(result, { 'x-key': 'decrypted-encrypted-val' });
     });
   });
@@ -324,32 +327,31 @@ describe('utils-oianalytics', () => {
   describe('testOIAnalyticsConnection', () => {
     const mockRegistration = testData.oIAnalytics.registration.completed as OIAnalyticsRegistration;
     const mockSpecificSettings = { host: 'https://spec-host' } as NorthOIAnalyticsSettingsSpecificSettings;
+    let requestMock: ReturnType<typeof mock.fn>;
 
     beforeEach(() => {
-      mock.method(undiciModule, 'request', async () => createMockResponse(200, 'OK'));
+      requestMock = mock.method(undiciModule, 'request', async (_url: string | URL) => createMockResponse(200, 'OK')) as ReturnType<typeof mock.fn>;
     });
 
     it('should succeed when API returns 200', async () => {
       await assert.doesNotReject(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false));
 
-      const calls = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls;
-      assert.strictEqual(calls.length, 1);
-      assert.ok(calls[0].arguments[0].toString().includes('/api/oianalytics/oibus/status'));
-      assert.ok(calls[0].arguments[0].toString().includes('localhost:4200'));
+      assert.strictEqual(requestMock.mock.calls.length, 1);
+      assert.ok(String(requestMock.mock.calls[0].arguments[0]).includes('/api/oianalytics/oibus/status'));
+      assert.ok(String(requestMock.mock.calls[0].arguments[0]).includes('localhost:4200'));
     });
 
     it('should use specific settings host when useOIAnalyticsRegistration is false', async () => {
       await assert.doesNotReject(testOIAnalyticsConnection(false, mockRegistration, mockSpecificSettings, 30000, null, false));
 
-      const calls = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls;
-      assert.strictEqual(calls.length, 1);
-      assert.ok(calls[0].arguments[0].toString().includes('/api/oianalytics/oibus/status'));
-      assert.ok(calls[0].arguments[0].toString().includes('spec-host'));
+      assert.strictEqual(requestMock.mock.calls.length, 1);
+      assert.ok(String(requestMock.mock.calls[0].arguments[0]).includes('/api/oianalytics/oibus/status'));
+      assert.ok(String(requestMock.mock.calls[0].arguments[0]).includes('spec-host'));
     });
 
     it('should throw error when fetch fails (Network Error)', async () => {
       const error = new Error('Network Error');
-      (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => {
+      requestMock.mock.mockImplementation(async () => {
         throw error;
       });
 
@@ -359,9 +361,7 @@ describe('utils-oianalytics', () => {
     });
 
     it('should throw error when API returns 500', async () => {
-      (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () =>
-        createMockResponse(500, 'Internal Server Error')
-      );
+      requestMock.mock.mockImplementation(async () => createMockResponse(500, 'Internal Server Error'));
 
       await assert.rejects(
         testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false),
@@ -371,7 +371,7 @@ describe('utils-oianalytics', () => {
 
     describe('401 Handling', () => {
       it('should throw error on 401 if accept401AsSuccess is false', async () => {
-        (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => createMockResponse(401, 'Unauthorized'));
+        requestMock.mock.mockImplementation(async () => createMockResponse(401, 'Unauthorized'));
 
         await assert.rejects(
           testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, false),
@@ -380,13 +380,13 @@ describe('utils-oianalytics', () => {
       });
 
       it('should SUCCEED on 401 if accept401AsSuccess is true', async () => {
-        (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => createMockResponse(401, 'Unauthorized'));
+        requestMock.mock.mockImplementation(async () => createMockResponse(401, 'Unauthorized'));
 
         await assert.doesNotReject(testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, true));
       });
 
       it('should still throw on other errors (e.g. 403) even if accept401AsSuccess is true', async () => {
-        (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => createMockResponse(403, 'Forbidden'));
+        requestMock.mock.mockImplementation(async () => createMockResponse(403, 'Forbidden'));
 
         await assert.rejects(
           testOIAnalyticsConnection(true, mockRegistration, null, 30000, null, true),

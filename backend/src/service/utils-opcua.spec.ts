@@ -24,9 +24,12 @@ import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_op
 
 describe('Service utils OPCUA', () => {
   describe('initOPCUACertificateFolders', () => {
+    let statMock: ReturnType<typeof mock.fn>;
+    let copyFileMock: ReturnType<typeof mock.fn>;
+
     beforeEach(() => {
-      mock.method(fs, 'stat', async () => null);
-      mock.method(fs, 'copyFile', async () => undefined);
+      statMock = mock.method(fs, 'stat', async () => null) as ReturnType<typeof mock.fn>;
+      copyFileMock = mock.method(fs, 'copyFile', async () => undefined) as ReturnType<typeof mock.fn>;
       mock.method(encryptionService, 'getCertPath', () => path.resolve('cert_path'));
       mock.method(encryptionService, 'getPrivateKeyPath', () => path.resolve('private_key_path'));
     });
@@ -38,39 +41,27 @@ describe('Service utils OPCUA', () => {
     it('should properly init OPCUA certificate folders', async () => {
       const folder = 'opcuaFolder';
       await initOPCUACertificateFolders(folder);
-      assert.strictEqual((fs.stat as ReturnType<typeof mock.fn>).mock.calls.length, 10);
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own')));
+      assert.strictEqual(statMock.mock.calls.length, 10);
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'certs')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'private')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'rejected')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'certs')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'crl')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'certs')));
+      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'crl')));
+      assert.strictEqual(copyFileMock.mock.calls.length, 2);
       assert.ok(
-        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'certs'))
-      );
-      assert.ok(
-        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'private'))
-      );
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'rejected')));
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted')));
-      assert.ok(
-        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'certs'))
-      );
-      assert.ok(
-        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'crl'))
-      );
-      assert.ok((fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers')));
-      assert.ok(
-        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'certs'))
-      );
-      assert.ok(
-        (fs.stat as ReturnType<typeof mock.fn>).mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'crl'))
-      );
-      assert.strictEqual((fs.copyFile as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.ok(
-        (fs.copyFile as ReturnType<typeof mock.fn>).mock.calls.some(
+        copyFileMock.mock.calls.some(
           c =>
             c.arguments[0] === path.resolve('private_key_path') &&
             c.arguments[1] === path.resolve(folder, 'opcua', 'own', 'private', 'private_key.pem')
         )
       );
       assert.ok(
-        (fs.copyFile as ReturnType<typeof mock.fn>).mock.calls.some(
+        copyFileMock.mock.calls.some(
           c =>
             c.arguments[0] === path.resolve('cert_path') &&
             c.arguments[1] === path.resolve(folder, 'opcua', 'own', 'certs', 'client_certificate.pem')
@@ -105,9 +96,12 @@ describe('Service utils OPCUA', () => {
   });
 
   describe('createSessionConfigs', () => {
+    let decryptTextMock: ReturnType<typeof mock.fn>;
+    let readFileMock: ReturnType<typeof mock.fn>;
+
     beforeEach(() => {
-      mock.method(encryptionService, 'decryptText', async (text: unknown) => text);
-      mock.method(fs, 'readFile', async () => '');
+      decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => text) as ReturnType<typeof mock.fn>;
+      readFileMock = mock.method(fs, 'readFile', async () => '') as ReturnType<typeof mock.fn>;
     });
 
     afterEach(() => {
@@ -180,9 +174,7 @@ describe('Service utils OPCUA', () => {
           }
         }
       );
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
-        southSettings.authentication.password!
-      ]);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [southSettings.authentication.password!]);
     });
 
     it('should properly create session configs with cert auth', async () => {
@@ -194,7 +186,7 @@ describe('Service utils OPCUA', () => {
         keepSessionAlive: false,
         retryInterval: 10_000
       };
-      (fs.readFile as ReturnType<typeof mock.fn>).mock.mockImplementation(async (filePath: unknown) => {
+      readFileMock.mock.mockImplementation(async (filePath: unknown) => {
         if (String(filePath).endsWith('cert_file.pem')) return 'cert';
         if (String(filePath).endsWith('key_file.pem')) return 'privateKey';
         return '';
@@ -221,15 +213,9 @@ describe('Service utils OPCUA', () => {
           }
         }
       );
-      assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 2);
-      assert.deepStrictEqual(
-        (fs.readFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
-        path.resolve(northSettings.authentication.certFilePath!)
-      );
-      assert.deepStrictEqual(
-        (fs.readFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments[0],
-        path.resolve(northSettings.authentication.keyFilePath!)
-      );
+      assert.strictEqual(readFileMock.mock.calls.length, 2);
+      assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], path.resolve(northSettings.authentication.certFilePath!));
+      assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], path.resolve(northSettings.authentication.keyFilePath!));
     });
   });
 
