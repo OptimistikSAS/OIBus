@@ -16,7 +16,7 @@ import {
   ReqResponse,
   retryableHttpStatusCodes
 } from '../../service/http-request.utils';
-import CacheService from '../../service/cache/cache.service';
+import type { ICacheService } from '../../model/cache.service.model';
 import { encryptionService } from '../../service/encryption.service';
 import { UndiciHeaders } from 'undici/types/dispatcher';
 import type { ILogger } from '../../model/logger.model';
@@ -35,7 +35,7 @@ async function* multipartStream(boundary: string, filename: string, dataStream: 
  * Class Console - display values and file path into the console
  */
 export default class NorthREST extends NorthConnector<NorthRESTSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, logger: ILogger, cacheService: CacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthRESTSettings>, logger: ILogger, cacheService: ICacheService) {
     super(configuration, logger, cacheService);
   }
 

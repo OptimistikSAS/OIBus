@@ -62,7 +62,7 @@ describe('North Connector Factory', () => {
   const MockNorthSFTP = makeMock('sftp');
   const MockCacheService = makeMock('cache-service');
 
-  const utilsExports = { createFolder: mock.fn(async () => undefined) };
+  const utilsExports = { createFolder: mock.fn(async (_path: string) => undefined) };
 
   before(() => {
     mockModule(nodeRequire, '../service/utils', utilsExports);
@@ -125,7 +125,7 @@ describe('North Connector Factory', () => {
 
   beforeEach(() => {
     for (const key of Object.keys(ctorCalls)) delete ctorCalls[key];
-    utilsExports.createFolder = mock.fn(async () => undefined);
+    utilsExports.createFolder = mock.fn(async (_path: string) => undefined);
   });
 
   afterEach(() => {

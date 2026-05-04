@@ -6,7 +6,7 @@ import net from 'node:net';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { client } from 'jsmodbus';
 import { OIBusModbusValue } from '../../transformers/connector-types.model';
-import CacheService from '../../service/cache/cache.service';
+import type { ICacheService } from '../../model/cache.service.model';
 import { connectSocket } from '../../service/utils-modbus';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
@@ -22,7 +22,7 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, logger: ILogger, cacheService: CacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, logger: ILogger, cacheService: ICacheService) {
     super(configuration, logger, cacheService);
   }
 

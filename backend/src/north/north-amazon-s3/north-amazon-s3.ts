@@ -7,7 +7,7 @@ import { encryptionService } from '../../service/encryption.service';
 import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import CacheService from '../../service/cache/cache.service';
+import type { ICacheService } from '../../model/cache.service.model';
 import type { ILogger } from '../../model/logger.model';
 
 /**
@@ -16,7 +16,7 @@ import type { ILogger } from '../../model/logger.model';
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
   private s3: S3Client | undefined;
 
-  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, logger: ILogger, cacheService: CacheService) {
+  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, logger: ILogger, cacheService: ICacheService) {
     super(connector, logger, cacheService);
   }
 
