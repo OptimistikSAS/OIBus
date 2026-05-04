@@ -40,7 +40,7 @@
     "Optimistik"
   ],
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1037.0",
+    "@aws-sdk/client-s3": "3.1041.0",
     "@azure/storage-blob": "12.31.0",
     "@azure/storage-file-datalake": "12.29.0",
     "@smithy/node-http-handler": "4.6.1",
@@ -48,7 +48,7 @@
     "ads-client": "2.2.0",
     "argon2": "0.44.0",
     "basic-auth": "2.0.1",
-    "basic-ftp": "6.0.0",
+    "basic-ftp": "6.0.1",
     "better-sqlite3": "12.9.0",
     "cors": "2.8.6",
     "cron": "4.4.0",
@@ -63,7 +63,7 @@
     "jsmodbus": "4.0.10",
     "jsonpath-plus": "10.4.0",
     "jsonwebtoken": "9.0.3",
-    "knex": "3.2.9",
+    "knex": "3.2.10",
     "helmet": "8.1.0",
     "ltx": "3.1.2",
     "luxon": "3.7.2",
@@ -73,7 +73,7 @@
     "multer": "2.1.1",
     "mysql2": "3.22.3",
     "node-forge": "1.4.0",
-    "node-opcua": "2.169.0",
+    "node-opcua": "2.170.1",
     "oracledb": "6.10.0",
     "papaparse": "5.5.3",
     "pg": "8.20.0",
@@ -88,7 +88,7 @@
     "stream-json": "2.1.0",
     "thread-stream": "4.0.0",
     "tsoa": "6.6.0",
-    "undici": "8.1.0"
+    "undici": "8.2.0"
   },
   "optionalDependencies": {
     "odbc": "2.5.0"
@@ -128,7 +128,7 @@
     "ts-jest": "29.4.9",
     "tslib": "2.8.1",
     "typescript": "5.4.5",
-    "typescript-eslint": "8.59.0"
+    "typescript-eslint": "8.59.1"
   },
   "pkg": {
     "scripts": [

@@ -20,9 +20,9 @@
     "lint:fix": "npm run lint -- --fix"
   },
   "dependencies": {
-    "@docsearch/js": "4.6.2",
-    "@docusaurus/core": "3.10.0",
-    "@docusaurus/preset-classic": "3.10.0",
+    "@docsearch/js": "4.6.3",
+    "@docusaurus/core": "3.10.1",
+    "@docusaurus/preset-classic": "3.10.1",
     "@mdx-js/react": "3.1.1",
     "clsx": "2.1.1",
     "cronstrue": "3.14.0",
@@ -33,7 +33,7 @@
     "redocusaurus": "2.5.0"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.10.0",
+    "@docusaurus/module-type-aliases": "3.10.1",
     "eslint": "9.39.4",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-jsx-a11y": "6.10.2",
