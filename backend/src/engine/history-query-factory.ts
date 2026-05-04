@@ -12,6 +12,7 @@ import { HistoryQueryEntity, HistoryQueryItemEntity } from '../model/histor-quer
 import { buildNorth } from '../north/north-connector-factory';
 import { buildSouth } from '../south/south-connector-factory';
 import CacheService from '../service/cache/cache.service';
+import type { ICacheService } from '../model/cache.service.model';
 import { OIBusSouthType } from '../../shared/model/south-connector.model';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import fs from 'node:fs/promises';
@@ -32,7 +33,7 @@ export const buildHistoryQuery = (
   southCacheRepository: SouthCacheRepository,
   certificateRepository: CertificateRepository,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-  orchestrator: CacheService
+  orchestrator: ICacheService
 ): HistoryQuery => {
   const north = buildNorth(
     {
@@ -126,7 +127,7 @@ export const initHistoryQueryCache = async (id: string, northType: OIBusNorthTyp
   }
 };
 
-export const createHistoryQueryOrchestrator = (baseFolder: string, historyId: string, logger: ILogger): CacheService => {
+export const createHistoryQueryOrchestrator = (baseFolder: string, historyId: string, logger: ILogger): ICacheService => {
   return new CacheService(
     logger,
     path.join(baseFolder, 'cache', `history-${historyId}`, 'north'),
