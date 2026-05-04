@@ -10,7 +10,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import CertificateRepository from '../../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
 import { OIBusError } from '../../model/engine.model';
-import CacheService from '../../service/cache/cache.service';
+import type { ICacheService } from '../../model/cache.service.model';
 import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
 import type { ILogger } from '../../model/logger.model';
 
@@ -32,7 +32,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
     logger: ILogger,
-    cacheService: CacheService,
+    cacheService: ICacheService,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
   ) {

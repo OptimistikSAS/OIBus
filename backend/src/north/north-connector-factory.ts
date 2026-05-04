@@ -1,6 +1,7 @@
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
 import CacheService from '../service/cache/cache.service';
+import type { ICacheService } from '../model/cache.service.model';
 import NorthAmazonS3 from './north-amazon-s3/north-amazon-s3';
 import { NorthConnectorEntity } from 'src/model/north-connector.model';
 import NorthAzureBlob from './north-azure-blob/north-azure-blob';
@@ -38,7 +39,7 @@ export const buildNorth = (
   logger: ILogger,
   certificateRepository: CertificateRepository,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-  orchestrator: CacheService
+  orchestrator: ICacheService
 ): NorthConnector<NorthSettings> => {
   switch (settings.type) {
     case 'aws-s3':
@@ -96,7 +97,7 @@ export const deleteNorthCache = async (id: string, baseFolder: string) => {
   await fs.rm(path.join(baseFolder, 'archive', `north-${id}`), { recursive: true, force: true });
 };
 
-export const createNorthOrchestrator = (baseFolder: string, id: string, logger: ILogger): CacheService => {
+export const createNorthOrchestrator = (baseFolder: string, id: string, logger: ILogger): ICacheService => {
   return new CacheService(
     logger,
     path.join(baseFolder, 'cache', `north-${id}`),

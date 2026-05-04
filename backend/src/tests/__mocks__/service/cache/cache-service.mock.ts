@@ -3,18 +3,17 @@ import { mock } from 'node:test';
 import {
   CacheMetadata,
   CacheSearchParam,
+  CacheSearchResult,
   CacheContentUpdateCommand,
   DataFolderType,
   FileCacheContent
 } from '../../../../../shared/model/engine.model';
+import type { ICacheService } from '../../../../model/cache.service.model';
 import type { ILogger } from '../../../../model/logger.model';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
-/**
- * Create a mock object for Cache Service
- */
-export default class CacheServiceMock {
+export default class CacheServiceMock implements ICacheService {
   setLogger = mock.fn((_value: ILogger): void => undefined);
   start = mock.fn(async (): Promise<void> => undefined);
   stop = mock.fn((): void => undefined);
@@ -26,7 +25,14 @@ export default class CacheServiceMock {
   cacheIsEmpty = mock.fn((): boolean => true);
   cacheIsFull = mock.fn((_maxSize: number): boolean => false);
   getCacheSize = mock.fn((): number => 0);
-  searchCacheContent = mock.fn(async (_searchParams: CacheSearchParam): Promise<{ content: Array<CacheMetadata> }> => ({ content: [] }));
+  searchCacheContent = mock.fn(
+    async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({
+      searchDate: '',
+      error: [],
+      archive: [],
+      cache: []
+    })
+  );
   getFileFromCache = mock.fn(async (_folder: DataFolderType, _filename: string): Promise<FileCacheContent> => ({}) as FileCacheContent);
   updateCacheContent = mock.fn(async (_updateCommand: CacheContentUpdateCommand): Promise<void> => undefined);
   addCacheContent = mock.fn(
