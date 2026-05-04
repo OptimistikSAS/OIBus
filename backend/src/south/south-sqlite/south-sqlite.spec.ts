@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
@@ -10,6 +10,9 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type SouthSQLiteClass from './south-sqlite';
+import type { SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
+import type { SouthItemSettings } from '../../../shared/model/south-settings.model';
 import type {
   SouthSQLiteItemSettings,
   SouthSQLiteItemSettingsDateTimeFields,
@@ -20,15 +23,20 @@ import { DateTime } from 'luxon';
 const nodeRequire = createRequire(import.meta.url);
 
 const logger = new PinoLogger();
-const addContentCallback = mock.fn();
+const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
 const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
 let southCacheService: SouthCacheServiceMock;
 
-const mockDatabase = {
-  prepare: mock.fn(),
+const mockDatabase: {
+  prepare: Mock<(_sql?: unknown) => unknown>;
+  transaction: Mock<() => undefined>;
+  close: Mock<() => undefined>;
+  all: Mock<(_sql?: unknown) => unknown>;
+} = {
+  prepare: mock.fn((_sql?: unknown): unknown => undefined),
   transaction: mock.fn(),
   close: mock.fn(),
-  all: mock.fn()
+  all: mock.fn((_sql?: unknown): unknown => undefined)
 };
 
 const utilsExports = {
@@ -42,7 +50,7 @@ const utilsExports = {
   convertDateTimeToInstant: mock.fn((inst: unknown) => inst),
   logQuery: mock.fn(),
   persistResults: mock.fn(async () => undefined),
-  generateReplacementParameters: mock.fn(() => []),
+  generateReplacementParameters: mock.fn((): unknown => []),
   generateCsvContent: mock.fn(() => ''),
   generateFilenameForSerialization: mock.fn(() => 'file.csv')
 };
@@ -175,9 +183,9 @@ describe('SouthSQLite', () => {
       { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
     ];
     const queryDataMock = mock.method(
-      south as unknown as Record<string, unknown>,
+      south,
       'queryData',
-      mock.fn(async () => queryDataResults)
+      async () => queryDataResults
     );
     utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
 
@@ -204,9 +212,9 @@ describe('SouthSQLite', () => {
   it('should properly run historyQuery without result', async () => {
     const startTime = testData.constants.dates.DATE_1;
     const queryDataMock = mock.method(
-      south as unknown as Record<string, unknown>,
+      south,
       'queryData',
-      mock.fn(async () => [])
+      async () => [] as Array<Record<string, string | number>>
     );
 
     const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
@@ -291,12 +299,12 @@ describe('SouthSQLite', () => {
     const formattedInstant = '2020-01-01T00:00:00.000Z';
     utilsExports.formatInstant = mock.fn(() => formattedInstant);
     const queryDataMock = mock.method(
-      south as unknown as Record<string, unknown>,
+      south,
       'queryData',
-      mock.fn(async () => [
+      async () => [
         { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ])
+      ] as Array<Record<string, string | number>>
     );
 
     await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
@@ -308,12 +316,12 @@ describe('SouthSQLite', () => {
     const formattedInstant = '2020-01-01T00:00:00.000Z';
     utilsExports.formatInstant = mock.fn(() => formattedInstant);
     const queryDataMock = mock.method(
-      south as unknown as Record<string, unknown>,
+      south,
       'queryData',
-      mock.fn(async () => [
+      async () => [
         { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ])
+      ] as Array<Record<string, string | number>>
     );
 
     await south.testItem(configuration.items[1], testData.south.itemTestingSettings);

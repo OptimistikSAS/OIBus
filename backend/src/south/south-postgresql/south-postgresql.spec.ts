@@ -7,7 +7,9 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
+import type { SouthItemSettings } from '../../../shared/model/south-settings.model';
 import type {
   SouthPostgreSQLItemSettings,
   SouthPostgreSQLItemSettingsDateTimeFields,
@@ -45,12 +47,12 @@ describe('SouthPostgreSQL', () => {
   let SouthPostgreSQL: typeof SouthPostgreSQLClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
   const clientConnect = mock.fn(async () => undefined);
-  const clientQuery = mock.fn(async () => ({
+  const clientQuery = mock.fn(async (_query?: unknown): Promise<unknown> => ({
     rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
   }));
   const clientEnd = mock.fn(async () => undefined);
@@ -68,7 +70,7 @@ describe('SouthPostgreSQL', () => {
     formatInstant: mock.fn((instant: unknown) => instant),
     generateCsvContent: mock.fn(() => ''),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
-    generateReplacementParameters: mock.fn(() => []),
+    generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
     persistResults: mock.fn(async () => undefined)
   };
