@@ -115,7 +115,7 @@ export const TRANSFORMER_JSON_TO_CSV_SETTINGS_DELIMITERS = [
 ] as const;
 export type TransformerJsonToCsvSettingsDelimiter = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_DELIMITERS)[number];
 
-export const TRANSFORMER_JSON_TO_CSV_SETTINGS_NEWLINES = ['DEFAULT', 'CRLF', 'LF', 'CR'] as const;
+export const TRANSFORMER_JSON_TO_CSV_SETTINGS_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
 export type TransformerJsonToCsvSettingsNewline = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_NEWLINES)[number];
 
 export const TRANSFORMER_JSON_TO_CSV_SETTINGS_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
@@ -143,7 +143,7 @@ export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_DELIMITERS = [
 ] as const;
 export type TransformerTimeValuesToCsvSettingsDelimiter = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_DELIMITERS)[number];
 
-export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_NEWLINES = ['DEFAULT', 'CRLF', 'LF', 'CR'] as const;
+export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_NEWLINES = ['CRLF', 'LF', 'CR'] as const;
 export type TransformerTimeValuesToCsvSettingsNewline = (typeof TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_NEWLINES)[number];
 
 export const TRANSFORMER_TIME_VALUES_TO_CSV_SETTINGS_QUOTE_CHARS = ['DOUBLE_QUOTE', 'SINGLE_QUOTE', 'NONE'] as const;
