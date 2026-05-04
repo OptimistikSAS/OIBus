@@ -8,7 +8,9 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
+import type { SouthItemSettings } from '../../../shared/model/south-settings.model';
 import type {
   SouthOracleItemSettings,
   SouthOracleItemSettingsDateTimeFields,
@@ -45,7 +47,7 @@ describe('SouthOracle', () => {
   let SouthOracle: typeof SouthOracleClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -71,7 +73,7 @@ describe('SouthOracle', () => {
     formatInstant: mock.fn((instant: unknown) => instant),
     generateCsvContent: mock.fn(() => ''),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
-    generateReplacementParameters: mock.fn(() => []),
+    generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
     persistResults: mock.fn(async () => undefined)
   };
@@ -341,7 +343,7 @@ describe('SouthOracle', () => {
       const replacementParams = { startTime: formattedStart, endTime: formattedEnd };
       utilsExports.generateReplacementParameters = mock.fn(() => replacementParams);
 
-      const mockExecute = mock.fn(async () => ({
+      const mockExecute = mock.fn(async (_sql: string, _params: unknown) => ({
         rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
       }));
       const mockClose = mock.fn();
@@ -398,7 +400,7 @@ describe('SouthOracle', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      const mockExecute = mock.fn(async () => ({
+      const mockExecute = mock.fn(async (_sql: string, _params: unknown) => ({
         rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
       }));
       const mockClose = mock.fn();
@@ -422,7 +424,7 @@ describe('SouthOracle', () => {
       const replacementParams = { startTime, endTime };
       utilsExports.generateReplacementParameters = mock.fn(() => replacementParams);
 
-      const mockExecute = mock.fn(() => {
+      const mockExecute = mock.fn((_sql: string, _params: unknown) => {
         throw new Error('query error');
       });
       const mockClose = mock.fn();
