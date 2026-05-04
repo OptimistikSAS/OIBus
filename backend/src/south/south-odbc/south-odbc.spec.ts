@@ -24,7 +24,7 @@ describe('SouthODBC', () => {
   let SouthODBC: typeof SouthODBCClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -36,7 +36,7 @@ describe('SouthODBC', () => {
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn(() => []),
     logQuery: mock.fn(),
-    persistResults: mock.fn(async () => undefined)
+    persistResults: mock.fn(async (_data: unknown, _serialization: unknown, _name: string, _item: unknown, _instant: unknown, _folder: string) => undefined)
   };
 
   const odbcLoaderExports = {
@@ -45,7 +45,7 @@ describe('SouthODBC', () => {
 
   const httpRequestExports = {
     __esModule: true,
-    HTTPRequest: mock.fn(async () => createMockResponse(200, {}))
+    HTTPRequest: mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200, {}))
   };
 
   before(() => {
@@ -76,15 +76,15 @@ describe('SouthODBC', () => {
     utilsExports.generateCsvContent = mock.fn(() => '');
     utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
     utilsExports.logQuery = mock.fn();
-    utilsExports.persistResults = mock.fn(async () => undefined);
+    utilsExports.persistResults = mock.fn(async (_data: unknown, _serialization: unknown, _name: string, _item: unknown, _instant: unknown, _folder: string) => undefined);
 
     // Reset other mocks
     odbcLoaderExports.loadOdbc = mock.fn(() => null);
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200, {}));
 
     // Reset logger mocks
     for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
-      (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+      fn.mock.resetCalls();
     }
 
     mock.method(console, 'info', () => null);
@@ -316,9 +316,9 @@ describe('SouthODBC', () => {
 
       const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
 
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
       assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        utilsExports.logQuery.mock.calls[0].arguments[0],
         configuration.items[0].settings.query
       );
 
@@ -341,26 +341,26 @@ describe('SouthODBC', () => {
         value: { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
       });
 
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], [
+      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[0], [
         { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
         { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
       ]);
       assert.deepStrictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        utilsExports.persistResults.mock.calls[0].arguments[1],
         configuration.items[0].settings.serialization
       );
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], configuration.name);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
       assert.deepStrictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[3],
+        utilsExports.persistResults.mock.calls[0].arguments[3],
         configuration.items[0]
       );
       assert.strictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[4],
+        utilsExports.persistResults.mock.calls[0].arguments[4],
         testData.constants.dates.FAKE_NOW
       );
       assert.strictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[5],
+        utilsExports.persistResults.mock.calls[0].arguments[5],
         path.resolve('cacheFolder', 'tmp')
       );
 
@@ -391,9 +391,9 @@ describe('SouthODBC', () => {
 
       const result = await south.queryOdbcData(configuration.items[1], startTime, endTime);
 
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
       assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        utilsExports.logQuery.mock.calls[0].arguments[0],
         configuration.items[1].settings.query
       );
 
@@ -476,8 +476,8 @@ describe('SouthODBC', () => {
 
       await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       assert.strictEqual(queryOdbcDataMock.mock.calls.length, 1);
-      assert.strictEqual((utilsExports.convertDateTimeToInstant as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-      assert.strictEqual((utilsExports.formatInstant as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(utilsExports.convertDateTimeToInstant.mock.calls.length, 0);
+      assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
     });
 
     it('QueryOdbcData in case of item test', async () => {
@@ -496,7 +496,7 @@ describe('SouthODBC', () => {
 
       await south.queryOdbcData(configuration.items[0], startTime, endTime, true);
 
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
       assert.strictEqual(odbc.connect.mock.calls.length, 1);
       assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
         connectionString: `${configuration.settings.connectionString};PWD=password;`,
@@ -682,26 +682,26 @@ describe('SouthODBC', () => {
       );
 
       assert.deepStrictEqual(result, { trackedInstant: '2020-03-01T00:00:00.000Z', value: { timestamp: '2020-03-01T00:00:00.000Z' } });
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], [
+      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[0], [
         { timestamp: '2020-02-01T00:00:00.000Z' },
         { timestamp: '2020-03-01T00:00:00.000Z' }
       ]);
       assert.deepStrictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1],
+        utilsExports.persistResults.mock.calls[0].arguments[1],
         configuration.items[0].settings.serialization
       );
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], configuration.name);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
       assert.deepStrictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[3],
+        utilsExports.persistResults.mock.calls[0].arguments[3],
         configuration.items[0]
       );
       assert.strictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[4],
+        utilsExports.persistResults.mock.calls[0].arguments[4],
         testData.constants.dates.FAKE_NOW
       );
       assert.strictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[5],
+        utilsExports.persistResults.mock.calls[0].arguments[5],
         path.resolve('cacheFolder', 'tmp')
       );
     });
@@ -1147,7 +1147,7 @@ describe('SouthODBC', () => {
     });
 
     it('should properly connect to remote agent and disconnect', async () => {
-      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200, {}));
 
       await south.connect();
       assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
@@ -1179,7 +1179,7 @@ describe('SouthODBC', () => {
 
     it('should properly reconnect to when connection fails', async () => {
       let httpCallCount = 0;
-      httpRequestExports.HTTPRequest = mock.fn(async () => {
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
         httpCallCount++;
         if (httpCallCount === 1) throw new Error('connection failed');
         return createMockResponse(200, {});
@@ -1211,7 +1211,7 @@ describe('SouthODBC', () => {
 
     it('should properly clear reconnect timeout on disconnect', async () => {
       let httpCallCount = 0;
-      httpRequestExports.HTTPRequest = mock.fn(async () => {
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
         httpCallCount++;
         if (httpCallCount === 1) throw new Error('connection failed');
         if (httpCallCount === 2) return createMockResponse(200, {});
@@ -1271,7 +1271,7 @@ describe('SouthODBC', () => {
       const endTime = '2022-01-01T00:00:00.000Z';
 
       let httpCallCount = 0;
-      httpRequestExports.HTTPRequest = mock.fn(async () => {
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
         httpCallCount++;
         if (httpCallCount === 1) {
           return createMockResponse(200, {
@@ -1289,9 +1289,9 @@ describe('SouthODBC', () => {
 
       const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
 
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
       assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        utilsExports.logQuery.mock.calls[0].arguments[0],
         configuration.items[0].settings.query
       );
 
@@ -1322,27 +1322,27 @@ describe('SouthODBC', () => {
         trackedInstant: '2020-03-01T00:00:00.000Z',
         value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
       });
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], [
+      assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[0], [
         { timestamp: '2020-02-01T00:00:00.000Z' },
         { timestamp: '2020-03-01T00:00:00.000Z' }
       ]);
-      assert.deepStrictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], {
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[1], {
         type: 'file',
         filename: configuration.items[0].settings.serialization.filename,
         compression: configuration.items[0].settings.serialization.compression
       });
-      assert.strictEqual((utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], configuration.name);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
       assert.deepStrictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[3],
+        utilsExports.persistResults.mock.calls[0].arguments[3],
         configuration.items[0]
       );
       assert.strictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[4],
+        utilsExports.persistResults.mock.calls[0].arguments[4],
         testData.constants.dates.FAKE_NOW
       );
       assert.strictEqual(
-        (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0].arguments[5],
+        utilsExports.persistResults.mock.calls[0].arguments[5],
         path.resolve('cacheFolder', 'tmp')
       );
 
@@ -1358,7 +1358,7 @@ describe('SouthODBC', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      httpRequestExports.HTTPRequest = mock.fn(async () =>
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
         createMockResponse(200, {
           recordCount: 2,
           content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
@@ -1368,9 +1368,9 @@ describe('SouthODBC', () => {
 
       const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
 
-      assert.strictEqual((utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
       assert.deepStrictEqual(
-        (utilsExports.logQuery as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        utilsExports.logQuery.mock.calls[0].arguments[0],
         configuration.items[1].settings.query
       );
 
@@ -1401,7 +1401,7 @@ describe('SouthODBC', () => {
       const endTime = '2022-01-01T00:00:00.000Z';
 
       let httpCallCount = 0;
-      httpRequestExports.HTTPRequest = mock.fn(async () => {
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
         httpCallCount++;
         if (httpCallCount === 1) return createMockResponse(400, 'bad request');
         return createMockResponse(500);
@@ -1450,7 +1450,7 @@ describe('SouthODBC', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      httpRequestExports.HTTPRequest = mock.fn(async () =>
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
         createMockResponse(200, {
           recordCount: 0,
           content: [],
@@ -1610,13 +1610,13 @@ describe('SouthODBC', () => {
     });
 
     it('should test connection successfully', async () => {
-      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, 'bad request'));
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200, 'bad request'));
       await assert.doesNotReject(south.testConnection());
     });
 
     it('should test connection fail', async () => {
       let httpCallCount = 0;
-      httpRequestExports.HTTPRequest = mock.fn(async () => {
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
         httpCallCount++;
         if (httpCallCount === 1) return createMockResponse(400, 'bad request');
         return createMockResponse(500, 'another error');
