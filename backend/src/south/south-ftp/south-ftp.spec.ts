@@ -12,7 +12,7 @@ import type SouthCacheRepository from '../../repository/cache/south-cache.reposi
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
 import type { SouthFTPItemSettings, SouthFTPSettings } from '../../../shared/model/south-settings.model';
 import { DateTime } from 'luxon';
-import type { FileInfo } from 'basic-ftp';
+import type { AccessOptions, FileInfo } from 'basic-ftp';
 import type SouthFtpClass from './south-ftp';
 
 const nodeRequire = createRequire(import.meta.url);
@@ -22,15 +22,15 @@ describe('SouthFTP', () => {
   let south: SouthFtpClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
   const mockFtpClient = {
-    access: mock.fn(async () => undefined),
-    list: mock.fn(async () => [] as Array<FileInfo>),
-    downloadTo: mock.fn(async () => undefined),
-    remove: mock.fn(async () => undefined),
+    access: mock.fn(async (_options?: AccessOptions) => undefined),
+    list: mock.fn(async (_path?: string) => [] as Array<FileInfo>),
+    downloadTo: mock.fn(async (_dest: string, _remote: string) => undefined),
+    remove: mock.fn(async (_path: string) => undefined),
     close: mock.fn(() => undefined)
   };
 
@@ -43,7 +43,7 @@ describe('SouthFTP', () => {
 
   const utilsExports = {
     checkAge: mock.fn(() => true),
-    compress: mock.fn(async () => undefined),
+    compress: mock.fn(async (_input: string, _output: string) => undefined),
     delay: mock.fn(async () => undefined),
     generateIntervals: mock.fn(() => []),
     groupItemsByGroup: mock.fn(() => []),
@@ -53,7 +53,7 @@ describe('SouthFTP', () => {
   const encryptionExports = {
     __esModule: true,
     encryptionService: {
-      decryptText: mock.fn(async () => 'decrypted-password')
+      decryptText: mock.fn(async (_text?: string | null) => 'decrypted-password')
     }
   };
 
@@ -188,19 +188,19 @@ describe('SouthFTP', () => {
 
     ftpExports.Client.mock.resetCalls();
 
-    mockFtpClient.access = mock.fn(async () => undefined);
-    mockFtpClient.list = mock.fn(async () => [] as Array<FileInfo>);
-    mockFtpClient.downloadTo = mock.fn(async () => undefined);
-    mockFtpClient.remove = mock.fn(async () => undefined);
+    mockFtpClient.access = mock.fn(async (_options?: AccessOptions) => undefined);
+    mockFtpClient.list = mock.fn(async (_path?: string) => [] as Array<FileInfo>);
+    mockFtpClient.downloadTo = mock.fn(async (_dest: string, _remote: string) => undefined);
+    mockFtpClient.remove = mock.fn(async (_path: string) => undefined);
     mockFtpClient.close = mock.fn(() => undefined);
 
     utilsExports.checkAge.mock.resetCalls();
     utilsExports.checkAge.mock.mockImplementation(() => true);
     utilsExports.compress.mock.resetCalls();
-    utilsExports.compress.mock.mockImplementation(async () => undefined);
+    utilsExports.compress.mock.mockImplementation(async (_input: string, _output: string) => undefined);
 
     encryptionExports.encryptionService.decryptText.mock.resetCalls();
-    encryptionExports.encryptionService.decryptText.mock.mockImplementation(async () => 'decrypted-password');
+    encryptionExports.encryptionService.decryptText.mock.mockImplementation(async (_text?: string | null) => 'decrypted-password');
 
     southCacheService.createCustomTable.mock.mockImplementation(() => undefined);
     southCacheService.getQueryOnCustomTable.mock.mockImplementation(() => null);
