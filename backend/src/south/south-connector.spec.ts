@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
@@ -12,12 +12,14 @@ import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/so
 import type {
   SouthFolderScannerItemSettings,
   SouthFolderScannerSettings,
+  SouthItemSettings,
   SouthMSSQLItemSettings,
   SouthMSSQLSettings,
   SouthOPCUAItemSettings,
   SouthOPCUASettings
 } from '../../shared/model/south-settings.model';
-import type { OIBusTimeValue } from '../../shared/model/engine.model';
+import type { OIBusContent, OIBusTimeValue } from '../../shared/model/engine.model';
+import type { Instant } from '../../shared/model/types';
 import type SouthFolderScannerClass from './south-folder-scanner/south-folder-scanner';
 import type SouthMSSQLClass from './south-mssql/south-mssql';
 import type SouthOPCUAClass from './south-opcua/south-opcua';
@@ -34,7 +36,10 @@ describe('SouthConnector', () => {
 
   const logger = new PinoLogger();
   const anotherLogger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(
+    async (_southId: string, _data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
+      undefined
+  );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
 
   const cronMockInstance = { stop: mock.fn() };
@@ -46,7 +51,10 @@ describe('SouthConnector', () => {
 
   const utilsExports = {
     delay: mock.fn(async () => undefined),
-    generateIntervals: mock.fn(() => ({ intervals: [], numberOfIntervalsDone: 0 })),
+    generateIntervals: mock.fn((_startTime: unknown, _startTimeFromCache: unknown, _endTime: unknown, _maxReadInterval?: unknown) => ({
+      intervals: [] as Array<never>,
+      numberOfIntervalsDone: 0
+    })),
     groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     validateCronExpression: mock.fn(() => ({ expression: '' })),
     checkAge: mock.fn(() => true),
@@ -112,7 +120,7 @@ describe('SouthConnector', () => {
       southCacheService = new SouthCacheServiceMock();
       addContentCallback.mock.resetCalls();
       for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
-        (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       }
       cronMockInstance.stop.mock.resetCalls();
       cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
@@ -144,38 +152,40 @@ describe('SouthConnector', () => {
     });
 
     it('should properly add to queue a new task and trigger next run', () => {
-      south.run = mock.fn(async () => undefined);
+      const runMock = mock.fn(async () => undefined);
+      south.run = runMock;
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual(south.run.mock.calls.length, 1);
-      assert.deepStrictEqual(south.run.mock.calls[0].arguments, [
+      assert.strictEqual(runMock.mock.calls.length, 1);
+      assert.deepStrictEqual(runMock.mock.calls[0].arguments, [
         testData.scanMode.list[0].id,
         testData.south.list[0].items.filter(element => element.scanMode?.id === testData.scanMode.list[0].id)
       ]);
 
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual((logger.warn as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
       assert.strictEqual(
-        (logger.warn as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0],
         `Task job not added in South connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}). The previous cron was still running`
       );
 
       south.addToQueue(testData.scanMode.list[1]);
-      assert.strictEqual(south.run.mock.calls.length, 1);
+      assert.strictEqual(runMock.mock.calls.length, 1);
       assert.deepStrictEqual(south.connectorConfiguration, testData.south.list[0]);
     });
 
     it('should properly add to queue a new task and not trigger next run if no item', () => {
-      south.run = mock.fn(async () => undefined);
+      const runMock = mock.fn(async () => undefined);
+      south.run = runMock;
       south['connector'].items = [];
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual(south.run.mock.calls.length, 0);
+      assert.strictEqual(runMock.mock.calls.length, 0);
     });
 
     it('should not update subscriptions if not compatible', async () => {
       await south.updateSubscriptions();
-      assert.strictEqual((logger.trace as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual((logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
       assert.strictEqual(
-        (logger.trace as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0],
         'This connector does not support subscriptions'
       );
 
@@ -190,21 +200,23 @@ describe('SouthConnector', () => {
         setTimeout(resolve, 1000);
       });
       south.disconnect = mock.fn(() => promise);
-      south.run = mock.fn(async () => undefined);
+      const runMock = mock.fn(async () => undefined);
+      south.run = runMock;
 
       south.stop();
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual(south.run.mock.calls.length, 0);
+      assert.strictEqual(runMock.mock.calls.length, 0);
       await flushPromises();
     });
 
     it('should add to queue a new task and not trigger next run if run in progress', () => {
-      south.run = mock.fn(async () => undefined);
+      const runMock = mock.fn(async () => undefined);
+      south.run = runMock;
       south.createDeferredPromise();
       south.addToQueue(testData.scanMode.list[0]);
-      assert.strictEqual(south.run.mock.calls.length, 0);
+      assert.strictEqual(runMock.mock.calls.length, 0);
       assert.ok(
-        (logger.warn as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'A South task is already running'
         )
       );
@@ -215,7 +227,7 @@ describe('SouthConnector', () => {
       south.updateCronJobs();
       assert.strictEqual(south['cronByScanModeIds'].size, 2);
 
-      south.createOrUpdateCronJob = mock.fn();
+      south.createOrUpdateCronJob = mock.fn((_scanMode: unknown) => undefined);
       south.updateScanModeIfUsed({
         id: 'bad id',
         cron: '',
@@ -233,17 +245,17 @@ describe('SouthConnector', () => {
     });
 
     it('should use another logger', async () => {
-      (logger.info as ReturnType<typeof mock.fn>).mock.resetCalls();
+      (logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       south.setLogger(anotherLogger);
       await south.stop();
-      assert.strictEqual((anotherLogger.info as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.strictEqual((logger.info as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual((anotherLogger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.strictEqual((logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
       south.hasSubscription();
     });
 
     it('should reset cache', async () => {
       await south.resetCache();
-      assert.strictEqual((southCacheService.dropItemValueTable as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual((southCacheService.dropItemValueTable as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
     });
 
     it('should create a cron job', () => {
@@ -251,14 +263,15 @@ describe('SouthConnector', () => {
         setTimeout(() => callback(), 1000);
         return cronMockInstance;
       });
-      south.addToQueue = mock.fn();
+      const addToQueueMock = mock.fn((_scanMode: unknown) => undefined);
+      south.addToQueue = addToQueueMock;
       south.createOrUpdateCronJob(testData.scanMode.list[0]);
       mock.timers.tick(1000);
-      assert.strictEqual(south.addToQueue.mock.calls.length, 1);
+      assert.strictEqual(addToQueueMock.mock.calls.length, 1);
 
       south.createOrUpdateCronJob(testData.scanMode.list[0]);
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] ===
             `Removing existing South cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
@@ -275,14 +288,14 @@ describe('SouthConnector', () => {
       await south.stop();
 
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] ===
             `Creating South cron job for scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
         )
       );
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] ===
             `Removing existing South cron job associated to scan mode "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron})`
@@ -302,7 +315,7 @@ describe('SouthConnector', () => {
       south.createOrUpdateCronJob({ ...testData.scanMode.list[0], cron: '* * * * * *L' });
 
       assert.ok(
-        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] ===
             `Error when creating South cron job for scan mode "${testData.scanMode.list[0].name}" (* * * * * *L): ${error.message}`
@@ -312,20 +325,21 @@ describe('SouthConnector', () => {
 
     it('should query files', async () => {
       let directQueryCallCount = 0;
-      south.directQuery = mock.fn(async () => {
+      const directQueryMock = mock.fn(async () => {
         directQueryCallCount++;
         if (directQueryCallCount === 2) throw new Error('file query error');
         return [];
       });
+      south.directQuery = directQueryMock;
 
       await south.run(
         testData.scanMode.list[0].id,
         testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>
       );
-      assert.strictEqual(south.directQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(south.directQuery.mock.calls[0].arguments, [testData.south.list[0].items]);
+      assert.strictEqual(directQueryMock.mock.calls.length, 1);
+      assert.deepStrictEqual(directQueryMock.mock.calls[0].arguments, [testData.south.list[0].items]);
       assert.ok(
-        (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === `Direct querying 2 items`
         )
       );
@@ -336,7 +350,7 @@ describe('SouthConnector', () => {
       );
 
       assert.ok(
-        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error when calling directQuery: file query error`
         )
       );
@@ -350,7 +364,7 @@ describe('SouthConnector', () => {
       southCacheService = new SouthCacheServiceMock();
       addContentCallback.mock.resetCalls();
       for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
-        (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       }
       cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
         return cronMockInstance;
@@ -380,17 +394,17 @@ describe('SouthConnector', () => {
     });
 
     it('should be properly initialized', () => {
-      assert.ok((logger.trace as ReturnType<typeof mock.fn>).mock.calls.length >= 0);
+      assert.ok((logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length >= 0);
       assert.strictEqual(south.isEnabled(), false);
-      assert.strictEqual((southCacheService.createItemValueTable as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-      south.historyQueryHandler = mock.fn(async () => undefined);
+      assert.strictEqual((southCacheService.createItemValueTable as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      south.historyQueryHandler = mock.fn(async (_items: unknown, _startTime: unknown, _endTime: unknown) => undefined);
     });
 
     it('should ignore history query when not history items', async () => {
       await south.historyQueryHandler([], '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z');
       south.resolveDeferredPromise();
       assert.ok(
-        (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'No history items to read. Ignoring historyQuery'
         )
       );
@@ -404,7 +418,7 @@ describe('SouthConnector', () => {
       southCacheService = new SouthCacheServiceMock();
       addContentCallback.mock.resetCalls();
       for (const fn of [logger.trace, logger.debug, logger.info, logger.warn, logger.error]) {
-        (fn as ReturnType<typeof mock.fn>).mock.resetCalls();
+        (fn as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       }
       cronExports.CronJob = mock.fn(function (_cron: unknown, _callback: () => void) {
         return cronMockInstance;
@@ -427,8 +441,8 @@ describe('SouthConnector', () => {
         'cacheFolder'
       );
 
-      south.connect = mock.fn(async () => undefined);
-      south.disconnect = mock.fn(async () => undefined);
+      south.connect = mock.fn(async (): Promise<void> => undefined);
+      south.disconnect = mock.fn(async (): Promise<void> => undefined);
       await south.start();
     });
 
@@ -439,24 +453,26 @@ describe('SouthConnector', () => {
 
     it('should properly run task a task', async () => {
       let historyCallCount = 0;
-      south.historyQueryHandler = mock.fn(async () => {
+      const historyQueryHandlerMock = mock.fn(async () => {
         historyCallCount++;
         if (historyCallCount === 1) throw new Error('history query error');
       });
+      south.historyQueryHandler = historyQueryHandlerMock;
       let directCallCount = 0;
-      south.directQuery = mock.fn(async () => {
+      const directQueryMock = mock.fn(async (): Promise<null> => {
         directCallCount++;
         if (directCallCount === 1) throw new Error('last point query error');
-        return [];
+        return null;
       });
+      south.directQuery = directQueryMock;
 
       await south.run(
         testData.scanMode.list[0].id,
         testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
       );
 
-      assert.strictEqual(south.historyQueryHandler.mock.calls.length, 1);
-      assert.deepStrictEqual(south.historyQueryHandler.mock.calls[0].arguments, [
+      assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 1);
+      assert.deepStrictEqual(historyQueryHandlerMock.mock.calls[0].arguments, [
         testData.south.list[2].items,
         DateTime.fromISO(testData.constants.dates.FAKE_NOW)
           .minus(3600 * 1000)
@@ -464,14 +480,14 @@ describe('SouthConnector', () => {
           .toISO()!,
         testData.constants.dates.FAKE_NOW
       ]);
-      assert.strictEqual(south.directQuery.mock.calls.length, 1);
+      assert.strictEqual(directQueryMock.mock.calls.length, 1);
       assert.ok(
-        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error when calling historyQuery: history query error`
         )
       );
       assert.ok(
-        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error when calling directQuery: last point query error`
         )
       );
@@ -481,7 +497,7 @@ describe('SouthConnector', () => {
         testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
       );
 
-      assert.deepStrictEqual(south.historyQueryHandler.mock.calls[1].arguments, [
+      assert.deepStrictEqual(historyQueryHandlerMock.mock.calls[1].arguments, [
         testData.south.list[2].items,
         DateTime.fromISO(testData.constants.dates.FAKE_NOW)
           .minus(3600 * 1000)
@@ -489,11 +505,11 @@ describe('SouthConnector', () => {
           .toISO()!,
         testData.constants.dates.FAKE_NOW
       ]);
-      assert.strictEqual(south.historyQueryHandler.mock.calls.length, 2);
-      assert.strictEqual(south.directQuery.mock.calls.length, 2);
+      assert.strictEqual(historyQueryHandlerMock.mock.calls.length, 2);
+      assert.strictEqual(directQueryMock.mock.calls.length, 2);
 
       assert.ok(
-        (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'No more task to run'
         )
       );
@@ -508,13 +524,13 @@ describe('SouthConnector', () => {
     it('should properly stop', async () => {
       await south.stop();
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] === `Stopping South "${testData.south.list[2].name}" (${testData.south.list[2].id})...`
         )
       );
       assert.ok(
-        (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === `South connector "${testData.south.list[2].name}" stopped`
         )
       );
@@ -525,39 +541,40 @@ describe('SouthConnector', () => {
         setTimeout(resolve, 1000);
       });
       south.historyQueryHandler = mock.fn(async () => promise);
-      south.directQuery = mock.fn(async () => []);
-      south.disconnect = mock.fn(async () => undefined);
+      south.directQuery = mock.fn(async (): Promise<null> => null);
+      const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+      south.disconnect = disconnectMock;
 
       south.run(testData.scanMode.list[0].id, testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>);
 
       south.stop();
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] === `Stopping South "${testData.south.list[2].name}" (${testData.south.list[2].id})...`
         )
       );
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Waiting for South task to finish'
         )
       );
-      assert.strictEqual(south.disconnect.mock.calls.length, 0);
+      assert.strictEqual(disconnectMock.mock.calls.length, 0);
       mock.timers.tick(1000);
       await flushPromises();
-      assert.strictEqual(south.disconnect.mock.calls.length, 1);
+      assert.strictEqual(disconnectMock.mock.calls.length, 1);
     });
 
     it('should add values', async () => {
       await south.addContent({ type: 'time-values', content: [] }, testData.constants.dates.DATE_1, []);
-      assert.strictEqual((logger.debug as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual((logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
       assert.strictEqual(addContentCallback.mock.calls.length, 0);
-      assert.strictEqual((southCacheService.saveItemLastValue as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual((southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
 
       const values = [{}, {}] as Array<OIBusTimeValue>;
       await south.addContent({ type: 'time-values', content: values }, testData.constants.dates.DATE_1, testData.south.list[2].items);
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === `Add 2 values to cache from South "${testData.south.list[2].name}"`
         )
       );
@@ -573,7 +590,7 @@ describe('SouthConnector', () => {
     it('should add file', async () => {
       await south.addContent({ type: 'any', filePath: 'file.csv' }, testData.constants.dates.DATE_1, testData.south.list[2].items);
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] === `Add file "file.csv" to cache from South "${testData.south.list[2].name}"`
         )
@@ -589,7 +606,7 @@ describe('SouthConnector', () => {
     it('should add any content', async () => {
       await south.addContent({ type: 'any-content', content: 'file.csv' }, testData.constants.dates.DATE_1, []);
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] === `Add 8 bytes of content to cache from South "${testData.south.list[2].name}"`
         )
@@ -615,14 +632,15 @@ describe('SouthConnector', () => {
         return { intervals: [], numberOfIntervalsDone: 0 };
       });
 
-      south.historyQuery = mock.fn(
+      const historyQueryMock = mock.fn(
         () =>
-          new Promise<string>(resolve => {
+          new Promise<{ trackedInstant: Instant | null; value: unknown | null }>(resolve => {
             setTimeout(() => {
-              resolve('2021-02-02T02:02:02.222Z');
+              resolve({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null });
             }, 1000);
           })
       );
+      south.historyQuery = historyQueryMock;
 
       south.createDeferredPromise();
       south
@@ -641,13 +659,13 @@ describe('SouthConnector', () => {
       await flushPromises();
 
       assert.ok(
-        (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
             c.arguments[0] ===
             `Connector is stopping. Exiting history query at interval 0: [2020-02-02T02:02:02.222Z, 2021-02-02T02:02:02.222Z]`
         )
       );
-      assert.strictEqual(south.historyQuery.mock.calls.length, 1);
+      assert.strictEqual(historyQueryMock.mock.calls.length, 1);
     });
 
     it('should use group historian settings when syncWithGroup is true', async () => {
@@ -687,11 +705,11 @@ describe('SouthConnector', () => {
         scanMode: { ...item.scanMode!, id: 'subscription' }
       }));
       south['subscribedItems'] = [south['connector'].items[0]];
-      south.unsubscribe = mock.fn(async () => undefined);
-      south.subscribe = mock.fn(async () => undefined);
+      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+      south.subscribe = mock.fn(async (): Promise<void> => undefined);
       await south.updateSubscriptions();
       assert.ok(
-        (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Subscribing to 3 new items'
         )
       );
@@ -701,11 +719,11 @@ describe('SouthConnector', () => {
       await south.updateSubscriptions();
 
       assert.ok(
-        (logger.trace as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Unsubscribing from 4 items'
         )
       );
-      assert.strictEqual((logger.error as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual((logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
     });
 
     it('should update subscriptions and log error', async () => {
@@ -766,18 +784,18 @@ describe('SouthConnector', () => {
         }
       ];
       let unsubscribeCallCount = 0;
-      south.unsubscribe = mock.fn(async () => {
+      south.unsubscribe = mock.fn(async (): Promise<void> => {
         unsubscribeCallCount++;
         if (unsubscribeCallCount === 1) throw new Error('unsubscribe error');
       });
       let subscribeCallCount = 0;
-      south.subscribe = mock.fn(async () => {
+      south.subscribe = mock.fn(async (): Promise<void> => {
         subscribeCallCount++;
         if (subscribeCallCount === 1) throw new Error('subscribe error');
       });
       await south.updateSubscriptions();
       assert.ok(
-        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error when subscribing to new items: subscribe error'
         )
       );
@@ -786,7 +804,7 @@ describe('SouthConnector', () => {
 
       await south.updateSubscriptions();
       assert.ok(
-        (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error when unsubscribing from items: unsubscribe error'
         )
       );

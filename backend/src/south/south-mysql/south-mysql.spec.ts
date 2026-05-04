@@ -7,7 +7,9 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
+import type { SouthItemSettings } from '../../../shared/model/south-settings.model';
 import type {
   SouthMySQLItemSettings,
   SouthMySQLItemSettingsDateTimeFields,
@@ -45,7 +47,7 @@ describe('SouthMySQL', () => {
   let SouthMySQL: typeof SouthMySQLClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -64,7 +66,7 @@ describe('SouthMySQL', () => {
     formatInstant: mock.fn((instant: unknown) => instant),
     generateCsvContent: mock.fn(() => ''),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
-    generateReplacementParameters: mock.fn(() => []),
+    generateReplacementParameters: mock.fn((): unknown => []),
     logQuery: mock.fn(),
     persistResults: mock.fn(async () => undefined)
   };
@@ -327,7 +329,7 @@ describe('SouthMySQL', () => {
 
       utilsExports.generateReplacementParameters = mock.fn(() => ({ startTime, endTime }));
 
-      const mockExecute = mock.fn(async () => [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]);
+      const mockExecute = mock.fn(async (_query: unknown) => [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]);
       const mockEnd = mock.fn();
       mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
 
@@ -364,7 +366,7 @@ describe('SouthMySQL', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      const mockExecute = mock.fn(async () => [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]);
+      const mockExecute = mock.fn(async (_query: unknown) => [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]);
       const mockEnd = mock.fn();
       mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
 
@@ -432,14 +434,14 @@ describe('SouthMySQL', () => {
       utilsExports.formatInstant = mock.fn(() => formattedInstant);
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-      mock.method(
+      const createConnectionOptionsMock = mock.method(
         south,
         'createConnectionOptions',
-        mock.fn(async () => undefined)
+        async () => undefined
       );
 
       await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-      assert.strictEqual((south.createConnectionOptions as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(createConnectionOptionsMock.mock.calls.length, 1);
       assert.strictEqual((mysqlExports.createConnection as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[0], startTime, endTime]);
@@ -467,14 +469,14 @@ describe('SouthMySQL', () => {
       utilsExports.formatInstant = mock.fn(() => formattedInstant);
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-      mock.method(
+      const createConnectionOptionsMock2 = mock.method(
         south,
         'createConnectionOptions',
-        mock.fn(async () => undefined)
+        async () => undefined
       );
 
       await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
-      assert.strictEqual((south.createConnectionOptions as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(createConnectionOptionsMock2.mock.calls.length, 1);
       assert.strictEqual((mysqlExports.createConnection as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       const { startTime, endTime } = testData.south.itemTestingSettings.history!;
       assert.deepStrictEqual(queryDataMock.mock.calls[0].arguments, [configuration.items[1], startTime, endTime]);
