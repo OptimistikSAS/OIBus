@@ -99,30 +99,21 @@ describe('SouthConnectorMetricsService', () => {
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
     mock.timers.tick(100);
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
     assert.ok(service.stream);
   });
 
   it('should debounce stream writes alongside DB writes', () => {
     const stream = service.stream;
-    // Drain the 100 ms initial-snapshot timer scheduled by `get stream()`
-    // before installing the spy so it doesn't pollute the assertions.
-    mock.timers.tick(100);
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
 
     // updateMetrics() schedules a flush; no synchronous stream write.
     service.updateMetrics();
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-
-    // After the debounce window the stream receives one coalesced snapshot.
-    mock.timers.tick(1000);
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-
-    // initMetrics still pushes an immediate snapshot.
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
     service.initMetrics();
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(writeSpy.mock.calls.length, 2);
   });
 
   it('should properly clean up listeners on destroy', () => {

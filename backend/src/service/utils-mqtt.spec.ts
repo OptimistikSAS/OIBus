@@ -154,11 +154,13 @@ const items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [
 
 describe('Service utils MQTT', () => {
   let logger: PinoLogger;
+  let decryptTextMock: ReturnType<typeof mock.fn>;
+  let readFileMock: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
     logger = new PinoLogger();
-    mock.method(encryptionService, 'decryptText', async (text: unknown) => text);
-    mock.method(fs, 'readFile', async () => '');
+    decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => text) as ReturnType<typeof mock.fn>;
+    readFileMock = mock.method(fs, 'readFile', async () => '') as ReturnType<typeof mock.fn>;
   });
 
   afterEach(() => {
@@ -198,7 +200,7 @@ describe('Service utils MQTT', () => {
         }
       );
       assert.strictEqual(typeof result.log, 'function');
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(decryptTextMock.mock.calls.length, 0);
 
       result.log!('test');
       assert.deepStrictEqual(logger.trace.mock.calls[0].arguments, ['test']);
@@ -242,11 +244,11 @@ describe('Service utils MQTT', () => {
           password: 'password'
         }
       );
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['password']);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['password']);
     });
 
     it('should create connection options with cert', async () => {
-      (fs.readFile as ReturnType<typeof mock.fn>).mock.mockImplementation(async (filePath: unknown) => {
+      readFileMock.mock.mockImplementation(async (filePath: unknown) => {
         const p = String(filePath);
         if (p.endsWith('cert')) return 'cert';
         if (p.endsWith('key')) return 'key';
@@ -289,11 +291,11 @@ describe('Service utils MQTT', () => {
           ca: 'ca'
         }
       );
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-      assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 3);
-      assert.deepStrictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], path.resolve('cert'));
-      assert.deepStrictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments[0], path.resolve('key'));
-      assert.deepStrictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls[2].arguments[0], path.resolve('ca'));
+      assert.strictEqual(decryptTextMock.mock.calls.length, 0);
+      assert.strictEqual(readFileMock.mock.calls.length, 3);
+      assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], path.resolve('cert'));
+      assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], path.resolve('key'));
+      assert.deepStrictEqual(readFileMock.mock.calls[2].arguments[0], path.resolve('ca'));
     });
 
     it('should create connection options without cert', async () => {
@@ -333,8 +335,8 @@ describe('Service utils MQTT', () => {
           ca: ''
         }
       );
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-      assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(decryptTextMock.mock.calls.length, 0);
+      assert.strictEqual(readFileMock.mock.calls.length, 0);
     });
   });
 

@@ -10,6 +10,7 @@ import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';
 import OIAnalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
+import type { ReqOptions } from '../../service/http-request.utils';
 import type { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
 import type NorthOIAnalyticsClass from './north-oianalytics';
 import type CertificateRepository from '../../repository/config/certificate.repository';
@@ -27,14 +28,15 @@ describe('NorthOIAnalytics', () => {
   const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock() as unknown as OIAnalyticsRegistrationRepository;
 
   const mockGzipStream = { pipe: mock.fn() };
+  const readStreamPipeMock = mock.fn(() => mockGzipStream);
   const mockReadStream = {
-    pipe: mock.fn(() => mockGzipStream),
+    pipe: readStreamPipeMock,
     on: mock.fn(),
     read: mock.fn()
   } as unknown as ReadStream;
 
-  const httpRequestMock = mock.fn(async () => createMockResponse(200));
-  const streamToStringMock = mock.fn(async () => 'stream-content-string');
+  const httpRequestMock = mock.fn(async (_url: URL, _options: ReqOptions) => createMockResponse(200));
+  const streamToStringMock = mock.fn(async (_stream: unknown) => 'stream-content-string');
 
   const buildHttpOptionsMock = mock.fn(async () => ({
     headers: { 'custom-header': 'val' },
@@ -95,7 +97,7 @@ describe('NorthOIAnalytics', () => {
     getUrlMock.mock.resetCalls();
     testOIAnalyticsConnectionMock.mock.resetCalls();
     createGzipMock.mock.resetCalls();
-    (mockReadStream.pipe as ReturnType<typeof mock.fn>).mock.resetCalls();
+    readStreamPipeMock.mock.resetCalls();
     (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get.mock.resetCalls();
 
     // node:zlib is a built-in module and cannot be patched via mockModule; use mock.method instead
@@ -108,8 +110,8 @@ describe('NorthOIAnalytics', () => {
     }));
     getHostMock.mock.mockImplementation(() => 'https://mock-host');
     getUrlMock.mock.mockImplementation((endpoint: string, host: string) => new URL(endpoint, host));
-    httpRequestMock.mock.mockImplementation(async () => createMockResponse(200));
-    streamToStringMock.mock.mockImplementation(async () => 'stream-content-string');
+    httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(200));
+    streamToStringMock.mock.mockImplementation(async (_stream: unknown) => 'stream-content-string');
     (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get.mock.mockImplementation(
       () => testData.oIAnalytics.registration.completed
     );
@@ -170,7 +172,7 @@ describe('NorthOIAnalytics', () => {
       assert.deepStrictEqual(streamToStringMock.mock.calls[0].arguments, [mockReadStream]);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
       assert.ok(url.href.includes('/api/oianalytics/oibus/time-values'));
       assertContains(options, { body: 'stream-content-string' });
       assertContains(options.headers as Record<string, unknown>, { 'Content-Type': 'application/json' });
@@ -182,7 +184,7 @@ describe('NorthOIAnalytics', () => {
 
       await north.handleContent(mockReadStream, metadata);
 
-      assert.strictEqual((mockReadStream.pipe as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(readStreamPipeMock.mock.calls.length, 1);
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
       assert.deepStrictEqual(createGzipMock.mock.calls[0].arguments, [{ level: 9 }]);
 
@@ -190,19 +192,19 @@ describe('NorthOIAnalytics', () => {
       assert.deepStrictEqual(streamToStringMock.mock.calls[0].arguments, [mockGzipStream]);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url] = httpRequestMock.mock.calls[0].arguments as [URL];
+      const [url] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
       assert.ok(url.href.includes('/api/oianalytics/oibus/time-values/compressed'));
     });
 
     it('should throw OIBusError on fetch failure', async () => {
-      httpRequestMock.mock.mockImplementation(async () => {
+      httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => {
         throw new Error('Network Error');
       });
       await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Fail to reach values endpoint/);
     });
 
     it('should throw OIBusError on non-ok response', async () => {
-      httpRequestMock.mock.mockImplementation(async () => createMockResponse(500, 'Internal Server Error'));
+      httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(500, 'Internal Server Error'));
       await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Error 500: Internal Server Error/);
     });
   });
@@ -222,7 +224,7 @@ describe('NorthOIAnalytics', () => {
       await north.handleContent(mockReadStream, metadata);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
       assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
       assertContains(options.query as Record<string, unknown>, { dataSourceId: configuration.name });
       assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
@@ -235,12 +237,12 @@ describe('NorthOIAnalytics', () => {
 
       await north.handleContent(mockReadStream, metadata);
 
-      assert.strictEqual((mockReadStream.pipe as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual(readStreamPipeMock.mock.calls.length, 1);
       assert.strictEqual(createGzipMock.mock.calls.length, 1);
       assert.deepStrictEqual(createGzipMock.mock.calls[0].arguments, [{ level: 9 }]);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, Record<string, unknown>];
+      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
       assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
       assert.ok((options.headers as Record<string, string>)['content-type'].startsWith('multipart/form-data; boundary=OIBusBoundary'));
     });
@@ -251,23 +253,23 @@ describe('NorthOIAnalytics', () => {
 
       await north.handleContent(mockReadStream, gzMetadata);
 
-      assert.strictEqual((mockReadStream.pipe as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(readStreamPipeMock.mock.calls.length, 0);
       assert.strictEqual(createGzipMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url] = httpRequestMock.mock.calls[0].arguments as [URL];
+      const [url] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
       assert.ok(url.href.includes('/api/oianalytics/file-uploads'));
     });
 
     it('should throw OIBusError on fetch failure', async () => {
-      httpRequestMock.mock.mockImplementation(async () => {
+      httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => {
         throw new Error('Network Error');
       });
       await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Fail to reach file endpoint/);
     });
 
     it('should throw OIBusError on non-ok response', async () => {
-      httpRequestMock.mock.mockImplementation(async () => createMockResponse(400, 'Bad Request'));
+      httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(400, 'Bad Request'));
       await assert.rejects(async () => north.handleContent(mockReadStream, metadata), /Error 400: Bad Request/);
     });
   });

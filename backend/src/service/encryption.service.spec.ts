@@ -102,6 +102,13 @@ const manifest: OIBusObjectAttribute = {
 const certFolder = 'certFolder';
 
 describe('Encryption Service', () => {
+  let statMock: ReturnType<typeof mock.fn>;
+  let readFileMock: ReturnType<typeof mock.fn>;
+  let writeFileMock: ReturnType<typeof mock.fn>;
+  let createCipherivMock: ReturnType<typeof mock.fn>;
+  let createDecipherivMock: ReturnType<typeof mock.fn>;
+  let privateDecryptMock: ReturnType<typeof mock.fn>;
+
   beforeEach(() => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
@@ -112,15 +119,15 @@ describe('Encryption Service', () => {
     encryptionService['initialized'] = true;
 
     // Mock fs functions
-    mock.method(fs, 'stat', async () => undefined);
+    statMock = mock.method(fs, 'stat', async () => undefined);
     mock.method(fs, 'mkdir', async () => undefined);
-    mock.method(fs, 'readFile', async () => '');
-    mock.method(fs, 'writeFile', async () => undefined);
+    readFileMock = mock.method(fs, 'readFile', async () => '');
+    writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
 
     // Mock crypto functions
-    mock.method(crypto, 'createCipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
-    mock.method(crypto, 'createDecipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
-    mock.method(crypto, 'privateDecrypt', () => Buffer.from(''));
+    createCipherivMock = mock.method(crypto, 'createCipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
+    createDecipherivMock = mock.method(crypto, 'createDecipheriv', () => ({ update: mock.fn(() => ''), final: mock.fn(() => '') }));
+    privateDecryptMock = mock.method(crypto, 'privateDecrypt', () => Buffer.from(''));
 
     // Reset forge mocks
     mockCert.setSubject = mock.fn();
@@ -145,31 +152,31 @@ describe('Encryption Service', () => {
 
   it('should not create certificate if it already exists', async () => {
     // fs.stat resolves → filesExists returns true, createFolder sees folder as existing
-    mock.method(encryptionService, 'generateSelfSignedCertificate', mock.fn());
+    const generateCertMock = mock.method(encryptionService, 'generateSelfSignedCertificate', mock.fn());
 
     await encryptionService.init(cryptoSettings, certFolder);
 
     // Verify createFolder was called (fs.stat called with resolved certFolder path)
-    const statCalls = (fs.stat as ReturnType<typeof mock.fn>).mock.calls.map(c => c.arguments[0]);
+    const statCalls = statMock.mock.calls.map(c => c.arguments[0]);
     assert.ok(statCalls.includes(path.resolve(certFolder)), 'createFolder should check folder existence');
     // Verify filesExists was called for cert paths
     assert.ok(statCalls.includes(path.resolve(certFolder, CERT_FILE_NAME)));
     assert.ok(statCalls.includes(path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME)));
     assert.ok(statCalls.includes(path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME)));
 
-    assert.strictEqual((encryptionService.generateSelfSignedCertificate as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(generateCertMock.mock.calls.length, 0);
+    assert.strictEqual(writeFileMock.mock.calls.length, 0);
     assert.strictEqual(encryptionService.certsFolder, certFolder);
   });
 
   it('should create certificate if it does not exist', async () => {
     // Make filesExists return false by having fs.stat throw for file paths (but resolve for folder)
-    (fs.stat as ReturnType<typeof mock.fn>).mock.mockImplementation(async (filePath: unknown) => {
+    statMock.mock.mockImplementation(async (filePath: unknown) => {
       if (String(filePath) === path.resolve(certFolder)) return; // folder exists
       throw new Error('ENOENT'); // files don't exist
     });
 
-    mock.method(
+    const generateCertMock = mock.method(
       encryptionService,
       'generateSelfSignedCertificate',
       mock.fn(async () => ({
@@ -181,8 +188,8 @@ describe('Encryption Service', () => {
 
     await encryptionService.init(cryptoSettings, certFolder);
 
-    assert.strictEqual((encryptionService.generateSelfSignedCertificate as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((encryptionService.generateSelfSignedCertificate as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.strictEqual(generateCertMock.mock.calls.length, 1);
+    assert.deepStrictEqual(generateCertMock.mock.calls[0].arguments, [
       {
         commonName: 'OIBus',
         countryName: 'FR',
@@ -193,15 +200,15 @@ describe('Encryption Service', () => {
         daysBeforeExpiry: 36500
       }
     ]);
-    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.deepStrictEqual(writeFileMock.mock.calls[0].arguments, [
       path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME),
       'private'
     ]);
-    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[1].arguments, [
+    assert.deepStrictEqual(writeFileMock.mock.calls[1].arguments, [
       path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME),
       'public'
     ]);
-    assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[2].arguments, [
+    assert.deepStrictEqual(writeFileMock.mock.calls[2].arguments, [
       path.resolve(certFolder, CERT_FILE_NAME),
       'cert'
     ]);
@@ -209,7 +216,7 @@ describe('Encryption Service', () => {
 
   it('should properly retrieve files', async () => {
     let readCallCount = 0;
-    (fs.readFile as ReturnType<typeof mock.fn>).mock.mockImplementation(async () => {
+    readFileMock.mock.mockImplementation(async () => {
       readCallCount++;
       if (readCallCount === 1) return 'cert file content';
       if (readCallCount === 2) return 'private key file content';
@@ -218,23 +225,23 @@ describe('Encryption Service', () => {
 
     assert.strictEqual(await encryptionService.getCert(), 'cert file content');
     assert.strictEqual(await encryptionService.getCert(), 'cert file content');
-    assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(readFileMock.mock.calls.length, 1);
     assert.strictEqual(await encryptionService.getPrivateKey(), 'private key file content');
     assert.strictEqual(await encryptionService.getPrivateKey(), 'private key file content');
-    assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(readFileMock.mock.calls.length, 2);
     assert.strictEqual(await encryptionService.getPublicKey(), 'public key file content');
     assert.strictEqual(await encryptionService.getPublicKey(), 'public key file content');
-    assert.strictEqual((fs.readFile as ReturnType<typeof mock.fn>).mock.calls.length, 3);
+    assert.strictEqual(readFileMock.mock.calls.length, 3);
   });
 
   it('should properly encrypt text', async () => {
     const update = mock.fn(() => 'encrypted text');
     const final = mock.fn(() => '');
-    (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
+    createCipherivMock.mock.mockImplementation(() => ({ update, final }));
 
     const encryptedText = await encryptionService.encryptText('text to encrypt');
     assert.strictEqual(encryptedText, 'encrypted text');
-    assert.deepStrictEqual((crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.deepStrictEqual(createCipherivMock.mock.calls[0].arguments, [
       cryptoSettings.algorithm,
       Buffer.from(cryptoSettings.securityKey, 'base64'),
       Buffer.from(cryptoSettings.initVector, 'base64')
@@ -246,7 +253,7 @@ describe('Encryption Service', () => {
   it('should properly encrypt empty input', async () => {
     const encryptedText = await encryptionService.encryptText('');
     assert.strictEqual(encryptedText, '');
-    assert.strictEqual((crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(createCipherivMock.mock.calls.length, 0);
   });
 
   it('should throw error on encrypt when class is not initialized', async () => {
@@ -258,11 +265,11 @@ describe('Encryption Service', () => {
     encryptionService['initialized'] = true;
     const update = mock.fn(() => 'decrypted text');
     const final = mock.fn(() => '');
-    (crypto.createDecipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
+    createDecipherivMock.mock.mockImplementation(() => ({ update, final }));
 
     const decryptedText = await encryptionService.decryptText('text to decrypt');
     assert.strictEqual(decryptedText, 'decrypted text');
-    assert.deepStrictEqual((crypto.createDecipheriv as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.deepStrictEqual(createDecipherivMock.mock.calls[0].arguments, [
       cryptoSettings.algorithm,
       Buffer.from(cryptoSettings.securityKey, 'base64'),
       Buffer.from(cryptoSettings.initVector, 'base64')
@@ -275,7 +282,7 @@ describe('Encryption Service', () => {
     encryptionService['initialized'] = true;
     const decryptedText = await encryptionService.decryptText('');
     assert.strictEqual(decryptedText, '');
-    assert.strictEqual((crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(createCipherivMock.mock.calls.length, 0);
   });
 
   it('should throw error on decrypt when class is not initialized', async () => {
@@ -319,7 +326,7 @@ describe('Encryption Service', () => {
 
     const update = mock.fn(() => 'encrypted secret');
     const final = mock.fn(() => '');
-    (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
+    createCipherivMock.mock.mockImplementation(() => ({ update, final }));
 
     const expectedCommand = {
       field1: 'not a secret',
@@ -367,7 +374,7 @@ describe('Encryption Service', () => {
 
     const update = mock.fn(() => 'encrypted secret');
     const final = mock.fn(() => '');
-    (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
+    createCipherivMock.mock.mockImplementation(() => ({ update, final }));
 
     const expectedCommand = {
       field1: 'not a secret',
@@ -445,7 +452,7 @@ describe('Encryption Service', () => {
 
     const update = mock.fn(() => 'encrypted secret');
     const final = mock.fn(() => '');
-    (crypto.createCipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
+    createCipherivMock.mock.mockImplementation(() => ({ update, final }));
 
     assert.deepStrictEqual(
       await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, manifest),
@@ -477,7 +484,7 @@ describe('Encryption Service', () => {
 
     const update = mock.fn(() => 'encrypted secret');
     const final = mock.fn(() => '');
-    (crypto.createDecipheriv as ReturnType<typeof mock.fn>).mock.mockImplementation(() => ({ update, final }));
+    createDecipherivMock.mock.mockImplementation(() => ({ update, final }));
 
     const expectedCommand = {
       field1: 'not a secret',
@@ -555,7 +562,7 @@ describe('Encryption Service', () => {
         }
       } as unknown as SouthOPCUASettings
     };
-    (crypto.privateDecrypt as ReturnType<typeof mock.fn>).mock.mockImplementation(() => Buffer.from('encrypted secret'));
+    privateDecryptMock.mock.mockImplementation(() => Buffer.from('encrypted secret'));
     const expectedCommand = {
       field1: 'not a secret',
       field2: 'encrypted secret',

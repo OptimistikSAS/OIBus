@@ -5,7 +5,7 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import mqtt from 'mqtt';
 import { IConnackPacket, QoS } from 'mqtt-packet';
 import { OIBusMQTTValue } from '../../transformers/connector-types.model';
-import CacheService from '../../service/cache/cache.service';
+import type { ICacheService } from '../../model/cache.service.model';
 import { createConnectionOptions } from '../../service/utils-mqtt';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
@@ -20,7 +20,7 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(configuration: NorthConnectorEntity<NorthMQTTSettings>, logger: ILogger, cacheService: CacheService) {
+  constructor(configuration: NorthConnectorEntity<NorthMQTTSettings>, logger: ILogger, cacheService: ICacheService) {
     super(configuration, logger, cacheService);
   }
 

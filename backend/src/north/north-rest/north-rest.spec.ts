@@ -39,8 +39,8 @@ describe('NorthREST', () => {
   const logger = new PinoLogger();
   const cacheService = new CacheServiceMock();
 
-  const httpRequestMock = mock.fn(async () => createMockResponse(200, 'OK'));
-  const streamToStringMock = mock.fn(async () => '');
+  const httpRequestMock = mock.fn(async (_url: URL, _options: ReqOptions) => createMockResponse(200, 'OK'));
+  const streamToStringMock = mock.fn(async (_stream: unknown) => '');
   const encryptionDecryptTextMock = mock.fn(async (text: string) => text);
 
   const httpRequestExports = {
@@ -91,7 +91,7 @@ describe('NorthREST', () => {
     streamToStringMock.mock.resetCalls();
     encryptionDecryptTextMock.mock.resetCalls();
 
-    httpRequestMock.mock.mockImplementation(async () => createMockResponse(200, 'OK'));
+    httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(200, 'OK'));
     encryptionDecryptTextMock.mock.mockImplementation(async (text: string) => text);
 
     const configuration = buildNorthEntity<NorthRESTSettings>('rest', {
@@ -151,13 +151,13 @@ describe('NorthREST', () => {
     north.connectorConfiguration.settings.test.testSuccessCode = 200;
     north.connectorConfiguration.settings.test.testMethod = 'POST';
     north.connectorConfiguration.settings.test.body = 'test';
-    httpRequestMock.mock.mockImplementationOnce(async () => createMockResponse(500, 'Error'));
+    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(500, 'Error'));
 
     await assert.rejects(async () => north.testConnection(), /HTTP request failed with status code 500/);
   });
 
   it('should fail test connection on fetch error', async () => {
-    httpRequestMock.mock.mockImplementationOnce(async () => {
+    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => {
       throw new Error('Network error');
     });
     await assert.rejects(async () => north.testConnection(), /Fetch error: Network error/);
@@ -272,7 +272,7 @@ describe('NorthREST', () => {
     });
     north = new NorthREST(configuration, logger, cacheService);
 
-    httpRequestMock.mock.mockImplementationOnce(async () => createMockResponse(201, 'Created'));
+    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
 
     const mockStream = new MockReadStream('path/to/file.txt') as unknown as ReadStream;
 
@@ -288,7 +288,7 @@ describe('NorthREST', () => {
   it('should upload file successfully via raw body (JSON)', async () => {
     north.connectorConfiguration.settings.sendAs = 'body';
 
-    httpRequestMock.mock.mockImplementationOnce(async () => createMockResponse(201, 'Created'));
+    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
     const mockStream = new MockReadStream('file.json') as unknown as ReadStream;
 
     await north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.json' } as CacheMetadata);
@@ -301,7 +301,7 @@ describe('NorthREST', () => {
   it('should upload file via raw body (XML) and manage http error', async () => {
     north.connectorConfiguration.settings.sendAs = 'body';
 
-    httpRequestMock.mock.mockImplementationOnce(async () => {
+    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => {
       throw new Error('http error');
     });
     const mockStream = new MockReadStream('file.xml') as unknown as ReadStream;
@@ -319,7 +319,7 @@ describe('NorthREST', () => {
   it('should upload file successfully via raw body (TXT)', async () => {
     north.connectorConfiguration.settings.sendAs = 'body';
 
-    httpRequestMock.mock.mockImplementationOnce(async () => createMockResponse(201, 'Created'));
+    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
     const mockStream = new MockReadStream('file.txt') as unknown as ReadStream;
 
     await north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.txt' } as CacheMetadata);
@@ -332,7 +332,7 @@ describe('NorthREST', () => {
   it('should upload file successfully via raw body (CSV)', async () => {
     north.connectorConfiguration.settings.sendAs = 'body';
 
-    httpRequestMock.mock.mockImplementationOnce(async () => createMockResponse(201, 'Created'));
+    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
     const mockStream = new MockReadStream('file.csv') as unknown as ReadStream;
 
     await north.handleContent(mockStream, { contentType: 'any', contentFile: 'file.csv' } as CacheMetadata);
@@ -342,7 +342,7 @@ describe('NorthREST', () => {
   });
 
   it('should handle upload failures (HTTP 500)', async () => {
-    httpRequestMock.mock.mockImplementationOnce(async () => createMockResponse(500, 'Server Error'));
+    httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(500, 'Server Error'));
     const mockStream = new MockReadStream('file.txt') as unknown as ReadStream;
 
     await assert.rejects(
