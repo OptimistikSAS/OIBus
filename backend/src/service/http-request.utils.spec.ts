@@ -1,4 +1,4 @@
-import { beforeEach, afterEach, describe, it, mock } from 'node:test';
+import { beforeEach, afterEach, describe, it, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { encryptionService } from './encryption.service';
@@ -9,6 +9,14 @@ import { version } from '../../package.json';
 const nodeRequire = createRequire(import.meta.url);
 const undiciModule = nodeRequire('undici');
 
+interface UndiciRequestOptions {
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string;
+  signal?: AbortSignal;
+  dispatcher?: { isMockProxyAgent?: boolean; isMockAgent?: boolean };
+}
+
 describe('HTTPRequest Service', () => {
   const testUrl = 'http://example.com/api';
   const testProxyUrl = 'http://proxy.example.com:8080';
@@ -16,16 +24,19 @@ describe('HTTPRequest Service', () => {
 
   let proxyAgentInstances: Array<{ isMockProxyAgent: boolean; options?: unknown }>;
   let agentInstances: Array<{ isMockAgent: boolean; options?: unknown }>;
+  let decryptTextMock: ReturnType<typeof mock.fn>;
+  let abortSignalTimeoutMock: ReturnType<typeof mock.fn>;
+  let requestMock: Mock<(url: string | URL, options?: UndiciRequestOptions) => Promise<unknown>>;
 
   beforeEach(() => {
     clearProxyAgentCache();
     proxyAgentInstances = [];
     agentInstances = [];
 
-    mock.method(encryptionService, 'decryptText', async (text: unknown) => (text ? `${text}-decrypted` : ''));
-    mock.method(AbortSignal, 'timeout', (_ms: number) => mockAbortSignal);
+    decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => (text ? `${text}-decrypted` : ''));
+    abortSignalTimeoutMock = mock.method(AbortSignal, 'timeout', (_ms: number) => mockAbortSignal);
 
-    mock.method(undiciModule, 'request', async () => createMockResponse(200, { success: true }));
+    requestMock = mock.method(undiciModule, 'request', async () => createMockResponse(200, { success: true })) as typeof requestMock;
 
     const instances = proxyAgentInstances;
     mock.method(
@@ -54,8 +65,8 @@ describe('HTTPRequest Service', () => {
   it('should make a basic request without options', async () => {
     const response = await HTTPRequest(testUrl);
 
-    assert.strictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.strictEqual(requestMock.mock.calls.length, 1);
+    assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
       testUrl,
       {
         headers: {
@@ -65,10 +76,10 @@ describe('HTTPRequest Service', () => {
     ]);
     assert.strictEqual(response.statusCode, 200);
     assert.strictEqual(response.ok, true);
-    assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(decryptTextMock.mock.calls.length, 0);
     assert.strictEqual(proxyAgentInstances.length, 0);
     assert.strictEqual(agentInstances.length, 0);
-    assert.strictEqual((AbortSignal.timeout as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(abortSignalTimeoutMock.mock.calls.length, 0);
   });
 
   it('should make a request with custom headers', async () => {
@@ -82,8 +93,8 @@ describe('HTTPRequest Service', () => {
     };
     const response = await HTTPRequest(testUrl, options);
 
-    assert.strictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [testUrl, options]);
+    assert.strictEqual(requestMock.mock.calls.length, 1);
+    assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [testUrl, options]);
     assert.strictEqual(response.ok, true);
   });
 
@@ -108,8 +119,9 @@ describe('HTTPRequest Service', () => {
         }
       }
     ]);
-    assert.strictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    const calledWith = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1];
+    assert.strictEqual(requestMock.mock.calls.length, 1);
+    const calledWith = requestMock.mock.calls[0].arguments[1];
+    assert.ok(calledWith);
     assert.deepStrictEqual(calledWith.method, 'POST');
     assert.deepStrictEqual(calledWith.headers, {
       'Content-Type': 'application/json',
@@ -121,7 +133,7 @@ describe('HTTPRequest Service', () => {
   });
 
   it('should handle non 2xx status codes and set ok to false', async () => {
-    (undiciModule.request as ReturnType<typeof mock.fn>).mock.mockImplementation(async () =>
+    requestMock.mock.mockImplementation(async () =>
       createMockResponse(404, { error: 'Not Found' })
     );
     const response = await HTTPRequest(testUrl);
@@ -134,9 +146,9 @@ describe('HTTPRequest Service', () => {
     const options: ReqOptions = { timeout: 5000 };
     await HTTPRequest(testUrl, options);
 
-    assert.strictEqual((AbortSignal.timeout as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((AbortSignal.timeout as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [5000]);
-    assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.strictEqual(abortSignalTimeoutMock.mock.calls.length, 1);
+    assert.deepStrictEqual(abortSignalTimeoutMock.mock.calls[0].arguments, [5000]);
+    assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
       testUrl,
       {
         headers: {
@@ -161,9 +173,9 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-pass']);
-      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['encrypted-pass']);
+      assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
         testUrl,
         {
           headers: {
@@ -187,9 +199,9 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [null]);
-      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [null]);
+      assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
         testUrl,
         {
           headers: {
@@ -211,9 +223,9 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-token']);
-      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['encrypted-token']);
+      assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
         testUrl,
         {
           headers: {
@@ -236,11 +248,11 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [
         encryptedTokenWithPrefix
       ]);
-      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
         testUrl,
         {
           headers: {
@@ -264,9 +276,9 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(originalUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, ['encrypted-urlpass']);
-      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['encrypted-urlpass']);
+      assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
         expectedUrl,
         {
           headers: {
@@ -274,7 +286,7 @@ describe('HTTPRequest Service', () => {
           }
         }
       ]);
-      const actualHeaders = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].headers;
+      const actualHeaders = requestMock.mock.calls[0].arguments[1]?.headers ?? {};
       assert.ok(!('Authorization' in actualHeaders));
     });
 
@@ -291,9 +303,9 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(originalUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [null]);
-      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [null]);
+      assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
         expectedUrl,
         {
           headers: {
@@ -301,7 +313,7 @@ describe('HTTPRequest Service', () => {
           }
         }
       ]);
-      const actualHeaders = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].headers;
+      const actualHeaders = requestMock.mock.calls[0].arguments[1]?.headers ?? {};
       assert.ok(!('Authorization' in actualHeaders));
     });
 
@@ -320,7 +332,7 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      const actualHeaders = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].headers;
+      const actualHeaders = requestMock.mock.calls[0].arguments[1]?.headers ?? {};
       assert.ok(!('authorization' in actualHeaders));
       assert.strictEqual(actualHeaders.Authorization, expectedToken);
     });
@@ -334,8 +346,8 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 0);
+      assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
         testUrl,
         {
           headers: {
@@ -359,9 +371,9 @@ describe('HTTPRequest Service', () => {
 
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [{ uri: testProxyUrl }]);
-      const dispatcher = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].dispatcher;
+      const dispatcher = requestMock.mock.calls[0].arguments[1]?.dispatcher;
       assert.ok(dispatcher?.isMockProxyAgent);
-      assert.deepStrictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.deepStrictEqual(requestMock.mock.calls[0].arguments, [
         testUrl,
         {
           headers: {
@@ -370,7 +382,7 @@ describe('HTTPRequest Service', () => {
           dispatcher
         }
       ]);
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(decryptTextMock.mock.calls.length, 0);
     });
 
     it('should configure ProxyAgent without auth and accept unauthorized', async () => {
@@ -392,9 +404,9 @@ describe('HTTPRequest Service', () => {
           }
         }
       ]);
-      const dispatcher = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].dispatcher;
+      const dispatcher = requestMock.mock.calls[0].arguments[1]?.dispatcher;
       assert.ok(dispatcher?.isMockProxyAgent);
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(decryptTextMock.mock.calls.length, 0);
     });
 
     it('should configure ProxyAgent with Basic auth', async () => {
@@ -412,15 +424,15 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [
         'encrypted-proxypass'
       ]);
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
         { uri: testProxyUrl, token: expectedToken }
       ]);
-      const dispatcher = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].dispatcher;
+      const dispatcher = requestMock.mock.calls[0].arguments[1]?.dispatcher;
       assert.ok(dispatcher?.isMockProxyAgent);
     });
 
@@ -438,15 +450,15 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [
         'encrypted-proxytoken'
       ]);
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
       assert.deepStrictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
         { uri: testProxyUrl, token: expectedToken }
       ]);
-      const dispatcher = (undiciModule.request as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1].dispatcher;
+      const dispatcher = requestMock.mock.calls[0].arguments[1]?.dispatcher;
       assert.ok(dispatcher?.isMockProxyAgent);
     });
 
@@ -466,8 +478,8 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [
         'encrypted-proxyurlpass'
       ]);
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
@@ -483,7 +495,7 @@ describe('HTTPRequest Service', () => {
       await HTTPRequest(testUrl, options);
 
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.strictEqual((undiciModule.request as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+      assert.strictEqual(requestMock.mock.calls.length, 2);
     });
 
     it('should create separate ProxyAgent instances for different proxy configs', async () => {
@@ -512,8 +524,8 @@ describe('HTTPRequest Service', () => {
 
       await HTTPRequest(testUrl, options);
 
-      assert.strictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((encryptionService.decryptText as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(decryptTextMock.mock.calls.length, 1);
+      assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [
         'encrypted-proxyurlpass'
       ]);
       assert.strictEqual((undiciModule.ProxyAgent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
