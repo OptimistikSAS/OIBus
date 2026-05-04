@@ -13,18 +13,24 @@ export default class EncryptionServiceMock {
     this.certsFolder = certsFolder;
   }
 
-  generateSelfSignedCertificate = mock.fn();
-  encryptConnectorSecrets = mock.fn((secrets: unknown) => secrets);
-  decryptConnectorSecrets = mock.fn((secrets: unknown) => secrets);
-  filterSecrets = mock.fn((secrets: unknown) => secrets);
-  encryptText = mock.fn((pass: unknown) => pass);
-  decryptText = mock.fn((pass: unknown) => pass);
-  decryptTextWithPrivateKey = mock.fn((pass: unknown) => pass);
-  decryptSecretsWithPrivateKey = mock.fn((secrets: unknown) => secrets);
-  getCert = mock.fn(() => 'cert.pem');
-  getCertPath = mock.fn(() => 'cert.pem');
-  getPrivateKey = mock.fn(() => 'privateKey.pem');
-  getPrivateKeyPath = mock.fn(() => 'privateKey.pem');
-  getPublicKey = mock.fn(() => 'publicKey.pem');
-  getPublicKeyPath = mock.fn(() => 'publicKey.pem');
+  generateSelfSignedCertificate = mock.fn(
+    async (): Promise<{ private: string; public: string; cert: string }> => ({
+      private: '',
+      public: '',
+      cert: ''
+    })
+  );
+  encryptConnectorSecrets = mock.fn(async <T>(secrets: T): Promise<T> => secrets);
+  decryptConnectorSecrets = mock.fn(async <T>(secrets: T): Promise<T> => secrets);
+  filterSecrets = mock.fn(<T>(secrets: T): T => secrets);
+  encryptText = mock.fn(async (pass: string | null | undefined): Promise<string> => pass ?? '');
+  decryptText = mock.fn(async (pass: string | null | undefined): Promise<string> => pass ?? '');
+  decryptTextWithPrivateKey = mock.fn(async (pass: string): Promise<string> => pass);
+  decryptSecretsWithPrivateKey = mock.fn(async <T>(secrets: T): Promise<T> => secrets);
+  getCert = mock.fn(async (): Promise<string> => 'cert.pem');
+  getCertPath = mock.fn((): string => 'cert.pem');
+  getPrivateKey = mock.fn(async (): Promise<string> => 'privateKey.pem');
+  getPrivateKeyPath = mock.fn((): string => 'privateKey.pem');
+  getPublicKey = mock.fn(async (): Promise<string> => 'publicKey.pem');
+  getPublicKeyPath = mock.fn((): string => 'publicKey.pem');
 }
