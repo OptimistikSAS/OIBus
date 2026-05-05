@@ -24,7 +24,7 @@ const nodeRequire = createRequire(import.meta.url);
 // Module-level mock exports for third-party modules
 const minimistExports = mock.fn(() => ({}));
 const csvExports = {
-  unparse: mock.fn(() => 'csv content')
+  unparse: mock.fn((_data?: unknown, _config?: unknown): string => 'csv content')
 };
 let admZipInstance: { extractAllTo: ReturnType<typeof mock.fn> };
 function AdmZipMock() {
@@ -225,7 +225,7 @@ describe('Service utils', () => {
         seq(() => myReadStream as unknown as fsSync.ReadStream)
       );
 
-      const myWriteStream = {
+      const myWriteStream: { pipe: ReturnType<typeof mock.fn>; on: ReturnType<typeof mock.fn> } = {
         pipe: mock.fn(function (this: unknown) {
           return this;
         }),
@@ -245,7 +245,7 @@ describe('Service utils', () => {
     });
 
     it('should properly manage error when compressing file', async () => {
-      const myReadStream = {
+      const myReadStream: { pipe: ReturnType<typeof mock.fn>; on: ReturnType<typeof mock.fn> } = {
         pipe: mock.fn(function (this: unknown) {
           return this;
         }),
@@ -599,7 +599,7 @@ describe('Service utils', () => {
           seq(() => readStreamMock as unknown as fsSync.ReadStream)
         );
 
-        const myWriteStream = {
+        const myWriteStream: { pipe: ReturnType<typeof mock.fn>; on: ReturnType<typeof mock.fn> } = {
           pipe: mock.fn(function (this: unknown) {
             return this;
           }),
@@ -1360,18 +1360,14 @@ describe('Service utils', () => {
         overlap: null
       } as unknown as SouthConnectorItemDTO;
 
-      let capturedData: Array<Record<string, unknown>> | null = null;
-      csvExports.unparse.mock.mockImplementation((data: Array<Record<string, unknown>>) => {
-        capturedData = data;
-        return 'csv content';
-      });
-
       utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', testData.scanMode.list);
 
+      assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
       assert.notStrictEqual(capturedData, null);
-      assert.deepStrictEqual(capturedData![0].maxReadInterval, 3600);
-      assert.deepStrictEqual(capturedData![0].readDelay, 200);
-      assert.deepStrictEqual(capturedData![0].overlap, 5);
+      assert.deepStrictEqual(capturedData[0].maxReadInterval, 3600);
+      assert.deepStrictEqual(capturedData[0].readDelay, 200);
+      assert.deepStrictEqual(capturedData[0].overlap, 5);
     });
   });
 

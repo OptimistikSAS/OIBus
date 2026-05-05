@@ -70,7 +70,7 @@ describe('HistoryQuery enabled', () => {
 
   it('should start south connector', async () => {
     const clearIntervalMock = mock.method(globalThis, 'clearInterval');
-    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => '');
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
 
     await historyQuery.start();
     mockedSouth1Mock.connectedEvent.emit('connected');
@@ -108,7 +108,6 @@ describe('HistoryQuery enabled', () => {
     mockedSouth1Mock.historyQueryHandler = mock.fn(async () => {
       handlerCallCount++;
       if (handlerCallCount <= 2) throw 'error';
-      return '';
     });
 
     await historyQuery.start();
@@ -146,7 +145,7 @@ describe('HistoryQuery enabled', () => {
   it('should properly stop', async () => {
     const clearIntervalMock = mock.method(globalThis, 'clearInterval');
     // historyQueryHandler must return a promise so the connected event handler can set up setInterval
-    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => '');
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
 
     let southConnectedEventRemoved!: number;
     let southStopCalled!: number;
@@ -220,7 +219,6 @@ describe('HistoryQuery enabled', () => {
       'stop',
       mock.fn(async () => undefined)
     );
-    // @ts-expect-error historyIsRunning exists at runtime on SouthConnector but not declared on type
     mockedSouth1.historyIsRunning = true;
     mockedNorth1Mock.isCacheEmpty = mock.fn(() => {
       // first call returns false, subsequent calls return true
@@ -237,7 +235,6 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.finish();
     assert.strictEqual(logger.trace.mock.calls.length, 2);
 
-    // @ts-expect-error historyIsRunning exists at runtime on SouthConnector but not declared on type
     mockedSouth1.historyIsRunning = false;
     await historyQuery.finish();
     assert.ok(

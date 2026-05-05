@@ -82,7 +82,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
@@ -100,7 +100,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 0);
   });
@@ -115,7 +115,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
 
     assert.strictEqual(output[0].payload, '123');
   });
@@ -130,7 +130,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
 
     assert.strictEqual(output[0].payload, '45.6');
   });
@@ -145,7 +145,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
 
     assert.strictEqual(output[0].payload, 'true');
   });
@@ -165,7 +165,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
 
     assert.strictEqual(output[0].payload, '1698400000000');
   });
@@ -188,7 +188,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 2);
     assert.deepStrictEqual(output[0], { topic: 'device/1', payload: '100' });
@@ -213,7 +213,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output: Array<OIBusMQTTValue> = JSON.parse(result.output);
+    const output: Array<OIBusMQTTValue> = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 2);
     assert.deepStrictEqual(output[0], { topic: 'device/1', payload: '{}' });
@@ -237,7 +237,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 0);
   });
@@ -252,7 +252,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 0);
   });
@@ -267,7 +267,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
@@ -283,7 +283,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 1);
     assert.strictEqual(output[0].topic, 'device/1');
@@ -314,7 +314,7 @@ describe('CSVToMQTTTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.strictEqual(output[0].payload, 'raw-content');
   });

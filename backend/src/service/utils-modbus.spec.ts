@@ -290,12 +290,18 @@ describe('connectSocket', () => {
   } as SouthModbusSettings;
 
   let mockSocket: net.Socket;
+  let mockConnect: ReturnType<typeof mock.fn>;
+  let mockDestroy: ReturnType<typeof mock.fn>;
+  let mockRemoveAllListeners: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
     mockSocket = new CustomStream() as unknown as net.Socket;
-    mockSocket.connect = mock.fn() as unknown as net.Socket['connect'];
-    mockSocket.destroy = mock.fn() as unknown as net.Socket['destroy'];
-    mockSocket.removeAllListeners = mock.fn() as unknown as net.Socket['removeAllListeners'];
+    mockConnect = mock.fn();
+    mockDestroy = mock.fn();
+    mockRemoveAllListeners = mock.fn();
+    mockSocket.connect = mockConnect as unknown as net.Socket['connect'];
+    mockSocket.destroy = mockDestroy as unknown as net.Socket['destroy'];
+    mockSocket.removeAllListeners = mockRemoveAllListeners as unknown as net.Socket['removeAllListeners'];
   });
 
   afterEach(() => {
@@ -308,13 +314,13 @@ describe('connectSocket', () => {
       const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       mockSocket.emit('connect');
       await assert.doesNotReject(connectPromise);
-      assert.deepStrictEqual((mockSocket.connect as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.deepStrictEqual(mockConnect.mock.calls[0].arguments, [
         {
           host: mockConnectionSettings.host,
           port: mockConnectionSettings.port
         }
       ]);
-      assert.strictEqual((mockSocket.removeAllListeners as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(mockRemoveAllListeners.mock.calls.length, 0);
     });
   });
 
@@ -324,7 +330,7 @@ describe('connectSocket', () => {
       const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       mock.timers.tick(30000);
       await assert.rejects(connectPromise, { message: 'Modbus connection timeout after 30000 ms' });
-      assert.ok((mockSocket.destroy as ReturnType<typeof mock.fn>).mock.calls.length > 0);
+      assert.ok(mockDestroy.mock.calls.length > 0);
     });
   });
 
@@ -334,7 +340,7 @@ describe('connectSocket', () => {
       const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       mockSocket.emit('error', testError);
       await assert.rejects(connectPromise, testError);
-      assert.ok((mockSocket.destroy as ReturnType<typeof mock.fn>).mock.calls.length > 0);
+      assert.ok(mockDestroy.mock.calls.length > 0);
     });
   });
 
@@ -343,8 +349,8 @@ describe('connectSocket', () => {
       const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       mockSocket.emit('error', new Error('ECONNREFUSED'));
       await assert.rejects(connectPromise);
-      assert.ok((mockSocket.removeAllListeners as ReturnType<typeof mock.fn>).mock.calls.length > 0);
-      assert.ok((mockSocket.destroy as ReturnType<typeof mock.fn>).mock.calls.length > 0);
+      assert.ok(mockRemoveAllListeners.mock.calls.length > 0);
+      assert.ok(mockDestroy.mock.calls.length > 0);
     });
 
     it('should remove all listeners and destroy socket on timeout', async () => {
@@ -352,8 +358,8 @@ describe('connectSocket', () => {
       const connectPromise = connectSocket(mockSocket, mockConnectionSettings);
       mock.timers.tick(30000);
       await assert.rejects(connectPromise);
-      assert.ok((mockSocket.removeAllListeners as ReturnType<typeof mock.fn>).mock.calls.length > 0);
-      assert.ok((mockSocket.destroy as ReturnType<typeof mock.fn>).mock.calls.length > 0);
+      assert.ok(mockRemoveAllListeners.mock.calls.length > 0);
+      assert.ok(mockDestroy.mock.calls.length > 0);
     });
   });
 });

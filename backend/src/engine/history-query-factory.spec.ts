@@ -13,6 +13,9 @@ import type OIAnalyticsRegistrationRepository from '../repository/config/oianaly
 import type CacheServiceType from '../service/cache/cache.service';
 import type { NorthFileWriterSettings, NorthSettings } from '../../shared/model/north-settings.model';
 import type { SouthItemSettings, SouthModbusSettings, SouthSettings } from '../../shared/model/south-settings.model';
+import type { OIBusContent } from '../../shared/model/engine.model';
+import type { Instant } from '../../shared/model/types';
+import type { HistoryQueryItemEntity } from '../model/histor-query.model';
 import type { HistoryQueryEntity } from '../model/histor-query.model';
 import type { Transformer } from '../model/transformer.model';
 import type {
@@ -146,7 +149,14 @@ describe('HistoryQueryFactory', () => {
     });
 
     it('should build north and south connectors and return HistoryQuery instance', () => {
-      const mockAddContent = mock.fn();
+      const mockAddContent = mock.fn(
+        async (
+          _southId: string,
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<HistoryQueryItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
       const result = buildHistoryQuery(
         mockSettings,
         mockAddContent,
@@ -212,7 +222,14 @@ describe('HistoryQueryFactory', () => {
     });
 
     it('should handle north caching callback inside south connector', async () => {
-      const mockAddContent = mock.fn();
+      const mockAddContent = mock.fn(
+        async (
+          _southId: string,
+          _data: OIBusContent,
+          _queryTime: Instant,
+          _items: Array<HistoryQueryItemEntity<SouthItemSettings>>
+        ): Promise<void> => undefined
+      );
       buildHistoryQuery(
         mockSettings,
         mockAddContent,

@@ -38,22 +38,22 @@ describe('NorthAzureBlob', () => {
   };
 
   // Azure SDK mock classes (need to be real constructors)
-  const BlobServiceClientMock = mock.fn(function () {
+  const BlobServiceClientMock = mock.fn(function (..._args: Array<unknown>) {
     return {};
   });
-  const StorageSharedKeyCredentialMock = mock.fn(function () {
+  const StorageSharedKeyCredentialMock = mock.fn(function (..._args: Array<unknown>) {
     return {};
   });
-  const DataLakeServiceClientMock = mock.fn(function () {
+  const DataLakeServiceClientMock = mock.fn(function (..._args: Array<unknown>) {
     return {};
   });
-  const DataLakeStorageSharedKeyCredentialMock = mock.fn(function () {
+  const DataLakeStorageSharedKeyCredentialMock = mock.fn(function (..._args: Array<unknown>) {
     return {};
   });
-  const ClientSecretCredentialMock = mock.fn(function () {
+  const ClientSecretCredentialMock = mock.fn(function (..._args: Array<unknown>) {
     return {};
   });
-  const DefaultAzureCredentialMock = mock.fn(function () {
+  const DefaultAzureCredentialMock = mock.fn(function (..._args: Array<unknown>) {
     return {};
   });
 

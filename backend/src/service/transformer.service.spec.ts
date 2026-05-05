@@ -5,6 +5,7 @@ import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
 import { mockModule, reloadModule } from '../tests/utils/test-utils';
 import type TransformerServiceType from './transformer.service';
+import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import type {
   createTransformer as createTransformerType,
   getStandardManifest as getStandardManifestType,
@@ -107,13 +108,15 @@ describe('Transformer Service', () => {
   let engine: DataStreamEngineMock;
   // JoiValidator is not mocked as a module — its validate method is a no-op (async, returns undefined)
   // We use a real instance but spy on it via mock.method
-  let validator: { validate: ReturnType<typeof mock.fn> };
+  let validator: JoiValidator;
+  let validatorValidateMock: ReturnType<typeof mock.method>;
 
   beforeEach(() => {
     transformerRepository = new TransformerRepositoryMock();
     oiAnalyticsMessageService = new OianalyticsMessageServiceMock();
     engine = new DataStreamEngineMock(null);
-    validator = { validate: mock.fn(async () => undefined) };
+    validator = new JoiValidator();
+    validatorValidateMock = mock.method(validator, 'validate', async () => undefined);
 
     transformerRepository.list.mock.mockImplementation(() => []);
 
@@ -121,12 +124,7 @@ describe('Transformer Service', () => {
     // that the already-loaded SUT module still sees a valid constructor.
     // The class creates fresh mock.fn instances per construction, so no reset needed.
 
-    service = new TransformerService(
-      validator as unknown as Parameters<typeof TransformerService>[0],
-      transformerRepository,
-      oiAnalyticsMessageService,
-      engine
-    );
+    service = new TransformerService(validator, transformerRepository, oiAnalyticsMessageService, engine);
   });
 
   afterEach(() => {
@@ -134,7 +132,14 @@ describe('Transformer Service', () => {
   });
 
   it('should search transformers', () => {
-    transformerRepository.search.mock.mockImplementation(() => testData.transformers.list);
+    const searchPage = {
+      content: testData.transformers.list,
+      totalElements: testData.transformers.list.length,
+      size: 10,
+      number: 0,
+      totalPages: 1
+    };
+    transformerRepository.search.mock.mockImplementation(() => searchPage);
 
     const result = service.search({
       type: undefined,
@@ -147,7 +152,7 @@ describe('Transformer Service', () => {
     assert.deepStrictEqual(transformerRepository.search.mock.calls[0].arguments, [
       { type: undefined, inputType: undefined, outputType: undefined, page: 0 }
     ]);
-    assert.deepStrictEqual(result, testData.transformers.list);
+    assert.deepStrictEqual(result, searchPage);
   });
 
   it('should list all transformers', () => {
@@ -184,13 +189,13 @@ describe('Transformer Service', () => {
     transformerRepository.list.mock.mockImplementation(() => []);
     const result = await service.create(testData.transformers.command, 'userTest');
 
-    assert.strictEqual(validator.validate.mock.calls.length, 1);
+    assert.strictEqual(validatorValidateMock.mock.calls.length, 1);
     assert.deepStrictEqual(result, { ...testData.transformers.command, createdBy: 'userTest', updatedBy: 'userTest' });
   });
 
   it('should not create a transformer with duplicate name', async () => {
     transformerRepository.list.mock.mockImplementation(() => [
-      { id: 'existing-id', type: 'custom', name: testData.transformers.command.name }
+      { ...testData.transformers.list[0], name: testData.transformers.command.name }
     ]);
 
     await assert.rejects(
@@ -205,7 +210,7 @@ describe('Transformer Service', () => {
 
     await service.update(testData.transformers.list[0].id, testData.transformers.command, 'userTest');
 
-    assert.strictEqual(validator.validate.mock.calls.length, 1);
+    assert.strictEqual(validatorValidateMock.mock.calls.length, 1);
     assert.strictEqual(transformerRepository.findById.mock.calls.length, 1);
     assert.deepStrictEqual(transformerRepository.findById.mock.calls[0].arguments, [testData.transformers.list[0].id]);
     assert.strictEqual(transformerRepository.save.mock.calls.length, 1);
@@ -278,7 +283,9 @@ describe('Transformer Service', () => {
     const command = JSON.parse(JSON.stringify(testData.transformers.command));
     command.name = 'Duplicate Name';
     transformerRepository.findById.mock.mockImplementation(() => testData.transformers.list[0]);
-    transformerRepository.list.mock.mockImplementation(() => [{ id: 'other-id', type: 'custom', name: 'Duplicate Name' }]);
+    transformerRepository.list.mock.mockImplementation(() => [
+      { ...testData.transformers.list[0], id: 'other-id', name: 'Duplicate Name' }
+    ]);
 
     await assert.rejects(
       () => service.update(testData.transformers.list[0].id, command, 'userTest'),
@@ -699,6 +706,7 @@ describe('Transformer Service', () => {
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
     const customTransformerNoAudit = { ...(testData.transformers.list[0] as CustomTransformer), createdBy: '', updatedBy: '' };
     const result = toTransformerDTO(customTransformerNoAudit, getUserInfo);
+    assert.ok(result.type === 'custom');
     assert.deepStrictEqual(result.createdBy, { id: '', friendlyName: '' });
     assert.deepStrictEqual(result.updatedBy, { id: '', friendlyName: '' });
   });
@@ -707,6 +715,7 @@ describe('Transformer Service', () => {
     const getUserInfo = (id: string) => ({ id, friendlyName: id });
     const customTransformerWithAudit = { ...(testData.transformers.list[0] as CustomTransformer), createdBy: 'user1', updatedBy: 'user2' };
     const result = toTransformerDTO(customTransformerWithAudit, getUserInfo);
+    assert.ok(result.type === 'custom');
     assert.deepStrictEqual(result.createdBy, { id: 'user1', friendlyName: 'user1' });
     assert.deepStrictEqual(result.updatedBy, { id: 'user2', friendlyName: 'user2' });
   });

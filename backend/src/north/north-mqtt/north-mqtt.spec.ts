@@ -33,10 +33,10 @@ describe('NorthMQTT', () => {
   const cacheService = new CacheServiceMock();
   const oiBusTransformer = new OIBusTransformerMock();
 
-  const connectAsyncFn = mock.fn(async () => mockMqttClient);
+  const connectAsyncFn = mock.fn(async (_url: string, ..._args: Array<unknown>) => mockMqttClient);
   const connectFn = mock.fn((_url: string) => mockMqttClient);
   const streamToStringFn = mock.fn(async () => '[]');
-  const createConnectionOptionsFn = mock.fn(async () => ({}));
+  const createConnectionOptionsFn = mock.fn(async (_id: string) => ({}));
 
   const mqttExports = {
     __esModule: true,

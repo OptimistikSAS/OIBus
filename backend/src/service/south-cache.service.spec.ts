@@ -27,7 +27,7 @@ describe('South cache service', () => {
   });
 
   it('should get item last value', () => {
-    const value = { itemId: 'item-1', queryTime: null, value: { x: 1 }, trackedInstant: '2024-01-01T00:00:00Z' };
+    const value = { itemId: 'item-1', groupId: 'group-1', queryTime: null, value: { x: 1 }, trackedInstant: '2024-01-01T00:00:00Z' };
     southCacheRepository.getItemLastValue.mock.mockImplementationOnce(() => value);
     const result = service.getItemLastValue('conn-1', 'group-1', 'item-1');
     assert.deepStrictEqual(southCacheRepository.getItemLastValue.mock.calls[0].arguments, ['conn-1', 'group-1', 'item-1']);

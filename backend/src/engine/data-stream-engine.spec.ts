@@ -364,11 +364,19 @@ describe('DataStreamEngine', () => {
     it('should create OPCUA connectors and history queries', async () => {
       const northConfig: NorthConnectorEntity<NorthSettings> = { ...testData.north.list[0], type: 'opcua' };
       const southConfig: SouthConnectorEntity<SouthSettings, SouthItemSettings> = { ...testData.south.list[0], type: 'opcua' };
-      const historyConfig: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = { ...testData.historyQueries.list[0], southType: 'opcua', northType: 'opcua' };
+      const historyConfig: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = {
+        ...testData.historyQueries.list[0],
+        southType: 'opcua',
+        northType: 'opcua'
+      };
 
       northConnectorRepository.findNorthById = mock.fn((_id: string): NorthConnectorEntity<NorthSettings> | null => northConfig);
-      southConnectorRepository.findSouthById = mock.fn((_id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null => southConfig);
-      historyQueryRepository.findHistoryById = mock.fn((_id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null => historyConfig);
+      southConnectorRepository.findSouthById = mock.fn(
+        (_id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null => southConfig
+      );
+      historyQueryRepository.findHistoryById = mock.fn(
+        (_id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null => historyConfig
+      );
 
       await engine.createNorth(northConfig.id);
       await engine.createSouth(southConfig.id);
@@ -826,7 +834,10 @@ describe('DataStreamEngine', () => {
       const params = { start: 'now' } as CacheSearchParam;
 
       mockedHistoryQuery1.searchCacheContent = mock.fn(async (_params: CacheSearchParam) => ({}) as Omit<CacheSearchResult, 'metrics'>);
-      engine.getHistoryQuery = mock.fn((_historyId: string) => ({ historyQuery: mockedHistoryQuery1, metrics: historyQueryMetricsService }));
+      engine.getHistoryQuery = mock.fn((_historyId: string) => ({
+        historyQuery: mockedHistoryQuery1,
+        metrics: historyQueryMetricsService
+      }));
       const result = await engine.searchCacheContent('history', testData.historyQueries.list[0].id, params);
 
       assert.strictEqual(mockedHistoryQuery1.searchCacheContent.mock.calls.length, 1);
@@ -842,7 +853,10 @@ describe('DataStreamEngine', () => {
     });
 
     it('should get file from cache (History)', async () => {
-      engine.getHistoryQuery = mock.fn((_historyId: string) => ({ historyQuery: mockedHistoryQuery1, metrics: historyQueryMetricsService }));
+      engine.getHistoryQuery = mock.fn((_historyId: string) => ({
+        historyQuery: mockedHistoryQuery1,
+        metrics: historyQueryMetricsService
+      }));
       await engine.getFileFromCache('history', testData.historyQueries.list[0].id, 'cache', 'file.json');
       assert.strictEqual(mockedHistoryQuery1.getFileFromCache.mock.calls.length, 1);
       assert.deepStrictEqual(mockedHistoryQuery1.getFileFromCache.mock.calls[0].arguments, ['cache', 'file.json']);

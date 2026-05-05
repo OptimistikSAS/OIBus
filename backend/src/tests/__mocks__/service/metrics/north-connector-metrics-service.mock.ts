@@ -17,15 +17,16 @@ export default class NorthConnectorMetricsServiceMock extends NorthConnectorMetr
   }
 
   constructor() {
-    super(
-      new NorthConnectorMock({} as NorthConnectorEntity<NorthSettings>),
-      null! as NorthConnectorMetricsRepository
-    );
+    super(new NorthConnectorMock({} as NorthConnectorEntity<NorthSettings>), null! as NorthConnectorMetricsRepository);
   }
 
   override updateMetrics = mock.fn((): void => undefined);
   override resetMetrics = mock.fn((): void => undefined);
   override destroy = mock.fn((): void => undefined);
-  override get metrics(): NorthConnectorMetrics { return {} as NorthConnectorMetrics; }
-  override get stream(): PassThrough { return new PassThrough(); }
+  override get metrics(): NorthConnectorMetrics {
+    return {} as NorthConnectorMetrics;
+  }
+  override get stream(): PassThrough {
+    return new PassThrough();
+  }
 }

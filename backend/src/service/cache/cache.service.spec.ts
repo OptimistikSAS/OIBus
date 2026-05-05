@@ -485,7 +485,7 @@ describe('CacheService', () => {
   });
 
   it('should properly add cache content and log state', async () => {
-    const output = 'some content';
+    const output = Buffer.from('some content');
     writeFileMock.mock.mockImplementation(async () => undefined);
     statMock.mock.mockImplementation(async () => ({ size: 1024, ctimeMs: Date.now() }));
     generateRandomIdMock.mock.mockImplementation(() => 'random');

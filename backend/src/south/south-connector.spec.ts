@@ -52,7 +52,7 @@ describe('SouthConnector', () => {
   const utilsExports = {
     delay: mock.fn(async () => undefined),
     generateIntervals: mock.fn((_startTime: unknown, _startTimeFromCache: unknown, _endTime: unknown, _maxReadInterval?: unknown) => ({
-      intervals: [] as Array<never>,
+      intervals: [] as Array<{ start: string; end: string }>,
       numberOfIntervalsDone: 0
     })),
     groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
@@ -626,11 +626,13 @@ describe('SouthConnector', () => {
         { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
       ];
       let generateIntervalsCallCount = 0;
-      utilsExports.generateIntervals = mock.fn(() => {
-        generateIntervalsCallCount++;
-        if (generateIntervalsCallCount === 1) return { intervals, numberOfIntervalsDone: 0 };
-        return { intervals: [], numberOfIntervalsDone: 0 };
-      });
+      utilsExports.generateIntervals = mock.fn(
+        (_startTime: unknown, _startTimeFromCache: unknown, _endTime: unknown, _maxReadInterval?: unknown) => {
+          generateIntervalsCallCount++;
+          if (generateIntervalsCallCount === 1) return { intervals, numberOfIntervalsDone: 0 };
+          return { intervals: [], numberOfIntervalsDone: 0 };
+        }
+      );
 
       const historyQueryMock = mock.fn(
         () =>

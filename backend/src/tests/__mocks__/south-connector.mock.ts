@@ -29,15 +29,24 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
   override run = mock.fn(async (): Promise<void> => undefined);
   override createDeferredPromise = mock.fn((): void => undefined);
   override resolveDeferredPromise = mock.fn((): void => undefined);
-  override historyQueryHandler = mock.fn(async (): Promise<void> => undefined);
+  override historyQueryHandler = mock.fn(
+    async (_items: Array<SouthConnectorItemEntity<SouthItemSettings>>, _startTime: Instant, _endTime: Instant): Promise<void> => undefined
+  );
   override directQueryHandler = mock.fn(async (): Promise<void> => undefined);
-  override addContent = mock.fn(async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> => undefined);
+  override addContent = mock.fn(
+    async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> => undefined
+  );
   override disconnect = mock.fn(async (): Promise<void> => undefined);
   override stop = mock.fn(async (): Promise<void> => undefined);
   override setLogger = mock.fn((_logger: ILogger): void => undefined);
   override resetCache = mock.fn(async (): Promise<void> => undefined);
   override testConnection = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }));
-  override testItem = mock.fn(async (_item: SouthConnectorItemEntity<SouthItemSettings>, _testingSettings: SouthConnectorItemTestingSettings): Promise<OIBusContent> => ({}) as OIBusContent);
+  override testItem = mock.fn(
+    async (
+      _item: SouthConnectorItemEntity<SouthItemSettings>,
+      _testingSettings: SouthConnectorItemTestingSettings
+    ): Promise<OIBusContent> => ({}) as OIBusContent
+  );
   override connectedEvent = new EventEmitter();
   override metricsEvent = new EventEmitter();
 

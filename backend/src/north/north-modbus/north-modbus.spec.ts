@@ -39,7 +39,7 @@ describe('NorthModbus', () => {
 
   const mockedEmitter = new CustomStream();
 
-  const connectSocketFn = mock.fn(async () => undefined);
+  const connectSocketFn = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => undefined);
   const streamToStringFn = mock.fn(async () => '[]');
 
   const writeSingleCoilFn = mock.fn(async () => ({ response: { body: { valuesAsArray: [123] } } }));

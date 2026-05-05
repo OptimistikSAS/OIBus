@@ -30,7 +30,11 @@ export default class HistoryQueryMock extends HistoryQuery {
   override setLogger = mock.fn((_logger: ILogger): void => undefined);
   override metricsEvent = new EventEmitter();
   override finishEvent = new EventEmitter();
-  override searchCacheContent = mock.fn(async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({}) as Omit<CacheSearchResult, 'metrics'>);
-  override getFileFromCache = mock.fn(async (_folder: DataFolderType, _filename: string): Promise<FileCacheContent> => ({}) as FileCacheContent);
+  override searchCacheContent = mock.fn(
+    async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({}) as Omit<CacheSearchResult, 'metrics'>
+  );
+  override getFileFromCache = mock.fn(
+    async (_folder: DataFolderType, _filename: string): Promise<FileCacheContent> => ({}) as FileCacheContent
+  );
   override updateCacheContent = mock.fn(async (_updateCommand: CacheContentUpdateCommand): Promise<void> => undefined);
 }
