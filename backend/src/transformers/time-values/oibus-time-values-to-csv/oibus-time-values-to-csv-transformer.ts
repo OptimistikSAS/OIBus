@@ -14,6 +14,7 @@ import {
   sanitizeFilename
 } from '../../../service/utils';
 import { TransformerTimeValuesToCsvSettings } from '../../../../shared/model/transformer-settings.model';
+import { applyFieldProcess } from '../../field-process';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -49,14 +50,14 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
     };
     const quoteChar = convertQuoteChar(this.options.quoteChar);
     const outputCSV = csv.unparse(
-      jsonData.map(value => ({
-        [this.options.pointIdColumnTitle]: value.pointId,
-        [this.options.timestampColumnTitle]: formatInstant(value.timestamp, {
+      jsonData.map(tv => ({
+        [this.options.pointIdColumnTitle]: applyFieldProcess(tv.pointId, this.options.pointIdProcess),
+        [this.options.timestampColumnTitle]: formatInstant(tv.timestamp, {
           type: this.options.timestampType,
           timezone: this.options.timezone,
           format: this.options.timestampFormat
         }),
-        [this.options.valueColumnTitle]: value.data.value
+        [this.options.valueColumnTitle]: tv.data.value
       })),
       {
         header: this.options.header || false,

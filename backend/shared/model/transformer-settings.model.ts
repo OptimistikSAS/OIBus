@@ -214,6 +214,7 @@ export interface TransformerJsonToCsvSettingsFields {
   columnName: string;
   jsonPath: string;
   dataType: TransformerJsonToCsvSettingsFieldsDataType;
+  fieldProcess?: string | null;
   datetimeSettings?: TransformerJsonToCsvSettingsFieldsDatetimeSettings | null;
 }
 
@@ -311,6 +312,7 @@ export interface TransformerTimeValuesToCsvSettings {
   timestampType: TransformerTimeValuesToCsvSettingsTimestampType;
   timestampFormat?: string;
   timezone?: Timezone;
+  pointIdProcess: string | null;
 }
 
 export type TransformerTimeValuesToJsonSettings = object;

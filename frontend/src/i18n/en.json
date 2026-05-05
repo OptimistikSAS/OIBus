@@ -1257,6 +1257,7 @@
                 "array": "Array",
                 "object": "Object"
               },
+              "field-process": "Field Process (JS expression, e.g. value.toUpperCase())",
               "datetime-settings": {
                 "title": "Datetime Settings",
                 "input-type": {
@@ -1375,7 +1376,8 @@
               "unix-epoch-ms": "Unix epoch (ms)"
             },
             "timestamp-format": "Timestamp output format",
-            "timezone": "Output timezone"
+            "timezone": "Output timezone",
+            "point-id-process": "Point ID Process (JS expression, e.g. value.toUpperCase())"
           },
           "time-values-to-modbus": {
             "mapping": {

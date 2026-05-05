@@ -17,6 +17,7 @@ import {
 import csv from 'papaparse';
 import { DateTime } from 'luxon';
 import { TransformerJsonToCsvSettings } from '../../../../shared/model/transformer-settings.model';
+import { applyFieldProcess } from '../../field-process';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -112,7 +113,7 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
         pathIndices.push(Number(match[1]));
       }
 
-      const csvRow: Record<string, string | number> = {};
+      const csvRow: Record<string, unknown> = {};
       this.options.fields.forEach(field => {
         // Resolve the specific path for this column
         const specificPath = injectIndices(field.jsonPath, pathIndices);
@@ -120,12 +121,13 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
         // Query the single specific value, parsing any JSON-stringified intermediate node
         const result = resolveJsonPath(specificPath, content);
 
+        let typedValue: unknown;
         if (result === undefined || result === null) {
-          csvRow[field.columnName] = this.options.nullValue ?? '';
+          typedValue = this.options.nullValue ?? '';
         } else {
           switch (field.dataType) {
             case 'datetime':
-              csvRow[field.columnName] = convertDateTime(
+              typedValue = convertDateTime(
                 result,
                 {
                   type: field.datetimeSettings!.inputType,
@@ -142,21 +144,23 @@ export default class JSONToCSVTransformer extends OIBusTransformer {
               );
               break;
             case 'number':
-              csvRow[field.columnName] = Number(result);
+              typedValue = Number(result);
               break;
             case 'boolean':
-              csvRow[field.columnName] = stringToBoolean(result).toString();
+              typedValue = stringToBoolean(result).toString();
               break;
             case 'string':
-              csvRow[field.columnName] = String(result);
+              typedValue = String(result);
               break;
             case 'object':
             case 'array':
             default:
-              csvRow[field.columnName] = JSON.stringify(result);
+              typedValue = JSON.stringify(result);
               break;
           }
         }
+
+        csvRow[field.columnName] = applyFieldProcess(typedValue, field.fieldProcess);
       });
 
       return csvRow;

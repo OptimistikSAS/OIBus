@@ -118,6 +118,14 @@ const manifest: TransformerManifest = {
         defaultValue: 'UTC',
         validators: [{ type: 'REQUIRED', arguments: [] }],
         displayProperties: { row: 3, columns: 4, displayInViewMode: true }
+      },
+      {
+        type: 'string',
+        key: 'pointIdProcess',
+        translationKey: 'configuration.oibus.manifest.transformers.time-values-to-csv.point-id-process',
+        defaultValue: null,
+        validators: [],
+        displayProperties: { row: 4, columns: 12, displayInViewMode: false }
       }
     ],
     enablingConditions: [

@@ -192,7 +192,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     expect(buf[0]).toBe(0xef);
     expect(buf[1]).toBe(0xbb);
     expect(buf[2]).toBe(0xbf);
-    expect(buf.slice(3).toString('utf-8')).toBe('csv content');
+    expect(buf.subarray(3).toString('utf-8')).toBe('csv content');
   });
 
   it('should encode as Latin-1 Buffer when encoding is LATIN_1', async () => {
@@ -253,7 +253,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     const buf = result.output as Buffer;
     expect(buf[0]).toBe(0xff);
     expect(buf[1]).toBe(0xfe);
-    expect(buf.slice(2).toString('utf16le')).toBe('csv content');
+    expect(buf.subarray(2).toString('utf16le')).toBe('csv content');
   });
 
   it('should correctly expose the manifest settings', () => {
@@ -262,5 +262,110 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
     expect(timeValuesToCsvManifest.settings.type).toBe('object');
     expect(timeValuesToCsvManifest.settings.key).toBe('options');
     expect(timeValuesToCsvManifest.settings.attributes[0].key).toBe('filename');
+  });
+
+  describe('fieldProcess', () => {
+    it('should apply pointIdProcess, valueProcess and timestampProcess to their respective columns', async () => {
+      const { formatInstant } = jest.requireMock('../../../service/utils');
+      (formatInstant as jest.Mock).mockReturnValue('2024-01-01 00:00:00');
+      (csv.unparse as jest.Mock).mockReturnValue('csv result');
+
+      const options = {
+        filename: 'output.csv',
+        encoding: 'UTF_8',
+        header: true,
+        delimiter: 'SEMI_COLON',
+        newline: 'DEFAULT',
+        quoteChar: 'NONE',
+        escapeChar: 'DOUBLE_QUOTE',
+        pointIdColumnTitle: 'Ref',
+        valueColumnTitle: 'Val',
+        timestampColumnTitle: 'TS',
+        timestampType: 'iso-string',
+        pointIdProcess: 'value.toUpperCase()',
+        valueProcess: 'String(value).replace(".", ",")',
+        timestampProcess: 'value.slice(0, 10)'
+      };
+
+      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, null);
+      mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '3.14' } }]));
+      mockStream.push(null);
+      await flushPromises();
+      await promise;
+
+      expect(csv.unparse).toHaveBeenCalledWith([{ Ref: 'REF-1', Val: '3.14', TS: '2024-01-01 00:00:00' }], expect.anything());
+    });
+
+    it('should leave column values unchanged when process fields are null', async () => {
+      const { formatInstant } = jest.requireMock('../../../service/utils');
+      (formatInstant as jest.Mock).mockReturnValue('2024-01-01T00:00:00.000Z');
+      (csv.unparse as jest.Mock).mockReturnValue('csv result');
+
+      const options = {
+        filename: 'output.csv',
+        encoding: 'UTF_8',
+        header: true,
+        delimiter: 'SEMI_COLON',
+        newline: 'DEFAULT',
+        quoteChar: 'NONE',
+        escapeChar: 'DOUBLE_QUOTE',
+        pointIdColumnTitle: 'Ref',
+        valueColumnTitle: 'Val',
+        timestampColumnTitle: 'TS',
+        timestampType: 'iso-string',
+        pointIdProcess: null,
+        valueProcess: null,
+        timestampProcess: null
+      };
+
+      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, null);
+      mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } }]));
+      mockStream.push(null);
+      await flushPromises();
+      await promise;
+
+      expect(csv.unparse).toHaveBeenCalledWith([{ Ref: 'ref-1', Val: '42', TS: '2024-01-01T00:00:00.000Z' }], expect.anything());
+    });
+
+    it('should throw a descriptive error when a process expression is invalid', async () => {
+      const { formatInstant } = jest.requireMock('../../../service/utils');
+      (formatInstant as jest.Mock).mockReturnValue('2024-01-01T00:00:00.000Z');
+
+      const options = {
+        filename: 'output.csv',
+        encoding: 'UTF_8',
+        header: true,
+        delimiter: 'SEMI_COLON',
+        newline: 'DEFAULT',
+        quoteChar: 'NONE',
+        escapeChar: 'DOUBLE_QUOTE',
+        pointIdColumnTitle: 'Ref',
+        valueColumnTitle: 'Val',
+        timestampColumnTitle: 'TS',
+        timestampType: 'iso-string',
+        pointIdProcess: 'value.boom()',
+        valueProcess: null,
+        timestampProcess: null
+      };
+
+      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, null);
+      // Attach the rejection handler BEFORE pushing data so the rejection is never "unhandled".
+      const rejectionCheck = expect(promise).rejects.toThrow('Field process evaluation failed');
+      mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } }]));
+      mockStream.push(null);
+      await flushPromises();
+      await rejectionCheck;
+    });
+
+    it('should expose process attributes in the manifest', () => {
+      const attrs = timeValuesToCsvManifest.settings.attributes;
+      expect(attrs.find(a => a.key === 'pointIdProcess')).toMatchObject({ type: 'string', validators: [] });
+    });
   });
 });
