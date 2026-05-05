@@ -3,6 +3,7 @@
 
 <div class="mt-4">
   <hr />
+
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h6 class="mb-0" translate="configuration.oibus.manifest.transformers.test-transformer-modal.title"></h6>
     <div class="d-flex align-items-center gap-2">
@@ -25,14 +26,7 @@
 
   @if (currentTransformer) {
     <form [formGroup]="form" id="test-form">
-      <div class="row mb-3">
-        <div class="col-12">
-          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"></label>
-          <oib-code-block formControlName="inputData" [language]="'json'" [readOnly]="false" />
-        </div>
-      </div>
-
-      <div class="row mb-2" formGroupName="options">
+      <div class="row mb-3" formGroupName="options">
         <oib-oibus-object-form-control
           [scanModes]="[]"
           [certificates]="[]"
@@ -40,125 +34,143 @@
           [objectAttribute]="currentTransformer.customManifest"
         />
       </div>
-    </form>
 
-    @if (error()) {
-      <div class="alert alert-danger mt-2" role="alert">{{ error() }}</div>
-    }
-
-    @if (response()) {
-      <div class="mt-3">
-        <div class="alert alert-info" role="alert">
-          <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.success"></span>
+      <div class="row g-3">
+        <!-- Left pane: input data -->
+        <div class="col-6">
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"></label>
+          <oib-code-block formControlName="inputData" [language]="'json'" [readOnly]="false" />
         </div>
 
-        <div>
-          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.results"></label>
-        </div>
-        <div class="d-flex align-items-center gap-3 mb-2 flex-wrap">
-          <span class="text-muted small">
-            <span class="fw-semibold" translate="configuration.oibus.manifest.transformers.test-transformer-modal.content-file"></span>
-            {{ response()!.metadata.contentFile }}
-          </span>
-          <span class="text-muted small">
-            <span class="fw-semibold" translate="configuration.oibus.manifest.transformers.test-transformer-modal.content-size"></span>
-            {{ response()!.metadata.contentSize | fileSize }}
-          </span>
-          <span class="text-muted small">
-            <span class="fw-semibold" translate="configuration.oibus.manifest.transformers.test-transformer-modal.created-at"></span>
-            {{ response()!.metadata.createdAt | datetime: 'short' }}
-          </span>
-          @if (numberOfElements() !== null) {
-            <span class="text-muted small">
-              <span
-                class="fw-semibold"
-                translate="configuration.oibus.manifest.transformers.test-transformer-modal.number-of-elements"
-              ></span>
-              {{ numberOfElements() }}
-            </span>
+        <!-- Right pane: result -->
+        <div class="col-6 d-flex flex-column gap-2">
+          <label class="form-label mb-0" translate="configuration.oibus.manifest.transformers.test-transformer-modal.results"></label>
+
+          @if (error()) {
+            <div class="alert alert-danger mb-0" role="alert">{{ error() }}</div>
           }
-        </div>
-        <div class="mb-2 d-flex">
-          @if (displayMode(); as mode) {
-            <div ngbDropdown class="d-inline-block me-3">
-              <button type="button" class="btn btn-link m-0 p-0" id="view-dropdown" ngbDropdownToggle>
-                <span class="fa {{ displayModeIcons[mode] }}"></span>
-                <span style="margin-left: 5px">{{ 'south.test-item.view.' + mode | translate }}</span>
-              </button>
-              <div ngbDropdownMenu aria-labelledby="view-dropdown">
-                @for (availableMode of availableDisplayModes(); track $index) {
-                  <button ngbDropdownItem [class.active]="mode === availableMode" (click)="changeDisplayMode(availableMode)">
-                    <span class="fa {{ displayModeIcons[availableMode] }}"></span>
-                    <span style="margin-left: 5px">{{ 'south.test-item.view.' + availableMode | translate }}</span>
-                  </button>
-                }
-              </div>
+
+          @if (response()) {
+            <div class="alert alert-info mb-0 py-1 px-2 small" role="alert">
+              <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.success"></span>
             </div>
-          }
-          @if (currentDisplayMode === 'table') {
-            @if (response()!.metadata.contentFile.endsWith('.csv')) {
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <label
-                  class="form-label mb-0 small fw-semibold"
-                  translate="configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter"
-                ></label>
-                <select class="form-select form-select-sm w-auto" (change)="changeCsvDelimiter($any($event.target).value)">
-                  <option value="." [selected]="csvDelimiter() === '.'">
-                    {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-dot' | translate }}
-                  </option>
-                  <option value=";" [selected]="csvDelimiter() === ';'">
-                    {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-semicolon' | translate }}
-                  </option>
-                  <option value=":" [selected]="csvDelimiter() === ':'">
-                    {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-colon' | translate }}
-                  </option>
-                  <option value="," [selected]="csvDelimiter() === ','">
-                    {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-comma' | translate }}
-                  </option>
-                  <option value="/" [selected]="csvDelimiter() === '/'">
-                    {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-slash' | translate }}
-                  </option>
-                  <option value="&#9;" [selected]="csvDelimiter() === '\t'">
-                    {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-tab' | translate }}
-                  </option>
-                  <option value=" " [selected]="csvDelimiter() === ' '">
-                    {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-non-breaking-space' | translate }}
-                  </option>
-                  <option value="|" [selected]="csvDelimiter() === '|'">
-                    {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-pipe' | translate }}
-                  </option>
-                </select>
-              </div>
-            }
-          }
-        </div>
-        @if (currentDisplayMode === 'table') {
-          <div class="mb-2 grid-table" [style]="'grid-template-columns: repeat(' + tableHeaders.length + ', minmax(0, auto))'">
-            <div class="grid-table-header fw-bold">
-              @for (header of tableHeaders; track $index) {
-                <div class="p-2">{{ header }}</div>
+
+            <!-- Metadata row -->
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              <span class="text-muted small">
+                <span class="fw-semibold" translate="configuration.oibus.manifest.transformers.test-transformer-modal.content-file"></span>
+                {{ response()!.metadata.contentFile }}
+              </span>
+              <span class="text-muted small">
+                <span class="fw-semibold" translate="configuration.oibus.manifest.transformers.test-transformer-modal.content-size"></span>
+                {{ response()!.metadata.contentSize | fileSize }}
+              </span>
+              <span class="text-muted small">
+                <span class="fw-semibold" translate="configuration.oibus.manifest.transformers.test-transformer-modal.created-at"></span>
+                {{ response()!.metadata.createdAt | datetime: 'short' }}
+              </span>
+              @if (numberOfElements() !== null) {
+                <span class="text-muted small">
+                  <span
+                    class="fw-semibold"
+                    translate="configuration.oibus.manifest.transformers.test-transformer-modal.number-of-elements"
+                  ></span>
+                  {{ numberOfElements() }}
+                </span>
               }
             </div>
-            @for (row of tablePage.content; track $index) {
-              <div class="grid-table-row">
-                @for (cell of row; track $index) {
-                  <div class="align-items-center d-flex h-100 p-2" style="overflow-wrap: anywhere">{{ cell }}</div>
+
+            <!-- View-mode selector + CSV delimiter -->
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+              @if (displayMode(); as mode) {
+                <div ngbDropdown class="d-inline-block">
+                  <button type="button" class="btn btn-link m-0 p-0" id="view-dropdown" ngbDropdownToggle>
+                    <span class="fa {{ displayModeIcons[mode] }}"></span>
+                    <span style="margin-left: 5px">{{ 'south.test-item.view.' + mode | translate }}</span>
+                  </button>
+                  <div ngbDropdownMenu aria-labelledby="view-dropdown">
+                    @for (availableMode of availableDisplayModes(); track $index) {
+                      <button ngbDropdownItem [class.active]="mode === availableMode" (click)="changeDisplayMode(availableMode)">
+                        <span class="fa {{ displayModeIcons[availableMode] }}"></span>
+                        <span style="margin-left: 5px">{{ 'south.test-item.view.' + availableMode | translate }}</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+              @if (currentDisplayMode === 'table' && response()!.metadata.contentFile.endsWith('.csv')) {
+                <div class="d-flex align-items-center gap-2">
+                  <label
+                    class="form-label mb-0 small fw-semibold"
+                    translate="configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter"
+                  ></label>
+                  <select class="form-select form-select-sm w-auto" (change)="changeCsvDelimiter($any($event.target).value)">
+                    <option value="." [selected]="csvDelimiter() === '.'">
+                      {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-dot' | translate }}
+                    </option>
+                    <option value=";" [selected]="csvDelimiter() === ';'">
+                      {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-semicolon' | translate }}
+                    </option>
+                    <option value=":" [selected]="csvDelimiter() === ':'">
+                      {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-colon' | translate }}
+                    </option>
+                    <option value="," [selected]="csvDelimiter() === ','">
+                      {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-comma' | translate }}
+                    </option>
+                    <option value="/" [selected]="csvDelimiter() === '/'">
+                      {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-slash' | translate }}
+                    </option>
+                    <option value="&#9;" [selected]="csvDelimiter() === '\t'">
+                      {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-tab' | translate }}
+                    </option>
+                    <option value=" " [selected]="csvDelimiter() === ' '">
+                      {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-non-breaking-space' | translate }}
+                    </option>
+                    <option value="|" [selected]="csvDelimiter() === '|'">
+                      {{ 'configuration.oibus.manifest.transformers.test-transformer-modal.csv-delimiter-pipe' | translate }}
+                    </option>
+                  </select>
+                </div>
+              }
+            </div>
+
+            <!-- Output content -->
+            @if (currentDisplayMode === 'table') {
+              <div class="grid-table" [style]="'grid-template-columns: repeat(' + tableHeaders.length + ', minmax(0, 1fr))'">
+                <div class="grid-table-header fw-bold">
+                  @for (header of tableHeaders; track $index) {
+                    <div class="p-2">{{ header }}</div>
+                  }
+                </div>
+                @for (row of tablePage.content; track $index) {
+                  <div class="grid-table-row">
+                    @for (cell of row; track $index) {
+                      <div class="align-items-center d-flex h-100 p-2" style="overflow-wrap: anywhere">{{ cell }}</div>
+                    }
+                  </div>
+                }
+                @if (tablePage.totalElements === 0) {
+                  <div class="p-2" style="grid-column: 1/-1">{{ 'south.test-item.table.no-values' | translate }}</div>
                 }
               </div>
+              @if (tablePage.totalPages > 1) {
+                <div class="d-flex flex-row-reverse">
+                  <oib-pagination [page]="tablePage" (pageChanged)="buildTablePage($event)" />
+                </div>
+              }
+            } @else {
+              <oib-code-block [formControl]="outputControl" [language]="outputLanguage()" [readOnly]="true" />
             }
-            @if (tablePage.totalElements === 0) {
-              <div class="p-2" style="grid-column: 1/-1">{{ 'south.test-item.table.no-values' | translate }}</div>
-            }
-          </div>
-          @if (tablePage.totalPages > 1) {
-            <div class="d-flex flex-row-reverse">
-              <oib-pagination [page]="tablePage" (pageChanged)="buildTablePage($event)" />
+          } @else if (!error()) {
+            <!-- Placeholder shown before the first test run -->
+            <div class="result-placeholder d-flex align-items-center justify-content-center text-muted">
+              <span class="fa fa-flask me-2"></span>
+              <span translate="configuration.oibus.manifest.transformers.test-transformer-modal.test"></span>
             </div>
           }
-        } @else {
-          <oib-code-block [formControl]="outputControl" [language]="outputLanguage()" [readOnly]="true" [height]="'300px'" />
-        }
+        </div>
       </div>
-    }
+    </form>
   }
 </div>
