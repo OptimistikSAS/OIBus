@@ -10,7 +10,9 @@ import { OIBusCommand } from '../../../../model/oianalytics-command.model';
  */
 export default class OIAnalyticsClientMock {
   updateCommandStatus = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
-  retrieveCancelledCommands = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _commands: Array<OIBusCommand>): Promise<Array<OIAnalyticsFetchCommandDTO>> => []);
+  retrieveCancelledCommands = mock.fn(
+    async (_registrationSettings: OIAnalyticsRegistration, _commands: Array<OIBusCommand>): Promise<Array<OIAnalyticsFetchCommandDTO>> => []
+  );
   retrievePendingCommands = mock.fn(
     async (_registrationSettings: OIAnalyticsRegistration): Promise<Array<OIAnalyticsFetchCommandDTO>> => []
   );

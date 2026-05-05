@@ -105,9 +105,9 @@ describe('OIAnalytics Message Service', () => {
     certificateRepository.list = mock.fn(() => testData.certificates.list);
     userRepository.list = mock.fn(() => testData.users.list);
     southRepository.findAllSouth = mock.fn(() => testData.south.list);
-    southRepository.findSouthById = mock.fn((id: string) => testData.south.list.find(element => element.id === id));
+    southRepository.findSouthById = mock.fn((id: string) => testData.south.list.find(element => element.id === id) ?? null);
     northRepository.findAllNorth = mock.fn(() => testData.north.list);
-    northRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(element => element.id === id));
+    northRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(element => element.id === id) ?? null);
     transformerRepository.list = mock.fn(() => [...testData.transformers.list, standardTransformer]);
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
@@ -125,7 +125,7 @@ describe('OIAnalytics Message Service', () => {
       historyQueryRepository,
       transformerRepository,
       oIAnalyticsClient,
-      logger as unknown as Parameters<typeof OIAnalyticsMessageService.prototype.setLogger>[0]
+      logger
     );
   });
 
@@ -137,8 +137,8 @@ describe('OIAnalytics Message Service', () => {
   });
 
   it('should properly start and stop', async () => {
-    (service as Record<string, unknown>)['retryMessageInterval'] = setTimeout(() => null);
-    const runMock = mock.fn();
+    service['retryMessageInterval'] = setTimeout(() => null);
+    const runMock = mock.fn(async () => undefined);
     service.run = runMock;
     service.start();
     assert.strictEqual(runMock.mock.calls.length, 1);
@@ -170,8 +170,8 @@ describe('OIAnalytics Message Service', () => {
   it('should properly send message and wait for it to finish before stopping', async () => {
     oIAnalyticsClient.sendConfiguration = mock.fn(
       () =>
-        new Promise(resolve => {
-          setTimeout(() => resolve(null), 1_000);
+        new Promise<void>(resolve => {
+          setTimeout(() => resolve(), 1_000);
         })
     );
 
@@ -232,8 +232,8 @@ describe('OIAnalytics Message Service', () => {
 
   it('should properly stop with stop timeout already set', async () => {
     const deferredPromise = new DeferredPromise();
-    (service as Record<string, unknown>)['runProgress$'] = deferredPromise;
-    (service as Record<string, unknown>)['stopTimeout'] = setTimeout(() => {
+    service['runProgress$'] = deferredPromise;
+    service['stopTimeout'] = setTimeout(() => {
       deferredPromise.resolve();
     }, 30_000);
 
@@ -247,7 +247,7 @@ describe('OIAnalytics Message Service', () => {
     oIAnalyticsClient.sendConfiguration = mock.fn(() => {
       throw new Error('fetch error');
     });
-    (service as Record<string, unknown>)['retryMessageInterval'] = setTimeout(() => null, 1);
+    service['retryMessageInterval'] = setTimeout(() => null, 1);
 
     service.start();
     await flushPromises();
@@ -267,7 +267,7 @@ describe('OIAnalytics Message Service', () => {
         () => {
           throw new Error('Bad Request');
         },
-        () => undefined
+        async () => undefined
       )
     );
 
@@ -331,7 +331,7 @@ describe('OIAnalytics message service without message', () => {
       historyQueryRepository,
       transformerRepository,
       oIAnalyticsClient,
-      logger as unknown as Parameters<typeof OIAnalyticsMessageService.prototype.setLogger>[0]
+      logger
     );
   });
 
@@ -342,14 +342,14 @@ describe('OIAnalytics message service without message', () => {
   it('should properly start when no message retrieved', () => {
     assert.strictEqual(oIAnalyticsMessageRepository.markAsCompleted.mock.calls.length, 0);
 
-    const runMock = mock.fn();
+    const runMock = mock.fn(async () => undefined);
     service.run = runMock;
     service.start();
     assert.strictEqual(runMock.mock.calls.length, 0);
   });
 
   it('should change logger', () => {
-    service.setLogger(anotherLogger as unknown as Parameters<typeof OIAnalyticsMessageService.prototype.setLogger>[0]);
+    service.setLogger(anotherLogger);
   });
 });
 
@@ -400,7 +400,7 @@ describe('OIAnalytics message service without completed registration', () => {
       historyQueryRepository,
       transformerRepository,
       oIAnalyticsClient,
-      logger as unknown as Parameters<typeof OIAnalyticsMessageService.prototype.setLogger>[0]
+      logger
     );
   });
 

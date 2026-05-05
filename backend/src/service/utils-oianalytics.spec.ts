@@ -38,8 +38,12 @@ describe('utils-oianalytics', () => {
   let decryptTextMock: ReturnType<typeof mock.fn>;
 
   beforeEach(() => {
-    encryptTextMock = mock.method(encryptionService, 'encryptText', async (_text: unknown) => 'encrypted-token') as ReturnType<typeof mock.fn>;
-    decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => `decrypted-${text}`) as ReturnType<typeof mock.fn>;
+    encryptTextMock = mock.method(encryptionService, 'encryptText', async (_text: unknown) => 'encrypted-token') as ReturnType<
+      typeof mock.fn
+    >;
+    decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => `decrypted-${text}`) as ReturnType<
+      typeof mock.fn
+    >;
 
     mockCertRepo = { findById: mock.fn() };
 
@@ -330,7 +334,9 @@ describe('utils-oianalytics', () => {
     let requestMock: ReturnType<typeof mock.fn>;
 
     beforeEach(() => {
-      requestMock = mock.method(undiciModule, 'request', async (_url: string | URL) => createMockResponse(200, 'OK')) as ReturnType<typeof mock.fn>;
+      requestMock = mock.method(undiciModule, 'request', async (_url: string | URL) => createMockResponse(200, 'OK')) as ReturnType<
+        typeof mock.fn
+      >;
     });
 
     it('should succeed when API returns 200', async () => {

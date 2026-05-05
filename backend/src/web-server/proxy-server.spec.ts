@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import type http from 'node:http';
 import type net from 'node:net';
 import type httpProxy from 'http-proxy';
-import {mockModule, reloadModule} from '../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 
 const nodeRequire = createRequire(import.meta.url);
