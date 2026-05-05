@@ -11,7 +11,9 @@ export default class EngineRepositoryMock extends EngineRepository {
   constructor() {
     super({} as Database, '');
   }
-  protected override createDefault(): void {}
+  protected override createDefault(): void {
+    return;
+  }
   override get = mock.fn((): EngineSettings | null => null);
   override update = mock.fn((_command: EngineSettingsCommandDTO, _updatedBy: string): void => undefined);
   override updateVersion = mock.fn((_version: string, _launcherVersion: string): void => undefined);

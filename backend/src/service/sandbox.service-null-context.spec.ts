@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
-import {mockModule, reloadModule} from '../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 import type { CustomTransformer } from '../model/transformer.model';
 import type SandboxServiceClass from './sandbox.service';
 

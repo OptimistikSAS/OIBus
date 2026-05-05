@@ -133,7 +133,7 @@ export default class UserRepository {
     this.database.prepare(query).run(id);
   }
 
-  private createDefault(): void {
+  protected createDefault(): void {
     const query = `SELECT id FROM ${USERS_TABLE} WHERE login = ?;`;
     const result = this.database.prepare(query).get(DEFAULT_USER.login);
     if (result) {

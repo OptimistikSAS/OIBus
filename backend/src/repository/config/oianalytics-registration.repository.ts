@@ -295,7 +295,7 @@ export default class OIAnalyticsRegistrationRepository {
     this.database.prepare(query).run(privateKey, publicKey);
   }
 
-  private createDefault(command: OIAnalyticsRegistrationEditCommand): void {
+  protected createDefault(command: OIAnalyticsRegistrationEditCommand): void {
     if (this.get()) {
       return;
     }

@@ -1,4 +1,5 @@
 import { mock } from 'node:test';
+import type { Database } from 'better-sqlite3';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
@@ -9,21 +10,25 @@ import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/so
 import { SouthConnectorItemSearchParam } from '../../../../../shared/model/south-connector.model';
 import { Page } from '../../../../../shared/model/types';
 import { ScanMode } from '../../../../model/scan-mode.model';
+import SouthConnectorRepository from '../../../../repository/config/south-connector.repository';
 
 /**
  * Create a mock object for South Connector repository
  */
-export default class SouthConnectorRepositoryMock {
-  findAllSouth = mock.fn((): Array<SouthConnectorEntityLight> => []);
-  findSouthById = mock.fn((_id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null => null);
-  saveSouth = mock.fn((_south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void => undefined);
-  start = mock.fn((_id: string): void => undefined);
-  stop = mock.fn((_id: string): void => undefined);
-  deleteSouth = mock.fn((_id: string): void => undefined);
-  listItems = mock.fn(
+export default class SouthConnectorRepositoryMock extends SouthConnectorRepository {
+  constructor() {
+    super({} as Database);
+  }
+  override findAllSouth = mock.fn((): Array<SouthConnectorEntityLight> => []);
+  override findSouthById = mock.fn((_id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null => null);
+  override saveSouth = mock.fn((_south: SouthConnectorEntity<SouthSettings, SouthItemSettings>): void => undefined);
+  override start = mock.fn((_id: string): void => undefined);
+  override stop = mock.fn((_id: string): void => undefined);
+  override deleteSouth = mock.fn((_id: string): void => undefined);
+  override listItems = mock.fn(
     (_southId: string, _searchParams: Omit<SouthConnectorItemSearchParam, 'page'>): Array<SouthConnectorItemEntity<SouthItemSettings>> => []
   );
-  searchItems = mock.fn(
+  override searchItems = mock.fn(
     (_southId: string, _searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemEntity<SouthItemSettings>> => ({
       content: [],
       size: 50,
@@ -32,18 +37,18 @@ export default class SouthConnectorRepositoryMock {
       totalPages: 0
     })
   );
-  findAllItemsForSouth = mock.fn((_southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> => []);
-  findItemById = mock.fn((_southConnectorId: string, _itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null => null);
-  saveItem = mock.fn((_southConnectorId: string, _southItem: SouthConnectorItemEntity<SouthItemSettings>): void => undefined);
-  saveAllItems = mock.fn(
+  override findAllItemsForSouth = mock.fn((_southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> => []);
+  override findItemById = mock.fn((_southConnectorId: string, _itemId: string): SouthConnectorItemEntity<SouthItemSettings> | null => null);
+  override saveItem = mock.fn((_southConnectorId: string, _southItem: SouthConnectorItemEntity<SouthItemSettings>): void => undefined);
+  override saveAllItems = mock.fn(
     (_southConnectorId: string, _southItems: Array<SouthConnectorItemEntity<SouthItemSettings>>, _deleteItemsNotPresent: boolean): void =>
       undefined
   );
-  deleteItem = mock.fn((_southId: string, _id: string): void => undefined);
-  deleteAllItemsBySouth = mock.fn((_southId: string): void => undefined);
-  enableItem = mock.fn((_id: string): void => undefined);
-  disableItem = mock.fn((_id: string): void => undefined);
-  moveItemsToGroup = mock.fn((_itemIds: Array<string>, _groupId: string | null): void => undefined);
-  findScanModeForSouth = mock.fn((_scanModeId: string): ScanMode => ({}) as ScanMode);
-  findGroupBySouthId = mock.fn((_southId: string): Array<SouthItemGroupEntityLight> => []);
+  override deleteItem = mock.fn((_southId: string, _id: string): void => undefined);
+  override deleteAllItemsBySouth = mock.fn((_southId: string): void => undefined);
+  override enableItem = mock.fn((_id: string): void => undefined);
+  override disableItem = mock.fn((_id: string): void => undefined);
+  override moveItemsToGroup = mock.fn((_itemIds: Array<string>, _groupId: string | null): void => undefined);
+  override findScanModeForSouth = mock.fn((_scanModeId: string): ScanMode => ({}) as ScanMode);
+  override findGroupBySouthId = mock.fn((_southId: string): Array<SouthItemGroupEntityLight> => []);
 }

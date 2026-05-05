@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
-import {mockModule, reloadModule} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -47,7 +47,10 @@ describe('SouthMySQL', () => {
   let SouthMySQL: typeof SouthMySQLClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
+  const addContentCallback = mock.fn(
+    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
+      undefined
+  );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -329,7 +332,9 @@ describe('SouthMySQL', () => {
 
       utilsExports.generateReplacementParameters = mock.fn(() => ({ startTime, endTime }));
 
-      const mockExecute = mock.fn(async (_query: unknown) => [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]);
+      const mockExecute = mock.fn(async (_query: unknown) => [
+        [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      ]);
       const mockEnd = mock.fn();
       mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
 
@@ -366,7 +371,9 @@ describe('SouthMySQL', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
 
-      const mockExecute = mock.fn(async (_query: unknown) => [[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]]);
+      const mockExecute = mock.fn(async (_query: unknown) => [
+        [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      ]);
       const mockEnd = mock.fn();
       mysqlExports.createConnection = mock.fn(async () => ({ end: mockEnd, execute: mockExecute, ping: mock.fn() }));
 
@@ -434,11 +441,7 @@ describe('SouthMySQL', () => {
       utilsExports.formatInstant = mock.fn(() => formattedInstant);
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-      const createConnectionOptionsMock = mock.method(
-        south,
-        'createConnectionOptions',
-        async () => undefined
-      );
+      const createConnectionOptionsMock = mock.method(south, 'createConnectionOptions', async () => undefined);
 
       await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
       assert.strictEqual(createConnectionOptionsMock.mock.calls.length, 1);
@@ -469,11 +472,7 @@ describe('SouthMySQL', () => {
       utilsExports.formatInstant = mock.fn(() => formattedInstant);
       utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
 
-      const createConnectionOptionsMock2 = mock.method(
-        south,
-        'createConnectionOptions',
-        async () => undefined
-      );
+      const createConnectionOptionsMock2 = mock.method(south, 'createConnectionOptions', async () => undefined);
 
       await south.testItem(configuration.items[1], testData.south.itemTestingSettings);
       assert.strictEqual(createConnectionOptionsMock2.mock.calls.length, 1);

@@ -138,7 +138,7 @@ export default class TransformerRepository {
     };
   }
 
-  private createStandardTransformers() {
+  protected createStandardTransformers() {
     if (!this.findByFunctionName(CSVToMQTTTransformer.transformerName)) {
       const standardTransformer: StandardTransformer = {
         id: generateRandomId(6),

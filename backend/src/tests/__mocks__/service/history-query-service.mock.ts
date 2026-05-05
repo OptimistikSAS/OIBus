@@ -39,7 +39,7 @@ export default class HistoryQueryServiceMock {
   getAllHistoryMetrics = mock.fn((): unknown => ({}));
   testNorth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);
   testSouth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);
-  testItem = mock.fn(async (): Promise<OIBusContent> => ({ type: 'any-content', content: '' } as OIBusAnyContent));
+  testItem = mock.fn(async (): Promise<OIBusContent> => ({ type: 'any-content', content: '' }) as OIBusAnyContent);
   listItems = mock.fn((_historyId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> => []);
   searchItems = mock.fn(
     (_historyId: string, _searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> => ({

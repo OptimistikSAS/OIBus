@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import testData from '../../tests/utils/test-data';
-import {mockModule, reloadModule, buildNorthEntity} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, buildNorthEntity } from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
@@ -187,7 +187,11 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
   const cacheService = new CacheServiceMock();
   const oiBusTransformer = new OIBusTransformerMock();
 
-  type SftpConnectConfig = { username?: string; privateKey?: Buffer | string; passphrase?: string };
+  interface SftpConnectConfig {
+    username?: string;
+    privateKey?: Buffer | string;
+    passphrase?: string;
+  }
   const mockSftpClient = {
     connect: mock.fn(async (_config: SftpConnectConfig) => undefined),
     list: mock.fn(async () => []),
