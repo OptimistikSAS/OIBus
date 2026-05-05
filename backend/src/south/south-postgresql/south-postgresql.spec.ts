@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
-import {mockModule, reloadModule} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -47,14 +47,19 @@ describe('SouthPostgreSQL', () => {
   let SouthPostgreSQL: typeof SouthPostgreSQLClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
+  const addContentCallback = mock.fn(
+    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
+      undefined
+  );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
   const clientConnect = mock.fn(async () => undefined);
-  const clientQuery = mock.fn(async (_query?: unknown): Promise<unknown> => ({
-    rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-  }));
+  const clientQuery = mock.fn(
+    async (_query?: unknown): Promise<unknown> => ({
+      rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+    })
+  );
   const clientEnd = mock.fn(async () => undefined);
 
   const pgExports: Record<string, unknown> = {

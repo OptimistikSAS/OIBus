@@ -43,9 +43,9 @@ const STOP_TIMEOUT = 30_000;
 export default class OIAnalyticsMessageService {
   private messagesQueue: Array<OIAnalyticsMessage> = [];
   private triggerRun: EventEmitter = new EventEmitter();
-  private runProgress$: DeferredPromise | null = null;
-  private stopTimeout: NodeJS.Timeout | null = null;
-  private retryMessageInterval: NodeJS.Timeout | null = null;
+  protected runProgress$: DeferredPromise | null = null;
+  protected stopTimeout: NodeJS.Timeout | null = null;
+  protected retryMessageInterval: NodeJS.Timeout | null = null;
 
   constructor(
     private oIAnalyticsMessageRepository: OIAnalyticsMessageRepository,

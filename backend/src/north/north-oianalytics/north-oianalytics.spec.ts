@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
 import zlib from 'node:zlib';
 import testData from '../../tests/utils/test-data';
-import {mockModule, reloadModule, buildNorthEntity, assertContains} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, buildNorthEntity, assertContains } from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import CertificateRepositoryMock from '../../tests/__mocks__/repository/config/certificate-repository.mock';

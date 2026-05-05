@@ -175,12 +175,18 @@ describe('OIBus Service', () => {
     historyQueryService.list.mock.mockImplementation(() => testData.historyQueries.listLight);
     southService.findById.mock.mockImplementation((id: string) => testData.south.list.find(el => el.id === id) ?? testData.south.list[0]);
     northService.findById.mock.mockImplementation((id: string) => testData.north.list.find(el => el.id === id) ?? testData.north.list[0]);
-    historyQueryService.findById.mock.mockImplementation((id: string) => testData.historyQueries.list.find(el => el.id === id) ?? testData.historyQueries.list[0]);
+    historyQueryService.findById.mock.mockImplementation(
+      (id: string) => testData.historyQueries.list.find(el => el.id === id) ?? testData.historyQueries.list[0]
+    );
 
     await service.start();
 
     assert.strictEqual(engine.start.mock.calls.length, 1);
-    assert.deepStrictEqual(engine.start.mock.calls[0].arguments, [testData.north.list, testData.south.list, testData.historyQueries.listLight]);
+    assert.deepStrictEqual(engine.start.mock.calls[0].arguments, [
+      testData.north.list,
+      testData.south.list,
+      testData.historyQueries.listLight
+    ]);
     assert.ok((logger.info.mock.calls[0].arguments[0] as string).includes('Starting OIBus...'));
     assert.ok(service.getProxyServer() !== undefined && service.getProxyServer() !== null);
     assert.strictEqual(ipFilterService.list.mock.calls.length, 1);
@@ -202,7 +208,7 @@ describe('OIBus Service', () => {
     (logger.info as ReturnType<typeof mock.fn>).mock.resetCalls();
     settingsWithoutOIAlog.proxyEnabled = false;
     engineRepository.get.mock.mockImplementation(() => settingsWithoutOIAlog);
-    const proxyServer = service.getProxyServer();
+    service.getProxyServer();
     // refreshIpFilters was called once in start() — reset before the new assertions
     lastProxyRefreshIpFilters.mock.resetCalls();
 

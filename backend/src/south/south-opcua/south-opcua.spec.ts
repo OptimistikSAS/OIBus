@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import Stream from 'node:stream';
 import testData from '../../tests/utils/test-data';
-import {mockModule, reloadModule} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -48,7 +48,12 @@ describe('SouthOPCUA', () => {
   let south: SouthOPCUAClass;
 
   const logger = new PinoLogger();
-  const addContentCallback: Mock<(southId: string, data: OIBusContent, queryTime: string, items: SouthConnectorItemEntity<SouthItemSettings>[]) => Promise<void>> = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
+  const addContentCallback: Mock<
+    (southId: string, data: OIBusContent, queryTime: string, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => Promise<void>
+  > = mock.fn(
+    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
+      undefined
+  );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -318,7 +323,7 @@ describe('SouthOPCUA', () => {
 
   it('should be properly initialized', async () => {
     const connectMock = mock.fn(async () => undefined);
-    const createSessionMock = mock.fn(async (): Promise<ClientSession> => ({} as ClientSession));
+    const createSessionMock = mock.fn(async (): Promise<ClientSession> => ({}) as ClientSession);
     south.connect = connectMock;
     south.createSession = createSessionMock;
     await south.start();

@@ -12,6 +12,7 @@ import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine
 import type EngineRepository from '../../repository/config/engine.repository';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import JoiValidator from '../../web-server/controllers/validators/joi.validator';
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { NotFoundError } from '../../model/types';
@@ -61,14 +62,11 @@ describe('OIAnalytics Registration Service', () => {
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsRegistrationServiceType>;
-  let validator: { validate: ReturnType<typeof mock.fn> };
-
   beforeEach(() => {
     oIAnalyticsRegistrationRepository = new OianalyticsRegistrationRepositoryMock();
     engineRepository = new EngineRepositoryMock();
     oIAnalyticsClient = new OianalyticsClientMock();
     logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
-    validator = { validate: mock.fn() };
 
     mockUtils.getOIBusInfo = mock.fn(() => testData.engine.oIBusInfo);
     engineRepository.get = mock.fn(() => testData.engine.settings);
@@ -78,8 +76,10 @@ describe('OIAnalytics Registration Service', () => {
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
+    const validator = new JoiValidator();
+    mock.method(validator, 'validate', async () => undefined);
     service = new OIAnalyticsRegistrationService(
-      null!,
+      validator,
       oIAnalyticsClient,
       oIAnalyticsRegistrationRepository,
       engineRepository as EngineRepository,

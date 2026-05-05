@@ -11,6 +11,9 @@ export default class OianalyticsRegistrationRepositoryMock extends OIAnalyticsRe
   constructor() {
     super({} as Database);
   }
+  protected override createDefault(): void {
+    return;
+  }
   override get = mock.fn((): OIAnalyticsRegistration | null => null);
   override register = mock.fn(
     (

@@ -2,7 +2,7 @@ import { describe, it, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { Readable } from 'stream';
 import testData from '../tests/utils/test-data';
-import {flushPromises} from '../tests/utils/test-utils';
+import { flushPromises } from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import IsoTransformer from './iso-transformer';
 import isoManifest from './iso-transformer/manifest';

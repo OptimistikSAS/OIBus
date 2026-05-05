@@ -47,7 +47,7 @@ export default class SouthServiceMock {
     async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> =>
       ({ items: [] }) as unknown as OIBusConnectionTestResult
   );
-  testItem = mock.fn(async (): Promise<OIBusContent> => ({ type: 'any-content', content: '' } as OIBusAnyContent));
+  testItem = mock.fn(async (): Promise<OIBusContent> => ({ type: 'any-content', content: '' }) as OIBusAnyContent);
   listItems = mock.fn((_southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> => []);
   searchItems = mock.fn(
     (_southId: string, _searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemEntity<SouthItemSettings>> => ({

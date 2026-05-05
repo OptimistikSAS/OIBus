@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
-import {mockModule, reloadModule, flushPromises} from '../tests/utils/test-utils';
+import { mockModule, reloadModule, flushPromises } from '../tests/utils/test-utils';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';

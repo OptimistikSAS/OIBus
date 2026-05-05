@@ -91,7 +91,11 @@ describe('FileCleanupService', () => {
   });
 
   it('should not clean up folder if not enough files', async () => {
-    const statMock2 = mock.method(fs, 'stat', mock.fn(async () => ({}))) as ReturnType<typeof mock.fn>;
+    const statMock2 = mock.method(
+      fs,
+      'stat',
+      mock.fn(async () => ({}))
+    ) as ReturnType<typeof mock.fn>;
 
     const readdirMock2 = mock.method(
       fs,

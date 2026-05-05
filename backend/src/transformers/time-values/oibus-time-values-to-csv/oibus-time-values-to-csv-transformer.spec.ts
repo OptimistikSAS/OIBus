@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
-import {flushPromises, mockModule, reloadModule} from '../../../tests/utils/test-utils';
+import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
 import type OIBusTimeValuesToCsvTransformerType from './oibus-time-values-to-csv-transformer';
 import timeValuesToCsvManifest from './manifest';

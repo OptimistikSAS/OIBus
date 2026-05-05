@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import testData from '../../tests/utils/test-data';
-import {mockModule, reloadModule} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
@@ -36,7 +36,9 @@ describe('SouthODBC', () => {
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     generateReplacementParameters: mock.fn(() => []),
     logQuery: mock.fn(),
-    persistResults: mock.fn(async (_data: unknown, _serialization: unknown, _name: string, _item: unknown, _instant: unknown, _folder: string) => undefined)
+    persistResults: mock.fn(
+      async (_data: unknown, _serialization: unknown, _name: string, _item: unknown, _instant: unknown, _folder: string) => undefined
+    )
   };
 
   const odbcLoaderExports = {
@@ -76,7 +78,9 @@ describe('SouthODBC', () => {
     utilsExports.generateCsvContent = mock.fn(() => '');
     utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
     utilsExports.logQuery = mock.fn();
-    utilsExports.persistResults = mock.fn(async (_data: unknown, _serialization: unknown, _name: string, _item: unknown, _instant: unknown, _folder: string) => undefined);
+    utilsExports.persistResults = mock.fn(
+      async (_data: unknown, _serialization: unknown, _name: string, _item: unknown, _instant: unknown, _folder: string) => undefined
+    );
 
     // Reset other mocks
     odbcLoaderExports.loadOdbc = mock.fn(() => null);
@@ -317,10 +321,7 @@ describe('SouthODBC', () => {
       const result = await south.queryOdbcData(configuration.items[0], startTime, endTime);
 
       assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(
-        utilsExports.logQuery.mock.calls[0].arguments[0],
-        configuration.items[0].settings.query
-      );
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
 
       assert.strictEqual(odbc.connect.mock.calls.length, 1);
       assert.deepStrictEqual(odbc.connect.mock.calls[0].arguments[0], {
@@ -346,23 +347,11 @@ describe('SouthODBC', () => {
         { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' },
         { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' }
       ]);
-      assert.deepStrictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[1],
-        configuration.items[0].settings.serialization
-      );
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[1], configuration.items[0].settings.serialization);
       assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
-      assert.deepStrictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[3],
-        configuration.items[0]
-      );
-      assert.strictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[4],
-        testData.constants.dates.FAKE_NOW
-      );
-      assert.strictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[5],
-        path.resolve('cacheFolder', 'tmp')
-      );
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[3], configuration.items[0]);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[4], testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[5], path.resolve('cacheFolder', 'tmp'));
 
       // Reset for second call
       odbcConnection.close.mock.resetCalls();
@@ -392,10 +381,7 @@ describe('SouthODBC', () => {
       const result = await south.queryOdbcData(configuration.items[1], startTime, endTime);
 
       assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(
-        utilsExports.logQuery.mock.calls[0].arguments[0],
-        configuration.items[1].settings.query
-      );
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[1].settings.query);
 
       assert.deepStrictEqual(result, {
         trackedInstant: null,
@@ -687,23 +673,11 @@ describe('SouthODBC', () => {
         { timestamp: '2020-02-01T00:00:00.000Z' },
         { timestamp: '2020-03-01T00:00:00.000Z' }
       ]);
-      assert.deepStrictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[1],
-        configuration.items[0].settings.serialization
-      );
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[1], configuration.items[0].settings.serialization);
       assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
-      assert.deepStrictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[3],
-        configuration.items[0]
-      );
-      assert.strictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[4],
-        testData.constants.dates.FAKE_NOW
-      );
-      assert.strictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[5],
-        path.resolve('cacheFolder', 'tmp')
-      );
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[3], configuration.items[0]);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[4], testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[5], path.resolve('cacheFolder', 'tmp'));
     });
 
     it('should manage connection error', async () => {
@@ -1290,10 +1264,7 @@ describe('SouthODBC', () => {
       const result = await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
 
       assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(
-        utilsExports.logQuery.mock.calls[0].arguments[0],
-        configuration.items[0].settings.query
-      );
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[0].settings.query);
 
       assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
       assert.ok(
@@ -1333,18 +1304,9 @@ describe('SouthODBC', () => {
         compression: configuration.items[0].settings.serialization.compression
       });
       assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[2], configuration.name);
-      assert.deepStrictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[3],
-        configuration.items[0]
-      );
-      assert.strictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[4],
-        testData.constants.dates.FAKE_NOW
-      );
-      assert.strictEqual(
-        utilsExports.persistResults.mock.calls[0].arguments[5],
-        path.resolve('cacheFolder', 'tmp')
-      );
+      assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[3], configuration.items[0]);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[4], testData.constants.dates.FAKE_NOW);
+      assert.strictEqual(utilsExports.persistResults.mock.calls[0].arguments[5], path.resolve('cacheFolder', 'tmp'));
 
       await south.queryRemoteAgentData(configuration.items[0], startTime, endTime);
       assert.ok(
@@ -1369,10 +1331,7 @@ describe('SouthODBC', () => {
       const result = await south.queryRemoteAgentData(configuration.items[1], startTime, endTime);
 
       assert.strictEqual(utilsExports.logQuery.mock.calls.length, 1);
-      assert.deepStrictEqual(
-        utilsExports.logQuery.mock.calls[0].arguments[0],
-        configuration.items[1].settings.query
-      );
+      assert.deepStrictEqual(utilsExports.logQuery.mock.calls[0].arguments[0], configuration.items[1].settings.query);
 
       assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
       assert.deepStrictEqual(httpRequestExports.HTTPRequest.mock.calls[0].arguments[1], {

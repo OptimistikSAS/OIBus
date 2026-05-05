@@ -9,6 +9,10 @@ const SCAN_MODES_TABLE = 'scan_modes';
  */
 export default class ScanModeRepository {
   constructor(private readonly database: Database) {
+    this.createDefault();
+  }
+
+  protected createDefault(): void {
     if (this.findAll().length === 0) {
       this.create(
         {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { EventEmitter } from 'node:events';
 import { ReadStream } from 'node:fs';
-import {mockModule, reloadModule, buildNorthEntity, assertContains} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, buildNorthEntity, assertContains } from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';

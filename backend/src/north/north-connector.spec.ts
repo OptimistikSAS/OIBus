@@ -2,7 +2,7 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
-import {mockModule, reloadModule, flushPromises} from '../tests/utils/test-utils';
+import { mockModule, reloadModule, flushPromises } from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import CacheServiceMock from '../tests/__mocks__/service/cache/cache-service.mock';
 import OIBusTransformerMock from '../tests/__mocks__/service/transformers/oibus-transformer.mock';
@@ -305,10 +305,7 @@ describe('NorthConnector', () => {
 
     assert.strictEqual(handleContentWrapperMock.mock.calls.length, 1);
     assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
-    assert.deepStrictEqual(
-      triggerRunIfNecessaryMock.mock.calls[0].arguments[0],
-      north['connector'].caching.throttling.runMinDelay
-    );
+    assert.deepStrictEqual(triggerRunIfNecessaryMock.mock.calls[0].arguments[0], north['connector'].caching.throttling.runMinDelay);
   });
 
   it('should properly run a task and trigger next after error', async () => {
@@ -317,10 +314,7 @@ describe('NorthConnector', () => {
     const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
     north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north.run({ id: 'scanModeId1', name: 'scan' });
-    assert.deepStrictEqual(
-      triggerRunIfNecessaryMock.mock.calls[0].arguments[0],
-      north['connector'].caching.error.retryInterval
-    );
+    assert.deepStrictEqual(triggerRunIfNecessaryMock.mock.calls[0].arguments[0], north['connector'].caching.error.retryInterval);
   });
 
   it('should properly run two times if a task is already in queue', async () => {
@@ -370,9 +364,7 @@ describe('NorthConnector', () => {
     );
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     assert.ok(
-      logger.info.mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === `"${testData.north.list[0].name}" stopped`
-      )
+      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === `"${testData.north.list[0].name}" stopped`)
     );
   });
 
@@ -394,11 +386,7 @@ describe('NorthConnector', () => {
           c.arguments[0] === `Stopping "${testData.north.list[0].name}" (${testData.north.list[0].id})...`
       )
     );
-    assert.ok(
-      logger.debug.mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Waiting for task to finish'
-      )
-    );
+    assert.ok(logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'Waiting for task to finish'));
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
 
     north.run({ id: 'trigger1', name: 'Another trigger' });
@@ -413,9 +401,7 @@ describe('NorthConnector', () => {
     await flushPromises();
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
     assert.ok(
-      logger.info.mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === `"${testData.north.list[0].name}" stopped`
-      )
+      logger.info.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === `"${testData.north.list[0].name}" stopped`)
     );
   });
 
@@ -444,10 +430,7 @@ describe('NorthConnector', () => {
   it('should get file from cache', async () => {
     await north.getFileFromCache('cache', 'file1.queue.tmp');
     assert.strictEqual(cacheService.getFileFromCache.mock.calls.length, 1);
-    assert.deepStrictEqual(cacheService.getFileFromCache.mock.calls[0].arguments, [
-      'cache',
-      'file1.queue.tmp'
-    ]);
+    assert.deepStrictEqual(cacheService.getFileFromCache.mock.calls[0].arguments, ['cache', 'file1.queue.tmp']);
   });
 
   it('should update cache content', async () => {
@@ -648,10 +631,7 @@ describe('NorthConnector', () => {
 
     const readableFromMock = realReadable['from'] as ReturnType<typeof mock.fn>;
     assert.strictEqual(readableFromMock.mock.calls.length, 1);
-    assert.deepStrictEqual(
-      readableFromMock.mock.calls[0].arguments[0],
-      JSON.stringify(testData.oibusContent[0].content)
-    );
+    assert.deepStrictEqual(readableFromMock.mock.calls[0].arguments[0], JSON.stringify(testData.oibusContent[0].content));
 
     assert.strictEqual(oiBusTransformer.transform.mock.calls.length, 1);
     assert.deepStrictEqual(oiBusTransformer.transform.mock.calls[0].arguments[1], {
@@ -732,7 +712,8 @@ describe('NorthConnector', () => {
 
   it('should cache json content and handle ignore transform', async () => {
     const findTransformerMock = mock.fn(
-      (_metadataSource: CacheMetadataSource) => ({ transformer: { type: 'standard', functionName: 'ignore' } }) as NorthTransformerWithOptions
+      (_metadataSource: CacheMetadataSource) =>
+        ({ transformer: { type: 'standard', functionName: 'ignore' } }) as NorthTransformerWithOptions
     );
     north['findTransformer'] = findTransformerMock;
     const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
@@ -785,10 +766,7 @@ describe('NorthConnector', () => {
 
     const createReadStreamMock = realFs['createReadStream'] as ReturnType<typeof mock.fn>;
     assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
-    assert.deepStrictEqual(
-      createReadStreamMock.mock.calls[0].arguments[0],
-      (testData.oibusContent[1] as OIBusFileContent).filePath
-    );
+    assert.deepStrictEqual(createReadStreamMock.mock.calls[0].arguments[0], (testData.oibusContent[1] as OIBusFileContent).filePath);
 
     assert.strictEqual(oiBusTransformer.transform.mock.calls.length, 1);
     assert.deepStrictEqual(oiBusTransformer.transform.mock.calls[0].arguments[1], {
@@ -940,7 +918,7 @@ describe('NorthConnector', () => {
         createdAt: ''
       } satisfies CacheMetadata
     }));
-    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transform } as OIBusTransformerMock));
+    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transform }) as OIBusTransformerMock);
     await north['executeTransformation']({ type: 'any-content', content: '' } as OIBusContent, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);
@@ -971,7 +949,7 @@ describe('NorthConnector', () => {
         createdAt: ''
       } satisfies CacheMetadata
     }));
-    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transform } as OIBusTransformerMock));
+    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transform }) as OIBusTransformerMock);
     await north['executeTransformation']({ type: 'setpoint', content: [] } as OIBusContent, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);

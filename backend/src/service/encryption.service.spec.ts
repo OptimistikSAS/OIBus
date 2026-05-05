@@ -200,18 +200,9 @@ describe('Encryption Service', () => {
         daysBeforeExpiry: 36500
       }
     ]);
-    assert.deepStrictEqual(writeFileMock.mock.calls[0].arguments, [
-      path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME),
-      'private'
-    ]);
-    assert.deepStrictEqual(writeFileMock.mock.calls[1].arguments, [
-      path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME),
-      'public'
-    ]);
-    assert.deepStrictEqual(writeFileMock.mock.calls[2].arguments, [
-      path.resolve(certFolder, CERT_FILE_NAME),
-      'cert'
-    ]);
+    assert.deepStrictEqual(writeFileMock.mock.calls[0].arguments, [path.resolve(certFolder, CERT_PRIVATE_KEY_FILE_NAME), 'private']);
+    assert.deepStrictEqual(writeFileMock.mock.calls[1].arguments, [path.resolve(certFolder, CERT_PUBLIC_KEY_FILE_NAME), 'public']);
+    assert.deepStrictEqual(writeFileMock.mock.calls[2].arguments, [path.resolve(certFolder, CERT_FILE_NAME), 'cert']);
   });
 
   it('should properly retrieve files', async () => {

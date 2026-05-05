@@ -15,7 +15,9 @@ export default class OIAnalyticsRegistrationServiceMock extends OIAnalyticsRegis
   override getRegistrationSettings = mock.fn((): OIAnalyticsRegistration => ({}) as OIAnalyticsRegistration);
   override register = mock.fn(async (_command: RegistrationSettingsCommandDTO, _updatedBy: string): Promise<void> => undefined);
   override checkRegistration = mock.fn(async (): Promise<void> => undefined);
-  override editRegistrationSettings = mock.fn(async (_command: RegistrationSettingsCommandDTO, _updatedBy: string): Promise<void> => undefined);
+  override editRegistrationSettings = mock.fn(
+    async (_command: RegistrationSettingsCommandDTO, _updatedBy: string): Promise<void> => undefined
+  );
   override updateKeys = mock.fn(async (_privateKey: string, _publicKey: string): Promise<void> => undefined);
   override testConnection = mock.fn(async (_command: RegistrationSettingsCommandDTO): Promise<void> => undefined);
   override unregister = mock.fn((): void => undefined);

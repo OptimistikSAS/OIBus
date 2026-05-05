@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 import testData from '../tests/utils/test-data';
-import {mockModule, reloadModule, flushPromises} from '../tests/utils/test-utils';
+import { mockModule, reloadModule, flushPromises } from '../tests/utils/test-utils';
 
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
@@ -27,8 +27,11 @@ import type { NorthConnectorEntityLight } from '../model/north-connector.model';
 import type { SouthConnectorEntityLight } from '../model/south-connector.model';
 import type { HistoryQueryEntityLight } from '../model/histor-query.model';
 import type { NorthConnectorEntity } from '../model/north-connector.model';
+import type { SouthConnectorEntity } from '../model/south-connector.model';
+import type { HistoryQueryEntity } from '../model/histor-query.model';
+import type { SouthSettings, SouthItemSettings } from '../../shared/model/south-settings.model';
 import type { NorthSettings } from '../../shared/model/north-settings.model';
-import type { CacheContentUpdateCommand, CacheSearchParam, OIBusContent } from '../../shared/model/engine.model';
+import type { CacheContentUpdateCommand, CacheSearchParam, CacheSearchResult, OIBusContent } from '../../shared/model/engine.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -200,9 +203,9 @@ describe('DataStreamEngine', () => {
     mockedSouth2 = new SouthConnectorMock(testData.south.list[1]);
 
     // Repository mock implementations
-    northConnectorRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(el => el.id === id));
-    southConnectorRepository.findSouthById = mock.fn((id: string) => testData.south.list.find(el => el.id === id));
-    historyQueryRepository.findHistoryById = mock.fn((id: string) => testData.historyQueries.list.find(el => el.id === id));
+    northConnectorRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(el => el.id === id) ?? null);
+    southConnectorRepository.findSouthById = mock.fn((id: string) => testData.south.list.find(el => el.id === id) ?? null);
+    historyQueryRepository.findHistoryById = mock.fn((id: string) => testData.historyQueries.list.find(el => el.id === id) ?? null);
 
     // Factory mock implementations (mutate in-place so the SUT's reference stays valid)
     northFactoryExports.buildNorth = mock.fn((conf: { id: string }) => {
@@ -359,13 +362,13 @@ describe('DataStreamEngine', () => {
 
   describe('Connectors Creation', () => {
     it('should create OPCUA connectors and history queries', async () => {
-      const northConfig = { ...testData.north.list[0], type: 'opcua' };
-      const southConfig = { ...testData.south.list[0], type: 'opcua' };
-      const historyConfig = { ...testData.historyQueries.list[0], southType: 'opcua', northType: 'opcua' };
+      const northConfig: NorthConnectorEntity<NorthSettings> = { ...testData.north.list[0], type: 'opcua' };
+      const southConfig: SouthConnectorEntity<SouthSettings, SouthItemSettings> = { ...testData.south.list[0], type: 'opcua' };
+      const historyConfig: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = { ...testData.historyQueries.list[0], southType: 'opcua', northType: 'opcua' };
 
-      northConnectorRepository.findNorthById = mock.fn(() => northConfig);
-      southConnectorRepository.findSouthById = mock.fn(() => southConfig);
-      historyQueryRepository.findHistoryById = mock.fn(() => historyConfig);
+      northConnectorRepository.findNorthById = mock.fn((_id: string): NorthConnectorEntity<NorthSettings> | null => northConfig);
+      southConnectorRepository.findSouthById = mock.fn((_id: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null => southConfig);
+      historyQueryRepository.findHistoryById = mock.fn((_id: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null => historyConfig);
 
       await engine.createNorth(northConfig.id);
       await engine.createSouth(southConfig.id);
@@ -542,7 +545,7 @@ describe('DataStreamEngine', () => {
     });
 
     it('should manage south connect event', async () => {
-      engine.getSouth = mock.fn(() => ({ south: mockedSouth1 }));
+      engine.getSouth = mock.fn((_southId: string) => ({ south: mockedSouth1, metrics: southConnectorMetricsService }));
 
       let hasHistoryQueryCall = 0;
       mockedSouth1.hasHistoryQuery = mock.fn(() => {
@@ -715,7 +718,7 @@ describe('DataStreamEngine', () => {
     describe('reloadTransformer', () => {
       it('should reload north connector configuration when transformer is in use', async () => {
         mock.method(engine, 'reloadHistoryQuery', async () => undefined);
-        northConnectorRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(el => el.id === id));
+        northConnectorRepository.findNorthById = mock.fn((id: string) => testData.north.list.find(el => el.id === id) ?? null);
 
         await engine.reloadTransformer(transformerId);
 
@@ -822,8 +825,8 @@ describe('DataStreamEngine', () => {
     it('should search cache content (History)', async () => {
       const params = { start: 'now' } as CacheSearchParam;
 
-      mockedHistoryQuery1.searchCacheContent = mock.fn(async () => ({}));
-      engine.getHistoryQuery = mock.fn(() => ({ historyQuery: mockedHistoryQuery1, metrics: { metrics: { north: {} } } }));
+      mockedHistoryQuery1.searchCacheContent = mock.fn(async (_params: CacheSearchParam) => ({}) as Omit<CacheSearchResult, 'metrics'>);
+      engine.getHistoryQuery = mock.fn((_historyId: string) => ({ historyQuery: mockedHistoryQuery1, metrics: historyQueryMetricsService }));
       const result = await engine.searchCacheContent('history', testData.historyQueries.list[0].id, params);
 
       assert.strictEqual(mockedHistoryQuery1.searchCacheContent.mock.calls.length, 1);
@@ -832,14 +835,14 @@ describe('DataStreamEngine', () => {
     });
 
     it('should get file from cache (North)', async () => {
-      engine.getNorth = mock.fn(() => ({ north: mockedNorth1, metrics: { metrics: {} } }));
+      engine.getNorth = mock.fn((_northId: string) => ({ north: mockedNorth1, metrics: northConnectorMetricsService }));
       await engine.getFileFromCache('north', testData.north.list[0].id, 'cache', 'file.json');
       assert.strictEqual(mockedNorth1.getFileFromCache.mock.calls.length, 1);
       assert.deepStrictEqual(mockedNorth1.getFileFromCache.mock.calls[0].arguments, ['cache', 'file.json']);
     });
 
     it('should get file from cache (History)', async () => {
-      engine.getHistoryQuery = mock.fn(() => ({ historyQuery: mockedHistoryQuery1, metrics: { metrics: { north: {} } } }));
+      engine.getHistoryQuery = mock.fn((_historyId: string) => ({ historyQuery: mockedHistoryQuery1, metrics: historyQueryMetricsService }));
       await engine.getFileFromCache('history', testData.historyQueries.list[0].id, 'cache', 'file.json');
       assert.strictEqual(mockedHistoryQuery1.getFileFromCache.mock.calls.length, 1);
       assert.deepStrictEqual(mockedHistoryQuery1.getFileFromCache.mock.calls[0].arguments, ['cache', 'file.json']);

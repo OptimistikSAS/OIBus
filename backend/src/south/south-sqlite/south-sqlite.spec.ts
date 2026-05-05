@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import testData from '../../tests/utils/test-data';
-import {mockModule, reloadModule, buildSouthEntity} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, buildSouthEntity } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -23,7 +23,9 @@ import { DateTime } from 'luxon';
 const nodeRequire = createRequire(import.meta.url);
 
 const logger = new PinoLogger();
-const addContentCallback = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
+const addContentCallback = mock.fn(
+  async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) => undefined
+);
 const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
 let southCacheService: SouthCacheServiceMock;
 
@@ -182,11 +184,7 @@ describe('SouthSQLite', () => {
       { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 },
       { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 }
     ];
-    const queryDataMock = mock.method(
-      south,
-      'queryData',
-      async () => queryDataResults
-    );
+    const queryDataMock = mock.method(south, 'queryData', async () => queryDataResults);
     utilsExports.formatInstant = mock.fn(() => '2020-02-01 00:00:00.000');
 
     const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
@@ -211,11 +209,7 @@ describe('SouthSQLite', () => {
 
   it('should properly run historyQuery without result', async () => {
     const startTime = testData.constants.dates.DATE_1;
-    const queryDataMock = mock.method(
-      south,
-      'queryData',
-      async () => [] as Array<Record<string, string | number>>
-    );
+    const queryDataMock = mock.method(south, 'queryData', async () => [] as Array<Record<string, string | number>>);
 
     const result = await south.historyQuery(configuration.items, startTime, testData.constants.dates.FAKE_NOW);
     assert.strictEqual(utilsExports.persistResults.mock.calls.length, 0);
@@ -301,10 +295,11 @@ describe('SouthSQLite', () => {
     const queryDataMock = mock.method(
       south,
       'queryData',
-      async () => [
-        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ] as Array<Record<string, string | number>>
+      async () =>
+        [
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+        ] as Array<Record<string, string | number>>
     );
 
     await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
@@ -318,10 +313,11 @@ describe('SouthSQLite', () => {
     const queryDataMock = mock.method(
       south,
       'queryData',
-      async () => [
-        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
-        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
-      ] as Array<Record<string, string | number>>
+      async () =>
+        [
+          { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+          { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+        ] as Array<Record<string, string | number>>
     );
 
     await south.testItem(configuration.items[1], testData.south.itemTestingSettings);

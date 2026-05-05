@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import testData from '../../tests/utils/test-data';
-import {mockModule, reloadModule, buildNorthEntity} from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, buildNorthEntity } from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import OIBusTransformerMock from '../../tests/__mocks__/service/transformers/oibus-transformer.mock';
