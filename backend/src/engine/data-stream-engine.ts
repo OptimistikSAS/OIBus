@@ -35,7 +35,7 @@ import HistoryQuery from './history-query';
 import HistoryQueryRepository from '../repository/config/history-query.repository';
 import HistoryQueryMetricsService from '../service/metrics/history-query-metrics.service';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
-import OIAnalyticsMessageService from '../service/oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
 import { clearProxyAgentCache } from '../service/http-request.utils';
 import type { ILogger } from '../model/logger.model';
@@ -60,7 +60,7 @@ export default class DataStreamEngine {
     private southCacheRepository: SouthCacheRepository,
     private certificateRepository: CertificateRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private oianalyticsMessageService: OIAnalyticsMessageService,
+    private oianalyticsMessageService: IOIAnalyticsMessageService,
     private _logger: ILogger
   ) {
     this.baseFolder = path.resolve('./');

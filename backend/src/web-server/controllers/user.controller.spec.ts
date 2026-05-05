@@ -31,7 +31,7 @@ describe('UserController', () => {
     userService = new UserServiceMock();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-      services: { userService }
+      services: Object.assign({} as CustomExpressRequest['services'], { userService })
     } as Partial<CustomExpressRequest>;
     mockUserServiceModule.toUserDTO = mock.fn((user: unknown) => user);
     controller = new UserController();

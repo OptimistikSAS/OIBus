@@ -37,7 +37,7 @@ describe('ScanModeController', () => {
     scanModeService = new ScanModeServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: { scanModeService, userService },
+      services: Object.assign({} as CustomExpressRequest['services'], { scanModeService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockScanModeServiceModule.toScanModeDTO = mock.fn((scanMode: unknown, getUserInfo: (id: string) => void) => {
@@ -110,7 +110,7 @@ describe('ScanModeController', () => {
       nextExecutions: [],
       humanReadableForm: ''
     };
-    scanModeService.verifyCron = mock.fn(() => validatedCronExpression);
+    scanModeService.verifyCron = mock.fn(async () => validatedCronExpression);
 
     const result = await controller.verifyCron(command, mockRequest as CustomExpressRequest);
 
@@ -127,7 +127,7 @@ describe('ScanModeController', () => {
       nextExecutions: [],
       humanReadableForm: ''
     };
-    scanModeService.verifyCron = mock.fn(() => validatedCronExpression);
+    scanModeService.verifyCron = mock.fn(async () => validatedCronExpression);
 
     const result = await controller.verifyCron(command, mockRequest as CustomExpressRequest);
 

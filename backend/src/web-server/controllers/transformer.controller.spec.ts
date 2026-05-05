@@ -3,10 +3,14 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import {
   CustomTransformerCommandDTO,
+  InputTemplate,
+  InputType,
   TransformerManifest,
   TransformerSearchParam,
-  TransformerTestRequest
+  TransformerTestRequest,
+  TransformerTestResponse
 } from '../../../shared/model/transformer.model';
+import type { CustomTransformer } from '../../model/transformer.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
@@ -44,7 +48,7 @@ describe('TransformerController', () => {
     transformerService = new TransformerServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: { transformerService, userService },
+      services: Object.assign({} as CustomExpressRequest['services'], { transformerService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockTransformerServiceModule.toTransformerDTO = mock.fn((transformer: unknown, getUserInfo: (id: string) => void) => {
@@ -170,7 +174,7 @@ describe('TransformerController', () => {
 
   it('should create a new custom transformer', async () => {
     const command: CustomTransformerCommandDTO = testData.transformers.command;
-    const createdTransformer = testData.transformers.list[0];
+    const createdTransformer = testData.transformers.list[0] as CustomTransformer;
     transformerService.create = mock.fn(async () => createdTransformer);
 
     const result = await controller.create(command, mockRequest as CustomExpressRequest);
@@ -205,7 +209,10 @@ describe('TransformerController', () => {
     const testRequest: TransformerTestRequest = { inputData: 'time-values', options: {} };
     const transformerCommand = testData.transformers.list[0] as unknown as CustomTransformerCommandDTO;
     const body = { transformer: transformerCommand, testRequest };
-    transformerService.test = mock.fn(async () => undefined);
+    transformerService.test = mock.fn(
+      async (_command: CustomTransformerCommandDTO, _testRequest: TransformerTestRequest): Promise<TransformerTestResponse> =>
+        ({}) as TransformerTestResponse
+    );
 
     await controller.test(body, mockRequest as CustomExpressRequest);
 
@@ -215,7 +222,7 @@ describe('TransformerController', () => {
 
   it('should get a template for transformer', async () => {
     const inputType = 'time-values';
-    transformerService.generateTemplate = mock.fn(async () => undefined);
+    transformerService.generateTemplate = mock.fn((_inputType: InputType): InputTemplate => ({}) as InputTemplate);
 
     await controller.getInputTemplate(inputType, mockRequest as CustomExpressRequest);
 

@@ -14,6 +14,9 @@ import OIAnalyticsMessageService from './oia/oianalytics-message.service';
 import testData from '../tests/utils/test-data';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
+import { ScanMode } from '../model/scan-mode.model';
+import { SouthConnectorEntityLight, SouthConnectorItemEntity } from '../model/south-connector.model';
+import { SouthItemSettings } from '../../shared/model/south-settings.model';
 
 let validator: { validate: ReturnType<typeof mock.fn> };
 let scanModeRepository: ScanModeRepositoryMock;
@@ -87,7 +90,9 @@ describe('Scan Mode Service', () => {
   });
 
   it('create() should not create a scan mode with duplicate name', async () => {
-    scanModeRepository.findAll.mock.mockImplementationOnce(() => [{ id: 'existing-id', name: testData.scanMode.command.name }]);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => [
+      { ...testData.scanMode.list[0], id: 'existing-id', name: testData.scanMode.command.name } satisfies ScanMode
+    ]);
 
     await assert.rejects(() => service.create(testData.scanMode.command, 'userTest'), {
       message: `Scan mode name "${testData.scanMode.command.name}" already exists`
@@ -173,7 +178,9 @@ describe('Scan Mode Service', () => {
     const command = JSON.parse(JSON.stringify(testData.scanMode.command));
     command.name = 'Duplicate Name';
     scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0]);
-    scanModeRepository.findAll.mock.mockImplementationOnce(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
+    scanModeRepository.findAll.mock.mockImplementationOnce(() => [
+      { ...testData.scanMode.list[0], id: 'other-id', name: 'Duplicate Name' } satisfies ScanMode
+    ]);
 
     await assert.rejects(() => service.update(testData.scanMode.list[0].id, command, 'userTest'), {
       message: `Scan mode name "Duplicate Name" already exists`
@@ -182,9 +189,16 @@ describe('Scan Mode Service', () => {
 
   it('delete() should delete a scan mode', async () => {
     scanModeRepository.findById.mock.mockImplementationOnce(() => testData.scanMode.list[0]);
-    southConnectorRepository.findAllSouth.mock.mockImplementationOnce(() => [{ id: 'south1' }, { id: 'south2' }]);
+    southConnectorRepository.findAllSouth.mock.mockImplementationOnce(() => [
+      { ...testData.south.list[0], id: 'south1' } satisfies SouthConnectorEntityLight,
+      { ...testData.south.list[0], id: 'south2' } satisfies SouthConnectorEntityLight
+    ]);
 
-    const mockItem = { id: 'item1', scanMode: { id: testData.scanMode.list[0].id } };
+    const mockItem: SouthConnectorItemEntity<SouthItemSettings> = {
+      ...testData.south.list[0].items[0],
+      id: 'item1',
+      scanMode: { ...testData.scanMode.list[0], id: testData.scanMode.list[0].id }
+    };
     southConnectorRepository.findAllItemsForSouth.mock.mockImplementation(() => [mockItem]);
 
     await service.delete(testData.scanMode.list[0].id);

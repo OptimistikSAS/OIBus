@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
@@ -17,8 +17,8 @@ import NorthConnectorRepositoryMock from '../tests/__mocks__/repository/config/n
 import SouthConnectorRepositoryMock from '../tests/__mocks__/repository/config/south-connector-repository.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
-import { southManifestList } from './south.service';
-import { northManifestList } from './north.service';
+import { southManifestList } from './south-manifests';
+import { northManifestList } from './north-manifests';
 import manifest from '../south/south-mssql/manifest';
 import type HistoryQueryServiceType from './history-query.service';
 import type {
@@ -56,17 +56,17 @@ const validatorMock = {
 };
 
 const mockPapaparse = {
-  parse: mock.fn(() => ({ meta: { delimiter: ',' }, data: [] }))
+  parse: mock.fn((): { meta: { delimiter: string }; data: Array<Record<string, unknown>> } => ({ meta: { delimiter: ',' }, data: [] }))
 };
 
 const mockUtils = {
   stringToBoolean: mock.fn(() => true),
-  checkScanMode: mock.fn(),
+  checkScanMode: mock.fn((): (typeof testData.scanMode.list)[0] => testData.scanMode.list[0]),
   checkGroups: mock.fn()
 };
 
 const mockTransformerService = {
-  toTransformerDTO: mock.fn((transformer: unknown) => transformer)
+  toTransformerDTO: mock.fn((transformer: unknown, _getUserInfo: unknown) => transformer)
 };
 
 let HistoryQueryService: typeof HistoryQueryServiceType;
@@ -161,9 +161,9 @@ describe('History Query service', () => {
     mockUtils.stringToBoolean.mock.mockImplementation(() => true);
     mockUtils.checkScanMode.mock.mockImplementation(() => testData.scanMode.list[0]);
     validatorMock.validateSettings.mock.mockImplementation(async () => undefined);
-    encryptionService.encryptConnectorSecrets.mock.mockImplementation((secrets: unknown) => secrets);
-    encryptionService.decryptConnectorSecrets.mock.mockImplementation((secrets: unknown) => secrets);
-    encryptionService.filterSecrets.mock.mockImplementation((secrets: unknown) => secrets);
+    encryptionService.encryptConnectorSecrets.mock.mockImplementation(async <T>(secrets: T): Promise<T> => secrets);
+    encryptionService.decryptConnectorSecrets.mock.mockImplementation(async <T>(secrets: T): Promise<T> => secrets);
+    encryptionService.filterSecrets.mock.mockImplementation(<T>(secrets: T, _formSettings: unknown): T => secrets);
 
     service = new HistoryQueryService(
       validatorMock as unknown as InstanceType<typeof HistoryQueryServiceType>['validator' extends keyof InstanceType<
@@ -217,7 +217,7 @@ describe('History Query service', () => {
     service.retrieveSecrets = mock.fn(() => null);
 
     await service.create(testData.historyQueries.command, testData.south.list[0].id, undefined, undefined, 'userTest');
-    assert.strictEqual((service.retrieveSecrets as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((service.retrieveSecrets as Mock<typeof service.retrieveSecrets>).mock.calls.length, 1);
     assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsMessageService.createFullHistoryQueriesMessageIfNotPending.mock.calls.length, 1);
     assert.strictEqual(engine.createHistoryQuery.mock.calls.length, 1);
@@ -236,7 +236,11 @@ describe('History Query service', () => {
   it('should not create a history query with duplicate name', async () => {
     service.retrieveSecrets = mock.fn(() => null);
     historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => [
-      { id: 'existing-id', name: testData.historyQueries.command.name }
+      {
+        ...testData.historyQueries.listLight[0],
+        id: 'existing-id',
+        name: testData.historyQueries.command.name
+      } satisfies HistoryQueryEntityLight
     ]);
 
     await assert.rejects(
@@ -246,7 +250,7 @@ describe('History Query service', () => {
   });
 
   it('should update a history query', async () => {
-    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.list);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.listLight);
     await service.update(testData.historyQueries.list[0].id, testData.historyQueries.command, false, 'userTest');
 
     assert.strictEqual(historyQueryRepository.saveHistory.mock.calls.length, 1);
@@ -287,7 +291,7 @@ describe('History Query service', () => {
   it('should update a history query with a new unique name', async () => {
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.name = 'Updated History Query Name';
-    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.list);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => testData.historyQueries.listLight);
 
     await service.update(testData.historyQueries.list[0].id, command, false, 'userTest');
 
@@ -298,7 +302,9 @@ describe('History Query service', () => {
   it('should not update a history query with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.historyQueries.command));
     command.name = 'Duplicate Name';
-    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
+    historyQueryRepository.findAllHistoriesLight.mock.mockImplementation(() => [
+      { ...testData.historyQueries.listLight[0], id: 'other-id', name: 'Duplicate Name' } satisfies HistoryQueryEntityLight
+    ]);
 
     await assert.rejects(
       async () => service.update(testData.historyQueries.list[0].id, command, false, 'userTest'),
@@ -648,7 +654,7 @@ describe('History Query service', () => {
   });
 
   it('should properly check items', async () => {
-    const csvData = [
+    const csvData: Array<Record<string, unknown>> = [
       {
         name: 'item1',
         enabled: 'true',
@@ -752,7 +758,7 @@ describe('History Query service', () => {
 
   it('should properly check items with array or object', async () => {
     southService.getManifest.mock.mockImplementationOnce(() => manifest);
-    const csvData = [
+    const csvData: Array<Record<string, unknown>> = [
       {
         name: 'item',
         enabled: 'true',
@@ -783,7 +789,7 @@ describe('History Query service', () => {
         {
           id: '',
           name: csvData[0].name,
-          enabled: csvData[0].enabled.toLowerCase() === 'true',
+          enabled: String(csvData[0].enabled).toLowerCase() === 'true',
           settings: {
             query: 'query',
             dateTimeFields: [],

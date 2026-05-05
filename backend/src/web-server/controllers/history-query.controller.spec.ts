@@ -2,14 +2,19 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
-import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemSearchParam } from '../../../shared/model/history-query.model';
+import {
+  HistoryQueryCommandDTO,
+  HistoryQueryItemCommandDTO,
+  HistoryQueryItemDTO,
+  HistoryQueryItemSearchParam
+} from '../../../shared/model/history-query.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
-import { CacheContentUpdateCommand, CacheMetadata, OIBusContent } from '../../../shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent, OIBusContent } from '../../../shared/model/engine.model';
 import { HistoryTransformerDTOWithOptions, TransformerDTO } from '../../../shared/model/transformer.model';
 import { OIBusTestingError } from '../../model/types';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
@@ -86,14 +91,14 @@ describe('HistoryQueryController', () => {
     };
     mockRes.status = mock.fn(() => mockRes);
     mockRequest = {
-      services: {
+      services: Object.assign({} as CustomExpressRequest['services'], {
         historyQueryService,
         southService: {
           getInstalledSouthManifests: mock.fn(() => [{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }])
         },
         oIBusService,
         userService
-      },
+      }),
       user: { id: 'test', login: 'testUser' },
       res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
     } as Partial<CustomExpressRequest>;
@@ -120,7 +125,7 @@ describe('HistoryQueryController', () => {
   });
 
   it('should return a list of history queries', async () => {
-    const mockHistoryQueries = testData.historyQueries.list;
+    const mockHistoryQueries = testData.historyQueries.listLight;
     historyQueryService.list = mock.fn(() => mockHistoryQueries);
 
     const result = await controller.list(mockRequest as CustomExpressRequest);
@@ -299,7 +304,7 @@ describe('HistoryQueryController', () => {
       filePath: '/path/to/file.json',
       content: '{"key": "value"}'
     };
-    historyQueryService.testItem = mock.fn(() => mockContent);
+    historyQueryService.testItem = mock.fn(async () => mockContent);
 
     const result = await controller.testItem(
       historyId,
@@ -400,7 +405,7 @@ describe('HistoryQueryController', () => {
       totalPages: 1
     };
     historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
-    historyQueryService.searchItems = mock.fn(async () => mockPageResult);
+    historyQueryService.searchItems = mock.fn(() => mockPageResult);
 
     const result = await controller.searchItems(historyId, name, enabled, page, mockRequest as CustomExpressRequest);
 
@@ -422,7 +427,7 @@ describe('HistoryQueryController', () => {
       totalPages: 1
     };
     historyQueryService.findById = mock.fn(() => testData.historyQueries.list[0]);
-    historyQueryService.searchItems = mock.fn(async () => mockPageResult);
+    historyQueryService.searchItems = mock.fn(() => mockPageResult);
 
     const result = await controller.searchItems(historyId, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -641,11 +646,11 @@ describe('HistoryQueryController', () => {
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
     const mockResult = {
-      items: [testData.historyQueries.itemCommand],
+      items: [testData.historyQueries.itemCommand as HistoryQueryItemDTO],
       errors: []
     };
 
-    historyQueryService.checkImportItems = mock.fn(() => mockResult);
+    historyQueryService.checkImportItems = mock.fn(async () => mockResult);
 
     const result = await controller.checkImportItems(
       southType,
@@ -755,8 +760,8 @@ describe('HistoryQueryController', () => {
   it('should search cache content with default params', async () => {
     const northId = testData.north.list[0].id;
 
-    const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-    oIBusService.searchCacheContent = mock.fn(async () => mockCacheMetadata);
+    const mockCacheResult: CacheSearchResult = {} as CacheSearchResult;
+    oIBusService.searchCacheContent = mock.fn(async () => mockCacheResult);
 
     const result = await controller.searchCacheContent(
       northId,
@@ -773,7 +778,7 @@ describe('HistoryQueryController', () => {
       northId,
       { start: undefined, end: undefined, nameContains: undefined, maxNumberOfFilesReturned: 0 }
     ]);
-    assert.deepStrictEqual(result, mockCacheMetadata);
+    assert.deepStrictEqual(result, mockCacheResult);
   });
 
   it('should search cache content with parameters', async () => {
@@ -782,21 +787,8 @@ describe('HistoryQueryController', () => {
     const start = '2023-01-01';
     const end = '2023-01-02';
 
-    const mockMetadata: CacheMetadata = {
-      contentFile: '/path/to/content.json',
-      contentSize: 1024,
-      numberOfElement: 10,
-      createdAt: '2023-01-01T00:00:00Z',
-      contentType: 'time-values'
-    };
-    const mockResult = [
-      {
-        metadataFilename: 'metadata.json',
-        metadata: mockMetadata
-      }
-    ];
-
-    oIBusService.searchCacheContent = mock.fn(async () => mockResult);
+    const mockCacheResult: CacheSearchResult = {} as CacheSearchResult;
+    oIBusService.searchCacheContent = mock.fn(async () => mockCacheResult);
 
     const result = await controller.searchCacheContent(historyId, nameContains, start, end, 1000, mockRequest as CustomExpressRequest);
 
@@ -806,7 +798,7 @@ describe('HistoryQueryController', () => {
       historyId,
       { start, end, nameContains, maxNumberOfFilesReturned: 1000 }
     ]);
-    assert.deepStrictEqual(result, mockResult);
+    assert.deepStrictEqual(result, mockCacheResult);
   });
 
   it('should get cache file content', async () => {
@@ -814,8 +806,8 @@ describe('HistoryQueryController', () => {
     const filename = 'test.json';
     const folder = 'cache';
 
-    const mockStream = { pipe: mock.fn() };
-    oIBusService.getFileFromCache = mock.fn(async () => mockStream);
+    const mockFileContent: FileCacheContent = {} as FileCacheContent;
+    oIBusService.getFileFromCache = mock.fn(async () => mockFileContent);
 
     await controller.getCacheFileContent(historyId, filename, folder, mockRequest as CustomExpressRequest);
 

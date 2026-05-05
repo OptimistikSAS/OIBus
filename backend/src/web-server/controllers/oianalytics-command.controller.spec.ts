@@ -33,7 +33,7 @@ describe('OIAnalyticsCommandController', () => {
   beforeEach(() => {
     commandService = new OIAnalyticsCommandServiceMock();
     mockRequest = {
-      services: { oIAnalyticsCommandService: commandService }
+      services: Object.assign({} as CustomExpressRequest['services'], { oIAnalyticsCommandService: commandService })
     } as Partial<CustomExpressRequest>;
     mockCommandServiceModule.toOIBusCommandDTO = mock.fn((command: unknown) => command);
     controller = new OIAnalyticsCommandController();

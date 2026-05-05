@@ -1,7 +1,7 @@
 import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsUpdateResultDTO } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
@@ -33,7 +33,7 @@ describe('EngineController', () => {
     userService = new UserServiceMock();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-      services: { oIBusService, userService }
+      services: Object.assign({} as CustomExpressRequest['services'], { oIBusService, userService })
     } as Partial<CustomExpressRequest>;
     mockOIBusServiceModule.toEngineSettingsDTO = mock.fn((settings: unknown) => settings);
     controller = new EngineController();
@@ -51,7 +51,7 @@ describe('EngineController', () => {
 
   it('should update engine settings', async () => {
     const command: EngineSettingsCommandDTO = testData.engine.command;
-    oIBusService.updateEngineSettings = mock.fn(async () => undefined);
+    oIBusService.updateEngineSettings = mock.fn(async () => ({}) as EngineSettingsUpdateResultDTO);
 
     await controller.updateEngineSettings(command, mockRequest as CustomExpressRequest);
 

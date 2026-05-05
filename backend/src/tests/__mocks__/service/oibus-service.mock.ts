@@ -12,7 +12,6 @@ import {
   OIBusInfo
 } from '../../../../shared/model/engine.model';
 import { EngineSettings } from '../../../model/engine.model';
-
 /**
  * Create a mock object for OIBus Service
  */
