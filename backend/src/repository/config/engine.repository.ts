@@ -117,7 +117,7 @@ export default class EngineRepository {
     this.database.prepare(query).run(version, launcherVersion);
   }
 
-  private createDefault(
+  protected createDefault(
     command: Omit<EngineSettings, 'id' | 'version' | 'launcherVersion' | 'createdBy' | 'updatedBy' | 'createdAt' | 'updatedAt'>,
     launcherVersion: string
   ): void {
