@@ -3,13 +3,14 @@ import { OIAnalyticsRegistration } from '../../../../model/oianalytics-registrat
 import { OIAnalyticsFetchCommandDTO } from '../../../../service/oia/oianalytics.model';
 import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../../../shared/model/engine.model';
 import { Instant } from '../../../../../shared/model/types';
+import { OIBusCommand } from '../../../../model/oianalytics-command.model';
 
 /**
  * Create a mock object for OIAnalytics Client
  */
 export default class OIAnalyticsClientMock {
   updateCommandStatus = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _payload: string): Promise<void> => undefined);
-  retrieveCancelledCommands = mock.fn(async (_registrationSettings: OIAnalyticsRegistration): Promise<Array<string>> => []);
+  retrieveCancelledCommands = mock.fn(async (_registrationSettings: OIAnalyticsRegistration, _commands: Array<OIBusCommand>): Promise<Array<OIAnalyticsFetchCommandDTO>> => []);
   retrievePendingCommands = mock.fn(
     async (_registrationSettings: OIAnalyticsRegistration): Promise<Array<OIAnalyticsFetchCommandDTO>> => []
   );

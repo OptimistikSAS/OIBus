@@ -45,7 +45,13 @@ export default class NorthServiceMock {
   removeAllCacheContent = mock.fn(async (): Promise<void> => undefined);
   moveCacheContent = mock.fn(async (): Promise<void> => undefined);
   moveAllCacheContent = mock.fn(async (): Promise<void> => undefined);
-  executeSetpoint = mock.fn(async (): Promise<void> => undefined);
+  executeSetpoint = mock.fn(
+    async (
+      _northConnectorId: string,
+      _commandContent: Array<{ reference: string; value: string }>,
+      _callback: (result: string) => void
+    ): Promise<void> => undefined
+  );
   retrieveSecretsFromNorth = mock.fn(
     (_retrieveSecretsFromNorth: string | null, _manifest: NorthConnectorManifest): NorthConnectorEntity<NorthSettings> | null => null
   );

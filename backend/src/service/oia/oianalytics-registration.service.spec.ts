@@ -9,6 +9,7 @@ import type { toOIAnalyticsRegistrationDTO as toOIAnalyticsRegistrationDTOType }
 import type LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import OianalyticsRegistrationRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-registration-repository.mock';
 import EngineRepositoryMock from '../../tests/__mocks__/repository/config/engine-repository.mock';
+import type EngineRepository from '../../repository/config/engine.repository';
 import OianalyticsClientMock from '../../tests/__mocks__/service/oia/oianalytics-client.mock';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
@@ -78,11 +79,11 @@ describe('OIAnalytics Registration Service', () => {
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     service = new OIAnalyticsRegistrationService(
-      validator as unknown as Parameters<typeof OIAnalyticsRegistrationService>[0],
+      null!,
       oIAnalyticsClient,
       oIAnalyticsRegistrationRepository,
-      engineRepository,
-      logger as unknown as Parameters<typeof OIAnalyticsRegistrationService>[4]
+      engineRepository as EngineRepository,
+      logger
     );
   });
 
@@ -140,15 +141,12 @@ describe('OIAnalytics Registration Service', () => {
       expirationDate: testData.constants.dates.FAKE_NOW,
       activationCode: '123ABC'
     };
-    oIAnalyticsClient.register = mock.fn(
-      seq(
-        () => result,
-        () => result
-      )
-    );
+    oIAnalyticsClient.register.mock.mockImplementationOnce(async () => result);
+    oIAnalyticsClient.register.mock.mockImplementationOnce(async () => result);
 
     mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
-    service.checkRegistration = mock.fn();
+    const checkRegistrationMock = mock.fn(async () => undefined);
+    service.checkRegistration = checkRegistrationMock;
 
     await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id);
 
@@ -167,11 +165,11 @@ describe('OIAnalytics Registration Service', () => {
     ]);
 
     mock.timers.tick(10_000);
-    assert.strictEqual((service.checkRegistration as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(checkRegistrationMock.mock.calls.length, 1);
 
     await service.register(testData.oIAnalytics.registration.command, testData.users.list[0].id);
     mock.timers.tick(10_000);
-    assert.strictEqual((service.checkRegistration as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(checkRegistrationMock.mock.calls.length, 2);
   });
 
   it('should register with proxy', async () => {
@@ -249,7 +247,7 @@ describe('OIAnalytics Registration Service', () => {
       activationCode: '123ABC'
     };
     mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
-    oIAnalyticsClient.register = mock.fn(() => result);
+    oIAnalyticsClient.register.mock.mockImplementationOnce(async () => result);
 
     await service.register(command, testData.users.list[0].id);
     assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 3);
@@ -384,7 +382,7 @@ describe('OIAnalytics Registration Service', () => {
       )
     );
     const result = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
-    oIAnalyticsClient.checkRegistration = mock.fn(() => result);
+    oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(async () => result);
 
     service.start(); // start with pending registration to set interval
     await service.checkRegistration();
@@ -400,7 +398,7 @@ describe('OIAnalytics Registration Service', () => {
   it('should check registration and return because already checking', async () => {
     oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
     const result = { status: 'COMPLETED', expired: true, accessToken: 'access_token' };
-    oIAnalyticsClient.checkRegistration = mock.fn(() => result);
+    oIAnalyticsClient.checkRegistration.mock.mockImplementation(async () => result);
 
     service.checkRegistration();
     await service.checkRegistration();
@@ -412,7 +410,7 @@ describe('OIAnalytics Registration Service', () => {
   it('should check registration but fail because of return status', async () => {
     oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
     const result = { status: 'DECLINED', expired: true, accessToken: 'access_token' };
-    oIAnalyticsClient.checkRegistration = mock.fn(() => result);
+    oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(async () => result);
 
     await service.checkRegistration();
 
@@ -424,7 +422,7 @@ describe('OIAnalytics Registration Service', () => {
 
   it('should check registration but fail because of client error', async () => {
     oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
-    oIAnalyticsClient.checkRegistration = mock.fn(() => {
+    oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(() => {
       throw new Error('error');
     });
 

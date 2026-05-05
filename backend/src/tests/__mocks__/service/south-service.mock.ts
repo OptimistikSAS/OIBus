@@ -16,7 +16,7 @@ import {
   SouthItemGroupEntity
 } from '../../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult } from '../../../../shared/model/engine.model';
+import { OIBusAnyContent, OIBusConnectionTestResult, OIBusContent } from '../../../../shared/model/engine.model';
 import { Page } from '../../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 
@@ -28,7 +28,7 @@ export default class SouthServiceMock {
   getManifest = mock.fn((_type: string): SouthConnectorManifest => ({}) as SouthConnectorManifest);
   list = mock.fn((): Array<SouthConnectorEntityLight> => []);
   findById = mock.fn(
-    (_southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> =>
+    (_southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null =>
       ({}) as SouthConnectorEntity<SouthSettings, SouthItemSettings>
   );
   create = mock.fn(
@@ -47,7 +47,7 @@ export default class SouthServiceMock {
     async (_southId: string, _southType: OIBusSouthType, _settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> =>
       ({ items: [] }) as unknown as OIBusConnectionTestResult
   );
-  testItem = mock.fn(async (): Promise<void> => undefined);
+  testItem = mock.fn(async (): Promise<OIBusContent> => ({ type: 'any-content', content: '' } as OIBusAnyContent));
   listItems = mock.fn((_southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> => []);
   searchItems = mock.fn(
     (_southId: string, _searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemEntity<SouthItemSettings>> => ({

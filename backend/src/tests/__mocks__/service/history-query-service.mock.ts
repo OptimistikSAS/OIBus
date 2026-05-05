@@ -9,7 +9,7 @@ import {
   HistoryQueryItemSearchParam
 } from '../../../../shared/model/history-query.model';
 import { HistoryTransformerWithOptions } from '../../../model/transformer.model';
-import { OIBusConnectionTestResult } from '../../../../shared/model/engine.model';
+import { OIBusAnyContent, OIBusConnectionTestResult, OIBusContent } from '../../../../shared/model/engine.model';
 import { HistoryQueryMetrics } from '../../../../shared/model/engine.model';
 import { Page } from '../../../../shared/model/types';
 import { PassThrough } from 'node:stream';
@@ -20,7 +20,7 @@ import { PassThrough } from 'node:stream';
 export default class HistoryQueryServiceMock {
   list = mock.fn((): Array<HistoryQueryEntityLight> => []);
   findById = mock.fn(
-    (_historyId: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> =>
+    (_historyId: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null =>
       ({}) as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>
   );
   create = mock.fn(
@@ -39,7 +39,7 @@ export default class HistoryQueryServiceMock {
   getAllHistoryMetrics = mock.fn((): unknown => ({}));
   testNorth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);
   testSouth = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }) as unknown as OIBusConnectionTestResult);
-  testItem = mock.fn(async (): Promise<void> => undefined);
+  testItem = mock.fn(async (): Promise<OIBusContent> => ({ type: 'any-content', content: '' } as OIBusAnyContent));
   listItems = mock.fn((_historyId: string): Array<HistoryQueryItemEntity<SouthItemSettings>> => []);
   searchItems = mock.fn(
     (_historyId: string, _searchParams: HistoryQueryItemSearchParam): Page<HistoryQueryItemEntity<SouthItemSettings>> => ({
