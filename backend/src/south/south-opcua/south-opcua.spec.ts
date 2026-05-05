@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
@@ -11,7 +11,8 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
-import type { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
+import type { SouthOPCUAItemSettings, SouthOPCUASettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
 import type SouthOPCUAClass from './south-opcua';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import {
@@ -47,7 +48,7 @@ describe('SouthOPCUA', () => {
   let south: SouthOPCUAClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback: Mock<(southId: string, data: OIBusContent, queryTime: string, items: SouthConnectorItemEntity<SouthItemSettings>[]) => Promise<void>> = mock.fn(async (_southId: string, _data: OIBusContent, _queryTime: string, _items: SouthConnectorItemEntity<SouthItemSettings>[]) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -74,7 +75,7 @@ describe('SouthOPCUA', () => {
     getTimestamp: mock.fn(() => testData.constants.dates.FAKE_NOW),
     initOPCUACertificateFolders: mock.fn(async () => undefined),
     logMessages: mock.fn(),
-    parseOPCUAValue: mock.fn(() => null),
+    parseOPCUAValue: mock.fn((): string | null => null),
     toOPCUASecurityMode: mock.fn(() => 1),
     toOPCUASecurityPolicy: mock.fn(() => 'none')
   };
@@ -316,8 +317,8 @@ describe('SouthOPCUA', () => {
   });
 
   it('should be properly initialized', async () => {
-    const connectMock = mock.fn();
-    const createSessionMock = mock.fn();
+    const connectMock = mock.fn(async () => undefined);
+    const createSessionMock = mock.fn(async (): Promise<ClientSession> => ({} as ClientSession));
     south.connect = connectMock;
     south.createSession = createSessionMock;
     await south.start();
@@ -558,7 +559,8 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly manage history query', async () => {
-    south.getHAValues = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const getHAValuesMock = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    south.getHAValues = getHAValuesMock;
     south['client'] = {} as unknown as ClientSession;
     await south.historyQuery(
       [configuration.items[0], configuration.items[1], configuration.items[2]],
@@ -566,7 +568,7 @@ describe('SouthOPCUA', () => {
       testData.constants.dates.DATE_2
     );
 
-    assert.deepStrictEqual((south.getHAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.deepStrictEqual(getHAValuesMock.mock.calls[0].arguments, [
       [configuration.items[0], configuration.items[1], configuration.items[2]],
       testData.constants.dates.DATE_1,
       testData.constants.dates.DATE_2,
@@ -579,7 +581,8 @@ describe('SouthOPCUA', () => {
       throw new Error('history error');
     });
     south['client'] = {} as unknown as ClientSession;
-    south.disconnect = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
     await assert.rejects(
       async () =>
         south.historyQuery(
@@ -589,7 +592,7 @@ describe('SouthOPCUA', () => {
         ),
       /history error/
     );
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
     // setTimeout should have been called for reconnect (timer mocked)
   });
 
@@ -598,7 +601,8 @@ describe('SouthOPCUA', () => {
       throw new Error('history error');
     });
     south['client'] = {} as unknown as ClientSession;
-    south.disconnect = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
     south['disconnecting'] = true;
     await assert.rejects(
       async () =>
@@ -609,11 +613,12 @@ describe('SouthOPCUA', () => {
         ),
       /history error/
     );
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should throw error when querying history with client not set', async () => {
-    south.getHAValues = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const getHAValuesMock = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    south.getHAValues = getHAValuesMock;
 
     await assert.rejects(
       async () =>
@@ -625,7 +630,7 @@ describe('SouthOPCUA', () => {
       /OPCUA client not set/
     );
 
-    assert.strictEqual((south.getHAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(getHAValuesMock.mock.calls.length, 0);
   });
 
   it('should properly get HA values with response status not good', async () => {
@@ -782,7 +787,7 @@ describe('SouthOPCUA', () => {
     const client = { historyRead } as unknown as ClientSession;
 
     let parseCallCount = 0;
-    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => {
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => {
       parseCallCount++;
       return parseCallCount === 1 ? '' : '123';
     });
@@ -880,16 +885,17 @@ describe('SouthOPCUA', () => {
     });
     const client = { historyRead } as unknown as ClientSession;
 
-    south.addContent = mock.fn(async () => undefined);
+    const addContentMock = mock.fn(async () => undefined);
+    south.addContent = addContentMock;
     let parseCallCount = 0;
-    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => {
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => {
       parseCallCount++;
       return parseCallCount === 1 ? '123' : '456';
     });
     await south.getHAValues([configuration.items[0]], testData.constants.dates.FAKE_NOW, testData.constants.dates.FAKE_NOW, client, false);
     assert.strictEqual(historyRead.mock.calls.length, 2);
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments, [
       {
         content: [
           {
@@ -1196,76 +1202,89 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly throw error on query last point if client not set', async () => {
-    south.getDAValues = mock.fn(async () => []);
+    const getDAValuesMock = mock.fn(async () => []);
+    south.getDAValues = getDAValuesMock;
     await assert.rejects(async () => south.directQuery(configuration.items), /OPCUA client not set/);
-    assert.strictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(getDAValuesMock.mock.calls.length, 0);
   });
 
   it('should do nothing on query last point if no nodes to read', async () => {
     south['client'] = {} as unknown as ClientSession;
-    south.getDAValues = mock.fn(async () => []);
-    south.addContent = mock.fn(async () => undefined);
+    const getDAValuesMock = mock.fn(async () => []);
+    const addContentMock = mock.fn(async () => undefined);
+    south.getDAValues = getDAValuesMock;
+    south.addContent = addContentMock;
     await south.directQuery([]);
-    assert.strictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(getDAValuesMock.mock.calls.length, 0);
+    assert.strictEqual(addContentMock.mock.calls.length, 0);
   });
 
   it('should query last point (only one)', async () => {
     const mockedClient = {} as unknown as ClientSession;
     south['client'] = mockedClient;
-    south.getDAValues = mock.fn(
+    const getDAValuesMock = mock.fn(
       async () => testData.oibusContent[0].content as ReturnType<typeof south.getDAValues> extends Promise<infer T> ? T : never
     );
-    south.addContent = mock.fn(async () => undefined);
+    const addContentMock = mock.fn(async () => undefined);
+    south.getDAValues = getDAValuesMock;
+    south.addContent = addContentMock;
     await south.directQuery([configuration.items[0], configuration.items[3]]);
-    assert.deepStrictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
     ]);
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
   });
 
   it('should query last point (several) and fail and reconnect', async () => {
     const mockedClient = {} as unknown as ClientSession;
     south['client'] = mockedClient;
-    south.getDAValues = mock.fn(() => {
+    const getDAValuesMock = mock.fn(() => {
       throw new Error('opcua read error');
     });
-    south.addContent = mock.fn(async () => undefined);
-    south.disconnect = mock.fn(async () => undefined);
+    const addContentMock = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async () => undefined);
+    south.getDAValues = getDAValuesMock;
+    south.addContent = addContentMock;
+    south.disconnect = disconnectMock;
     south.connect = mock.fn(async () => undefined);
     await assert.rejects(async () => south.directQuery([configuration.items[0], configuration.items[3]]), /opcua read error/);
-    assert.deepStrictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
     ]);
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(addContentMock.mock.calls.length, 0);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should query last point (several) and fail and not reconnect', async () => {
     const mockedClient = {} as unknown as ClientSession;
     south['client'] = mockedClient;
-    south.getDAValues = mock.fn(() => {
+    const getDAValuesMock = mock.fn(() => {
       throw new Error('opcua read error');
     });
-    south.addContent = mock.fn(async () => undefined);
-    south.disconnect = mock.fn(async () => undefined);
-    south.connect = mock.fn(async () => undefined);
+    const addContentMock = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async () => undefined);
+    const connectMock = mock.fn(async () => undefined);
+    south.getDAValues = getDAValuesMock;
+    south.addContent = addContentMock;
+    south.disconnect = disconnectMock;
+    south.connect = connectMock;
     south['disconnecting'] = true;
     await assert.rejects(async () => south.directQuery([configuration.items[0], configuration.items[3]]), /opcua read error/);
-    assert.deepStrictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.deepStrictEqual(getDAValuesMock.mock.calls[0].arguments, [
       [{ nodeId: configuration.items[3].settings.nodeId, name: configuration.items[3].name, settings: configuration.items[3].settings }],
       mockedClient
     ]);
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((south.connect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(addContentMock.mock.calls.length, 0);
+    assert.strictEqual(connectMock.mock.calls.length, 0);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should not query items if bad node id', async () => {
     south['client'] = {} as unknown as ClientSession;
-    south.getDAValues = mock.fn(async () => []);
+    const getDAValuesMock = mock.fn(async () => []);
+    south.getDAValues = getDAValuesMock;
     let resolveCallCount = 0;
     nodeOPCUAMock.resolveNodeId.mock.mockImplementation(() => {
       resolveCallCount++;
@@ -1276,7 +1295,7 @@ describe('SouthOPCUA', () => {
     });
 
     await south.directQuery([configuration.items[3], configuration.items[4], configuration.items[5]]);
-    assert.strictEqual((south.getDAValues as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(getDAValuesMock.mock.calls.length, 0);
     assert.strictEqual((logger.error as ReturnType<typeof mock.fn>).mock.calls.length, 3);
   });
 
@@ -1302,7 +1321,7 @@ describe('SouthOPCUA', () => {
     const client = { read } as unknown as ClientSession;
 
     let parseCallCount = 0;
-    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => {
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => {
       parseCallCount++;
       return parseCallCount === 1 ? '' : '123';
     });
@@ -1367,13 +1386,14 @@ describe('SouthOPCUA', () => {
     const stream = new CustomStream();
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
+    const createSubscription2Mock = mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }));
     south['client'] = {
-      createSubscription2: mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }))
+      createSubscription2: createSubscription2Mock
     } as unknown as ClientSession;
 
     south['subscription'] = { terminate: mock.fn(), monitor: monitorFn } as unknown as ClientSubscription;
     await south.subscribe([configuration.items[0]]);
-    assert.strictEqual((south['client'].createSubscription2 as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(createSubscription2Mock.mock.calls.length, 0);
     assert.strictEqual(monitorFn.mock.calls.length, 1);
   });
 
@@ -1381,8 +1401,9 @@ describe('SouthOPCUA', () => {
     const stream = new CustomStream();
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
+    const createSubscription2Mock = mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }));
     south['client'] = {
-      createSubscription2: mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }))
+      createSubscription2: createSubscription2Mock
     } as unknown as ClientSession;
 
     // Only throw on the first resolveNodeId call (for items[0]); items[1] is skipped; items[2] succeeds
@@ -1394,14 +1415,15 @@ describe('SouthOPCUA', () => {
       }
       return nodeId;
     });
-    south.addContent = mock.fn(async () => undefined);
+    const addContentMock = mock.fn(async () => undefined);
+    south.addContent = addContentMock;
 
     south['monitoredItems'].set(configuration.items[1].id, {} as unknown as ClientMonitoredItem);
 
     await south.subscribe([configuration.items[0], configuration.items[1], configuration.items[2]]);
-    assert.strictEqual((south['client'].createSubscription2 as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(createSubscription2Mock.mock.calls.length, 1);
     assert.strictEqual(monitorFn.mock.calls.length, 1);
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(addContentMock.mock.calls.length, 0);
     assert.strictEqual(
       (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
         c =>
@@ -1412,22 +1434,23 @@ describe('SouthOPCUA', () => {
     );
     assert.strictEqual(south['monitoredItems'].size, 2);
 
-    south.flushMessages = mock.fn(async () => undefined);
+    const flushMessagesMock = mock.fn(async () => undefined);
+    south.flushMessages = flushMessagesMock;
     let parseCallCount = 0;
-    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => {
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation((): string | null => {
       parseCallCount++;
       return parseCallCount === 1 ? '' : 'parsedValue';
     });
     south['connector'].settings.maxNumberOfMessages = 2;
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
     stream.emit('changed', { value: { value: 1, dataType: DataType.Null }, sourceTimestamp: DateTime.now(), statusCode: StatusCodes.Good });
-    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(flushMessagesMock.mock.calls.length, 0);
     stream.emit('changed', {
       value: { value: 1, dataType: DataType.Float },
       serverTimestamp: DateTime.now(),
       statusCode: StatusCodes.Good
     });
-    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(flushMessagesMock.mock.calls.length, 1);
     assert.deepStrictEqual(south['bufferedValues'], [
       {
         item: configuration.items[2],
@@ -1457,9 +1480,10 @@ describe('SouthOPCUA', () => {
   });
 
   it('should not flush messages if none in buffer', async () => {
-    south.addContent = mock.fn(async () => undefined);
+    const addContentMock = mock.fn(async () => undefined);
+    south.addContent = addContentMock;
     await south.flushMessages();
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(addContentMock.mock.calls.length, 0);
     // setTimeout called for next flush
   });
 
@@ -1480,9 +1504,10 @@ describe('SouthOPCUA', () => {
     ];
     south['flushTimeout'] = setTimeout(() => null);
 
-    south.addContent = mock.fn(async () => undefined);
+    const addContentMock = mock.fn(async () => undefined);
+    south.addContent = addContentMock;
     await south.flushMessages();
-    assert.deepStrictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments, [
       {
         type: 'time-values',
         content: [
