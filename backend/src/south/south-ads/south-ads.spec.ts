@@ -6,8 +6,10 @@ import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import type { SouthConnectorEntity } from '../../model/south-connector.model';
-import type { SouthADSItemSettings, SouthADSSettings } from '../../../shared/model/south-settings.model';
+import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
+import type { SouthADSItemSettings, SouthADSSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
+import type { Instant } from '../../../shared/model/types';
 import type { AdsDataType } from 'ads-client';
 import type SouthADSClass from './south-ads';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -19,13 +21,20 @@ describe('South ADS', () => {
   let south: SouthADSClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(
+    async (
+      _southId: string,
+      _data: OIBusContent,
+      _queryTime: Instant,
+      _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ): Promise<void> => undefined
+  );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
   const connect = mock.fn(async () => ({ targetAmsNetId: 'targetAmsNetId', localAmsNetId: 'localAmsNetId', localAdsPort: 'localAdsPort' }));
   const disconnect = mock.fn(async () => undefined);
-  const readValue = mock.fn(async () => undefined);
+  const readValue = mock.fn(async (): Promise<unknown> => undefined);
   const adsInstance = { connection: { connected: true }, connect, disconnect, readValue };
 
   const adsExports: Record<string, unknown> = {

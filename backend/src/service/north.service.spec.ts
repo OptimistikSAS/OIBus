@@ -17,6 +17,7 @@ import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import NorthConnectorMock from '../tests/__mocks__/north-connector.mock';
 import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import LoggerMock from '../tests/__mocks__/service/logger/logger.mock';
+import NorthConnectorMetricsServiceMock from '../tests/__mocks__/service/metrics/north-connector-metrics-service.mock';
 import type NorthServiceType from './north.service';
 import type {
   northManifestList as northManifestListType,
@@ -33,7 +34,7 @@ import type { toTransformerDTO as toTransformerDTOType } from './transformer.ser
 const nodeRequire = createRequire(import.meta.url);
 
 let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
-let mockNorthConnectorFactory: Record<string, ReturnType<typeof mock.fn>>;
+let mockNorthConnectorFactory: Record<string, ReturnType<typeof mock.fn> | boolean>;
 let mockEncryptionService: Record<string, unknown>;
 
 let NorthService: new (...args: Array<unknown>) => InstanceType<typeof NorthServiceType>;
@@ -89,7 +90,7 @@ describe('North Service', () => {
   let engine: DataStreamEngineMock;
   let transformerService: TransformerServiceMock;
   let southItemGroupRepository: { findById: ReturnType<typeof mock.fn> };
-  let validator: { validate: ReturnType<typeof mock.fn> };
+  let validator: { validate: ReturnType<typeof mock.fn>; validateSettings: ReturnType<typeof mock.fn> };
   let logger: LoggerMock;
   let mockedNorth1: NorthConnectorMock;
 
@@ -130,7 +131,11 @@ describe('North Service', () => {
         name: element.name,
         type: element.type,
         description: element.description,
-        enabled: element.enabled
+        enabled: element.enabled,
+        createdBy: element.createdBy,
+        updatedBy: element.updatedBy,
+        createdAt: element.createdAt,
+        updatedAt: element.updatedAt
       }))
     );
     southConnectorRepository.findSouthById.mock.mockImplementation(() => testData.south.list[0]);
@@ -203,13 +208,14 @@ describe('North Service', () => {
 
   it('should create a north connector with a transformer group', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
-    if (command.transformers[0].source.type !== 'south') {
+    const firstTransformerSource = command.transformers[0].source;
+    if (firstTransformerSource.type !== 'south') {
       throw new Error('Expected south source in test data');
     }
     southItemGroupRepository.findById.mock.mockImplementationOnce(() => ({
       id: 'groupId1',
       name: '',
-      southId: command.transformers[0].source.southId,
+      southId: firstTransformerSource.southId,
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
@@ -225,7 +231,7 @@ describe('North Service', () => {
         ...command.transformers[0],
         source: {
           type: 'south',
-          southId: command.transformers[0].source.southId,
+          southId: firstTransformerSource.southId,
           groupId: 'groupId1',
           items: []
         }
@@ -233,14 +239,16 @@ describe('North Service', () => {
     ];
     await service.create(command, null, 'userTest');
 
-    const savedEntity = northConnectorRepository.saveNorth.mock.calls[0].arguments[0] as Record<string, unknown>;
-    const transformers = savedEntity.transformers as Array<{ source: { group: Record<string, unknown> } }>;
-    assert.ok(transformers[0].source.group.id === 'groupId1');
-    assert.ok(transformers[0].source.group.name === '');
-    assert.ok(transformers[0].source.group.createdBy === '');
-    assert.ok(transformers[0].source.group.updatedBy === '');
-    assert.ok(transformers[0].source.group.createdAt === '');
-    assert.ok(transformers[0].source.group.updatedAt === '');
+    const savedEntity = northConnectorRepository.saveNorth.mock.calls[0].arguments[0];
+    const savedSource = savedEntity.transformers[0].source;
+    assert.strictEqual(savedSource.type, 'south');
+    if (savedSource.type !== 'south') throw new Error('Expected south source');
+    assert.ok(savedSource.group?.id === 'groupId1');
+    assert.ok(savedSource.group?.name === '');
+    assert.ok(savedSource.group?.createdBy === '');
+    assert.ok(savedSource.group?.updatedBy === '');
+    assert.ok(savedSource.group?.createdAt === '');
+    assert.ok(savedSource.group?.updatedAt === '');
   });
 
   it('should create a north connector and not start it if disabled', async () => {
@@ -270,7 +278,19 @@ describe('North Service', () => {
   });
 
   it('should not create a north connector with duplicate name', async () => {
-    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [{ id: 'existing-id', name: testData.north.command.name }]);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [
+      {
+        id: 'existing-id',
+        name: testData.north.command.name,
+        type: 'console',
+        description: '',
+        enabled: true,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ]);
 
     await assert.rejects(
       () => service.create(testData.north.command, null, 'userTest'),
@@ -292,13 +312,14 @@ describe('North Service', () => {
     northConnectorRepository.findAllNorth.mock.mockImplementation(() => testData.north.list);
     transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
     const command = JSON.parse(JSON.stringify(testData.north.command)) as NorthConnectorCommandDTO;
-    if (command.transformers[0].source.type !== 'south') {
+    const firstTransformerSource = command.transformers[0].source;
+    if (firstTransformerSource.type !== 'south') {
       throw new Error('Expected south source in test data');
     }
     southItemGroupRepository.findById.mock.mockImplementationOnce(() => ({
       id: 'groupId1',
       name: '',
-      southId: command.transformers[0].source.southId,
+      southId: firstTransformerSource.southId,
       scanMode: testData.scanMode.list[0],
       overlap: null,
       maxReadInterval: null,
@@ -314,7 +335,7 @@ describe('North Service', () => {
         ...command.transformers[0],
         source: {
           type: 'south',
-          southId: command.transformers[0].source.southId,
+          southId: firstTransformerSource.southId,
           groupId: 'groupId1',
           items: []
         }
@@ -322,14 +343,16 @@ describe('North Service', () => {
     ];
     await service.update(testData.north.list[0].id, command, 'userTest');
 
-    const savedEntity = northConnectorRepository.saveNorth.mock.calls[0].arguments[0] as Record<string, unknown>;
-    const transformers = savedEntity.transformers as Array<{ source: { group: Record<string, unknown> } }>;
-    assert.ok(transformers[0].source.group.id === 'groupId1');
-    assert.ok(transformers[0].source.group.name === '');
-    assert.ok(transformers[0].source.group.createdBy === '');
-    assert.ok(transformers[0].source.group.updatedBy === '');
-    assert.ok(transformers[0].source.group.createdAt === '');
-    assert.ok(transformers[0].source.group.updatedAt === '');
+    const savedEntity = northConnectorRepository.saveNorth.mock.calls[0].arguments[0];
+    const savedSource = savedEntity.transformers[0].source;
+    assert.strictEqual(savedSource.type, 'south');
+    if (savedSource.type !== 'south') throw new Error('Expected south source');
+    assert.ok(savedSource.group?.id === 'groupId1');
+    assert.ok(savedSource.group?.name === '');
+    assert.ok(savedSource.group?.createdBy === '');
+    assert.ok(savedSource.group?.updatedBy === '');
+    assert.ok(savedSource.group?.createdAt === '');
+    assert.ok(savedSource.group?.updatedAt === '');
   });
 
   it('should update a north connector with a new unique name', async () => {
@@ -347,7 +370,19 @@ describe('North Service', () => {
   it('should not update a north connector with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'Duplicate Name';
-    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [
+      {
+        id: 'other-id',
+        name: 'Duplicate Name',
+        type: 'console',
+        description: '',
+        enabled: true,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ]);
     transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
 
     await assert.rejects(
@@ -370,7 +405,19 @@ describe('North Service', () => {
   it('should not update a north connector if south not found', async () => {
     const command = JSON.parse(JSON.stringify(testData.north.command));
     command.name = 'New Name';
-    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
+    northConnectorRepository.findAllNorth.mock.mockImplementation(() => [
+      {
+        id: 'other-id',
+        name: 'Duplicate Name',
+        type: 'console',
+        description: '',
+        enabled: true,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ]);
     transformerService.findAll.mock.mockImplementation(() => testData.transformers.list);
     southConnectorRepository.findSouthById.mock.mockImplementationOnce(() => null);
 
@@ -456,7 +503,7 @@ describe('North Service', () => {
   it('should execute setpoint', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     northMock.isEnabled.mock.mockImplementationOnce(() => true);
-    engine.getNorth.mock.mockImplementation(() => ({ north: northMock }));
+    engine.getNorth.mock.mockImplementation(() => ({ north: northMock, metrics: new NorthConnectorMetricsServiceMock() }));
     const callback = mock.fn();
     const commandContent = [{ reference: 'reference', value: '123456' }];
     await service.executeSetpoint('northId', commandContent, callback);
@@ -480,7 +527,7 @@ describe('North Service', () => {
   it('should not execute setpoint if north disabled', async () => {
     const northMock = new NorthConnectorMock(testData.north.list[0]);
     northMock.isEnabled.mock.mockImplementationOnce(() => false);
-    engine.getNorth.mock.mockImplementation(() => ({ north: northMock }));
+    engine.getNorth.mock.mockImplementation(() => ({ north: northMock, metrics: new NorthConnectorMetricsServiceMock() }));
     const callback = mock.fn();
     await assert.rejects(
       () => service.executeSetpoint('northId', [{ reference: 'reference', value: '123456' }], callback),

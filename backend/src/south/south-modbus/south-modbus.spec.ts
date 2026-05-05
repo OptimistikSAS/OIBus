@@ -10,10 +10,13 @@ import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-ser
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type {
+  SouthItemSettings,
   SouthModbusItemSettings,
   SouthModbusItemSettingsModbusType,
   SouthModbusSettings
 } from '../../../shared/model/south-settings.model';
+import type { OIBusContent } from '../../../shared/model/engine.model';
+import type { Instant } from '../../model/types';
 import type SouthModbusClass from './south-modbus';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
@@ -58,7 +61,14 @@ describe('South Modbus', () => {
   let south: SouthModbusClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(
+    async (
+      _southId: string,
+      _data: OIBusContent,
+      _queryTime: Instant,
+      _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ): Promise<void> => undefined
+  );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
   let mockedEmitter: CustomStream;
@@ -90,11 +100,11 @@ describe('South Modbus', () => {
 
   // utils-modbus mock
   const utilsModbusExports = {
-    connectSocket: mock.fn(async () => undefined),
-    readCoil: mock.fn(async () => undefined),
-    readDiscreteInputRegister: mock.fn(async () => undefined),
-    readHoldingRegister: mock.fn(async () => undefined),
-    readInputRegister: mock.fn(async () => undefined)
+    connectSocket: mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => undefined),
+    readCoil: mock.fn(async (): Promise<string | undefined> => undefined),
+    readDiscreteInputRegister: mock.fn(async (): Promise<string | undefined> => undefined),
+    readHoldingRegister: mock.fn(async (): Promise<string | undefined> => undefined),
+    readInputRegister: mock.fn(async (): Promise<string | undefined> => undefined)
   };
 
   // utils mock
@@ -289,11 +299,11 @@ describe('South Modbus', () => {
     jsmdbExports.default.client.TCP = mock.fn(function () {
       return {};
     });
-    utilsModbusExports.connectSocket = mock.fn(async () => undefined);
-    utilsModbusExports.readCoil = mock.fn(async () => undefined);
-    utilsModbusExports.readDiscreteInputRegister = mock.fn(async () => undefined);
-    utilsModbusExports.readHoldingRegister = mock.fn(async () => undefined);
-    utilsModbusExports.readInputRegister = mock.fn(async () => undefined);
+    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => undefined);
+    utilsModbusExports.readCoil = mock.fn(async (): Promise<string | undefined> => undefined);
+    utilsModbusExports.readDiscreteInputRegister = mock.fn(async (): Promise<string | undefined> => undefined);
+    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string | undefined> => undefined);
+    utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string | undefined> => undefined);
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
@@ -305,7 +315,8 @@ describe('South Modbus', () => {
   });
 
   it('should properly connect', async () => {
-    south.disconnect = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
     (south as unknown as Record<string, unknown>)['reconnectTimeout'] = setTimeout(() => null, 1000);
 
     await south.connect();
@@ -323,20 +334,21 @@ describe('South Modbus', () => {
         (c.arguments[0] as string).includes(`Modbus socket connected to ${configuration.settings.host}:${configuration.settings.port}`)
       )
     );
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
   it('should properly reconnect on connect error when not disconnecting', async () => {
-    south.disconnect = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
 
-    utilsModbusExports.connectSocket = mock.fn(async () => {
+    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => {
       throw new Error('connect error');
     });
 
     // With disconnecting=false and connector.enabled=true, a retry timer should be set
     await south.connect();
 
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
     assert.ok(
       logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
         (c.arguments[0] as string).includes('Modbus socket error: connect error')
@@ -344,22 +356,23 @@ describe('South Modbus', () => {
     );
 
     // Tick the retry interval — should trigger another connect attempt
-    utilsModbusExports.connectSocket = mock.fn(async () => undefined);
+    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => undefined);
     mock.timers.tick(configuration.settings.retryInterval);
     assert.strictEqual(socketMock.mock.calls.length, 2);
   });
 
   it('should not set retry timer when disconnecting is true', async () => {
-    south.disconnect = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
     (south as unknown as Record<string, unknown>)['disconnecting'] = true;
 
-    utilsModbusExports.connectSocket = mock.fn(async () => {
+    utilsModbusExports.connectSocket = mock.fn(async (_socket: unknown, _settings: unknown): Promise<void> => {
       throw new Error('connect error');
     });
 
     await south.connect();
 
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
 
     // No timer should have been set — ticking should NOT trigger another Socket creation
     mock.timers.tick(configuration.settings.retryInterval);
@@ -391,38 +404,42 @@ describe('South Modbus', () => {
   it('should query items via directQuery', async () => {
     const mockedClient = {} as unknown as ModbusTCPClient;
     (south as unknown as Record<string, unknown>)['modbusClient'] = mockedClient;
-    south.disconnect = mock.fn(async () => undefined);
-    south.addContent = mock.fn(async () => undefined);
-    south.modbusFunction = mock.fn(async () => []);
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    const addContentMock = mock.fn(
+      async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+        undefined
+    );
+    const modbusFunctionMock = mock.fn(async (): Promise<[]> => []);
+    south.disconnect = disconnectMock;
+    south.addContent = addContentMock;
+    south.modbusFunction = modbusFunctionMock;
 
     await south.directQuery(configuration.items);
 
-    assert.strictEqual((south.modbusFunction as ReturnType<typeof mock.fn>).mock.calls.length, configuration.items.length);
-    assert.deepStrictEqual((south.modbusFunction as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
-      mockedClient,
-      configuration.items[0]
-    ]);
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 0);
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], {
+    assert.strictEqual(modbusFunctionMock.mock.calls.length, configuration.items.length);
+    assert.deepStrictEqual(modbusFunctionMock.mock.calls[0].arguments, [mockedClient, configuration.items[0]]);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
       content: [],
       type: 'time-values'
     });
-    assert.strictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
-    assert.deepStrictEqual((south.addContent as ReturnType<typeof mock.fn>).mock.calls[0].arguments[2], configuration.items);
+    assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
+    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], configuration.items);
   });
 
   it('should handle directQuery error when disconnecting is true', async () => {
     (south as unknown as Record<string, unknown>)['modbusClient'] = {} as unknown as ModbusTCPClient;
     (south as unknown as Record<string, unknown>)['disconnecting'] = true;
-    south.disconnect = mock.fn(async () => undefined);
-    south.addContent = mock.fn(async () => undefined);
-    south.modbusFunction = mock.fn(async () => {
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    south.modbusFunction = mock.fn(async (): Promise<never> => {
       throw new Error('modbus function error');
     });
 
     await assert.rejects(south.directQuery([configuration.items[1]]), new Error('modbus function error'));
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
 
     // No retry timer set when disconnecting
     mock.timers.tick(configuration.settings.retryInterval);
@@ -432,14 +449,15 @@ describe('South Modbus', () => {
   it('should handle directQuery error when not disconnecting', async () => {
     (south as unknown as Record<string, unknown>)['modbusClient'] = {} as unknown as ModbusTCPClient;
     (south as unknown as Record<string, unknown>)['disconnecting'] = false;
-    south.disconnect = mock.fn(async () => undefined);
-    south.addContent = mock.fn(async () => undefined);
-    south.modbusFunction = mock.fn(async () => {
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    south.modbusFunction = mock.fn(async (): Promise<never> => {
       throw new Error('modbus function error');
     });
 
     await assert.rejects(south.directQuery([configuration.items[1]]), new Error('modbus function error'));
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
 
     // Retry timer should have been set — tick triggers a connect (net.Socket call)
     mock.timers.tick(configuration.settings.retryInterval);
@@ -447,14 +465,15 @@ describe('South Modbus', () => {
   });
 
   it('should throw when directQuery is called without modbusClient', async () => {
-    south.modbusFunction = mock.fn(async () => []);
+    const modbusFunctionMock = mock.fn(async (): Promise<[]> => []);
+    south.modbusFunction = modbusFunctionMock;
     await assert.rejects(south.directQuery(configuration.items), new Error('Could not read address: Modbus client not set'));
-    assert.strictEqual((south.modbusFunction as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(modbusFunctionMock.mock.calls.length, 0);
   });
 
   it('should call readCoil method', async () => {
     const mockedClient = {} as unknown as ModbusTCPClient;
-    utilsModbusExports.readCoil = mock.fn(async () => '123');
+    utilsModbusExports.readCoil = mock.fn(async (): Promise<string | undefined> => '123');
 
     const values = await south.modbusFunction(mockedClient, configuration.items[4]);
     assert.strictEqual(utilsModbusExports.readCoil.mock.calls.length, 1);
@@ -470,7 +489,7 @@ describe('South Modbus', () => {
 
   it('should call readDiscreteInputRegister method', async () => {
     const mockedClient = {} as unknown as ModbusTCPClient;
-    utilsModbusExports.readDiscreteInputRegister = mock.fn(async () => '123');
+    utilsModbusExports.readDiscreteInputRegister = mock.fn(async (): Promise<string | undefined> => '123');
 
     const values = await south.modbusFunction(mockedClient, configuration.items[3]);
     assert.strictEqual(utilsModbusExports.readDiscreteInputRegister.mock.calls.length, 1);
@@ -486,7 +505,7 @@ describe('South Modbus', () => {
 
   it('should call readInputRegister method', async () => {
     const mockedClient = {} as unknown as ModbusTCPClient;
-    utilsModbusExports.readInputRegister = mock.fn(async () => '123');
+    utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string | undefined> => '123');
 
     const values = await south.modbusFunction(mockedClient, configuration.items[2]);
     assert.strictEqual(utilsModbusExports.readInputRegister.mock.calls.length, 1);
@@ -511,7 +530,7 @@ describe('South Modbus', () => {
 
   it('should call readHoldingRegister method', async () => {
     const mockedClient = {} as unknown as ModbusTCPClient;
-    utilsModbusExports.readHoldingRegister = mock.fn(async () => '123');
+    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string | undefined> => '123');
 
     const values = await south.modbusFunction(mockedClient, configuration.items[1]);
     assert.strictEqual(utilsModbusExports.readHoldingRegister.mock.calls.length, 1);
@@ -536,7 +555,7 @@ describe('South Modbus', () => {
 
   it('should throw an error on wrong modbus type', async () => {
     const mockedClient = {} as unknown as ModbusTCPClient;
-    south.addContent = mock.fn(async () => undefined);
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
     configuration.settings.addressOffset = 'jbus';
     const item: SouthConnectorItemEntity<SouthModbusItemSettings> = {
       id: 'bad',

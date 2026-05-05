@@ -84,7 +84,7 @@ describe('User Service', () => {
   });
 
   it('should create a user', async () => {
-    userRepository.create.mock.mockImplementationOnce(() => testData.users.list[0]);
+    userRepository.create.mock.mockImplementationOnce(async () => testData.users.list[0]);
 
     const result = await service.create(testData.users.command, 'password', testData.users.list[0].id);
 

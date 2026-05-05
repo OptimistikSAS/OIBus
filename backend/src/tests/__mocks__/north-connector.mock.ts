@@ -39,8 +39,12 @@ export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   override stop = mock.fn(async (): Promise<void> => undefined);
   override setLogger = mock.fn((_logger: ILogger): void => undefined);
   override updateScanMode = mock.fn(async (): Promise<void> => undefined);
-  override searchCacheContent = mock.fn(async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({}) as Omit<CacheSearchResult, 'metrics'>);
-  override getFileFromCache = mock.fn(async (_folder: DataFolderType, _filename: string): Promise<FileCacheContent> => ({}) as FileCacheContent);
+  override searchCacheContent = mock.fn(
+    async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({}) as Omit<CacheSearchResult, 'metrics'>
+  );
+  override getFileFromCache = mock.fn(
+    async (_folder: DataFolderType, _filename: string): Promise<FileCacheContent> => ({}) as FileCacheContent
+  );
   override updateCacheContent = mock.fn(async (_updateCommand: CacheContentUpdateCommand): Promise<void> => undefined);
   override testConnection = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }));
   override metricsEvent = new EventEmitter();

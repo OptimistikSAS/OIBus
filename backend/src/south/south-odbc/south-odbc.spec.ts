@@ -18,6 +18,9 @@ import type {
 import type SouthODBCClass from './south-odbc';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 
+// Loose type alias for mock odbc instances returned by loadOdbc
+type OdbcMockInstance = { connect: (args: unknown) => unknown } | null;
+
 const nodeRequire = createRequire(import.meta.url);
 
 describe('SouthODBC', () => {
@@ -42,7 +45,7 @@ describe('SouthODBC', () => {
   };
 
   const odbcLoaderExports = {
-    loadOdbc: mock.fn(() => null)
+    loadOdbc: mock.fn((): OdbcMockInstance => null)
   };
 
   const httpRequestExports = {
@@ -83,7 +86,7 @@ describe('SouthODBC', () => {
     );
 
     // Reset other mocks
-    odbcLoaderExports.loadOdbc = mock.fn(() => null);
+    odbcLoaderExports.loadOdbc = mock.fn((): OdbcMockInstance => null);
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200, {}));
 
     // Reset logger mocks
@@ -291,10 +294,10 @@ describe('SouthODBC', () => {
     it('should get data from ODBC', async () => {
       const odbcConnection = {
         close: mock.fn(),
-        query: mock.fn()
+        query: mock.fn((_sql: string): Array<Record<string, unknown>> => [])
       };
       let queryCallCount = 0;
-      odbcConnection.query.mock.mockImplementation(() => {
+      odbcConnection.query.mock.mockImplementation((_sql: string) => {
         queryCallCount++;
         if (queryCallCount === 1) {
           return [
@@ -306,10 +309,10 @@ describe('SouthODBC', () => {
       });
 
       const odbc = {
-        connect: mock.fn(() => odbcConnection)
+        connect: mock.fn((_args: unknown): typeof odbcConnection => odbcConnection)
       };
       let loadOdbcCallCount = 0;
-      odbcLoaderExports.loadOdbc = mock.fn(() => {
+      odbcLoaderExports.loadOdbc = mock.fn((): OdbcMockInstance => {
         loadOdbcCallCount++;
         if (loadOdbcCallCount <= 2) return odbc;
         return null;
@@ -396,12 +399,12 @@ describe('SouthODBC', () => {
     it('should manage query error', async () => {
       const odbcConnection = {
         close: mock.fn(),
-        query: mock.fn(() => {
+        query: mock.fn((_sql: string): never => {
           throw new Error('query error');
         })
       };
-      const odbc = { connect: mock.fn(() => odbcConnection) };
-      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+      const odbc = { connect: mock.fn((_args: unknown): typeof odbcConnection => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn((): OdbcMockInstance => odbc);
 
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
@@ -415,15 +418,15 @@ describe('SouthODBC', () => {
     it('should manage odbc error', async () => {
       const odbcConnection = {
         close: mock.fn(),
-        query: mock.fn(() => {
+        query: mock.fn((_sql: string): never => {
           throw {
             message: 'odbc error',
             odbcErrors: [{ message: 'error1' }, { message: 'error2' }]
           };
         })
       };
-      const odbc = { connect: mock.fn(() => odbcConnection) };
-      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+      const odbc = { connect: mock.fn((_args: unknown): typeof odbcConnection => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn((): OdbcMockInstance => odbc);
 
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
@@ -469,13 +472,13 @@ describe('SouthODBC', () => {
     it('QueryOdbcData in case of item test', async () => {
       const odbcConnection = {
         close: mock.fn(),
-        query: mock.fn(() => [
+        query: mock.fn((_sql: string) => [
           { value: 1, timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2020-02-01T00:00:00.000Z' },
           { value: 2, timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2020-03-01T00:00:00.000Z' }
         ])
       };
-      const odbc = { connect: mock.fn(() => odbcConnection) };
-      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+      const odbc = { connect: mock.fn((_args: unknown): typeof odbcConnection => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn((): OdbcMockInstance => odbc);
 
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
@@ -646,10 +649,10 @@ describe('SouthODBC', () => {
     it('should get data from ODBC without auth', async () => {
       const odbcConnection = {
         close: mock.fn(),
-        query: mock.fn(() => [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
+        query: mock.fn((_sql: string) => [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
       };
-      const odbc = { connect: mock.fn(() => odbcConnection) };
-      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+      const odbc = { connect: mock.fn((_args: unknown): typeof odbcConnection => odbcConnection) };
+      odbcLoaderExports.loadOdbc = mock.fn((): OdbcMockInstance => odbc);
 
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';
@@ -682,11 +685,11 @@ describe('SouthODBC', () => {
 
     it('should manage connection error', async () => {
       const odbc = {
-        connect: mock.fn(() => {
+        connect: mock.fn((_args: unknown): never => {
           throw new Error('connection error');
         })
       };
-      odbcLoaderExports.loadOdbc = mock.fn(() => odbc);
+      odbcLoaderExports.loadOdbc = mock.fn((): OdbcMockInstance => odbc);
 
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2022-01-01T00:00:00.000Z';

@@ -17,15 +17,16 @@ export default class SouthConnectorMetricsServiceMock extends SouthConnectorMetr
   }
 
   constructor() {
-    super(
-      new SouthConnectorMock({} as SouthConnectorEntity<SouthSettings, SouthItemSettings>),
-      null! as SouthConnectorMetricsRepository
-    );
+    super(new SouthConnectorMock({} as SouthConnectorEntity<SouthSettings, SouthItemSettings>), null! as SouthConnectorMetricsRepository);
   }
 
   override updateMetrics = mock.fn((): void => undefined);
   override resetMetrics = mock.fn((): void => undefined);
   override destroy = mock.fn((): void => undefined);
-  override get metrics(): SouthConnectorMetrics { return {} as SouthConnectorMetrics; }
-  override get stream(): PassThrough { return new PassThrough(); }
+  override get metrics(): SouthConnectorMetrics {
+    return {} as SouthConnectorMetrics;
+  }
+  override get stream(): PassThrough {
+    return new PassThrough();
+  }
 }
