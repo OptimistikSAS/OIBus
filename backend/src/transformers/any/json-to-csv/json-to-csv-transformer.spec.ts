@@ -465,4 +465,107 @@ describe('JSONToCSVTransformer', () => {
     expect(jsonToCsvManifest.settings.key).toBe('options');
     expect(jsonToCsvManifest.settings.attributes[0].key).toBe('filename');
   });
+
+  describe('fieldProcess', () => {
+    it('should apply fieldProcess expression to the typed value before writing to CSV', async () => {
+      (csv.unparse as jest.Mock).mockReturnValue('csv result');
+
+      const options = {
+        filename: 'output.csv',
+        delimiter: 'SEMI_COLON',
+        encoding: 'UTF_8',
+        quoteChar: 'NONE',
+        escapeChar: 'DOUBLE_QUOTE',
+        newline: 'DEFAULT',
+        nullValue: '',
+        header: true,
+        rowIteratorPath: '$[*]',
+        fields: [
+          { jsonPath: '$[*].name', columnName: 'Name', dataType: 'string', fieldProcess: 'value.toUpperCase()' },
+          { jsonPath: '$[*].score', columnName: 'Score', dataType: 'number', fieldProcess: 'Math.round(value * 100) / 100' },
+          { jsonPath: '$[*].tag', columnName: 'Tag', dataType: 'string', fieldProcess: null }
+        ]
+      };
+
+      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
+      mockStream.push(JSON.stringify([{ name: 'hello', score: 3.14159, tag: 'keep-me' }]));
+      mockStream.push(null);
+      await flushPromises();
+      await promise;
+
+      expect(csv.unparse).toHaveBeenCalledWith(
+        [{ Name: 'HELLO', Score: 3.14, Tag: 'keep-me' }],
+        expect.objectContaining({ delimiter: ';' })
+      );
+    });
+
+    it('should skip fieldProcess when it is null or empty', async () => {
+      (csv.unparse as jest.Mock).mockReturnValue('csv result');
+
+      const options = {
+        filename: 'output.csv',
+        delimiter: 'SEMI_COLON',
+        encoding: 'UTF_8',
+        quoteChar: 'NONE',
+        escapeChar: 'DOUBLE_QUOTE',
+        newline: 'DEFAULT',
+        nullValue: '',
+        header: true,
+        rowIteratorPath: '$[*]',
+        fields: [
+          { jsonPath: '$[*].name', columnName: 'Name', dataType: 'string', fieldProcess: '' },
+          { jsonPath: '$[*].id', columnName: 'ID', dataType: 'number', fieldProcess: '   ' }
+        ]
+      };
+
+      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
+      mockStream.push(JSON.stringify([{ name: 'original', id: 42 }]));
+      mockStream.push(null);
+      await flushPromises();
+      await promise;
+
+      expect(csv.unparse).toHaveBeenCalledWith([{ Name: 'original', ID: 42 }], expect.objectContaining({ delimiter: ';' }));
+    });
+
+    it('should throw a descriptive error when fieldProcess expression is invalid', async () => {
+      const options = {
+        filename: 'output.csv',
+        delimiter: 'SEMI_COLON',
+        encoding: 'UTF_8',
+        quoteChar: 'NONE',
+        escapeChar: 'DOUBLE_QUOTE',
+        newline: 'DEFAULT',
+        nullValue: '',
+        header: true,
+        rowIteratorPath: '$[*]',
+        fields: [{ jsonPath: '$[*].name', columnName: 'Name', dataType: 'string', fieldProcess: 'value.nonExistentMethod()' }]
+      };
+
+      const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+      const mockStream = new Readable();
+      const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
+      // Attach the rejection handler BEFORE pushing data so the rejection is never "unhandled".
+      const rejectionCheck = expect(promise).rejects.toThrow('Field process evaluation failed');
+      mockStream.push(JSON.stringify([{ name: 'hello' }]));
+      mockStream.push(null);
+      await flushPromises();
+      await rejectionCheck;
+    });
+
+    it('should expose fieldProcess attribute in the manifest', () => {
+      const fieldItem = jsonToCsvManifest.settings.attributes.find(a => a.key === 'fields');
+      expect(fieldItem).toBeDefined();
+      expect(fieldItem!.type).toBe('array');
+      if (fieldItem!.type === 'array') {
+        const fieldProcessAttr = fieldItem!.rootAttribute.attributes.find(a => a.key === 'fieldProcess');
+        expect(fieldProcessAttr).toBeDefined();
+        expect(fieldProcessAttr!.type).toBe('string');
+        expect(fieldProcessAttr!.validators).toHaveLength(0);
+      }
+    });
+  });
 });

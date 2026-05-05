@@ -138,6 +138,12 @@ const manifest: TransformerManifest = {
               referralPathFromRoot: 'dataType',
               targetPathFromRoot: 'datetimeSettings',
               values: ['datetime']
+            },
+            {
+              referralPathFromRoot: 'dataType',
+              targetPathFromRoot: 'fieldProcess',
+              values: ['datetime'],
+              operator: 'NOT_EQUAL'
             }
           ],
           validators: [],
@@ -192,6 +198,18 @@ const manifest: TransformerManifest = {
                 row: 0,
                 columns: 4,
                 displayInViewMode: true
+              }
+            },
+            {
+              type: 'string',
+              key: 'fieldProcess',
+              translationKey: 'configuration.oibus.manifest.transformers.json-to-csv.fields.field-process',
+              defaultValue: null,
+              validators: [],
+              displayProperties: {
+                row: 1,
+                columns: 12,
+                displayInViewMode: false
               }
             },
             {

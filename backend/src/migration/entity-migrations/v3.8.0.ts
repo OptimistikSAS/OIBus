@@ -918,22 +918,41 @@ async function migrateCsvTransformerOptions(knex: Knex): Promise<void> {
 
   if (csvTransformers.length === 0) return;
 
+  // Lookup map: transformer id → function name, used to apply type-specific defaults.
+  const transformerFunctionName = new Map(csvTransformers.map(t => [t.id, t.function_name]));
   const transformerIds = csvTransformers.map(t => t.id);
 
   const tables = [NORTH_TRANSFORMERS_TABLE, HISTORY_QUERY_TRANSFORMERS_TABLE];
   for (const table of tables) {
-    const instances: Array<{ id: string; options: string | null }> = await knex(table)
-      .select('id', 'options')
+    const instances: Array<{ id: string; transformer_id: string; options: string | null }> = await knex(table)
+      .select('id', 'transformer_id', 'options')
       .whereIn('transformer_id', transformerIds)
       .whereNotNull('options');
 
     for (const instance of instances) {
       const options = JSON.parse(instance.options!);
+
+      // Generic CSV defaults (applied to both transformers)
       if (options.encoding === undefined) options.encoding = 'UTF_8';
       if (options.quoteChar === undefined) options.quoteChar = 'DOUBLE_QUOTE';
       if (options.escapeChar === undefined) options.escapeChar = 'DOUBLE_QUOTE';
       if (options.newline === undefined) options.newline = 'DEFAULT';
       if (options.header === undefined) options.header = true;
+
+      const functionName = transformerFunctionName.get(instance.transformer_id);
+
+      if (functionName === 'json-to-csv') {
+        // Add fieldProcess: null to every field that does not have it yet
+        if (Array.isArray(options.fields)) {
+          options.fields = (options.fields as Array<Record<string, unknown>>).map(field => ({
+            ...field,
+            fieldProcess: field.fieldProcess !== undefined ? field.fieldProcess : null
+          }));
+        }
+      } else if (functionName === 'time-values-to-csv') {
+        if (options.pointIdProcess === undefined) options.pointIdProcess = null;
+      }
+
       await knex(table)
         .where('id', instance.id)
         .update({ options: JSON.stringify(options) });
