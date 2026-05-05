@@ -28,7 +28,7 @@ export default class SouthServiceMock {
   getManifest = mock.fn((_type: string): SouthConnectorManifest => ({}) as SouthConnectorManifest);
   list = mock.fn((): Array<SouthConnectorEntityLight> => []);
   findById = mock.fn(
-    (_southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null =>
+    (_southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> =>
       ({}) as SouthConnectorEntity<SouthSettings, SouthItemSettings>
   );
   create = mock.fn(

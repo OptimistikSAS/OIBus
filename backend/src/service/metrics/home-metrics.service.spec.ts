@@ -29,10 +29,10 @@ describe('HomeMetricsService', () => {
     dataStreamEngine.getAllNorthMetrics.mock.mockImplementation(() => ({}));
     oIBusService.stream.emit('data', `data: ${JSON.stringify(testData.engine.metrics)}`);
     const stream = service.stream;
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
     oIBusService.stream.emit('data', `data: ${JSON.stringify(testData.engine.metrics)}`);
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
+    assert.deepStrictEqual(writeSpy.mock.calls[0].arguments, [
       `data: ${JSON.stringify({
         norths: {},
         engine: testData.engine.metrics,
@@ -43,9 +43,9 @@ describe('HomeMetricsService', () => {
 
   it('should get stream', () => {
     const stream = service.stream;
-    stream.write = mock.fn();
+    const writeSpy = mock.method(stream, 'write', () => true);
     mock.timers.tick(100);
-    assert.strictEqual((stream.write as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(writeSpy.mock.calls.length, 1);
     assert.ok(service.stream);
   });
 });

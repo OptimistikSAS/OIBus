@@ -5,10 +5,14 @@ import { DateTime } from 'luxon';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
 import SouthConnectorRepository from '../../repository/config/south-connector.repository';
-import DataStreamEngine from '../../engine/data-stream-engine';
+import type { CacheContentUpdateCommand } from '../../../shared/model/engine.model';
 import OIAnalyticsMessageRepository from '../../repository/config/oianalytics-message.repository';
 import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
 import type { ILogger } from '../../model/logger.model';
+
+interface ICacheUpdater {
+  updateCacheContent(type: 'north' | 'history', id: string, updateCommand: CacheContentUpdateCommand): Promise<void>;
+}
 
 const CLEAN_UP_INTERVAL = 3600 * 1000; // Every hour
 
@@ -36,7 +40,7 @@ export default class CleanupService {
     private readonly southConnectorRepository: SouthConnectorRepository,
     private readonly oianalyticsMessageRepository: OIAnalyticsMessageRepository,
     private readonly oianalyticsCommandRepository: OIAnalyticsCommandRepository,
-    private readonly dataStreamEngine: DataStreamEngine
+    private readonly dataStreamEngine: ICacheUpdater
   ) {
     this.logger = logger;
     this.dataFolder = path.resolve(baseCacheFolder);

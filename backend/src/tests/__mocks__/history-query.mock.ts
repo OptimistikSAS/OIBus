@@ -23,6 +23,13 @@ export default class HistoryQueryMock extends HistoryQuery {
     super(connector, null! as NorthConnector<NorthSettings>, null! as SouthConnector<SouthSettings, SouthItemSettings>, null! as ILogger);
   }
 
+  override get historyQueryConfiguration() {
+    return super.historyQueryConfiguration;
+  }
+  override set historyQueryConfiguration(_v: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
+    // south and north are null in this mock — skip the connector propagation
+  }
+
   override start = mock.fn(async (): Promise<void> => undefined);
   override stop = mock.fn(async (): Promise<void> => undefined);
   override resetCache = mock.fn(async (): Promise<void> => undefined);

@@ -47,6 +47,7 @@ before(() => {
 
 describe('OIAnalytics Client', () => {
   let service: InstanceType<typeof OIAnalyticsClientType>;
+  let writeFileMock: ReturnType<typeof mock.method>;
 
   beforeEach(() => {
     // Reset all mock functions in-place so the SUT picks up the fresh fns
@@ -57,7 +58,7 @@ describe('OIAnalytics Client', () => {
     mockUtilsOianalytics.getProxyOptions = mock.fn(() => ({ acceptUnauthorized: false, proxy: undefined }));
     mockUtilsOianalytics.getUrl = mock.fn((endpoint: string, host: string) => new URL(endpoint, host));
 
-    mock.method(fs, 'writeFile', async () => undefined);
+    writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
 
     service = new OIAnalyticsClient();
   });
@@ -292,8 +293,8 @@ describe('OIAnalytics Client', () => {
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/upgrade/asset'));
       assert.deepStrictEqual(calledOptions.query, { assetId: 'asset-1' });
 
-      assert.strictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-      assert.deepStrictEqual((fs.writeFile as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [
+      assert.strictEqual(writeFileMock.mock.calls.length, 1);
+      assert.deepStrictEqual(writeFileMock.mock.calls[0].arguments, [
         'target.zip',
         Buffer.from((await mockResponse.body.arrayBuffer()) as ArrayBuffer)
       ]);

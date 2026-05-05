@@ -66,15 +66,16 @@ import {
 } from '../../model/oianalytics-command.model';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { CacheSearchResult, FileCacheContent, OIBusContent } from '../../../shared/model/engine.model';
 import { EngineSettings } from '../../model/engine.model';
 
 import type OIAnalyticsCommandServiceType from './oianalytics-command.service';
 import type { toOIBusCommandDTO as toOIBusCommandDTOType } from './oianalytics-command.service';
-import { toSouthConnectorItemDTO } from '../south.service';
-import { toHistoryQueryItemDTO } from '../history-query.service';
+import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
+import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -425,17 +426,17 @@ describe('OIAnalytics Command Service', () => {
 
   it('should check retrieved command', async () => {
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
-    oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => testData.oIAnalytics.commands.oIBusList);
+    oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => testData.oIAnalytics.commands.oIAnalyticsList);
 
     await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.retrieveCancelledCommands.mock.calls.length, 1);
-    assert.strictEqual(oIAnalyticsCommandRepository.cancel.mock.calls.length, testData.oIAnalytics.commands.oIBusList.length);
+    assert.strictEqual(oIAnalyticsCommandRepository.cancel.mock.calls.length, testData.oIAnalytics.commands.oIAnalyticsList.length);
     assert.ok(
       (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
         c =>
           c.arguments[0] ===
-          `${testData.oIAnalytics.commands.oIBusList.length} commands cancelled among the ${testData.oIAnalytics.commands.oIBusList.length} pending commands`
+          `${testData.oIAnalytics.commands.oIAnalyticsList.length} commands cancelled among the ${testData.oIAnalytics.commands.oIBusList.length} pending commands`
       )
     );
 
@@ -966,8 +967,8 @@ describe('OIAnalytics Command Service', () => {
     southService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: testData.south.list[0].items.map(item =>
         toSouthConnectorItemDTO(item, testData.south.list[0].type, (id: string) => ({ id, friendlyName: id }))
-      ),
-      errors: []
+      ) as Array<SouthConnectorItemDTO>,
+      errors: [] as Array<{ item: Record<string, string>; error: string }>
     }));
 
     await service.executeCommand();
@@ -992,7 +993,9 @@ describe('OIAnalytics Command Service', () => {
 
   it('should execute create-or-update-south-items-from-csv command and throw an error if south not found', async () => {
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[14]]);
-    southService.findById.mock.mockImplementationOnce(() => null);
+    southService.findById.mock.mockImplementationOnce((southId: string) => {
+      throw new Error(`South connector ${southId} not found`);
+    });
 
     await service.executeCommand();
 
@@ -1012,10 +1015,10 @@ describe('OIAnalytics Command Service', () => {
     southService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: testData.south.list[0].items.map(item =>
         toSouthConnectorItemDTO(item, testData.south.list[0].type, (id: string) => ({ id, friendlyName: id }))
-      ),
+      ) as Array<SouthConnectorItemDTO>,
       errors: [
-        { item: { name: 'item1' }, error: 'error1' },
-        { item: { name: 'item2' }, error: 'error2' }
+        { item: { name: 'item1' } as Record<string, string>, error: 'error1' },
+        { item: { name: 'item2' } as Record<string, string>, error: 'error2' }
       ]
     }));
 
@@ -1439,8 +1442,8 @@ describe('OIAnalytics Command Service', () => {
     historyQueryService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: testData.historyQueries.list[0].items.map(item =>
         toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, (id: string) => ({ id, friendlyName: id }))
-      ),
-      errors: []
+      ) as Array<HistoryQueryItemDTO>,
+      errors: [] as Array<{ item: Record<string, string>; error: string }>
     }));
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
@@ -1476,7 +1479,9 @@ describe('OIAnalytics Command Service', () => {
         delimiter: ','
       }
     } as OIBusCreateOrUpdateHistoryQuerySouthItemsFromCSVCommand;
-    historyQueryService.findById.mock.mockImplementationOnce(() => null);
+    historyQueryService.findById.mock.mockImplementationOnce((historyId: string) => {
+      throw new Error(`History query ${historyId} not found`);
+    });
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
 
     await service.executeCommand();
@@ -1503,10 +1508,10 @@ describe('OIAnalytics Command Service', () => {
     historyQueryService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: testData.historyQueries.list[0].items.map(item =>
         toHistoryQueryItemDTO(item, testData.historyQueries.list[0].southType, (id: string) => ({ id, friendlyName: id }))
-      ),
+      ) as Array<HistoryQueryItemDTO>,
       errors: [
-        { item: { name: 'item1' }, error: 'error1' },
-        { item: { name: 'item2' }, error: 'error2' }
+        { item: { name: 'item1' } as Record<string, string>, error: 'error1' },
+        { item: { name: 'item2' } as Record<string, string>, error: 'error2' }
       ]
     }));
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);

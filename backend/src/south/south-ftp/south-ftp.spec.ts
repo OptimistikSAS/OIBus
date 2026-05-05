@@ -31,7 +31,7 @@ describe('SouthFTP', () => {
     list: mock.fn(async (_path?: string) => [] as Array<FileInfo>),
     downloadTo: mock.fn(async (_dest: string, _remote: string) => undefined),
     remove: mock.fn(async (_path: string) => undefined),
-    close: mock.fn(() => undefined)
+    close: mock.fn(async () => undefined)
   };
 
   const ftpExports = {
@@ -192,7 +192,7 @@ describe('SouthFTP', () => {
     mockFtpClient.list = mock.fn(async (_path?: string) => [] as Array<FileInfo>);
     mockFtpClient.downloadTo = mock.fn(async (_dest: string, _remote: string) => undefined);
     mockFtpClient.remove = mock.fn(async (_path: string) => undefined);
-    mockFtpClient.close = mock.fn(() => undefined);
+    mockFtpClient.close = mock.fn(async () => undefined);
 
     utilsExports.checkAge.mock.resetCalls();
     utilsExports.checkAge.mock.mockImplementation(() => true);
@@ -491,10 +491,8 @@ describe('SouthFTP', () => {
     });
 
     it('should query files with file that has zero size', async () => {
-      const fileWithNoSize = {
-        ...createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())),
-        size: 0
-      };
+      const fileWithNoSize = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      fileWithNoSize.size = 0;
 
       mockFtpClient.list.mock.mockImplementation(async () => [fileWithNoSize]);
 
@@ -600,8 +598,10 @@ describe('SouthFTP', () => {
       const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
       await southWithLimit.start();
 
-      const file1 = { ...createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 600 * 1024 };
-      const file2 = { ...createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 600 * 1024 };
+      const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      file1.size = 600 * 1024;
+      const file2 = createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      file2.size = 600 * 1024;
 
       mockFtpClient.list.mock.mockImplementation(async () => [file1, file2]);
 
@@ -631,8 +631,10 @@ describe('SouthFTP', () => {
       const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
       await southWithLimit.start();
 
-      const file1 = { ...createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 512 * 1024 };
-      const file2 = { ...createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis())), size: 512 * 1024 };
+      const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      file1.size = 512 * 1024;
+      const file2 = createMockFileInfo('file2.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      file2.size = 512 * 1024;
       const file3 = createMockFileInfo('file3.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 
       mockFtpClient.list.mock.mockImplementation(async () => [file1, file2, file3]);
@@ -881,6 +883,10 @@ describe('SouthFTP', () => {
       const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 1 }).toMillis()));
 
       southCacheService.getItemLastValue.mock.mockImplementation(() => ({
+        itemId: 'id2',
+        groupId: null,
+        queryTime: null,
+        trackedInstant: null,
         value: [{ filename: 'test.log', modifiedTime: DateTime.now().minus({ minutes: 5 }).toMillis() }]
       }));
 

@@ -1,5 +1,5 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { ipFilterSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import IpFilterRepository from '../repository/config/ip-filter.repository';
 import { IPFilterCommandDTO, IPFilterDTO } from '../../shared/model/ip-filter.model';
@@ -14,7 +14,7 @@ export default class IPFilterService {
   constructor(
     protected readonly validator: JoiValidator,
     private ipFilterRepository: IpFilterRepository,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService
+    private oIAnalyticsMessageService: IOIAnalyticsMessageService
   ) {}
 
   list(): Array<IPFilter> {

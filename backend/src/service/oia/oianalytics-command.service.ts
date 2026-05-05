@@ -4,10 +4,20 @@ import { encryptionService } from '../encryption.service';
 import { DateTime } from 'luxon';
 import path from 'node:path';
 import { version } from '../../../package.json';
-import ScanModeService from '../scan-mode.service';
+import type { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
+import type { ScanMode } from '../../model/scan-mode.model';
 import OIAnalyticsCommandRepository from '../../repository/config/oianalytics-command.repository';
 import { OIAnalyticsRegistration, OIAnalyticsRegistrationEditCommand } from '../../model/oianalytics-registration.model';
-import OIBusService from '../oibus.service';
+import type {
+  CacheContentUpdateCommand,
+  CacheSearchParam,
+  CacheSearchResult,
+  DataFolderType,
+  EngineSettingsCommandDTO,
+  EngineSettingsUpdateResultDTO,
+  FileCacheContent
+} from '../../../shared/model/engine.model';
+import type { EngineSettings } from '../../model/engine.model';
 import {
   OIBusCommand,
   OIBusCreateCertificateCommand,
@@ -56,24 +66,151 @@ import {
 } from '../../model/oianalytics-command.model';
 import { CommandSearchParam, OIBusCommandDTO } from '../../../shared/model/command.model';
 import { Page } from '../../../shared/model/types';
-import SouthService, { toSouthConnectorItemDTO } from '../south.service';
-import NorthService from '../north.service';
+import { toSouthConnectorItemDTO } from '../south-connector-dto.utils';
 import OIAnalyticsClient from './oianalytics-client.service';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import OIAnalyticsMessageService from './oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../../model/oianalytics-message.model';
 import OIAnalyticsRegistrationService from './oianalytics-registration.service';
 import { EventEmitter } from 'node:events';
-import IPFilterService from '../ip-filter.service';
-import CertificateService from '../certificate.service';
-import HistoryQueryService, { toHistoryQueryItemDTO } from '../history-query.service';
-import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
+import type { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
+import type { IPFilter } from '../../model/ip-filter.model';
+import type { CertificateCommandDTO } from '../../../shared/model/certificate.model';
+import { toHistoryQueryItemDTO } from '../history-query-item-dto.utils';
+import { HistoryQueryCommandDTO, HistoryQueryItemCommandDTO, HistoryQueryItemDTO } from '../../../shared/model/history-query.model';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
-import { OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { NotFoundError } from '../../model/types';
-import { SouthConnectorItemCommandDTO } from '../../../shared/model/south-connector.model';
-import TransformerService from '../transformer.service';
+import {
+  OIBusSouthType,
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemTestingSettings,
+  SouthConnectorManifest
+} from '../../../shared/model/south-connector.model';
+import type { SouthConnectorEntity } from '../../model/south-connector.model';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest, OIBusNorthType } from '../../../shared/model/north-connector.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
+import type { HistoryQueryEntity } from '../../model/histor-query.model';
+import { CustomTransformerCommandDTO, TransformerTestRequest, TransformerTestResponse } from '../../../shared/model/transformer.model';
 import type { ILogger } from '../../model/logger.model';
+
+interface ICertificateService {
+  create(command: CertificateCommandDTO, createdBy: string): Promise<unknown>;
+  update(certificateId: string, command: CertificateCommandDTO, updatedBy: string): Promise<void>;
+  delete(certificateId: string): Promise<void>;
+}
+
+interface IIPFilterService {
+  create(command: IPFilterCommandDTO, createdBy: string): Promise<IPFilter>;
+  update(ipFilterId: string, command: IPFilterCommandDTO, updatedBy: string): Promise<void>;
+  delete(ipFilterId: string): Promise<void>;
+}
+
+interface IScanModeService {
+  create(command: ScanModeCommandDTO, createdBy: string): Promise<ScanMode>;
+  update(scanModeId: string, command: ScanModeCommandDTO, updatedBy: string): Promise<void>;
+  delete(scanModeId: string): Promise<void>;
+}
+
+interface IOIBusService {
+  getEngineSettings(): EngineSettings;
+  updateOIBusVersion(version: string, launcherVersion: string): void;
+  loggerEvent: EventEmitter;
+  updateEngineSettings(command: EngineSettingsCommandDTO, updatedBy: string): Promise<EngineSettingsUpdateResultDTO>;
+  searchCacheContent(type: 'north' | 'history', id: string, searchParams: CacheSearchParam): Promise<CacheSearchResult>;
+  getFileFromCache(type: 'north' | 'history', id: string, folder: DataFolderType, filename: string): Promise<FileCacheContent>;
+  updateCacheContent(type: 'north' | 'history', id: string, updateCommand: CacheContentUpdateCommand): Promise<void>;
+}
+
+interface ICommandSouthService {
+  listManifest(): Array<SouthConnectorManifest>;
+  findById(southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings> | null;
+  create(command: SouthConnectorCommandDTO, retrieveSecretsFromSouth: string | null, createdBy: string): Promise<unknown>;
+  update(southId: string, command: SouthConnectorCommandDTO, updatedBy: string): Promise<void>;
+  delete(southId: string): Promise<void>;
+  checkImportItems(
+    southType: string,
+    fileContent: string,
+    delimiter: string,
+    existingItems: Array<{ name: string }>
+  ): Promise<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: Record<string, string>; error: string }> }>;
+  importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>, user: string, deleteItemsNotPresent?: boolean): Promise<void>;
+  testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult>;
+  testItem(
+    southId: string,
+    southType: OIBusSouthType,
+    itemName: string,
+    southSettings: SouthSettings,
+    itemSettings: SouthItemSettings,
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent>;
+}
+
+interface ICommandNorthService {
+  listManifest(): Array<NorthConnectorManifest>;
+  create(command: NorthConnectorCommandDTO, retrieveSecretsFromNorth: string | null, createdBy: string): Promise<unknown>;
+  update(northId: string, command: NorthConnectorCommandDTO, updatedBy: string): Promise<void>;
+  delete(northId: string): Promise<void>;
+  testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<OIBusConnectionTestResult>;
+  executeSetpoint(
+    northConnectorId: string,
+    commandContent: Array<{ reference: string; value: string }>,
+    callback: (result: string) => void
+  ): Promise<void>;
+}
+
+interface ICommandHistoryQueryService {
+  findById(historyId: string): HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> | null;
+  create(
+    command: HistoryQueryCommandDTO,
+    retrieveSecretsFromSouth: string | undefined,
+    retrieveSecretsFromNorth: string | undefined,
+    retrieveSecretsFromHistoryQuery: string | undefined,
+    createdBy: string
+  ): Promise<unknown>;
+  update(historyId: string, command: HistoryQueryCommandDTO, resetCache: boolean, updatedBy: string): Promise<void>;
+  delete(historyId: string): Promise<void>;
+  checkImportItems(
+    southType: string,
+    fileContent: string,
+    delimiter: string,
+    existingItems: Array<Omit<HistoryQueryItemDTO, 'createdBy' | 'updatedBy'>>
+  ): Promise<{ items: Array<HistoryQueryItemDTO>; errors: Array<{ item: Record<string, string>; error: string }> }>;
+  importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO>, user: string, deleteItemsNotPresent?: boolean): Promise<void>;
+  testNorth(
+    historyId: string,
+    northType: OIBusNorthType,
+    retrieveSecretsFromNorth: string | undefined,
+    settingsToTest: NorthSettings
+  ): Promise<OIBusConnectionTestResult>;
+  testSouth(
+    historyId: string,
+    southType: OIBusSouthType,
+    retrieveSecretsFromSouth: string | undefined,
+    settingsToTest: SouthSettings
+  ): Promise<OIBusConnectionTestResult>;
+  testItem(
+    historyId: string,
+    southType: OIBusSouthType,
+    itemName: string,
+    retrieveSecretsFromSouth: string | undefined,
+    southSettings: SouthSettings,
+    itemSettings: SouthItemSettings,
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent>;
+  start(historyId: string): Promise<void>;
+  pause(historyId: string): Promise<void>;
+}
+
+interface ICommandTransformerService {
+  create(command: CustomTransformerCommandDTO, createdBy: string): Promise<unknown>;
+  update(transformerId: string, command: CustomTransformerCommandDTO, updatedBy: string): Promise<void>;
+  delete(transformerId: string): Promise<void>;
+  test(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Promise<TransformerTestResponse>;
+}
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
@@ -86,16 +223,16 @@ export default class OIAnalyticsCommandService {
   constructor(
     private oIAnalyticsCommandRepository: OIAnalyticsCommandRepository,
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService,
+    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
     private oIAnalyticsClient: OIAnalyticsClient,
-    private oIBusService: OIBusService,
-    private scanModeService: ScanModeService,
-    private ipFilterService: IPFilterService,
-    private certificateService: CertificateService,
-    private southService: SouthService,
-    private northService: NorthService,
-    private historyQueryService: HistoryQueryService,
-    private transformerService: TransformerService,
+    private oIBusService: IOIBusService,
+    private scanModeService: IScanModeService,
+    private ipFilterService: IIPFilterService,
+    private certificateService: ICertificateService,
+    private southService: ICommandSouthService,
+    private northService: ICommandNorthService,
+    private historyQueryService: ICommandHistoryQueryService,
+    private transformerService: ICommandTransformerService,
     private logger: ILogger,
     private binaryFolder: string,
     private ignoreRemoteUpdate: boolean,

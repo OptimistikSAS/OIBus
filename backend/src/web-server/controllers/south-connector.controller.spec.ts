@@ -7,10 +7,9 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
-  SouthItemGroupDTO,
   SouthItemGroupCommandDTO
 } from '../../../shared/model/south-connector.model';
-import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
+import type { SouthItemGroupEntity } from '../../model/south-connector.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
@@ -27,12 +26,6 @@ const nodeRequire = createRequire(import.meta.url);
 let mockSouthServiceModule: Record<string, ReturnType<typeof mock.fn>>;
 let mockUtilsModule: Record<string, ReturnType<typeof mock.fn>>;
 let SouthConnectorController: typeof SouthConnectorControllerShape;
-
-const toScanModeDTO = (sm: (typeof testData.scanMode.list)[0]): ScanModeDTO => ({
-  ...sm,
-  createdBy: { id: sm.createdBy, friendlyName: sm.createdBy },
-  updatedBy: { id: sm.updatedBy, friendlyName: sm.updatedBy }
-});
 
 before(() => {
   fixTsoaModuleResolution(nodeRequire);
@@ -88,7 +81,7 @@ describe('SouthConnectorController', () => {
     };
     mockRes.status = mock.fn(() => mockRes);
     mockRequest = {
-      services: { southService, scanModeService, oIBusService, userService },
+      services: Object.assign({} as CustomExpressRequest['services'], { southService, scanModeService, oIBusService, userService }),
       user: { id: 'test', login: 'testUser' },
       res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
     } as Partial<CustomExpressRequest>;
@@ -275,7 +268,7 @@ describe('SouthConnectorController', () => {
       filePath: '/path/to/file.json',
       content: '{"key": "value"}'
     };
-    southService.testItem = mock.fn(() => mockContent);
+    southService.testItem = mock.fn(async () => mockContent);
 
     const result = await controller.testItem(southId, southType, itemName, requestBody, mockRequest as CustomExpressRequest);
 
@@ -359,7 +352,7 @@ describe('SouthConnectorController', () => {
       totalPages: 1
     };
     southService.findById = mock.fn(() => testData.south.list[0]);
-    southService.searchItems = mock.fn(async () => mockPageResult);
+    southService.searchItems = mock.fn(() => mockPageResult);
 
     const result = await controller.searchItems(southId, name, scanModeId, enabled, page, mockRequest as CustomExpressRequest);
 
@@ -381,7 +374,7 @@ describe('SouthConnectorController', () => {
       totalPages: 1
     };
     southService.findById = mock.fn(() => testData.south.list[0]);
-    southService.searchItems = mock.fn(async () => mockPageResult);
+    southService.searchItems = mock.fn(() => mockPageResult);
 
     const result = await controller.searchItems(southId, undefined, undefined, undefined, undefined, mockRequest as CustomExpressRequest);
 
@@ -421,6 +414,8 @@ describe('SouthConnectorController', () => {
     const mockLastValue = {
       itemId,
       itemName: testData.south.list[0].items[0].name,
+      groupId: null,
+      groupName: '',
       queryTime: '2024-01-01T00:00:00.000Z',
       value: { temperature: 42 },
       trackedInstant: '2024-01-02T00:00:00.000Z'
@@ -626,7 +621,7 @@ describe('SouthConnectorController', () => {
       items: [{ id: '1', name: 'item1' }] as Array<SouthConnectorItemDTO>,
       errors: []
     };
-    southService.checkImportItems = mock.fn(() => mockResult);
+    southService.checkImportItems = mock.fn(async () => mockResult);
 
     const result = await controller.checkImportItems(
       southType,
@@ -708,22 +703,20 @@ describe('SouthConnectorController', () => {
 
   it('should list groups for a south connector', async () => {
     const southId = testData.south.list[0].id;
-    const mockGroups: Array<SouthItemGroupDTO> = [
+    const mockGroups: Array<SouthItemGroupEntity> = [
       {
         id: 'group1',
-        createdBy: { id: '', friendlyName: '' },
-        updatedBy: { id: '', friendlyName: '' },
+        createdBy: '',
+        updatedBy: '',
         createdAt: '2024-01-01T00:00:00.000Z',
         updatedAt: '2024-01-01T00:00:00.000Z',
-        standardSettings: {
-          name: 'Group 1',
-          scanMode: toScanModeDTO(testData.scanMode.list[0])
-        },
-        historySettings: {
-          overlap: null,
-          maxReadInterval: null,
-          readDelay: 0
-        }
+        name: 'Group 1',
+        southId,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0,
+        items: []
       }
     ];
     southService.getGroups = mock.fn(() => mockGroups);
@@ -738,21 +731,19 @@ describe('SouthConnectorController', () => {
   it('should get a specific group by id', async () => {
     const southId = testData.south.list[0].id;
     const groupId = 'group1';
-    const mockGroup: SouthItemGroupDTO = {
+    const mockGroup: SouthItemGroupEntity = {
       id: 'group1',
-      createdBy: { id: '', friendlyName: '' },
-      updatedBy: { id: '', friendlyName: '' },
+      createdBy: '',
+      updatedBy: '',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
-      standardSettings: {
-        name: 'Group 1',
-        scanMode: toScanModeDTO(testData.scanMode.list[0])
-      },
-      historySettings: {
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: 0
-      }
+      name: 'Group 1',
+      southId,
+      scanMode: testData.scanMode.list[0],
+      overlap: null,
+      maxReadInterval: null,
+      readDelay: 0,
+      items: []
     };
     southService.getGroup = mock.fn(() => mockGroup);
 
@@ -777,21 +768,19 @@ describe('SouthConnectorController', () => {
         readDelay: 0
       }
     };
-    const mockCreatedGroup: SouthItemGroupDTO = {
+    const mockCreatedGroup: SouthItemGroupEntity = {
       id: 'newGroupId',
-      createdBy: { id: '', friendlyName: '' },
-      updatedBy: { id: '', friendlyName: '' },
+      createdBy: '',
+      updatedBy: '',
       createdAt: '2024-01-01T00:00:00.000Z',
       updatedAt: '2024-01-01T00:00:00.000Z',
-      standardSettings: {
-        name: 'New Group',
-        scanMode: toScanModeDTO(testData.scanMode.list[0])
-      },
-      historySettings: {
-        overlap: 5,
-        maxReadInterval: null,
-        readDelay: 0
-      }
+      name: 'New Group',
+      southId,
+      scanMode: testData.scanMode.list[0],
+      overlap: 5,
+      maxReadInterval: null,
+      readDelay: 0,
+      items: []
     };
     southService.createGroup = mock.fn(() => mockCreatedGroup);
 
@@ -817,7 +806,7 @@ describe('SouthConnectorController', () => {
         readDelay: 0
       }
     };
-    southService.updateGroup = mock.fn(async () => undefined);
+    southService.updateGroup = mock.fn(() => ({}) as SouthItemGroupEntity);
 
     await controller.updateGroup(southId, groupId, command, mockRequest as CustomExpressRequest);
 

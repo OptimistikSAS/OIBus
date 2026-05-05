@@ -37,7 +37,7 @@ describe('CertificateController', () => {
     certificateService = new CertificateServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: { certificateService, userService },
+      services: Object.assign({} as CustomExpressRequest['services'], { certificateService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockCertServiceModule.toCertificateDTO = mock.fn((cert: unknown, getUserInfo: (id: string) => void) => {

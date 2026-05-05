@@ -6,23 +6,15 @@ import {
   NorthConnectorTypedDTO,
   OIBusNorthType
 } from '../../shared/model/north-connector.model';
-import azureManifest from '../north/north-azure-blob/manifest';
-import oianalyticsManifest from '../north/north-oianalytics/manifest';
-import fileWriterManifest from '../north/north-file-writer/manifest';
-import consoleManifest from '../north/north-console/manifest';
-import amazonManifest from '../north/north-amazon-s3/manifest';
-import sftpManifest from '../north/north-sftp/manifest';
-import restManifest from '../north/north-rest/manifest';
-import opcuaManifest from '../north/north-opcua/manifest';
-import mqttManifest from '../north/north-mqtt/manifest';
-import modbusManifest from '../north/north-modbus/manifest';
+import { northManifestList } from './north-manifests';
+export { northManifestList } from './north-manifests';
 import { NorthConnectorEntity, NorthConnectorEntityLight } from '../model/north-connector.model';
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import NorthConnectorMetricsRepository from '../repository/metrics/north-connector-metrics.repository';
 import LogRepository from '../repository/logs/log.repository';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { checkScanMode } from './utils';
 import { GetUserInfo } from '../../shared/model/types';
 import { ScanMode } from '../model/scan-mode.model';
@@ -30,7 +22,7 @@ import SouthConnectorRepository from '../repository/config/south-connector.repos
 import { NorthSettings } from '../../shared/model/north-settings.model';
 import CertificateRepository from '../repository/config/certificate.repository';
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
-import DataStreamEngine from '../engine/data-stream-engine';
+import type DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
 import {
   CacheMetadataSource,
@@ -49,18 +41,6 @@ import { SouthConnectorItemEntityLight, SouthItemGroupEntity, SouthItemGroupEnti
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import { SouthItemGroupLightDTO } from '../../shared/model/south-connector.model';
 
-export const northManifestList: Array<NorthConnectorManifest> = [
-  consoleManifest,
-  oianalyticsManifest,
-  azureManifest,
-  amazonManifest,
-  fileWriterManifest,
-  sftpManifest,
-  restManifest,
-  opcuaManifest,
-  modbusManifest,
-  mqttManifest
-];
 
 export default class NorthService {
   constructor(
@@ -73,7 +53,7 @@ export default class NorthService {
     private logRepository: LogRepository,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService,
+    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
     private readonly transformerService: TransformerService,
     private readonly engine: DataStreamEngine
   ) {}

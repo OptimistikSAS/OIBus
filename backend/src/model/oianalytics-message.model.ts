@@ -1,5 +1,12 @@
 import { OIAnalyticsMessageStatus, OIAnalyticsMessageType } from '../../shared/model/oianalytics-message.model';
 import { BaseEntity, Instant } from './types';
+import type { ILogger } from './logger.model';
+
+export interface IOIAnalyticsMessageService {
+  createFullConfigMessageIfNotPending(): void;
+  createFullHistoryQueriesMessageIfNotPending(): void;
+  setLogger(logger: ILogger): void;
+}
 
 interface BaseOIAnalyticsMessage extends BaseEntity {
   type: OIAnalyticsMessageType;

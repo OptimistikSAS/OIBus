@@ -28,14 +28,17 @@ const certificateRepository = new CertificateRepositoryMock() as unknown as Cert
 const oIAnalyticsRegistrationRepository = new OIAnalyticsRegistrationRepositoryMock() as unknown as OIAnalyticsRegistrationRepository;
 
 const httpRequestExports = {
-  HTTPRequest: mock.fn(async () => createMockResponse(200, {}))
+  HTTPRequest: mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}))
 };
 
 const utilsOianalyticsExports = {
   buildHttpOptions: mock.fn(async () => ({ headers: {}, auth: {}, timeout: 30000 })),
   getHost: mock.fn(() => 'http://mock-host'),
   getUrl: mock.fn((endpoint: string, host: string) => new URL(endpoint, host)),
-  parseData: mock.fn(() => ({ formattedResult: [], maxInstant: '2023-01-01T00:00:00.000Z' })),
+  parseData: mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
+    formattedResult: [],
+    maxInstant: '2023-01-01T00:00:00.000Z'
+  })),
   testOIAnalyticsConnection: mock.fn(async () => undefined)
 };
 
@@ -46,7 +49,7 @@ const utilsExports = {
   generateIntervals: mock.fn(() => []),
   groupItemsByGroup: mock.fn(() => []),
   validateCronExpression: mock.fn(() => ({ expression: '' })),
-  formatQueryParams: mock.fn(() => ({ formatted: 'query' })),
+  formatQueryParams: mock.fn((): Record<string, string> => ({ formatted: 'query' })),
   persistResults: mock.fn(async () => undefined),
   generateReplacementParameters: mock.fn(() => []),
   formatInstant: mock.fn((inst: unknown) => inst),
@@ -111,7 +114,9 @@ const baseConfiguration: SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIA
 };
 
 let SouthOIAnalytics: typeof SouthOIAnalyticsClass;
-let addContentCallback: ReturnType<typeof mock.fn>;
+let addContentCallback: ReturnType<
+  typeof mock.fn<(_southId: string, _data: unknown, _queryTime: string, _items: unknown) => Promise<undefined>>
+>;
 let south: SouthOIAnalyticsClass;
 
 describe('SouthOIAnalytics', () => {
@@ -130,16 +135,19 @@ describe('SouthOIAnalytics', () => {
 
   beforeEach(() => {
     southCacheService = new SouthCacheServiceMock();
-    addContentCallback = mock.fn();
+    addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
 
     // Reset mutable exports
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
     utilsOianalyticsExports.buildHttpOptions = mock.fn(async () => ({ headers: {}, auth: {}, timeout: 30000 }));
     utilsOianalyticsExports.getHost = mock.fn(() => 'http://mock-host');
     utilsOianalyticsExports.getUrl = mock.fn((endpoint: string, host: string) => new URL(endpoint, host));
-    utilsOianalyticsExports.parseData = mock.fn(() => ({ formattedResult: [], maxInstant: '2023-01-01T00:00:00.000Z' }));
+    utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
+      formattedResult: [],
+      maxInstant: '2023-01-01T00:00:00.000Z'
+    }));
     utilsOianalyticsExports.testOIAnalyticsConnection = mock.fn(async () => undefined);
-    utilsExports.formatQueryParams = mock.fn(() => ({ formatted: 'query' }));
+    utilsExports.formatQueryParams = mock.fn((): Record<string, string> => ({ formatted: 'query' }));
     utilsExports.persistResults = mock.fn(async () => undefined);
 
     (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get = mock.fn(
@@ -183,8 +191,8 @@ describe('SouthOIAnalytics', () => {
   describe('queryData (Internal)', () => {
     it('should build request correctly and return JSON data', async () => {
       const mockData = [{ val: 1 }];
-      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, mockData));
-      utilsExports.formatQueryParams = mock.fn(() => ({ some: 'query' }));
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, mockData));
+      utilsExports.formatQueryParams = mock.fn((): Record<string, string> => ({ some: 'query' }));
 
       const result = await south.queryData(baseConfiguration.items[0], 'start', 'end');
 
@@ -201,7 +209,7 @@ describe('SouthOIAnalytics', () => {
     });
 
     it('should throw if query request fails', async () => {
-      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(400, 'Bad Request'));
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(400, 'Bad Request'));
 
       await assert.rejects(south.queryData(baseConfiguration.items[0], 'start', 'end'), {
         message: 'HTTP request failed with status code 400 and message: Bad Request'
@@ -214,8 +222,10 @@ describe('SouthOIAnalytics', () => {
       const mockRawData = [{ raw: 'data' }];
       const mockFormatted = [{ pointId: 'p1', value: 10 }];
 
-      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, mockRawData));
-      utilsOianalyticsExports.parseData = mock.fn(() => ({ formattedResult: mockFormatted }));
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, mockRawData));
+      utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
+        formattedResult: mockFormatted
+      }));
 
       const testingSettings = {
         history: { startTime: 'start', endTime: 'end' }
@@ -237,8 +247,11 @@ describe('SouthOIAnalytics', () => {
       const mockFormatted = [{ pointId: 'p1' }];
       const maxInstant = '2023-02-01T12:00:00.000Z';
 
-      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, mockRaw));
-      utilsOianalyticsExports.parseData = mock.fn(() => ({ formattedResult: mockFormatted, maxInstant }));
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, mockRaw));
+      utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => ({
+        formattedResult: mockFormatted,
+        maxInstant
+      }));
 
       const resultInstant = await south.historyQuery([item], 'start', 'end');
 
@@ -266,7 +279,7 @@ describe('SouthOIAnalytics', () => {
     it('should handle empty results gracefully', async () => {
       const item = baseConfiguration.items[0];
 
-      httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, []));
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, []));
       utilsOianalyticsExports.parseData = mock.fn(() => ({ formattedResult: [], maxInstant: 'default' }));
 
       await south.historyQuery([item], 'start', 'end');
@@ -286,12 +299,12 @@ describe('SouthOIAnalytics', () => {
         { ...baseConfiguration.items[0], name: 'i2' }
       ];
 
-      httpRequestExports.HTTPRequest = mock.fn(async () => {
+      httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => {
         return createMockResponse(200, []);
       });
 
       let parseCallCount = 0;
-      utilsOianalyticsExports.parseData = mock.fn(() => {
+      utilsOianalyticsExports.parseData = mock.fn((): { formattedResult: Array<unknown>; maxInstant?: string } => {
         parseCallCount++;
         if (parseCallCount === 1) return { formattedResult: [], maxInstant: '2023-01-02' };
         return { formattedResult: [], maxInstant: '2023-01-01' };
