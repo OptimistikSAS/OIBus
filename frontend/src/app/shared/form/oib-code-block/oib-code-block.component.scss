@@ -1,0 +1,9 @@
+.editor-container {
+  width: 100%;
+  // Allow the user to drag the bottom edge to resize the editor.
+  // overflow: hidden is required for resize to work and is safe here because
+  // CodeMirror's inner .cm-scroller handles its own scrolling independently.
+  resize: vertical;
+  overflow: hidden;
+  min-height: 4rem;
+}

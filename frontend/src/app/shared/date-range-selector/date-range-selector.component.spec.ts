@@ -316,6 +316,27 @@ describe('DateRangeSelectorComponent', () => {
         expect(onTouchedSpy).toHaveBeenCalled();
       });
 
+      it('should emit the predefined range even when switching from custom mode with past dates', () => {
+        // Simulate what the real app does: writeValue is called with an initial DateRange,
+        // putting the component into 'custom' mode with dates from the past.
+        component.writeValue({ startTime: '2020-01-01T00:00:00.000Z', endTime: '2020-06-01T00:00:00.000Z' });
+
+        onChangeSpy.calls.reset();
+        onTouchedSpy.calls.reset();
+
+        // User switches from 'custom' (with 2020 dates) to 'last-hour'.
+        // This must update the parent form — the original bug left it unchanged
+        // because patchValue updated startTime first, saw the old 2020 endTime,
+        // and raised badStartDateRange before endTime was updated.
+        component.internalForm.controls.rangeType.setValue('last-hour');
+
+        expect(onChangeSpy).toHaveBeenCalledWith({
+          startTime: '2024-01-01T11:00:00.000Z',
+          endTime: '2024-01-01T12:00:00.000Z'
+        });
+        expect(onTouchedSpy).toHaveBeenCalled();
+      });
+
       it('should emit value when custom dates are changed', () => {
         const dateRange: DateRange = {
           startTime: '2024-01-01T10:00:00.000Z',

@@ -18,7 +18,6 @@ export class FileContentModalComponent {
   readonly codeBlock = viewChild.required<OibCodeBlockComponent>('codeBlock');
   filename = '';
   fileCacheContent: FileCacheContent | null = null;
-  private callbackSet = false;
 
   prepare(filename: string, fileCacheContent: FileCacheContent) {
     this.filename = filename;
@@ -26,24 +25,6 @@ export class FileContentModalComponent {
 
     this.codeBlock().changeLanguage(this.fileCacheContent.truncated ? 'raw' : this.fileCacheContent.contentType);
     this.codeBlock().writeValue(this.fileCacheContent.content);
-    // Attach a listener to the code editor to resize the modal when the content changes
-    this.codeBlock().onChange = () => {
-      if (this.callbackSet) {
-        return;
-      }
-
-      const codeBlockValue = this.codeBlock();
-      const codeEditorInstance = codeBlockValue.codeEditorInstance();
-      if (codeEditorInstance) {
-        codeEditorInstance.onDidContentSizeChange(() => {
-          const contentHeight = Math.min(window.innerHeight * 0.75, codeEditorInstance.getContentHeight());
-          const containerWidth = this.codeBlock()._editorContainer()!.nativeElement.clientWidth;
-          codeBlockValue._editorContainer()!.nativeElement.style.height = `${contentHeight}px`;
-          codeEditorInstance.layout({ width: containerWidth, height: contentHeight });
-          this.callbackSet = true;
-        });
-      }
-    };
   }
 
   dismiss() {
