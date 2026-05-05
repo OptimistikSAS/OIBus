@@ -395,7 +395,7 @@ describe('SouthMySQL', () => {
 
       utilsExports.generateReplacementParameters = mock.fn(() => ({ startTime, endTime }));
 
-      const mockExecute = mock.fn(() => {
+      const mockExecute = mock.fn((_query: unknown) => {
         throw new Error('query error');
       });
       const mockEnd = mock.fn();

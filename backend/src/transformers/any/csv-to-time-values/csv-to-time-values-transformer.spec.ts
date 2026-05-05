@@ -81,11 +81,12 @@ describe('CSVToTimeValuesTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.ok(mockPapaparse.parse.mock.calls.length > 0);
-    assert.strictEqual(mockPapaparse.parse.mock.calls[0].arguments[1].header, true);
-    assert.strictEqual(mockPapaparse.parse.mock.calls[0].arguments[1].delimiter, ';');
+    const parseOptions0 = mockPapaparse.parse.mock.calls[0].arguments[1] as { header: boolean; delimiter: string };
+    assert.strictEqual(parseOptions0.header, true);
+    assert.strictEqual(parseOptions0.delimiter, ';');
     assert.strictEqual(output.length, 2);
     assert.strictEqual(output[0].pointId, 'S1');
     assert.strictEqual(output[1].data.value, 20);
@@ -108,11 +109,12 @@ describe('CSVToTimeValuesTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.ok(mockPapaparse.parse.mock.calls.length > 0);
-    assert.strictEqual(mockPapaparse.parse.mock.calls[0].arguments[1].header, false);
-    assert.strictEqual(mockPapaparse.parse.mock.calls[0].arguments[1].delimiter, ',');
+    const parseOptions1 = mockPapaparse.parse.mock.calls[0].arguments[1] as { header: boolean; delimiter: string };
+    assert.strictEqual(parseOptions1.header, false);
+    assert.strictEqual(parseOptions1.delimiter, ',');
     assert.strictEqual(output.length, 2);
     assert.strictEqual(output[0].pointId, 'S1');
     assert.strictEqual(output[1].pointId, 'S2');
@@ -137,7 +139,7 @@ describe('CSVToTimeValuesTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 2);
     assert.strictEqual(output[0].pointId, 'Valid');
@@ -158,7 +160,7 @@ describe('CSVToTimeValuesTransformer', () => {
     mockStream.push(null);
     await flushPromises();
     const result = await promise;
-    const output = JSON.parse(result.output);
+    const output = JSON.parse(result.output.toString());
 
     assert.strictEqual(output.length, 0);
   });

@@ -1,5 +1,8 @@
 import { mock } from 'node:test';
 import { mockBaseFolders } from '../utils/test-utils';
+import type NorthConnector from '../../north/north-connector';
+import type { NorthSettings } from '../../../shared/model/north-settings.model';
+import type NorthConnectorMetricsService from '../../service/metrics/north-connector-metrics.service';
 
 /**
  * Create a mock object for Data Stream engine
@@ -16,7 +19,7 @@ export default class DataStreamEngineMock {
   stop = mock.fn();
   createNorth = mock.fn();
   startNorth = mock.fn();
-  getNorth = mock.fn();
+  getNorth = mock.fn((): { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService } | undefined => undefined);
   getNorthSSE = mock.fn();
   getNorthMetrics = mock.fn();
   getAllNorthMetrics = mock.fn();

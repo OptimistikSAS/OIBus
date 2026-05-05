@@ -21,7 +21,7 @@ describe('NorthAmazonS3', () => {
   const cacheService = new CacheServiceMock();
   const oiBusTransformer = new OIBusTransformerMock();
 
-  const mockSend = mock.fn(async () => undefined);
+  const mockSend = mock.fn(async (_command: unknown): Promise<void> => undefined);
 
   const s3ClientExports = {
     S3Client: function (this: { send: typeof mockSend }) {

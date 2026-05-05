@@ -22,7 +22,7 @@ export default class EncryptionServiceMock {
   );
   encryptConnectorSecrets = mock.fn(async <T>(secrets: T): Promise<T> => secrets);
   decryptConnectorSecrets = mock.fn(async <T>(secrets: T): Promise<T> => secrets);
-  filterSecrets = mock.fn(<T>(secrets: T): T => secrets);
+  filterSecrets = mock.fn(<T>(secrets: T, _formSettings: unknown): T => secrets);
   encryptText = mock.fn(async (pass: string | null | undefined): Promise<string> => pass ?? '');
   decryptText = mock.fn(async (pass: string | null | undefined): Promise<string> => pass ?? '');
   decryptTextWithPrivateKey = mock.fn(async (pass: string): Promise<string> => pass);
