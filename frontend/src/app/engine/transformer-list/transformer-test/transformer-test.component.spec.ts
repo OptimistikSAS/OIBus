@@ -1,4 +1,5 @@
 import { Component, forwardRef, input, output, Pipe, PipeTransform } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { AbstractControl, ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { ComponentTester, createMock } from 'ngx-speculoos';
@@ -305,12 +306,22 @@ describe('TransformerTestComponent', () => {
     });
 
     it('should clear response and displayMode on test failure', () => {
-      transformerService.test.and.returnValue(throwError(() => new Error('Execution failed')));
+      transformerService.test.and.returnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 500,
+              statusText: 'Internal Server Error',
+              error: { message: 'Execution failed' }
+            })
+        )
+      );
 
       tester.componentInstance.form.patchValue({ inputData: '{}' });
       tester.componentInstance.test();
 
-      expect(tester.componentInstance.error()).toBe('Execution failed');
+      expect(tester.componentInstance.error()).toContain('500');
+      expect(tester.componentInstance.error()).toContain('Execution failed');
       expect(tester.componentInstance.response()).toBeNull();
       expect(tester.componentInstance.displayMode()).toBeNull();
       expect(tester.componentInstance.isLoading()).toBe(false);

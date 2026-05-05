@@ -28,3 +28,10 @@
 .grid-table-row:hover > div {
   background-color: $mediumGrey !important;
 }
+
+.result-placeholder {
+  min-height: 8rem;
+  border: 1px dashed $mediumGrey;
+  border-radius: 4px;
+  gap: 0.5rem;
+}

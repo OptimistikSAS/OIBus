@@ -154,7 +154,7 @@ export class TransformerController extends Controller {
   ): Promise<TransformerTestResponse> {
     const transformerService = request.services.transformerService;
     try {
-      return transformerService.test(command.transformer, command.testRequest);
+      return await transformerService.test(command.transformer, command.testRequest);
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }

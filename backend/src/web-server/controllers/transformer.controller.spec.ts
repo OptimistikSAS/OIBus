@@ -222,9 +222,9 @@ describe('TransformerController', () => {
       throw new Error('Transformer execution failed');
     });
 
-    await expect(
-      controller.test({ transformer: command, testRequest }, mockRequest as CustomExpressRequest)
-    ).rejects.toThrow(OIBusTestingError);
+    await expect(controller.test({ transformer: command, testRequest }, mockRequest as CustomExpressRequest)).rejects.toThrow(
+      OIBusTestingError
+    );
   });
 
   it('should get a template for transformer', async () => {
