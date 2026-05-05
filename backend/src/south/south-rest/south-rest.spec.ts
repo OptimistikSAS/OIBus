@@ -24,7 +24,7 @@ describe('SouthRestAPI connector', () => {
   let south: SouthRestClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -44,7 +44,7 @@ describe('SouthRestAPI connector', () => {
   };
 
   const httpRequestExports = {
-    HTTPRequest: mock.fn(async () => createMockResponse(200))
+    HTTPRequest: mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200))
   };
 
   const encryptionServiceInstance = new EncryptionServiceMock('', '');
@@ -129,7 +129,7 @@ describe('SouthRestAPI connector', () => {
 
   beforeEach(() => {
     southCacheService = new SouthCacheServiceMock();
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200));
     fsMock = {
       writeFile: mock.method(fs, 'writeFile', async () => undefined) as unknown as ReturnType<typeof mock.fn>,
       stat: mock.method(fs, 'stat', async () => ({ size: 100 })) as unknown as ReturnType<typeof mock.fn>
@@ -160,12 +160,12 @@ describe('SouthRestAPI connector', () => {
   // --------------------------------------------------------------------------
 
   it('should test connection successfully', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, 'OK'));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, 'OK'));
     await assert.doesNotReject(south.testConnection());
   });
 
   it('should fail test connection on HTTP error', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(500, 'Server Error'));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(500, 'Server Error'));
     await assert.rejects(
       south.testConnection(),
       new Error('HTTP request failed with status code 500, expected 200. Message: Server Error')
@@ -173,7 +173,7 @@ describe('SouthRestAPI connector', () => {
   });
 
   it('should fail test connection on fetch error', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async () => {
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => {
       throw new Error('http error');
     });
     await assert.rejects(south.testConnection(), new Error('Fetch error: http error'));
@@ -189,7 +189,7 @@ describe('SouthRestAPI connector', () => {
     config.settings.test.body = 'body';
 
     south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, 'OK'));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, 'OK'));
 
     await south.testConnection();
 
@@ -212,7 +212,7 @@ describe('SouthRestAPI connector', () => {
     const fmtQueue = [testData.constants.dates.DATE_1, testData.constants.dates.DATE_2];
     let fmtIdx = 0;
     utilsExports.formatInstant = mock.fn(() => fmtQueue[fmtIdx++] ?? '');
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, { data: [] }));
 
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -234,7 +234,7 @@ describe('SouthRestAPI connector', () => {
     const fmtQueue = ['2024-01-01', '2025-01-01'];
     let fmtIdx = 0;
     utilsExports.formatInstant = mock.fn(() => fmtQueue[fmtIdx++] ?? '');
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
 
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -257,7 +257,7 @@ describe('SouthRestAPI connector', () => {
     const fmtQueue = ['START', 'END'];
     let fmtIdx = 0;
     utilsExports.formatInstant = mock.fn(() => fmtQueue[fmtIdx++] ?? '');
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
 
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -274,7 +274,7 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
 
     await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -288,7 +288,9 @@ describe('SouthRestAPI connector', () => {
     const item = createItem({ returnType: 'body' });
     const xmlContent = '<root>data</root>';
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, xmlContent, { 'content-type': 'application/xml' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, xmlContent, { 'content-type': 'application/xml' })
+    );
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
     assert.ok((result.filename as string).includes('.xml'));
@@ -299,7 +301,7 @@ describe('SouthRestAPI connector', () => {
     const item = createItem({ returnType: 'file' });
 
     const mockRes = createMockResponse(200, 'file-content', { 'content-disposition': 'attachment; filename="report.pdf"' });
-    httpRequestExports.HTTPRequest = mock.fn(async () => mockRes);
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => mockRes);
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -312,7 +314,7 @@ describe('SouthRestAPI connector', () => {
     const item = createItem({ returnType: 'file' });
 
     const mockRes = createMockResponse(200, 'file-content', { 'content-disposition': 'attachment; file="report.pdf"' });
-    httpRequestExports.HTTPRequest = mock.fn(async () => mockRes);
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => mockRes);
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -325,7 +327,7 @@ describe('SouthRestAPI connector', () => {
     const item = createItem({ returnType: 'file' });
 
     const mockRes = createMockResponse(200, 'file-content', {});
-    httpRequestExports.HTTPRequest = mock.fn(async () => mockRes);
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => mockRes);
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -338,7 +340,9 @@ describe('SouthRestAPI connector', () => {
     const item = createItem();
     const jsonString = '{"manual": "parse"}';
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, jsonString, { 'content-type': 'text/plain' })
+    );
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
     assert.deepStrictEqual(result.content, { manual: 'parse' });
@@ -349,7 +353,9 @@ describe('SouthRestAPI connector', () => {
     const item = createItem();
     const jsonString = '1';
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, jsonString, { 'content-type': 'text/plain' })
+    );
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
     assert.deepStrictEqual(result.content, '1');
@@ -360,7 +366,9 @@ describe('SouthRestAPI connector', () => {
     const item = createItem();
     const jsonString = '{]';
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, jsonString, { 'content-type': 'text/plain' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, jsonString, { 'content-type': 'text/plain' })
+    );
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
     assert.deepStrictEqual(result.content, '{]');
@@ -369,7 +377,7 @@ describe('SouthRestAPI connector', () => {
 
   it('should throw error if queryData response is not OK', async () => {
     const item = createItem();
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(404, 'Not Found'));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(404, 'Not Found'));
 
     await assert.rejects(
       south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2),
@@ -394,7 +402,9 @@ describe('SouthRestAPI connector', () => {
       items: [{ date: '2024-01-01' }, { date: '2024-01-02' }]
     };
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, responseData, { 'content-type': 'application/json' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, responseData, { 'content-type': 'application/json' })
+    );
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -410,7 +420,9 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }, { 'content-type': 'application/json' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, { data: [] }, { 'content-type': 'application/json' })
+    );
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
     assert.strictEqual(result.maxInstant, null);
   });
@@ -422,7 +434,9 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }, { 'content-type': 'application/json' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, { data: [] }, { 'content-type': 'application/json' })
+    );
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
     assert.strictEqual(result.maxInstant, null);
   });
@@ -440,7 +454,9 @@ describe('SouthRestAPI connector', () => {
       items: [{ date: '2024-01-01' }, { date: '2024-01-02' }, { date: null }, { date: '2024-01-01' }]
     });
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, responseData, { 'content-type': 'application/text' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, responseData, { 'content-type': 'application/text' })
+    );
 
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
 
@@ -456,7 +472,9 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }, { 'content-type': 'application/text' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, { data: [] }, { 'content-type': 'application/text' })
+    );
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
     assert.strictEqual(result.maxInstant, null);
   });
@@ -468,7 +486,9 @@ describe('SouthRestAPI connector', () => {
       }
     });
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { data: [] }, { 'content-type': 'application/text' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, { data: [] }, { 'content-type': 'application/text' })
+    );
     const result = await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
     assert.strictEqual(result.maxInstant, null);
   });
@@ -519,7 +539,7 @@ describe('SouthRestAPI connector', () => {
 
   it('should not add content if file is empty', async () => {
     const item = createItem();
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, {}));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, {}));
 
     fsMock.stat.mock.mockImplementation(async () => ({ size: 0 }));
 
@@ -539,7 +559,9 @@ describe('SouthRestAPI connector', () => {
       history: { startTime: testData.constants.dates.DATE_1, endTime: testData.constants.dates.DATE_2 }
     };
 
-    httpRequestExports.HTTPRequest = mock.fn(async () => createMockResponse(200, { test: 'ok' }, { 'content-type': 'application/json' }));
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) =>
+      createMockResponse(200, { test: 'ok' }, { 'content-type': 'application/json' })
+    );
 
     const result = await south.testItem(item, testingSettings);
 
@@ -556,10 +578,7 @@ describe('SouthRestAPI connector', () => {
     const config = createConfiguration();
     config.settings.proxy.useProxy = true;
     (south as unknown as Record<string, unknown>)['connector'] = config;
-    assert.throws(
-      () => (south as unknown as Record<string, Array<() => unknown>>)['getProxyOptions'](),
-      new Error('Proxy URL not specified')
-    );
+    assert.throws(() => (south as unknown as Record<string, () => unknown>)['getProxyOptions'](), new Error('Proxy URL not specified'));
   });
 
   it('should get proxy', () => {

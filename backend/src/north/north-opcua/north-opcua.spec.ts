@@ -61,7 +61,7 @@ describe('NorthOPCUA', () => {
   const oiBusTransformer = new OIBusTransformerMock();
 
   const createSessionConfigsFn = mock.fn(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity }));
-  const initOPCUACertificateFoldersFn = mock.fn(async () => undefined);
+  const initOPCUACertificateFoldersFn = mock.fn(async (_folder: string) => undefined);
   const streamToStringFn = mock.fn(async () => '[]');
 
   const transformerExports = {
@@ -109,7 +109,7 @@ describe('NorthOPCUA', () => {
     createSessionConfigsFn.mock.mockImplementation(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity }));
 
     initOPCUACertificateFoldersFn.mock.resetCalls();
-    initOPCUACertificateFoldersFn.mock.mockImplementation(async () => undefined);
+    initOPCUACertificateFoldersFn.mock.mockImplementation(async (_folder: string) => undefined);
 
     streamToStringFn.mock.resetCalls();
     streamToStringFn.mock.mockImplementation(async () => '[]');
@@ -292,7 +292,7 @@ describe('NorthOPCUA', () => {
     // Tag3: valid DataType.Double but write fails
     // Tag4: valid DataType.Double and write succeeds
     sessionReadMock.mock.mockImplementation(
-      seq(
+      seq<Promise<{ value: unknown }>>(
         async () => ({ value: 'bad' }),
         async () => ({ value: { value: { value: 'Bad' } } }),
         async () => ({ value: { value: { value: DataType.Double } } }),

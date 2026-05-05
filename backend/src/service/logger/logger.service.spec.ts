@@ -4,9 +4,11 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import type { EngineSettings } from '../../model/engine.model';
 import type { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
+import type { ILogger } from '../../model/logger.model';
 import type LoggerServiceType from './logger.service';
 import type FileCleanupServiceType from './file-cleanup.service';
 
@@ -127,7 +129,7 @@ describe('Logger', () => {
   });
 
   it('should be properly initialized with loki error and standard file names', async () => {
-    mock.method(console, 'error', mock.fn());
+    const consoleErrorMock = mock.method(console, 'error', mock.fn());
 
     encryptionMock.decryptText.mock.mockImplementationOnce(() => {
       throw new Error('decrypt-error');
@@ -135,8 +137,8 @@ describe('Logger', () => {
 
     await service.start(engineSettings, registration);
 
-    assert.strictEqual((console.error as ReturnType<typeof mock.fn>).mock.calls.length, 1);
-    assert.deepStrictEqual((console.error as ReturnType<typeof mock.fn>).mock.calls[0].arguments, [new Error('decrypt-error')]);
+    assert.strictEqual(consoleErrorMock.mock.calls.length, 1);
+    assert.deepStrictEqual(consoleErrorMock.mock.calls[0].arguments, [new Error('decrypt-error')]);
   });
 
   it('should be properly initialized without loki password, without oia token and without sqliteLog', async () => {
@@ -235,8 +237,9 @@ describe('Logger', () => {
   });
 
   it('should properly create child logger', () => {
-    const childFunction = mock.fn();
-    service.logger = { child: childFunction } as unknown as ReturnType<typeof childFunction>;
+    const childFunction = mock.fn((_bindings: Record<string, unknown>, _options?: Record<string, unknown>): ILogger => new PinoLogger());
+    const loggerStub: ILogger = { ...new PinoLogger(), child: childFunction };
+    service.logger = loggerStub;
     service.createChildLogger('south');
     assert.deepStrictEqual(childFunction.mock.calls[0].arguments, [{ scopeType: 'south', scopeId: undefined, scopeName: undefined }]);
   });

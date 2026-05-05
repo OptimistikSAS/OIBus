@@ -32,7 +32,7 @@ describe('LogController', () => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     logService = new LogServiceMock();
     mockRequest = {
-      services: { logService }
+      services: Object.assign({} as CustomExpressRequest['services'], { logService })
     } as Partial<CustomExpressRequest>;
     mockLogServiceModule.toLogDTO = mock.fn((log: unknown) => log);
     controller = new LogController();
@@ -62,7 +62,7 @@ describe('LogController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
-    logService.search = mock.fn(async () => expectedResult);
+    logService.search = mock.fn(() => expectedResult);
 
     const result = await controller.search(
       start,
@@ -95,7 +95,7 @@ describe('LogController', () => {
     };
 
     const expectedResult = createPageFromArray(testData.logs.list, 25, 0);
-    logService.search = mock.fn(async () => expectedResult);
+    logService.search = mock.fn(() => expectedResult);
 
     const result = await controller.search(
       undefined,

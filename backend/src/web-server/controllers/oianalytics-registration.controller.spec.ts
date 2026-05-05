@@ -33,9 +33,7 @@ describe('OIAnalyticsRegistrationController', () => {
     registrationService = new OIAnalyticsRegistrationServiceMock();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-      services: {
-        oIAnalyticsRegistrationService: registrationService
-      }
+      services: Object.assign({} as CustomExpressRequest['services'], { oIAnalyticsRegistrationService: registrationService })
     } as Partial<CustomExpressRequest>;
     mockRegistrationServiceModule.toOIAnalyticsRegistrationDTO = mock.fn((settings: unknown) => settings);
     controller = new OIAnalyticsRegistrationController();

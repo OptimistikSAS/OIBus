@@ -62,7 +62,10 @@ const nodeRequire = createRequire(import.meta.url);
 
 describe('South Connector Factory', () => {
   const mockLogger = new PinoLogger();
-  const mockAddContent = mock.fn<[string, OIBusContent, Instant, Array<SouthConnectorItemEntity<SouthItemSettings>>], Promise<void>>();
+  const mockAddContent = mock.fn(
+    async (_southId: string, _data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
+      undefined
+  );
   const mockSouthCacheFolder = '/tmp/cache';
   const mockSouthCacheRepository = {} as SouthCacheRepository;
   const mockCertificateRepository = {} as CertificateRepository;
@@ -99,7 +102,7 @@ describe('South Connector Factory', () => {
   const MockSouthFTP = makeMock('ftp');
   const MockSouthSQLite = makeMock('sqlite');
 
-  const utilsExports = { createFolder: mock.fn(async () => undefined) };
+  const utilsExports = { createFolder: mock.fn(async (_path: string) => undefined) };
 
   before(() => {
     mockModule(nodeRequire, '../service/utils', utilsExports);
@@ -147,7 +150,7 @@ describe('South Connector Factory', () => {
 
   beforeEach(() => {
     for (const key of Object.keys(ctorCalls)) delete ctorCalls[key];
-    utilsExports.createFolder = mock.fn(async () => undefined);
+    utilsExports.createFolder = mock.fn(async (_path: string) => undefined);
   });
 
   afterEach(() => {

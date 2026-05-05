@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
@@ -26,9 +26,14 @@ import type {
   toSouthItemGroupDTO as toSouthItemGroupDTOType,
   copySouthItemCommandToSouthItemEntity as copySouthItemCommandToSouthItemEntityType
 } from './south.service';
-import { SouthConnectorEntityLight, SouthItemGroupEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
+import {
+  SouthConnectorEntityLight,
+  SouthItemGroupEntity,
+  SouthConnectorItemEntity,
+  SouthConnectorEntity
+} from '../model/south-connector.model';
 import { SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../shared/model/south-connector.model';
-import { SouthItemSettings } from '../../shared/model/south-settings.model';
+import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { toScanModeDTO } from './scan-mode.service';
 
@@ -196,7 +201,7 @@ describe('South Service', () => {
 
     assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
-    assert.strictEqual((service.retrieveSecretsFromSouth as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((service.retrieveSecretsFromSouth as Mock<typeof service.retrieveSecretsFromSouth>).mock.calls.length, 1);
     assert.strictEqual(engine.createSouth.mock.calls.length, 1);
     assert.strictEqual(engine.startSouth.mock.calls.length, 1);
   });
@@ -229,12 +234,11 @@ describe('South Service', () => {
     });
 
     let callCount = 0;
-    southConnectorRepository.saveSouth.mock.mockImplementation((south: Record<string, unknown>) => {
+    southConnectorRepository.saveSouth.mock.mockImplementation((south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) => {
       if (callCount === 0 && !south.id) {
         south.id = 'newSouthId';
       }
       callCount++;
-      return south;
     });
 
     const command = JSON.parse(JSON.stringify(testData.south.command));
@@ -265,12 +269,11 @@ describe('South Service', () => {
     };
 
     let callCount = 0;
-    southConnectorRepository.saveSouth.mock.mockImplementation((south: Record<string, unknown>) => {
+    southConnectorRepository.saveSouth.mock.mockImplementation((south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) => {
       if (callCount === 0 && !south.id) {
         south.id = 'newSouthId';
       }
       callCount++;
-      return south;
     });
 
     southItemGroupRepository.findByNameAndSouthId.mock.mockImplementation(() => existingGroup);
@@ -295,7 +298,7 @@ describe('South Service', () => {
     await service.create(command, testData.south.list[0].id, 'userTest');
 
     assert.strictEqual(southConnectorRepository.saveSouth.mock.calls.length, 1);
-    assert.strictEqual((service.retrieveSecretsFromSouth as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual((service.retrieveSecretsFromSouth as Mock<typeof service.retrieveSecretsFromSouth>).mock.calls.length, 1);
   });
 
   it('should not create south connector if disabled', async () => {
@@ -312,7 +315,9 @@ describe('South Service', () => {
 
   it('should not create a south connector with duplicate name', async () => {
     service.retrieveSecretsFromSouth = mock.fn(() => null);
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() => [{ id: 'existing-id', name: testData.south.command.name }]);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => [
+      { ...testData.south.list[0], id: 'existing-id', name: testData.south.command.name } satisfies SouthConnectorEntityLight
+    ]);
 
     await assert.rejects(
       async () => service.create(testData.south.command, null, 'userTest'),
@@ -369,7 +374,9 @@ describe('South Service', () => {
   it('should not update a south connector with duplicate name', async () => {
     const command = JSON.parse(JSON.stringify(testData.south.command));
     command.name = 'Duplicate Name';
-    southConnectorRepository.findAllSouth.mock.mockImplementation(() => [{ id: 'other-id', name: 'Duplicate Name' }]);
+    southConnectorRepository.findAllSouth.mock.mockImplementation(() => [
+      { ...testData.south.list[0], id: 'other-id', name: 'Duplicate Name' } satisfies SouthConnectorEntityLight
+    ]);
 
     await assert.rejects(
       async () => service.update(testData.south.list[0].id, command, 'userTest'),
@@ -489,6 +496,7 @@ describe('South Service', () => {
     const itemId = testData.south.list[0].items[0].id;
     const cached = {
       itemId,
+      groupId: null,
       queryTime: '2024-01-01T00:00:00.000Z',
       value: { temperature: 42 },
       trackedInstant: '2024-01-02T00:00:00.000Z'

@@ -28,7 +28,7 @@ export default class HistoryQueryMetricsServiceMock extends HistoryQueryMetricsS
   override resetMetrics = mock.fn((): void => undefined);
   override destroy = mock.fn((): void => undefined);
   override get metrics(): HistoryQueryMetrics {
-    return {} as HistoryQueryMetrics;
+    return { north: {} } as unknown as HistoryQueryMetrics;
   }
   override get stream(): PassThrough {
     return new PassThrough();

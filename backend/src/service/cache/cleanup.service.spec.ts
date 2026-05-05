@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, beforeEach, afterEach, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -7,6 +7,10 @@ import { DateTime } from 'luxon';
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
 import { CacheMetadata } from '../../../shared/model/engine.model';
+import { NorthConnectorEntity } from '../../model/north-connector.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { HistoryQueryEntity } from '../../model/histor-query.model';
+import { SouthSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import CleanupService from './cleanup.service';
 import NorthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/north-connector-repository.mock';
 import SouthConnectorRepositoryMock from '../../tests/__mocks__/repository/config/south-connector-repository.mock';
@@ -128,13 +132,13 @@ describe('CleanupService', () => {
         })
       );
 
-      southConnectorRepository.findSouthById.mock.mockImplementation((id: unknown) => (id === '1' ? {} : null));
-      northConnectorRepository.findNorthById.mock.mockImplementation((id: unknown) => (id === '1' ? {} : null));
-      historyQueryRepository.findHistoryById.mock.mockImplementation((id: unknown) => (id === '1' ? {} : null));
+      southConnectorRepository.findSouthById.mock.mockImplementation((id: string) => (id === '1' ? testData.south.list[0] : null));
+      northConnectorRepository.findNorthById.mock.mockImplementation((id: string) => (id === '1' ? testData.north.list[0] : null));
+      historyQueryRepository.findHistoryById.mock.mockImplementation((id: string) => (id === '1' ? testData.historyQueries.list[0] : null));
 
       await (priv()['cleanOrphans'] as unknown as () => Promise<void>)();
 
-      const rmCalls = (fs.rm as ReturnType<typeof mock.fn>).mock.calls.map(c => c.arguments[0]);
+      const rmCalls = (fs.rm as Mock<typeof fs.rm>).mock.calls.map(c => c.arguments[0]);
 
       assert.ok(rmCalls.includes(path.resolve('baseFolder', 'cache', 'south-2')));
       assert.ok(rmCalls.includes(path.resolve('baseFolder', 'error', 'north-2')));
@@ -200,18 +204,20 @@ describe('CleanupService', () => {
 
       await (priv()['cleanOrphans'] as unknown as () => Promise<void>)();
 
-      assert.ok((fs.rm as ReturnType<typeof mock.fn>).mock.calls.some(c => String(c.arguments[0]).includes('south-2')));
+      assert.ok((fs.rm as Mock<typeof fs.rm>).mock.calls.some(c => String(c.arguments[0]).includes('south-2')));
       assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Could not remove orphan')));
     });
   });
 
   describe('cleanNorthConnectors (Retention Policy)', () => {
     it('should apply retention policy and update content', async () => {
-      const north = {
+      const north: NorthConnectorEntity<NorthSettings> = {
+        ...testData.north.list[0],
         id: 'n1',
         caching: {
-          error: { retentionDuration: 1 },
-          archive: { retentionDuration: 5 }
+          ...testData.north.list[0].caching,
+          error: { ...testData.north.list[0].caching.error, retentionDuration: 1 },
+          archive: { ...testData.north.list[0].caching.archive, retentionDuration: 5 }
         }
       };
       northConnectorRepository.findAllNorthFull.mock.mockImplementation(() => [north]);
@@ -258,11 +264,13 @@ describe('CleanupService', () => {
     });
 
     it('should skip folders if retention is 0 (optimization)', async () => {
-      const north = {
+      const north: NorthConnectorEntity<NorthSettings> = {
+        ...testData.north.list[0],
         id: 'n1',
         caching: {
-          error: { retentionDuration: 0 },
-          archive: { retentionDuration: 0 }
+          ...testData.north.list[0].caching,
+          error: { ...testData.north.list[0].caching.error, retentionDuration: 0 },
+          archive: { ...testData.north.list[0].caching.archive, retentionDuration: 0 }
         }
       };
       northConnectorRepository.findAllNorthFull.mock.mockImplementation(() => [north]);
@@ -275,11 +283,13 @@ describe('CleanupService', () => {
 
   describe('cleanHistoryQueries (Retention Policy)', () => {
     it('should apply retention policy including subpath "north"', async () => {
-      const history = {
+      const history: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = {
+        ...testData.historyQueries.list[0],
         id: 'h1',
         caching: {
-          error: { retentionDuration: 24 },
-          archive: { retentionDuration: 0 }
+          ...testData.historyQueries.list[0].caching,
+          error: { ...testData.historyQueries.list[0].caching.error, retentionDuration: 24 },
+          archive: { ...testData.historyQueries.list[0].caching.archive, retentionDuration: 0 }
         }
       };
       historyQueryRepository.findAllHistoriesFull.mock.mockImplementation(() => [history]);
@@ -340,7 +350,7 @@ describe('CleanupService', () => {
         10
       );
 
-      assert.ok((fs.rm as ReturnType<typeof mock.fn>).mock.calls.some(c => String(c.arguments[0]).includes('corrupt.json')));
+      assert.ok((fs.rm as Mock<typeof fs.rm>).mock.calls.some(c => String(c.arguments[0]).includes('corrupt.json')));
       assert.deepStrictEqual(files, []);
     });
 
@@ -363,8 +373,11 @@ describe('CleanupService', () => {
 
   describe('cleanOIAnalyticsData', () => {
     it('should delete old messages and commands', () => {
-      const messages = [{ id: 'm1' }, { id: 'm2' }];
-      const commands = [{ id: 'c1' }];
+      const messages = [
+        { ...testData.oIAnalytics.messages.oIBusList[0], id: 'm1' },
+        { ...testData.oIAnalytics.messages.oIBusList[0], id: 'm2' }
+      ];
+      const commands = [{ ...testData.oIAnalytics.commands.oIBusList[0], id: 'c1' }];
 
       oianalyticsMessageRepository.list.mock.mockImplementation(() => messages);
       oianalyticsCommandRepository.list.mock.mockImplementation(() => commands);

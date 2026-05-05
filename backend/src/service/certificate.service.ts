@@ -6,7 +6,7 @@ import EncryptionService from './encryption.service';
 import { CertificateCommandDTO, CertificateDTO } from '../../shared/model/certificate.model';
 import { generateRandomId } from './utils';
 import { DateTime, Duration } from 'luxon';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { NotFoundError } from '../model/types';
 import { GetUserInfo } from '../../shared/model/types';
 
@@ -15,7 +15,7 @@ export default class CertificateService {
     protected readonly validator: JoiValidator,
     private certificateRepository: CertificateRepository,
     private encryptionService: EncryptionService,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService
+    private oIAnalyticsMessageService: IOIAnalyticsMessageService
   ) {}
 
   list(): Array<Certificate> {

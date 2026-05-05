@@ -22,19 +22,20 @@ const encryptionServiceMock = new EncryptionServiceMock('', '');
 
 const mockSftpClient = {
   connect: mock.fn(async () => undefined),
-  list: mock.fn(async () => [] as Array<FileInfo>),
+  list: mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [] as Array<FileInfo>),
   fastGet: mock.fn(async () => undefined),
   delete: mock.fn(async () => undefined),
   end: mock.fn(async () => undefined)
 };
 
+const sftpClientDefaultFn = mock.fn(function () {
+  return mockSftpClient;
+}) as unknown as new () => typeof mockSftpClient;
 const sftpClientExports = {
   __esModule: true,
-  default: mock.fn(function () {
-    return mockSftpClient;
-  }) as unknown as new () => typeof mockSftpClient
+  default: sftpClientDefaultFn
 };
-(sftpClientExports as { default: { default: unknown } }).default.default = sftpClientExports.default;
+(sftpClientDefaultFn as unknown as Record<string, unknown>)['default'] = sftpClientDefaultFn;
 
 const utilsExports = {
   checkAge: mock.fn(() => true),
@@ -50,7 +51,7 @@ describe('SouthSFTP', () => {
   let south: SouthSftpClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -176,7 +177,7 @@ describe('SouthSFTP', () => {
     mockSftpClient.fastGet.mock.resetCalls();
     mockSftpClient.delete.mock.resetCalls();
     mockSftpClient.end.mock.resetCalls();
-    mockSftpClient.list = mock.fn(async () => [] as Array<FileInfo>);
+    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [] as Array<FileInfo>);
     utilsExports.checkAge = mock.fn(() => true);
     utilsExports.compress = mock.fn(async () => undefined);
     addContentCallback.mock.resetCalls();
@@ -243,7 +244,7 @@ describe('SouthSFTP', () => {
     const file2 = { name: 'file2.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
     const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
 
-    mockSftpClient.list = mock.fn(async () => [file1, file2, file3]);
+    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [file1, file2, file3]);
     mockSftpClient.fastGet = mock.fn(async () => undefined);
     mockSftpClient.delete = mock.fn(async () => undefined);
 
@@ -279,7 +280,7 @@ describe('SouthSFTP', () => {
     const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
 
     let listCallCount = 0;
-    mockSftpClient.list = mock.fn(async () => {
+    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => {
       listCallCount++;
       return listCallCount === 1 ? [file1, file2, file3] : [];
     });
@@ -316,7 +317,7 @@ describe('SouthSFTP', () => {
     const file1 = { name: 'file1.csv', size: 600 * 1024, modifyTime: mtimeMs } as FileInfo;
     const file2 = { name: 'file2.csv', size: 600 * 1024, modifyTime: mtimeMs } as FileInfo;
 
-    mockSftpClient.list = mock.fn(async () => [file1, file2]);
+    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [file1, file2]);
     mockSftpClient.fastGet = mock.fn(async () => undefined);
     mockSftpClient.delete = mock.fn(async () => undefined);
 
@@ -352,7 +353,7 @@ describe('SouthSFTP', () => {
     const file3 = { name: 'file3.csv', size: 100, modifyTime: mtimeMs } as FileInfo;
 
     let listCallCount = 0;
-    mockSftpClient.list = mock.fn(async () => {
+    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => {
       listCallCount++;
       return listCallCount === 1 ? [file1, file2, file3] : [];
     });
@@ -417,7 +418,7 @@ describe('SouthSFTP', () => {
       'checkCondition',
       mock.fn(() => true)
     );
-    mockSftpClient.list = mock.fn(async (_folder: string, callback?: (fi: FileInfo) => boolean) => {
+    mockSftpClient.list = mock.fn(async (_folder?: string, callback?: (fi: FileInfo) => boolean) => {
       if (callback) callback(fileInfo);
       return [fileInfo];
     });
@@ -452,7 +453,7 @@ describe('SouthSFTP', () => {
     const fileFailsCondition = { type: '-', name: 'other.xml', size: 100, modifyTime: mtimeMs } as FileInfo;
 
     let listCallCount = 0;
-    mockSftpClient.list = mock.fn(async () => {
+    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => {
       listCallCount++;
       return listCallCount === 1 ? [dirEntry] : [fileInSubdir, fileFailsCondition];
     });
@@ -473,7 +474,7 @@ describe('SouthFTP with preserve file and compression', () => {
   let south: SouthSftpClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -599,7 +600,7 @@ describe('SouthFTP with preserve file and compression', () => {
     mockSftpClient.fastGet.mock.resetCalls();
     mockSftpClient.delete.mock.resetCalls();
     mockSftpClient.end.mock.resetCalls();
-    mockSftpClient.list = mock.fn(async () => [] as Array<FileInfo>);
+    mockSftpClient.list = mock.fn(async (_folder?: string, _callback?: (fi: FileInfo) => boolean) => [] as Array<FileInfo>);
     mockSftpClient.fastGet = mock.fn(async () => undefined);
     mockSftpClient.delete = mock.fn(async () => undefined);
     utilsExports.compress = mock.fn(async () => undefined);
@@ -691,7 +692,7 @@ describe('SouthSFTP test connection with private key', () => {
   let south: SouthSftpClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 

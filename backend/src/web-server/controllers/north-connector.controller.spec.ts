@@ -9,7 +9,7 @@ import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import { StandardTransformerDTO, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
-import { CacheContentUpdateCommand, CacheMetadata } from '../../../shared/model/engine.model';
+import { CacheContentUpdateCommand, CacheSearchResult, FileCacheContent } from '../../../shared/model/engine.model';
 import { OIBusTestingError } from '../../model/types';
 import type { NorthConnectorController as NorthConnectorControllerShape } from './north-connector.controller';
 
@@ -47,7 +47,7 @@ describe('NorthConnectorController', () => {
     oIBusService = new OIBusServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: { northService, oIBusService, userService },
+      services: Object.assign({} as CustomExpressRequest['services'], { northService, oIBusService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockNorthServiceModule.toNorthConnectorDTO = mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {
@@ -233,8 +233,8 @@ describe('NorthConnectorController', () => {
 
   it('should search cache content with default params', async () => {
     const northId = testData.north.list[0].id;
-    const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-    oIBusService.searchCacheContent = mock.fn(async () => mockCacheMetadata);
+    const mockCacheResult: CacheSearchResult = {} as CacheSearchResult;
+    oIBusService.searchCacheContent = mock.fn(async () => mockCacheResult);
 
     const result = await controller.searchCacheContent(
       northId,
@@ -251,7 +251,7 @@ describe('NorthConnectorController', () => {
       northId,
       { start: undefined, end: undefined, nameContains: undefined, maxNumberOfFilesReturned: 0 }
     ]);
-    assert.deepStrictEqual(result, mockCacheMetadata);
+    assert.deepStrictEqual(result, mockCacheResult);
   });
 
   it('should search cache content with parameters', async () => {
@@ -259,8 +259,8 @@ describe('NorthConnectorController', () => {
     const nameContains = 'test';
     const start = testData.constants.dates.DATE_1;
     const end = testData.constants.dates.DATE_2;
-    const mockCacheMetadata: Array<{ metadataFilename: string; metadata: CacheMetadata }> = [];
-    oIBusService.searchCacheContent = mock.fn(async () => mockCacheMetadata);
+    const mockCacheResult: CacheSearchResult = {} as CacheSearchResult;
+    oIBusService.searchCacheContent = mock.fn(async () => mockCacheResult);
 
     const result = await controller.searchCacheContent(northId, nameContains, start, end, 10000, mockRequest as CustomExpressRequest);
 
@@ -270,15 +270,15 @@ describe('NorthConnectorController', () => {
       northId,
       { start, end, nameContains, maxNumberOfFilesReturned: 10000 }
     ]);
-    assert.deepStrictEqual(result, mockCacheMetadata);
+    assert.deepStrictEqual(result, mockCacheResult);
   });
 
   it('should get cache file content', async () => {
     const northId = testData.north.list[0].id;
     const folder = 'cache';
     const filename = 'test-file';
-    const mockFileStream = { pipe: mock.fn() };
-    oIBusService.getFileFromCache = mock.fn(async () => mockFileStream);
+    const mockFileContent: FileCacheContent = {} as FileCacheContent;
+    oIBusService.getFileFromCache = mock.fn(async () => mockFileContent);
 
     await controller.getCacheFileContent(northId, filename, folder, mockRequest as CustomExpressRequest);
 

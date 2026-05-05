@@ -42,7 +42,7 @@ describe('SouthMQTT', () => {
   let south: SouthMQTTClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -267,12 +267,12 @@ describe('SouthMQTT', () => {
       'subscribe',
       mock.fn(async () => undefined)
     );
-    mock.method(
+    const disconnectMock = mock.method(
       south,
       'disconnect',
       mock.fn(async () => undefined)
     );
-    mock.method(
+    const flushMessagesMock = mock.method(
       south,
       'flushMessages',
       mock.fn(async () => undefined)
@@ -291,7 +291,7 @@ describe('SouthMQTT', () => {
     configuration.settings.maxNumberOfMessages = 10;
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises();
-    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(flushMessagesMock.mock.calls.length, 0);
 
     configuration.settings.maxNumberOfMessages = 1;
     utilsMqttExports.getItem = mock.fn(() => configuration.items[0] as unknown);
@@ -302,7 +302,7 @@ describe('SouthMQTT', () => {
         (c: { arguments: Array<unknown> }) => c.arguments[0] === 'MQTT message for topic myTopic: myMessage, dup:false, qos:1, retain:false'
       )
     );
-    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(flushMessagesMock.mock.calls.length, 1);
 
     utilsMqttExports.getItem = mock.fn(() => {
       throw new Error('getItem error');
@@ -318,7 +318,7 @@ describe('SouthMQTT', () => {
     assert.ok(
       logger.error.mock.calls.some((c: { arguments: Array<unknown> }) => (c.arguments[0] as string).includes(`MQTT Client error: `))
     );
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should properly connect and clear timeout', async () => {
@@ -454,7 +454,7 @@ describe('SouthMQTT', () => {
     mqttExports.default.connectAsync = mock.fn(async () => {
       throw new Error('connect error');
     });
-    mock.method(
+    const disconnectMock = mock.method(
       south,
       'disconnect',
       mock.fn(async () => undefined)
@@ -462,7 +462,7 @@ describe('SouthMQTT', () => {
 
     await south.start();
 
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
     const priv = south as unknown as Record<string, unknown>;
     assert.notStrictEqual(priv['reconnectTimeout'], null);
   });
@@ -471,7 +471,7 @@ describe('SouthMQTT', () => {
     mqttExports.default.connectAsync = mock.fn(async () => {
       throw new Error('connect error');
     });
-    mock.method(
+    const disconnectMock = mock.method(
       south,
       'disconnect',
       mock.fn(async () => undefined)
@@ -480,7 +480,7 @@ describe('SouthMQTT', () => {
 
     await south.connect();
 
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
     const priv = south as unknown as Record<string, unknown>;
     assert.strictEqual(priv['reconnectTimeout'], null);
   });
@@ -492,7 +492,7 @@ describe('SouthMQTT', () => {
       'subscribe',
       mock.fn(async () => undefined)
     );
-    mock.method(
+    const flushMessagesMock = mock.method(
       south,
       'flushMessages',
       mock.fn(async () => undefined)
@@ -504,11 +504,11 @@ describe('SouthMQTT', () => {
     mqttStream.emit('connect');
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises();
-    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+    assert.strictEqual(flushMessagesMock.mock.calls.length, 0);
 
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false, qos: 1, retain: false });
     await flushPromises();
-    assert.strictEqual((south.flushMessages as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(flushMessagesMock.mock.calls.length, 1);
     configuration.settings.maxNumberOfMessages = 1;
   });
 
@@ -600,7 +600,7 @@ describe('SouthMQTT', () => {
   });
 
   it('should properly test item', async () => {
-    mock.method(
+    const disconnectMock = mock.method(
       south,
       'disconnect',
       mock.fn(async () => undefined)
@@ -621,11 +621,11 @@ describe('SouthMQTT', () => {
     assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
     assert.strictEqual(mqttStream.end.mock.calls.length, 1);
     assert.deepStrictEqual(mqttStream.end.mock.calls[0].arguments, [true]);
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
   it('should properly test item and manage unsubscribe error', async () => {
-    mock.method(
+    const disconnectMock = mock.method(
       south,
       'disconnect',
       mock.fn(async () => undefined)
@@ -647,7 +647,7 @@ describe('SouthMQTT', () => {
     assert.strictEqual(mqttStream.unsubscribeAsync.mock.calls.length, 1);
     assert.deepStrictEqual(mqttStream.unsubscribeAsync.mock.calls[0].arguments, [configuration.items[0].settings.topic]);
     assert.strictEqual(mqttStream.end.mock.calls.length, 0);
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
     assert.strictEqual(
       error,
       `Error when testing item ${configuration.items[0].settings.topic} (received message "myMessage"): unsubscribe error`
@@ -655,7 +655,7 @@ describe('SouthMQTT', () => {
   });
 
   it('should properly test item and manage subscribe error', async () => {
-    mock.method(
+    const disconnectMock = mock.method(
       south,
       'disconnect',
       mock.fn(async () => undefined)
@@ -672,7 +672,7 @@ describe('SouthMQTT', () => {
     await flushPromises();
     await testItemPromise;
 
-    assert.strictEqual((south.disconnect as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
     assert.strictEqual(error, `Error when testing item ${configuration.items[0].settings.topic}: subscribe error`);
   });
 });

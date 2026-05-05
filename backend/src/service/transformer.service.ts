@@ -12,7 +12,7 @@ import {
   TransformerTestRequest,
   TransformerTestResponse
 } from '../../shared/model/transformer.model';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { GetUserInfo, Page } from '../../shared/model/types';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
@@ -78,7 +78,7 @@ export default class TransformerService {
   constructor(
     protected readonly validator: JoiValidator,
     private transformerRepository: TransformerRepository,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService,
+    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
     private engine: TransformerReloadEngine
   ) {}
 

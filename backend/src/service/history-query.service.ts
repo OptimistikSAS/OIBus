@@ -8,7 +8,6 @@ import {
   HistoryQueryItemCommandDTO,
   HistoryQueryItemDTO,
   HistoryQueryItemSearchParam,
-  HistoryQueryItemTypedDTO,
   HistoryQueryLightDTO,
   HistoryQueryNorthTypedDTO,
   HistoryQuerySouthTypedDTO
@@ -19,25 +18,65 @@ import HistoryQueryRepository from '../repository/config/history-query.repositor
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { checkScanMode, stringToBoolean } from './utils';
-import { toScanModeDTO } from './scan-mode.service';
-import SouthService, { southManifestList } from './south.service';
-import NorthService, { northManifestList } from './north.service';
+import { toScanModeDTO } from './scan-mode-dto.utils';
+import { toHistoryQueryItemDTO } from './history-query-item-dto.utils';
+import { southManifestList } from './south-manifests';
+import { northManifestList } from './north-manifests';
+import type { SouthConnectorEntity } from '../model/south-connector.model';
+import type { NorthConnectorEntity } from '../model/north-connector.model';
 import LogRepository from '../repository/logs/log.repository';
 import { BaseEntity, GetUserInfo, Page } from '../../shared/model/types';
 import { HistoryQueryMetrics, OIBusConnectionTestResult, OIBusContent } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import csv from 'papaparse';
 import HistoryQueryMetricsRepository from '../repository/metrics/history-query-metrics.repository';
 import { PassThrough } from 'node:stream';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import TransformerService, { toTransformerDTO } from './transformer.service';
+import { toTransformerDTO } from './transformer.service';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import DataStreamEngine from '../engine/data-stream-engine';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import { HistoryTransformerWithOptions } from '../model/transformer.model';
+import { HistoryTransformerWithOptions, Transformer } from '../model/transformer.model';
 import { SouthConnectorItemEntityLight } from '../model/south-connector.model';
+import type { ILogger } from '../model/logger.model';
+
+interface ISouthService {
+  getManifest(type: string): SouthConnectorManifest;
+  findById(southId: string): SouthConnectorEntity<SouthSettings, SouthItemSettings>;
+  testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult>;
+  testItem(
+    southId: string,
+    southType: OIBusSouthType,
+    itemName: string,
+    southSettings: SouthSettings,
+    itemSettings: SouthItemSettings,
+    testingSettings: SouthConnectorItemTestingSettings
+  ): Promise<OIBusContent>;
+}
+
+interface INorthService {
+  getManifest(type: string): NorthConnectorManifest;
+  findById(northId: string): NorthConnectorEntity<NorthSettings>;
+  testNorth(northId: string, northType: OIBusNorthType, settingsToTest: NorthSettings): Promise<OIBusConnectionTestResult>;
+}
+
+interface ITransformerService {
+  findAll(): Array<Transformer>;
+}
+
+interface IHistoryEngine {
+  createHistoryQuery(historyId: string): Promise<unknown>;
+  reloadHistoryQuery(
+    historyQueryConfig: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
+    resetCache: boolean
+  ): Promise<void>;
+  deleteHistoryQuery(historyEntity: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void>;
+  stopHistoryQuery(historyId: string): Promise<void>;
+  getHistoryQuerySSE(historyId: string): PassThrough;
+  getHistoryMetrics(historyId: string): HistoryQueryMetrics;
+  logger: ILogger;
+}
 
 export default class HistoryQueryService {
   constructor(
@@ -48,11 +87,11 @@ export default class HistoryQueryService {
     private readonly scanModeRepository: ScanModeRepository,
     private readonly logRepository: LogRepository,
     private readonly historyQueryMetricsRepository: HistoryQueryMetricsRepository,
-    private readonly southService: SouthService,
-    private readonly northService: NorthService,
-    private readonly transformerService: TransformerService,
-    private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
-    private readonly engine: DataStreamEngine
+    private readonly southService: ISouthService,
+    private readonly northService: INorthService,
+    private readonly transformerService: ITransformerService,
+    private readonly oIAnalyticsMessageService: IOIAnalyticsMessageService,
+    private readonly engine: IHistoryEngine
   ) {}
 
   list(): Array<HistoryQueryEntityLight> {
@@ -810,23 +849,4 @@ export const toHistoryQueryDTO = (
   };
 };
 
-export const toHistoryQueryItemDTO = (
-  historyQueryItem: HistoryQueryItemEntity<SouthItemSettings>,
-  southType: string,
-  getUserInfo: GetUserInfo
-): HistoryQueryItemTypedDTO<SouthItemSettings> => {
-  const southManifest = southManifestList.find(element => element.id === southType)!;
-  const itemSettingsManifest = southManifest.items.rootAttribute.attributes.find(
-    attribute => attribute.key === 'settings'
-  )! as OIBusObjectAttribute;
-  return {
-    id: historyQueryItem.id,
-    name: historyQueryItem.name,
-    enabled: historyQueryItem.enabled,
-    settings: encryptionService.filterSecrets<SouthItemSettings>(historyQueryItem.settings, itemSettingsManifest),
-    createdBy: getUserInfo(historyQueryItem.createdBy),
-    updatedBy: getUserInfo(historyQueryItem.updatedBy),
-    createdAt: historyQueryItem.createdAt,
-    updatedAt: historyQueryItem.updatedAt
-  };
-};
+export { toHistoryQueryItemDTO } from './history-query-item-dto.utils';

@@ -9,6 +9,7 @@ import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/sou
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
 import type { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../shared/model/south-settings.model';
+import type { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import type { SouthConnectorEntity } from '../../model/south-connector.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type SouthFolderScannerClass from './south-folder-scanner';
@@ -21,7 +22,7 @@ describe('SouthFolderScanner', () => {
   let south: SouthFolderScannerClass;
 
   const logger = new PinoLogger();
-  const addContentCallback = mock.fn();
+  const addContentCallback = mock.fn(async (_southId: string, _data: unknown, _queryTime: string, _items: unknown) => undefined);
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
 
@@ -183,7 +184,7 @@ describe('SouthFolderScanner', () => {
       );
       utilsExports.checkAge = mock.fn(() => true);
 
-      const result = await south.testItem(configuration.items[0], {});
+      const result = await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
       assert.strictEqual(result.type, 'time-values');
       assert.strictEqual((result as { type: string; content: Array<unknown> }).content.length, 2);
     });
@@ -206,7 +207,7 @@ describe('SouthFolderScanner', () => {
       );
       utilsExports.checkAge = mock.fn(() => true);
 
-      const result = await south.testItem(configuration.items[0], {});
+      const result = await south.testItem(configuration.items[0], { history: undefined } satisfies SouthConnectorItemTestingSettings);
       assert.strictEqual(result.type, 'time-values');
       assert.strictEqual((result as { type: string; content: Array<unknown> }).content.length, 0);
     });
@@ -292,7 +293,13 @@ describe('SouthFolderScanner', () => {
 
     it('should preserve files and return their updated modify times if preserveFiles is true', async () => {
       configuration.items[0].settings.preserveFiles = true;
-      southCacheService.getItemLastValue = mock.fn(() => ({ value: [{ filename: 'file1.csv', modifiedTime: 1000 }] }));
+      southCacheService.getItemLastValue = mock.fn(() => ({
+        itemId: 'id1',
+        groupId: null,
+        queryTime: null,
+        trackedInstant: null,
+        value: [{ filename: 'file1.csv', modifiedTime: 1000 }]
+      }));
 
       const result = await south.directQuery(configuration.items);
 

@@ -1,7 +1,7 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
@@ -10,6 +10,7 @@ import { validateCronExpression } from './utils';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { GetUserInfo } from '../../shared/model/types';
+export { toScanModeDTO } from './scan-mode-dto.utils';
 
 export default class ScanModeService {
   constructor(
@@ -17,7 +18,7 @@ export default class ScanModeService {
     private scanModeRepository: ScanModeRepository,
     private southConnectorRepository: SouthConnectorRepository,
     private southCacheRepository: SouthCacheRepository,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService,
+    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
     private dataStreamEngine: DataStreamEngine
   ) {}
 
@@ -78,15 +79,3 @@ export default class ScanModeService {
   }
 }
 
-export const toScanModeDTO = (scanMode: ScanMode, getUserInfo: GetUserInfo): ScanModeDTO => {
-  return {
-    id: scanMode.id,
-    name: scanMode.name,
-    description: scanMode.description,
-    cron: scanMode.cron,
-    createdBy: getUserInfo(scanMode.createdBy),
-    updatedBy: getUserInfo(scanMode.updatedBy),
-    createdAt: scanMode.createdAt,
-    updatedAt: scanMode.updatedAt
-  };
-};

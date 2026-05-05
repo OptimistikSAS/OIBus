@@ -1,6 +1,11 @@
 import { mock } from 'node:test';
 import { CustomTransformer, Transformer } from '../../../model/transformer.model';
-import { CustomTransformerCommandDTO, TransformerSearchParam } from '../../../../shared/model/transformer.model';
+import {
+  CustomTransformerCommandDTO,
+  TransformerSearchParam,
+  TransformerTestRequest,
+  TransformerTestResponse
+} from '../../../../shared/model/transformer.model';
 import { Page } from '../../../../shared/model/types';
 import type { TransformerManifest } from '../../../../shared/model/transformer.model';
 import { InputType } from '../../../../shared/model/transformer.model';
@@ -27,6 +32,9 @@ export default class TransformerServiceMock {
   );
   update = mock.fn(async (_transformerId: string, _command: CustomTransformerCommandDTO, _updatedBy: string): Promise<void> => undefined);
   delete = mock.fn(async (_transformerId: string): Promise<void> => undefined);
-  test = mock.fn(async (): Promise<unknown> => ({}));
+  test = mock.fn(
+    async (_command: CustomTransformerCommandDTO, _testRequest: TransformerTestRequest): Promise<TransformerTestResponse> =>
+      ({}) as TransformerTestResponse
+  );
   generateTemplate = mock.fn((_inputType: InputType): unknown => ({}));
 }

@@ -58,6 +58,7 @@ before(() => {
 
   mockModule(nodeRequire, './utils', mockUtils);
   mockModule(nodeRequire, '../north/north-connector-factory', mockNorthConnectorFactory);
+  mockModule(nodeRequire, '../south/south-connector-factory', { __esModule: true, buildSouth: mock.fn() });
   mockModule(nodeRequire, './encryption.service', mockEncryptionService);
 
   const mod = reloadModule<{

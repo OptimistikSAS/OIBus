@@ -37,7 +37,7 @@ describe('IPFilterController', () => {
     ipFilterService = new IPFilterServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: { ipFilterService, userService },
+      services: Object.assign({} as CustomExpressRequest['services'], { ipFilterService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockIPFilterServiceModule.toIPFilterDTO = mock.fn((ipFilter: unknown, getUserInfo: (id: string) => void) => {

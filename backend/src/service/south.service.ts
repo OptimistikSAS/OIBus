@@ -2,14 +2,12 @@ import { encryptionService } from './encryption.service';
 
 // South imports
 import {
-  ItemLightDTO,
   OIBusSouthType,
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
-  SouthConnectorItemTypedDTO,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthConnectorTypedDTO,
@@ -18,30 +16,13 @@ import {
   SouthItemLastValue
 } from '../../shared/model/south-connector.model';
 
-import oianalyticsManifest from '../south/south-oianalytics/manifest';
-import opcuaManifest from '../south/south-opcua/manifest';
-import mqttManifest from '../south/south-mqtt/manifest';
-import modbusManifest from '../south/south-modbus/manifest';
-import folderScannerManifest from '../south/south-folder-scanner/manifest';
-import adsManifest from '../south/south-ads/manifest';
-import mssqlManifest from '../south/south-mssql/manifest';
-import mysqlManifest from '../south/south-mysql/manifest';
-import postgresqlManifest from '../south/south-postgresql/manifest';
-import oracleManifest from '../south/south-oracle/manifest';
-import odbcManifest from '../south/south-odbc/manifest';
-import sqliteManifest from '../south/south-sqlite/manifest';
-import opcManifest from '../south/south-opc/manifest';
-import oledbManifest from '../south/south-oledb/manifest';
-import piManifest from '../south/south-pi/manifest';
-import sftpManifest from '../south/south-sftp/manifest';
-import ftpManifest from '../south/south-ftp/manifest';
-import restManifest from '../south/south-rest/manifest';
+import { southManifestList } from './south-manifests';
+export { southManifestList } from './south-manifests';
 import { OIBusConnectionTestResult, OIBusContent } from '../../shared/model/engine.model';
 import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
-  SouthConnectorItemEntityLight,
   SouthItemGroupCommand,
   SouthItemGroupEntity,
   SouthItemGroupEntityLight
@@ -51,7 +32,7 @@ import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import LogRepository from '../repository/logs/log.repository';
 import SouthConnectorMetricsRepository from '../repository/metrics/south-connector-metrics.repository';
 import { GetUserInfo, Page } from '../../shared/model/types';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import { checkGroups, checkScanMode, stringToBoolean } from './utils';
@@ -61,34 +42,14 @@ import csv from 'papaparse';
 
 import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
-import DataStreamEngine from '../engine/data-stream-engine';
+import type DataStreamEngine from '../engine/data-stream-engine';
 import { PassThrough } from 'node:stream';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
-import { toScanModeDTO } from './scan-mode.service';
+import { toScanModeDTO } from './scan-mode-dto.utils';
+import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { buildSouth } from '../south/south-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-
-export const southManifestList: Array<SouthConnectorManifest> = [
-  folderScannerManifest,
-  mqttManifest,
-  opcuaManifest,
-  opcManifest,
-  mssqlManifest,
-  mysqlManifest,
-  odbcManifest,
-  oledbManifest,
-  oracleManifest,
-  postgresqlManifest,
-  sqliteManifest,
-  adsManifest,
-  modbusManifest,
-  oianalyticsManifest,
-  piManifest,
-  restManifest,
-  sftpManifest,
-  ftpManifest
-];
 
 export default class SouthService {
   constructor(
@@ -100,7 +61,7 @@ export default class SouthService {
     private readonly scanModeRepository: ScanModeRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
     private readonly certificateRepository: CertificateRepository,
-    private readonly oIAnalyticsMessageService: OIAnalyticsMessageService,
+    private readonly oIAnalyticsMessageService: IOIAnalyticsMessageService,
     private readonly engine: DataStreamEngine,
     private readonly southItemGroupRepository: SouthItemGroupRepository
   ) {}
@@ -956,60 +917,4 @@ export const toSouthConnectorDTO = (
   };
 };
 
-export const toSouthConnectorItemDTO = (
-  entity: SouthConnectorItemEntity<SouthItemSettings>,
-  southType: string,
-  getUserInfo: GetUserInfo
-): SouthConnectorItemTypedDTO<SouthItemSettings> => {
-  const manifest = southManifestList.find(element => element.id === southType)!;
-  const itemSettingsManifest = manifest.items.rootAttribute.attributes.find(
-    attribute => attribute.key === 'settings'
-  )! as OIBusObjectAttribute;
-  return {
-    id: entity.id,
-    name: entity.name,
-    enabled: entity.enabled,
-    scanMode: entity.scanMode ? toScanModeDTO(entity.scanMode, getUserInfo) : null,
-    settings: encryptionService.filterSecrets(entity.settings, itemSettingsManifest),
-    createdBy: getUserInfo(entity.createdBy),
-    updatedBy: getUserInfo(entity.updatedBy),
-    createdAt: entity.createdAt,
-    updatedAt: entity.updatedAt,
-    group: entity.group ? toSouthItemGroupDTO(entity.group, getUserInfo) : null,
-    syncWithGroup: entity.syncWithGroup,
-    maxReadInterval: entity.maxReadInterval,
-    readDelay: entity.readDelay,
-    overlap: entity.overlap
-  };
-};
-
-export const toSouthItemGroupDTO = (entity: SouthItemGroupEntityLight, getUserInfo: GetUserInfo): SouthItemGroupDTO => {
-  return {
-    id: entity.id,
-    createdBy: getUserInfo(entity.createdBy),
-    updatedBy: getUserInfo(entity.updatedBy),
-    createdAt: entity.createdAt,
-    updatedAt: entity.updatedAt,
-    standardSettings: {
-      name: entity.name,
-      scanMode: toScanModeDTO(entity.scanMode, getUserInfo)
-    },
-    historySettings: {
-      overlap: entity.overlap,
-      maxReadInterval: entity.maxReadInterval,
-      readDelay: entity.readDelay
-    }
-  };
-};
-
-export const toSouthItemLightDTO = (entity: SouthConnectorItemEntityLight, getUserInfo: GetUserInfo): ItemLightDTO => {
-  return {
-    id: entity.id,
-    name: entity.name,
-    enabled: entity.enabled,
-    createdBy: getUserInfo(entity.createdBy),
-    updatedBy: getUserInfo(entity.updatedBy),
-    createdAt: entity.createdAt,
-    updatedAt: entity.updatedAt
-  };
-};
+export { toSouthConnectorItemDTO, toSouthItemGroupDTO, toSouthItemLightDTO } from './south-connector-dto.utils';

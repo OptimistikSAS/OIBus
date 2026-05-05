@@ -19,7 +19,7 @@ import { GetUserInfo } from '../../shared/model/types';
 import { contentSchema, engineSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import { encryptionService } from './encryption.service';
 import LoggerService from './logger/logger.service';
-import OIAnalyticsMessageService from './oia/oianalytics-message.service';
+import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import ProxyServer from '../web-server/proxy-server';
 import { DateTime } from 'luxon';
 import process from 'node:process';
@@ -61,7 +61,7 @@ export default class OIBusService {
     private ipFilterService: IPFilterService,
     private oIAnalyticsRegistrationService: OIAnalyticsRegistrationService,
     private loggerService: LoggerService,
-    private oIAnalyticsMessageService: OIAnalyticsMessageService,
+    private oIAnalyticsMessageService: IOIAnalyticsMessageService,
     private southService: SouthService,
     private northService: NorthService,
     private historyQueryService: HistoryQueryService,

@@ -31,7 +31,7 @@ describe('ContentController', () => {
   beforeEach(() => {
     oIBusService = new OIBusServiceMock();
     mockRequest = {
-      services: { oIBusService }
+      services: Object.assign({} as CustomExpressRequest['services'], { oIBusService })
     } as Partial<CustomExpressRequest>;
     controller = new ContentController();
   });
