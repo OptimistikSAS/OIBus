@@ -11,3 +11,27 @@ $containerMinHeight: 30vh;
 #message-container {
   min-height: $containerMinHeight;
 }
+
+.json-content {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.grid-table {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(100px, 200px) minmax(75px, 1fr) minmax(100px, 1fr);
+}
+
+.grid-table-header,
+.grid-table-row {
+  display: contents;
+}
+
+.grid-table > .grid-table-row:nth-child(even) > div {
+  background-color: $veryLightGrey;
+}
+
+.grid-table-row:hover > div {
+  background-color: $mediumGrey !important;
+}

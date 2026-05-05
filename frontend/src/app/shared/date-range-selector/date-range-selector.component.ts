@@ -111,6 +111,25 @@ export class DateRangeSelectorComponent implements OnInit, OnDestroy, ControlVal
     }
   }
 
+  /**
+   * Returns the effective date range at the moment of the call.
+   * For predefined ranges (e.g. "last 10 minutes") the calculation is
+   * always performed fresh, so callers always receive up-to-date values
+   * regardless of when the user changed the dropdown.
+   */
+  currentDateRange(): DateRange | null {
+    const rangeType = this.internalForm.controls.rangeType.value;
+
+    if (rangeType === 'custom') {
+      const startTime = this.internalForm.controls.startTime.value;
+      const endTime = this.internalForm.controls.endTime.value;
+      return startTime && endTime ? { startTime, endTime } : null;
+    }
+
+    const range = this.predefinedRanges.find(r => r.key === rangeType);
+    return range ? range.calculate() : null;
+  }
+
   getCurrentRangeDescription(): string {
     const rangeType = this.internalForm.controls.rangeType.value;
     if (rangeType === 'custom') {
@@ -170,35 +189,52 @@ export class DateRangeSelectorComponent implements OnInit, OnDestroy, ControlVal
     return `${start} - ${end}`;
   }
 
+  // Re-entrancy guard: patchValue (called below for predefined ranges) triggers
+  // writeValue on the still-mounted DatetimepickerComponent children, whose
+  // internal combineLatest fires onChange, which updates the parent form and
+  // re-enters emitValue. The guard absorbs that recursive call harmlessly.
+  private _emittingValue = false;
+
   private emitValue(): void {
-    const formValue = this.internalForm.value;
-    let dateRange: DateRange;
+    if (this._emittingValue) return;
+    this._emittingValue = true;
+    try {
+      const formValue = this.internalForm.value;
+      let dateRange: DateRange;
 
-    if (formValue.rangeType === 'custom') {
-      dateRange = {
-        startTime: formValue.startTime!,
-        endTime: formValue.endTime!
-      };
-    } else {
-      const range = this.predefinedRanges.find(r => r.key === formValue.rangeType);
-      if (range) {
-        dateRange = range.calculate();
-        // Update the internal form controls for consistency
-        this.internalForm.patchValue(
-          {
-            startTime: dateRange.startTime,
-            endTime: dateRange.endTime
-          },
-          { emitEvent: false }
-        );
+      if (formValue.rangeType === 'custom') {
+        dateRange = {
+          startTime: formValue.startTime!,
+          endTime: formValue.endTime!
+        };
       } else {
-        return;
+        const range = this.predefinedRanges.find(r => r.key === formValue.rangeType);
+        if (range) {
+          dateRange = range.calculate();
+          // Sync the internal controls so the UI and cross-validators reflect the
+          // calculated values. patchValue updates controls sequentially, so
+          // startTime's validator may see a transient badStartDateRange while endTime
+          // still holds the old custom date — updateValueAndValidity corrects that.
+          this.internalForm.patchValue(
+            {
+              startTime: dateRange.startTime,
+              endTime: dateRange.endTime
+            },
+            { emitEvent: false }
+          );
+          this.internalForm.controls.startTime.updateValueAndValidity({ emitEvent: false });
+          this.internalForm.controls.endTime.updateValueAndValidity({ emitEvent: false });
+        } else {
+          return;
+        }
       }
-    }
 
-    if (this.internalForm.valid) {
-      this.onChange(dateRange);
-      this.onTouched();
+      if (this.internalForm.valid) {
+        this.onChange(dateRange);
+        this.onTouched();
+      }
+    } finally {
+      this._emittingValue = false;
     }
   }
 }

@@ -58,6 +58,7 @@
       @if (supportsHistorySettings) {
         <div class="form-group mx-2" formGroupName="history" id="history">
           <oib-date-range-selector
+            #dateRangeSelector
             formControlName="dateRange"
             [startLabel]="'south.test-item.query-start'"
             [endLabel]="'south.test-item.query-end'"

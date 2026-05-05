@@ -15,10 +15,7 @@
             "baseHref": "/",
             "outputPath": "../backend/dist/frontend",
             "browser": "src/main.ts",
-            "polyfills": [
-              "zone.js",
-              "@angular/localize/init"
-            ],
+            "polyfills": ["zone.js", "@angular/localize/init"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -31,14 +28,10 @@
                 "output": "vendor/monaco-editor"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ],
+            "styles": ["src/styles.scss"],
             "stylePreprocessorOptions": {
               "sass": {
-                "silenceDeprecations": [
-                  "import"
-                ]
+                "silenceDeprecations": ["import"]
               }
             }
           },
@@ -56,7 +49,7 @@
                 {
                   "type": "initial",
                   "maximumWarning": "1500kB",
-                  "maximumError": "2MB"
+                  "maximumError": "3MB"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -77,9 +70,7 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true,
-              "polyfills": [
-                "@angular/localize/init"
-              ]
+              "polyfills": ["@angular/localize/init"]
             }
           },
           "defaultConfiguration": "production"
@@ -102,10 +93,7 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": [
-              "src/**/*.ts",
-              "src/**/*.html"
-            ],
+            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"],
             "maxWarnings": 0,
             "concurrency": "auto"
           }
@@ -115,11 +103,7 @@
           "options": {
             "main": "src/test.ts",
             "aot": true,
-            "polyfills": [
-              "zone.js",
-              "zone.js/testing",
-              "@angular/localize/init"
-            ],
+            "polyfills": ["zone.js", "zone.js/testing", "@angular/localize/init"],
             "tsConfig": "tsconfig.spec.json",
             "assets": [
               {
@@ -127,19 +111,13 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "src/styles.scss"
-            ],
+            "styles": ["src/styles.scss"],
             "stylePreprocessorOptions": {
               "sass": {
-                "silenceDeprecations": [
-                  "import"
-                ]
+                "silenceDeprecations": ["import"]
               }
             },
-            "exclude": [
-              "src/**/*.vitest.spec.ts"
-            ],
+            "exclude": ["src/**/*.vitest.spec.ts"],
             "karmaConfig": "karma.conf.cjs"
           }
         },
@@ -148,16 +126,10 @@
           "options": {
             "tsConfig": "tsconfig.vitest.json",
             "buildTarget": "::vitest",
-            "browsers": [
-              "chromiumHeadless"
-            ],
+            "browsers": ["chromiumHeadless"],
             "runnerConfig": true,
-            "include": [
-              "src/**/*.vitest.spec.ts"
-            ],
-            "setupFiles": [
-              "src/test/test.ts"
-            ]
+            "include": ["src/**/*.vitest.spec.ts"],
+            "setupFiles": ["src/test/test.ts"]
           }
         }
       }

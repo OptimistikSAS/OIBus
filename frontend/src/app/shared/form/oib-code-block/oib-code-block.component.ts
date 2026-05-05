@@ -1,17 +1,16 @@
-/* eslint-disable-next-line */
-/// <reference path="../../../../../node_modules/monaco-editor/monaco.d.ts" />
-import { Component, ElementRef, forwardRef, inject, viewChild, input, effect, signal } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, ReactiveFormsModule } from '@angular/forms';
-import { MonacoEditorLoaderService } from './monaco-editor-loader.service';
-import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
+import { afterRenderEffect, Component, ElementRef, forwardRef, input, OnDestroy, signal, viewChild } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { EditorView } from '@codemirror/view';
+import { Compartment, EditorState } from '@codemirror/state';
+import { basicSetup } from 'codemirror';
+import { json } from '@codemirror/lang-json';
+import { javascript } from '@codemirror/lang-javascript';
+import { sql } from '@codemirror/lang-sql';
 
-// This component relies on the monaco editor and needs it to load it if it is not already available.
-// It delegates this task to the MonacoEditorLoaderService, which returns a Promise which resolves when the loading is done.
 @Component({
   selector: 'oib-code-block',
   templateUrl: './oib-code-block.component.html',
   styleUrl: './oib-code-block.component.scss',
-  imports: [ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -20,9 +19,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
     }
   ]
 })
-export class OibCodeBlockComponent implements ControlValueAccessor {
-  private monacoEditorLoader = inject(MonacoEditorLoaderService);
-
+export class OibCodeBlockComponent implements OnDestroy, ControlValueAccessor {
   readonly _editorContainer = viewChild.required<ElementRef<HTMLDivElement>>('editorContainer');
   readonly key = input('');
   readonly language = input('');
@@ -31,27 +28,62 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
   readonly disabled = signal(false);
   readonly chunkedValueProgress = signal(0);
 
+  private editorView: EditorView | null = null;
+  private pendingValue: string | null = null;
+  private readonly languageCompartment = new Compartment();
+  private readonly editableCompartment = new Compartment();
+  /** Prevents the updateListener from calling onChange during programmatic writes. */
+  private suppressOnChange = false;
+
   onChange: (value: string) => void = () => {};
-  onTouched = () => {};
+  onTouched: () => void = () => {};
 
-  /**
-   * Holds the instance of the current code editor
-   */
-  codeEditorInstance = signal<monaco.editor.IStandaloneCodeEditor | null>(null);
-  /**
-   * Value to write when the loading is complete
-   */
-  private pendingValueToWrite = signal<string | null>(null);
-  /**
-   * Track the current language to detect changes
-   */
-  private currentLanguage = signal<string | null>(null);
+  constructor() {
+    afterRenderEffect(() => {
+      const container = this._editorContainer().nativeElement;
+      const isEditable = !this.readOnly() && !this.disabled();
+      const lang = this.language();
 
-  registerOnChange(fn: any): void {
+      if (!this.editorView) {
+        const state = EditorState.create({
+          doc: this.pendingValue ?? '',
+          extensions: [
+            basicSetup,
+            // Make the editor fill its container height
+            EditorView.theme({ '&': { height: '100%' }, '.cm-scroller': { overflow: 'auto' } }),
+            this.languageCompartment.of(this.getLanguageExtension(lang)),
+            this.editableCompartment.of(EditorView.editable.of(isEditable)),
+            EditorView.updateListener.of(update => {
+              if (update.docChanged && !this.suppressOnChange) {
+                this.onChange(update.state.doc.toString());
+              }
+            }),
+            EditorView.domEventHandlers({ blur: () => this.onTouched() })
+          ]
+        });
+        this.editorView = new EditorView({ state, parent: container });
+        this.pendingValue = null;
+      } else {
+        // Reactively update language and editable state when their signals change
+        this.editorView.dispatch({
+          effects: [
+            this.languageCompartment.reconfigure(this.getLanguageExtension(lang)),
+            this.editableCompartment.reconfigure(EditorView.editable.of(isEditable))
+          ]
+        });
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.editorView?.destroy();
+  }
+
+  registerOnChange(fn: (value: string) => void): void {
     this.onChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
 
@@ -59,137 +91,46 @@ export class OibCodeBlockComponent implements ControlValueAccessor {
     this.disabled.set(isDisabled);
   }
 
-  constructor() {
-    this.monacoEditorLoader.loadMonacoEditor().then(() => {
-      this.codeEditorInstance.set(
-        monaco.editor.create(this._editorContainer().nativeElement, {
-          value: '',
-          language: this.language(),
-          theme: 'vs-light',
-          selectOnLineNumbers: true,
-          wordWrap: 'on',
-          minimap: { enabled: false },
-          readOnly: this.readOnly(),
-          automaticLayout: true,
-          stickyScroll: {
-            enabled: false
-          }
-        })
-      );
-
-      // we listen on changes
-      const codeEditor = this.codeEditorInstance()!;
-      codeEditor.getModel()!.onDidChangeContent(() => {
-        this.onChange(codeEditor.getValue());
-      });
-      const pendingValueToWrite = this.pendingValueToWrite();
-      if (pendingValueToWrite) {
-        codeEditor.setValue(pendingValueToWrite);
-      }
-    });
-
-    // Effect to handle language changes
-    effect(() => {
-      const lang = this.language();
-      const editor = this.codeEditorInstance();
-      if (editor && lang !== this.currentLanguage()) {
-        this.changeLanguage(lang);
-      }
-    });
-  }
-
   writeValue(value: string): void {
-    // we can only set the value once the editor is loaded, which can take some time on first load
-    const codeEditor = this.codeEditorInstance();
-    if (codeEditor) {
-      codeEditor.setValue(value);
+    const content = value ?? '';
+    if (this.editorView) {
+      this.setEditorContent(content);
     } else {
-      // if the editor is not yet loaded, we store the value to write,
-      // and it'll be set once the loading is complete
-      this.pendingValueToWrite.set(value);
+      this.pendingValue = content;
     }
   }
 
-  writeValueChunked(value: string, chunkSize = 100_000): Promise<void> {
-    // we can only set the value once the editor is loaded, which can take some time on first load
-    const codeEditor = this.codeEditorInstance();
-    if (!codeEditor) {
-      // if the editor is not yet loaded, we store the value to write,
-      // and it'll be set once the loading is complete
-      this.pendingValueToWrite.set(value);
-      return Promise.resolve();
-    }
-
-    return new Promise(resolve => {
-      const model = codeEditor.getModel();
-      if (!model) return resolve();
-
-      let offset = 0;
-      const totalLength = value.length;
-
-      // First chunk needs to replace any existing content
-      const firstChunk = value.slice(0, chunkSize);
-      model.pushEditOperations(
-        [],
-        [
-          {
-            range: model.getFullModelRange(),
-            text: firstChunk
-          }
-        ],
-        () => null
-      );
-
-      offset = firstChunk.length;
-      this.chunkedValueProgress.update(() => offset / totalLength);
-
-      const applyNextChunk = () => {
-        const chunk = value.slice(offset, offset + chunkSize);
-
-        if (chunk.length === 0) {
-          this.chunkedValueProgress.update(() => 1);
-          return resolve();
-        }
-
-        // Get the current last position in the model
-        const lastLine = model!.getLineCount();
-        const lastLineContent = model!.getLineContent(lastLine);
-
-        // Apply the chunk at the end of the current content
-        model?.pushEditOperations(
-          [],
-          [
-            {
-              range: {
-                startLineNumber: lastLine,
-                startColumn: lastLineContent.length + 1,
-                endLineNumber: lastLine,
-                endColumn: lastLineContent.length + 1
-              },
-              text: chunk
-            }
-          ],
-          () => null
-        );
-
-        offset += chunk.length;
-
-        // Calculate and log progress
-        this.chunkedValueProgress.update(() => offset / totalLength);
-
-        // Schedule next chunk
-        requestAnimationFrame(applyNextChunk);
-      };
-
-      // Start processing remaining chunks
-      requestAnimationFrame(applyNextChunk);
+  /**
+   * Imperatively change the editor language. Useful when the language is not
+   * bound as an input (e.g. set after an async operation).
+   */
+  changeLanguage(lang: string): void {
+    this.editorView?.dispatch({
+      effects: this.languageCompartment.reconfigure(this.getLanguageExtension(lang))
     });
   }
 
-  changeLanguage(language: string) {
-    const codeEditor = this.codeEditorInstance();
-    if (codeEditor) {
-      monaco.editor.setModelLanguage(codeEditor.getModel()!, language);
+  private setEditorContent(value: string): void {
+    if (!this.editorView) return;
+    this.suppressOnChange = true;
+    this.editorView.dispatch({
+      changes: { from: 0, to: this.editorView.state.doc.length, insert: value }
+    });
+    this.suppressOnChange = false;
+  }
+
+  private getLanguageExtension(lang: string) {
+    switch (lang) {
+      case 'json':
+        return json();
+      case 'javascript':
+        return javascript();
+      case 'typescript':
+        return javascript({ typescript: true });
+      case 'sql':
+        return sql();
+      default:
+        return [];
     }
   }
 }

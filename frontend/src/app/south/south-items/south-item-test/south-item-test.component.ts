@@ -39,6 +39,8 @@ class SouthItemTestComponent implements AfterContentInit, OnInit {
   private translate = inject(TranslateService);
 
   readonly testResultView = viewChild.required<ItemTestResultComponent>('testResultViewComponent');
+  // Optional: only present when supportsHistorySettings is true
+  readonly dateRangeSelector = viewChild<DateRangeSelectorComponent>('dateRangeSelector');
 
   /** What kind of item is being tested */
   readonly type = input.required<'south' | 'history-south'>();
@@ -91,11 +93,15 @@ class SouthItemTestComponent implements AfterContentInit, OnInit {
 
     const formValue = this.testingSettingsForm.value;
 
-    if (formValue.history?.dateRange) {
+    if (formValue.history?.dateRange !== undefined) {
+      // Re-calculate the date range at the moment the test is triggered so that
+      // predefined ranges (e.g. "last 10 minutes") are always fresh and never
+      // reflect stale values from the time the user changed the dropdown.
+      const liveRange = this.dateRangeSelector()?.currentDateRange() ?? formValue.history.dateRange;
       return {
         history: {
-          startTime: formValue.history.dateRange.startTime,
-          endTime: formValue.history.dateRange.endTime
+          startTime: liveRange.startTime,
+          endTime: liveRange.endTime
         }
       };
     }
