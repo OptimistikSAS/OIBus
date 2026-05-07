@@ -4,119 +4,162 @@ sidebar_position: 2
 
 # First Access
 
-OIBus configuration interface is available on http://localhost:2223.
+Once OIBus is running, open a browser and navigate to `http://localhost:2223`.
 
-:::caution Default access
-By default, the user is **admin** and the password is **pass**.
+:::caution Default credentials
+The default login is **admin** with password **pass**.
 
-We strongly advise to change the password in the [user settings](#user-settings).
+Change the password immediately after your first login in the [User Settings](#user-settings) section.
+:::
+
+:::note Port configuration
+The default port **2223** can be changed in [Engine Settings](../engine/engine-settings.mdx#oibus-port) if it conflicts with another service.
 :::
 
 ## Home Page
 
-The OIBus home page shows enabled connectors and the engine with their associated metrics.
+The home page gives a real-time overview of your OIBus instance: enabled South and North connectors are listed with
+their live metrics, and the engine status is shown at the top.
 
 <div style={{ textAlign: 'center' }}>![Home page](../../../static/img/guide/installation/first_access/home-page.png)</div>
 
-The magnifying glass icon redirects you to the display page of the connector or of the engine.
+Click the **magnifying glass** icon next to any connector or the engine to open its display page, where you can
+inspect detailed metrics and cache status.
 
 ## Engine
 
-The engine page allows you to set [logging parameters](../engine/engine-settings.mdx#logging-parameters), [Scan Modes](../engine/scan-modes.mdx) and [IP Filters](../engine/ip-filters.mdx).
+The engine page is the control centre for OIBus-wide settings. From here you can configure:
+
+- [Engine settings](../engine/engine-settings.mdx) (name, port, proxy server)
+- [Logging parameters](../engine/engine-settings.mdx#logging-parameters)
+- [Scan Modes](../engine/scan-modes.mdx)
+- [IP Filters](../engine/ip-filters.mdx)
 
 <div style={{ textAlign: 'center' }}>![Engine](../../../static/img/guide/installation/first_access/engine.png)</div>
 
-:::note
-The restart button and the shutdown button affect the engine only, not the service. It means it will shut down the connectors, but not the web service, which allows you to still access the OIBus interface.
+:::note Restart button
+The **Restart** button works only when OIBus is running as a system service. It signals the service manager
+to stop and restart the process — the service itself handles the actual restart.
+
+If OIBus is started manually (e.g. from a terminal), the restart button will stop the process without
+bringing it back up automatically.
 :::
 
-:::tip Allow remote access by adding an IP filter with curl
-If you want to automatize the setup of OIBus, and access it remotely, you can send a curl command to accept connection from various IP addresses. Here is an example that accepts all IP addresses.
-
-```bash
-curl --location --request POST "http://localhost:2223/api/ip-filters" \
---header "Content-Type: application/json" \
---data-raw '{"address": "*", "description": "All"}' \
--u "admin\:pass"
-```
-
+:::tip Allow remote access
+To access OIBus from another machine, add an IP filter — including via curl for automated setups.
+See [IP Filters](../engine/ip-filters.mdx) for details.
 :::
 
 ### Engine Metrics
 
-These metrics provide insights into the resource usage and performance of the OIBus process:
-Metric | Description |
-|----------------------|-------------------------------------------------------------------------------------------------|
-| **CPU usage** | Last second: `78.10%` (instantaneous), Average: `80.92%` (over time) |
-| **Uptime** | `47 minutes, 4 seconds` (duration the process has been running) |
-| **Free memory** | `43%` (available system memory) |
-| **RAM usage** | min: `0 B` / current: `555.8 MB` / max: `1601.4 MB` (process memory in RAM) |
-| **Heap total** | min: `0 B` / current: `129.6 MB` / max: `1340.0 MB` (memory allocated for heap) |
-| **Heap used** | min: `0 B` / current: `86.4 MB` / max: `1308.3 MB` (actual memory in use) |
-| **External memory** | min: `0 B` / current: `19.3 MB` / max: `154.6 MB` (memory for native extensions) |
-| **Array buffer** | min: `0 B` / current: `4.6 MB` / max: `139.9 MB` (memory for binary data) |
+The engine display page shows real-time resource usage for the OIBus process:
+
+| Metric              | Description                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------- |
+| **CPU usage**       | Instantaneous CPU usage and rolling average over recent intervals.                      |
+| **Uptime**          | Time elapsed since the OIBus process last started.                                      |
+| **Free memory**     | Percentage of system memory currently available.                                        |
+| **RAM usage**       | Process memory resident in RAM — minimum, current, and maximum since startup.           |
+| **Heap total**      | Total memory allocated for the JavaScript heap.                                         |
+| **Heap used**       | Memory actively used within the heap.                                                   |
+| **External memory** | Memory used by native extensions (e.g., C++ bindings).                                  |
+| **Array buffer**    | Memory allocated for binary data buffers.                                               |
 
 ## North Connectors
 
-To add a North connector, simply click the "+" button.
+North connectors define where OIBus sends data. Click **+** to add a new connector and choose from the available
+types.
 
 <div style={{ textAlign: 'center' }}>![North](../../../static/img/guide/installation/first_access/north.png)</div>
 
-On the list's right-hand side, you have options to:
+Each connector in the list has the following actions on the right-hand side:
 
-- Activate/deactivate a connector
-- Access its display page or editing form
-- Create a duplicate
-- Delete it
+- **Enable / Disable** — toggle the connector on or off without deleting it
+- **Display** — open the connector's monitoring page (metrics, cache status, recent transmissions)
+- **Edit** — modify the connector's settings
+- **Duplicate** — create a copy of the connector with a new name
+- **Delete** — permanently remove the connector
+
+:::tip
+Refer to the [North connectors guide](../north-connectors/common-settings.md) for details on cache settings,
+throttling, and transformers.
+:::
 
 ## South Connectors
 
-To add a South connector, simply click the "+" button.
+South connectors define the data sources OIBus reads from. Click **+** to add a new connector and choose from the
+available protocols.
 
 <div style={{ textAlign: 'center' }}>![South](../../../static/img/guide/installation/first_access/south.png)</div>
 
-On the list's right-hand side, you have options to:
+Each connector in the list has the following actions on the right-hand side:
 
-- Activate/deactivate a connector
-- Access its display page or editing form
-- Create a duplicate
-- Delete it
+- **Enable / Disable** — toggle the connector on or off without deleting it
+- **Display** — open the connector's monitoring page (metrics, last scan times, subscription status)
+- **Edit** — modify the connector's settings
+- **Duplicate** — create a copy of the connector with a new name
+- **Delete** — permanently remove the connector
+
+:::tip
+Refer to the [South connectors guide](../south-connectors/common-settings.md) for details on scan modes,
+items, and subscription-based protocols.
+:::
 
 ## History Queries
 
-To add a History query, simply click the "+" button.
+History queries replay a time range of data through a South connector and forward it to a North connector.
+Click **+** to create a new history query.
 
 <div style={{ textAlign: 'center' }}>![History Queries](../../../static/img/guide/installation/first_access/history-query.png)</div>
 
-On the list's right-hand side, you have options to:
+Each history query in the list has the following actions on the right-hand side:
 
-- Activate/deactivate a query
-- Access its display page or editing form
-- Create a duplicate
-- Delete it
+- **Start / Pause** — begin or suspend the query execution
+- **Display** — open the query's monitoring page (progress, metrics)
+- **Edit** — modify the query's settings
+- **Duplicate** — create a copy of the query
+- **Delete** — permanently remove the query
+
+:::tip
+Refer to the [History Queries guide](../history-queries.md) for details on time range configuration and
+execution controls.
+:::
 
 ## Logs
 
-The log page automatically refreshes every 10 seconds.
+The log page displays OIBus runtime logs and refreshes automatically every 10 seconds.
 
 <div style={{ textAlign: 'center' }}>![Logs](../../../static/img/guide/installation/first_access/logs.png)</div>
 
-Filter logs by:
+Use the filters to narrow down what you see:
 
-- Dates
-- Log level
-- Log type (South, North, engine, etc.)
-- Scope (connector/history query)
-- Message content
+| Filter        | Description                                                                        |
+| ------------- | ---------------------------------------------------------------------------------- |
+| **Date range**    | Show only logs within a specific time window.                                  |
+| **Level**         | Filter by severity: `trace`, `debug`, `info`, `warn`, `error`.                 |
+| **Scope**         | Restrict logs to the engine, a South connector, a North connector, or a history query. |
+| **Message**       | Search by free text within log message content.                                |
+
+Log verbosity is configured per destination (console, file, database, OIAnalytics) in
+[Engine Settings → Logging Parameters](../engine/engine-settings.mdx#logging-parameters).
 
 ## About
 
-Information about the OIBus process and link to the documentation.
+The **About** page shows version and build information for the running OIBus instance, along with a link to this
+documentation.
 
 <div style={{ textAlign: 'center' }}>![About](../../../static/img/guide/installation/first_access/about.png)</div>
 
+Use this page to confirm the exact version when reporting issues or checking compatibility with OIAnalytics.
+
 ## User Settings
 
-Modify your password and select the timezone for date displays.
+The **User Settings** page lets you update your account password and set the timezone used for date and time
+displays throughout the interface.
 
 <div style={{ textAlign: 'center' }}>![User settings](../../../static/img/guide/installation/first_access/user-settings.png)</div>
+
+| Setting          | Description                                                              |
+| ---------------- | ------------------------------------------------------------------------ |
+| **Password**     | Change the current user's login password.                                |
+| **Timezone**     | Select the timezone for all date/time values shown in the interface.     |
