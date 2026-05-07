@@ -1,4 +1,3 @@
-import CodeBlock from '@theme/CodeBlock';
 import DownloadButton from '../../../src/components/DownloadButton';
 import packageInfo from '../../../package.json';
 
@@ -10,7 +9,7 @@ import packageInfo from '../../../package.json';
   >
     <div>
       <div>{`OIBus v${packageInfo.version}`}</div>
-      <div>MacOS (Intel chip)</div>
+      <div>macOS (Intel)</div>
     </div>
   </DownloadButton>
   <DownloadButton
@@ -18,57 +17,47 @@ import packageInfo from '../../../package.json';
   >
     <div>
       <div>{`OIBus v${packageInfo.version}`}</div>
-      <div>MacOS (ARM 64)</div>
+      <div>macOS (Apple Silicon)</div>
     </div>
   </DownloadButton>
 </div>
 
-## Run OIBus on macOS
+:::info
+macOS support is intended for development and testing. For production deployments, use Linux or Windows where OIBus can be installed as a system service.
+:::
 
-1. **Extract the downloaded archive** to a location of your choice
+## Run OIBus
 
-2. **Open Terminal** and navigate to the folder containing the OIBus binary
+1. Extract the downloaded archive to a location of your choice.
 
-3. **Run OIBus** with the following command:
+2. Open **Terminal** and navigate to the extracted folder.
 
-```bash
-./oibus-launcher --config [your-data-folder-path]
-```
-
-Replace `[your-data-folder-path]` with the path where you want to store OIBus configuration and cache files.
-
-**Example:**
+3. Launch OIBus:
 
 ```bash
 ./oibus-launcher --config ~/oibus-data
 ```
 
-:::important Requirements
+Replace `~/oibus-data` with the path where you want to store OIBus configuration and cache files.
 
-- You need **admin permissions** to run the binary
-- The binary must be run from its own folder
-
+:::note
+- Administrator permissions are required to run the binary.
+- The binary must be executed from its own folder.
 :::
 
 ## Allow App Execution
 
-On macOS, you may need to manually allow the execution of the OIBus binary:
+macOS Gatekeeper will block unsigned binaries on first launch. You need to allow both `oibus-launcher`
+and `oibus` (which the launcher starts as a child process):
 
-1. When first running OIBus, you'll see a security warning
-2. Go to **System Settings > Privacy & Security**
-3. In the Security section, click **Allow Anyway** for:
-
-- `oibus-launcher`
-- `oibus` (which is run by the launcher)
+1. Run `./oibus-launcher` — macOS will display a security warning and block execution.
+2. Go to **System Settings → Privacy & Security**.
+3. In the **Security** section, click **Allow Anyway** next to the blocked binary.
+4. Repeat for the second binary when it is blocked.
 
 <div style={{ textAlign: 'center' }}>![macOS Security Settings](../../../static/img/guide/installation/macos-security.png)</div>
 
-:::note
-You'll need to perform this operation twice - once for each binary.
-:::
-
 ## Access OIBus
 
-After successfully launching OIBus, access the interface at: http://localhost:2223/
-
-Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
+Once OIBus is running, open `http://localhost:2223` in a browser and follow the
+[first access guide](./first-access.mdx).

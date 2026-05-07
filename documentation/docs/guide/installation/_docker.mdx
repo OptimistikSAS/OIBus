@@ -1,73 +1,37 @@
 import CodeBlock from '@theme/CodeBlock';
 import packageInfo from '../../../package.json';
 
-## Download
+## Pull the Image
 
 <CodeBlock language="bash">{`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}</CodeBlock>
 
-### Run the Container
+## Run the Container
 
-```bash
-docker run --name oibus-container \ -d \ -p 2223:2223 \ -v "./OIBusData:/app/OIBus/OIBusData" \ oibus
-```
+<CodeBlock language="bash">
+{`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
 
-:::tip Persistent Data Volume
-The volume mount (`-v`) is **highly recommended** to:
-
-- Persist configuration between container restarts
-- Access logs and cache files
-- Maintain your configuration database
-- Store historical data
-
-Without a volume, all data will be lost when the container stops.
+:::tip Persistent data volume
+The `-v` mount is **required** for production use. Without it, all configuration, cache, and logs are lost
+when the container stops or is replaced.
 :::
 
-## Container Configuration
-
-### Port Configuration
-
-| Port     | Purpose       | Configuration                                   |
-| -------- | ------------- | ----------------------------------------------- |
-| 2223     | Web interface | Exposed by default (`-p 2223:2223`)             |
-| [custom] | Proxy server  | Add `-p [HOST_PORT]:[CONTAINER_PORT]` to expose |
-
-:::danger Port Configuration Warning
-**Important:** Never change the HTTP port (2223) from within the OIBus web interface when running in Docker. Changing this port will make the web interface inaccessible as the container only exposes port 2223 by default.
+:::danger Do not change the HTTP port from inside OIBus
+When running in Docker, do not change the OIBus HTTP port (2223) from the web interface. The container
+only exposes port 2223 — changing it internally will make the interface unreachable.
 :::
 
-### Proxy Server Setup
+Open `http://localhost:2223` in a browser and follow the [first access guide](./first-access.mdx).
 
-To use OIBus as a proxy server in Docker:
-
-1. Configure the proxy port in OIBus settings (e.g., 9000)
-2. Update your `docker run` command:
-
-```bash
-docker run --name oibus-container \ -d \ -p 2223:2223 \ -p 9000:9000 \ -v "./OIBusData:/app/OIBus/OIBusData" \ oibus
-```
-
-3. Ensure your firewall allows traffic on the proxy port
-
-## Best Practices
-
-### Volume Management
-
-- Create a dedicated directory for OIBus data on your host
-- Set appropriate permissions: `chmod 775 OIBusData`
-- Consider using named volumes for production deployments
-
-### Resource Limits
-
-```bash
-docker run --name oibus-container \ -d \ --memory="2g" \ --cpus="2" \ -p 2223:2223 \ -v "./OIBusData:/app/OIBus/OIBusData" \ oibus
-```
-
-### Docker Compose Example
+## Docker Compose
 
 <CodeBlock language="yaml">
-  {`
-version: '3.8'
-services:
+{`services:
   oibus:
     image: ghcr.io/optimistiksas/oibus:v${packageInfo.version}
     container_name: oibus-container
@@ -78,7 +42,7 @@ services:
     restart: unless-stopped
     environment:
       - TZ=UTC
-    # Uncomment to set resource limits
+    # Uncomment to apply resource limits:
     # deploy:
     #   resources:
     #     limits:
@@ -86,3 +50,47 @@ services:
     #       memory: 2G
 `}
 </CodeBlock>
+
+## Port Configuration
+
+| Port       | Purpose                  | How to expose                                     |
+| ---------- | ------------------------ | ------------------------------------------------- |
+| `2223`     | OIBus web interface      | `-p 2223:2223` (included by default above)        |
+| *(custom)* | OIBus proxy server       | Add `-p <HOST_PORT>:<CONTAINER_PORT>` as needed   |
+
+To expose the proxy server port (e.g. `9000`) alongside the web interface:
+
+<CodeBlock language="bash">
+{`docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -p 9000:9000 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+## Update OIBus
+
+Pull the new image, then recreate the container. The data volume is preserved:
+
+<CodeBlock language="bash">
+{`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}
+docker stop oibus-container
+docker rm oibus-container
+docker run -d \\
+  --name oibus-container \\
+  -p 2223:2223 \\
+  -v ./OIBusData:/app/OIBus/OIBusData \\
+  --restart unless-stopped \\
+  ghcr.io/optimistiksas/oibus:v${packageInfo.version}`}
+</CodeBlock>
+
+With Docker Compose:
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+The `oibus.db` configuration database is upgraded automatically on first startup after an update.
