@@ -19,21 +19,21 @@ Click **Add** in the Transformers section to open the configuration modal. Three
 
 Choose where the data comes from.
 
-| Source | Description |
-| --- | --- |
-| **South connector** | Data collected by one of the configured South connectors |
-| **OIBus API** | Data pushed to OIBus via the REST API. Requires a **Data Source ID** string to identify the originating system |
-| **OIAnalytics Setpoint** | Write-back commands sent from OIAnalytics |
+| Source                   | Description                                                                                                    |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| **South connector**      | Data collected by one of the configured South connectors                                                       |
+| **OIBus API**            | Data pushed to OIBus via the REST API. Requires a **Data Source ID** string to identify the originating system |
+| **OIAnalytics Setpoint** | Write-back commands sent from OIAnalytics                                                                      |
 
 ### 2 — Item Scope (South connectors only)
 
 When the source is a South connector, you can restrict which of its items the transformer applies to.
 
-| Scope | Description |
-| --- | --- |
-| **All items** | Every item of the selected South connector goes through this transformer |
-| **By group** | Only items belonging to a specific group are processed |
-| **Specific items** | Hand-pick individual items from the search list |
+| Scope              | Description                                                              |
+| ------------------ | ------------------------------------------------------------------------ |
+| **All items**      | Every item of the selected South connector goes through this transformer |
+| **By group**       | Only items belonging to a specific group are processed                   |
+| **Specific items** | Hand-pick individual items from the search list                          |
 
 :::tip
 A single North connector can have **multiple transformers** with different sources and scopes. This lets you apply
@@ -46,12 +46,12 @@ temperature sensors and another for flow meters.
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
 
-| South connector type | Compatible standard transformers |
-| --- | --- |
-| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI** (PLC / historian) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
-| **REST, SFTP, FTP, Folder Scanner, SQL databases** (file / query-based) | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON) |
-| **OIBus API** | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON) |
-| **OIAnalytics Setpoint** | MQTT payloads, Modbus values, OPCUA values |
+| South connector type                                                    | Compatible standard transformers                                                           |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI** (PLC / historian)      | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
+| **REST, SFTP, FTP, Folder Scanner, SQL databases** (file / query-based) | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON)                          |
+| **OIBus API**                                                           | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON)                          |
+| **OIAnalytics Setpoint**                                                | MQTT payloads, Modbus values, OPCUA values                                                 |
 
 Custom transformers are also shown in this list and are always named by the user.
 
@@ -86,24 +86,24 @@ transform individual values before they are written.
 
 ##### Settings
 
-| Setting                 | Description                                                                        |
-| ----------------------- | ---------------------------------------------------------------------------------- |
-| **Filename**            | Output filename; `@CurrentDate` is replaced with the current UTC timestamp         |
-| **Encoding**            | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                                   |
-| **Header**              | Whether to include the column header row                                           |
-| **Delimiter**           | Column separator                                                                   |
-| **Newline**             | Line ending (`LF`, `CRLF`, `CR`)                                                  |
-| **Quote char**          | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                          |
-| **Escape char**         | `DOUBLE_QUOTE` or `BACKSLASH`                                                      |
-| **Point ID column**     | Header label for the point identifier column                                       |
-| **Value column**        | Header label for the value column                                                  |
-| **Timestamp column**    | Header label for the timestamp column                                              |
-| **Timestamp type**      | Output format (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)              |
-| **Timestamp format**    | Custom pattern when type is `string` (e.g. `yyyy-MM-dd HH:mm:ss.SSS`)             |
-| **Timezone**            | Timezone for formatting when type is `string`                                      |
-| **Point ID process**    | Optional JS expression applied to each point ID (variable: `value`)               |
-| **Value process**       | Optional JS expression applied to each value (variable: `value`)                  |
-| **Timestamp process**   | Optional JS expression applied to each formatted timestamp (variable: `value`)    |
+| Setting               | Description                                                                    |
+| --------------------- | ------------------------------------------------------------------------------ |
+| **Filename**          | Output filename; `@CurrentDate` is replaced with the current UTC timestamp     |
+| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                                |
+| **Header**            | Whether to include the column header row                                       |
+| **Delimiter**         | Column separator                                                               |
+| **Newline**           | Line ending (`LF`, `CRLF`, `CR`)                                               |
+| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                      |
+| **Escape char**       | `DOUBLE_QUOTE` or `BACKSLASH`                                                  |
+| **Point ID column**   | Header label for the point identifier column                                   |
+| **Value column**      | Header label for the value column                                              |
+| **Timestamp column**  | Header label for the timestamp column                                          |
+| **Timestamp type**    | Output format (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)          |
+| **Timestamp format**  | Custom pattern when type is `string` (e.g. `yyyy-MM-dd HH:mm:ss.SSS`)          |
+| **Timezone**          | Timezone for formatting when type is `string`                                  |
+| **Point ID process**  | Optional JS expression applied to each point ID (variable: `value`)            |
+| **Value process**     | Optional JS expression applied to each value (variable: `value`)               |
+| **Timestamp process** | Optional JS expression applied to each formatted timestamp (variable: `value`) |
 
 ##### Example
 
@@ -111,7 +111,7 @@ transform individual values before they are written.
 
 ```json
 [
-  { "pointId": "plant/temp1",     "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
   { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
 ]
 ```
@@ -151,9 +151,9 @@ match are silently dropped. The payload is a JSON string containing the `data` f
 
 ##### Settings
 
-| Setting     | Description                            |
-| ----------- | -------------------------------------- |
-| **Mapping** | List of `{ pointId, topic }` pairs     |
+| Setting     | Description                        |
+| ----------- | ---------------------------------- |
+| **Mapping** | List of `{ pointId, topic }` pairs |
 
 ##### Example
 
@@ -163,9 +163,9 @@ Mapping: `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pre
 
 ```json
 [
-  { "pointId": "plant/temp1",     "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
   { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } },
-  { "pointId": "plant/unknown",   "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "0" } }
+  { "pointId": "plant/unknown", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "0" } }
 ]
 ```
 
@@ -174,7 +174,7 @@ Mapping: `plant/temp1 → sensors/temperature`, `plant/pressure1 → sensors/pre
 ```json
 [
   { "topic": "sensors/temperature", "payload": "{\"value\":\"23.5\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" },
-  { "topic": "sensors/pressure",    "payload": "{\"value\":\"102.1\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" }
+  { "topic": "sensors/pressure", "payload": "{\"value\":\"102.1\",\"timestamp\":\"2024-01-15T10:00:00.000Z\"}" }
 ]
 ```
 
@@ -187,8 +187,8 @@ appropriate type: booleans for coils, integers for holding registers. Readings w
 
 ##### Settings
 
-| Setting     | Description                                                                          |
-| ----------- | ------------------------------------------------------------------------------------ |
+| Setting     | Description                                                                           |
+| ----------- | ------------------------------------------------------------------------------------- |
 | **Mapping** | List of `{ pointId, address, modbusType }` pairs (`modbusType`: `coil` or `register`) |
 
 ##### Example
@@ -200,7 +200,7 @@ Mapping: `plant/valve1 → 0x0010 (coil)`, `plant/speed → 0x0020 (register)`
 ```json
 [
   { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "true" } },
-  { "pointId": "plant/speed",  "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "1450" } }
+  { "pointId": "plant/speed", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "1450" } }
 ]
 ```
 
@@ -223,26 +223,22 @@ are stripped.
 
 ##### Settings
 
-| Setting       | Description                                                  |
-| ------------- | ------------------------------------------------------------ |
-| **Precision** | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr`  |
+| Setting       | Description                                                |
+| ------------- | ---------------------------------------------------------- |
+| **Precision** | Timestamp precision: `ms` (unchanged), `s`, `min`, or `hr` |
 
 ##### Example — Precision `s`
 
 **Input**
 
 ```json
-[
-  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.523Z", "data": { "value": "23.5", "quality": "good" } }
-]
+[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.523Z", "data": { "value": "23.5", "quality": "good" } }]
 ```
 
 **Output** — milliseconds are zeroed, `quality` is stripped
 
 ```json
-[
-  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } }
-]
+[{ "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } }]
 ```
 
 ---
@@ -266,7 +262,7 @@ Mapping: `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 
 ```json
 [
-  { "pointId": "plant/temp1",  "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
   { "pointId": "plant/valve1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "true" } }
 ]
 ```
@@ -276,7 +272,7 @@ Mapping: `plant/temp1 → ns=1;s=Temperature`, `plant/valve1 → ns=1;s=Valve1`
 ```json
 [
   { "nodeId": "ns=1;s=Temperature", "value": "23.5" },
-  { "nodeId": "ns=1;s=Valve1",      "value": "true" }
+  { "nodeId": "ns=1;s=Valve1", "value": "true" }
 ]
 ```
 
@@ -296,15 +292,15 @@ string to ISO-8601 according to the configured format.
 
 ##### Settings
 
-| Setting              | Description                                                                            |
-| -------------------- | -------------------------------------------------------------------------------------- |
-| **Has header**       | Whether the first row is a header row                                                  |
-| **Delimiter**        | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                  |
-| **Point ID column**  | Column name (header mode) or zero-based index holding the point identifier             |
-| **Timestamp column** | Column name or index holding the timestamp                                             |
-| **Value column**     | Column name or index holding the value                                                 |
-| **Timestamp type**   | Format of the raw timestamp (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)    |
-| **Timezone**         | Timezone for parsing (only used when type is `string`)                                 |
+| Setting              | Description                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------- |
+| **Has header**       | Whether the first row is a header row                                                 |
+| **Delimiter**        | Column separator (`COMMA`, `SEMI_COLON`, `TAB`, etc.)                                 |
+| **Point ID column**  | Column name (header mode) or zero-based index holding the point identifier            |
+| **Timestamp column** | Column name or index holding the timestamp                                            |
+| **Value column**     | Column name or index holding the value                                                |
+| **Timestamp type**   | Format of the raw timestamp (`iso-string`, `unix-epoch`, `unix-epoch-ms`, `string`)   |
+| **Timezone**         | Timezone for parsing (only used when type is `string`)                                |
 | **Format**           | Custom datetime pattern (only used when type is `string`, e.g. `yyyy-MM-dd HH:mm:ss`) |
 
 ##### Example
@@ -325,8 +321,8 @@ tag/pressure1,2024-01-15T10:00:00.000Z,102.1
 
 ```json
 [
-  { "pointId": "tag/temp1",     "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 23.5 } },
-  { "pointId": "tag/temp1",     "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": 23.8 } },
+  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 23.5 } },
+  { "pointId": "tag/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": 23.8 } },
   { "pointId": "tag/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": 102.1 } }
 ]
 ```
@@ -346,14 +342,14 @@ supported:
 
 ##### Settings
 
-| Setting               | Description                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------ |
-| **Has header**        | Whether the first row is a header row                                                |
-| **Delimiter**         | Column separator                                                                     |
-| **Topic column**      | Column name or index holding the MQTT topic                                          |
-| **Payload type**      | `string`, `number`, `boolean`, `datetime`, or `object`                               |
-| **Value column**      | Column for the value (simple payload types only)                                     |
-| **Object fields**     | List of `{ key, column, dataType }` mappings (object payload only)                  |
+| Setting               | Description                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| **Has header**        | Whether the first row is a header row                                                 |
+| **Delimiter**         | Column separator                                                                      |
+| **Topic column**      | Column name or index holding the MQTT topic                                           |
+| **Payload type**      | `string`, `number`, `boolean`, `datetime`, or `object`                                |
+| **Value column**      | Column for the value (simple payload types only)                                      |
+| **Object fields**     | List of `{ key, column, dataType }` mappings (object payload only)                    |
 | **Datetime settings** | Input/output datetime conversion (applies when payload type or a field is `datetime`) |
 
 ##### Example — Simple payload
@@ -370,7 +366,7 @@ plant/pump1/running,true
 
 ```json
 [
-  { "topic": "plant/pump1/speed",   "payload": "1450" },
+  { "topic": "plant/pump1/speed", "payload": "1450" },
   { "topic": "plant/pump1/running", "payload": "true" }
 ]
 ```
@@ -406,28 +402,28 @@ support datetime conversion, type casting, and optional per-field JavaScript pos
 
 ##### Settings
 
-| Setting                | Description                                                                        |
-| ---------------------- | ---------------------------------------------------------------------------------- |
-| **Filename**           | Output filename; `@CurrentDate` is replaced with the current UTC timestamp         |
-| **Encoding**           | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                                   |
-| **Header**             | Whether to include the column header row                                           |
-| **Delimiter**          | Column separator                                                                   |
-| **Newline**            | Line ending (`LF`, `CRLF`, `CR`)                                                  |
-| **Quote char**         | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                          |
-| **Escape char**        | `DOUBLE_QUOTE` or `BACKSLASH`                                                      |
-| **Null value**         | String written when a field is missing or null (defaults to empty string)          |
-| **Row iterator path**  | JSONPath pointing to the array of rows (e.g. `$.data[*]`)                          |
-| **Fields**             | One entry per CSV column (see below)                                               |
+| Setting               | Description                                                                |
+| --------------------- | -------------------------------------------------------------------------- |
+| **Filename**          | Output filename; `@CurrentDate` is replaced with the current UTC timestamp |
+| **Encoding**          | `UTF_8`, `UTF_8_BOM`, `LATIN_1`, or `UTF_16_LE`                            |
+| **Header**            | Whether to include the column header row                                   |
+| **Delimiter**         | Column separator                                                           |
+| **Newline**           | Line ending (`LF`, `CRLF`, `CR`)                                           |
+| **Quote char**        | `DOUBLE_QUOTE`, `SINGLE_QUOTE`, or `NONE`                                  |
+| **Escape char**       | `DOUBLE_QUOTE` or `BACKSLASH`                                              |
+| **Null value**        | String written when a field is missing or null (defaults to empty string)  |
+| **Row iterator path** | JSONPath pointing to the array of rows (e.g. `$.data[*]`)                  |
+| **Fields**            | One entry per CSV column (see below)                                       |
 
 Each **field** entry:
 
-| Setting              | Description                                                                                  |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| **Column name**      | Header label in the CSV                                                                      |
-| **JSON path**        | JSONPath to the value within the current row (e.g. `$.timestamp`)                           |
-| **Data type**        | `string`, `number`, `boolean`, `datetime`, `array`, or `object`                             |
-| **Datetime settings**| Input and output format/timezone/type when data type is `datetime`                          |
-| **Field process**    | Optional JS expression to post-process the extracted value (e.g. `value.toUpperCase()`)     |
+| Setting               | Description                                                                             |
+| --------------------- | --------------------------------------------------------------------------------------- |
+| **Column name**       | Header label in the CSV                                                                 |
+| **JSON path**         | JSONPath to the value within the current row (e.g. `$.timestamp`)                       |
+| **Data type**         | `string`, `number`, `boolean`, `datetime`, `array`, or `object`                         |
+| **Datetime settings** | Input and output format/timezone/type when data type is `datetime`                      |
+| **Field process**     | Optional JS expression to post-process the extracted value (e.g. `value.toUpperCase()`) |
 
 ##### Example
 
@@ -439,14 +435,15 @@ relevant fields and reformats them for a File Writer North connector.
 ```json
 {
   "data": [
-    { "ts": "2024-01-15T10:00:00.000Z", "tag": "temp1",     "val": 23.5,  "ok": true },
-    { "ts": "2024-01-15T10:01:00.000Z", "tag": "temp1",     "val": 23.8,  "ok": true },
+    { "ts": "2024-01-15T10:00:00.000Z", "tag": "temp1", "val": 23.5, "ok": true },
+    { "ts": "2024-01-15T10:01:00.000Z", "tag": "temp1", "val": 23.8, "ok": true },
     { "ts": "2024-01-15T10:00:00.000Z", "tag": "pressure1", "val": 102.1, "ok": false }
   ]
 }
 ```
 
 Configuration:
+
 - Row iterator path: `$.data[*]`
 - Fields: `Timestamp` (`$.ts`, datetime), `Tag` (`$.tag`, string), `Value` (`$.val`, number), `OK` (`$.ok`, boolean)
 
@@ -486,9 +483,9 @@ matching entry are dropped. The payload is the value serialized to a string; obj
 
 ##### Settings
 
-| Setting     | Description                           |
-| ----------- | ------------------------------------- |
-| **Mapping** | List of `{ reference, topic }` pairs  |
+| Setting     | Description                          |
+| ----------- | ------------------------------------ |
+| **Mapping** | List of `{ reference, topic }` pairs |
 
 ##### Example
 
@@ -499,7 +496,7 @@ Mapping: `pump1/setSpeed → control/pump1/speed`
 ```json
 [
   { "reference": "pump1/setSpeed", "value": 1200 },
-  { "reference": "valve2/open",    "value": true }
+  { "reference": "valve2/open", "value": true }
 ]
 ```
 
@@ -508,9 +505,7 @@ Mapping: `pump1/setSpeed → control/pump1/speed`
 **Output (MQTT messages)**
 
 ```json
-[
-  { "topic": "control/pump1/speed", "payload": "1200" }
-]
+[{ "topic": "control/pump1/speed", "payload": "1200" }]
 ```
 
 ---
@@ -522,8 +517,8 @@ parsed as integers and written as holding registers.
 
 ##### Settings
 
-| Setting     | Description                                                                            |
-| ----------- | -------------------------------------------------------------------------------------- |
+| Setting     | Description                                                                             |
+| ----------- | --------------------------------------------------------------------------------------- |
 | **Mapping** | List of `{ reference, address, modbusType }` pairs (`modbusType`: `coil` or `register`) |
 
 ##### Example
@@ -556,9 +551,9 @@ Converts setpoint commands into OPC UA write commands using a **reference → no
 
 ##### Settings
 
-| Setting     | Description                               |
-| ----------- | ----------------------------------------- |
-| **Mapping** | List of `{ reference, nodeId }` pairs     |
+| Setting     | Description                           |
+| ----------- | ------------------------------------- |
+| **Mapping** | List of `{ reference, nodeId }` pairs |
 
 ##### Example
 
@@ -567,17 +562,13 @@ Mapping: `pump1/speed → ns=1;s=PumpSpeed`
 **Input (setpoints)**
 
 ```json
-[
-  { "reference": "pump1/speed", "value": 1200 }
-]
+[{ "reference": "pump1/speed", "value": 1200 }]
 ```
 
 **Output (OPC UA write commands)**
 
 ```json
-[
-  { "nodeId": "ns=1;s=PumpSpeed", "value": 1200 }
-]
+[{ "nodeId": "ns=1;s=PumpSpeed", "value": 1200 }]
 ```
 
 ---
@@ -613,21 +604,21 @@ export function transform(
 }
 ```
 
-| Return field      | Description                                                        |
-| ----------------- | ------------------------------------------------------------------ |
-| `data`            | The transformed output as a string (JSON, CSV, binary base-64…)   |
-| `filename`        | The filename used when the output is stored in the North cache     |
-| `numberOfElement` | Optional count of processed records, shown in logs and metrics    |
+| Return field      | Description                                                     |
+| ----------------- | --------------------------------------------------------------- |
+| `data`            | The transformed output as a string (JSON, CSV, binary base-64…) |
+| `filename`        | The filename used when the output is stored in the North cache  |
+| `numberOfElement` | Optional count of processed records, shown in logs and metrics  |
 
 ### Available Libraries
 
 The following libraries are pre-loaded in the sandbox and available via `require`:
 
-| Library          | `require` name   | Description                                     |
-| ---------------- | ---------------- | ----------------------------------------------- |
-| **[Luxon](https://moment.github.io/luxon/)** | `luxon` | Date/time parsing, formatting, and arithmetic |
+| Library                                                                | `require` name  | Description                                     |
+| ---------------------------------------------------------------------- | --------------- | ----------------------------------------------- |
+| **[Luxon](https://moment.github.io/luxon/)**                           | `luxon`         | Date/time parsing, formatting, and arithmetic   |
 | **[JSONPath Plus](https://jsonpath-plus.github.io/JSONPath/docs/ts/)** | `jsonpath-plus` | JSONPath queries over arbitrary JSON structures |
-| **[PapaParse](https://www.papaparse.com/docs)** | `papaparse` | CSV parsing and serialization |
+| **[PapaParse](https://www.papaparse.com/docs)**                        | `papaparse`     | CSV parsing and serialization                   |
 
 Any other `require` call throws an error — `fs`, `http`, `process`, and all Node.js built-ins are blocked.
 
@@ -658,8 +649,8 @@ for a File Writer North connector.
 
 ```json
 [
-  { "ts": "2024-01-15T10:00:00.000Z", "id": "temp1",     "val": 23.5  },
-  { "ts": "2024-01-15T10:01:00.000Z", "id": "temp1",     "val": 23.8  },
+  { "ts": "2024-01-15T10:00:00.000Z", "id": "temp1", "val": 23.5 },
+  { "ts": "2024-01-15T10:01:00.000Z", "id": "temp1", "val": 23.8 },
   { "ts": "2024-01-15T10:00:00.000Z", "id": "pressure1", "val": 102.1 }
 ]
 ```
@@ -680,11 +671,14 @@ export function transform(content, source, filename, options) {
   const Papa = require('papaparse');
   const rows = JSON.parse(content);
 
-  const csv = Papa.unparse(rows.map(r => ({
-    Timestamp: r.ts,
-    Tag:       r.id,
-    Value:     r.val
-  })), { delimiter: ';', header: true });
+  const csv = Papa.unparse(
+    rows.map(r => ({
+      Timestamp: r.ts,
+      Tag: r.id,
+      Value: r.val
+    })),
+    { delimiter: ';', header: true }
+  );
 
   return {
     data: csv,
@@ -704,8 +698,8 @@ Only keep readings above a configured threshold, and annotate each with a derive
 
 ```json
 [
-  { "pointId": "plant/temp1",     "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
-  { "pointId": "plant/temp2",     "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "18.0" } },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp2", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "18.0" } },
   { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
 ]
 ```
@@ -714,8 +708,8 @@ Only keep readings above a configured threshold, and annotate each with a derive
 
 ```json
 [
-  { "pointId": "plant/temp1",     "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5",  "status": "NORMAL" } },
-  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1", "status": "HIGH"   } }
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5", "status": "NORMAL" } },
+  { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1", "status": "HIGH" } }
 ]
 ```
 
@@ -762,8 +756,8 @@ export function transform(
 ```json
 {
   "records": [
-    { "header": { "ts": "2024-01-15T10:00:00.000Z" }, "tag": "plant/temp1",     "measurements": { "val": 23.5  } },
-    { "header": { "ts": "2024-01-15T10:01:00.000Z" }, "tag": "plant/temp1",     "measurements": { "val": 23.8  } },
+    { "header": { "ts": "2024-01-15T10:00:00.000Z" }, "tag": "plant/temp1", "measurements": { "val": 23.5 } },
+    { "header": { "ts": "2024-01-15T10:01:00.000Z" }, "tag": "plant/temp1", "measurements": { "val": 23.8 } },
     { "header": { "ts": "2024-01-15T10:00:00.000Z" }, "tag": "plant/pressure1", "measurements": { "val": 102.1 } }
   ]
 }
@@ -773,8 +767,8 @@ export function transform(
 
 ```json
 [
-  { "pointId": "plant/temp1",     "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5"  } },
-  { "pointId": "plant/temp1",     "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": "23.8"  } },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "23.5" } },
+  { "pointId": "plant/temp1", "timestamp": "2024-01-15T10:01:00.000Z", "data": { "value": "23.8" } },
   { "pointId": "plant/pressure1", "timestamp": "2024-01-15T10:00:00.000Z", "data": { "value": "102.1" } }
 ]
 ```
@@ -786,12 +780,12 @@ export function transform(content, _source, _filename, _options) {
   const { JSONPath } = require('jsonpath-plus');
   const data = JSON.parse(content);
 
-  const timestamps = JSONPath({ path: '$.records[*].header.ts',       json: data });
-  const tags       = JSONPath({ path: '$.records[*].tag',              json: data });
-  const values     = JSONPath({ path: '$.records[*].measurements.val', json: data });
+  const timestamps = JSONPath({ path: '$.records[*].header.ts', json: data });
+  const tags = JSONPath({ path: '$.records[*].tag', json: data });
+  const values = JSONPath({ path: '$.records[*].measurements.val', json: data });
 
   const timeValues = timestamps.map((ts, i) => ({
-    pointId:   tags[i],
+    pointId: tags[i],
     timestamp: ts,
     data: { value: String(values[i]) }
   }));
@@ -814,7 +808,7 @@ Parse Unix epoch millisecond timestamps from a REST API response and convert the
 
 ```json
 [
-  { "id": "plant/temp1",     "epoch_ms": 1705312800000, "val": 23.5  },
+  { "id": "plant/temp1", "epoch_ms": 1705312800000, "val": 23.5 },
   { "id": "plant/pressure1", "epoch_ms": 1705312800000, "val": 102.1 }
 ]
 ```
@@ -823,7 +817,7 @@ Parse Unix epoch millisecond timestamps from a REST API response and convert the
 
 ```json
 [
-  { "id": "plant/temp1",     "epoch_ms": 1705312800000, "val": 23.5,  "timestamp": "2024-01-15T11:00:00.000+01:00" },
+  { "id": "plant/temp1", "epoch_ms": 1705312800000, "val": 23.5, "timestamp": "2024-01-15T11:00:00.000+01:00" },
   { "id": "plant/pressure1", "epoch_ms": 1705312800000, "val": 102.1, "timestamp": "2024-01-15T11:00:00.000+01:00" }
 ]
 ```
