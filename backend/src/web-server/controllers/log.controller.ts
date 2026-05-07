@@ -15,6 +15,12 @@ export class LogController extends Controller {
   /**
    * Searches system logs with various filter parameters. If no time range is specified, defaults to the last 24 hours.
    * @summary Search logs
+   * @param start ISO 8601 start of the time range (e.g. `2024-01-01T00:00:00.000Z`). Defaults to 24 hours ago.
+   * @param end ISO 8601 end of the time range (e.g. `2024-01-02T00:00:00.000Z`). Defaults to now.
+   * @param levels Comma-separated list of log levels to include (e.g. `error,warn`). Valid values: `silent`, `error`, `warn`, `info`, `debug`, `trace`.
+   * @param scopeIds Comma-separated list of scope IDs to filter by (e.g. `connector123,connector456`).
+   * @param scopeTypes Comma-separated list of scope types to filter by (e.g. `south,north`). Valid values: `south`, `north`, `history-query`, `internal`, `web-server`.
+   * @param messageContent Substring to search for within log messages.
    * @returns {Promise<Page<LogDTO>>} Paginated list of log entries
    */
   @Get('/')

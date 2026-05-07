@@ -147,6 +147,12 @@ export class TransformerController extends Controller {
     await transformerService.delete(transformerId);
   }
 
+  /**
+   * Runs a custom transformer against the provided input data and returns the transformed output.
+   * Use this endpoint to validate transformer logic before saving it.
+   * @summary Test a custom transformer
+   * @returns {Promise<TransformerTestResponse>} The transformation output and execution metadata
+   */
   @Post('/test')
   async test(
     @Body() command: { transformer: CustomTransformerCommandDTO; testRequest: TransformerTestRequest },
@@ -160,6 +166,11 @@ export class TransformerController extends Controller {
     }
   }
 
+  /**
+   * Returns a sample input payload for the given input type, useful as a starting point when writing or testing a custom transformer.
+   * @summary Get input template for a transformer input type
+   * @returns {Promise<InputTemplate>} A template object with sample data for the requested input type
+   */
   @Get('/template/{inputType}')
   async getInputTemplate(@Path() inputType: InputType, @Request() request: CustomExpressRequest): Promise<InputTemplate> {
     const transformerService = request.services.transformerService;

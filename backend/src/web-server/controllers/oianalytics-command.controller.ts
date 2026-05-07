@@ -12,8 +12,13 @@ import { toOIBusCommandDTO } from '../../service/oia/oianalytics-command.service
  */
 export class OIAnalyticsCommandController extends Controller {
   /**
-   * Searches OIAnalytics commands with optional filtering by type and status.
+   * Searches OIAnalytics commands with optional filtering by type, status, and time range.
    * @summary Search OIAnalytics commands
+   * @param types Comma-separated list of command types to filter by (e.g. `update-version,restart-engine`).
+   * @param status Comma-separated list of statuses to filter by (e.g. `COMPLETED,ERRORED`). Valid values: `RETRIEVED`, `RUNNING`, `ERRORED`, `CANCELLED`, `COMPLETED`.
+   * @param start ISO 8601 start of the time range.
+   * @param end ISO 8601 end of the time range.
+   * @param ack Filter by acknowledgement status. `true` returns only acknowledged commands.
    * @returns {Promise<Page<OIBusCommandDTO>>} Paginated list of commands
    */
   @Get('/search')

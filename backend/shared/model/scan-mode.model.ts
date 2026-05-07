@@ -67,9 +67,9 @@ export interface ValidatedCronExpression {
   errorMessage: string;
 
   /**
-   * The next 5 execution times for the cron expression.
-   * Empty if the expression is invalid.
-   * @example ["2023-01-01T00:00:00Z", "2023-01-02T00:00:00Z", "2023-01-03T00:00:00Z", "2023-01-04T00:00:00Z", "2023-01-05T00:00:00Z"]
+   * The next 3 execution times for the cron expression.
+   * Empty array if the expression is invalid.
+   * @example ["2024-01-01T00:00:00.000Z", "2024-01-02T00:00:00.000Z", "2024-01-03T00:00:00.000Z"]
    */
   nextExecutions: Array<Instant>;
 

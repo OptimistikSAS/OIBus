@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 import { BaseEntity, Instant } from './types';
 import {
   SouthADSItemSettings,
@@ -412,29 +413,115 @@ export interface SouthItemGroupCommandDTO {
   };
 }
 
+// ── Named variants (tsoa uses these as schema names) ─────────────────────
+/** South connector configuration for Beckhoff ADS. */
+export interface SouthConnectorADSDTO extends SouthConnectorTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings> {
+  items: Array<SouthConnectorADSItemDTO>;
+}
+/** South connector configuration for the Folder Scanner. */
+export interface SouthConnectorFolderScannerDTO extends SouthConnectorTypedDTO<
+  'folder-scanner',
+  SouthFolderScannerSettings,
+  SouthFolderScannerItemSettings
+> {
+  items: Array<SouthConnectorFolderScannerItemDTO>;
+}
+/** South connector configuration for FTP file transfer. */
+export interface SouthConnectorFTPDTO extends SouthConnectorTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings> {
+  items: Array<SouthConnectorFTPItemDTO>;
+}
+/** South connector configuration for Modbus. */
+export interface SouthConnectorModbusDTO extends SouthConnectorTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings> {
+  items: Array<SouthConnectorModbusItemDTO>;
+}
+/** South connector configuration for MQTT. */
+export interface SouthConnectorMQTTDTO extends SouthConnectorTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings> {
+  items: Array<SouthConnectorMQTTItemDTO>;
+}
+/** South connector configuration for Microsoft SQL Server. */
+export interface SouthConnectorMSSQLDTO extends SouthConnectorTypedDTO<'mssql', SouthMSSQLSettings, SouthMSSQLItemSettings> {
+  items: Array<SouthConnectorMSSQLItemDTO>;
+}
+/** South connector configuration for MySQL. */
+export interface SouthConnectorMySQLDTO extends SouthConnectorTypedDTO<'mysql', SouthMySQLSettings, SouthMySQLItemSettings> {
+  items: Array<SouthConnectorMySQLItemDTO>;
+}
+/** South connector configuration for ODBC. */
+export interface SouthConnectorODBCDTO extends SouthConnectorTypedDTO<'odbc', SouthODBCSettings, SouthODBCItemSettings> {
+  items: Array<SouthConnectorODBCItemDTO>;
+}
+/** South connector configuration for OIAnalytics. */
+export interface SouthConnectorOIAnalyticsDTO extends SouthConnectorTypedDTO<
+  'oianalytics',
+  SouthOIAnalyticsSettings,
+  SouthOIAnalyticsItemSettings
+> {
+  items: Array<SouthConnectorOIAnalyticsItemDTO>;
+}
+/** South connector configuration for OLE DB. */
+export interface SouthConnectorOLEDBDTO extends SouthConnectorTypedDTO<'oledb', SouthOLEDBSettings, SouthOLEDBItemSettings> {
+  items: Array<SouthConnectorOLEDBItemDTO>;
+}
+/** South connector configuration for classic OPC (OLE for Process Control). */
+export interface SouthConnectorOPCDTO extends SouthConnectorTypedDTO<'opc', SouthOPCSettings, SouthOPCItemSettings> {
+  items: Array<SouthConnectorOPCItemDTO>;
+}
+/** South connector configuration for OPC UA. */
+export interface SouthConnectorOPCUADTO extends SouthConnectorTypedDTO<'opcua', SouthOPCUASettings, SouthOPCUAItemSettings> {
+  items: Array<SouthConnectorOPCUAItemDTO>;
+}
+/** South connector configuration for Oracle Database. */
+export interface SouthConnectorOracleDTO extends SouthConnectorTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings> {
+  items: Array<SouthConnectorOracleItemDTO>;
+}
+/** South connector configuration for OSIsoft PI System. */
+export interface SouthConnectorOsisoftPIDTO extends SouthConnectorTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings> {
+  items: Array<SouthConnectorOsisoftPIItemDTO>;
+}
+/** South connector configuration for PostgreSQL. */
+export interface SouthConnectorPostgreSQLDTO extends SouthConnectorTypedDTO<
+  'postgresql',
+  SouthPostgreSQLSettings,
+  SouthPostgreSQLItemSettings
+> {
+  items: Array<SouthConnectorPostgreSQLItemDTO>;
+}
+/** South connector configuration for the REST API. */
+export interface SouthConnectorRESTDTO extends SouthConnectorTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings> {
+  items: Array<SouthConnectorRESTItemDTO>;
+}
+/** South connector configuration for SFTP file transfer. */
+export interface SouthConnectorSFTPDTO extends SouthConnectorTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings> {
+  items: Array<SouthConnectorSFTPItemDTO>;
+}
+/** South connector configuration for SQLite. */
+export interface SouthConnectorSQLiteDTO extends SouthConnectorTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings> {
+  items: Array<SouthConnectorSQLiteItemDTO>;
+}
+
 /**
  * Data Transfer Object for a South connector.
  * Contains all configuration details and current state of a South connector.
  */
 export type SouthConnectorDTO =
-  | SouthConnectorTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings>
-  | SouthConnectorTypedDTO<'folder-scanner', SouthFolderScannerSettings, SouthFolderScannerItemSettings>
-  | SouthConnectorTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings>
-  | SouthConnectorTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings>
-  | SouthConnectorTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings>
-  | SouthConnectorTypedDTO<'mssql', SouthMSSQLSettings, SouthMSSQLItemSettings>
-  | SouthConnectorTypedDTO<'mysql', SouthMySQLSettings, SouthMySQLItemSettings>
-  | SouthConnectorTypedDTO<'odbc', SouthODBCSettings, SouthODBCItemSettings>
-  | SouthConnectorTypedDTO<'oianalytics', SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
-  | SouthConnectorTypedDTO<'oledb', SouthOLEDBSettings, SouthOLEDBItemSettings>
-  | SouthConnectorTypedDTO<'opc', SouthOPCSettings, SouthOPCItemSettings>
-  | SouthConnectorTypedDTO<'opcua', SouthOPCUASettings, SouthOPCUAItemSettings>
-  | SouthConnectorTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
-  | SouthConnectorTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
-  | SouthConnectorTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
-  | SouthConnectorTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings>
-  | SouthConnectorTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
-  | SouthConnectorTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>;
+  | SouthConnectorADSDTO
+  | SouthConnectorFolderScannerDTO
+  | SouthConnectorFTPDTO
+  | SouthConnectorModbusDTO
+  | SouthConnectorMQTTDTO
+  | SouthConnectorMSSQLDTO
+  | SouthConnectorMySQLDTO
+  | SouthConnectorODBCDTO
+  | SouthConnectorOIAnalyticsDTO
+  | SouthConnectorOLEDBDTO
+  | SouthConnectorOPCDTO
+  | SouthConnectorOPCUADTO
+  | SouthConnectorOracleDTO
+  | SouthConnectorOsisoftPIDTO
+  | SouthConnectorPostgreSQLDTO
+  | SouthConnectorRESTDTO
+  | SouthConnectorSFTPDTO
+  | SouthConnectorSQLiteDTO;
 
 export interface SouthConnectorCommandTypedDTO<T extends OIBusSouthType, S, IS> {
   /**
@@ -577,77 +664,255 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
   overlap: number | null;
 }
 
+// ── Named command variants (tsoa uses these as schema names) ──────────────
+/** South connector command for Beckhoff ADS. */
+export interface SouthConnectorADSCommandDTO extends SouthConnectorCommandTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings> {
+  items: Array<SouthConnectorADSItemCommandDTO>;
+}
+/** South connector command for the Folder Scanner. */
+export interface SouthConnectorFolderScannerCommandDTO extends SouthConnectorCommandTypedDTO<
+  'folder-scanner',
+  SouthFolderScannerSettings,
+  SouthFolderScannerItemSettings
+> {
+  items: Array<SouthConnectorFolderScannerItemCommandDTO>;
+}
+/** South connector command for FTP file transfer. */
+export interface SouthConnectorFTPCommandDTO extends SouthConnectorCommandTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings> {
+  items: Array<SouthConnectorFTPItemCommandDTO>;
+}
+/** South connector command for Modbus. */
+export interface SouthConnectorModbusCommandDTO extends SouthConnectorCommandTypedDTO<
+  'modbus',
+  SouthModbusSettings,
+  SouthModbusItemSettings
+> {
+  items: Array<SouthConnectorModbusItemCommandDTO>;
+}
+/** South connector command for MQTT. */
+export interface SouthConnectorMQTTCommandDTO extends SouthConnectorCommandTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings> {
+  items: Array<SouthConnectorMQTTItemCommandDTO>;
+}
+/** South connector command for Microsoft SQL Server. */
+export interface SouthConnectorMSSQLCommandDTO extends SouthConnectorCommandTypedDTO<'mssql', SouthMSSQLSettings, SouthMSSQLItemSettings> {
+  items: Array<SouthConnectorMSSQLItemCommandDTO>;
+}
+/** South connector command for MySQL. */
+export interface SouthConnectorMySQLCommandDTO extends SouthConnectorCommandTypedDTO<'mysql', SouthMySQLSettings, SouthMySQLItemSettings> {
+  items: Array<SouthConnectorMySQLItemCommandDTO>;
+}
+/** South connector command for ODBC. */
+export interface SouthConnectorODBCCommandDTO extends SouthConnectorCommandTypedDTO<'odbc', SouthODBCSettings, SouthODBCItemSettings> {
+  items: Array<SouthConnectorODBCItemCommandDTO>;
+}
+/** South connector command for OIAnalytics. */
+export interface SouthConnectorOIAnalyticsCommandDTO extends SouthConnectorCommandTypedDTO<
+  'oianalytics',
+  SouthOIAnalyticsSettings,
+  SouthOIAnalyticsItemSettings
+> {
+  items: Array<SouthConnectorOIAnalyticsItemCommandDTO>;
+}
+/** South connector command for OLE DB. */
+export interface SouthConnectorOLEDBCommandDTO extends SouthConnectorCommandTypedDTO<'oledb', SouthOLEDBSettings, SouthOLEDBItemSettings> {
+  items: Array<SouthConnectorOLEDBItemCommandDTO>;
+}
+/** South connector command for classic OPC (OLE for Process Control). */
+export interface SouthConnectorOPCCommandDTO extends SouthConnectorCommandTypedDTO<'opc', SouthOPCSettings, SouthOPCItemSettings> {
+  items: Array<SouthConnectorOPCItemCommandDTO>;
+}
+/** South connector command for OPC UA. */
+export interface SouthConnectorOPCUACommandDTO extends SouthConnectorCommandTypedDTO<'opcua', SouthOPCUASettings, SouthOPCUAItemSettings> {
+  items: Array<SouthConnectorOPCUAItemCommandDTO>;
+}
+/** South connector command for Oracle Database. */
+export interface SouthConnectorOracleCommandDTO extends SouthConnectorCommandTypedDTO<
+  'oracle',
+  SouthOracleSettings,
+  SouthOracleItemSettings
+> {
+  items: Array<SouthConnectorOracleItemCommandDTO>;
+}
+/** South connector command for OSIsoft PI System. */
+export interface SouthConnectorOsisoftPICommandDTO extends SouthConnectorCommandTypedDTO<
+  'osisoft-pi',
+  SouthPISettings,
+  SouthPIItemSettings
+> {
+  items: Array<SouthConnectorOsisoftPIItemCommandDTO>;
+}
+/** South connector command for PostgreSQL. */
+export interface SouthConnectorPostgreSQLCommandDTO extends SouthConnectorCommandTypedDTO<
+  'postgresql',
+  SouthPostgreSQLSettings,
+  SouthPostgreSQLItemSettings
+> {
+  items: Array<SouthConnectorPostgreSQLItemCommandDTO>;
+}
+/** South connector command for the REST API. */
+export interface SouthConnectorRESTCommandDTO extends SouthConnectorCommandTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings> {
+  items: Array<SouthConnectorRESTItemCommandDTO>;
+}
+/** South connector command for SFTP file transfer. */
+export interface SouthConnectorSFTPCommandDTO extends SouthConnectorCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings> {
+  items: Array<SouthConnectorSFTPItemCommandDTO>;
+}
+/** South connector command for SQLite. */
+export interface SouthConnectorSQLiteCommandDTO extends SouthConnectorCommandTypedDTO<
+  'sqlite',
+  SouthSQLiteSettings,
+  SouthSQLiteItemSettings
+> {
+  items: Array<SouthConnectorSQLiteItemCommandDTO>;
+}
+
 /**
  * Command Data Transfer Object for creating or updating a South connector.
  * Used as the request body for South connector creation/update endpoints.
  */
 export type SouthConnectorCommandDTO =
-  | SouthConnectorCommandTypedDTO<'ads', SouthADSSettings, SouthADSItemSettings>
-  | SouthConnectorCommandTypedDTO<'folder-scanner', SouthFolderScannerSettings, SouthFolderScannerItemSettings>
-  | SouthConnectorCommandTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings>
-  | SouthConnectorCommandTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings>
-  | SouthConnectorCommandTypedDTO<'mqtt', SouthMQTTSettings, SouthMQTTItemSettings>
-  | SouthConnectorCommandTypedDTO<'mssql', SouthMSSQLSettings, SouthMSSQLItemSettings>
-  | SouthConnectorCommandTypedDTO<'mysql', SouthMySQLSettings, SouthMySQLItemSettings>
-  | SouthConnectorCommandTypedDTO<'odbc', SouthODBCSettings, SouthODBCItemSettings>
-  | SouthConnectorCommandTypedDTO<'oianalytics', SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
-  | SouthConnectorCommandTypedDTO<'oledb', SouthOLEDBSettings, SouthOLEDBItemSettings>
-  | SouthConnectorCommandTypedDTO<'opc', SouthOPCSettings, SouthOPCItemSettings>
-  | SouthConnectorCommandTypedDTO<'opcua', SouthOPCUASettings, SouthOPCUAItemSettings>
-  | SouthConnectorCommandTypedDTO<'oracle', SouthOracleSettings, SouthOracleItemSettings>
-  | SouthConnectorCommandTypedDTO<'osisoft-pi', SouthPISettings, SouthPIItemSettings>
-  | SouthConnectorCommandTypedDTO<'postgresql', SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
-  | SouthConnectorCommandTypedDTO<'rest', SouthRestSettings, SouthRestItemSettings>
-  | SouthConnectorCommandTypedDTO<'sftp', SouthSFTPSettings, SouthSFTPItemSettings>
-  | SouthConnectorCommandTypedDTO<'sqlite', SouthSQLiteSettings, SouthSQLiteItemSettings>;
+  | SouthConnectorADSCommandDTO
+  | SouthConnectorFolderScannerCommandDTO
+  | SouthConnectorFTPCommandDTO
+  | SouthConnectorModbusCommandDTO
+  | SouthConnectorMQTTCommandDTO
+  | SouthConnectorMSSQLCommandDTO
+  | SouthConnectorMySQLCommandDTO
+  | SouthConnectorODBCCommandDTO
+  | SouthConnectorOIAnalyticsCommandDTO
+  | SouthConnectorOLEDBCommandDTO
+  | SouthConnectorOPCCommandDTO
+  | SouthConnectorOPCUACommandDTO
+  | SouthConnectorOracleCommandDTO
+  | SouthConnectorOsisoftPICommandDTO
+  | SouthConnectorPostgreSQLCommandDTO
+  | SouthConnectorRESTCommandDTO
+  | SouthConnectorSFTPCommandDTO
+  | SouthConnectorSQLiteCommandDTO;
+
+// ── Named item DTO variants (tsoa uses these as schema names) ────────────
+/** South connector item DTO for Beckhoff ADS. */
+export interface SouthConnectorADSItemDTO extends SouthConnectorItemTypedDTO<SouthADSItemSettings> {}
+/** South connector item DTO for the Folder Scanner. */
+export interface SouthConnectorFolderScannerItemDTO extends SouthConnectorItemTypedDTO<SouthFolderScannerItemSettings> {}
+/** South connector item DTO for FTP file transfer. */
+export interface SouthConnectorFTPItemDTO extends SouthConnectorItemTypedDTO<SouthFTPItemSettings> {}
+/** South connector item DTO for Modbus. */
+export interface SouthConnectorModbusItemDTO extends SouthConnectorItemTypedDTO<SouthModbusItemSettings> {}
+/** South connector item DTO for MQTT. */
+export interface SouthConnectorMQTTItemDTO extends SouthConnectorItemTypedDTO<SouthMQTTItemSettings> {}
+/** South connector item DTO for Microsoft SQL Server. */
+export interface SouthConnectorMSSQLItemDTO extends SouthConnectorItemTypedDTO<SouthMSSQLItemSettings> {}
+/** South connector item DTO for MySQL. */
+export interface SouthConnectorMySQLItemDTO extends SouthConnectorItemTypedDTO<SouthMySQLItemSettings> {}
+/** South connector item DTO for ODBC. */
+export interface SouthConnectorODBCItemDTO extends SouthConnectorItemTypedDTO<SouthODBCItemSettings> {}
+/** South connector item DTO for OIAnalytics. */
+export interface SouthConnectorOIAnalyticsItemDTO extends SouthConnectorItemTypedDTO<SouthOIAnalyticsItemSettings> {}
+/** South connector item DTO for OLE DB. */
+export interface SouthConnectorOLEDBItemDTO extends SouthConnectorItemTypedDTO<SouthOLEDBItemSettings> {}
+/** South connector item DTO for classic OPC (OLE for Process Control). */
+export interface SouthConnectorOPCItemDTO extends SouthConnectorItemTypedDTO<SouthOPCItemSettings> {}
+/** South connector item DTO for OPC UA. */
+export interface SouthConnectorOPCUAItemDTO extends SouthConnectorItemTypedDTO<SouthOPCUAItemSettings> {}
+/** South connector item DTO for Oracle Database. */
+export interface SouthConnectorOracleItemDTO extends SouthConnectorItemTypedDTO<SouthOracleItemSettings> {}
+/** South connector item DTO for OSIsoft PI System. */
+export interface SouthConnectorOsisoftPIItemDTO extends SouthConnectorItemTypedDTO<SouthPIItemSettings> {}
+/** South connector item DTO for PostgreSQL. */
+export interface SouthConnectorPostgreSQLItemDTO extends SouthConnectorItemTypedDTO<SouthPostgreSQLItemSettings> {}
+/** South connector item DTO for the REST API. */
+export interface SouthConnectorRESTItemDTO extends SouthConnectorItemTypedDTO<SouthRestItemSettings> {}
+/** South connector item DTO for SFTP file transfer. */
+export interface SouthConnectorSFTPItemDTO extends SouthConnectorItemTypedDTO<SouthSFTPItemSettings> {}
+/** South connector item DTO for SQLite. */
+export interface SouthConnectorSQLiteItemDTO extends SouthConnectorItemTypedDTO<SouthSQLiteItemSettings> {}
 
 /**
  * Data Transfer Object for an item to query within a South connector.
  * Represents an individual data point or file to be collected.
  */
 export type SouthConnectorItemDTO =
-  | SouthConnectorItemTypedDTO<SouthADSItemSettings>
-  | SouthConnectorItemTypedDTO<SouthFolderScannerItemSettings>
-  | SouthConnectorItemTypedDTO<SouthFTPItemSettings>
-  | SouthConnectorItemTypedDTO<SouthModbusItemSettings>
-  | SouthConnectorItemTypedDTO<SouthMQTTItemSettings>
-  | SouthConnectorItemTypedDTO<SouthMSSQLItemSettings>
-  | SouthConnectorItemTypedDTO<SouthMySQLItemSettings>
-  | SouthConnectorItemTypedDTO<SouthODBCItemSettings>
-  | SouthConnectorItemTypedDTO<SouthOIAnalyticsItemSettings>
-  | SouthConnectorItemTypedDTO<SouthOLEDBItemSettings>
-  | SouthConnectorItemTypedDTO<SouthOPCItemSettings>
-  | SouthConnectorItemTypedDTO<SouthOPCUAItemSettings>
-  | SouthConnectorItemTypedDTO<SouthOracleItemSettings>
-  | SouthConnectorItemTypedDTO<SouthPIItemSettings>
-  | SouthConnectorItemTypedDTO<SouthPostgreSQLItemSettings>
-  | SouthConnectorItemTypedDTO<SouthRestItemSettings>
-  | SouthConnectorItemTypedDTO<SouthSFTPItemSettings>
-  | SouthConnectorItemTypedDTO<SouthSQLiteItemSettings>;
+  | SouthConnectorADSItemDTO
+  | SouthConnectorFolderScannerItemDTO
+  | SouthConnectorFTPItemDTO
+  | SouthConnectorModbusItemDTO
+  | SouthConnectorMQTTItemDTO
+  | SouthConnectorMSSQLItemDTO
+  | SouthConnectorMySQLItemDTO
+  | SouthConnectorODBCItemDTO
+  | SouthConnectorOIAnalyticsItemDTO
+  | SouthConnectorOLEDBItemDTO
+  | SouthConnectorOPCItemDTO
+  | SouthConnectorOPCUAItemDTO
+  | SouthConnectorOracleItemDTO
+  | SouthConnectorOsisoftPIItemDTO
+  | SouthConnectorPostgreSQLItemDTO
+  | SouthConnectorRESTItemDTO
+  | SouthConnectorSFTPItemDTO
+  | SouthConnectorSQLiteItemDTO;
+
+// ── Named item command variants (tsoa uses these as schema names) ─────────
+/** South connector item command for Beckhoff ADS. */
+export interface SouthConnectorADSItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthADSItemSettings> {}
+/** South connector item command for the Folder Scanner. */
+export interface SouthConnectorFolderScannerItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthFolderScannerItemSettings> {}
+/** South connector item command for FTP file transfer. */
+export interface SouthConnectorFTPItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthFTPItemSettings> {}
+/** South connector item command for Modbus. */
+export interface SouthConnectorModbusItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthModbusItemSettings> {}
+/** South connector item command for MQTT. */
+export interface SouthConnectorMQTTItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthMQTTItemSettings> {}
+/** South connector item command for Microsoft SQL Server. */
+export interface SouthConnectorMSSQLItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthMSSQLItemSettings> {}
+/** South connector item command for MySQL. */
+export interface SouthConnectorMySQLItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthMySQLItemSettings> {}
+/** South connector item command for ODBC. */
+export interface SouthConnectorODBCItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthODBCItemSettings> {}
+/** South connector item command for OIAnalytics. */
+export interface SouthConnectorOIAnalyticsItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthOIAnalyticsItemSettings> {}
+/** South connector item command for OLE DB. */
+export interface SouthConnectorOLEDBItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthOLEDBItemSettings> {}
+/** South connector item command for classic OPC (OLE for Process Control). */
+export interface SouthConnectorOPCItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthOPCItemSettings> {}
+/** South connector item command for OPC UA. */
+export interface SouthConnectorOPCUAItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthOPCUAItemSettings> {}
+/** South connector item command for Oracle Database. */
+export interface SouthConnectorOracleItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthOracleItemSettings> {}
+/** South connector item command for OSIsoft PI System. */
+export interface SouthConnectorOsisoftPIItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthPIItemSettings> {}
+/** South connector item command for PostgreSQL. */
+export interface SouthConnectorPostgreSQLItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthPostgreSQLItemSettings> {}
+/** South connector item command for the REST API. */
+export interface SouthConnectorRESTItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthRestItemSettings> {}
+/** South connector item command for SFTP file transfer. */
+export interface SouthConnectorSFTPItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthSFTPItemSettings> {}
+/** South connector item command for SQLite. */
+export interface SouthConnectorSQLiteItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthSQLiteItemSettings> {}
 
 /**
  * Command Data Transfer Object for creating or updating a South connector item.
  * Used as the request body for South connector item creation/update endpoints.
  */
 export type SouthConnectorItemCommandDTO =
-  | SouthConnectorItemCommandTypedDTO<SouthADSItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthFolderScannerItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthFTPItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthModbusItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthMQTTItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthMSSQLItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthMySQLItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthODBCItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthOIAnalyticsItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthOLEDBItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthOPCItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthOPCUAItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthOracleItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthPIItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthPostgreSQLItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthRestItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthSFTPItemSettings>
-  | SouthConnectorItemCommandTypedDTO<SouthSQLiteItemSettings>;
+  | SouthConnectorADSItemCommandDTO
+  | SouthConnectorFolderScannerItemCommandDTO
+  | SouthConnectorFTPItemCommandDTO
+  | SouthConnectorModbusItemCommandDTO
+  | SouthConnectorMQTTItemCommandDTO
+  | SouthConnectorMSSQLItemCommandDTO
+  | SouthConnectorMySQLItemCommandDTO
+  | SouthConnectorODBCItemCommandDTO
+  | SouthConnectorOIAnalyticsItemCommandDTO
+  | SouthConnectorOLEDBItemCommandDTO
+  | SouthConnectorOPCItemCommandDTO
+  | SouthConnectorOPCUAItemCommandDTO
+  | SouthConnectorOracleItemCommandDTO
+  | SouthConnectorOsisoftPIItemCommandDTO
+  | SouthConnectorPostgreSQLItemCommandDTO
+  | SouthConnectorRESTItemCommandDTO
+  | SouthConnectorSFTPItemCommandDTO
+  | SouthConnectorSQLiteItemCommandDTO;
 
 /**
  * Settings for testing a South connector item.

@@ -30,7 +30,8 @@ export interface CertificateDTO extends BaseEntity {
   certificate: string;
 
   /**
-   * The expiry date and time of the certificate.
+   * The expiry date and time of the certificate in ISO 8601 format.
+   * @example "2026-01-01T00:00:00.000Z"
    */
   expiry: Instant;
 }
