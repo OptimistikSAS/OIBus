@@ -13,12 +13,12 @@ import DockerSteps from './_docker.mdx';
 
 ## System Requirements
 
-| Resource                  | Minimum                                | Notes                                                                    |
-| ------------------------- | -------------------------------------- | ------------------------------------------------------------------------ |
-| **RAM**                   | 2 GB                                   | Actual usage depends on the number of connectors and data volume.        |
-| **Disk space**            | 200 MB                                 | Several additional GB recommended for data buffering and cache.          |
-| **Administrative rights** | Required                               | Needed to install OIBus and register it as a system service.             |
-| **Web browser**           | Chrome, Firefox, or Edge               | Internet Explorer is not supported.                                      |
+| Resource                  | Minimum                  | Notes                                                                                                                                                                      |
+| ------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **RAM**                   | 2 GB                     | Actual usage depends on the number of connectors and data volume.                                                                                                          |
+| **Disk space**            | 200 MB                   | Several additional GB recommended for data buffering and cache. See [Data Rate and Cache Sizing](../advanced/oibus-data-rate.mdx) to estimate requirements for your setup. |
+| **Administrative rights** | Required                 | Needed to install OIBus and register it as a system service.                                                                                                               |
+| **Web browser**           | Chrome, Firefox, or Edge | Internet Explorer is not supported.                                                                                                                                        |
 
 :::note Remote access
 The browser can be on the same machine or on a remote workstation. For remote access, configure an
@@ -27,12 +27,12 @@ The browser can be on the same machine or on a remote workstation. For remote ac
 
 ## Supported Platforms
 
-| Platform     | Versions                                       | Architectures              |
-| ------------ | ---------------------------------------------- | -------------------------- |
-| **Windows**  | 10, 11, Server 2016 / 2019 / 2022 / 2025       | x64                        |
-| **Linux**    | Ubuntu 20.04+, Debian 10/11, RHEL 8/9          | x64, ARM64                 |
-| **macOS**    | 11 (Big Sur) and later                         | Intel (x64), Apple Silicon (ARM64) |
-| **Docker**   | Any host running Docker Engine 20.10+          | x64, ARM64                 |
+| Platform    | Versions                                 | Architectures                      |
+| ----------- | ---------------------------------------- | ---------------------------------- |
+| **Windows** | 10, 11, Server 2016 / 2019 / 2022 / 2025 | x64                                |
+| **Linux**   | Ubuntu 20.04+, Debian 10/11, RHEL 8/9    | x64, ARM64                         |
+| **macOS**   | 11 (Big Sur) and later                   | Intel (x64), Apple Silicon (ARM64) |
+| **Docker**  | Any host running Docker Engine 20.10+    | x64, ARM64                         |
 
 ## Installation
 

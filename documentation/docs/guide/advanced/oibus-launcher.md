@@ -4,77 +4,113 @@ sidebar_position: 1
 
 # OIBus Launcher
 
-In production, OIBus is installed and runs as a **service** (via installation scripts or the Windows installer). The system consists of two main components:
+In production, OIBus runs as a **system service**. The service does not start the `oibus` binary directly
+— it starts `oibus-launcher`, which then manages `oibus` as a child process.
 
-- **OIBus Launcher** (`oibus-launcher`)
-- **OIBus Binary** (`oibus`)
+This indirection is what makes [remote upgrades from OIAnalytics](../installation/oianalytics.mdx) safe:
+the launcher can replace the binary, detect a failed start, and roll back automatically — all without
+human intervention.
 
-The service executes the OIBus Launcher, which manages the OIBus binary as a child process. This architecture is particularly useful for handling **[remote updates from OIAnalytics](../installation/oianalytics.mdx)**.
+## Component Overview
 
-## How the OIBus Launcher Works
+| Component          | Binary           | Role                                                                                     |
+| ------------------ | ---------------- | ---------------------------------------------------------------------------------------- |
+| **OIBus Launcher** | `oibus-launcher` | Managed by the OS service. Handles updates, crash recovery, and child process lifecycle. |
+| **OIBus**          | `oibus`          | The main application. Started and monitored by the launcher.                             |
 
-When you start the `oibus-launcher`, it follows this process:
+## Folder Structure
 
-1. **Check for Updates**
+The launcher expects the following layout in its working directory (the OIBus installation folder):
 
-The launcher checks the `update` folder for new files (e.g., from a remote update).
+```
+OIBus/
+├── oibus-launcher          ← the launcher binary (run by the OS service)
+├── binaries/
+│   └── oibus               ← active OIBus binary (oibus.exe on Windows)
+├── update/                 ← staged update dropped here by the upgrade process
+│   └── binaries/
+│       └── oibus
+└── backup/                 ← created automatically before an upgrade
+    ├── oibus
+    └── data-folder/        ← snapshot of the data directory
+```
 
-2. **Backup and Update**
+When an upgrade command is received from OIAnalytics, the new binary is placed in `update/binaries/`.
+The launcher detects it on the next start.
 
-If files are found:
+## Startup Sequence
 
-- It creates a backup of the current binaries and the `data-folder` (e.g., `C:\OIBusData`).
-- It replaces the existing files in the `binaries` folder with the updated ones.
+Every time `oibus-launcher` starts, it follows this sequence:
 
-3. **Launch OIBus**
+1. **Check for a staged update** — inspect the `update/` folder for new binaries.
 
-The launcher starts the `oibus` binary as a child process.
+2. **Apply the update** (if files are present):
+   - Back up the current binary from `binaries/` and the data folder to `backup/`.
+   - Replace the binary in `binaries/` with the one from `update/`.
 
-5. **Monitor for Failures**
+3. **Start OIBus** — launch `oibus` from `binaries/` as a child process, forwarding all CLI arguments.
 
-The launcher monitors the child process for **30 seconds**. If the process fails (indicating a potential update failure), it:
+4. **Monitor for 30 seconds** — if OIBus exits or crashes within 30 seconds of an update, the launcher
+   treats it as a failed upgrade:
+   - Stops the crashed process.
+   - Restores the previous binary and data folder from `backup/`.
+   - Restarts OIBus from the restored binary.
 
-- Stops the child process.
-- Restores both the binaries and the data folder from the backup.
-- Restarts the `oibus` binary.
+5. **Mark as stable** — if OIBus is still running after 30 seconds, the update is considered successful
+   and the backup is cleaned up.
 
-6. **Direct Boot (No Updates)**
+:::info No update found
+If the `update/` folder is empty, the launcher skips steps 1–2 and goes directly to step 3.
+:::
 
-If no files are found in the `update` folder, the launcher directly starts the `oibus` binary from the `binaries` folder.
+:::tip Crash recovery
+The same monitoring logic applies even without an update. If OIBus crashes for any reason, the launcher
+restarts it automatically — behaving like a process supervisor.
+:::
 
-## Console Line Arguments
+## Command-Line Arguments
 
-All command-line arguments passed to `oibus-launcher` are forwarded to the `oibus` child process.
+All arguments passed to `oibus-launcher` (except `--reset-password`) are forwarded to the `oibus` child
+process. The launcher also automatically injects `--launcherVersion <version>` so OIBus knows which
+launcher version is managing it.
 
 ### `--config`
 
-Run the `oibus` binary with the specified data folder.
+Path to the OIBus data folder. Defaults to `./` if omitted.
 
 ```bash
+oibus-launcher --config /path/to/OIBusData
+```
+
+```batch
 oibus-launcher --config C:\OIBusData
 ```
 
 ### `--version`
 
-Display the versions of `oibus` and `oibus-launcher`, then exits.
+Print the versions of `oibus-launcher` and `oibus`, then exit. No update check is performed.
 
 ```bash
-oibus-launcher --version true
+oibus-launcher --version
 ```
 
 ### `--reset-password`
 
-Reset the admin user credentials to their default values (`admin` / `pass`).
+Reset the admin user credentials to the defaults (`admin` / `pass`) and exit immediately.
+Always provide `--config` alongside this flag so the launcher finds the correct database.
 
-**Steps:**
+```bash
+oibus-launcher --reset-password --config /path/to/OIBusData
+```
 
-1. Run the command:
-   ```bash
-   oibus-launcher --reset-password true --config C:\OIBusData
-   ```
-2. Restart the service.
-3. Access the OIBus interface using the default credentials: `admin` / `pass`.
+**Recovery steps after a forgotten password:**
+
+1. Stop the OIBus service.
+2. Run the command above.
+3. Restart the service.
+4. Log in with `admin` / `pass` and change the password immediately in
+   [User Settings](../installation/first-access.mdx#user-settings).
 
 :::caution
-Always specify the data folder path when using `--reset-password`.
+`--reset-password` is processed by the launcher only and is never forwarded to the `oibus` binary.
 :::
