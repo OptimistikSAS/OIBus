@@ -12,10 +12,12 @@ const HomepageHeader = () => {
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
         <h1 className={clsx('hero__title', styles.welcomeTitle)}>
-          <Translate description="The homepage main heading">OIBus - Data collection solution</Translate>
+          <Translate description="The homepage main heading">OIBus — Open source data collection</Translate>
         </h1>
         <p className={clsx('hero__subtitle', styles.welcomeTitle)}>
-          <Translate description="The tagline">Start collecting your data now</Translate>
+          <Translate description="The tagline">
+            Collect industrial data from OPC UA, Modbus, SQL, MQTT and more — forward it anywhere
+          </Translate>
         </p>
         <div className="row">
           <div className={clsx('col col--4')}>
@@ -66,8 +68,8 @@ const HomepageHeader = () => {
 export default function Home() {
   return (
     <Layout
-      title={`OIBus - Data collection solution - Documentation`}
-      description="Documentation for OIBus, an open-source data extraction tool"
+      title={`OIBus — Open source data collection`}
+      description="OIBus is an open source industrial data collection software. Connect to OPC UA, Modbus, SQL databases, MQTT, REST APIs and more. Forward data to OIAnalytics, Amazon S3, Azure Blob Storage, or any HTTP endpoint. Free, lightweight, runs on Windows, Linux, macOS and Docker."
     >
       <HomepageHeader />
       <main>
