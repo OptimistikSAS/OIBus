@@ -53,13 +53,23 @@
             </div>
           } @else if (form.controls.source.value.dataSourceType === 'oianalytics-setpoint') {
             <div class="col-6">
-              <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
-              <span>{{ 'enums.oibus-data-source-type.oianalytics-setpoint' }}</span>
+              <span
+                class="form-label"
+                translate="configuration.oibus.manifest.transformers.source-simple"
+                [translateParams]="{
+                  source: 'enums.oibus-data-source-type.oianalytics-setpoint' | translate
+                }"
+              ></span>
             </div>
           } @else {
             <div class="col-4">
-              <b><span class="form-label" translate="configuration.oibus.manifest.transformers.source"></span></b>
-              <span>{{ 'enums.oibus-data-source-type.' + form.controls.source.value.dataSourceType | translate }}</span>
+              <span
+                class="form-label"
+                translate="configuration.oibus.manifest.transformers.source-simple"
+                [translateParams]="{
+                  source: 'enums.oibus-data-source-type.' + form.controls.source.value.dataSourceType | translate
+                }"
+              ></span>
             </div>
           }
         }

@@ -344,8 +344,7 @@ export class EditNorthTransformerModalComponent {
 
       if (source.dataSourceType === 'south' && source.south) {
         return (
-          element.inputType === 'any-content' ||
-          element.inputType === 'any' ||
+          (element.inputType === 'any-content' && getAssociatedInputType(source.south.type) === 'any') ||
           element.inputType === getAssociatedInputType(source.south.type)
         );
       }
