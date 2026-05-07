@@ -17,7 +17,7 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import EngineRepository from '../repository/config/engine.repository';
 import { EngineSettings } from '../model/engine.model';
 import { GetUserInfo } from '../../shared/model/types';
-import { contentSchema, engineSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import { engineSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import { encryptionService } from './encryption.service';
 import LoggerService from './logger/logger.service';
 import OIAnalyticsMessageService from './oia/oianalytics-message.service';
@@ -213,7 +213,6 @@ export default class OIBusService {
   }
 
   async addExternalContent(northId: string, dataSourceId: string, content: OIBusContent): Promise<void> {
-    await this.validator.validate(contentSchema, content);
     await this.engine.addExternalContent(northId, dataSourceId, content);
   }
 

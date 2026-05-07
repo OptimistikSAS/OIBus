@@ -30539,8 +30539,8 @@
 						"description": "No Content"
 					}
 				},
-				"description": "Adds time-value or setpoint content directly to the specified North connector(s) cache queue.\nThis allows external systems to push processed data directly into OIBus.",
-				"summary": "Inject structured content into North connector cache(s) queue",
+				"description": "Adds any JSON content directly to the specified North connector(s) cache queue.\nThe body can be any valid JSON object or array. It is serialized and wrapped as\nan OIBus any-content payload, allowing external systems to push arbitrary data\ndirectly into OIBus for further processing by North connectors.",
+				"summary": "Inject any JSON content into North connector cache(s) queue",
 				"tags": [
 					"Content"
 				],
@@ -30568,14 +30568,7 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"anyOf": [
-									{
-										"$ref": "#/components/schemas/OIBusTimeValueContent"
-									},
-									{
-										"$ref": "#/components/schemas/OIBusSetpointContent"
-									}
-								]
+								"$ref": "#/components/schemas/Record_string.unknown_"
 							}
 						}
 					}

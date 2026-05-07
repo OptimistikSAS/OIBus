@@ -1,5 +1,4 @@
 import { ContentController } from './content.controller';
-import { OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import fs from 'node:fs/promises';
@@ -14,23 +13,20 @@ describe('ContentController', () => {
     }
   } as CustomExpressRequest;
 
-  const timeValuesContent: OIBusTimeValueContent = {
-    type: 'time-values',
-    content: []
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
     controller = new ContentController();
   });
 
-  it('should add time values content', async () => {
+  it('should wrap any JSON body as any-content and add it to each north connector', async () => {
     const northId = 'northId1,northId2';
     const dataSourceId = 'dataSourceId';
+    const body = { foo: 'bar', count: 42 };
     (mockRequest.services!.oIBusService.addExternalContent as jest.Mock).mockResolvedValue(undefined);
-    await controller.addContent(northId, dataSourceId, timeValuesContent, mockRequest as CustomExpressRequest);
-    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId1', dataSourceId, timeValuesContent);
-    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId2', dataSourceId, timeValuesContent);
+    await controller.addContent(northId, dataSourceId, body, mockRequest as CustomExpressRequest);
+    const expectedContent = { type: 'any-content', content: JSON.stringify(body) };
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId1', dataSourceId, expectedContent);
+    expect(mockRequest.services!.oIBusService.addExternalContent).toHaveBeenCalledWith('northId2', dataSourceId, expectedContent);
   });
 
   it('should add file', async () => {

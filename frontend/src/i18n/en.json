@@ -955,6 +955,7 @@
         },
         "transformers": {
           "title": "Transform payloads",
+          "source-simple": "Source: {{ source }}",
           "source": "Source: {{ name }} ({{ type }})",
           "source-disabled": "Source: {{ name }} ({{ type }}) - paused",
           "output": "Output",
