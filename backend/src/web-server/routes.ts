@@ -6168,7 +6168,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
     const upload = opts?.multer ||  multer({"limits":{"fileSize":8388608}});
 
-    
+
         const argsUserController_search: Record<string, TsoaRoute.ParameterSchema> = {
                 login: {"in":"query","name":"login","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 page: {"in":"query","name":"page","required":true,"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},
@@ -10226,7 +10226,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsContentController_addContent: Record<string, TsoaRoute.ParameterSchema> = {
                 northId: {"in":"query","name":"northId","required":true,"dataType":"string"},
                 dataSourceId: {"in":"query","name":"dataSourceId","required":true,"dataType":"string"},
-                content: {"in":"body","name":"content","required":true,"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusSetpointContent"}]},
+                body: {"in":"body","name":"body","required":true,"ref":"Record_string.unknown_"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/api/content/content',

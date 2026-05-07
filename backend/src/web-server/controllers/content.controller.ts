@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Query, Request, Route, SuccessResponse, Tags, UploadedFile } from 'tsoa';
-import { OIBusSetpointContent, OIBusTimeValueContent } from '../../../shared/model/engine.model';
+import { OIBusAnyContent } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import fs from 'node:fs/promises';
 import { OIBusValidationError } from '../../model/types';
@@ -44,22 +44,25 @@ export class ContentController extends Controller {
   }
 
   /**
-   * Adds time-value or setpoint content directly to the specified North connector(s) cache queue.
-   * This allows external systems to push processed data directly into OIBus.
-   * @summary Inject structured content into North connector cache(s) queue
+   * Adds any JSON content directly to the specified North connector(s) cache queue.
+   * The body can be any valid JSON object or array. It is serialized and wrapped as
+   * an OIBus any-content payload, allowing external systems to push arbitrary data
+   * directly into OIBus for further processing by North connectors.
+   * @summary Inject any JSON content into North connector cache(s) queue
    */
   @Post('/content')
   @SuccessResponse(204, 'No Content')
   async addContent(
     @Query() northId: string,
     @Query() dataSourceId: string,
-    @Body() content: OIBusTimeValueContent | OIBusSetpointContent,
+    @Body() body: Record<string, unknown>,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const oIBusService = request.services.oIBusService;
+    const anyContent: OIBusAnyContent = { type: 'any-content', content: JSON.stringify(body) };
     const normalizedNorthIds = northId.split(',').filter(id => id.trim() !== '');
     for (const id of normalizedNorthIds) {
-      await oIBusService.addExternalContent(id, dataSourceId, content);
+      await oIBusService.addExternalContent(id, dataSourceId, anyContent);
     }
   }
 }

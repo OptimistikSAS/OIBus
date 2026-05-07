@@ -58,20 +58,6 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
   })
 });
 
-const contentSchema: Joi.ObjectSchema = Joi.object({
-  type: Joi.string().required().allow('any', 'time-values'),
-  content: Joi.array().when('type', {
-    is: Joi.string().valid('time-values'),
-    then: Joi.required(),
-    otherwise: Joi.allow('').optional()
-  }),
-  filePath: Joi.string().when('type', {
-    is: Joi.string().valid('any'),
-    then: Joi.required(),
-    otherwise: Joi.allow('').optional()
-  })
-});
-
 const registrationSchema: Joi.ObjectSchema = Joi.object({
   host: Joi.string().required(),
   acceptUnauthorized: Joi.boolean().required(),
@@ -163,13 +149,4 @@ function cronValidator(value: string, helper: Joi.CustomHelpers) {
   return cronValidation.isValid ? true : helper.message({ custom: cronValidation.errorMessage });
 }
 
-export {
-  scanModeSchema,
-  certificateSchema,
-  engineSchema,
-  registrationSchema,
-  ipFilterSchema,
-  userSchema,
-  contentSchema,
-  transformerSchema
-};
+export { scanModeSchema, certificateSchema, engineSchema, registrationSchema, ipFilterSchema, userSchema, transformerSchema };
