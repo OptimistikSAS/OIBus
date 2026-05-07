@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 import { OIBusDataType } from './engine.model';
 import { BaseEntity } from './types';
 import {
@@ -231,21 +232,43 @@ export interface NorthConnectorTypedDTO<T extends OIBusNorthType, S> extends Bas
   transformers: Array<TransformerDTOWithOptions>;
 }
 
+// ── Named variants (tsoa uses these as schema names) ─────────────────────
+/** North connector configuration for Amazon S3. */
+export interface NorthConnectorAmazonS3DTO extends NorthConnectorTypedDTO<'aws-s3', NorthAmazonS3Settings> {}
+/** North connector configuration for Azure Blob Storage. */
+export interface NorthConnectorAzureBlobDTO extends NorthConnectorTypedDTO<'azure-blob', NorthAzureBlobSettings> {}
+/** North connector configuration for the Console debug output. */
+export interface NorthConnectorConsoleDTO extends NorthConnectorTypedDTO<'console', NorthConsoleSettings> {}
+/** North connector configuration for the File Writer. */
+export interface NorthConnectorFileWriterDTO extends NorthConnectorTypedDTO<'file-writer', NorthFileWriterSettings> {}
+/** North connector configuration for Modbus. */
+export interface NorthConnectorModbusDTO extends NorthConnectorTypedDTO<'modbus', NorthModbusSettings> {}
+/** North connector configuration for MQTT. */
+export interface NorthConnectorMQTTDTO extends NorthConnectorTypedDTO<'mqtt', NorthMQTTSettings> {}
+/** North connector configuration for OIAnalytics. */
+export interface NorthConnectorOIAnalyticsDTO extends NorthConnectorTypedDTO<'oianalytics', NorthOIAnalyticsSettings> {}
+/** North connector configuration for OPC UA. */
+export interface NorthConnectorOPCUADTO extends NorthConnectorTypedDTO<'opcua', NorthOPCUASettings> {}
+/** North connector configuration for the REST API. */
+export interface NorthConnectorRESTDTO extends NorthConnectorTypedDTO<'rest', NorthRESTSettings> {}
+/** North connector configuration for SFTP file transfer. */
+export interface NorthConnectorSFTPDTO extends NorthConnectorTypedDTO<'sftp', NorthSFTPSettings> {}
+
 /**
  * Data Transfer Object for a North connector.
  * Contains all configuration details of a North connector.
  */
 export type NorthConnectorDTO =
-  | NorthConnectorTypedDTO<'aws-s3', NorthAmazonS3Settings>
-  | NorthConnectorTypedDTO<'azure-blob', NorthAzureBlobSettings>
-  | NorthConnectorTypedDTO<'console', NorthConsoleSettings>
-  | NorthConnectorTypedDTO<'file-writer', NorthFileWriterSettings>
-  | NorthConnectorTypedDTO<'modbus', NorthModbusSettings>
-  | NorthConnectorTypedDTO<'mqtt', NorthMQTTSettings>
-  | NorthConnectorTypedDTO<'oianalytics', NorthOIAnalyticsSettings>
-  | NorthConnectorTypedDTO<'opcua', NorthOPCUASettings>
-  | NorthConnectorTypedDTO<'rest', NorthRESTSettings>
-  | NorthConnectorTypedDTO<'sftp', NorthSFTPSettings>;
+  | NorthConnectorAmazonS3DTO
+  | NorthConnectorAzureBlobDTO
+  | NorthConnectorConsoleDTO
+  | NorthConnectorFileWriterDTO
+  | NorthConnectorModbusDTO
+  | NorthConnectorMQTTDTO
+  | NorthConnectorOIAnalyticsDTO
+  | NorthConnectorOPCUADTO
+  | NorthConnectorRESTDTO
+  | NorthConnectorSFTPDTO;
 
 export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
   /**
@@ -381,21 +404,43 @@ export interface NorthConnectorCommandTypedDTO<T extends OIBusNorthType, S> {
   transformers: Array<TransformerCommandDTOWithOptions>;
 }
 
+// ── Named command variants (tsoa uses these as schema names) ──────────────
+/** North connector command for Amazon S3. */
+export interface NorthConnectorAmazonS3CommandDTO extends NorthConnectorCommandTypedDTO<'aws-s3', NorthAmazonS3Settings> {}
+/** North connector command for Azure Blob Storage. */
+export interface NorthConnectorAzureBlobCommandDTO extends NorthConnectorCommandTypedDTO<'azure-blob', NorthAzureBlobSettings> {}
+/** North connector command for the Console debug output. */
+export interface NorthConnectorConsoleCommandDTO extends NorthConnectorCommandTypedDTO<'console', NorthConsoleSettings> {}
+/** North connector command for the File Writer. */
+export interface NorthConnectorFileWriterCommandDTO extends NorthConnectorCommandTypedDTO<'file-writer', NorthFileWriterSettings> {}
+/** North connector command for Modbus. */
+export interface NorthConnectorModbusCommandDTO extends NorthConnectorCommandTypedDTO<'modbus', NorthModbusSettings> {}
+/** North connector command for MQTT. */
+export interface NorthConnectorMQTTCommandDTO extends NorthConnectorCommandTypedDTO<'mqtt', NorthMQTTSettings> {}
+/** North connector command for OIAnalytics. */
+export interface NorthConnectorOIAnalyticsCommandDTO extends NorthConnectorCommandTypedDTO<'oianalytics', NorthOIAnalyticsSettings> {}
+/** North connector command for OPC UA. */
+export interface NorthConnectorOPCUACommandDTO extends NorthConnectorCommandTypedDTO<'opcua', NorthOPCUASettings> {}
+/** North connector command for the REST API. */
+export interface NorthConnectorRESTCommandDTO extends NorthConnectorCommandTypedDTO<'rest', NorthRESTSettings> {}
+/** North connector command for SFTP file transfer. */
+export interface NorthConnectorSFTPCommandDTO extends NorthConnectorCommandTypedDTO<'sftp', NorthSFTPSettings> {}
+
 /**
  * Command Data Transfer Object for creating or updating a North connector.
  * Used as the request body for North connector creation/update endpoints.
  */
 export type NorthConnectorCommandDTO =
-  | NorthConnectorCommandTypedDTO<'aws-s3', NorthAmazonS3Settings>
-  | NorthConnectorCommandTypedDTO<'azure-blob', NorthAzureBlobSettings>
-  | NorthConnectorCommandTypedDTO<'console', NorthConsoleSettings>
-  | NorthConnectorCommandTypedDTO<'file-writer', NorthFileWriterSettings>
-  | NorthConnectorCommandTypedDTO<'modbus', NorthModbusSettings>
-  | NorthConnectorCommandTypedDTO<'mqtt', NorthMQTTSettings>
-  | NorthConnectorCommandTypedDTO<'oianalytics', NorthOIAnalyticsSettings>
-  | NorthConnectorCommandTypedDTO<'opcua', NorthOPCUASettings>
-  | NorthConnectorCommandTypedDTO<'rest', NorthRESTSettings>
-  | NorthConnectorCommandTypedDTO<'sftp', NorthSFTPSettings>;
+  | NorthConnectorAmazonS3CommandDTO
+  | NorthConnectorAzureBlobCommandDTO
+  | NorthConnectorConsoleCommandDTO
+  | NorthConnectorFileWriterCommandDTO
+  | NorthConnectorModbusCommandDTO
+  | NorthConnectorMQTTCommandDTO
+  | NorthConnectorOIAnalyticsCommandDTO
+  | NorthConnectorOPCUACommandDTO
+  | NorthConnectorRESTCommandDTO
+  | NorthConnectorSFTPCommandDTO;
 
 /**
  * Manifest for a North connector type.

@@ -6,9 +6,11 @@ import { BaseEntity } from './types';
  */
 export interface IPFilterDTO extends BaseEntity {
   /**
-   * The IP address or CIDR block to filter.
-   * Can be an IPv4 address, IPv6 address, or CIDR notation.
-   * @example "192.168.1.1"
+   * A regex pattern matched against the remote client's IP address.
+   * A plain IP address (e.g. `192.168.1.1`) is treated as a literal pattern.
+   * Use `*` to allow all addresses, or a regex prefix like `192\.168\.` to allow an entire subnet.
+   * Both IPv4 and IPv6 addresses (including IPv4-mapped IPv6) are supported.
+   * @example "192\\.168\\.1\\..*"
    */
   address: string;
 
@@ -25,9 +27,11 @@ export interface IPFilterDTO extends BaseEntity {
  */
 export interface IPFilterCommandDTO {
   /**
-   * The IP address or CIDR block to filter.
-   * Can be an IPv4 address, IPv6 address, or CIDR notation.
-   * @example "192.168.1.1"
+   * A regex pattern matched against the remote client's IP address.
+   * A plain IP address (e.g. `192.168.1.1`) is treated as a literal pattern.
+   * Use `*` to allow all addresses, or a regex prefix like `192\.168\.` to allow an entire subnet.
+   * Both IPv4 and IPv6 addresses (including IPv4-mapped IPv6) are supported.
+   * @example "192\\.168\\.1\\..*"
    */
   address: string;
 

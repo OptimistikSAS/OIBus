@@ -468,18 +468,67 @@ export interface TransformerSearchParam {
   page: number;
 }
 
+/**
+ * Request payload for testing a custom transformer.
+ */
 export interface TransformerTestRequest {
+  /**
+   * The raw input data string to pass to the transformer.
+   * The expected format depends on the transformer's `inputType`
+   * (e.g. a JSON-serialised array of time-values, or a raw file path for `any`).
+   * @example "[{\"timestamp\":\"2024-01-01T00:00:00.000Z\",\"pointId\":\"sensor1\",\"value\":\"42.0\"}]"
+   */
   inputData: string;
+
+  /**
+   * Optional transformer-specific options object passed alongside the input data.
+   * @example { "precision": 2 }
+   */
   options?: object;
 }
 
+/**
+ * Response from a transformer test run.
+ */
 export interface TransformerTestResponse {
+  /**
+   * The serialised transformation output produced by the transformer.
+   * @example "{\"topic\":\"sensors/sensor1\",\"payload\":42}"
+   */
   output: string;
+
+  /**
+   * Execution metadata produced during the test run.
+   */
   metadata: {
+    /**
+     * MIME type of the output content.
+     * @example "application/json"
+     */
     contentType: string;
+
+    /**
+     * File path of the output content, if the transformer produced a file.
+     * @example "/tmp/transformer-output-1234.csv"
+     */
     contentFile: string;
+
+    /**
+     * Size of the output content in bytes.
+     * @example 256
+     */
     contentSize: number;
+
+    /**
+     * Timestamp at which the output was produced.
+     * @example "2024-01-01T00:00:00.000Z"
+     */
     createdAt: Instant;
+
+    /**
+     * Number of data elements in the output (e.g. number of time-value points).
+     * @example 1
+     */
     numberOfElement: number;
   };
 }

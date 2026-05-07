@@ -8,4 +8,33 @@ import openApi from './openapi.json';
 
 # OIBus API Reference
 
+The OIBus REST API lets you automate every aspect of an OIBus instance: configure connectors and scan modes, push data directly into North connector caches, search logs, manage users, and monitor engine health — all over HTTP.
+
+## Base URL
+
+```
+http://<oibus-host>:2223
+```
+
+The default port is `2223`. Replace `<oibus-host>` with the hostname or IP address of the machine running OIBus.
+
+## Authentication
+
+Every request must be authenticated. OIBus supports two methods:
+
+| Method                 | When to use                                                                                                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **JWT (Bearer token)** | Interactive sessions. Obtain a token by `POST /api/users/authenticate` with `{ login, password }`. Pass it as `Authorization: Bearer <token>`. Tokens are valid for 7 days and are invalidated if the password changes. |
+| **HTTP Basic Auth**    | Scripts and automation. Pass credentials as `Authorization: Basic <base64(login:password)>`. Prefer running scripts on the OIBus host (`localhost`) so credentials are not transmitted over the network in cleartext.   |
+
+## Common patterns
+
+**Pagination** — list endpoints that return `Page<T>` accept a `page` query parameter (zero-based). The response includes `totalElements`, `totalPages`, `size`, and `number`.
+
+**Comma-separated multi-values** — some query parameters (e.g. `northId`, `levels`, `types`, `status`) accept multiple values as a comma-separated string: `?levels=error,warn`.
+
+**204 No Content** — `PUT` and `DELETE` operations return `204` on success with an empty body.
+
+---
+
 <RedocWrapper spec={openApi} />

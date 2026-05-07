@@ -15,6 +15,8 @@ export class ContentController extends Controller {
    * Uploads a file and adds it to the specified North connector(s) cache.
    * The file will be processed according to the North connector's configuration.
    * @summary Inject a file into North connector cache(s) queue
+   * @param northId One or more North connector IDs, comma-separated (e.g. `id1,id2`). The file is queued in every listed connector.
+   * @param dataSourceId An arbitrary identifier for the external source pushing the file. Used for tracing and logging.
    */
   @Post('/file')
   @SuccessResponse(204, 'No Content')
@@ -49,6 +51,8 @@ export class ContentController extends Controller {
    * an OIBus any-content payload, allowing external systems to push arbitrary data
    * directly into OIBus for further processing by North connectors.
    * @summary Inject any JSON content into North connector cache(s) queue
+   * @param northId One or more North connector IDs, comma-separated (e.g. `id1,id2`). The content is queued in every listed connector.
+   * @param dataSourceId An arbitrary identifier for the external source pushing the content. Used for tracing and logging.
    */
   @Post('/content')
   @SuccessResponse(204, 'No Content')
