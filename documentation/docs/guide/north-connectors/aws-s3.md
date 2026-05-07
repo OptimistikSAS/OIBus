@@ -13,27 +13,24 @@ long-term storage, data lakes, or integration with AWS services.
 
 Configure the following parameters to connect to your Amazon S3 bucket:
 
-| Setting        | Description                                                     |
-| -------------- | --------------------------------------------------------------- |
-| **Bucket**     | Name of the Amazon S3 bucket where files will be stored.        |
-| **Region**     | AWS region where the bucket is located (e.g., `eu-west-3`).     |
-| **Folder**     | Specific folder within the bucket where files should be stored. |
-| **Access key** | Authentication key for connecting to the Amazon S3 bucket.      |
-| **Secret key** | Secret key associated with the access key.                      |
+| Setting        | Description                                                     | Example Value          |
+| -------------- | --------------------------------------------------------------- | ---------------------- |
+| **Bucket**     | Name of the Amazon S3 bucket where files will be stored.        | `my-oibus-bucket`      |
+| **Region**     | AWS region where the bucket is located.                         | `eu-west-3`            |
+| **Folder**     | Specific folder within the bucket where files should be stored. | `oibus/data`           |
+| **Access key** | Authentication key for connecting to the Amazon S3 bucket.      | `AKIAIOSFODNN7EXAMPLE` |
+| **Secret key** | Secret key associated with the access key.                      | `••••••••`             |
 
 ### Proxy Configuration
 
-If your OIBus instance requires a proxy to connect to Amazon S3, enable the **Use proxy** option and provide the
-following details:
+If your network infrastructure requires requests to pass through a proxy server to reach Amazon S3, enable the
+**Use proxy** option and configure the proxy details below.
 
-| Setting            | Description                                                      |
-| ------------------ | ---------------------------------------------------------------- |
-| **Proxy URL**      | URL of the proxy server (e.g., `http://proxy.example.com:8080`). |
-| **Proxy username** | Username for proxy authentication (if required).                 |
-| **Proxy password** | Password for proxy authentication (if required).                 |
-
-For more information on proxy configuration, see
-the [Engine Settings - Proxy Server Configuration](../engine/engine-settings.mdx#proxy-server).
+| Setting            | Description                                      | Example Value                   |
+| ------------------ | ------------------------------------------------ | ------------------------------- |
+| **Proxy URL**      | URL of the proxy server.                         | `http://proxy.example.com:8080` |
+| **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
+| **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
 ## Best Practices
 

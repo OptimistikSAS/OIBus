@@ -5,16 +5,16 @@ for local storage, data processing pipelines, or integration with file-based sys
 
 ## Specific Settings
 
-| Setting           | Description                                                                                                           |
-| ----------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Output folder** | Directory where files will be stored. Relative paths are resolved based on the **Data folder** (see _About_ section). |
+| Setting           | Description                                                                                                           | Example Value     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Output folder** | Directory where files will be stored. Relative paths are resolved based on the **Data folder** (see _About_ section). | `/data/oibus-out` |
 
 ### File Naming Options
 
-| Setting             | Description                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Prefix filename** | Text to prepend to the filename. Supports internal variables like `@ConnectorName`.                     |
-| **Suffix filename** | Text to append to the filename (before the extension). Supports internal variables like `@CurrentDate`. |
+| Setting    | Description                                                                                             | Example Value     |
+| ---------- | ------------------------------------------------------------------------------------------------------- | ----------------- |
+| **Prefix** | Text to prepend to the filename. Supports internal variables like `@ConnectorName`.                     | `@ConnectorName-` |
+| **Suffix** | Text to append to the filename (before the extension). Supports internal variables like `@CurrentDate`. | `-@CurrentDate`   |
 
 :::tip Dynamic Filenames
 Use internal variables to create dynamic filenames:

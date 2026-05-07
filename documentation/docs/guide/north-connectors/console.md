@@ -5,9 +5,9 @@ The **Console North Connector** displays filenames or values directly in the con
 
 ## Specific Settings
 
-| Setting     | Description                                                                                                              |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Verbose** | When enabled, displays received data in **detailed tables**. When disabled, only shows the **count of values** received. |
+| Setting     | Description                                                                                                              | Example Value    |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| **Verbose** | When enabled, displays received data in **detailed tables**. When disabled, only shows the **count of values** received. | Enabled/Disabled |
 
 ## Using the Console in Production
 
