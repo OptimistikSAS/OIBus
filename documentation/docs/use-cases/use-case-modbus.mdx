@@ -7,12 +7,9 @@ sidebar_position: 4
 
 ## Beforehand
 
-This use case is useful to properly test OIBus. You can use a Modbus Simulator.
+This use case is a good starting point for testing OIBus — you can use a Modbus simulator to try it without real hardware.
 
-Details regarding the configurations can be located on the [North File Writer](../guide/north-connectors/file-writer.md) and
-[South Modbus](../guide/south-connectors/modbus.md) connectors pages.
-
-This specific scenario is constructed around the depicted fictional network.
+See the [North File Writer](../guide/north-connectors/file-writer.md) and [South Modbus](../guide/south-connectors/modbus.md) connector pages for full configuration details. The example uses the following fictional network.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -24,15 +21,11 @@ This specific scenario is constructed around the depicted fictional network.
 
 ## South Modbus
 
-Be sure to have the URL (or IP address) of the Modbus server and the access port (typically 502). Some servers (or masters) may have
-multiple clients (or slaves) connected. Be sure to know the slave ID to distinguish the target, or maintain it as 1 if there is only one
-slave.
+You need the IP address (or hostname) and port of the Modbus server (port 502 is the default). If the server has multiple slaves, you also need the slave ID of your target — use `1` when there is only one slave.
 
 In this example, the IP address is `10.0.0.1` and the port is `502`.
 
-Based on the address schema of the PLC, opt for either JBus or Modbus offset to indicate whether register addresses start at 0 or 1.
-
-Additionally, note that PLCs may store retrieved values differently. Be sure to know the endianness, byte swapping, and word swapping.
+Select **JBus** or **Modbus** address offset depending on whether register addresses start at 0 or 1 on your PLC. Also confirm the endianness, byte swapping, and word swapping with the PLC documentation or its administrator.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -43,13 +36,12 @@ Additionally, note that PLCs may store retrieved values differently. Be sure to 
 </div>
 
 :::tip Testing connection
-You can verify the connection by testing the settings using the `Test settings` button.
+Click **Test settings** to verify the connection before saving.
 :::
 
 ### Items
 
-Include the addresses you intend to read. Consult the person responsible for the Modbus server to identify the available addresses, their
-Modbus type, data type, and multiplier coefficient. Choose a [scan mode](../guide/engine/scan-modes.mdx) to retrieve the data.
+Add the register addresses you want to read. Ask the Modbus server administrator for the available addresses, their Modbus type, data type, and multiplier coefficient. Select a [scan mode](../guide/engine/scan-modes.mdx) to control the collection interval.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -59,29 +51,19 @@ Modbus type, data type, and multiplier coefficient. Choose a [scan mode](../guid
   </div>
 </div>
 
-:::tip Massive import
-For bulk item import, start by clicking the `Export` button to obtain a CSV file with the correct columns. Each line
-in the file will correspond to a new item. Ensure that the names are unique.
+:::tip Bulk import
+Click **Export** to download a CSV template with the correct columns, fill in one item per row, then import it back. Item names must be unique.
 :::
 
 ## North File Writer
 
-Be sure to have the path to the folder that needs to be accessed. The user running OIBus must have the appropriate access rights for that
-folder (here `D:\Data`)
+You need the path to the output folder and the OIBus service account must have write access to it (e.g. `D:\Data`).
 
-:::info OIBus System user
-When OIBus operates as a service on Windows, the default user is SYSTEM. You can modify this setting through the
-service management tool by selecting OIBus and changing the user running the service. After saving the changes, make sure to restart the
-service.
-
-OIBus has the capability to access remote folders. In such instances, recheck the user permissions for accessing the remote folder. Keep in
-mind that SYSTEM users on Windows may not have access to remote folders.
+:::info OIBus system user on Windows
+When OIBus runs as a Windows service, the default account is **SYSTEM**. Change it via the Windows service manager if you need access to network shares or folders restricted to a specific user. Restart the service after changing the account. Note that the **SYSTEM** account does not have access to remote (UNC) paths by default.
 :::
 
-OIBus offers the capability to generate either files or JSON values. Files will be directly written as they are, while JSON values will be
-converted into JSON files.
-
-Additionally, you have the option to specify a prefix and suffix to be appended to each file written in the output folder.
+OIBus can write data as raw files or as JSON files. Files received from South connectors are written as-is; JSON values are serialised to JSON files. You can also add a prefix and suffix to every filename written to the output folder.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -92,5 +74,5 @@ Additionally, you have the option to specify a prefix and suffix to be appended 
 </div>
 
 :::tip Testing connection
-You can verify the connection by testing the settings using the `Test settings` button.
+Click **Test settings** to verify the connection before saving.
 :::

@@ -5,27 +5,21 @@ sidebar_position: 3
 
 import NorthOIAnalytics from './_north_oianalytics.mdx';
 
-# ADS - TwinCAT® → OIAnalytics®
+# ADS / TwinCAT® → OIAnalytics®
 
 ## Beforehand
 
-This use case shows how to set up an ADS connector and how to send the resulting CSV files into OIAnalytics.
+See the [North OIAnalytics](../guide/north-connectors/oianalytics.md) and [South ADS](../guide/south-connectors/ads.mdx) connector pages for full configuration details.
 
-Details regarding the configurations can be located on the [North OIAnalytics](../guide/north-connectors/oianalytics.md) and
-[South ADS](../guide/south-connectors/ads.mdx) connectors pages.
+Read the [connector-specific network settings](../guide/south-connectors/ads.mdx#specific-settings) before configuring the ADS connector — the required parameters depend on how OIBus is deployed relative to the ADS router.
+
+Two deployment scenarios are described below.
 
 ## South ADS
 
-Ensure that you are familiar with the network configuration required to access the ADS server from the OIBus machine, as detailed in the
-[connector documentation](../guide/south-connectors/ads.mdx#specific-settings).
-
-Let's consider two implementation scenarios:
-
-- OIBus directly installed in the PLC, which includes the ADS router.
-- OIBus installed on a separate machine, or on the same machine but without direct access to the ADS router, which can be accessed via
-  another local network.
-
 ### Local ADS
+
+OIBus is installed on the same machine as the ADS router.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -33,16 +27,17 @@ Let's consider two implementation scenarios:
 
 </div>
 
-In this scenario, OIBus is directly installed on the same machine than the ADS router. Only the ADS Net ID needs to be specified (here
-`127.0.0.1.1.1`).
+Only the **ADS Net ID** needs to be specified (here `127.0.0.1.1.1`).
 
 <div style={{ textAlign: 'center' }}>
 
-    ![Twincat local settings](../../static/img/use-cases/twincat-local-settings.png)
+![Twincat local settings](../../static/img/use-cases/twincat-local-settings.png)
 
 </div>
 
 ### Remote ADS
+
+OIBus is deployed on a separate machine and must connect to the ADS router over the network.
 
 <div style={{ textAlign: 'center' }}>
 
@@ -50,13 +45,9 @@ In this scenario, OIBus is directly installed on the same machine than the ADS r
 
 </div>
 
-In this scenario, OIBus is deployed on a remote virtual machine. Initially, it needs to establish connectivity with the ADS Router located
-at address `10.0.0.1` on port `48898`. Additionally, an AMS Net ID matching the static route configured on the AMS Server (located on the
-TwinCAT machine) needs to be provided. For instance, here the AMS Net ID is specified as `193.164.196.201.1.1`, where the first segment
-(`193.164.196.201`) typically corresponds to the IP address of the OIBus machine.
-
-The ADS Client port is used to establish the connection between the ADS router and the PLC. It's essential to designate an unused port for
-this purpose, such as port `48899` in this example.
+- **ADS Router address**: `10.0.0.1`, port `48898`
+- **AMS Net ID**: must match the static route configured on the AMS server. The first four segments typically correspond to the OIBus machine's IP address (e.g. `193.164.196.201.1.1`)
+- **ADS Client port**: an unused local port used to connect to the PLC through the router (e.g. `48899`)
 
 <div style={{ textAlign: 'center' }}>
 
@@ -64,12 +55,13 @@ this purpose, such as port `48899` in this example.
 
 </div>
 
-:::tip Testing connection You can verify the connection by testing the settings using the `Test settings` button. :::
+:::tip Testing connection
+Click **Test settings** to verify the connection before saving.
+:::
 
 ### Items
 
-Include the addresses you intend to read. Consult the person responsible for the PLC to identify the available addresses. Choose a
-[scan mode](../guide/engine/scan-modes.mdx) to retrieve the data.
+Add the addresses you want to read. Ask the PLC administrator for the available addresses. Select a [scan mode](../guide/engine/scan-modes.mdx) to control the collection interval.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -79,18 +71,10 @@ Include the addresses you intend to read. Consult the person responsible for the
   </div>
 </div>
 
-:::tip Massive import
-For bulk item import, start by clicking the `Export` button to obtain a CSV file with the correct columns. Each line
-in the file will correspond to a new item. Ensure that the names are unique.
+:::tip Bulk import
+Click **Export** to download a CSV template with the correct columns, fill in one item per row, then import it back. Item names must be unique.
 :::
 
-The ADS connector is frequently employed for accessing PLCs, and there are scenarios where multiple PLCs with the same namespace need to be
-accessed.
-
-To streamline this process, OIBus allows you to import items from a CSV file, which can be the result of exporting from another ADS
-connector. However, note that the names will be the same between the two connectors. To distinguish them, utilize the `PLC name` field from
-the connector settings section (here `PLC001`).
-
-The PLC name will be appended in front of all item names, providing a unique identifier.
+When collecting data from multiple PLCs that share the same address namespace, export items from one ADS connector and import them into another. Because the item names will be identical, use the **PLC name** field in the connector settings (e.g. `PLC001`) — OIBus prepends it to every item name to keep them unique.
 
 <NorthOIAnalytics></NorthOIAnalytics>
