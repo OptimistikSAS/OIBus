@@ -13,43 +13,41 @@ Data Lake Storage**. This connector is ideal for cloud storage, data lakes, or i
 
 Configure the following parameters to connect to your Azure Blob Storage:
 
-| Setting            | Description                                                                                                   |
-| ------------------ | ------------------------------------------------------------------------------------------------------------- |
-| **Use Data Lake**  | Enable to use **Azure Data Lake Storage** instead of standard Azure Blob Storage.                             |
-| **Use custom URL** | Use a custom endpoint URL. If disabled, the standard URL (`https://<account>.blob.core.windows.net`) is used. |
+| Setting            | Description                                                                       | Example Value    |
+| ------------------ | --------------------------------------------------------------------------------- | ---------------- |
+| **Use Data Lake**  | Enable to use **Azure Data Lake Storage** instead of standard Azure Blob Storage. | Enabled/Disabled |
+| **Use custom URL** | Use a custom endpoint URL instead of the account-based standard URL.              | Enabled/Disabled |
 
 ### Connection Settings
 
-| Setting       | Description                                                        |
-| ------------- | ------------------------------------------------------------------ |
-| **Account**   | Azure storage account name with access to the specified container. |
-| **Container** | Azure Blob container where files will be stored.                   |
-| **Path**      | Folder path within the container where files should be stored.     |
+| Setting        | Description                                                                        | Example Value                                    |
+| -------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **Account**    | Azure storage account name. Used when **Use custom URL** is disabled.              | `mystorageaccount`                               |
+| **Custom URL** | Full endpoint URL of the storage service. Used when **Use custom URL** is enabled. | `https://mystorageaccount.blob.core.windows.net` |
+| **Container**  | Azure Blob container where files will be stored.                                   | `oibus-data`                                     |
+| **Path**       | Folder path within the container where files should be stored.                     | `factory/line1`                                  |
 
-### Authentication Methods
+### Authentication
 
-Choose one of the following authentication methods:
-
-| Method         | Description                                                                         | Required Parameters                 |
-| -------------- | ----------------------------------------------------------------------------------- | ----------------------------------- |
-| **Access Key** | Connect using an account access key.                                                | Account access key                  |
-| **SAS Token**  | Use a **Shared Access Signature (SAS) Token** for time-limited access.              | SAS Token                           |
-| **AAD**        | Use **Azure Active Directory** authentication. Requires a service account in Azure. | Tenant ID, Client ID, Client Secret |
-| **External**   | Use **Windows domain authentication** (Windows only).                               |                                     |
+| Setting            | Description                                                                                   | Example Value                                                               |
+| ------------------ | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Authentication** | Authentication method.                                                                        | `Access key`, `SAS token`, `AAD - Application Active Directory`, `External` |
+| **Access key**     | Account access key. Required for Access key authentication.                                   | `••••••••`                                                                  |
+| **SAS token**      | Shared Access Signature token for time-limited access. Required for SAS token authentication. | `sv=2021-06-08&...`                                                         |
+| **Tenant ID**      | Azure Active Directory tenant ID. Required for AAD authentication.                            | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                      |
+| **Client ID**      | Application (client) ID. Required for AAD authentication.                                     | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                      |
+| **Client secret**  | Application client secret. Required for AAD authentication.                                   | `••••••••`                                                                  |
 
 ### Proxy Configuration
 
-If your OIBus instance requires a proxy to connect to Azure Blob Storage, enable the **Use proxy** option and provide
-the following details:
+If your network infrastructure requires requests to pass through a proxy server to reach Azure Blob Storage, enable the
+**Use proxy** option and configure the proxy details below.
 
-| Setting            | Description                                                      |
-| ------------------ | ---------------------------------------------------------------- |
-| **Proxy URL**      | URL of the proxy server (e.g., `http://proxy.example.com:8080`). |
-| **Proxy username** | Username for proxy authentication (if required).                 |
-| **Proxy password** | Password for proxy authentication (if required).                 |
-
-For more information on proxy configuration, see
-the [Engine Settings - Proxy Server Configuration](../engine/engine-settings.mdx#proxy-server).
+| Setting            | Description                                      | Example Value                   |
+| ------------------ | ------------------------------------------------ | ------------------------------- |
+| **Proxy URL**      | URL of the proxy server.                         | `http://proxy.example.com:8080` |
+| **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
+| **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
 ## Best Practices
 

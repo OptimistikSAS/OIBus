@@ -17,39 +17,43 @@ OIAnalytics® includes **built-in file parsers**, eliminating the need for pre-p
 
 ## Specific Settings
 
-| Setting                          | Description                                                                                          |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Use OIAnalytics registration** | Use connection settings from [OIAnalytics registration](../installation/oianalytics.mdx).            |
-| **Timeout**                      | Duration (in milliseconds) before a connection failure is reported.                                  |
-| **Compress data**                | Compress data if not already compressed. Adds `.gz` extension to files and compresses JSON payloads. |
+| Setting                          | Description                                                                                          | Example Value    |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------- |
+| **Use OIAnalytics registration** | Use connection settings from [OIAnalytics registration](../installation/oianalytics.mdx).            | Enabled/Disabled |
+| **Timeout**                      | Duration (in milliseconds) before a connection failure is reported.                                  | `30000`          |
+| **Compress data**                | Compress data if not already compressed. Adds `.gz` extension to files and compresses JSON payloads. | Enabled/Disabled |
 
 ### Manual Configuration (if registration is not used)
 
-| Setting                             | Description                                                                                  |
-| ----------------------------------- | -------------------------------------------------------------------------------------------- |
-| **Host**                            | Hostname of the OIAnalytics® SaaS application (e.g., `https://optimistik.oianalytics.com`). |
-| **Accept unauthorized certificate** | Enable if HTTP queries pass through a firewall that strips certificates.                     |
+| Setting                             | Description                                                              | Example Value                        |
+| ----------------------------------- | ------------------------------------------------------------------------ | ------------------------------------ |
+| **Host**                            | Hostname of the OIAnalytics® SaaS application.                           | `https://optimistik.oianalytics.com` |
+| **Accept unauthorized certificate** | Enable if HTTP queries pass through a firewall that strips certificates. | Enabled/Disabled                     |
 
-#### Authentication Methods
+#### Authentication
 
-Choose one of the following authentication methods:
-
-| Method                       | Description                                      | Required Parameters                      |
-| ---------------------------- | ------------------------------------------------ | ---------------------------------------- |
-| **Access key/Secret**        | Standard authentication using access keys.       | Access key, Secret                       |
-| **Azure AD (Client Secret)** | Use Azure Active Directory with a client secret. | Tenant ID, Client ID, Client Secret      |
-| **Azure AD (Certificate)**   | Use Azure Active Directory with a certificate.   | Tenant ID, Client ID, Certificate, Scope |
+| Setting            | Description                                                                        | Example Value                                                                                               |
+| ------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Authentication** | Authentication method.                                                             | `Access key/Secret`, `Azure Active Directory with client secret`, `Azure Active Directory with certificate` |
+| **Access key**     | Access key. Required for Access key/Secret.                                        | `my-access-key`                                                                                             |
+| **Secret**         | Secret key. Required for Access key/Secret.                                        | `••••••••`                                                                                                  |
+| **Tenant ID**      | Azure AD tenant ID. Required for AAD methods.                                      | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                                                      |
+| **Client ID**      | Application (client) ID. Required for AAD methods.                                 | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                                                      |
+| **Client secret**  | Application client secret. Required for Azure Active Directory with client secret. | `••••••••`                                                                                                  |
+| **Certificate**    | Application certificate. Required for Azure Active Directory with certificate.     | (selected from list)                                                                                        |
+| **Scope**          | OAuth2 scope. Required for Azure Active Directory with certificate.                | `https://example.com/.default`                                                                              |
 
 #### Proxy Configuration
 
-| Setting            | Description                                                      |
-| ------------------ | ---------------------------------------------------------------- |
-| **Use proxy**      | Route requests through a proxy.                                  |
-| **Proxy URL**      | URL of the proxy server (e.g., `http://proxy.example.com:8080`). |
-| **Proxy username** | Username for proxy authentication (if required).                 |
-| **Proxy password** | Password for proxy authentication (if required).                 |
+If your network infrastructure requires requests to pass through a proxy server to reach OIAnalytics®, enable
+**Use proxy** and configure the proxy details below.
 
-For proxy settings with OIAnalytics registration, see [OIAnalytics Registration](../installation/oianalytics.mdx).
+| Setting            | Description                                      | Example Value                   |
+| ------------------ | ------------------------------------------------ | ------------------------------- |
+| **Use proxy**      | Route requests through a proxy server.           | Enabled/Disabled                |
+| **Proxy URL**      | URL of the proxy server.                         | `http://proxy.example.com:8080` |
+| **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
+| **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
 ## Connecting OIBus to OIAnalytics®
 

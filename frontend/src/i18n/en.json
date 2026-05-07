@@ -890,7 +890,7 @@
             },
             "send-as": {
               "title": "Send payload as",
-              "file": "File (FormData)",
+              "file": "File",
               "body": "Body"
             },
             "test": {
@@ -906,7 +906,8 @@
               "success-code": "Expected success code"
             },
             "proxy": {
-              "use-proxy": "Proxy",
+              "title": "Proxy",
+              "use-proxy": "Use proxy",
               "url": "Proxy URL",
               "username": "Proxy username",
               "password": "Proxy password"
@@ -1679,10 +1680,10 @@
               }
             },
             "test": {
-              "title": "Test configuration",
-              "endpoint": "Test endpoint",
+              "title": "Connection Test",
+              "endpoint": "Test Endpoint",
               "method": {
-                "title": "HTTP method",
+                "title": "Method",
                 "GET": "GET",
                 "POST": "POST",
                 "PUT": "PUT"
@@ -2154,7 +2155,7 @@
             },
             "rest": {
               "method": {
-                "title": "HTTP method",
+                "title": "Method",
                 "GET": "GET",
                 "POST": "POST",
                 "PUT": "PUT",

@@ -12,26 +12,22 @@ The **MQTT North Connector** enables OIBus to **publish data to MQTT brokers**, 
 
 ### Connection Configuration
 
-| Setting                            | Description                                                                                   |
-| ---------------------------------- | --------------------------------------------------------------------------------------------- |
-| **URL**                            | URL of the MQTT broker (e.g., `mqtt://broker.example.com` or `ssl://broker.example.com:8883`) |
-| **QoS**                            | Quality of Service level for message delivery (0, 1, or 2)                                    |
-| **Reject unauthorized connection** | Reject connections that cannot be authorized                                                  |
-| **Reconnect period**               | Time interval between reconnection attempts (in milliseconds)                                 |
-| **Connect timeout**                | Maximum time to wait for a connection (in milliseconds)                                       |
-| **Persistent**                     | Enable for persistent sessions that survive broker restarts (toggle option)                   |
+| Setting                            | Description                                                                            | Example Value                    |
+| ---------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------- |
+| **URL**                            | URL of the MQTT broker.                                                                | `mqtt://broker.example.com:1883` |
+| **QoS**                            | Quality of Service level: `0` (at most once), `1` (at least once), `2` (exactly once). | `0`, `1`, `2`                    |
+| **Reject unauthorized connection** | Reject connections that cannot be authorized.                                          | Enabled/Disabled                 |
+| **Reconnect period**               | Time interval between reconnection attempts (in milliseconds).                         | `5000`                           |
+| **Connect timeout**                | Maximum time to wait for a connection (in milliseconds).                               | `30000`                          |
+| **Persistent**                     | Enable for persistent sessions that survive broker restarts.                           | Enabled/Disabled                 |
 
-:::tip QoS (Quality of Service)
+### Authentication
 
-- **QoS 0**: Fire and forget (no acknowledgment)
-- **QoS 1**: Acknowledged delivery (at least once)
-- **QoS 2**: Assured delivery (exactly once)
-  :::
-
-### Authentication Methods
-
-| Method                | Description                                        | Required Parameters                         |
-| --------------------- | -------------------------------------------------- | ------------------------------------------- |
-| **None**              | No authentication (not recommended for production) | None                                        |
-| **Username/Password** | Standard username/password authentication          | Username, Password                          |
-| **Certificate**       | Certificate-based authentication (most secure)     | Cert file path, Key file path, CA file path |
+| Setting            | Description                                                                      | Example Value                              |
+| ------------------ | -------------------------------------------------------------------------------- | ------------------------------------------ |
+| **Authentication** | Authentication method.                                                           | `None`, `Username/Password`, `Certificate` |
+| **Username**       | Username for broker authentication. Required for Username/Password.              | `mqtt_user`                                |
+| **Password**       | Password for broker authentication. Required for Username/Password.              | `••••••••`                                 |
+| **Cert file path** | Path to the signed certificate file. Required for Certificate authentication.    | `/path/to/cert.pem`                        |
+| **Key file path**  | Path to the private key file. Required for Certificate authentication.           | `/path/to/key.pem`                         |
+| **CA file path**   | Path to the certificate authority file. Required for Certificate authentication. | `/path/to/ca.pem`                          |

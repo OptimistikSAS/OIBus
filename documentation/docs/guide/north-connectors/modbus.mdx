@@ -1,3 +1,5 @@
+import ModbusDataFormatTester from '../../../src/components/ModbusDataFormatTester/index';
+
 # Modbus
 
 The **Modbus North Connector** enables OIBus to **write data to Modbus-compatible devices**, allowing seamless integration with PLCs, RTUs, and other industrial equipment that supports the Modbus protocol.
@@ -23,8 +25,12 @@ The **Modbus North Connector** enables OIBus to **write data to Modbus-compatibl
 
 ### Data Format Options
 
-| Setting        | Description                                                                                  |                  |
-| -------------- | -------------------------------------------------------------------------------------------- | ---------------- |
-| **Endianness** | Specifies the type of bit encoding (Big Endian or Little Endian).                            | `Big Endian`     |
-| **Swap Bytes** | Determines whether the bytes within a group of 16 bits (a word) should be inverted or not.   | Enabled/Disabled |
-| **Swap Words** | Indicates whether the words (16-bit groups) should be inverted or not within a 32-bit group. | Enabled/Disabled |
+| Setting        | Description                                                   | Example Value    |
+| -------------- | ------------------------------------------------------------- | ---------------- |
+| **Endianness** | Type of bit encoding.                                         | `Big endian`     |
+| **Swap Bytes** | Whether bytes within a 16-bit word should be swapped.         | Enabled/Disabled |
+| **Swap Words** | Whether 16-bit words should be swapped within a 32-bit group. | Enabled/Disabled |
+
+Use the tester below to preview how different endianness and swap settings affect the byte layout of a value written to a Modbus register:
+
+<ModbusDataFormatTester />
