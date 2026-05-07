@@ -3,7 +3,6 @@ sidebar_position: 14
 ---
 
 import ItemSettings from './_south-sql-item-settings.mdx';
-import ThrottlingSettings from './_throttling-settings.mdx';
 
 # PostgreSQL
 
@@ -17,16 +16,16 @@ Connect to and query PostgreSQL databases with OIBus.
 
 ## Specific Settings
 
-| Setting            | Description                                            | Default Value | Notes                      |
-| ------------------ | ------------------------------------------------------ | ------------- | -------------------------- |
-| Host               | Address of the PostgreSQL server                       | -             | IP address or hostname     |
-| Port               | Server port number                                     | 5432          | Standard PostgreSQL port   |
-| SSL                | Enable encrypted connection                            | Disabled      | Recommended for production |
-| Database           | Name of the database to connect to                     | -             | Case-sensitive             |
-| Connection timeout | Maximum time (ms) to establish connection              | 10000         | Recommended: 5000-30000ms  |
-| Request timeout    | Maximum execution time (ms) for individual SQL queries | 15000         | Adjust for complex queries |
-| Username           | Authentication username                                | -             |                            |
-| Password           | Authentication password                                | -             |                            |
+| Setting            | Description                                                            | Example Value    |
+| ------------------ | ---------------------------------------------------------------------- | ---------------- |
+| Host               | IP address or hostname of the PostgreSQL server.                       | `192.168.1.10`   |
+| Port               | Server port number. Default: `5432`.                                   | `5432`           |
+| SSL                | Enable encrypted connection. Recommended for production.               | Enabled/Disabled |
+| Database           | Name of the database to connect to.                                    | `production`     |
+| Connection timeout | Maximum time in milliseconds to establish connection. Default: `10000`. | `10000`         |
+| Request timeout    | Maximum execution time in milliseconds for individual SQL queries.     | `15000`          |
+| Username           | Authentication username.                                               | `db_user`        |
+| Password           | Authentication password.                                               | `••••••••`       |
 
 :::tip Security Best Practices
 
@@ -46,5 +45,17 @@ Connect to and query PostgreSQL databases with OIBus.
 - SSL encryption adds minimal overhead
 - Increase timeouts for large datasets or complex queries
 
-<ThrottlingSettings />
 <ItemSettings />
+
+:::note PostgreSQL datetime field types
+The following **Type** values are available for datetime field configuration:
+
+| Type                    | Description                                        |
+| ----------------------- | -------------------------------------------------- |
+| String                  | String representation parsed with a custom format  |
+| Timestamp               | PostgreSQL `TIMESTAMP` column (no timezone)        |
+| Timestamp with timezone | PostgreSQL `TIMESTAMPTZ` column (with timezone)    |
+| ISO String              | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)          | Unix timestamp in seconds                          |
+| UNIX epoch (ms)         | Unix timestamp in milliseconds                     |
+:::

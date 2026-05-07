@@ -3,7 +3,6 @@ sidebar_position: 6
 ---
 
 import ItemSettings from './_south-sql-item-settings.mdx';
-import ThrottlingSettings from './_throttling-settings.mdx';
 
 # MySQL® / MariaDB™
 
@@ -18,14 +17,14 @@ Connect to and query MySQL® or MariaDB™ databases with OIBus.
 
 ## Specific Settings
 
-| Setting            | Description                                  | Default Value | Notes                     |
-| ------------------ | -------------------------------------------- | ------------- | ------------------------- |
-| Host               | Address of the MySQL/MariaDB server instance | -             | IP address or hostname    |
-| Port               | Server port number                           | 3306          | Standard MySQL port       |
-| Connection timeout | Maximum time (ms) to establish connection    | 5000          | Recommended: 5000-30000ms |
-| Database           | Name of the database to connect to           | -             | Case-sensitive            |
-| Username           | Authentication username                      | -             |                           |
-| Password           | Authentication password                      | -             |                           |
+| Setting            | Description                                                            | Example Value  |
+| ------------------ | ---------------------------------------------------------------------- | -------------- |
+| Host               | IP address or hostname of the MySQL/MariaDB server.                    | `192.168.1.10` |
+| Port               | Server port number. Default: `3306`.                                   | `3306`         |
+| Connection timeout | Maximum time in milliseconds to establish connection. Default: `5000`. | `5000`         |
+| Database           | Name of the database to connect to.                                    | `production`   |
+| Username           | Authentication username.                                               | `db_user`      |
+| Password           | Authentication password.                                               | `••••••••`     |
 
 :::caution User Permissions
 
@@ -33,5 +32,22 @@ Always use a read-only database user
 
 :::
 
-<ThrottlingSettings />
 <ItemSettings />
+
+:::note MySQL / MariaDB datetime field types
+The following **Type** values are available for datetime field configuration:
+
+| Type            | Description                                        |
+| --------------- | -------------------------------------------------- |
+| String          | String representation parsed with a custom format  |
+| DateTime        | MySQL `DATETIME` or `TIMESTAMP` column             |
+| ISO String      | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Unix timestamp in seconds                          |
+| UNIX epoch (ms) | Unix timestamp in milliseconds                     |
+
+:::
+
+:::note MySQL item request timeout
+Each MySQL item has an additional **Request timeout** field (milliseconds) that overrides the connection-level
+default for that specific query.
+:::

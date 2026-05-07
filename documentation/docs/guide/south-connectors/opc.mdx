@@ -31,15 +31,30 @@ OIBus Agent **must** be installed on a Windows machine
 | Server name      | OPC server name (ProgID)                   | `Matrikon.OPC.Simulation`   |
 | Mode             | Data access mode (DA or HDA)               | `HDA`                       |
 
+## Group Settings
+
+Items are organised into **groups**. Each group defines a shared schedule and, for HDA mode, the default
+throttling parameters for all items it contains.
+
+| Setting       | Description                                                             | Example Value |
+| ------------- | ----------------------------------------------------------------------- | ------------- |
+| **Name**      | Unique label for the group within this connector.                       | `Group A`     |
+| **Scan mode** | Collection schedule applied to every item in the group.                 | `Every 1 min` |
+
 <ThrottlingSettings />
+
+:::tip Overriding throttling per item
+Each item can override the group throttling defaults by disabling the **Sync with group** toggle in the item
+edit form.
+:::
 
 ## Item Settings
 
-| Setting    | Description                                                                   | Options/Examples                            |
-| ---------- | ----------------------------------------------------------------------------- | ------------------------------------------- |
-| Node ID    | Path to data in OPC server namespace                                          | `Channel1.Device1.Tag1`                     |
-| Aggregate  | Data aggregation method (verify server support)                               | `Raw`, `Average`, `Minimum`, `Maximum`, ... |
-| Resampling | Resample aggregated values at requested interval (requires non-Raw aggregate) | `None`, `1s`, `10s`, `1h`, ...              |
+| Setting    | Description                                                                   | Example Value           |
+| ---------- | ----------------------------------------------------------------------------- | ----------------------- |
+| Node ID    | Path to data in OPC server namespace                                          | `Channel1.Device1.Tag1` |
+| Aggregate  | Data aggregation method (verify server support). See note below for full list.| `Raw`, `Average`, `Minimum`, … |
+| Resampling | Resample aggregated values at requested interval (requires non-Raw aggregate) | `None`, `1 second`, `1 hour`, … |
 
 :::caution Compatibility Notes
 
@@ -47,6 +62,44 @@ OIBus Agent **must** be installed on a Windows machine
 2. **Resampling**: Only available when aggregate ≠ `Raw`
 3. **Recommended Settings**: Use `Raw` aggregation and `None` resampling for maximum compatibility
 4. **Server Capabilities**: Verify supported features with your OPC server documentation
+
+:::
+
+:::note Aggregate values
+
+| Value               | Description                                    |
+| ------------------- | ---------------------------------------------- |
+| Raw                 | All raw values in the interval                 |
+| Interpolative       | Interpolated value at the requested time       |
+| Total               | Sum of all values in the interval              |
+| Average             | Arithmetic mean                                |
+| Time average        | Time-weighted average                          |
+| Count               | Number of data points                          |
+| STDEV               | Standard deviation                             |
+| Minimum actual time | Minimum value with its actual timestamp        |
+| Minimum             | Minimum value in the interval                  |
+| Maximum actual time | Maximum value with its actual timestamp        |
+| Maximum             | Maximum value in the interval                  |
+| Start               | First value in the interval                    |
+| End                 | Last value in the interval                     |
+| Delta               | Difference between first and last value        |
+| Reg slope           | Linear regression slope                        |
+| Reg const           | Linear regression y-intercept                  |
+| Reg dev             | Linear regression deviation                    |
+| Variance            | Statistical variance                           |
+| Range               | Maximum minus minimum                          |
+| Duration good       | Duration of good-quality data                  |
+| Duration bad        | Duration of bad-quality data                   |
+| Percent good        | Percentage of good-quality samples             |
+| Percent bad         | Percentage of bad-quality samples              |
+| Worst quality       | Worst quality code in the interval             |
+| Annotations         | Annotation events                              |
+
+:::
+
+:::note Resampling values
+
+`None` · `1 second` · `10 seconds` · `30 seconds` · `1 minute` · `1 hour` · `1 day`
 
 :::
 

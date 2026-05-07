@@ -1,48 +1,29 @@
 ### Throttling Settings
 
-You can optimize data requests using throttling configurations. These settings help manage large data intervals and network conditions effectively.
+Throttling controls how OIBus paces historical data requests. These settings appear on each **group** (for
+connectors that support groups) or on each **item** (for single-item connectors). Items in a group can override
+the group defaults by disabling the **Sync with group** toggle.
 
-#### Key Throttling Parameters
-
-| Setting           | Description                                                                                                                                             | Data Type    | Example Value |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------- |
-| Max read interval | Maximum duration (in seconds) for each data request interval. Larger intervals are automatically divided into smaller chunks not exceeding this value.  | Seconds      | 3600          |
-| Read delay        | Delay (in milliseconds) between consecutive data requests. Helps prevent server overload.                                                               | Milliseconds | 1000          |
-| Overlap           | Time overlap (in milliseconds) between consecutive queries to ensure data continuity. This value is subtracted from the `@StartTime` of the next query. | Milliseconds | 60000         |
+| Setting               | Description                                                                                                                     | Example Value |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| **Max read interval** | Maximum duration of each sub-query in seconds. Larger time ranges are automatically split into chunks not exceeding this value. | `3600`        |
+| **Read delay**        | Pause in milliseconds between consecutive sub-queries. Helps prevent server overload and manages rate limits.                   | `1000`        |
+| **Overlap**           | Time in milliseconds subtracted from `@StartTime` of each query to capture late-arriving data from the previous interval.      | `60000`       |
 
 #### How Throttling Works
 
-1. **Interval Division**:
+1. **Interval splitting** — A 24-hour range with `Max read interval = 3600` (1 hour) is split into 24 separate
+   1-hour sub-queries.
+2. **Read delay** — A pause is inserted between sub-queries to manage server load.
+3. **Overlap** — With `Overlap = 60000` (1 minute), a query for `[10:00–11:00]` actually requests
+   `[9:59–11:00]`, ensuring no late-arriving data is missed.
 
-- Large time ranges are automatically split into smaller intervals
-- Each sub-interval does not exceed the `Max read interval` duration
-- Example: A 24-hour request with `Max read interval = 3600` (1 hour) will be split into 24 separate 1-hour requests
-
-2. **Request Timing**:
-
-- The `Read delay` introduces a pause between consecutive requests
-- Helps manage server load and prevents rate limiting
-- Particularly useful during network instability or when querying large datasets
-
-3. **Data Continuity**:
-
-- The `Overlap` setting ensures no gaps in your data
-- Creates a time buffer between consecutive queries
-- Example: With `Overlap = 60000` (1 minute), each query will include 1 minute of overlapping data with the previous query
-
-:::info Overlap Functionality
-The overlap setting modifies the `@StartTime` of each query by subtracting the overlap value from the calculated start time. This adjustment applies to the entire query range, not to individual sub-intervals when large requests are split into smaller chunks.
-
-This functionality is particularly useful when:
-
-- New data is ingested after previous queries have executed
-- You need to account for potential ingestion delays in the source system
-
-**Example**:
-With `overlap=60000` (1 minute), a query for the interval `[10:00-11:00]` will actually request `[9:59-11:00]`, ensuring capture of any late-arriving data from the previous time period.
+:::info Overlap applies to the full query range
+The overlap value is subtracted from the start of the overall query, not from the start of each individual
+sub-interval when a large range is split into chunks.
 :::
 
-### Recommended Configurations
+#### Recommended Configurations
 
 | Scenario                       | Max read interval | Read delay | Overlap        |
 | ------------------------------ | ----------------- | ---------- | -------------- |

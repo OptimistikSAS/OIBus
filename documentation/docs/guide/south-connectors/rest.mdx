@@ -12,97 +12,106 @@ Query data from any HTTP/HTTPS REST API using configurable methods, query parame
 
 ### Main Configuration
 
-| Setting                             | Description                                                               | Default Value            |
-| ----------------------------------- | ------------------------------------------------------------------------- | ------------------------ |
-| **Host**                            | Base URL of the REST API server (must start with `http://` or `https://`) | `http://server.com:8080` |
-| **Accept unauthorized certificate** | Allow HTTPS connections with self-signed or invalid certificates          | Disabled                 |
-| **Timeout**                         | Duration before a connection failure is reported (s)                      | 30                       |
+| Setting                             | Description                                                                 | Example Value            |
+| ----------------------------------- | --------------------------------------------------------------------------- | ------------------------ |
+| **Host**                            | Base URL of the REST API server. Must start with `http://` or `https://`.   | `http://server.com:8080` |
+| **Accept unauthorized certificate** | Allow HTTPS connections with self-signed or invalid certificates.           | Enabled/Disabled         |
+| **Timeout**                         | Duration in seconds before a connection failure is reported. Default: `30`. | `30`                     |
 
 ### Authentication
 
-| Method      | Description                                                               | Required Parameters                      |
-| ----------- | ------------------------------------------------------------------------- | ---------------------------------------- |
-| **None**    | No authentication                                                         | –                                        |
-| **Basic**   | HTTP Basic authentication                                                 | Username, Password                       |
-| **Bearer**  | Bearer token sent in the `Authorization` header                           | Token                                    |
-| **API Key** | Custom key/value pair injected into a request header or a query parameter | API Key name, API Key value, Destination |
-
-#### API Key Options
-
-| Setting       | Description                                           | Values                   |
-| ------------- | ----------------------------------------------------- | ------------------------ |
-| **API Key**   | Name of the header or query parameter                 | e.g. `X-Api-Key`         |
-| **API Value** | Secret value sent with the request (stored encrypted) | –                        |
-| **Add to**    | Where the key/value pair is injected                  | `header`, `query-params` |
+| Setting               | Description                                                       | Example Value                             |
+| --------------------- | ----------------------------------------------------------------- | ----------------------------------------- |
+| Authentication method | Authentication type for the connection.                           | `None`, `Basic`, `Bearer`, `API Key`      |
+| Username              | Username for Basic authentication.                                | `api_user`                                |
+| Password              | Password for Basic authentication.                                | `••••••••`                                |
+| Token                 | Bearer token sent in the `Authorization` header.                  | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` |
+| API Key               | Name of the header or query parameter for API Key authentication. | `X-Api-Key`                               |
+| API Value             | Secret value sent with the request (stored encrypted).            | `••••••••`                                |
+| Add to                | Where the API key/value pair is injected.                         | `header`, `query-params`                  |
 
 ### Proxy Configuration
 
-| Setting            | Description                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| **Use proxy**      | Route requests through a proxy server                        |
-| **Proxy URL**      | Full URL of the proxy (e.g. `http://proxy.example.com:8080`) |
-| **Proxy username** | Username for proxy authentication (if required)              |
-| **Proxy password** | Password for proxy authentication (if required)              |
+| Setting            | Description                                      | Example Value                   |
+| ------------------ | ------------------------------------------------ | ------------------------------- |
+| **Use proxy**      | Route requests through a proxy server.           | Enabled/Disabled                |
+| **Proxy URL**      | Full URL of the proxy server.                    | `http://proxy.example.com:8080` |
+| **Proxy username** | Username for proxy authentication (if required). | `proxy_user`                    |
+| **Proxy password** | Password for proxy authentication (if required). | `••••••••`                      |
 
 ### Connection Test
 
 OIBus can test the connection to the server before any item query is executed. This is useful to verify credentials and reachability.
 
-| Setting          | Description                                             | Default Value |
-| ---------------- | ------------------------------------------------------- | ------------- |
-| **Method**       | HTTP method used for the test request                   | `GET`         |
-| **Endpoint**     | Path appended to the host (e.g. `/health`)              | `/`           |
-| **Body**         | Optional JSON body for `POST` or `PUT` test requests    | –             |
-| **Success code** | HTTP status code that indicates a successful connection | `200`         |
+| Setting           | Description                                                          | Example Value |
+| ----------------- | -------------------------------------------------------------------- | ------------- |
+| **Method**        | HTTP method used for the test request. Default: `GET`.               | `GET`         |
+| **Test Endpoint** | Path appended to the host. Default: `/`.                             | `/health`     |
+| **Body**          | Optional JSON body for `POST` or `PUT` test requests.                | `{}`          |
+| **Success code**  | HTTP status code indicating a successful connection. Default: `200`. | `200`         |
 
 :::info
 The test body is only sent when the method is `POST` or `PUT`.
 :::
 
-<ThrottlingSettings />
+## Group Settings
+
+Items can be organised into groups. Each group defines a shared collection schedule and default throttling
+settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
+provides common defaults that individual items can override.
+
+| Setting        | Description                                                                                         | Example Value  |
+| -------------- | --------------------------------------------------------------------------------------------------- | -------------- |
+| **Name**       | Unique label for the group within this connector.                                                   | `Group A`      |
+| **Scan mode**  | Schedule used to collect all items in the group.                                                    | `Every 1 min`  |
+| **Throttling** | Default throttling values (Max read interval, Read delay, Overlap) inherited by items in the group. | `3600, 200, 0` |
 
 ## Item Settings
 
-Each item targets a specific API endpoint and defines how to request and interpret the response.
+Each item targets a specific API endpoint and defines how to request and interpret the response. Items
+inherit their scan mode and throttling defaults from their group, but each setting can be overridden per
+item by disabling **Sync with group**.
+
+<ThrottlingSettings />
 
 ### Request Configuration
 
-| Setting         | Description                                                                 | Default Value |
-| --------------- | --------------------------------------------------------------------------- | ------------- |
-| **Method**      | HTTP method for the data request                                            | `GET`         |
-| **Endpoint**    | Path appended to the host (e.g. `/api/data`)                                | `/api/data`   |
-| **Return type** | How the response is processed — as a structured body or a raw file download | `body`        |
+| Setting         | Description                                                                  | Example Value  |
+| --------------- | ---------------------------------------------------------------------------- | -------------- |
+| **Method**      | HTTP method for the data request. Default: `GET`.                            | `GET`          |
+| **Endpoint**    | Path appended to the host.                                                   | `/api/data`    |
+| **Return type** | How the response is processed — as a structured body or a raw file download. | `body`, `file` |
 
 ### Query Parameters
 
 Add key/value pairs appended to the request URL as query string parameters. Use the `@StartTime` and `@EndTime`
 variables to inject the query's time window directly into a parameter value.
 
-| Setting         | Description                                                                                        |
-| --------------- | -------------------------------------------------------------------------------------------------- |
-| **Key**         | Name of the query parameter                                                                        |
-| **Value**       | Value of the parameter; may contain `@StartTime` or `@EndTime` placeholders                        |
-| **Date format** | Shown when the value contains `@StartTime` or `@EndTime` — configures how the instant is formatted |
+| Setting         | Description                                                                                         | Example Value |
+| --------------- | --------------------------------------------------------------------------------------------------- | ------------- |
+| **Key**         | Name of the query parameter.                                                                        | `from`        |
+| **Value**       | Value of the parameter; may contain `@StartTime` or `@EndTime` placeholders.                        | `@StartTime`  |
+| **Date format** | Shown when the value contains `@StartTime` or `@EndTime` — configures how the instant is formatted. | `iso-string`  |
 
 #### Date/Time Format for Query Parameters
 
 When a parameter value includes `@StartTime` or `@EndTime`, a date format configuration section appears:
 
-| Setting      | Description                                      | Values                                                |
-| ------------ | ------------------------------------------------ | ----------------------------------------------------- |
-| **Type**     | Representation of the datetime value             | `iso-string`, `unix-epoch`, `unix-epoch-ms`, `string` |
-| **Timezone** | Timezone for formatting (only for `string` type) | e.g. `UTC`, `Europe/Paris`                            |
-| **Format**   | Custom format pattern (only for `string` type)   | e.g. `yyyy-MM-dd HH:mm:ss`                            |
+| Setting      | Description                                       | Example Value                                         |
+| ------------ | ------------------------------------------------- | ----------------------------------------------------- |
+| **Type**     | Representation of the datetime value.             | `iso-string`, `unix-epoch`, `unix-epoch-ms`, `string` |
+| **Timezone** | Timezone for formatting (only for `string` type). | `UTC`, `Europe/Paris`                                 |
+| **Format**   | Custom format pattern (only for `string` type).   | `yyyy-MM-dd HH:mm:ss`                                 |
 
 ### Headers
 
 Add custom HTTP headers to the request. Like query parameters, header values support `@StartTime` and `@EndTime`
 substitution with the same date/time format configuration.
 
-| Setting   | Description                                                       |
-| --------- | ----------------------------------------------------------------- |
-| **Key**   | Header name (e.g. `X-Custom-Header`)                              |
-| **Value** | Header value; may contain `@StartTime` or `@EndTime` placeholders |
+| Setting   | Description                                                        | Example Value     |
+| --------- | ------------------------------------------------------------------ | ----------------- |
+| **Key**   | Header name.                                                       | `X-Custom-Header` |
+| **Value** | Header value; may contain `@StartTime` or `@EndTime` placeholders. | `Bearer my_token` |
 
 :::info Content-Type
 When a body is configured and no `Content-Type` header is explicitly defined, OIBus automatically adds
@@ -114,10 +123,10 @@ When a body is configured and no `Content-Type` header is explicitly defined, OI
 A JSON body can be sent for `POST`, `PUT`, `PATCH`, and `DELETE` requests. The body supports `@StartTime` and
 `@EndTime` placeholders to inject the query time window into the payload.
 
-| Setting         | Description                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------- |
-| **Content**     | JSON body of the request; may contain `@StartTime` or `@EndTime` placeholders                     |
-| **Date format** | Shown when the body contains `@StartTime` or `@EndTime` — configures how the instant is formatted |
+| Setting         | Description                                                                                        | Example Value            |
+| --------------- | -------------------------------------------------------------------------------------------------- | ------------------------ |
+| **Content**     | JSON body of the request; may contain `@StartTime` or `@EndTime` placeholders.                     | `{"from": "@StartTime"}` |
+| **Date format** | Shown when the body contains `@StartTime` or `@EndTime` — configures how the instant is formatted. | `iso-string`             |
 
 The date/time format configuration for the body follows the same settings as [query parameters](#datetime-format-for-query-parameters).
 
@@ -125,10 +134,9 @@ The date/time format configuration for the body follows the same settings as [qu
 
 The `Return type` setting controls how OIBus interprets the server's response.
 
-| Return type | Behaviour                                                                                                                                                      |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **body**    | The response is read as text. OIBus auto-detects the format from the `Content-Type` header: JSON responses are parsed as JSON, XML responses are kept as text. |
-| **file**    | The response body is saved as a binary file. If the server sends a `Content-Disposition: attachment; filename=...` header, that filename is used.              |
+| Setting     | Description                                                                                                                                                                                            | Example Value  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| Return type | `body`: response is read as text; OIBus auto-detects JSON or XML from the `Content-Type` header. `file`: response body is saved as a binary file using the `Content-Disposition` filename if provided. | `body`, `file` |
 
 :::info Filename in file mode
 When the server does not provide a `Content-Disposition` header, the file is saved with an auto-generated name
@@ -140,20 +148,20 @@ based on the connector name, item name, and a random identifier.
 When the return type is `body` and the response is JSON, OIBus can automatically track the most recent timestamp
 found in the response. This advances the `@StartTime` of the next query to avoid re-fetching already seen data.
 
-| Setting           | Description                                                                             |
-| ----------------- | --------------------------------------------------------------------------------------- |
-| **Track instant** | Enable extraction of the maximum timestamp from the JSON response                       |
-| **JSONPath**      | Expression used to locate timestamp values inside the JSON (e.g. `$.data[*].timestamp`) |
-| **Date format**   | How OIBus should interpret the extracted values (type, timezone, format, locale)        |
+| Setting           | Description                                                                                 | Example Value         |
+| ----------------- | ------------------------------------------------------------------------------------------- | --------------------- |
+| **Track instant** | Enable extraction of the maximum timestamp from the JSON response.                          | Enabled/Disabled      |
+| **JSONPath**      | Expression used to locate timestamp values inside the JSON response.                        | `$.data[*].timestamp` |
+| **Date format**   | How OIBus should interpret the extracted timestamp values (type, timezone, format, locale). | `iso-string`          |
 
 #### Tracking Instant Date/Time Format
 
-| Setting      | Description                                                | Values                                                |
-| ------------ | ---------------------------------------------------------- | ----------------------------------------------------- |
-| **Type**     | Representation of the datetime in the JSON field           | `iso-string`, `unix-epoch`, `unix-epoch-ms`, `string` |
-| **Timezone** | Timezone for parsing (only for `string` type)              | e.g. `UTC`, `Europe/Paris`                            |
-| **Format**   | Custom format pattern for parsing (only for `string` type) | e.g. `yyyy-MM-dd HH:mm:ss`                            |
-| **Locale**   | Locale for month/day name parsing (only for `string` type) | e.g. `en-En`                                          |
+| Setting      | Description                                                 | Example Value                                         |
+| ------------ | ----------------------------------------------------------- | ----------------------------------------------------- |
+| **Type**     | Representation of the datetime in the JSON field.           | `iso-string`, `unix-epoch`, `unix-epoch-ms`, `string` |
+| **Timezone** | Timezone for parsing (only for `string` type).              | `UTC`, `Europe/Paris`                                 |
+| **Format**   | Custom format pattern for parsing (only for `string` type). | `yyyy-MM-dd HH:mm:ss`                                 |
+| **Locale**   | Locale for month/day name parsing (only for `string` type). | `en-En`                                               |
 
 :::info JSONPath
 OIBus uses the [JSONPath Plus](https://github.com/JSONPath-Plus/JSONPath) library. When multiple values match the
@@ -164,10 +172,10 @@ JSONPath expression, the maximum timestamp among all of them is used as the new 
 
 The following variables can be used in query parameter values, header values, and request bodies:
 
-| Variable     | Description                                                                               |
-| ------------ | ----------------------------------------------------------------------------------------- |
-| `@StartTime` | Start of the current query interval. Updated to the tracked max instant after each query. |
-| `@EndTime`   | End of the current query interval (capped to the current time or the sub-interval end).   |
+| Setting      | Description                                                                               | Example Value              |
+| ------------ | ----------------------------------------------------------------------------------------- | -------------------------- |
+| `@StartTime` | Start of the current query interval. Updated to the tracked max instant after each query. | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | End of the current query interval (capped to the current time or the sub-interval end).   | `2024-01-15T11:00:00.000Z` |
 
 :::info Query Splitting
 When a large time range is requested, OIBus splits it into smaller sub-intervals based on the **Max read interval**

@@ -1,0 +1,78 @@
+---
+sidebar_position: 5
+---
+
+import MqttWildcardTester from '../../../src/components/MqttWildcardTester/index';
+
+# MQTT
+
+MQTT (Message Queuing Telemetry Transport) is a lightweight protocol designed for real-time messaging using a
+publish/subscribe model. OIBus acts as an MQTT client using the [MQTT.js](https://github.com/mqttjs/MQTT.js) library to
+interact with MQTT brokers.
+
+## Specific Settings
+
+### Connection
+
+| Setting             | Description                                                                         | Example Value                    |
+| ------------------- | ----------------------------------------------------------------------------------- | -------------------------------- |
+| URL                 | Address of the MQTT broker (format: `mqtt://address:port`). Default port is `1883`. | `mqtt://broker.example.com:1883` |
+| Reconnect period    | Time (in milliseconds) to wait before reconnection attempts                         | `5000`                           |
+| Connect timeout     | Maximum time (in milliseconds) to wait for connection establishment                 | `30000`                          |
+| Reject unauthorized | Reject connections with unverified certificates (e.g., self-signed)                 | Enabled/Disabled                 |
+
+### Quality of Service
+
+| Setting        | Description                                                                                                                                            | Example Value    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------- |
+| QoS            | Quality of Service level: `0` (at most once), `1` (at least once, possible duplicates), `2` (exactly once).                                            | `0`, `1`, `2`    |
+| **Persistent** | When enabled, the broker retains messages and queued deliveries across reconnections (requires QoS 1 or 2). When disabled, a clean session is started. | Enabled/Disabled |
+
+### Authentication
+
+#### No Authentication
+
+| Setting | Description                               | Example Value |
+| ------- | ----------------------------------------- | ------------- |
+| (None)  | No authentication required for connection | -             |
+
+#### Username / Password
+
+| Setting  | Description                        | Example Value |
+| -------- | ---------------------------------- | ------------- |
+| Username | Username for broker authentication | `mqtt_user`   |
+| Password | Password for broker authentication | `••••••••`    |
+
+#### Certificate Authentication
+
+| Setting        | Description                                                                | Example Value       |
+| -------------- | -------------------------------------------------------------------------- | ------------------- |
+| Cert file path | Path to the signed certificate file                                        | `/path/to/cert.pem` |
+| Key file path  | Path to the private key file                                               | `/path/to/key.pem`  |
+| CA file path   | Path to the certificate authority file. Leave empty for self-signed certs. | `/path/to/ca.pem`   |
+
+### Data Throttling
+
+| Setting                         | Description                                                                    | Example Value |
+| ------------------------------- | ------------------------------------------------------------------------------ | ------------- |
+| Number of messages before flush | Number of messages to accumulate before flushing to North caches               | `1000`        |
+| Delay between flush             | Time delay (in milliseconds) between automatic flushes of accumulated messages | `1000`        |
+
+## Item Settings
+
+Each item subscribes to one MQTT topic. MQTT uses a hierarchical topic structure with wildcard support:
+
+| Setting   | Description                                          | Example Value            |
+| --------- | ---------------------------------------------------- | ------------------------ |
+| **Topic** | The MQTT topic to subscribe to. Wildcards supported. | `sensors/#`, `plant/+/T` |
+
+### Topic Wildcards
+
+| Setting | Description           | Example Value           |
+| ------- | --------------------- | ----------------------- |
+| `#`     | Multi-level wildcard  | `sensors/#`             |
+| `+`     | Single-level wildcard | `sensors/+/temperature` |
+
+Use the tester below to see which topics a given subscription filter matches:
+
+<MqttWildcardTester />

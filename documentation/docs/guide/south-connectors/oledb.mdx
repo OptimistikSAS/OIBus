@@ -3,7 +3,6 @@ sidebar_position: 9
 ---
 
 import ItemSettings from './_south-sql-item-settings.mdx';
-import ThrottlingSettings from './_throttling-settings.mdx';
 
 # OLEDB
 
@@ -19,13 +18,24 @@ Connect to OLEDB data sources through a remote [OIBus Agent](../oibus-agent/oled
 
 ## Specific Settings
 
-| Setting            | Description                                         | Default Value | Notes                              |
-| ------------------ | --------------------------------------------------- | ------------- | ---------------------------------- |
-| Remote agent URL   | Agent endpoint (e.g., `http://host:2224`)           | -             | Required for remote connections    |
-| Connection timeout | Maximum time (ms) to establish connection           | 15000         | Recommended: 5000-30000ms          |
-| Retry interval     | Time (ms) to wait before retrying connection        | 10000         |                                    |
-| Request timeout    | Maximum execution time (ms) for individual queries  | 15000         | Adjust for large historian queries |
-| Connection string  | OLEDB connection string in provider-specific format | -             | See examples below                 |
+| Setting            | Description                                                                                             | Example Value                               |
+| ------------------ | ------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Remote agent URL   | Agent endpoint URL. Required for all connections.                                                       | `http://192.168.1.100:2224`                 |
+| Connection timeout | Maximum time in milliseconds to establish connection. Default: `15000`.                                 | `15000`                                     |
+| Retry interval     | Time in milliseconds to wait before retrying the connection. Default: `10000`.                          | `10000`                                     |
+| Request timeout    | Maximum execution time in milliseconds for individual queries. Default: `15000`.                        | `15000`                                     |
+| Connection string  | OLEDB connection string in provider-specific format.                                                    | `Provider=OraOLEDB.Oracle;Data Source=mydb` |
+| Password           | Authentication password (stored securely). Added as `Password=<password>` if not in connection string. | `••••••••`                                  |
 
-<ThrottlingSettings />
 <ItemSettings />
+
+:::note OLEDB datetime field types
+The following **Type** values are available for datetime field configuration:
+
+| Type            | Description                                        |
+| --------------- | -------------------------------------------------- |
+| String          | String representation parsed with a custom format  |
+| ISO String      | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Unix timestamp in seconds                          |
+| UNIX epoch (ms) | Unix timestamp in milliseconds                     |
+:::
