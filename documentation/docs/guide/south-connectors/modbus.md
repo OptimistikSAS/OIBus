@@ -1,3 +1,7 @@
+---
+sidebar_position: 4
+---
+
 # Modbus
 
 Modbus is a communication protocol utilized in PLC networks. Originally developed for serial interfaces like RS232,
