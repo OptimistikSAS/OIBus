@@ -10,30 +10,31 @@ Securely transfer and read files from remote FTP servers.
 
 ## Specific Settings
 
-| Setting              | Description                                                                                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Host**             | IP address or hostname of the FTP server.                                                                                                          |
-| **Port**             | Port for the connection (default: **21**).                                                                                                         |
-| **Compress file**    | Enable gzip compression before North processing                                                                                                    |
-| **Max files**        | Maximum number of files to retrieve per scan. Set to **0** for no limit. When reached, remaining files are retrieved in the next scan.             |
-| **Max size (MB)**    | Maximum total size (in MB) of files to retrieve per scan. Set to **0** for no limit. When reached, remaining files are retrieved in the next scan. |
-| **Scan sub-folders** | If enabled, recursively scans sub-folders within the remote folder.                                                                                |
+| Setting           | Description                                      | Example Value    |
+| ----------------- | ------------------------------------------------ | ---------------- |
+| **Host**          | IP address or hostname of the FTP server.        | `192.168.1.100`  |
+| **Port**          | Port for the connection. Default: `21`.          | `21`             |
+| **Compress file** | Enable gzip compression before North processing. | Enabled/Disabled |
 
-### Authentication Methods
+### Authentication
 
-| Method                | Description                                        | Required Parameters |
-| --------------------- | -------------------------------------------------- | ------------------- |
-| **None**              | No authentication (not recommended for production) | None                |
-| **Username/Password** | Standard username/password authentication.         | Username, Password  |
+| Setting               | Description                                                             | Example Value               |
+| --------------------- | ----------------------------------------------------------------------- | --------------------------- |
+| Authentication method | Authentication type: `None` (no authentication) or `Username/Password`. | `None`, `Username/Password` |
+| Username              | Username for FTP server authentication (when using Username/Password).  | `ftp_user`                  |
+| Password              | Password for FTP server authentication (when using Username/Password).  | `••••••••`                  |
 
 ## File Retrieval Settings
 
-| Setting               | Description                                                                                                                                                             | Example Values       |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| Remote folder         | Source directory path on SFTP server                                                                                                                                    | `/incoming/data`     |
-| RegExp                | File pattern filter (regular expression)                                                                                                                                | `.*\.txt`, `.*\.csv` |
-| Minimum age           | Minimum age (in ms) for files to be retrieved. Avoids corrupted files still being written. Default: `1000` ms.                                                          | `1000`               |
-| Preserve file         | If enabled, files are **not deleted** after retrieval. Useful if other applications need access. OIBus tracks modification time to avoid re-retrieving unchanged files. | Enabled/Disabled     |
-| Ignored modified date | (_Requires **Preserve file**_) Forces retrieval even if the file's modification time hasn't changed. Useful for ensuring files are always processed.                    | Enabled/Disabled     |
+| Setting               | Description                                                                                                                                                             | Example Value         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| Remote folder         | Source directory path on the FTP server.                                                                                                                                | `/incoming/data`      |
+| RegExp                | File pattern filter (regular expression).                                                                                                                               | `.*\.txt`, `.*\.csv`  |
+| Minimum age           | Minimum age (in ms) for files to be retrieved. Avoids corrupted files still being written. Default: `1000` ms.                                                          | `1000`                |
+| Preserve file         | If enabled, files are **not deleted** after retrieval. Useful if other applications need access. OIBus tracks modification time to avoid re-retrieving unchanged files. | Enabled/Disabled      |
+| Ignored modified date | (_Requires **Preserve file**_) Forces retrieval even if the file's modification time hasn't changed. Useful for ensuring files are always processed.                    | Enabled/Disabled      |
+| Max files per scan    | Maximum number of files to retrieve per scan. Set to **0** for no limit. Remaining files are retrieved in the next scan.                                                | `0` (no limit), `100` |
+| Max size per scan     | Maximum total size (in MB) of files per scan. Set to **0** for no limit. Remaining files are retrieved in the next scan.                                                | `0` (no limit), `500` |
+| Scan sub-folders      | If enabled, recursively scans sub-folders within the remote folder.                                                                                                     | Enabled/Disabled      |
 
 <RegexTester />

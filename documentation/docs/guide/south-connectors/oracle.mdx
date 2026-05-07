@@ -3,7 +3,6 @@ sidebar_position: 12
 ---
 
 import ItemSettings from './_south-sql-item-settings.mdx';
-import ThrottlingSettings from './_throttling-settings.mdx';
 
 # Oracle Database™
 
@@ -21,16 +20,16 @@ Connect to and query Oracle Database™ using OIBus with support for both thin a
 
 ## Specific Settings
 
-| Setting               | Description                                                          | Default Value | Notes                                |
-| --------------------- | -------------------------------------------------------------------- | ------------- | ------------------------------------ |
-| Thick mode            | Uses Oracle Client Library for database access                       | Disabled      | Requires Instant Client installation |
-| Oracle Client Library | Path to Oracle Instant Client (e.g., `C:\oracle\instantclient_23_5`) | -             | Required for thick mode              |
-| Host                  | Address of the Oracle server                                         | -             |                                      |
-| Port                  | Server port                                                          | 1521          | Standard Oracle port                 |
-| Connection timeout    | Maximum time (ms) to establish connection                            | 15000         | Recommended: 5000-30000ms            |
-| Database              | Name/SID of the target database                                      | -             |                                      |
-| Username              | Authentication username                                              | -             |                                      |
-| Password              | Authentication password                                              | -             |                                      |
+| Setting               | Description                                                                         | Example Value                    |
+| --------------------- | ----------------------------------------------------------------------------------- | -------------------------------- |
+| Thick mode            | Use Oracle Client Library for database access. Requires Instant Client installation. | Enabled/Disabled                |
+| Oracle Client Library | Path to Oracle Instant Client. Required when thick mode is enabled.                 | `C:\oracle\instantclient_23_5`   |
+| Host                  | IP address or hostname of the Oracle server.                                        | `192.168.1.10`                   |
+| Port                  | Server port. Default: `1521`.                                                       | `1521`                           |
+| Connection timeout    | Maximum time in milliseconds to establish connection. Default: `15000`.             | `15000`                          |
+| Database              | Name or SID of the target database.                                                 | `ORCL`                           |
+| Username              | Authentication username.                                                            | `db_user`                        |
+| Password              | Authentication password.                                                            | `••••••••`                       |
 
 ### Connection Modes
 
@@ -54,5 +53,21 @@ Connect to and query Oracle Database™ using OIBus with support for both thin a
 
 :::
 
-<ThrottlingSettings />
 <ItemSettings />
+
+:::note Oracle datetime field types
+The following **Type** values are available for datetime field configuration:
+
+| Type            | Description                                        |
+| --------------- | -------------------------------------------------- |
+| String          | String representation parsed with a custom format  |
+| DateTime        | Oracle `DATE` or `TIMESTAMP` column                |
+| ISO String      | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Unix timestamp in seconds                          |
+| UNIX epoch (ms) | Unix timestamp in milliseconds                     |
+:::
+
+:::note Oracle item request timeout
+Each Oracle item has an additional **Request timeout** field (milliseconds) that sets the maximum execution
+time for that specific query.
+:::

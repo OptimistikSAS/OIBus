@@ -14,9 +14,6 @@ The **Folder Scanner** South connector periodically scans a specified input fold
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
 | Input folder       | Path of the folder to scan. Can be **absolute** or **relative** (relative to the **Data folder** - see the _About_ section). Supports remote paths (e.g., `/remote.server/data` or `Z:\Remote disk\DATA`). **Case-sensitive**. | `/data/input` or `Z:\Files` |
 | Enable compression | If enabled, files are compressed using **gzip** before being sent to North caches.                                                                                                                                             | Enabled/Disabled            |
-| Max files per scan | Maximum number of files to retrieve per scan. Set to **0** for no limit. When reached, remaining files are retrieved in the next scan.                                                                                         | `0` (no limit), `100`       |
-| Max size per scan  | Maximum total size (in MB) of files to retrieve per scan. Set to **0** for no limit. When reached, remaining files are retrieved in the next scan.                                                                             | `0` (no limit), `500`       |
-| Scan sub-folders   | If enabled, recursively scans sub-folders within the input folder.                                                                                                                                                             | Enabled/Disabled            |
 
 :::caution User Access Requirements
 
@@ -32,5 +29,8 @@ The user running OIBus (terminal user or service account) **must have read acces
 | Minimum age           | Minimum age (in ms) for files to be retrieved. Avoids corrupted files still being written. Default: `1000` ms.                                                          | `1000`                                  |
 | Preserve file         | If enabled, files are **not deleted** after retrieval. Useful if other applications need access. OIBus tracks modification time to avoid re-retrieving unchanged files. | Enabled/Disabled                        |
 | Ignored modified date | (_Requires **Preserve file**_) Forces retrieval even if the file's modification time hasn't changed. Useful for ensuring files are always processed.                    | Enabled/Disabled                        |
+| Max files per scan    | Maximum number of files to retrieve per scan. Set to **0** for no limit. Remaining files are retrieved in the next scan.                                                | `0` (no limit), `100`                   |
+| Max size per scan     | Maximum total size (in MB) of files per scan. Set to **0** for no limit. Remaining files are retrieved in the next scan.                                                | `0` (no limit), `500`                   |
+| Scan sub-folders      | If enabled, recursively scans sub-folders within the input folder.                                                                                                      | Enabled/Disabled                        |
 
 <RegexTester />

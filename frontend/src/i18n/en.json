@@ -845,8 +845,8 @@
               "none": "None",
               "basic128": "Basic128",
               "basic192": "Basic192",
-              "basic256": "DEPRECATED - DO NOT USE - Basic256",
-              "basic128-rsa15": "DEPRECATED - DO NOT USE - Basic128-RSA15",
+              "basic256": "Basic256 (deprecated)",
+              "basic128-rsa15": "Basic128-RSA15 (deprecated)",
               "basic192-rsa15": "Basic192-RSA15",
               "basic256-rsa15": "Basic256-RSA15",
               "basic256-sha256": "Basic256-SHA256",
@@ -894,10 +894,10 @@
               "body": "Body"
             },
             "test": {
-              "title": "Test configuration",
-              "endpoint": "Test endpoint",
+              "title": "Connection Test",
+              "endpoint": "Test Endpoint",
               "method": {
-                "title": "Test method",
+                "title": "Method",
                 "GET": "GET",
                 "POST": "POST",
                 "PUT": "PUT"
@@ -913,7 +913,7 @@
             },
             "timeout": "Request timeout",
             "method": {
-              "title": "HTTP method",
+              "title": "Method",
               "GET": "GET",
               "POST": "POST",
               "PUT": "PUT",
@@ -1611,8 +1611,8 @@
               "none": "None",
               "basic128": "Basic128",
               "basic192": "Basic192",
-              "basic256": "Basic256",
-              "basic128-rsa15": "Basic128-RSA15",
+              "basic256": "Basic256 (deprecated)",
+              "basic128-rsa15": "Basic128-RSA15 (deprecated)",
               "basic192-rsa15": "Basic192-RSA15",
               "basic256-rsa15": "Basic256-RSA15",
               "basic256-sha256": "Basic256-SHA256",

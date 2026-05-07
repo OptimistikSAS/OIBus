@@ -3,7 +3,6 @@ sidebar_position: 17
 ---
 
 import ItemSettings from './_south-sql-item-settings.mdx';
-import ThrottlingSettings from './_throttling-settings.mdx';
 
 # SQLite™
 
@@ -21,5 +20,15 @@ Connect to and query SQLite™ database files with OIBus.
 - Avoid concurrent writes from multiple processes
 - Use WAL mode for better concurrency (PRAGMA journal_mode=WAL)
 
-<ThrottlingSettings />
 <ItemSettings />
+
+:::note SQLite datetime field types
+The following **Type** values are available for datetime field configuration:
+
+| Type            | Description                                        |
+| --------------- | -------------------------------------------------- |
+| String          | String representation parsed with a custom format  |
+| ISO String      | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`) |
+| UNIX epoch (s)  | Unix timestamp in seconds                          |
+| UNIX epoch (ms) | Unix timestamp in milliseconds                     |
+:::

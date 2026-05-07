@@ -21,12 +21,12 @@ OPC Unified Architecture (OPC UA) protocol for secure industrial data access in 
 
 ### Connection Configuration
 
-| Setting                | Description                                                 |
-| ---------------------- | ----------------------------------------------------------- |
-| **Endpoint URL**       | URL of the OPC UA server (e.g., `opc.tcp://localhost:4840`) |
-| **Keep session alive** | Keep session alive between messages                         |
-| **Retry Interval**     | Delay between retries (in milliseconds)                     |
-| **Read timeout**       | Maximum execution time (ms) for requests                    |
+| Setting                | Description                                          | Example Value              |
+| ---------------------- | ---------------------------------------------------- | -------------------------- |
+| **Endpoint URL**       | URL of the OPC UA server.                            | `opc.tcp://localhost:4840` |
+| **Keep session alive** | Keep the session alive between messages.             | Enabled/Disabled           |
+| **Retry Interval**     | Delay in milliseconds between retries.               | `5000`                     |
+| **Read timeout**       | Maximum execution time in milliseconds for requests. | `15000`                    |
 
 ### Data Throttling
 
@@ -37,35 +37,89 @@ OPC Unified Architecture (OPC UA) protocol for secure industrial data access in 
 
 ### Security Settings
 
-| Setting             | Description                                                              |
-| ------------------- | ------------------------------------------------------------------------ |
-| **Security Mode**   | Security mode for the connection (None, Sign, SignAndEncrypt)            |
-| **Security Policy** | Security policy for the connection (None, Basic128Rsa15, Basic256, etc.) |
+| Setting             | Description                                                                                                                                                                   | Example Value                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Security Mode**   | Security mode for the connection.                                                                                                                                             | `None`, `Sign`, `Sign and encrypt`        |
+| **Security Policy** | Security policy for the connection. See note below for full list.                                                                                                             | `None`, `Basic256-SHA256`, `AES128-SHA256-RSA-OAEP` |
+
+:::note Security Policy values
+
+| Value                   | Description                                                                                    |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| None                    | No security. Data is transmitted unencrypted with no message authentication.                   |
+| Basic128                | AES-128 encryption, HMAC-SHA1 signing, RSA-1024 key exchange.                                 |
+| Basic192                | AES-192 encryption, HMAC-SHA1 signing, RSA-1024 key exchange.                                 |
+| Basic256                | ⚠️ **Deprecated.** AES-256 encryption, HMAC-SHA1 signing. Avoid — SHA-1 is cryptographically weak. |
+| Basic128-RSA15          | ⚠️ **Deprecated.** AES-128 encryption, HMAC-SHA1 signing, RSA PKCS#1 v1.5 padding. Avoid — both SHA-1 and RSA-1.5 are weak. |
+| Basic192-RSA15          | AES-192 encryption, HMAC-SHA1 signing, RSA PKCS#1 v1.5 padding.                               |
+| Basic256-RSA15          | AES-256 encryption, HMAC-SHA1 signing, RSA PKCS#1 v1.5 padding.                               |
+| Basic256-SHA256         | AES-256 encryption, HMAC-SHA256 signing, RSA-OAEP padding. **Recommended** for most deployments. |
+| AES128-SHA256-RSA-OAEP  | AES-128 encryption, SHA-256 signing, RSA-OAEP padding. Modern standard (OPC UA Part 2 rev. 1.05). |
+| PubSub AES-128-CTR      | AES-128-CTR symmetric encryption for OPC UA Pub/Sub mode.                                     |
+| PubSub AES-256-CTR      | AES-256-CTR symmetric encryption for OPC UA Pub/Sub mode.                                     |
+
+:::
 
 ### Authentication Methods
 
-| Method                | Description                                | Required Parameters             |
-| --------------------- | ------------------------------------------ | ------------------------------- |
-| **Anonymous**         | Connect without authentication.            | None                            |
-| **Username/Password** | Standard username/password authentication. | Username, Password              |
-| **Certificate**       | Authentication using client certificates.  | Client Certificate, Private Key |
+| Setting              | Description                                                           | Example Value                             |
+| -------------------- | --------------------------------------------------------------------- | ----------------------------------------- |
+| Authentication       | Authentication method for the OPC UA server connection.               | `Anonymous`, `Username/Password`, `Certificate` |
+| Username             | Username for Username/Password authentication.                        | `opc_user`                                |
+| Password             | Password for Username/Password authentication.                        | `••••••••`                                |
+| Client certificate   | Client certificate file for Certificate authentication.               | `/path/to/cert.pem`                       |
+| Private key          | Private key file for Certificate authentication.                      | `/path/to/key.pem`                        |
+
+## Group Settings
+
+Items are organised into **groups**. Each group defines a shared schedule and, for HA mode, the default
+throttling parameters for all items it contains.
+
+| Setting       | Description                                                             | Example Value |
+| ------------- | ----------------------------------------------------------------------- | ------------- |
+| **Name**      | Unique label for the group within this connector.                       | `Group A`     |
+| **Scan mode** | Collection schedule applied to every item in the group.                 | `Every 1 min` |
 
 <ThrottlingSettings />
 
+:::tip Overriding throttling per item
+Each item can override the group throttling defaults by disabling the **Sync with group** toggle in the item
+edit form.
+:::
+
 ## Item Settings
 
-| Setting    | Description                   | HA Mode Options                   | DA Mode Options |
-| ---------- | ----------------------------- | --------------------------------- | --------------- |
-| Node ID    | Data path in server namespace | `ns=3;i=1001` or `ns=3;s=Counter` | Same as HA      |
-| Mode       | Data access method            | HA or DA                          | -               |
-| Aggregate  | Value aggregation (HA only)   | `Raw`, `Average`, `Min`, `Max`    | N/A             |
-| Resampling | Interval resampling (HA only) | `None`, `1s`, `5m`, `1h`          | N/A             |
+| Setting          | Description                                                                                                              | Example Value                                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| Node ID          | Path to the data point in the OPC UA server namespace.                                                                   | `ns=3;i=1001`, `ns=3;s=Counter`                 |
+| Mode             | Data access method: `ha` (Historical Access) or `da` (Data Access).                                                     | `ha`, `da`                                      |
+| Aggregate        | Value aggregation method (HA mode only).                                                                                 | `Raw`, `Average`, `Minimum`, `Maximum`, `Count` |
+| Resampling       | Interval resampling (HA mode only).                                                                                      | `None`, `1 second`, `1 hour`, `1 day`           |
+| Timestamp origin | Timestamp source: `OIBus` (query time), `Point` (server-reported timestamp), `Server` (server current time).            | `OIBus`, `Point`, `Server`                      |
 
 :::caution Server Compatibility
 
 1. Verify server supports selected mode (HA/DA)
 2. Not all servers support all aggregation/resampling options
 3. Recommended: Use `Raw` aggregation and `None` resampling
+
+:::
+
+:::note Aggregate values (HA mode)
+
+| Value   | Description                   |
+| ------- | ----------------------------- |
+| Raw     | All raw values in the interval |
+| Average | Arithmetic mean               |
+| Minimum | Minimum value in the interval |
+| Maximum | Maximum value in the interval |
+| Count   | Number of data points         |
+
+:::
+
+:::note Resampling values
+
+`None` · `1 second` · `10 seconds` · `30 seconds` · `1 minute` · `1 hour` · `1 day`
 
 :::
 

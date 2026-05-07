@@ -17,27 +17,42 @@ Connect to OSIsoft PI System™ for industrial data collection and visualization
 
 ## Connection Settings
 
-| Setting          | Description                                  | Default Value | Notes                        |
-| ---------------- | -------------------------------------------- | ------------- | ---------------------------- |
-| Remote agent URL | Agent endpoint (e.g., `http://host:2224`)    | -             | Required for all connections |
-| Retry interval   | Time (ms) to wait before retrying connection | 10000         | Recommended: 5000-15000ms    |
+| Setting          | Description                                                                    | Example Value               |
+| ---------------- | ------------------------------------------------------------------------------ | --------------------------- |
+| Remote agent URL | Agent endpoint URL. Required for all connections.                              | `http://192.168.1.100:2224` |
+| Retry interval   | Time in milliseconds to wait before retrying the connection. Default: `10000`. | `10000`                     |
+
+## Group Settings
+
+Items are organised into **groups**. Each group defines a shared schedule and the default throttling
+parameters for historical data retrieval.
+
+| Setting       | Description                                                             | Example Value |
+| ------------- | ----------------------------------------------------------------------- | ------------- |
+| **Name**      | Unique label for the group within this connector.                       | `Group A`     |
+| **Scan mode** | Collection schedule applied to every item in the group.                 | `Every 1 min` |
 
 <ThrottlingSettings />
+
+:::tip Overriding throttling per item
+Each item can override the group throttling defaults by disabling the **Sync with group** toggle in the item
+edit form.
+:::
 
 ## Item Configuration
 
 ### Point Access Methods
 
-| Setting     | Description                                                                                                                                        | Example Value             |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| Type        | Access method: `pointId` (single point) or `pointQuery` (multiple points)                                                                          | `pointId` or `pointQuery` |
-| Point ID    | Fully qualified point ID (without server name)                                                                                                     | `\\CDT158\SINUSOID`       |
-| Point Query | Query selector for multiple points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)) | `Name:='SINUSOID'`        |
+| Setting     | Description                                                                                                                                        | Example Value               |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| Type        | Access method: `PI point` (single point by ID) or `PI query` (multiple points by query expression)                                                 | `PI point` or `PI query`    |
+| Point ID    | Fully qualified point ID (without server name). Used when Type is `PI point`.                                                                      | `\\CDT158\SINUSOID`         |
+| Point Query | Query selector for multiple points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Used when Type is `PI query`. | `Name:='SINUSOID'` |
 
 :::info Reference Names
 
-- For `pointId`: Item name serves as reference in JSON payloads
-- For `pointQuery`: PI name is used as reference
+- For `PI point`: Item name serves as reference in JSON payloads
+- For `PI query`: PI name is used as reference
   :::
 
 ## OSIsoft PI SDK Configuration
@@ -85,22 +100,22 @@ View system logs in PI System Management Tools:
 
 ### Configuration Screenshots
 
-1. **SDK Installation**:
-   ![PI SDK installation](../../../static/img/guide/south/osisoft-pi/0-installation.png)
-   _Specify default data server during installation_
+**1. SDK Installation** — Specify default data server during installation
 
-2. **Trust Configuration**:
-   ![PI SDK add trust](../../../static/img/guide/south/osisoft-pi/1-add-trust.png)
-   _Configure trust for agent machine_
+![PI SDK installation](../../../static/img/guide/south/osisoft-pi/0-installation.png)
 
-3. **Trust List**:
-   ![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/2-trust-list.png)
-   _Verified trust configuration_
+**2. Trust Configuration** — Configure trust for agent machine
 
-4. **Mapping Creation**:
-   ![PI SDK add mapping](../../../static/img/guide/south/osisoft-pi/3-add-mapping.png)
-   _Map agent user to PI identity_
+![PI SDK add trust](../../../static/img/guide/south/osisoft-pi/1-add-trust.png)
 
-5. **Mapping List**:
-   ![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/4-mapping-list.png)
-   _Verified user mapping_
+**3. Trust List** — Verified trust configuration
+
+![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/2-trust-list.png)
+
+**4. Mapping Creation** — Map agent user to PI identity
+
+![PI SDK add mapping](../../../static/img/guide/south/osisoft-pi/3-add-mapping.png)
+
+**5. Mapping List** — Verified user mapping
+
+![PI SDK list trust](../../../static/img/guide/south/osisoft-pi/4-mapping-list.png)

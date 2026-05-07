@@ -1,19 +1,36 @@
 import SerializationSettings from './_south-serialization-settings.mdx';
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+## Group Settings
+
+Items can be organised into groups. Each group defines a shared collection schedule and default throttling
+settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
+provides common defaults that individual items can override.
+
+| Setting         | Description                                                                                       | Example Value    |
+| --------------- | ------------------------------------------------------------------------------------------------- | ---------------- |
+| **Name**        | Unique label for the group within this connector.                                                 | `Group A`        |
+| **Scan mode**   | Schedule used to collect all items in the group.                                                  | `Every 1 min`    |
+| **Throttling**  | Default throttling values (Max read interval, Read delay, Overlap) inherited by items in the group. | `3600, 200, 0` |
 
 ## Item Settings
 
-Each item in the South connector can be individually configured with specific query parameters and datetime handling. Multiple queries to the same database can be executed sequentially within a single connector, with results consolidated into output files for North connectors.
+Each item can be individually configured with its own query parameters and datetime handling.
+Items inherit their scan mode and throttling defaults from their group, but each setting can be
+overridden per item by disabling **Sync with group**.
 
+<ThrottlingSettings />
 ### Query Configuration
 
-The query field accepts standard SQL syntax with support for internal variables that enhance data retrieval resilience and performance optimization.
+The query field accepts standard SQL syntax with support for internal variables that enhance data retrieval
+resilience and performance optimization.
 
 #### Query Variables
 
-| Variable     | Description                                                                                         | Behavior                                       |
-| ------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| `@StartTime` | Initialized to first execution time, then updated to the most recent timestamp from reference field | Automatically advances based on retrieved data |
-| `@EndTime`   | Set to current time (`now()`) or sub-interval end when queries are split                            | Defines upper bound for data retrieval         |
+| Setting      | Description                                                                                         | Example Value              |
+| ------------ | --------------------------------------------------------------------------------------------------- | -------------------------- |
+| `@StartTime` | Initialized to first execution time, then updated to the most recent timestamp from reference field | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | Set to current time (`now()`) or sub-interval end when queries are split                            | `2024-01-15T11:00:00.000Z` |
 
 Example Query:
 
@@ -26,23 +43,24 @@ ORDER BY reading_time
 ```
 
 :::info Query Splitting
-For handling large datasets, queries can be automatically divided into smaller time-based chunks.
-See [Splitting Large Queries](#throttling-settings) for configuration details.
+For handling large datasets, queries can be automatically divided into smaller time-based chunks based on the
+**Max read interval** throttling setting.
 :::
 
 ### Datetime Field Configuration
 
-| Setting         | Description                                                               | Applies To                         | Example Value               |
-| --------------- | ------------------------------------------------------------------------- | ---------------------------------- | --------------------------- |
-| Field name      | Name of the datetime field in your SELECT statement                       | All types                          | `timestamp`, `reading_time` |
-| Reference field | Designates which field determines the `@StartTime` for subsequent queries | All types                          | `reading_time`              |
-| Type            | Data type of the datetime field in database                               | All fields                         | String, Date, DateTime      |
-| Timezone        | Timezone of the stored datetime (required for string/date types)          | String/Date/DateTime/SmallDateTime | `UTC`, `Europe/Paris`       |
-| Format          | Format pattern for string-based datetimes                                 | String type only                   | `yyyy-MM-dd HH:mm:ss`       |
-| Locale          | Locale for format elements (e.g., month names)                            | String type only                   | `en_US`, `fr_FR`            |
+| Setting             | Description                                                                                                    | Example Value               |
+| ------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| **Field name**      | Name of the datetime field in your SELECT statement                                                            | `timestamp`, `reading_time` |
+| **Reference field** | Designates which field determines the `@StartTime` for subsequent queries                                      | `reading_time`              |
+| **Type**            | Data type of the datetime field. Available values differ by connector — see the connector-specific note below. | `iso-string`, `unix-epoch`  |
+| **Timezone**        | Timezone of the stored datetime (for string/date types)                                                        | `UTC`, `Europe/Paris`       |
+| **Format**          | Format pattern for string-based datetimes                                                                      | `yyyy-MM-dd HH:mm:ss`       |
+| **Locale**          | Locale for format elements (e.g., month names)                                                                 | `en_US`, `fr_FR`            |
 
 :::warning Type Consistency Requirement
-When using datetime conversions in queries:
+When using datetime conversions in queries, keep the type consistent in both the SELECT list and the WHERE
+clause:
 
 Problematic approach (may cause unexpected behavior):
 
@@ -52,7 +70,7 @@ FROM table
 WHERE string_field > @StartTime
 ```
 
-Recommended approach (maintains type consistency):
+Recommended approach:
 
 ```sql
 SELECT value, CONVERT(datetime, string_field) AS timestamp
@@ -64,19 +82,20 @@ WHERE CONVERT(datetime, string_field) > @StartTime
 
 ### Data Flow Process
 
-1. OIBus executes each configured query sequentially
-2. Results are consolidated into structured output
-3. Max Instant is retrieved from the datetime field used as reference, converted to UTC format and stored to be used as the next `@StartTime`
-4. Final output is formatted according to [serialization settings](#csv-serialization)
-5. Processed data is sent to configured North connectors
+1. OIBus executes each configured query sequentially.
+2. Results are consolidated into structured output.
+3. The max instant is extracted from the reference datetime field, converted to UTC, and stored as the next
+   `@StartTime`.
+4. Final output is formatted according to [serialization settings](#csv-serialization).
+5. Processed data is sent to configured North connectors.
 
 :::tip Best Practices
 
-1. Choose reference fields with consistent, increasing values
-2. For string datetimes, ensure format matches between database storage and query variables
-3. Add indexes on datetime fields for better performance
-4. Use query splitting for large time ranges
+1. Choose reference fields with consistent, increasing values.
+2. For string datetimes, ensure the format matches between database storage and query variables.
+3. Add indexes on datetime fields for better query performance.
+4. Use the Max read interval to split large time ranges into manageable chunks.
 
 :::
 
-<SerializationSettings></SerializationSettings>
+<SerializationSettings />

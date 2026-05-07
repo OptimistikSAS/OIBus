@@ -4,118 +4,134 @@ sidebar_position: 0
 
 # Common Settings
 
-A **South connector** fetches data from a specific source (e.g., MQTT broker, MSSQL database) and forwards it to North
-caches. Each connector can manage multiple items, with the nature of each item depending on the connector type (e.g.,
-subscribing to a topic, querying a database).
+A **South connector** fetches data from a specific source (e.g., MQTT broker, MSSQL database) and forwards it to
+North caches. Each connector manages one or more **items** — the individual data points or queries to collect.
+Items can optionally be organised into **groups** to share a common schedule and throttling configuration.
 
 ## Adding a South Connector
 
 1. Navigate to the **South** page.
 2. Click the **+** button.
 3. Select a connector type and configure its settings.
-4. Monitor or adjust settings from the connector’s display page.
+4. Monitor or adjust settings from the connector's display page.
 
 ## General Settings
 
-| Setting         | Description                                                                   |
-| --------------- | ----------------------------------------------------------------------------- |
-| **Name**        | User-friendly label for easy identification.                                  |
-| **Description** | Optional context (connection details, access rights, unique characteristics). |
-| **Enabled**     | Enable/disable the connector from the list or its display page.               |
+| Setting         | Description                                                                   | Example Value         |
+| --------------- | ----------------------------------------------------------------------------- | --------------------- |
+| **Name**        | User-friendly label for easy identification.                                  | `My MSSQL Connector`  |
+| **Description** | Optional context (connection details, access rights, unique characteristics). | `Production database` |
+| **Enabled**     | Enable/disable the connector from the list or its display page.               | Enabled/Disabled      |
 
 ## Specific Section
 
-Refer to each connector’s documentation for type-specific settings.
+Refer to each connector's documentation for type-specific settings.
 
 ### Testing Connection
 
 Use the **Test settings** button to verify your connection configuration.
 
-## Item Section
+---
 
-Items retrieve data as files or JSON payloads. Each item requires:
+## Groups
 
-| Setting               | Description                                                                |
-| --------------------- | -------------------------------------------------------------------------- |
-| **Name**              | Unique reference for North target applications.                            |
-| **Scan mode**         | Determines when OIBus requests data (e.g., `subscription` for MQTT/OPCUA). |
-| **Specific settings** | Varies by connector type.                                                  |
+A group bundles items that share the same collection schedule. Each group has:
 
-### Item Actions
+| Setting        | Description                                                                                      | Example Value   |
+| -------------- | ------------------------------------------------------------------------------------------------ | --------------- |
+| **Name**       | Unique label for the group within this connector.                                                | `Group A`       |
+| **Scan mode**  | Schedule used to collect data for all items in the group.                                        | `Every 1 min`   |
+| **Throttling** | _(History-capable connectors only)_ Default throttling settings inherited by items in the group. | `3600, 200, 0`  |
 
-- **Disable/Enable**: Toggle from the item’s edit form or the connector’s display page.
-- **Test**: Verify item settings and results from the edit/create modal.
-  > **Tip**: Test connection settings before testing items.
+Items assigned to a group inherit its scan mode. For history-capable connectors, items also inherit
+the group's throttling settings by default (Max read interval, Read delay, Overlap), but each item can
+override them individually by disabling **Sync with group**.
 
-### Import/Export Items
+Items that are **not assigned to any group** define their own scan mode directly on the item.
 
-- **Export**: Download items as a CSV with columns: `name`, `enabled`, `scanMode`, and `settings_*`.
-- **Import**: Use a CSV template (export an existing list for reference).
-  > **Note**: The system validates for duplicates and correct formatting before adding items.
+:::note Execution model for SQL and REST connectors
+For SQL-based and REST connectors, items within the same group are still fetched **one at a time**
+sequentially. The group provides a shared schedule and default throttling settings, but each item
+runs its own independent query.
+:::
 
-## Max Instant and Scan Mode Management
+### Group Actions
 
-History-capable South connectors track the last `max_instant` in the `cache.db` database. Behavior varies by connector:
-
-- **Database connectors**: Always use `Max instant per item` internally.
-- **OPCUA** (HA mode), **OPC Classic** (HDA mode), **OSIsoft PI**: Choose between per-item or grouped `max_instant`.
-
-This section explains how OIBus manages the `max_instant` value when you modify the connector or item configuration. The
-behavior depends on whether **Max instant per item** is enabled or disabled, and the specific action you perform (e.g.,
-changing scan modes, removing items, or deleting the connector).
-
-### Max Instant Per Item: **Enabled**
-
-- **Change scan mode**: Removes the old cache entry for the item and creates a new entry using the previous `max_instant`.
-- **Remove item**: Deletes the cache entry for this specific item.
-- **Remove connector**: Deletes all linked items and their associated cache entries.
-
-### Max Instant Per Item: **Disabled**
-
-When disabled, **all items sharing the same scan mode use a single `max_instant`**. This is especially useful for connectors where multiple data points are stored or updated simultaneously (e.g., OPCUA), as it ensures consistent timestamp tracking across items.
-
-In this mode, the `max_instant` is tied to the **scan mode**, not individual items.
-
-- **Change scan mode**:
-  - If the new scan mode has **no existing entry**: Removes the old entry (if no other items use it) and creates a new entry with the previous `max_instant`.
-  - If new scan mode **already has an entry**: No new entry; uses existing `max_instant`.
-    > **Warning**: Changing scan modes may cause duplicate queries or data loss if `max_instant` differs
-    > significantly.
-- **Remove item**: Deletes cache entry only if no other items use the same scan mode.
-- **Remove connector**: Deletes all items and cache entries.
-
-### Transitioning Between Modes (Max Instant Per Item)
-
-- **Disabled → Enabled**: Removes grouped cache entries, creates per-item entries with previous `max_instant`.
-- **Enabled → Disabled**: Removes per-item entries, creates grouped entries with the latest `max_instant` per scan mode.
-  > **Warning**: Data loss may occur if `max_instant` values differ.
+Groups can be created, edited, and deleted directly from the item edit form or from the group dropdown
+in the item list. Deleting a group does not delete its items — they become unassigned.
 
 ---
 
-## Example Scenarios
+## Items
 
-### Max Instant Per Item: Enabled
+Items retrieve data as files or JSON payloads. Each item has the following fields:
 
-**Before**:
-| south_id | scan_mode_id | item_id | max_instant |
-|----------|--------------|---------|---------------------------|
-| south1 | scan_prev | item1 | 2024-02-16T00:00:00.000Z |
-| south1 | scan_prev | item2 | 2024-02-16T00:00:00.000Z |
+| Setting               | Description                                                                                                                    | Example Value         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------- |
+| **Name**              | Unique reference used by North connectors and transformers to identify this data point.                                        | `Temperature_Sensor1` |
+| **Group**             | The group this item belongs to. Leave empty for a standalone item with its own scan mode.                                      | `Group A`             |
+| **Scan mode**         | Schedule that determines when OIBus collects data. Only shown when the item has no group (otherwise inherited from the group). | `Every 1 min`         |
+| **Enabled**           | Whether the item is active.                                                                                                    | Enabled/Disabled      |
+| **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                            | Enabled/Disabled      |
+| **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                          | `3600`                |
+| **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                          | `200`                 |
+| **Overlap**           | _(History-capable connectors)_ Milliseconds subtracted from `@StartTime` to capture late-arriving data.                       | `0`                   |
+| **Specific settings** | Varies by connector type — see each connector's documentation.                                                                 | —                     |
 
-**After changing scan mode**:
-| south_id | scan_mode_id | item_id | max_instant |
-|----------|--------------|---------|---------------------------|
-| south1 | scan_new | item1 | 2024-02-16T00:00:00.000Z |
-| south1 | scan_prev | item2 | 2024-02-16T00:00:00.000Z |
+### Item Actions
 
-### Max Instant Per Item: Disabled
+- **Disable/Enable**: Toggle from the item edit form or directly from the connector's display page.
+- **Test**: Verify item settings and preview results from the create/edit modal.
+  > **Tip**: Test the connection settings before testing individual items.
+- **View last value** (🔍): Opens a read-only panel showing the item's last retrieval state. See
+  [Inspecting the last retrieved value](#inspecting-the-last-retrieved-value) for details.
+- **Move to group**: Select multiple items and use the mass-action menu to reassign them to a group at once.
 
-**Before**:
-| south_id | scan_mode_id | item_id | max_instant |
-|----------|--------------|---------|---------------------------|
-| south1 | scan_prev | all | 2024-02-16T00:00:00.000Z |
+### Import/Export Items
 
-**After changing scan mode**:
-| south_id | scan_mode_id | item_id | max_instant |
-|----------|--------------|---------|---------------------------|
-| south1 | scan_new | all | 2024-02-16T00:00:00.000Z |
+- **Export**: Download all items as a CSV. Columns include `name`, `enabled`, `scanMode`, `group`,
+  `syncWithGroup`, `maxReadInterval`, `readDelay`, `overlap`, and connector-specific `settings_*` columns.
+- **Import**: Upload a CSV to create or update items in bulk. Export an existing list to get a valid
+  template with the correct column names.
+  > **Note**: The system validates for duplicates and correct formatting before applying the import.
+
+---
+
+## Max Instant Tracking
+
+History-capable South connectors track the last successfully retrieved timestamp (the *max instant*) so
+that each run only fetches new data. The max instant is tracked at the **item** level — each item
+maintains its own independent tracking, whether it belongs to a group or not.
+
+### Behaviour when configuration changes
+
+| Action                   | Effect on max instant                                                      |
+| ------------------------ | -------------------------------------------------------------------------- |
+| Change item's group      | Item retains its own tracked instant; only throttling defaults may change. |
+| Change group's scan mode | Each item's tracked instant is preserved under the new scan mode.          |
+| Delete a group           | Items become unassigned; their tracked instants are preserved.             |
+| Delete an item           | Its tracked instant is removed.                                            |
+| Delete the connector     | All items and tracked instants are removed.                                |
+
+:::warning Data gaps and duplicates when changing throttling settings
+If you change the Max read interval or Overlap on a group or item, the next query will use the new
+parameters from the current tracked instant. A significantly different overlap can cause small gaps
+or duplicates at the boundary.
+:::
+
+### Inspecting the last retrieved value
+
+Click the **🔍** icon on any item row to open the **Last retrieved value** panel. It shows:
+
+| Setting             | Description                                                                                                                           | Example Value                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| **Item name**       | Name of the item.                                                                                                                     | `Temperature_Sensor1`               |
+| **Group**           | Group this item belongs to, if any.                                                                                                   | `Group A`                           |
+| **Query time**      | Timestamp of the last query execution for this item.                                                                                  | `2024-01-15T10:30:00.000Z`          |
+| **Tracked instant** | The *max instant* stored for this item — used as `@StartTime` in the next query. Empty if no query has run yet.                       | `2024-01-15T10:29:55.000Z`          |
+| **Value**           | The last cached result. For file-based connectors: a list of filenames and modification times. For history connectors: the raw JSON payload of the last sub-query. Empty if no data has been retrieved yet. | `[{"file": "data.csv", ...}]` |
+
+This panel is useful for:
+- Verifying that a new item has started collecting data (check that **Tracked instant** is populated).
+- Diagnosing data gaps — compare the tracked instant against the current time to see how far behind an item is.
+- Confirming the exact file or record that was last seen by file-based connectors.
