@@ -3,11 +3,11 @@ const { github: lightCodeTheme, dracula: darkCodeTheme } = themes;
 
 /** @type {import('@docusaurus/types').Config} */
 export default {
-  title: 'OIBus - Data collection solution',
+  title: 'OIBus',
   url: 'https://oibus.optimistik.com/',
   baseUrl: '/',
   favicon: 'img/favicon.ico',
-  tagline: 'Start collecting your data now',
+  tagline: 'Open source industrial data collection — OPC UA, Modbus, SQL, MQTT and more',
   onBrokenLinks: 'warn',
   markdown: {
     hooks: {
@@ -15,18 +15,54 @@ export default {
     }
   },
 
-  // GitHub pages deployment config.
-  // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'OptimistikSAS', // Usually your GitHub org/username.
-  projectName: 'OIBus', // Usually your repo name.
+  organizationName: 'OptimistikSAS',
+  projectName: 'OIBus',
 
-  // Even if you don't use internalization, you can use this field to set useful
-  // metadata like html lang. For example, if your site is Chinese, you may want
-  // to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
     locales: ['en']
   },
+
+  // JSON-LD structured data for the whole site
+  headTags: [
+    {
+      tagName: 'script',
+      attributes: { type: 'application/ld+json' },
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'OIBus',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Windows, Linux, macOS, Docker',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+        description:
+          'Open source industrial data collection software. Collect data from OPC UA, Modbus, SQL databases, MQTT and REST APIs. Forward it to OIAnalytics, Amazon S3, Azure Blob Storage, or any HTTP endpoint.',
+        url: 'https://oibus.optimistik.com',
+        downloadUrl: 'https://github.com/OptimistikSAS/OIBus/releases',
+        author: {
+          '@type': 'Organization',
+          name: 'Optimistik',
+          url: 'https://optimistik.com'
+        },
+        maintainer: {
+          '@type': 'Organization',
+          name: 'Optimistik',
+          url: 'https://optimistik.com'
+        },
+        license: 'https://ec.europa.eu/info/european-union-public-licence_en',
+        codeRepository: 'https://github.com/OptimistikSAS/OIBus',
+        isAccessibleForFree: true,
+        keywords: 'OPC UA, Modbus, MQTT, SQL, industrial data collection, IIoT, open source, edge computing, data historian'
+      })
+    },
+    {
+      tagName: 'link',
+      attributes: {
+        rel: 'me',
+        href: 'https://github.com/OptimistikSAS/OIBus'
+      }
+    }
+  ],
 
   plugins: [
     function noWebpackBarPlugin() {
@@ -52,6 +88,11 @@ export default {
           routeBasePath: '/docs',
           editLocalizedFiles: true
         },
+        sitemap: {
+          changefreq: 'weekly',
+          priority: 0.5,
+          ignorePatterns: ['/tags/**']
+        },
         theme: { customCss: [require.resolve('./src/css/custom.css')] }
       }
     ],
@@ -68,6 +109,20 @@ export default {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
+      // Global meta tags added to every page
+      metadata: [
+        {
+          name: 'keywords',
+          content:
+            'OIBus, OPC UA, Modbus, MQTT, SQL, industrial data collection, IIoT, open source, edge computing, data historian, OIAnalytics, Optimistik'
+        },
+        { name: 'author', content: 'Optimistik' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'OIBus Documentation' },
+        { name: 'twitter:card', content: 'summary' },
+        { name: 'twitter:site', content: '@optimistik' }
+      ],
+
       navbar: {
         title: 'OIBus',
         logo: {
@@ -116,22 +171,10 @@ export default {
           {
             title: 'Documentation',
             items: [
-              {
-                label: 'User Guide',
-                to: '/docs/guide/'
-              },
-              {
-                label: 'Use cases',
-                to: '/docs/use-cases/'
-              },
-              {
-                label: 'Developer Guide',
-                to: '/docs/developer/'
-              },
-              {
-                label: 'API',
-                to: '/docs/api/'
-              }
+              { label: 'User Guide', to: '/docs/guide/' },
+              { label: 'Use cases', to: '/docs/use-cases/' },
+              { label: 'Developer Guide', to: '/docs/developer/' },
+              { label: 'API', to: '/docs/api/' }
             ]
           },
           {
@@ -146,35 +189,20 @@ export default {
           {
             title: 'More',
             items: [
-              {
-                label: 'GitHub',
-                href: 'https://github.com/OptimistikSAS/OIBus'
-              }
+              { label: 'GitHub', href: 'https://github.com/OptimistikSAS/OIBus' },
+              { label: 'Releases', href: 'https://github.com/OptimistikSAS/OIBus/releases' }
             ]
           }
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Optimistik. Built with Docusaurus.
-        All trademarks, logos and brand names are the property of their respective owners. All company, product and service names used in this website are for identification purposes only. Use of these names, trademarks and brands does not imply endorsement.`
+        copyright: `Copyright © ${new Date().getFullYear()} Optimistik. Built with Docusaurus. All trademarks, logos and brand names are the property of their respective owners. All company, product and service names used in this website are for identification purposes only. Use of these names, trademarks and brands does not imply endorsement.`
       },
       algolia: {
-        // The application ID provided by Algolia
         appId: 'RFGM4OD43Y',
-
-        // Public API key: it is safe to commit it
         apiKey: '4d97db82cb5a33edb810b5798335f501',
-
         indexName: 'oibus-optimistik',
-
-        // Optional: see doc section below
         contextualSearch: true,
-
-        // Optional: Algolia search parameters
         searchParameters: {},
-
-        // Optional: path for search page that enabled by default (`false` to disable it)
         searchPagePath: 'search'
-
-        //... other Algolia params
       },
       prism: {
         theme: lightCodeTheme,

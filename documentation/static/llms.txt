@@ -1,0 +1,78 @@
+# OIBus
+
+> Open source industrial data collection software — free, lightweight, and easy to deploy.
+
+OIBus is an open source data collection agent developed and maintained by Optimistik since 2020 under
+the European Union Public Licence (EUPL). It runs on Windows, Linux, macOS, and Docker. It connects to
+20+ industrial and business data sources (South connectors) and forwards data to 10+ destinations
+(North connectors) including cloud platforms, databases, and analytics applications.
+
+OIBus is configured entirely through a web interface — no code required. It supports scheduled polling,
+event-based subscriptions, history replay (backfill), and store-and-forward caching. It handles from 10
+to 10,000+ data points per second.
+
+## Documentation
+
+- [Overview and concepts](https://oibus.optimistik.com/docs/guide/): Architecture, South/North/Engine model, supported protocols
+- [Installation](https://oibus.optimistik.com/docs/guide/installation/): Windows installer, Linux service, macOS, Docker
+- [First access](https://oibus.optimistik.com/docs/guide/installation/first-access): Web interface walkthrough, default credentials, engine metrics
+- [OIAnalytics registration](https://oibus.optimistik.com/docs/guide/installation/oianalytics): Remote management, command architecture, secret encryption
+- [Automated installation](https://oibus.optimistik.com/docs/guide/installation/disk-image): Mass deployment via disk image and curl API
+
+## South Connectors (Data Sources)
+
+- [Common settings](https://oibus.optimistik.com/docs/guide/south-connectors/common-settings): Scan modes, items, subscriptions, throttling
+- [OPC UA](https://oibus.optimistik.com/docs/guide/south-connectors/opcua): OPC UA subscriptions and history, security modes, aggregates
+- [OPC Classic (DA/HDA)](https://oibus.optimistik.com/docs/guide/south-connectors/opc): OPC DA/HDA with aggregate and resampling
+- [Modbus](https://oibus.optimistik.com/docs/guide/south-connectors/modbus): Modbus TCP/RTU, coils, registers, data types
+- [MQTT](https://oibus.optimistik.com/docs/guide/south-connectors/mqtt): MQTT subscriptions, wildcard topics, QoS
+- [Microsoft SQL Server](https://oibus.optimistik.com/docs/guide/south-connectors/mssql): MSSQL queries with datetime handling
+- [MySQL / MariaDB](https://oibus.optimistik.com/docs/guide/south-connectors/mysql): MySQL queries
+- [PostgreSQL](https://oibus.optimistik.com/docs/guide/south-connectors/postgresql): PostgreSQL queries
+- [Oracle Database](https://oibus.optimistik.com/docs/guide/south-connectors/oracle): Oracle queries
+- [SQLite](https://oibus.optimistik.com/docs/guide/south-connectors/sqlite): SQLite queries
+- [ODBC](https://oibus.optimistik.com/docs/guide/south-connectors/odbc): ODBC generic SQL connector
+- [OLEDB](https://oibus.optimistik.com/docs/guide/south-connectors/oledb): OLEDB connector (Windows)
+- [OSIsoft PI](https://oibus.optimistik.com/docs/guide/south-connectors/osisoft-pi): PI Data Archive historian
+- [REST API (South)](https://oibus.optimistik.com/docs/guide/south-connectors/rest): HTTP REST polling
+- [OIAnalytics (South)](https://oibus.optimistik.com/docs/guide/south-connectors/oianalytics): Pull data from OIAnalytics
+
+## North Connectors (Destinations)
+
+- [Common settings](https://oibus.optimistik.com/docs/guide/north-connectors/common-settings): Cache, throttling, errors, archive, transformers, data filtering
+- [OIAnalytics (North)](https://oibus.optimistik.com/docs/guide/north-connectors/oianalytics): Send data to OIAnalytics SaaS
+- [Amazon S3](https://oibus.optimistik.com/docs/guide/north-connectors/aws-s3): Upload files to Amazon S3
+- [Azure Blob Storage](https://oibus.optimistik.com/docs/guide/north-connectors/azure-blob): Upload files to Azure Blob / Data Lake
+- [MQTT (North)](https://oibus.optimistik.com/docs/guide/north-connectors/mqtt): Publish to MQTT broker
+- [REST API (North)](https://oibus.optimistik.com/docs/guide/north-connectors/rest): Push data to any HTTP REST endpoint
+- [SFTP](https://oibus.optimistik.com/docs/guide/north-connectors/sftp): Upload files via SFTP
+- [Modbus (North)](https://oibus.optimistik.com/docs/guide/north-connectors/modbus): Write values to Modbus devices
+- [OPC UA (North)](https://oibus.optimistik.com/docs/guide/north-connectors/opcua): Write values to OPC UA servers
+- [File Writer](https://oibus.optimistik.com/docs/guide/north-connectors/file-writer): Write files to local disk
+- [Console](https://oibus.optimistik.com/docs/guide/north-connectors/console): Print data to console (debugging)
+
+## Engine
+
+- [Engine settings](https://oibus.optimistik.com/docs/guide/engine/engine-settings): Name, port, proxy server, logging parameters
+- [Scan modes](https://oibus.optimistik.com/docs/guide/engine/scan-modes): Cron-based scheduling for data collection
+- [IP filters](https://oibus.optimistik.com/docs/guide/engine/ip-filters): Restrict web interface access by IP address
+- [Transformers](https://oibus.optimistik.com/docs/guide/engine/transformers): Filter, modify, and convert data between South and North
+- [Certificates](https://oibus.optimistik.com/docs/guide/engine/certificates): TLS certificate management
+
+## History Queries
+
+- [History queries](https://oibus.optimistik.com/docs/guide/history-queries): Replay historical data from any South connector to any North connector
+
+## API Reference
+
+- [REST API](https://oibus.optimistik.com/docs/api/): Full OIBus REST API reference (OpenAPI)
+
+## Developer
+
+- [Developer guide](https://oibus.optimistik.com/docs/developer/): Contributing, architecture, creating new connectors
+
+## Source
+
+- [GitHub](https://github.com/OptimistikSAS/OIBus): Source code, issues, releases, changelog
+- [License](https://ec.europa.eu/info/european-union-public-licence_en): European Union Public Licence (EUPL)
+- [Releases](https://github.com/OptimistikSAS/OIBus/releases): Download latest and previous versions
