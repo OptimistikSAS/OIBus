@@ -3,14 +3,14 @@ displayed_sidebar: useCasesSidebar
 sidebar_position: 7
 ---
 
-# Advanced use case
+# Advanced Multi-Network Setup
 
-## Beforehand
+## Overview
 
-This use case shows an advanced setup of a heterogeneous network:
+This use case shows a heterogeneous network with two isolated zones:
 
-- Operational Technology (OT) in the industrial network with PLCs
-- Information Technology (IT) in the enterprise network
+- **OT network** — the industrial network hosting PLCs
+- **IT network** — the enterprise network with databases and cloud connectivity
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -20,12 +20,9 @@ This use case shows an advanced setup of a heterogeneous network:
   </div>
 </div>
 
-## Several OIBus
+Two OIBus instances are deployed: **OIBus OT** and **OIBus IT**. This limits the firewall opening between the two zones to a single connection: OIBus OT sends data to OIAnalytics through the proxy server running on OIBus IT.
 
-In this configuration, two OIBus are set up: **OIBus OT** and **OIBus IT**. This way, only one connection between the OT and IT networks
-needs to be allowed through the internal firewall. **OIBus OT** sends data to OIAnalytics through the proxy server of **OIBus IT**.
-
-In such a scenario, it is better to first set up the **OIBus IT** with its proxy server and the proper network firewall rules.
+Set up **OIBus IT** first — configure its proxy server and the required firewall rules before configuring OIBus OT.
 
 ## OIBus IT
 
@@ -33,66 +30,54 @@ In such a scenario, it is better to first set up the **OIBus IT** with its proxy
 
 #### MSSQL
 
-The connection to the MSSQL database is straightforward and can be simply set up from [this use case](./use-case-mssql) and the
-[connector documentation](../guide/south-connectors/mssql).
+See the [MSSQL use case](./use-case-mssql) and the [connector documentation](../guide/south-connectors/mssql) for setup instructions.
 
 #### MQTT
 
-This connector can be used to subscribe to MQTT topic, as specified in [this page](../guide/south-connectors/mqtt).
+Subscribe to MQTT topics as described in the [MQTT connector page](../guide/south-connectors/mqtt).
 
 #### Folder Scanner
 
-In this example, a script generates data files (like CSV files) in a folder which OIBus can scan to retrieve the files according to a regex,
-as specified in [this page](../guide/south-connectors/folder-scanner).
+OIBus can watch a folder and pick up files matching a regex pattern — useful when a script or another tool drops CSV files that OIBus cannot query directly. See the [Folder Scanner connector page](../guide/south-connectors/folder-scanner).
 
-This scenario is useful when OIBus does not have a direct access to the database.
+#### ODBC (with OIBus Agent)
 
-#### ODBC (with Remote OIBus Agent)
+The [ODBC connector](../guide/south-connectors/odbc) uses an [OIBus Agent](../guide/oibus-agent/installation) installed on the IP21 machine. See the [IP21 use case](./use-case-ip21) for setup details.
 
-In the network example, the [ODBC South connector](../guide/south-connectors/odbc) uses an [OIBus Agent](../guide/oibus-agent/installation)
-that must be installed on the IP21 machine. It is possible to refer to the [IP21 use case](./use-case-ip21) for a proper setup.
+#### OSIsoft PI (with OIBus Agent)
 
-#### OSIsoft PI (with Remote OIBus Agent)
-
-In the network example, the [OSIsoft PI South connector](../guide/south-connectors/osisoft-pi) uses an
-[OIBus Agent](../guide/oibus-agent/installation) that must be installed on the IP21 machine. It is possible to refer to the
-[OSIsoft PI use case](./use-case-ip21) for a proper setup.
+The [OSIsoft PI connector](../guide/south-connectors/osisoft-pi) uses an [OIBus Agent](../guide/oibus-agent/installation) installed on or near the PI server. See the [OSIsoft PI use case](./use-case-pi) for setup details.
 
 ### North Connectors
 
 #### OIAnalytics
 
-It is strongly suggested to first [register OIBus into OIAnalytics](../guide/installation/oianalytics) and to use the registration
-inside the [North OIAnalytics connector](../guide/north-connectors/oianalytics).
+[Register OIBus with OIAnalytics](../guide/installation/oianalytics) first, then enable the registration in the [North OIAnalytics connector](../guide/north-connectors/oianalytics).
 
-### Proxy server
+### Proxy Server
 
-Enable the [proxy server](../guide/engine/engine-settings#proxy-server) and be sure the selected port is not used and is
-allowed on the firewall for inbound connections.
+Enable the [proxy server](../guide/engine/engine-settings#proxy-server) on OIBus IT and make sure the chosen port is available and open for inbound connections in the firewall.
 
 ## OIBus OT
 
-This OIBus can be used to access PLCs located in the industrial network.
+OIBus OT collects data from PLCs in the industrial network and forwards it to OIAnalytics via the OIBus IT proxy.
 
 ### South Connectors
 
 #### TwinCAT ADS
 
-Refer to the [TwinCAT ADS use case](./use-case-ads) to properly set up the connector. Here, the ADS server is remote.
+See the [TwinCAT ADS use case](./use-case-ads) — the ADS server is remote in this scenario.
 
-#### OPCUA
+#### OPC UA
 
-Refer to the [OPCUA use case](./use-case-opcua) to properly set up the connector.
+See the [OPC UA use case](./use-case-opcua).
 
 #### Modbus
 
-Refer to the [Modbus use case](./use-case-modbus) to properly set up the connector.
+See the [Modbus use case](./use-case-modbus).
 
 ### North Connectors
 
 #### OIAnalytics
 
-It is strongly suggested to first [register OIBus into OIAnalytics](../guide/installation/oianalytics) with the help of a proxy and
-to use the registration inside the [North OIAnalytics connector](../guide/north-connectors/oianalytics).
-
-The proxy to use is the one set up on the **OIBus IT**. Be sure that a connection is possible through the firewall.
+[Register OIBus OT with OIAnalytics](../guide/installation/oianalytics) and configure the proxy (the OIBus IT proxy server) in the registration settings. Enable the registration in the [North OIAnalytics connector](../guide/north-connectors/oianalytics) and confirm that the firewall allows the connection from OIBus OT to OIBus IT.

@@ -7,14 +7,11 @@ sidebar_position: 5
 
 ## Beforehand
 
-AspenTech IP21 is a real-time data historian software that collects, stores, and analyzes vast amounts of time-series data from industrial
-processes, offering tools for real-time monitoring, analysis, and reporting. OIBus can connect to IP21 via ODBC.
+AspenTech IP21 is a real-time data historian that collects, stores, and analyses time-series data from industrial processes. OIBus connects to IP21 via ODBC.
 
-Details regarding the configurations can be located on the [North Amazon S3](../guide/north-connectors/aws-s3.md) and
-[South ODBC](../guide/south-connectors/odbc) connectors pages.
+See the [North Amazon S3](../guide/north-connectors/aws-s3.md) and [South ODBC](../guide/south-connectors/odbc) connector pages for full configuration details.
 
-This use case requires the installation of an [OIBus Agent](../guide/oibus-agent/installation) and is based on the depicted fictional
-network scenario.
+This use case requires an [OIBus Agent](../guide/oibus-agent/installation). The example uses the following fictional network.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -24,34 +21,28 @@ network scenario.
   </div>
 </div>
 
-:::caution
-The Aspen SQLplus driver is sensitive to network latency, so it is strongly recommended to install the OIBus Agent on the IP21
-server or at least on the same network to minimize latency between the Agent connector and the IP21 historian.
-
-Additional network hops or firewalls between the Agent and the historian can lead to data collection issues or performance degradation.
+:::caution Install the Agent close to IP21
+The Aspen SQLplus driver is sensitive to network latency. Install the OIBus Agent on the IP21 server, or at least on the same local network. Additional network hops or firewalls between the Agent and the historian can cause data collection issues and performance degradation.
 :::
 
 ## South ODBC
 
-There are two options for managing ODBC connections:
+ODBC connections can be managed in two ways:
 
-- The internal [node-odbc JavaScript](https://github.com/markdirish/node-odbc) driver.
-- The [OIBus Agent](../guide/oibus-agent/installation) with C# ODBC implementation.
+- The internal [node-odbc](https://github.com/markdirish/node-odbc) JavaScript driver.
+- The [OIBus Agent](../guide/oibus-agent/installation) with its C# ODBC implementation.
 
 :::info
-This use case manages ODBC connections with the OIBus Agent. It is considered a best practice for IP21 connections.
+This use case uses the OIBus Agent — the recommended approach for IP21.
 :::
 
-Ensure that the OIBus Agent is installed on the IP21 machine and that the `Use remote agent` option is checked. Based on the previously
-shown network configuration, enter `http://192.169.0.2:2224` as the `Remote Agent URL`.
+Install the OIBus Agent on the IP21 machine, enable **Use remote agent** in the connector settings, and enter `http://192.169.0.2:2224` as the **Remote Agent URL**.
 
-:::tip OIBus Agent port and network settings
-When installing the OIBus Agent, port 2224 is used by default, but you can choose a different
-port if needed. Ensure that the selected port is allowed for HTTP connections in your firewall settings.
+:::tip OIBus Agent port
+Port 2224 is the default. You can change it during installation. Make sure the chosen port is open for inbound HTTP connections in your firewall.
 :::
 
-The connection string follows the standard ODBC format. For IP21, the `AspenTech SQLplus` ODBC driver must be installed on the machine where
-the OIBus Agent is configured.
+The connection string follows the standard ODBC format. The **AspenTech SQLplus** ODBC driver must be installed on the machine running the OIBus Agent.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -62,21 +53,21 @@ the OIBus Agent is configured.
 </div>
 
 :::tip Testing connection
-You can verify the connection by testing the settings using the `Test settings` button.
+Click **Test settings** to verify the connection before saving.
 :::
 
 ### Items
 
-The ODBC connector accepts SQL queries. You can refer to the [MSSQL item documentation](./use-case-mssql#sql-queries) to create the items.
+The ODBC connector accepts SQL queries. See the [MSSQL item documentation](./use-case-mssql#sql-queries) for guidance on writing queries with `@StartTime` and `@EndTime` variables.
 
 ## North Amazon S3
 
-Be sure to have the following information before filling the appropriate fields:
+You need the following before filling in the connector settings:
 
 - Bucket: `oibus-test`
 - Region: `eu-west-3`
-- Folder: `north-local-oib`
-- Access key and shared key generated on Amazon S3
+- Folder: `north-local-oib` (leave empty to store files at the bucket root)
+- Access key and secret key generated in Amazon S3
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -87,5 +78,5 @@ Be sure to have the following information before filling the appropriate fields:
 </div>
 
 :::tip Testing connection
-You can verify the connection by testing the settings using the `Test settings` button.
+Click **Test settings** to verify the connection before saving.
 :::

@@ -5,19 +5,15 @@ sidebar_position: 6
 
 import NorthOIAnalytics from './_north_oianalytics.mdx';
 
-# OSIsoftPI System™ → OIAnalytics®
+# OSIsoft PI System™ → OIAnalytics®
 
 ## Beforehand
 
-OSIsoft PI System™ is a software suite used for real-time data management and analytics in industrial settings, providing tools to collect,
-store, and analyze time-series data from various sources. It supports operational efficiency, process optimization, and decision-making
-across industries like manufacturing, energy, and utilities.
+OSIsoft PI System™ is a real-time data management platform widely used in manufacturing, energy, and utilities to collect, store, and analyse time-series data from industrial processes.
 
-Details regarding the configurations can be located on the [North OIAnalytics](../guide/north-connectors/oianalytics) and
-[South OSIsoft PI](../guide/south-connectors/osisoft-pi) connectors pages.
+See the [North OIAnalytics](../guide/north-connectors/oianalytics) and [South OSIsoft PI](../guide/south-connectors/osisoft-pi) connector pages for full configuration details.
 
-This use case requires the installation of an [OIBus Agent](../guide/oibus-agent/installation) and is based on the depicted fictional
-network scenario.
+This use case requires an [OIBus Agent](../guide/oibus-agent/installation). Install it either on the PI server itself or on another machine where the OSIsoft PI SDK is installed — see [OSIsoft PI SDK configuration](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration) for details. The example uses the following fictional network.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -27,13 +23,9 @@ network scenario.
   </div>
 </div>
 
-You can either install the OIBus Agent on the same machine as OSIsoft PI, or install it on a remote machine where the OSIsoft PI SDK is
-installed. More information can be found on the
-[OSIsoft PI SDK settings](../guide/south-connectors/osisoft-pi#osisoft-pi-sdk-configuration).
-
 ## South PI
 
-Enter the `Remote agent URL`. From the example, the value here is `http://localhost:2224`.
+Enter the **Remote agent URL**. In this example: `http://localhost:2224`.
 
 <div style={{ textAlign: 'center' }}>
   <div>
@@ -44,15 +36,15 @@ Enter the `Remote agent URL`. From the example, the value here is `http://localh
 </div>
 
 :::tip Testing connection
-You can verify the connection by testing the settings using the `Test settings` button.
+Click **Test settings** to verify the connection before saving.
 :::
 
 ### Items
 
-OSIsoft PI items can be of two types:
+PI items can be of two types:
 
-- **Point ID**: Retrieve time values for a single point.
-- **Query**: Retrieve time values for a list of points that match a regex-like query.
+- **Point ID** — retrieve time-series values for a single PI point.
+- **Query** — retrieve time-series values for all PI points matching a regex-like expression. The item name is used only for logging; the data is labelled with the actual PI point references.
 
 #### Point ID
 
@@ -65,9 +57,6 @@ OSIsoft PI items can be of two types:
 </div>
 
 #### Query
-
-When using a query, the item name is used solely for logging purposes. The actual name attached to the data corresponds to the references of
-the points found by the query.
 
 <div style={{ textAlign: 'center' }}>
   <div>
