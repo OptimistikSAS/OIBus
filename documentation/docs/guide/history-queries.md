@@ -4,39 +4,56 @@ sidebar_position: 6
 
 # History Queries
 
-OIBus enables both real-time data streaming and historical data retrieval, allowing access to information from periods before your streaming setup was active.
+History queries let you retrieve data from a past time range using the same South and North connector
+infrastructure as real-time streaming. They are useful for back-filling data from before your live
+setup was active, or for re-exporting a specific period.
+
+## Compatible South Connectors
+
+Only South connectors with historian capabilities support history queries:
+
+| Connector          |
+| ------------------ |
+| [MSSQL](./south-connectors/mssql.mdx) |
+| [MySQL® / MariaDB™](./south-connectors/mysql.mdx) |
+| [ODBC](./south-connectors/odbc.mdx) |
+| [OIAnalytics®](./south-connectors/oianalytics.mdx) |
+| [OLEDB](./south-connectors/oledb.mdx) |
+| [OPC Classic™ (HDA mode)](./south-connectors/opc.mdx) |
+| [OPC UA™ (HA mode)](./south-connectors/opcua.mdx) |
+| [Oracle Database™](./south-connectors/oracle.mdx) |
+| [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) |
+| [PostgreSQL](./south-connectors/postgresql.mdx) |
+| [REST](./south-connectors/rest.mdx) |
+| [SQLite™](./south-connectors/sqlite.mdx) |
 
 ## Create a History Query
 
-### Setup Options
+From the **History** page, click **+** and choose:
 
-You can create history queries using:
+- **New connectors** — configure a dedicated South and North connector for this query.
+- **Existing connectors** — all items from the selected South connector are copied into the history query.
 
-- **New South/North connectors** specifically for historical retrieval
-- **Existing South/North connectors** (all items will be copied)
+## Settings
 
-:::info Compatible Connectors
-Only South connectors with historian capabilities support history queries, including:
+### General
 
-- OPC UA (HA mode)
-- OPC Classic (HDA mode)
-- MSSQL/SQL Server
-- PostgreSQL
-- Oracle
-- OSIsoft PI System™
-- Other temporal database connectors
+| Setting         | Description                                      | Example Value |
+| --------------- | ------------------------------------------------ | ------------- |
+| **Name**        | Unique label for the history query.              | `Backfill Jan 2024` |
+| **Description** | Optional context for the query.                  | `Re-export after outage` |
 
-:::
+### Time Range
 
-## History Query Main Settings
+| Setting               | Description                                                                                    | Example Value |
+| --------------------- | ---------------------------------------------------------------------------------------------- | ------------- |
+| **Start time**        | Beginning of the historical period to retrieve.                                                | `2024-01-01T00:00:00.000Z` |
+| **End time**          | End of the historical period to retrieve.                                                      | `2024-02-01T00:00:00.000Z` |
+| **Max read interval** | Maximum sub-query duration in seconds. The full range is split into chunks of this size.       | `3600`        |
+| **Read delay**        | Pause in milliseconds between consecutive sub-queries, to avoid overloading the source system. | `200`         |
 
-### Time Configuration
-
-1. **Start Time**: Beginning of historical period (required)
-2. **End Time**: End of historical period (required)
-
-:::caution SQL Connectors Requirement
-For SQL-based connectors, you MUST include both time variables in your queries:
+:::caution SQL connectors
+For SQL-based connectors, your query **must** include both time variables:
 
 ```sql
 SELECT * FROM sensor_data
@@ -46,54 +63,47 @@ AND timestamp <= @EndTime
 
 :::
 
-## Resilience Features
+### South and North Configuration
 
-### Automatic Recovery
+A history query embeds a full South connector (type, settings, items) and a full North connector
+(type, settings, transformers, caching). These are configured the same way as their live counterparts.
 
-- Tracks maximum retrieved timestamp in local cache
-- Resumes from last position after connection failures
-- Maintains progress across restarts
+## Execution Controls
 
-### Item Grouping
+| Control          | Description                                                              |
+| ---------------- | ------------------------------------------------------------------------ |
+| **Start**        | Begin the query from the current tracked position (or from Start time if never run). |
+| **Pause**        | Suspend execution. Progress is preserved — the query resumes from where it stopped. |
+| **Resume**       | Continue a paused query from its last tracked position.                  |
+| **Restart**      | Re-run a finished or errored query from the beginning.                   |
+| **Reset cache**  | Clear all cached progress and force the next run to restart from Start time. |
 
-- **Default**: Items share the same maximum instant (better performance)
-- **Max instant per item**: Tracks each item separately (more precise)
+Controls are available from the display page, the editing page, and the history query list.
 
-:::tip When to Use Per-Item Tracking (OPCUA, OPC, PI)
-Use "Max instant per item" when:
+## Monitoring
 
-- Data points update at different frequencies
-- Source system doesn't guarantee synchronous writes
-- You need individual progress tracking for each item
+The display page shows real-time metrics for both the South and North sides of the query:
 
-Note: This creates separate queries per item which may increase server load
-:::
+**South (retrieval) metrics:**
+- Interval progress — current interval number out of total intervals
+- Number of values and files retrieved
+- Last value retrieved (point ID, timestamp, data)
+- Last file retrieved
+- Last run start time and duration
 
-## Running a Query
+**North (transmission) metrics:**
+- Cache size — current, total cached, total sent
+- Error size — current, total errored
+- Archive size — current, total archived
+- Last content sent
+- Last run start time and duration
 
-### Execution Controls
+## Automatic Recovery
 
-Start or pause queries from:
+The query tracks the last successfully retrieved timestamp so it can resume after a failure or restart
+without re-fetching already-retrieved data. Progress is preserved across OIBus restarts.
 
-- Editing page
-- List page
-- Display page
-
-### Monitoring
-
-The display page shows:
-
-- Current progress
-- Query status
-- Items processed
-- Estimated completion
-
-:::caution Important Note
-Any modifications to:
-
-- Added/removed items
-- Updated configurations
-- Time range changes
-
-will restart the query from the original start time.
+:::caution Resetting progress
+Using **Reset cache** clears all tracked progress. The next run will start over from the original
+**Start time**, which may result in duplicate data being sent to the North connector.
 :::
