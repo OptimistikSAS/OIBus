@@ -6,39 +6,40 @@ sidebar_position: 4
 
 ## Objective
 
-This automated installation procedure enables efficient, large-scale OIBus deployments by combining secure installation with standardized initial configuration.
+This procedure enables efficient, large-scale OIBus deployments by combining silent installation with
+standardized initial configuration applied on first launch.
 
-**Key Benefits:**
+**Key benefits:**
 
-- **Scalable deployment** across multiple machines
-- **Consistent configurations** from first launch
-- **Immediate remote management** via [OIAnalytics](./oianalytics.mdx)
+- **Scalable deployment** across multiple machines from a single disk image
+- **Consistent configuration** from first launch — no manual steps on each machine
+- **Immediate remote management** via [OIAnalytics](./oianalytics.mdx) registration
 - **Reduced manual effort** and minimized setup errors
-
-Perfect for enterprise environments, industrial implementations, or any scenario requiring multiple OIBus instances with uniform configurations.
 
 ## Disk Image Preparation
 
-### Sample Implementation
+1. Extract the OIBus installation ZIP to `C:\Program Files\OIBus`.
+2. Add your installation script to this directory.
+3. Configure the script to run on startup — guarded by a check so it only runs when the OIBus service is
+   not yet installed.
+4. Build a disk image (without OIBus already installed) for deployment.
 
-1. Extract the OIBus installation ZIP to `C:\Program Files\OIBus`
-2. Add your installation script to this directory
-3. Configure the script to run on startup (only if OIBus isn't already installed)
-4. Create a disk image (without OIBus installed) for deployment
-
-Additional curl commands can be added to the installation script for initial setup. Specific configurations will be managed through OIAnalytics.
+Additional curl commands can be added to the script to pre-configure any initial settings. Ongoing
+configuration changes are then managed through OIAnalytics.
 
 ## Sample Installation Script
 
-The following script automates the installation, startup, and registration of OIBus. The `OIANALYTICS_URL` can be
-customized to point to your OIAnalytics instance. If you don’t use OIAnalytics, you can omit the registration step.
+The script below automates the full bootstrap sequence: installation, service startup, initial configuration
+via the API, and OIAnalytics registration. Set `OIANALYTICS_URL` to your OIAnalytics instance. If you do
+not use OIAnalytics, omit the registration step at the end.
 
 ```batch
 @echo off
-:: This script checks if OIBus is already installed. If not, it waits for the network, installs OIBus, waits for the service to start, and registers it.
+:: Bootstrap script for OIBus.
+:: Installs OIBus, waits for the service and web server to be ready,
+:: creates initial configuration via the API, then registers with OIAnalytics.
 
-:: Path to the installation script (assumes it is in the same folder as this script)
-:: Set the path before et local
+:: Path to the OIBus installer (assumes it is in the same directory as this script)
 set INSTALL_SCRIPT_PATH=%~dp0install.bat
 
 setlocal enabledelayedexpansion
@@ -47,7 +48,7 @@ set USERNAME=admin
 set PASSWORD=pass
 set OIANALYTICS_URL=https://instance.optimistik.fr/
 
-:: Default values
+:: Default values (overridable via -n and -c parameters)
 set n=OIBus
 set c=C:\OIBusData
 
@@ -55,128 +56,142 @@ set c=C:\OIBusData
 if "%~1"=="" goto PARSE_PARAMETERS_DONE
 if "%~1"=="-n" (
     set "n=%~2"
-    shift
-    shift
-    goto PARSE_PARAMETERS
+    shift & shift & goto PARSE_PARAMETERS
 )
 if "%~1"=="-c" (
     set "c=%~2"
-    shift
-    shift
-    goto PARSE_PARAMETERS
+    shift & shift & goto PARSE_PARAMETERS
 )
-shift
-goto PARSE_PARAMETERS
+shift & goto PARSE_PARAMETERS
 :PARSE_PARAMETERS_DONE
 
-:: Check if running as Admin
+:: Require administrator privileges
 net session >nul 2>&1
 if %errorLevel% neq 0 (
     echo This script must be run as Administrator.
     exit /b 1
 )
 
-:: Check if OIBus service is already installed
+:: Skip installation if the service already exists
 sc query "%n%" >nul 2>&1
 if %errorlevel% equ 0 (
     echo %n% service is already installed. Skipping installation.
     goto END
 )
 
-:: Wait for the network service to be running
-echo Waiting for the network service to start...
+:: Wait for the DNS cache service (proxy for network availability)
+echo Waiting for network...
 :WAIT_FOR_NETWORK
 sc query "Dnscache" | find "RUNNING" >nul
 if %errorlevel% neq 0 (
     timeout /t 5 >nul
     goto WAIT_FOR_NETWORK
 )
-echo Network service is running.
+echo Network is ready.
 
-:: Create data directory if it doesn't exist
+:: Create the data directory if needed
 if not exist "%c%" mkdir "%c%"
 
-:: Call the installation script, passing the data directory as a parameter
-call "%INSTALL_SCRIPT_PATH%" -c %c% -n %n%
+:: Run the OIBus installer
+call "%INSTALL_SCRIPT_PATH%" -c "%c%" -n "%n%"
 if %errorlevel% neq 0 (
-    echo Error: %n% installation failed.
+    echo Error: OIBus installation failed.
     exit /b %errorlevel%
 )
 
-:: Wait for the OIBus service to be running
+:: Wait for the OIBus Windows service to reach RUNNING state
 echo Waiting for %n% service to start...
-:WAIT_FOR_OIBUS
+:WAIT_FOR_SERVICE
 for /f "tokens=3 delims=: " %%H in ('sc query "%n%" ^| findstr "STATE"') do (
     if /I "%%H" NEQ "RUNNING" (
         timeout /t 5 >nul
-        goto WAIT_FOR_OIBUS
+        goto WAIT_FOR_SERVICE
     )
 )
-echo %n% service is now running.
+echo %n% service is running.
 
-:: Wait for the OIBus web server to be up
-echo Waiting for %n% web server to be up...
+:: Wait for the OIBus web server to respond
+echo Waiting for %n% web server...
 :WAIT_FOR_WEB
 curl --silent --output NUL --fail http://localhost:2223/api
 if %errorlevel% neq 0 (
     timeout /t 5 >nul
     goto WAIT_FOR_WEB
 )
-echo %n% web server is now up.
+echo %n% web server is ready.
 
-:: Execute the curl command to create a scan mode
+:: ── 1. Open IP access ────────────────────────────────────────────────────────
+echo Allowing all IP addresses...
+curl --silent --location --user %USERNAME%:%PASSWORD% ^
+  "http://localhost:2223/api/ip-filters" ^
+  --header "Content-Type: application/json" ^
+  --header "Accept: application/json" ^
+  --data "{\"address\": \"*\", \"description\": \"All\"}"
+echo.
+if %errorlevel% neq 0 (
+    echo Error: Failed to create IP filter.
+    exit /b %errorlevel%
+)
+
+:: ── 2. Create a scan mode ────────────────────────────────────────────────────
 echo Creating scan mode...
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/scan-modes" ^
---header "Content-Type: application/json" ^
---header "Accept: application/json" ^
---data "{\"name\": \"Every 2 minutes\", \"description\": \"\", \"cron\": \"0 */2 * * * *\"}"
+curl --silent --location --user %USERNAME%:%PASSWORD% ^
+  "http://localhost:2223/api/scan-modes" ^
+  --header "Content-Type: application/json" ^
+  --header "Accept: application/json" ^
+  --data "{\"name\": \"Every 2 minutes\", \"description\": \"\", \"cron\": \"0 */2 * * * *\"}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to create scan mode.
     exit /b %errorlevel%
 )
 
-:: Execute the curl command to create North connector
-echo Creating North connector...
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/north" ^
---header "Content-Type: application/json" ^
---header "Accept: application/json" ^
---data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"timeout\": 15000, \"compress\": false}, \"caching\": {\"archive\": {\"retentionDuration\": 0, \"enabled\": false}, \"error\": {\"retentionDuration\": 0, \"retryCount\": 3, \"retryInterval\": 5000}, \"throttling\": {\"maxNumberOfElements\": 10000, \"maxSize\": 0, \"runMinDelay\": 200}, \"trigger\": {\"numberOfFiles\": 1, \"numberOfElements\": 1, \"scanModeName\": \"Every 2 minutes\", \"scanModeId\": \"\"}}, \"subscriptions\": [], \"transformers\": []}"
+:: ── 3. Create a North OIAnalytics connector ───────────────────────────────────
+echo Creating North OIAnalytics connector...
+curl --silent --location --user %USERNAME%:%PASSWORD% ^
+  "http://localhost:2223/api/north" ^
+  --header "Content-Type: application/json" ^
+  --header "Accept: application/json" ^
+  --data "{\"name\": \"North OIAnalytics\", \"type\": \"oianalytics\", \"description\": \"\", \"enabled\": true, \"settings\": {\"useOiaModule\": true, \"timeout\": 15000, \"compress\": false}, \"caching\": {\"archive\": {\"enabled\": false, \"retentionDuration\": 0}, \"error\": {\"retentionDuration\": 0, \"retryCount\": 3, \"retryInterval\": 5000}, \"throttling\": {\"maxNumberOfElements\": 10000, \"maxSize\": 0, \"runMinDelay\": 200}, \"trigger\": {\"numberOfFiles\": 1, \"numberOfElements\": 1, \"scanModeId\": \"\", \"scanModeName\": \"Every 2 minutes\"}}, \"transformers\": []}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to create North connector.
     exit /b %errorlevel%
 )
 
-:: Execute the curl command to create South connector
-echo Creating South connector...
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/south" ^
---header "Content-Type: application/json" ^
---header "Accept: application/json" ^
---data "{\"name\": \"Modbus\", \"type\": \"modbus\", \"description\": \"\", \"enabled\": true, \"settings\": {\"host\": \"127.0.0.1\", \"port\": 502, \"connectTimeout\": 10000, \"retryInterval\": 10000, \"slaveId\": 1, \"addressOffset\": \"modbus\", \"endianness\": \"big-endian\", \"swapBytesInWords\": false, \"swapWordsInDWords\": false}, \"items\": []}"
+:: ── 4. Create a South Modbus connector ────────────────────────────────────────
+echo Creating South Modbus connector...
+curl --silent --location --user %USERNAME%:%PASSWORD% ^
+  "http://localhost:2223/api/south" ^
+  --header "Content-Type: application/json" ^
+  --header "Accept: application/json" ^
+  --data "{\"name\": \"Modbus\", \"type\": \"modbus\", \"description\": \"\", \"enabled\": true, \"settings\": {\"host\": \"127.0.0.1\", \"port\": 502, \"connectTimeout\": 10000, \"retryInterval\": 10000, \"slaveId\": 1, \"addressOffset\": \"modbus\", \"endianness\": \"big-endian\", \"swapBytesInWords\": false, \"swapWordsInDWords\": false}, \"items\": [], \"groups\": []}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to create South connector.
     exit /b %errorlevel%
 )
 
-:: Execute the curl command to register OIBus
-echo Registering OIBus...
-curl --location --user %USERNAME%:%PASSWORD% "http://localhost:2223/api/oianalytics/register" ^
---header "Content-Type: application/json" ^
---data "{\"host\": \"%OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": \"\", \"proxyUsername\": \"\", \"proxyPassword\": \"\", \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"setpoint\": true, \"testNorthConnection\": true, \"deleteNorth\": true, \"updateNorth\": true, \"createNorth\": true, \"testSouthItem\": true, \"testSouthConnection\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"deleteSouth\": true, \"updateSouth\": true, \"createSouth\": true, \"testHistorySouthItem\": true, \"testHistorySouthConnection\": true, \"testHistoryNorthConnection\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"deleteHistoryQuery\": true, \"updateHistoryQuery\": true, \"createHistoryQuery\": true, \"deleteCertificate\": true, \"updateCertificate\": true, \"createCertificate\": true, \"deleteIpFilter\": true, \"updateIpFilter\": true, \"createIpFilter\": true, \"deleteScanMode\": true, \"updateScanMode\": true, \"createScanMode\": true, \"updateRegistrationSettings\": true, \"updateEngineSettings\": true, \"regenerateCipherKeys\": true, \"restartEngine\": true, \"updateVersion\": true}}"
+:: ── 5. Register OIBus with OIAnalytics ────────────────────────────────────────
+echo Registering OIBus with OIAnalytics...
+curl --silent --location --user %USERNAME%:%PASSWORD% ^
+  "http://localhost:2223/api/oianalytics/register" ^
+  --header "Content-Type: application/json" ^
+  --data "{\"host\": \"%OIANALYTICS_URL%\", \"useProxy\": false, \"proxyUrl\": \"\", \"proxyUsername\": \"\", \"proxyPassword\": \"\", \"useApiGateway\": false, \"apiGatewayHeaderKey\": \"\", \"apiGatewayHeaderValue\": \"\", \"apiGatewayBaseEndpoint\": \"\", \"acceptUnauthorized\": false, \"commandRefreshInterval\": 60, \"commandRetryInterval\": 10, \"messageRetryInterval\": 10, \"commandPermissions\": {\"updateVersion\": true, \"restartEngine\": true, \"regenerateCipherKeys\": true, \"updateEngineSettings\": true, \"updateRegistrationSettings\": true, \"createScanMode\": true, \"updateScanMode\": true, \"deleteScanMode\": true, \"createIpFilter\": true, \"updateIpFilter\": true, \"deleteIpFilter\": true, \"createCertificate\": true, \"updateCertificate\": true, \"deleteCertificate\": true, \"createSouth\": true, \"updateSouth\": true, \"deleteSouth\": true, \"createOrUpdateSouthItemsFromCsv\": true, \"testSouthConnection\": true, \"testSouthItem\": true, \"createNorth\": true, \"updateNorth\": true, \"deleteNorth\": true, \"testNorthConnection\": true, \"searchNorthCacheContent\": true, \"getNorthCacheFileContent\": true, \"updateNorthCacheContent\": true, \"createHistoryQuery\": true, \"updateHistoryQuery\": true, \"deleteHistoryQuery\": true, \"createOrUpdateHistoryItemsFromCsv\": true, \"testHistoryNorthConnection\": true, \"testHistorySouthConnection\": true, \"testHistorySouthItem\": true, \"searchHistoryCacheContent\": true, \"getHistoryCacheFileContent\": true, \"updateHistoryCacheContent\": true, \"createCustomTransformer\": true, \"updateCustomTransformer\": true, \"deleteCustomTransformer\": true, \"testCustomTransformer\": true, \"setpoint\": true}}"
 echo.
 if %errorlevel% neq 0 (
     echo Error: Failed to register OIBus.
     exit /b %errorlevel%
 )
 
-:END
+echo Bootstrap complete. Validate the OIAnalytics registration in your OIAnalytics instance.
 
+:END
 ```
 
-:::info
-For a complete list of available endpoints, visit the [API documentation page](../../api/index.mdx).
+:::info API reference
+For the full list of available endpoints and their request/response schemas, see the
+[API documentation](../../api/index.mdx).
 :::
 
 ### Usage
@@ -184,3 +199,8 @@ For a complete list of available endpoints, visit the [API documentation page](.
 ```batch
 .\mass-install.bat -n "OIBus" -c "C:\OIBusData"
 ```
+
+| Parameter | Description                              | Default        |
+| --------- | ---------------------------------------- | -------------- |
+| `-n`      | Name of the OIBus Windows service.       | `OIBus`        |
+| `-c`      | Path to the OIBus data directory.        | `C:\OIBusData` |
