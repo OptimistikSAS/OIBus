@@ -29,21 +29,39 @@ import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { CONTENT_FOLDER } from '../model/engine.model';
 
 /**
- * Class NorthConnector: provides general attributes and methods for north connectors.
- * Building a new North connector means to extend this class, and to surcharge
- * the following methods:
- * - **handleValues**: receive an array of values that need to be sent to an external application
- * - **handleFile**: receive a file that need to be sent to an external application.
- * - **connect** (optional): to allow establishing proper connection to the external application
- * - **disconnect** (optional): to allow proper disconnection
+ * Base class for every North connector.
  *
- * The constructor of the API need to initialize:
- * - **this.canHandleValues** to true in order to receive values with handleValues()
- * - **this.canHandleFiles** to true in order to receive a file with handleFile()
+ * **Conceptual model**
+ *  - North is **pull-based** from a local file cache. South connectors call
+ *    `cacheContent(...)` to write payloads (optionally through a transformer);
+ *    a separate cron-driven `run()` loop later pulls files out of the cache
+ *    and hands them to the subclass's `handleContent()` for actual delivery.
+ *  - This decoupling means a flaky destination doesn't block South ingestion:
+ *    files just pile up in the cache and get retried on the next tick.
  *
- * In addition, it is possible to use a number of helper functions:
- * - **getProxy**: get the proxy handler
- * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
+ * **What a subclass implements**
+ *  - `supportedTypes()`: which `OIBusContent.contentType` values this North
+ *    can deliver (e.g. `['oianalytics', 'any']`). Unsupported types are
+ *    automatically routed to the error folder by `handleContentWrapper`.
+ *  - `handleContent(fileStream, metadata)`: the actual delivery. May throw —
+ *    the wrapper handles retry + error-folder routing.
+ *  - `testConnection()`: probe for the UI's "test" button.
+ *  - Optionally override `connect()` / `disconnect()` for protocol setup —
+ *    call `super.*` to keep the cron / cache lifecycle correct.
+ *
+ * **Transformer routing** (in `cacheContent` → `findTransformer`)
+ *  - Resolution priority: items-level → group-level → south-level fallback.
+ *  - Standard transformers `'ignore'` and `'iso'` short-circuit: ignore drops
+ *    the data, iso skips transformation and caches the raw payload.
+ *  - Resolution uses a pre-built lookup that's invalidated on the
+ *    `connectorConfiguration` setter (see `transformerLookup` doc).
+ *
+ * **Retry semantics** (in `handleContentWrapper`)
+ *  - On `handleContent` failure: increment `errorCount`, log, keep the file
+ *    in the cache. Next tick re-tries the same file.
+ *  - When `errorCount > caching.error.retryCount` (and the error didn't set
+ *    `forceRetry`), the file is moved to the `error/` folder so the rest of
+ *    the cache can keep flowing.
  */
 export default abstract class NorthConnector<T extends NorthSettings> {
   private contentBeingSent: { filename: string; metadata: CacheMetadata } | null = null;
@@ -165,6 +183,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     return this.transformerLookup!;
   }
 
+  /**
+   * Wire up event listeners and start the cache. Always boots the cache (so
+   * the UI can search cached/error/archive even when the connector is
+   * disabled); only calls `connect()` (which installs the cron) when enabled.
+   */
   async start(): Promise<void> {
     this.cacheService.cacheSizeEventEmitter.on('cache-size', this.onCacheSize);
     this.taskRunnerEvent.on('run', async (taskDescription: { id: string; name: string }) => {
@@ -182,8 +205,12 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /**
-   * Method called by Engine to initialize a North connector. This method can be surcharged in the
-   * North connector implementation to allow connection to a third party application for example.
+   * Install the send-cron and check whether there's already content in the
+   * cache to flush.
+   *
+   * Subclasses MAY override to open a session / socket / HTTP client to the
+   * destination. Overrides should call `super.connect()` so the cron + initial
+   * trigger sweep run.
    */
   async connect(): Promise<void> {
     this.metricsEvent.emit('connect', {
@@ -197,7 +224,12 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /**
-   * Create a job used to populate the queue where each element of the queue is a job to call, associated to its scan mode
+   * Create (or replace) the cron job that periodically enqueues a "send" tick.
+   * Each cron firing adds a task to the queue via `addTaskToQueue`, which the
+   * `'run'` event handler drains.
+   *
+   * Invalid cron expressions are logged and skipped — a misconfigured cron
+   * must not crash the North.
    */
   createCronJob(scanMode: ScanMode): void {
     const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
@@ -223,6 +255,14 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
+  /**
+   * Enqueue a "send" task. Same de-duplication contract as South's
+   * `addToQueue`: identical task ids are coalesced, and an empty queue
+   * triggers `'run'` immediately. Tasks come from three sources:
+   *   - the cron (scan-mode tick),
+   *   - `triggerRunIfNecessary` (file count / element count threshold reached),
+   *   - retry after `errorCount > 0`.
+   */
   addTaskToQueue(taskDescription: { id: string; name: string }): void {
     const foundJob = this.taskJobQueue.find(element => element.id === taskDescription.id);
     if (foundJob) {
@@ -238,6 +278,19 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
+  /**
+   * Drain one queued task: pull a file from the cache and try to deliver it.
+   *
+   * Guards: skip entirely if a previous `run()` is still in flight
+   * (`runProgress$`) or the connector is shutting down. The deferred is
+   * cleared at every exit path so `stop()` can be cleanly awaited.
+   *
+   * After the run, decides what to do next:
+   *  - more tasks queued → emit `'run'` to keep draining.
+   *  - queue empty → call `triggerRunIfNecessary` with either the retry
+   *    interval (if the last attempt errored) or the configured throttling
+   *    minimum, which may re-enqueue if cache thresholds are breached.
+   */
   async run(taskDescription: { id: string; name: string }): Promise<void> {
     this.logger.trace(`North run triggered by task "${taskDescription.name}" (${taskDescription.id})`);
     if (this.runProgress$ || this.stopping) {
@@ -259,6 +312,23 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
+  /**
+   * One "deliver from cache" attempt. The full lifecycle:
+   *  1. Pull the next pending file from the cache (or reuse a previously
+   *     pulled one if we're retrying — `contentBeingSent` holds the cursor).
+   *  2. Reject unsupported content types straight to the error folder.
+   *  3. Stream the file into the subclass's `handleContent()`.
+   *  4. On success: archive or remove the file per the connector's archive
+   *     setting, reset `errorCount`, emit `'run-end'` with action `'sent'`
+   *     or `'archived'`.
+   *  5. On failure: keep the file, increment `errorCount`, and (if past the
+   *     retry-count threshold and the error wasn't `forceRetry`) move it to
+   *     the error folder so the queue can keep flowing.
+   *
+   * The metadata structure is `JSON.parse(JSON.stringify(...))`-cloned before
+   * use so a subclass that mutates the metadata can't corrupt the in-flight
+   * cursor.
+   */
   async handleContentWrapper(): Promise<void> {
     if (!this.contentBeingSent) {
       this.contentBeingSent = await this.cacheService.getCacheContentToSend(this.connector.caching.throttling.maxNumberOfElements);
@@ -361,6 +431,23 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     });
   }
 
+  /**
+   * Engine-facing entry point. Called by `data-stream-engine.addContent` for
+   * every batch of data the South emits.
+   *
+   * Routing:
+   *  - Cache full → drop on the floor (the cache-full warning is debounced
+   *    inside `cacheIsFull`).
+   *  - No transformer matches → `handleNoTransformer` (caches raw if the
+   *    type is supported, else logs and drops).
+   *  - Transformer is the standard `'ignore'` → drop intentionally.
+   *  - Transformer is the standard `'iso'` → cache as-is (pass-through).
+   *  - Otherwise → run the transformer and cache its output.
+   *
+   * After caching, `triggerRunIfNecessary(0)` is called so a configured
+   * trigger threshold (file count, element count) can promote this batch to
+   * an immediate send instead of waiting for the next cron tick.
+   */
   async cacheContent(data: OIBusContent, source: CacheMetadataSource): Promise<void> {
     if (this.cacheService.cacheIsFull(this.connector.caching.throttling.maxSize)) {
       return;
@@ -578,14 +665,22 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   /**
-   * Method called by Engine to stop a North connector. This method can be surcharged in the
-   * North connector implementation to allow disconnecting to a third party application for example.
+   * Release transport resources and stop the cache's debounce timers.
+   * Subclasses MAY override to close their HTTP client / socket / session;
+   * overrides should call `super.disconnect()` so the cache shuts down its
+   * internal timers cleanly.
    */
   async disconnect(): Promise<void> {
     this.cacheService.stop();
     this.logger.info(`"${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
+  /**
+   * Graceful shutdown. Symmetric to South's `stop()`:
+   *  1. Flip `stopping` and detach the queue listener.
+   *  2. Wait for any in-flight `run()` to finish.
+   *  3. Stop crons, clear the queue, disconnect.
+   */
   async stop(): Promise<void> {
     this.stopping = true;
     this.logger.debug(`Stopping "${this.connector.name}" (${this.connector.id})...`);
@@ -613,16 +708,38 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.cacheService.setLogger(value);
   }
 
+  /**
+   * Empty the cache (cache + error + archive folders). Triggered by the
+   * operator from the UI. Subclasses do NOT need to override; this only
+   * touches files, not transport state.
+   */
   async resetCache(): Promise<void> {
     await this.cacheService.removeAllCacheContent();
   }
 
+  /**
+   * Propagate a scan-mode cron change from the engine. Only rebuilds the
+   * cron if this North actually uses that scan mode (otherwise no-op).
+   */
   async updateScanMode(scanMode: ScanMode): Promise<void> {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);
     }
   }
 
+  /**
+   * Check cache state and possibly enqueue an immediate send tick. Three
+   * trigger paths, in order:
+   *  1. `errorCount > 0` → a retry task so a previously failed send gets
+   *     another shot without waiting for the next cron.
+   *  2. Raw-file queue depth past `caching.trigger.numberOfFiles` → flush.
+   *  3. Element queue depth past `caching.trigger.numberOfElements` → flush.
+   *
+   * `timeToWait` lets the caller defer the check (used by `run()` to honour
+   * `caching.throttling.runMinDelay` between back-to-back sends). The
+   * `stopping` flag short-circuits after the wait so a shutdown during the
+   * delay doesn't re-arm the queue.
+   */
   private async triggerRunIfNecessary(timeToWait: number): Promise<void> {
     if (timeToWait) {
       await delay(timeToWait);
@@ -654,12 +771,32 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     }
   }
 
+  /**
+   * Content types this North can deliver, expressed as the `contentType`
+   * strings produced by South connectors and transformers (e.g.
+   * `'oianalytics'`, `'any'`, `'modbus'`). The wrapper routes any other
+   * content type to the error folder so misrouted payloads don't get
+   * delivered to a destination that can't handle them.
+   */
   abstract supportedTypes(): Array<string>;
 
+  /**
+   * Probe the destination with the connector's current settings. Surfaces
+   * protocol-specific diagnostics for the UI's "test connection" button.
+   * Must not mutate connector state.
+   */
   abstract testConnection(): Promise<OIBusConnectionTestResult>;
 
+  /**
+   * The actual send. Receives the cached file as a read stream plus its
+   * metadata. May throw — `handleContentWrapper` handles retry and
+   * error-folder routing. If a thrown error sets `forceRetry`, the file stays
+   * in the cache forever (no error-folder fallback); use it when the failure
+   * is transient by definition (network blip).
+   */
   abstract handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void>;
 
+  /** Absolute path of the cache root for this connector. */
   protected getCacheFolder() {
     return this.cacheService.cacheFolder;
   }

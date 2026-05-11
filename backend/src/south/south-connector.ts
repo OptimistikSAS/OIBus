@@ -23,7 +23,39 @@ import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 
 /**
- * Class SouthConnector: provides general attributes and methods for South connectors.
+ * Base class for every South connector.
+ *
+ * **Responsibilities**
+ *  - Run a per-scan-mode cron that calls `run()` (which fans out to
+ *    `directQueryHandler` and/or `historyQueryHandler` depending on the
+ *    capabilities the subclass implements).
+ *  - Persist a per-item `trackedInstant` in the South cache so history queries
+ *    are resumable across restarts (no re-querying already-fetched data).
+ *  - Manage subscription items (`scanMode.id === 'subscription'`) by diffing
+ *    the desired item set against the live subscriptions.
+ *  - Forward retrieved content (time-values / files / opaque payloads) to the
+ *    engine via the `addContent*` family.
+ *
+ * **What a subclass implements**
+ *  - One or more capability interfaces from `./south-interface`:
+ *      `SouthDirectQuery`     → implement `directQuery(items)` for one-shot reads
+ *      `SouthHistoryQuery`    → implement `historyQuery(items, start, end)` for HA
+ *      `SouthSubscription`    → implement `subscribe(items)` + `unsubscribe(items)`
+ *    Capabilities are discovered via `hasDirectQuery()` / `hasHistoryQuery()` /
+ *    `hasSubscription()` which do a structural `in`-check, so subclasses don't
+ *    need to declare a flag.
+ *  - `testConnection()` and `testItem()` for the UI's "test" buttons.
+ *
+ * **Run-loop contract**
+ *  - Each cron tick enqueues a `ScanMode` via `addToQueue`. If a job for the
+ *    same scan mode is already queued or running, the new one is dropped (a
+ *    cron firing while its previous tick is still in flight is normal).
+ *  - `run()` consumes the queue head, groups the items via `groupItemsByGroup`
+ *    (so multi-item connectors batch grouped items into a single request, and
+ *    single-item connectors get one call per item), then re-emits `'next'` so
+ *    the next queued scan-mode (if any) starts immediately.
+ *  - `stop()` flips a `stopping` flag and awaits any in-flight `runProgress$`
+ *    deferred so the engine can shut down cleanly mid-scan.
  */
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
   private taskJobQueue: Array<ScanMode> = [];
@@ -77,6 +109,12 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     });
   }
 
+  /**
+   * Provision the per-connector cache table and call `connect()` if the
+   * connector is enabled. No-op when the connector is disabled — the engine
+   * still constructs it so the UI can read settings, but we don't spin up cron
+   * jobs or open connections.
+   */
   async start(): Promise<void> {
     if (this.isEnabled()) {
       this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
@@ -86,6 +124,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
+  /**
+   * Reset cron state and signal the connector is ready to schedule work.
+   *
+   * Subclasses MAY override to establish the underlying transport (TCP, OPC
+   * UA session, MQTT client, etc.). Overrides should call `super.connect()` so
+   * cron jobs, subscription bookkeeping, and the `'connected'` event are kept
+   * in sync.
+   */
   async connect(): Promise<void> {
     this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
 
@@ -101,6 +147,16 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.connectedEvent.emit('connected');
   }
 
+  /**
+   * Recompute the set of active cron jobs to match the current item / group
+   * configuration. Creates jobs for newly-referenced scan modes, stops jobs
+   * for scan modes no longer used. Idempotent — safe to call after any
+   * configuration change.
+   *
+   * The `'subscription'` scan mode is intentionally excluded: subscription
+   * items are pushed by the source, not polled, so they don't drive a cron.
+   * See `updateSubscriptions()` for that path.
+   */
   updateCronJobs(): void {
     // Collect all unique scan modes from enabled items (excluding 'subscription')
     const scanModes = new Map<string, ScanMode>();
@@ -135,8 +191,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Used when the cron of a scan mode is changed in the Engine
-   * The cron expression must be propagated to each South
+   * Propagate a scan-mode cron-expression change from the engine. Only
+   * rebuilds the cron if this connector actually uses that scan mode —
+   * otherwise it's a no-op (we'd never have had a cron for it).
    */
   updateScanModeIfUsed(scanMode: ScanMode): void {
     if (this.cronByScanModeIds.get(scanMode.id)) {
@@ -144,6 +201,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
+  /**
+   * Replace or create the cron for a single scan mode. Invalid cron
+   * expressions are logged and skipped without throwing — a single bad
+   * expression must not prevent the rest of the connector from running.
+   */
   createOrUpdateCronJob(scanMode: ScanMode): void {
     const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
     if (existingCronJob) {
@@ -164,6 +226,20 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
+  /**
+   * Diff the configured subscription items against what we're currently
+   * subscribed to and call `subscribe()` / `unsubscribe()` to reconcile.
+   *
+   * "Subscription items" are items whose scan mode is the reserved
+   * `'subscription'` id — push-driven rather than pull-driven, so they don't
+   * run through the cron loop. Subclasses must implement `SouthSubscription`
+   * for this to do anything; non-subscription connectors get a trace log and
+   * return.
+   *
+   * Errors from `subscribe()` / `unsubscribe()` are logged per-batch but never
+   * rethrown — a partial failure on either side leaves the connector running
+   * with whatever subscriptions did succeed.
+   */
   async updateSubscriptions(): Promise<void> {
     if (!this.hasSubscription()) {
       this.logger.trace('This connector does not support subscriptions');
@@ -207,6 +283,20 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return this.connector.enabled;
   }
 
+  /**
+   * Enqueue a scan-mode tick. Called from the cron callback in
+   * `createOrUpdateCronJob`.
+   *
+   * Dropped (logged but not re-enqueued) when:
+   *  - the connector is in the middle of `stop()`, or
+   *  - a tick for the same scan mode is already in the queue (i.e. the cron
+   *    fired again while the previous tick is still being processed). This is
+   *    a backpressure signal — usually it means the scan interval is too short
+   *    for the work being done. Surfaced as a warning so operators see it.
+   *
+   * If the queue was empty, also kicks the `'next'` event to start processing
+   * immediately. Otherwise, `run()` will drain the queue head when it finishes.
+   */
   addToQueue(scanMode: ScanMode): void {
     if (this.stopping) {
       this.logger.trace(`Connector is exiting. Cron "${scanMode.name}" (${scanMode.cron}) not added`);
@@ -227,6 +317,29 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
+  /**
+   * Execute one scan-mode tick for the given items.
+   *
+   * Items are grouped via `groupItemsByGroup` so connectors that support
+   * batched reads (OPC UA, Modbus, etc.) issue one request per group;
+   * "single-item" connectors (see `SOUTH_SINGLE_ITEMS`) get one call per item.
+   *
+   * Within the group loop:
+   *  1. If the connector implements `SouthDirectQuery`, run `directQueryHandler`.
+   *  2. If the connector implements `SouthHistoryQuery`, run
+   *     `historyQueryHandler` with a time window of "now − maxReadInterval"
+   *     to "now". The `trackedInstant` cache then narrows this window on
+   *     subsequent runs so we don't re-query already-fetched data.
+   *  3. Between groups, sleep `readDelay` (if configured) so the source isn't
+   *     overwhelmed by back-to-back batches.
+   *
+   * The `stopping` flag is checked between groups so `stop()` can interrupt
+   * mid-scan without waiting for the whole item list to finish.
+   *
+   * Errors from `direct`/`history` are caught and logged per-iteration — a
+   * single bad batch must not abort the rest of the scan or hide errors from
+   * later batches.
+   */
   async run(scanModeId: string, items: Array<SouthConnectorItemEntity<I>>): Promise<void> {
     this.createDeferredPromise();
 
@@ -289,17 +402,19 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Method used to set the runProgress$ variable with a DeferredPromise
-   * This allows calling historyQueryHandler from outside (like history query engine) in a blocking way for other
-   * calls
+   * Arm the `runProgress$` deferred. `stop()` awaits this promise so it can
+   * cleanly interrupt mid-scan; the history-query engine also reuses this
+   * hook to drive history runs as if they were a single coordinated task.
    */
   createDeferredPromise(): void {
     this.runProgress$ = new DeferredPromise();
   }
 
   /**
-   * Method used to resolve and unset the DeferredPromise kept in the runProgress$ variable
-   * This allows controlling the promise from an outside class (like history query engine)
+   * Resolve and clear the in-flight `runProgress$`. Pairs with
+   * `createDeferredPromise`; safe to call when no promise is armed (no-op).
+   * Must be called on EVERY exit path of `run()`, including early-out cases,
+   * otherwise `stop()` will hang.
    */
   resolveDeferredPromise(): void {
     if (this.runProgress$) {
@@ -308,6 +423,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
   }
 
+  /**
+   * One-shot read of the current value(s). Skips the call entirely if
+   * `filterDirectItems()` drops every item (subclasses may filter on settings
+   * that disable direct reads for some items).
+   *
+   * The returned value is cached as the item's `value` so the UI can show a
+   * "last value" without re-querying. `trackedInstant` stays `null` here —
+   * direct reads don't bound a time window; that's what history queries do.
+   */
   async directQueryHandler(items: Array<SouthConnectorItemEntity<I>>): Promise<void> {
     const itemsToRead = this.filterDirectItems(items);
     if (!itemsToRead.length) {
@@ -329,6 +453,23 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     });
   }
 
+  /**
+   * Run a windowed history read against `items` and persist the most recent
+   * timestamp seen so the next call resumes where this one left off.
+   *
+   * Window construction:
+   *  - The effective start is `max(startTime, cache.trackedInstant - overlap)`
+   *    so we never re-query data we've already cached (and the `overlap` lets
+   *    operators backfill a small slack window for late-arriving samples).
+   *  - The window is then split into sub-intervals of at most
+   *    `maxReadInterval` seconds (via `generateIntervals`) so very wide
+   *    catch-up reads don't try to fetch hours of data in one round-trip.
+   *  - `numberOfIntervalsDone` lets the planner skip intervals that are
+   *    entirely older than `trackedInstant` (already fetched).
+   *
+   * `historyIsRunning` is set for the duration so concurrent triggers and the
+   * metrics layer can detect whether a historical pass is in flight.
+   */
   async historyQueryHandler(items: Array<SouthConnectorItemEntity<I>>, startTime: Instant, endTime: Instant): Promise<void> {
     const itemsToRead = this.filterHistoryItems(items);
     if (!itemsToRead.length) {
@@ -457,6 +598,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return Math.round((currentIntervalIndex / numberOfIntervals + Number.EPSILON) * 100) / 100;
   }
 
+  /**
+   * Entry point subclasses call after a successful read. Dispatches by content
+   * shape to the engine callback and updates per-shape metrics:
+   *   - `'time-values'`  → array of OIBusTimeValue (timestamp + pointId + data)
+   *   - `'any-content'`  → opaque serialised payload (MQTT messages, etc.)
+   *   - `'any'`          → a file on disk (folder-scanner, FTP, etc.)
+   */
   async addContent(data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) {
     switch (data.type) {
       case 'time-values':
@@ -508,6 +656,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     });
   }
 
+  /**
+   * Stop crons, drain the queue, release transport resources. Subclasses MAY
+   * override to close sessions / sockets; overrides should call
+   * `super.disconnect()` so cron + queue state is reset.
+   *
+   * Idempotent — safe to call when already disconnected.
+   */
   async disconnect(): Promise<void> {
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
@@ -518,6 +673,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
+  /**
+   * Graceful shutdown. Flips `stopping`, awaits any in-flight `run()` via
+   * `runProgress$`, then disconnects. Used by the engine on connector delete /
+   * config reload / OIBus shutdown.
+   */
   async stop(): Promise<void> {
     this.stopping = true;
     this.logger.debug(`Stopping South "${this.connector.name}" (${this.connector.id})...`);
@@ -536,26 +696,48 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger = value;
   }
 
+  /**
+   * Drop the per-connector cache table (clears every item's `trackedInstant`
+   * and `value`). Triggered by the engine when the operator clicks
+   * "reset cache" — subsequent history queries will re-fetch from the
+   * connector's configured start window.
+   */
   async resetCache(): Promise<void> {
     this.cacheService!.dropItemValueTable(this.connector.id);
   }
 
+  /**
+   * Hook for subclasses that want to filter which items participate in a
+   * history pass (default: all of them). Useful for connectors where some
+   * items are direct-only or subscription-only.
+   */
   filterHistoryItems(items: Array<SouthConnectorItemEntity<I>>): Array<SouthConnectorItemEntity<I>> {
     return items;
   }
 
+  /**
+   * Hook for subclasses that want to filter which items participate in a
+   * direct read (default: all of them). Symmetric to `filterHistoryItems`.
+   */
   filterDirectItems(items: Array<SouthConnectorItemEntity<I>>): Array<SouthConnectorItemEntity<I>> {
     return items;
   }
 
+  /**
+   * Capability check. Returns `true` (with a TypeScript type-guard narrowing)
+   * if the subclass implements `SouthDirectQuery`. Discovery is structural —
+   * subclasses don't need a flag, just an implementation of `directQuery()`.
+   */
   hasDirectQuery(): this is SouthDirectQuery {
     return 'directQuery' in this;
   }
 
+  /** Capability check — true iff the subclass implements `SouthHistoryQuery.historyQuery()`. */
   hasHistoryQuery(): this is SouthHistoryQuery {
     return 'historyQuery' in this;
   }
 
+  /** Capability check — true iff the subclass implements both `subscribe()` and `unsubscribe()` from `SouthSubscription`. */
   hasSubscription(): this is SouthSubscription {
     return 'subscribe' in this && 'unsubscribe' in this;
   }
@@ -568,7 +750,17 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     return this.connector;
   }
 
+  /**
+   * Probe the source with the connector's current settings. Surfaces protocol-
+   * specific diagnostics (server build, response counts, etc.) for the UI's
+   * "test connection" button. Must not mutate the connector state.
+   */
   abstract testConnection(): Promise<OIBusConnectionTestResult>;
 
+  /**
+   * Run a single item through the connector with one-off `testingSettings`
+   * (overrides such as history window, sample count, etc.) and return the
+   * raw content. Backs the UI's per-item test action.
+   */
   abstract testItem(item: SouthConnectorItemEntity<I>, testingSettings: SouthConnectorItemTestingSettings): Promise<OIBusContent>;
 }
