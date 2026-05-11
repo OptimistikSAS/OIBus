@@ -28,7 +28,7 @@
     "migrate": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
     "test": "node --import tsx --test --test-reporter=tap 'src/**/*.spec.ts'",
     "test:spec": "node --import tsx --test --test-reporter=spec 'src/**/*.spec.ts'",
-    "test:coverage": "node --import tsx --test --experimental-test-coverage --test-coverage-exclude='src/**/*.spec.ts' 'src/**/*.spec.ts'",
+    "test:coverage": "node --import tsx --test --experimental-test-coverage --test-coverage-exclude='src/**/*.spec.ts' --test-coverage-exclude='src/tests/**' --test-coverage-exclude='src/index.ts' --test-coverage-exclude='src/web-server/routes.ts' --test-coverage-exclude='src/web-server/web-server.ts' --test-coverage-exclude='src/settings-interface.generator.ts' --test-coverage-exclude='src/migration/**' --test-coverage-exclude='src/**/manifest.ts' --test-coverage-exclude='src/model/**' --test-coverage-exclude='shared/**' 'src/**/*.spec.ts'",
     "test:watch": "node --import tsx --test --watch 'src/**/*.spec.ts'",
     "lint": "eslint src/*.ts shared/model/*.ts",
     "lint:fix": "npm run lint -- --fix",

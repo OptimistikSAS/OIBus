@@ -116,12 +116,6 @@ const createAuthMiddleware = (config: AuthConfig) => {
         return res.status(200).json(currentUser);
       }
 
-      // Handle current user endpoint
-      if (req.url === '/api/users/current-user') {
-        const currentUser = config.userService.findByLogin(headerUser.name)!;
-        return res.status(200).json(currentUser);
-      }
-
       // Handle authentication endpoint
       if (req.path === '/api/users/authentication') {
         const token = jwt.sign(
