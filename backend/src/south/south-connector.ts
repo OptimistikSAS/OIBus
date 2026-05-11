@@ -171,11 +171,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
     // Get all subscription items
     const subscriptionItems = this.connector.items.filter(item => item.scanMode && item.scanMode.id === 'subscription' && item.enabled);
-    // Get the IDs of currently subscribed items
     const subscribedIds = new Set(this.subscribedItems.map(item => item.id));
+    const subscriptionIds = new Set(subscriptionItems.map(item => item.id));
 
     // Items to unsubscribe: those in subscribedItems but not in subscriptionItems
-    const itemsToUnsubscribe = this.subscribedItems.filter(item => !subscriptionItems.some(subItem => subItem.id === item.id));
+    const itemsToUnsubscribe = this.subscribedItems.filter(item => !subscriptionIds.has(item.id));
     // Items to subscribe: those in subscriptionItems but not already subscribed
     const itemsToSubscribe = subscriptionItems.filter(item => !subscribedIds.has(item.id));
 
@@ -184,7 +184,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       try {
         this.logger.trace(`Unsubscribing from ${itemsToUnsubscribe.length} items`);
         await this.unsubscribe(itemsToUnsubscribe);
-        this.subscribedItems = this.subscribedItems.filter(item => !itemsToUnsubscribe.includes(item));
+        // After unsubscribing, the surviving subscribed items are exactly those
+        // whose id is still in subscriptionIds
+        this.subscribedItems = this.subscribedItems.filter(item => subscriptionIds.has(item.id));
       } catch (error: unknown) {
         this.logger.error(`Error when unsubscribing from items: ${(error as Error).message}`);
       }
