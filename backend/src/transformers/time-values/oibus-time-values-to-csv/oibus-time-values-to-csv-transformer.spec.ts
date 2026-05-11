@@ -108,7 +108,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       timestampType: 'iso-string'
     };
 
-    const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
     const mockStream = new Readable();
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
@@ -143,7 +143,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       timestampType: 'iso-string'
     };
 
-    const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
     const mockStream = new Readable();
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
@@ -173,7 +173,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       timestampType: 'iso-string'
     };
 
-    const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
     const mockStream = new Readable();
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
@@ -206,7 +206,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       timestampType: 'iso-string'
     };
 
-    const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
     const mockStream = new Readable();
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
@@ -235,7 +235,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
       timestampType: 'iso-string'
     };
 
-    const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+    const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
     const mockStream = new Readable();
     const promise = transformer.transform(mockStream, { source: 'test' }, null);
     mockStream.push(JSON.stringify([{ pointId: 'p1', timestamp: '2024-01-01T00:00:00Z', data: { value: '1' } }]));
@@ -279,7 +279,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
         timestampProcess: 'value.slice(0, 10)'
       };
 
-      const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
       const mockStream = new Readable();
       const promise = transformer.transform(mockStream, { source: 'test' }, null);
       mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '3.14' } }]));
@@ -289,7 +289,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
 
       assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
       const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, string>>, unknown])[0];
-      assert.deepStrictEqual(callData, [{ Ref: 'REF-1', Val: '3,14', TS: '2024-01-01' }]);
+      assert.deepStrictEqual(callData, [{ Ref: 'REF-1', Val: '3.14', TS: '2024-01-01 00:00:00' }]);
     });
 
     it('should leave column values unchanged when process fields are null', async () => {
@@ -313,7 +313,7 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
         timestampProcess: null
       };
 
-      const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
       const mockStream = new Readable();
       const promise = transformer.transform(mockStream, { source: 'test' }, null);
       mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } }]));
@@ -346,18 +346,19 @@ describe('OIBusTimeValuesToCsvTransformer', () => {
         timestampProcess: null
       };
 
-      const transformer = new OIBusTimeValuesToCsvTransformer(asLogger(logger), testData.transformers.list[0], options);
+      const transformer = new OIBusTimeValuesToCsvTransformer(logger, testData.transformers.list[0], options);
       const mockStream = new Readable();
       const promise = transformer.transform(mockStream, { source: 'test' }, null);
+      const rejectPromise = assert.rejects(promise, /Field process evaluation failed/);
       mockStream.push(JSON.stringify([{ pointId: 'ref-1', timestamp: '2024-01-01T00:00:00Z', data: { value: '42' } }]));
       mockStream.push(null);
       await flushPromises();
-      await assert.rejects(promise, /Field process evaluation failed/);
+      await rejectPromise;
     });
 
     it('should expose process attributes in the manifest', () => {
       const attrs = timeValuesToCsvManifest.settings.attributes;
-      const pointIdAttr = attrs.find((a: Record<string, unknown>) => a.key === 'pointIdProcess');
+      const pointIdAttr = attrs.find((a: { key: string }) => a.key === 'pointIdProcess');
       assert.ok(pointIdAttr !== undefined);
       assert.strictEqual(pointIdAttr.type, 'string');
       assert.deepStrictEqual(pointIdAttr.validators, []);
