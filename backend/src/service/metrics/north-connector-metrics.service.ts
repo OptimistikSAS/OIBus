@@ -6,8 +6,11 @@ import NorthConnectorMetricsRepository from '../../repository/metrics/north-conn
 import NorthConnector from '../../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 
+const METRICS_FLUSH_INTERVAL_MS = 1000;
+
 export default class NorthConnectorMetricsService {
   private _stream: PassThrough | null = null;
+  private metricsFlushTimer: NodeJS.Timeout | null = null;
 
   private _metrics: NorthConnectorMetrics = {
     metricsStart: DateTime.now().toUTC().toISO() as Instant,
@@ -79,12 +82,27 @@ export default class NorthConnectorMetricsService {
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
+  /** Both the DB write and the SSE push are debounced through the same timer. */
   updateMetrics(): void {
+    if (this.metricsFlushTimer) return;
+    this.metricsFlushTimer = setTimeout(() => {
+      this.metricsFlushTimer = null;
+      this.flushMetrics();
+    }, METRICS_FLUSH_INTERVAL_MS);
+  }
+
+  private flushMetrics(): void {
     this.northConnectorMetricsRepository.updateMetrics(this.northConnector.connectorConfiguration.id, this._metrics);
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
+    // Cancel any pending debounced flush — the metrics row is about to be
+    // removed and re-initialised, so a stale flush would be wasted work.
+    if (this.metricsFlushTimer) {
+      clearTimeout(this.metricsFlushTimer);
+      this.metricsFlushTimer = null;
+    }
     this.northConnectorMetricsRepository.removeMetrics(this.northConnector.connectorConfiguration.id);
     this.initMetrics();
   }
@@ -95,6 +113,12 @@ export default class NorthConnectorMetricsService {
     this.northConnector.metricsEvent.off('connect', this.onConnect);
     this.northConnector.metricsEvent.off('run-start', this.onRunStart);
     this.northConnector.metricsEvent.off('run-end', this.onRunEnd);
+    // Drain any pending flush so the last seen metrics aren't lost on shutdown.
+    if (this.metricsFlushTimer) {
+      clearTimeout(this.metricsFlushTimer);
+      this.metricsFlushTimer = null;
+      this.flushMetrics();
+    }
     this._stream?.destroy();
     this._stream = null;
   }
