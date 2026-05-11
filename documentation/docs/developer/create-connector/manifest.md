@@ -5,148 +5,287 @@ sidebar_position: 2
 
 # The manifest
 
-With this JSON, you can specify what fields are required to configure your connector, what type of fields, etc...
+The manifest is a TypeScript file (typed as `SouthConnectorManifest` or `NorthConnectorManifest`) that
+declares:
 
-- **id**: The id of your manifest (must not be used by another manifest)
-- **name**: The name used for display
-- **category**: The type of manifest. Existing categories are: `iot`, `api`, `database`, `file`.
-- **description**: What your connector does, briefly summarized.
-- **modes**: How your connector will integrate with OIBus.
-  - For South
-    - subscription: Can your connector subscribe ? If so, it must implements `QueriesSubscription` class.
-    - lastPoint: Can your connector request a point ? If so the value will be retrieved as JSON payload and the connector must implement the
-      `QueriesLastPoint` interface.
-    - lastFile: Can your connector request a file ? If so, the connector must implement the `QueriesFile` interface.
-    - history: Can your connector request a history ? If so, the connector must implement the `QueriesHistory` interface.
-    - If true, it will be possible to create history queries from your connector type.
-  - For North
-    - files: Can manage files. If so, the connector must implement the `HandlesFile` interface.
-    - points: Can manage JSON payload. If so, the connector must implement the `HandlesValues` interface.
-- settings: An array of settings which represents the inputs to configure your connector. See the [settings section](#settings)
-- items (South only): A section to describe how to configure the items to query
-  - scanMode:
-    - acceptSubscription: Is it possible to use subscription for an item? Example: OPCUA
-    - subscriptionOnly: Is subscription the only choice for each item? Example: MQTT
-  - settings: An array of settings which represents the inputs to configure your item. See the [settings section](#settings)
+- **What the connector is** — id, category, supported modes (South) or content types (North)
+- **What settings the operator can configure** — connection URL, credentials, protocol-specific options
+- **For South: what an item looks like** — which value to query, scan-mode acceptability, item-specific
+  settings
 
-## Settings
+The frontend renders the manifest as a form; the backend type-generator produces the corresponding TypeScript
+interfaces (`South<Type>Settings`, `South<Type>ItemSettings`, `North<Type>Settings`).
 
-All settings have common fields, used for display or validation. These common fields are:
+## Top-level shape
 
-- **Main fields**
-  - **key**: The field, written in `camelCase`
-  - **type**: One of the type described below, starting with the `Oib` prefix
-  - **defaultValue** (optional): must match the type (string, number, boolean...)
-- **Display settings**
-  - **label**: What to display in the form
-  - **pipe** (optional): A pipe to translate the options
-  - **unitLabel** (optional): The unit of the value
-  - **newRow**: Should this input start a new row?
-  - **class**: Bootstrap compatible CSS classes, mainly used to display each input in the row with `col-4`, `col`, etc.
-  - **displayInViewMode**: Should this input be shown on the display page of a connector
-- **Validation**
-  - conditionalDisplay: The other field to monitor according to which the current field is displayed or not. The validators apply only if
-    the current field is displayed. See example below.
-  - validators: An array of [Angular validators](https://angular.io/api/forms/Validators). See example below
+### South
 
-```json title="Conditional display example"
+```typescript title="backend/src/south/south-folder-scanner/manifest.ts (excerpt)"
+import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+
+const manifest: SouthConnectorManifest = {
+  id: 'folder-scanner', // must be in OIBUS_SOUTH_TYPES
+  category: 'file', // 'file' | 'iot' | 'database' | 'api'
+  modes: {
+    subscription: false, // class implements SouthSubscription?
+    lastPoint: false, // class implements SouthDirectQuery for a point?
+    lastFile: true, // class implements SouthDirectQuery for a file?
+    history: false // class implements SouthHistoryQuery?
+  },
+  settings: {
+    /* OIBusObjectAttribute — see below */
+  },
+  items: {
+    /* OIBusArrayAttribute — see below */
+  }
+};
+
+export default manifest;
+```
+
+The `modes` flags are _advisory_ — they tell the UI which actions to expose (e.g. whether to show
+"create history query" for this connector type). The actual runtime capability is determined by which
+interfaces from `south-interface.ts` the class implements; see
+[the class doc](./class.md#capability-interfaces-south-only).
+
+### North
+
+```typescript title="backend/src/north/north-console/manifest.ts"
+import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+
+const manifest: NorthConnectorManifest = {
+  id: 'console', // must be in OIBUS_NORTH_TYPES
+  category: 'debug', // 'debug' | 'api' | 'file' | 'iot'
+  types: ['any', 'time-values', 'setpoint'], // content types this North can deliver
+  settings: {
+    /* OIBusObjectAttribute */
+  }
+};
+
+export default manifest;
+```
+
+North doesn't have `items`. The `types` array MUST agree with what the class returns from
+`supportedTypes()` — the engine checks at runtime and routes unsupported types to the error folder.
+
+## The settings object
+
+`settings` is always an `OIBusObjectAttribute`:
+
+```typescript
 {
-  "field": "authentication",
-  "values": ["basic"]
+  type: 'object',
+  key: 'settings',
+  translationKey: 'configuration.oibus.manifest.<south|north>.settings',
+  displayProperties: { visible: true, wrapInBox: false },
+  enablingConditions: [],
+  validators: [],
+  attributes: [ /* child attributes — your form fields */ ]
 }
 ```
 
-```json title="Validator example"
-[
-  {
-    "key": "required"
-  },
-  {
-    "key": "maxLength",
-    "params": {
-      "maxLength": 50
-    }
+Each child in `attributes` is one form control. Containers (`object`, `array`) can themselves contain more
+attributes — nesting is unlimited.
+
+### Attribute types
+
+| `type`            | UI element              | Generated TypeScript type | Extra fields                                                                    |
+| ----------------- | ----------------------- | ------------------------- | ------------------------------------------------------------------------------- |
+| `'string'`        | Text input              | `string \| null`          | `defaultValue`                                                                  |
+| `'number'`        | Numeric input           | `number \| null`          | `defaultValue`, `unit` (e.g. `'ms'`, `'MB'`)                                    |
+| `'boolean'`       | Toggle / checkbox       | `boolean`                 | `defaultValue`                                                                  |
+| `'secret'`        | Password input (masked) | `string \| null`          | (encrypted at rest by OIBus)                                                    |
+| `'string-select'` | Dropdown                | `string \| null`          | `selectableValues: Array<string>`, `defaultValue`                               |
+| `'code'`          | Codemirror editor       | `string \| null`          | `contentType: 'sql' \| 'json'`, `defaultValue`                                  |
+| `'instant'`       | Date+time picker        | `Instant \| null`         | —                                                                               |
+| `'timezone'`      | Timezone select         | `string \| null`          | `defaultValue`                                                                  |
+| `'scan-mode'`     | Scan-mode select        | `ScanMode`                | `acceptableType: 'POLL' \| 'SUBSCRIPTION' \| 'SUBSCRIPTION_AND_POLL'`           |
+| `'certificate'`   | Certificate selector    | `string \| null`          | —                                                                               |
+| `'object'`        | Group container         | nested object             | `attributes`, `displayProperties: { visible, wrapInBox }`, `enablingConditions` |
+| `'array'`         | Repeatable rows         | `Array<T>`                | `paginate`, `numberOfElementPerPage`, `rootAttribute`                           |
+
+Every leaf attribute carries the same common fields:
+
+| Field               | Purpose                                                                                            |
+| ------------------- | -------------------------------------------------------------------------------------------------- |
+| `key`               | camelCase field name — becomes the TypeScript property                                             |
+| `translationKey`    | i18n key for the label                                                                             |
+| `validators`        | Array of `{ type, arguments }` — see below                                                         |
+| `displayProperties` | `{ row, columns, displayInViewMode }` for leaf attributes, or `{ visible, wrapInBox }` for objects |
+
+### A concrete example
+
+```typescript title="One simple string attribute"
+{
+  type: 'string',
+  key: 'inputFolder',
+  translationKey: 'configuration.oibus.manifest.south.folder-scanner.input-folder',
+  defaultValue: './input/',
+  validators: [
+    { type: 'REQUIRED', arguments: [] }
+  ],
+  displayProperties: {
+    row: 0,        // 0-indexed row in the form
+    columns: 12,   // Bootstrap-style 12-column grid → 12 = full width
+    displayInViewMode: true
   }
-]
+}
 ```
 
-Then, each type of fields comes with its frontend logic and backend type safety. Some types add more fields.
-
-### OibText
-
-Create an input of type text in the frontend, and a field of type `string` in the TypeScript model.
-
-### OibTextArea
-
-Create a textarea input in the frontend, and a field of type `string` in the TypeScript model.
-
-### OibCodeBlock
-
-Create a code block with [monaco editor](https://microsoft.github.io/monaco-editor/) in the frontend, and a field of type `string` in the
-TypeScript model. Additional field:
-
-- contentType: The language to set up the editor on the frontend (example: `sql`, `json`).
-
-### OibNumber
-
-Create an input of type number in the frontend, and a field of type `number` in the TypeScript model.
-
-### OibSelect
-
-Create an input of type select in the frontend, and a field of type `string` in the TypeScript model. Additional field:
-
-- options: The options to display in the select
-
-### OibSecret
-
-Create an input of type password in the frontend, and a field of type `string` in the TypeScript model. This field does not show what is
-typed in the frontend, and indicate OIBus [to encrypt the input](../../guide/advanced/oibus-security).
-
-### OibCheckbox
-
-Create an input of type checkbox in the frontend (customized in a toggle), and a field of type `boolean` in the TypeScript model.
-
-### OibTimezone
-
-Create an input of type select in the frontend, and a field of type `string` in the TypeScript model. The options are the available
-timezones.
-
-### Group settings
-
-It is possible to group settings together, inside a structure or inside an array.
-
-#### OibArray
-
-OibArray will be displayed... as an array where you can add or delete rows: each row will have the fields described in the **content**
-fields. See the `dateTimeFields` builder as an example.
-
-#### OibFormGroup
-
-Group settings in another structure. Specially useful to apply a `conditonalDisplay` to a group of settings, and add other
-`conditionalDisplays` inside the structure
-
-## Items
-
-The items form (create, or update) can be called from the Item array of the display or edit page of a South connector. All items must have a
-name, a scanMode (that can be hidden if it only accepts subscription) and [specific settings described in the manifest](#settings).
-
-## Create or update your data types
-
-If you create a new connector, add it in the `buildSouthInterfaceName` or `buildNorthInterfaceName` method of the
-`settings-interface.generator.ts` file.
-
-Once your manifest is ready, you can generate the appropriate types by running in the `backend` folder:
-
-```
-npm run generate-settings-interface
+```typescript title="A select with three options"
+{
+  type: 'string-select',
+  key: 'authenticationType',
+  translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.type',
+  selectableValues: ['none', 'basic', 'cert'],
+  defaultValue: 'none',
+  validators: [{ type: 'REQUIRED', arguments: [] }],
+  displayProperties: { row: 2, columns: 4, displayInViewMode: false }
+}
 ```
 
-This command will parse all the manifest files found in the `backend` folder and create the TypeScript types according to each field
-description.
+```typescript title="A secret that's only required when auth = basic"
+// Declared as a sibling of authenticationType; visibility is controlled by an
+// enablingCondition on the PARENT object (see below).
+{
+  type: 'secret',
+  key: 'password',
+  translationKey: 'configuration.oibus.manifest.south.mqtt.authentication.password',
+  validators: [{ type: 'REQUIRED', arguments: [] }],
+  displayProperties: { row: 3, columns: 4, displayInViewMode: false }
+}
+```
 
-You will be able to call them with the customized name `South<ConnectorType>Settings` and `South<ConnectorType>ItemSettings`.
+### Validators
 
-:::caution
-Once the command has run, if the types have changed, the next run will fail. You will have to update your code to adapt it to the
-new types first.
+```typescript
+validators: [
+  { type: 'REQUIRED', arguments: [] },
+  { type: 'MINIMUM', arguments: ['1'] }, // numeric, e.g. number must be ≥ 1
+  { type: 'MAXIMUM', arguments: ['65535'] },
+  { type: 'POSITIVE_INTEGER', arguments: [] },
+  { type: 'VALID_CRON', arguments: [] },
+  { type: 'PATTERN', arguments: ['^[A-Z]{3}-\\d+$'] }, // regex; backslashes need escaping
+  { type: 'UNIQUE', arguments: [] }, // value unique within the parent array
+  { type: 'SINGLE_TRUE', arguments: [] }, // exactly one sibling boolean may be true
+  { type: 'MQTT_TOPIC_OVERLAP', arguments: [] } // MQTT-specific: no overlapping topics in an array
+];
+```
+
+Validator arguments are always strings; the frontend parses them per validator type.
+
+Hidden fields (see [enabling conditions](#enabling-conditions)) skip their validators — a required-but-hidden
+field won't block form submission.
+
+### Enabling conditions
+
+Show or hide attributes based on the value of another field. Declared on the **parent object**, not on each
+attribute:
+
+```typescript title="Show 'username' and 'password' only when authentication.type === 'basic'"
+{
+  type: 'object',
+  key: 'authentication',
+  translationKey: 'configuration.oibus.manifest.south.mqtt.authentication',
+  displayProperties: { visible: true, wrapInBox: true },
+  enablingConditions: [
+    {
+      referralPathFromRoot: 'authentication.type',
+      targetPathFromRoot: 'authentication.username',
+      values: ['basic'],
+      operator: 'EQUALS'  // optional: 'EQUALS' (default) | 'NOT_EQUAL' | 'CONTAINS'
+    },
+    {
+      referralPathFromRoot: 'authentication.type',
+      targetPathFromRoot: 'authentication.password',
+      values: ['basic']
+    }
+  ],
+  validators: [],
+  attributes: [
+    { type: 'string-select', key: 'type', /* ... */ },
+    { type: 'string', key: 'username', /* ... */ },
+    { type: 'secret', key: 'password', /* ... */ }
+  ]
+}
+```
+
+Paths are dotted, relative to the **enclosing object's root** (not the form root).
+
+## Items (South only)
+
+`items` describes the per-item sub-form. It's an `OIBusArrayAttribute` whose `rootAttribute` is the
+`OIBusObjectAttribute` defining one row:
+
+```typescript title="Typical items shape"
+items: {
+  type: 'array',
+  key: 'items',
+  translationKey: 'configuration.oibus.manifest.south.items',
+  paginate: true,
+  numberOfElementPerPage: 20,
+  validators: [],
+  rootAttribute: {
+    type: 'object',
+    key: 'item',
+    translationKey: 'configuration.oibus.manifest.south.items.item',
+    displayProperties: { visible: true, wrapInBox: false },
+    enablingConditions: [],
+    validators: [],
+    attributes: [
+      // The three always-present item attributes:
+      { type: 'string',  key: 'name',     /* required, unique */ },
+      { type: 'boolean', key: 'enabled',  defaultValue: true, /* ... */ },
+      {
+        type: 'scan-mode',
+        key: 'scanMode',
+        acceptableType: 'POLL',           // 'POLL' | 'SUBSCRIPTION' | 'SUBSCRIPTION_AND_POLL'
+        translationKey: 'configuration.oibus.manifest.south.items.scan-mode',
+        validators: [{ type: 'REQUIRED', arguments: [] }],
+        displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+      },
+
+      // Connector-specific settings under a nested object:
+      {
+        type: 'object',
+        key: 'settings',
+        translationKey: 'configuration.oibus.manifest.south.items.settings',
+        displayProperties: { visible: true, wrapInBox: true },
+        enablingConditions: [],
+        validators: [],
+        attributes: [
+          // your item-specific fields here
+        ]
+      }
+    ]
+  }
+}
+```
+
+The `scanMode.acceptableType` controls what the operator can pick:
+
+| Value                     | Effect                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------- |
+| `'POLL'`                  | Periodic only (default for most South connectors)                                 |
+| `'SUBSCRIPTION'`          | Push-driven only — use when the connector ONLY supports subscriptions (e.g. MQTT) |
+| `'SUBSCRIPTION_AND_POLL'` | Either is valid per item (OPC UA: some items polled, some subscribed)             |
+
+A complete real example is `backend/src/south/south-folder-scanner/manifest.ts`.
+
+## Generating the TypeScript types
+
+After editing the manifest, regenerate the typed settings interfaces from `backend/`:
+
+```bash
+npm run generate:settings-interface
+```
+
+The script reads every `manifest.ts`, derives the corresponding TypeScript type, and writes it into
+`backend/shared/model/south-settings.model.ts` (and the North equivalent). It also refreshes the OpenAPI
+definitions.
+
+:::caution Schema changes are breaking
+If you change a field's `key`, `type`, or position in its parent's `attributes` array, the generated
+interface changes. Existing connector configurations saved to the database may need a migration —
+add one in `backend/src/migration/entity-migrations/`.
 :::
