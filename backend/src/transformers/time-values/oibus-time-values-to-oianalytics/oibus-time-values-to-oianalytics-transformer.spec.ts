@@ -8,7 +8,18 @@ import OIBusTimeValuesToOIAnalyticsTransformer from './oibus-time-values-to-oian
 import timeValuesToOianalyticsManifest from './manifest';
 
 jest.mock('../../../service/utils', () => ({
-  generateRandomId: jest.fn().mockReturnValue('randomId')
+  generateRandomId: jest.fn().mockReturnValue('randomId'),
+  // Used by the streaming entry point. Faithful enough for the tests: collect
+  // 'data' chunks until 'end', then return as UTF-8.
+  streamToString: jest.fn(
+    (stream: NodeJS.ReadableStream) =>
+      new Promise((resolve, reject) => {
+        const chunks: Array<Buffer> = [];
+        stream.on('data', (chunk: Buffer | string) => chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      })
+  )
 }));
 
 const logger: pino.Logger = new PinoLogger();
@@ -83,6 +94,31 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
       numberOfElement: 3,
       contentType: 'oianalytics'
     });
+  });
+
+  it('should transform an in-memory Array<OIBusTimeValue> directly without a stream round-trip', async () => {
+    const options = { precision: 'ms' };
+    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
+
+    const dataChunks: Array<OIBusTimeValue> = [
+      { pointId: 'p1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } },
+      { pointId: 'p2', timestamp: testData.constants.dates.DATE_2, data: { value: '2', quality: 'good' } }
+    ];
+
+    const result = await transformer.transformInMemory(dataChunks, { source: 'test' }, null);
+
+    // Same shape as the stream path produces — the `quality` field is dropped
+    // by design, matching the existing stream-based test.
+    expect(result.output).toEqual(
+      Buffer.from(
+        JSON.stringify([
+          { pointId: 'p1', timestamp: dataChunks[0].timestamp, data: { value: '1' } },
+          { pointId: 'p2', timestamp: dataChunks[1].timestamp, data: { value: '2' } }
+        ])
+      )
+    );
+    expect(result.metadata.numberOfElement).toBe(2);
+    expect(result.metadata.contentType).toBe('oianalytics');
   });
 
   it('should properly format instant with precision', () => {

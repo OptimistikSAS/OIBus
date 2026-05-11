@@ -2,8 +2,7 @@ import OIBusTransformer from '../../oibus-transformer';
 import csv from 'papaparse';
 import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
-import { pipeline, Readable, Transform } from 'node:stream';
-import { promisify } from 'node:util';
+import { Readable } from 'node:stream';
 import { DateTime } from 'luxon';
 import {
   convertDelimiter,
@@ -11,33 +10,42 @@ import {
   convertNewline,
   convertQuoteChar,
   formatInstant,
-  sanitizeFilename
+  sanitizeFilename,
+  streamToString
 } from '../../../service/utils';
 import { TransformerTimeValuesToCsvSettings } from '../../../../shared/model/transformer-settings.model';
 import { applyFieldProcess } from '../../field-process';
 
-const pipelineAsync = promisify(pipeline);
-
 export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-csv';
 
+  /**
+   * Stream entry point — collects the stream via `streamToString` (utils) and
+   * delegates to the in-memory path. Kept for callers that genuinely stream
+   * (file-on-disk paths).
+   */
   async transform(
     data: ReadStream | Readable,
+    source: CacheMetadataSource,
+    filename: string | null
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
+    const text = await streamToString(data);
+    return this.transformInMemory(JSON.parse(text) as Array<OIBusTimeValue>, source, filename);
+  }
+
+  /**
+   * In-memory fast path — operates directly on the `Array<OIBusTimeValue>`
+   * that the caller already has. Skips the JSON.stringify → stream → collect →
+   * JSON.parse round-trip the streaming API would otherwise force.
+   */
+  override async transformInMemory(
+    data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
-    // Collect the data from the stream
-    const chunks: Array<Buffer> = [];
-    await pipelineAsync(
-      data,
-      new Transform({
-        transform(chunk, encoding, callback) {
-          chunks.push(chunk);
-          callback();
-        }
-      })
-    );
-    const jsonData: Array<OIBusTimeValue> = JSON.parse(Buffer.concat(chunks).toString('utf-8'));
+    const jsonData: Array<OIBusTimeValue> = Array.isArray(data)
+      ? (data as Array<OIBusTimeValue>)
+      : (JSON.parse(String(data)) as Array<OIBusTimeValue>);
 
     const metadata: CacheMetadata = {
       contentFile: sanitizeFilename(
@@ -49,15 +57,22 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
       contentType: 'any'
     };
     const quoteChar = convertQuoteChar(this.options.quoteChar);
+    // Read hot-path options once into locals so the per-element `.map` doesn't
+    // hit `this.options.*` (which is a `get options()` accessor) N times.
+    const pointIdProcess = this.options.pointIdProcess;
+    const pointIdCol = this.options.pointIdColumnTitle;
+    const timestampCol = this.options.timestampColumnTitle;
+    const valueCol = this.options.valueColumnTitle;
+    const timestampOpts = {
+      type: this.options.timestampType,
+      timezone: this.options.timezone,
+      format: this.options.timestampFormat
+    };
     const outputCSV = csv.unparse(
       jsonData.map(tv => ({
-        [this.options.pointIdColumnTitle]: applyFieldProcess(tv.pointId, this.options.pointIdProcess),
-        [this.options.timestampColumnTitle]: formatInstant(tv.timestamp, {
-          type: this.options.timestampType,
-          timezone: this.options.timezone,
-          format: this.options.timestampFormat
-        }),
-        [this.options.valueColumnTitle]: tv.data.value
+        [pointIdCol]: applyFieldProcess(tv.pointId, pointIdProcess),
+        [timestampCol]: formatInstant(tv.timestamp, timestampOpts),
+        [valueCol]: tv.data.value
       })),
       {
         header: this.options.header || false,

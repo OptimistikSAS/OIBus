@@ -9,7 +9,16 @@ import OIBusSetpointToMQTTTransformer from './oibus-setpoint-to-mqtt-transformer
 import setpointToMqttManifest from './manifest';
 
 jest.mock('../../../service/utils', () => ({
-  generateRandomId: jest.fn().mockReturnValue('randomId')
+  generateRandomId: jest.fn().mockReturnValue('randomId'),
+  streamToString: jest.fn(
+    (stream: NodeJS.ReadableStream) =>
+      new Promise((resolve, reject) => {
+        const chunks: Array<Buffer> = [];
+        stream.on('data', (chunk: Buffer | string) => chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      })
+  )
 }));
 jest.mock('papaparse');
 

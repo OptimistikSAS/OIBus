@@ -439,7 +439,7 @@ describe('NorthConnector', () => {
       contentType: 'time-values'
     };
     const outputStream = 'outputStream';
-    (oiBusTransformer.transform as jest.Mock).mockReturnValueOnce({ metadata, output: outputStream });
+    (oiBusTransformer.transformInMemory as jest.Mock).mockReturnValueOnce({ metadata, output: outputStream });
 
     await north.cacheContent(testData.oibusContent[0], {
       source: 'south',
@@ -447,12 +447,10 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    // Verify stream creation from content
-    expect(Readable.from).toHaveBeenCalledWith(JSON.stringify(testData.oibusContent[0].content));
-
-    // Verify transformer call with stream
-    expect(oiBusTransformer.transform).toHaveBeenCalledWith(
-      expect.anything(),
+    // In-memory fast path: the array goes straight to transformInMemory; no
+    // Readable.from / JSON.stringify round-trip in the caller.
+    expect(oiBusTransformer.transformInMemory).toHaveBeenCalledWith(
+      testData.oibusContent[0].content,
       {
         source: 'south',
         southId: testData.south.list[1].id,
@@ -460,6 +458,7 @@ describe('NorthConnector', () => {
       },
       null
     );
+    expect(oiBusTransformer.transform).not.toHaveBeenCalled();
 
     // Verify CacheService call with output stream
     expect(cacheService.addCacheContent).toHaveBeenCalledWith(outputStream, {
@@ -484,7 +483,7 @@ describe('NorthConnector', () => {
     const outputStream1 = 'outputStream1';
     const outputStream2 = 'outputStream2';
 
-    (oiBusTransformer.transform as jest.Mock)
+    (oiBusTransformer.transformInMemory as jest.Mock)
       .mockReturnValueOnce({ metadata, output: outputStream1 })
       .mockReturnValueOnce({ metadata, output: outputStream2 });
 
@@ -494,8 +493,9 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    // Verify chunking logic
-    expect(Readable.from).toHaveBeenCalledTimes(2);
+    // Chunked in-memory fast path: each chunk goes to transformInMemory; no
+    // stream wrapping at the caller level.
+    expect(oiBusTransformer.transformInMemory).toHaveBeenCalledTimes(2);
     expect(createTransformer).toHaveBeenCalledTimes(1);
 
     expect(cacheService.addCacheContent).toHaveBeenCalledTimes(2);
@@ -677,16 +677,17 @@ describe('NorthConnector', () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
-    const transform = jest.fn().mockReturnValueOnce({
+    const transformInMemory = jest.fn().mockReturnValueOnce({
       output: 'output',
       metadata: {
         contentType: 'opcua',
         numberOfElement: 1
       }
     });
-    (createTransformer as jest.Mock).mockReturnValueOnce({ transform });
+    (createTransformer as jest.Mock).mockReturnValueOnce({ transformInMemory });
     await north['executeTransformation']({ type: 'any-content', content: '' }, options, { source: 'oianalytics-setpoints' });
-    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics-setpoints' }, null);
+    // any-content is in-memory (already a string); goes through the fast path.
+    expect(transformInMemory).toHaveBeenCalledWith('', { source: 'oianalytics-setpoints' }, null);
     expect(cacheService.addCacheContent).toHaveBeenCalledWith('output', {
       contentType: 'opcua',
       numberOfElement: 1
@@ -697,16 +698,17 @@ describe('NorthConnector', () => {
     const options: NorthTransformerWithOptions = {
       id: 'northId'
     } as NorthTransformerWithOptions;
-    const transform = jest.fn().mockReturnValueOnce({
+    const transformInMemory = jest.fn().mockReturnValueOnce({
       output: 'output',
       metadata: {
         contentType: 'opcua',
         numberOfElement: 1
       }
     });
-    (createTransformer as jest.Mock).mockReturnValueOnce({ transform });
+    (createTransformer as jest.Mock).mockReturnValueOnce({ transformInMemory });
     await north['executeTransformation']({ type: 'setpoint', content: [] }, options, { source: 'oianalytics-setpoints' });
-    expect(transform).toHaveBeenCalledWith(expect.anything(), { source: 'oianalytics-setpoints' }, null);
+    // Setpoint is in-memory data; goes through the fast path with the raw array.
+    expect(transformInMemory).toHaveBeenCalledWith([], { source: 'oianalytics-setpoints' }, null);
     expect(cacheService.addCacheContent).toHaveBeenCalledWith('output', {
       contentType: 'opcua',
       numberOfElement: 1

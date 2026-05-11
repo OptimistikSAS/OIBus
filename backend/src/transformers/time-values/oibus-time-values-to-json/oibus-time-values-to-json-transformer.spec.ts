@@ -9,7 +9,18 @@ import OIBusTimeValuesToJSONTransformer from './oibus-time-values-to-json-transf
 import timeValuesToJsonManifest from './manifest';
 
 jest.mock('../../../service/utils', () => ({
-  generateRandomId: jest.fn().mockReturnValue('randomId')
+  generateRandomId: jest.fn().mockReturnValue('randomId'),
+  // Used by the stream entry point. Faithful enough for the tests: collect
+  // 'data' chunks until 'end', then return as UTF-8.
+  streamToString: jest.fn(
+    (stream: NodeJS.ReadableStream) =>
+      new Promise((resolve, reject) => {
+        const chunks: Array<Buffer> = [];
+        stream.on('data', (chunk: Buffer | string) => chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      })
+  )
 }));
 jest.mock('papaparse');
 
