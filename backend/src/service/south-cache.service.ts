@@ -9,16 +9,16 @@ export default class SouthCacheService {
     this.cacheRepository.createItemValueTable(connectorId);
   }
 
-  getItemLastValue(connectorId: string, groupId: string | null, itemId: string): Omit<SouthItemLastValue, 'itemName' | 'groupName'> | null {
-    return this.cacheRepository.getItemLastValue(connectorId, groupId, itemId);
+  getItemLastValue(connectorId: string, itemId: string): Omit<SouthItemLastValue, 'itemName' | 'groupName'> | null {
+    return this.cacheRepository.getItemLastValue(connectorId, itemId);
   }
 
   saveItemLastValue(connectorId: string, value: Omit<SouthItemLastValue, 'itemName' | 'groupName'>): void {
     this.cacheRepository.saveItemLastValue(connectorId, value);
   }
 
-  deleteItemValue(connectorId: string, groupId: string | null, itemId: string | null): void {
-    this.cacheRepository.deleteItemValue(connectorId, groupId, itemId);
+  deleteItemValue(connectorId: string, itemId: string): void {
+    this.cacheRepository.deleteItemValue(connectorId, itemId);
   }
 
   dropItemValueTable(connectorId: string): void {

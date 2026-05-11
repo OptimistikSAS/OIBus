@@ -438,7 +438,7 @@ describe('South Service', () => {
 
     expect(southConnectorRepository.findSouthById).toHaveBeenCalledWith(southId);
     expect(southConnectorRepository.findItemById).toHaveBeenCalledWith(southId, itemId);
-    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, null, itemId);
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, itemId);
     expect(result).toEqual({
       groupId: null,
       groupName: '',
@@ -457,7 +457,7 @@ describe('South Service', () => {
 
     const result = service.getItemLastValue(southId, itemId);
 
-    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, null, itemId);
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith(southId, itemId);
     expect(result).toEqual({
       groupId: null,
       groupName: '',

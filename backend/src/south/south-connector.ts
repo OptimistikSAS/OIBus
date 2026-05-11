@@ -337,7 +337,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
     const groupId =
       items[0].group && items[0].syncWithGroup && !SOUTH_SINGLE_ITEMS.includes(this.connector.type) ? items[0].group.id : null;
-    let southCache = this.cacheService!.getItemLastValue(this.connector.id, groupId, items[0].id);
+    let southCache = this.cacheService!.getItemLastValue(this.connector.id, items[0].id);
     if (!southCache) {
       southCache = {
         itemId: items[0].id,

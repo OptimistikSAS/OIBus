@@ -28,8 +28,8 @@ describe('South cache service', () => {
   it('should get item last value', () => {
     const value = { itemId: 'item-1', queryTime: null, value: { x: 1 }, trackedInstant: '2024-01-01T00:00:00Z' };
     (southCacheRepository.getItemLastValue as jest.Mock).mockReturnValueOnce(value);
-    const result = service.getItemLastValue('conn-1', 'group-1', 'item-1');
-    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith('conn-1', 'group-1', 'item-1');
+    const result = service.getItemLastValue('conn-1', 'item-1');
+    expect(southCacheRepository.getItemLastValue).toHaveBeenCalledWith('conn-1', 'item-1');
     expect(result).toEqual(value);
   });
 
@@ -41,9 +41,9 @@ describe('South cache service', () => {
   });
 
   it('should delete item value', () => {
-    service.deleteItemValue('conn-1', 'group-1', 'item-1');
+    service.deleteItemValue('conn-1', 'item-1');
     expect(southCacheRepository.deleteItemValue).toHaveBeenCalledTimes(1);
-    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('conn-1', 'group-1', 'item-1');
+    expect(southCacheRepository.deleteItemValue).toHaveBeenCalledWith('conn-1', 'item-1');
   });
 
   it('should drop item value table', () => {
