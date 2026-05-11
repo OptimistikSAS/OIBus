@@ -5,52 +5,173 @@ sidebar_position: 4
 
 # Docker Image
 
-Deploy OIBus in containerized environments using our official Docker configuration for consistent, isolated installations.
+OIBus ships an official multi-arch Docker image. This page covers what the image contains, where it
+comes from, and how to build a custom variant from the same `Dockerfile` if you need to.
 
-## Official Docker Image
+For deployment instructions (volumes, networking, environment variables, recommended runtime flags),
+see the [Docker Installation Guide](../guide/installation/installation.mdx) on the user-facing
+side of the docs.
 
-The Docker configuration files are available in the [OIBus GitHub repository](https://github.com/OptimistikSAS/OIBus/tree/main/build/docker/Dockerfile), providing a ready-to-use containerization solution.
+## 🐳 Use the official image
 
-### Build Arguments
-
-| Argument  | Description         | Default Value | Example Values     |
-| --------- | ------------------- | ------------- | ------------------ |
-| `arch`    | System architecture | `x64`         | `x64`, `arm64`     |
-| `version` | OIBus version       | `v3.7.0`      | `v3.7.0`, `v3.6.8` |
-
-## Docker Commands
-
-Execute these commands from the directory containing the Dockerfile (`build/docker/`).
-
-### Build the Image
+For day-to-day use, **pull the pre-built image** rather than building your own:
 
 ```bash
-# Basic build (x64, latest version)
-docker build -t oibus .
+docker pull ghcr.io/optimistiksas/oibus:latest
 ```
+
+Available tags:
+
+| Tag         | Source                                                                                                                |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| `latest`    | Last stable release. Updated automatically by [`new_release.yml`](./release.mdx) on every stable cut.                 |
+| `beta`      | Last pre-release. Use this to validate upcoming features in your test environment.                                    |
+| `vX.Y.Z`    | Pinned to a specific version (e.g. `v3.7.0`). Recommended for production so upgrades are an explicit operator action. <!-- x-release-please-version --> |
+
+The image is built for `linux/amd64` and `linux/arm64`; Docker picks the right variant for your host
+automatically when you `pull`. The full publish flow runs through
+[`.github/workflows/docker.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/docker.yml).
+
+### Minimal `docker run`
 
 ```bash
-# Build for specific architecture
-docker build -t oibus --build-arg arch="arm64" .
+docker run -d \
+  --name oibus \
+  -p 2223:2223 \
+  -v /path/to/persistent-data:/app/OIBus/OIBusData \
+  ghcr.io/optimistiksas/oibus:latest
 ```
+
+- **Port `2223`** — the OIBus web UI / API.
+- **`/app/OIBus/OIBusData`** — where the container stores configuration, the cache, and logs. Mount a
+  host directory here so data survives a container replacement.
+
+### Docker Compose example
+
+The repository's `docker-compose.yml` includes a ready-to-use service definition that you can copy:
+
+```yaml title="docker-compose.yml — oibus service"
+services:
+  oibus:
+    image: ghcr.io/optimistiksas/oibus:latest
+    container_name: oibus_runtime
+    ports:
+      - '2223:2223'
+    volumes:
+      - ./data-folder:/app/OIBus/OIBusData
+    restart: unless-stopped
+```
+
+The repo also bundles `nginx`, `opcua-server`, `mqtt-broker`, `postgres`, and other simulators behind
+Docker Compose profiles — useful for a full dev / testing stack. See the
+[Benchmark the product](./index.md#benchmark-the-product) section for what's available.
+
+## 🔧 What's in the image
+
+The Dockerfile lives at
+[`build/docker/Dockerfile`](https://github.com/OptimistikSAS/OIBus/blob/main/build/docker/Dockerfile).
+It's small and intentionally so — it **downloads** the pre-built OIBus binary from the matching
+GitHub release rather than compiling from source:
+
+{/* x-release-please-start-version */}
+
+```dockerfile title="build/docker/Dockerfile"
+FROM ubuntu
+
+ARG TARGETARCH                         # set automatically by `docker buildx` / `--platform`
+ARG ARCH=${TARGETARCH/amd64/x64}        # GitHub release filenames use x64, not amd64
+ARG VERSION="v3.7.0"                    # overridden by the release workflow
+
+RUN apt update -y && apt install -y curl unzip
+
+WORKDIR /app
+RUN curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/${VERSION}/oibus-linux_${ARCH}-${VERSION}.zip
+RUN unzip -a oibus-linux_${ARCH}-${VERSION}.zip -d OIBus/
+WORKDIR /app/OIBus
+RUN mkdir OIBusData
+
+EXPOSE 2223
+CMD ["./oibus-launcher", "--config", "./OIBusData", "--ignoreIpFilters", "true", "--ignoreRemoteUpdate", "true"]
+```
+
+{/* x-release-please-end */}
+
+A few things worth knowing:
+
+- **Pre-built binary**: the image fetches `oibus-linux_<arch>-<version>.zip` from
+  [Releases](https://github.com/OptimistikSAS/OIBus/releases). That zip is itself produced by the
+  release pipeline — see the [Release Process](./release.mdx#-what-the-release-workflow-actually-produces).
+- **`--ignoreIpFilters true`** is baked into the default `CMD`: the container assumes you're already
+  isolating access at the network layer (Docker network, reverse proxy, etc.). If you want the in-app
+  IP-filter to apply, override `CMD` or rebuild without that flag.
+- **`--ignoreRemoteUpdate true`** disables the launcher's auto-update path: in a container, updates
+  happen by replacing the image with a newer tag, not by mutating the running container.
+- The default `VERSION="v3.7.0"` in the Dockerfile is just a placeholder for local builds. <!-- x-release-please-version -->
+  The release pipeline always passes `--build-arg VERSION=<tag>` to override it.
+
+### Build arguments
+
+| Argument           | How it's set                                  | Purpose                                                                              |
+| ------------------ | --------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `TARGETARCH`       | Set by `docker buildx` from `--platform`      | Tells the Dockerfile which arch to fetch. Don't pass it manually.                    |
+| `VERSION`          | `--build-arg VERSION=...` (default `v3.7.0`)  | Which GitHub release to pull binaries from. Must match an existing release tag. <!-- x-release-please-version --> |
+
+## 🛠 Building your own image
+
+You only need this if you're patching the Dockerfile itself, testing against a release that doesn't
+have an official image yet, or building for an arch the matrix doesn't ship. Everyone else: use
+[the official image](#-use-the-official-image).
+
+All commands run from the repository's `build/docker/` directory.
+
+### Build for your host architecture
 
 ```bash
-# Build specific version
-docker build -t oibus --build-arg version="v3.7.0" .
+cd build/docker
+docker build -t oibus-local .
 ```
+
+`docker build` defaults to your host's architecture; `TARGETARCH` is filled in automatically.
+
+### Build for a specific architecture
+
+Use `--platform`, NOT `--build-arg`:
 
 ```bash
-# Build specific version for ARM64
-docker build -t oibus --build-arg arch="arm64" --build-arg version="v3.7.0" .
+# Build the arm64 image (works on any host via Docker Desktop / buildx)
+docker buildx build --platform linux/arm64 -t oibus-local:arm64 .
+
+# Build the amd64 image
+docker buildx build --platform linux/amd64 -t oibus-local:amd64 .
 ```
 
-## Running the Container
+`docker buildx` populates `TARGETARCH` from `--platform`, the Dockerfile rewrites `amd64 → x64` so it
+matches the release-asset naming, and the right zip is fetched.
 
-For detailed instructions on container execution, including:
+### Pin a specific OIBus version
 
-- **Volume configuration** for persistent data storage
-- **Port mapping** and network configuration
-- **Environment variables** for customization
-- **Resource management** and best practices
+{/* x-release-please-start-version */}
 
-➡️ See the [complete Docker Installation Guide](../guide/installation/installation.mdx).
+```bash
+docker build -t oibus-local --build-arg VERSION="v3.7.0" .
+```
+
+{/* x-release-please-end */}
+
+`VERSION` must reference an existing GitHub release — the Dockerfile fetches
+`oibus-linux_<arch>-<version>.zip` from that release. If the asset doesn't exist (e.g. you pointed at a
+pre-release tag), the `curl` step fails. To use a pre-release, check the
+[Releases page](https://github.com/OptimistikSAS/OIBus/releases) for the exact asset name and tag.
+
+### Build multi-arch in one shot
+
+```bash
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  --tag oibus-local:multiarch \
+  --output type=image,push=false \
+  .
+```
+
+This mirrors what [`docker.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/docker.yml)
+does during a release, minus the push to `ghcr.io`.
