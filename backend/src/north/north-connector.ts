@@ -456,7 +456,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       if (this.connector.caching.throttling.maxNumberOfElements > 0) {
         for (let i = 0; i < data.content.length; i += this.connector.caching.throttling.maxNumberOfElements) {
           const chunks: Array<object> = data.content.slice(i, i + this.connector.caching.throttling.maxNumberOfElements);
-          await this.cacheService.addCacheContent(Readable.from(JSON.stringify(data.content)), {
+          await this.cacheService.addCacheContent(Readable.from(JSON.stringify(chunks)), {
             contentType: data.type,
             numberOfElement: chunks.length
           });
