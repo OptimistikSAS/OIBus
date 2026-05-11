@@ -239,6 +239,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     for (const [index, groupedElements] of groupedItemsList.entries()) {
       if (this.stopping) {
         this.logger.debug(`Connector is stopping. Exiting run`);
+        this.resolveDeferredPromise();
         return;
       }
 
@@ -269,7 +270,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       }
 
       const readDelay = groupedElements[0].group?.readDelay ?? groupedElements[0].readDelay!;
-      if (index !== groupedItemsList.length - 1 && readDelay) {
+      if (!this.stopping && index !== groupedItemsList.length - 1 && readDelay) {
         await delay(readDelay);
       }
     }
