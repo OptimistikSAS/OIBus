@@ -604,6 +604,10 @@ describe('NorthConnector', () => {
     ).toEqual(north['connector'].transformers[0]);
 
     (north['connector'].transformers[0].source as SourceOriginSouth).items = [];
+    // findTransformer is backed by a cache that's rebuilt on setter calls.
+    // The test mutates the source in place (production reloads the entire
+    // connector via the setter), so we trigger a rebuild manually here.
+    north['rebuildTransformerCache']();
     expect(
       north['findTransformer']({
         source: 'south',
@@ -613,6 +617,7 @@ describe('NorthConnector', () => {
     ).toEqual(north['connector'].transformers[0]);
 
     north['connector'].transformers[0].source = { type: 'oibus-api', dataSourceId: 'id' };
+    north['rebuildTransformerCache']();
     expect(
       north['findTransformer']({
         source: 'oibus-api',
@@ -622,17 +627,6 @@ describe('NorthConnector', () => {
   });
 
   it('should find transformer from south metadata at group level', () => {
-    const itemWithMatchingGroup = {
-      ...testData.south.list[0].items[0],
-      group: {
-        id: 'groupId1',
-        name: 'Group 1',
-        scanMode: testData.scanMode.list[0],
-        overlap: null,
-        maxReadInterval: null,
-        readDelay: null
-      }
-    };
     (north['connector'].transformers[0].source as SourceOriginSouth) = {
       type: 'south',
       south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
@@ -644,6 +638,7 @@ describe('NorthConnector', () => {
       } as SouthItemGroupEntity,
       items: []
     };
+    north['rebuildTransformerCache']();
 
     expect(
       north['findTransformer']({
@@ -656,6 +651,30 @@ describe('NorthConnector', () => {
     expect(
       north['findTransformer']({ source: 'south', southId: 'southId1', items: [{ id: 'anotherId' }] } as CacheMetadataSource)
     ).not.toEqual(north['connector'].transformers[0]);
+  });
+
+  it('should invalidate the transformer-lookup cache when connectorConfiguration is reassigned', () => {
+    // Prime the cache with a first lookup.
+    north['findTransformer']({
+      source: 'south',
+      southId: testData.south.list[0].id,
+      items: [testData.south.list[0].items[0]]
+    } as CacheMetadataSource);
+    const cachedBefore = north['transformerLookup'];
+    expect(cachedBefore).not.toBeNull();
+
+    // Production path: connector config is replaced entirely → setter fires.
+    north.connectorConfiguration = { ...north['connector'], transformers: [] } as (typeof north)['connector'];
+    // Setter must drop the cache so the next lookup rebuilds it.
+    expect(north['transformerLookup']).toBeNull();
+
+    // Next call sees the new (empty) transformer list.
+    const result = north['findTransformer']({
+      source: 'south',
+      southId: testData.south.list[0].id,
+      items: [testData.south.list[0].items[0]]
+    } as CacheMetadataSource);
+    expect(result).toBeUndefined();
   });
 
   it('should handle no transformer when not supporting type', async () => {
