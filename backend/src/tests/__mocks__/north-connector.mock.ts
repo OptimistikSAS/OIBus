@@ -19,7 +19,7 @@ export default class NorthConnectorMock {
   handleContentWrapper = jest.fn();
   createOIBusError = jest.fn();
   resetCache = jest.fn();
-  cacheContent = jest.fn();
+  cacheContent = jest.fn().mockResolvedValue(undefined);
   isSubscribed = jest.fn();
   isCacheEmpty = jest.fn();
   disconnect = jest.fn();
