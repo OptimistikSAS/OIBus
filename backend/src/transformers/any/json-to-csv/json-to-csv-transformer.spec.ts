@@ -161,7 +161,7 @@ describe('JSONToCSVTransformer', () => {
 
   describe('fieldProcess', () => {
     it('should apply fieldProcess expression to the typed value before writing to CSV', async () => {
-      (csv.unparse as jest.Mock).mockReturnValue('csv result');
+      mockPapaparse.unparse = mock.fn(() => 'csv result');
 
       const options = {
         filename: 'output.csv',
@@ -188,14 +188,14 @@ describe('JSONToCSVTransformer', () => {
       await flushPromises();
       await promise;
 
-      expect(csv.unparse).toHaveBeenCalledWith(
-        [{ Name: 'HELLO', Score: 3.14, Tag: 'keep-me' }],
-        expect.objectContaining({ delimiter: ';' })
-      );
+      assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
+      const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, unknown>>, unknown])[0];
+      assert.deepStrictEqual(callData, [{ Name: 'HELLO', Score: 3.14, Tag: 'keep-me' }]);
+      assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
     });
 
     it('should skip fieldProcess when it is null or empty', async () => {
-      (csv.unparse as jest.Mock).mockReturnValue('csv result');
+      mockPapaparse.unparse = mock.fn(() => 'csv result');
 
       const options = {
         filename: 'output.csv',
@@ -221,7 +221,10 @@ describe('JSONToCSVTransformer', () => {
       await flushPromises();
       await promise;
 
-      expect(csv.unparse).toHaveBeenCalledWith([{ Name: 'original', ID: 42 }], expect.objectContaining({ delimiter: ';' }));
+      assert.strictEqual(mockPapaparse.unparse.mock.calls.length, 1);
+      const callData = (mockPapaparse.unparse.mock.calls[0].arguments as [Array<Record<string, unknown>>, unknown])[0];
+      assert.deepStrictEqual(callData, [{ Name: 'original', ID: 42 }]);
+      assertContains(mockPapaparse.unparse.mock.calls[0].arguments[1] as Record<string, unknown>, { delimiter: ';' });
     });
 
     it('should throw a descriptive error when fieldProcess expression is invalid', async () => {
@@ -241,23 +244,22 @@ describe('JSONToCSVTransformer', () => {
       const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
       const mockStream = new Readable();
       const promise = transformer.transform(mockStream, { source: 'test' }, 'data.json');
-      // Attach the rejection handler BEFORE pushing data so the rejection is never "unhandled".
-      const rejectionCheck = expect(promise).rejects.toThrow('Field process evaluation failed');
+      const rejectPromise = assert.rejects(promise, /Field process evaluation failed/);
       mockStream.push(JSON.stringify([{ name: 'hello' }]));
       mockStream.push(null);
       await flushPromises();
-      await rejectionCheck;
+      await rejectPromise;
     });
 
     it('should expose fieldProcess attribute in the manifest', () => {
-      const fieldItem = jsonToCsvManifest.settings.attributes.find(a => a.key === 'fields');
-      expect(fieldItem).toBeDefined();
-      expect(fieldItem!.type).toBe('array');
-      if (fieldItem!.type === 'array') {
-        const fieldProcessAttr = fieldItem!.rootAttribute.attributes.find(a => a.key === 'fieldProcess');
-        expect(fieldProcessAttr).toBeDefined();
-        expect(fieldProcessAttr!.type).toBe('string');
-        expect(fieldProcessAttr!.validators).toHaveLength(0);
+      const fieldItem = jsonToCsvManifest.settings.attributes.find((a: { key: string }) => a.key === 'fields');
+      assert.ok(fieldItem !== undefined);
+      assert.strictEqual(fieldItem.type, 'array');
+      if (fieldItem.type === 'array') {
+        const fieldProcessAttr = fieldItem.rootAttribute.attributes.find((a: { key: string }) => a.key === 'fieldProcess');
+        assert.ok(fieldProcessAttr !== undefined);
+        assert.strictEqual(fieldProcessAttr.type, 'string');
+        assert.deepStrictEqual(fieldProcessAttr.validators, []);
       }
     });
   });

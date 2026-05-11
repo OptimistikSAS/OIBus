@@ -2,7 +2,6 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
-import { OIBusTimeValueContent } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import { reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
@@ -23,11 +22,6 @@ describe('ContentController', () => {
   let oIBusService: OIBusServiceMock;
   let mockRequest: Partial<CustomExpressRequest>;
 
-  const timeValuesContent: OIBusTimeValueContent = {
-    type: 'time-values',
-    content: []
-  };
-
   beforeEach(() => {
     oIBusService = new OIBusServiceMock();
     mockRequest = {
@@ -40,16 +34,18 @@ describe('ContentController', () => {
     mock.restoreAll();
   });
 
-  it('should add time values content', async () => {
+  it('should wrap JSON body as any-content and add it to each north connector', async () => {
     const northId = 'northId1,northId2';
     const dataSourceId = 'dataSourceId';
+    const body = { type: 'time-values', content: [] };
     oIBusService.addExternalContent = mock.fn(async () => undefined);
 
-    await controller.addContent(northId, dataSourceId, timeValuesContent, mockRequest as CustomExpressRequest);
+    await controller.addContent(northId, dataSourceId, body, mockRequest as CustomExpressRequest);
 
+    const expectedContent = { type: 'any-content', content: JSON.stringify(body) };
     assert.strictEqual(oIBusService.addExternalContent.mock.calls.length, 2);
-    assert.deepStrictEqual(oIBusService.addExternalContent.mock.calls[0].arguments, ['northId1', dataSourceId, timeValuesContent]);
-    assert.deepStrictEqual(oIBusService.addExternalContent.mock.calls[1].arguments, ['northId2', dataSourceId, timeValuesContent]);
+    assert.deepStrictEqual(oIBusService.addExternalContent.mock.calls[0].arguments, ['northId1', dataSourceId, expectedContent]);
+    assert.deepStrictEqual(oIBusService.addExternalContent.mock.calls[1].arguments, ['northId2', dataSourceId, expectedContent]);
   });
 
   it('should add file', async () => {
