@@ -41,7 +41,7 @@
   "devDependencies": {
     "@types/better-sqlite3": "7.6.13",
     "@types/minimist": "1.2.5",
-    "@types/node": "24.12.2",
+    "@types/node": "24.12.3",
     "@yao-pkg/pkg": "6.19.0",
     "eslint": "9.39.4",
     "eslint-config-prettier": "10.1.8",
@@ -51,7 +51,7 @@
     "tslib": "2.8.1",
     "tsx": "4.21.0",
     "typescript": "5.4.5",
-    "typescript-eslint": "8.59.1"
+    "typescript-eslint": "8.59.2"
   },
   "pkg": {
     "assets": [
