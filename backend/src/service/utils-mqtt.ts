@@ -42,16 +42,74 @@ export const createConnectionOptions = async (
   return options;
 };
 
+// Per-item pre-computed match metadata, cached by item reference. The cache
+// auto-evicts when items are GC'd. The `topic` field guards against in-place
+// mutation: if the underlying topic string was swapped, we re-derive parts.
+interface ItemMqttMeta {
+  topic: string;
+  parts: ReadonlyArray<string>;
+  wildcardCount: number;
+}
+const itemMetaCache = new WeakMap<SouthConnectorItemEntity<SouthMQTTItemSettings>, ItemMqttMeta>();
+
+const getItemMeta = (item: SouthConnectorItemEntity<SouthMQTTItemSettings>): ItemMqttMeta => {
+  const cached = itemMetaCache.get(item);
+  const topic = item.settings.topic;
+  if (cached && cached.topic === topic) {
+    return cached;
+  }
+  const parts = topic.split('/');
+  let wildcardCount = 0;
+  for (const p of parts) {
+    if (p === '+' || p === '#') wildcardCount++;
+  }
+  const meta: ItemMqttMeta = { topic, parts, wildcardCount };
+  itemMetaCache.set(item, meta);
+  return meta;
+};
+
+// Equivalent to wildcardTopic's match-length, computed on pre-split parts so the
+// caller can split the inbound topic once and reuse it across every item check.
+// Returns null on no-match, otherwise the number of wildcard captures (which the
+// caller compares against the cached wildcardCount — same correctness check as
+// before, just without re-running the [+#] regex per call).
+const countWildcardMatches = (
+  topicParts: ReadonlyArray<string>,
+  wildcardParts: ReadonlyArray<string>,
+  topic: string,
+  wildcard: string
+): number | null => {
+  if (topic === wildcard) return 0;
+  if (wildcard === '#') return 1;
+  let captures = 0;
+  for (let i = 0; i < topicParts.length; i++) {
+    const w = wildcardParts[i];
+    if (w === '+') {
+      captures++;
+    } else if (w === '#') {
+      return captures + 1;
+    } else if (w !== topicParts[i]) {
+      return null;
+    }
+  }
+  return topicParts.length === wildcardParts.length ? captures : null;
+};
+
 export const getItem = (
   topic: string,
   items: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>>
 ): SouthConnectorItemEntity<SouthMQTTItemSettings> => {
-  const matchingItems = items.filter(item => {
-    const matchList = wildcardTopic(topic, item.settings.topic);
-    // Count the number of wildcard. If it has the same number of wildcards in the item topic than the number of path chunk, it matches
-    // If there is no wildcard, it should have empty arrays, so it is an exact match
-    return !!(item.enabled && matchList && matchList.length === (item.settings.topic.match(/[+#]/g) || []).length);
-  });
+  const topicParts = topic.split('/');
+  const matchingItems: Array<SouthConnectorItemEntity<SouthMQTTItemSettings>> = [];
+
+  for (const item of items) {
+    if (!item.enabled) continue;
+    const meta = getItemMeta(item);
+    const captures = countWildcardMatches(topicParts, meta.parts, topic, meta.topic);
+    if (captures !== null && captures === meta.wildcardCount) {
+      matchingItems.push(item);
+    }
+  }
 
   if (matchingItems.length > 1) {
     throw new Error(
