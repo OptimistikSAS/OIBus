@@ -16,7 +16,12 @@ let UserController: typeof UserControllerShape;
 
 before(() => {
   fixTsoaModuleResolution(nodeRequire);
-  mockUserServiceModule = { toUserDTO: mock.fn((user: unknown) => user) };
+  mockUserServiceModule = {
+    toUserDTO: mock.fn((user: unknown, getUserInfo: (id: string) => unknown) => {
+      getUserInfo('');
+      return user;
+    })
+  };
   mockModule(nodeRequire, '../../service/user.service', mockUserServiceModule);
   const mod = reloadModule<{ UserController: typeof UserControllerShape }>(nodeRequire, './user.controller');
   UserController = mod.UserController;
@@ -33,7 +38,10 @@ describe('UserController', () => {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
       services: createMockServices({ userService })
     } as Partial<CustomExpressRequest>;
-    mockUserServiceModule.toUserDTO = mock.fn((user: unknown) => user);
+    mockUserServiceModule.toUserDTO = mock.fn((user: unknown, getUserInfo: (id: string) => unknown) => {
+      getUserInfo('');
+      return user;
+    });
     controller = new UserController();
   });
 

@@ -15,7 +15,12 @@ let OIAnalyticsRegistrationController: typeof OIAnalyticsRegistrationControllerS
 
 before(() => {
   fixTsoaModuleResolution(nodeRequire);
-  mockRegistrationServiceModule = { toOIAnalyticsRegistrationDTO: mock.fn((settings: unknown) => settings) };
+  mockRegistrationServiceModule = {
+    toOIAnalyticsRegistrationDTO: mock.fn((settings: unknown, getUserInfo: (id: string) => unknown) => {
+      getUserInfo('');
+      return settings;
+    })
+  };
   mockModule(nodeRequire, '../../service/oia/oianalytics-registration.service', mockRegistrationServiceModule);
   const mod = reloadModule<{ OIAnalyticsRegistrationController: typeof OIAnalyticsRegistrationControllerShape }>(
     nodeRequire,
@@ -35,7 +40,10 @@ describe('OIAnalyticsRegistrationController', () => {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
       services: createMockServices({ oIAnalyticsRegistrationService: registrationService })
     } as Partial<CustomExpressRequest>;
-    mockRegistrationServiceModule.toOIAnalyticsRegistrationDTO = mock.fn((settings: unknown) => settings);
+    mockRegistrationServiceModule.toOIAnalyticsRegistrationDTO = mock.fn((settings: unknown, getUserInfo: (id: string) => unknown) => {
+      getUserInfo('');
+      return settings;
+    });
     controller = new OIAnalyticsRegistrationController();
   });
 
