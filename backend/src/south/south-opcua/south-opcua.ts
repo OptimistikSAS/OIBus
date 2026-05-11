@@ -476,11 +476,16 @@ export default class SouthOPCUA
                   const historyDataValues = (result.historyData as HistoryDataOptions).dataValues!.filter(
                     value => value
                   ) as Array<DataValue>;
-                  this.logger.trace(
-                    `Result for node "${node.nodeId}" (number ${i}) contains ` +
-                      `${historyDataValues.length} values and has status code ` +
-                      `${result.statusCode.name}, continuation point is ${result.continuationPoint}`
-                  );
+                  // Per-node-per-batch hot path inside HistoryRead loop. Gate the
+                  // template-literal interpolation (including NodeId.toString) so it
+                  // only runs when a transport actually accepts trace.
+                  if (this.logger.isLevelEnabled('trace')) {
+                    this.logger.trace(
+                      `Result for node "${node.nodeId}" (number ${i}) contains ` +
+                        `${historyDataValues.length} values and has status code ` +
+                        `${result.statusCode.name}, continuation point is ${result.continuationPoint}`
+                    );
+                  }
                   for (const historyValue of historyDataValues) {
                     const value = parseOPCUAValue(associatedItem.name, historyValue.value, this.logger);
                     if (!value) {

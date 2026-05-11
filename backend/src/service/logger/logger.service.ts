@@ -12,6 +12,45 @@ const LOG_DB_NAME = 'logs.db';
 const LOG_FILE_NAME = 'journal.log';
 
 /**
+ * Compute the most-verbose (lowest-numeric) level across the enabled transports.
+ *
+ * Why this matters: pino's parent-level filter runs BEFORE dispatch to transports.
+ * If the parent is at `'trace'`, every `logger.trace(...)` and
+ * `logger.debug(...)` call goes through pino's internal formatting + transport
+ * dispatch — even when no transport actually accepts those levels. By setting the
+ * parent to the most-verbose level any transport requests, pino can short-circuit
+ * calls above that level cheaply.
+ *
+ * Note: JavaScript still evaluates template-literal args at the call site before
+ * pino sees them, so very hot call sites should ALSO use `logger.isLevelEnabled(...)`
+ * guards. This change only eliminates pino's internal cost, not arg evaluation.
+ */
+// Mirrors pino.levels.values. Hardcoded so this helper stays pure (no runtime
+// dependency on pino's internals) and trivially testable.
+const PINO_LEVEL_VALUES: Record<string, number> = {
+  trace: 10,
+  debug: 20,
+  info: 30,
+  warn: 40,
+  error: 50,
+  fatal: 60
+};
+
+const computeParentLevel = (targets: ReadonlyArray<{ level: string }>): pino.LevelWithSilent => {
+  let minValue = Number.POSITIVE_INFINITY;
+  let minLevel: pino.LevelWithSilent = 'silent';
+  for (const t of targets) {
+    if (t.level === 'silent') continue;
+    const v = PINO_LEVEL_VALUES[t.level];
+    if (v !== undefined && v < minValue) {
+      minValue = v;
+      minLevel = t.level as pino.Level;
+    }
+  }
+  return minLevel;
+};
+
+/**
  * Manage pino loggers
  * Four loggers are supported:
  *  - Console
@@ -99,7 +138,9 @@ class LoggerService {
 
     this.logger = pino({
       base: undefined,
-      level: 'trace', // default to trace since each transport has its defined level
+      // Most-verbose level across enabled transports. Cheap calls above this
+      // level are short-circuited inside pino. See computeParentLevel jsdoc.
+      level: computeParentLevel(targets),
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets }
     }).child({ scopeType: 'internal' });

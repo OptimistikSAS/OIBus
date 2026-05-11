@@ -71,7 +71,12 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         }
       });
       this.client.on('message', async (topic, message, packet) => {
-        this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}, qos:${packet.qos}, retain:${packet.retain}`);
+        // Per-message hot path: gate the template-literal interpolation so we don't
+        // pay the cost (including `message.toString()` implicit coercion) when no
+        // transport accepts trace.
+        if (this.logger.isLevelEnabled('trace')) {
+          this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}, qos:${packet.qos}, retain:${packet.retain}`);
+        }
         try {
           const item = getItem(topic, this.connector.items);
           this.bufferedMessages.push({ topic, message: message.toString(), item, timestamp: DateTime.now().toUTC().toISO() });
