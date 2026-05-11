@@ -427,7 +427,7 @@ describe('SouthOPCUA', () => {
     const mockedClient = { close: jest.fn() };
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
     south.getDAValues = jest.fn().mockReturnValue({ value: [] });
-    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
+    south.getHAValues = jest.fn().mockReturnValue({ value: null });
 
     await south.testItem(configuration.items[0], {
       history: {
@@ -454,7 +454,7 @@ describe('SouthOPCUA', () => {
     const mockedClient = { close: jest.fn() };
     south.createSession = jest.fn().mockReturnValueOnce(mockedClient);
     south.getDAValues = jest.fn().mockReturnValue({ value: [] });
-    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
+    south.getHAValues = jest.fn().mockReturnValue({ value: null });
     await south.testItem(configuration.items[3], { history: undefined });
     expect(initOPCUACertificateFolders).toHaveBeenCalledWith('opcua-test-randomUUID');
     expect(resolveNodeId).toHaveBeenCalledWith(configuration.items[0].settings.nodeId);
@@ -478,7 +478,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly manage history query', async () => {
-    south.getHAValues = jest.fn().mockReturnValue({ value: [] });
+    south.getHAValues = jest.fn().mockReturnValue({ value: null });
     south['client'] = {} as unknown as ClientSession;
     await south.historyQuery(
       [configuration.items[0], configuration.items[1], configuration.items[2]],
@@ -664,13 +664,11 @@ describe('SouthOPCUA', () => {
     );
     expect(historyRead).toHaveBeenCalled();
     expect(result).toEqual({
-      value: [
-        {
-          data: { quality: 'Good', value: '123' },
-          pointId: 'item1',
-          timestamp: testData.constants.dates.FAKE_NOW
-        }
-      ],
+      value: {
+        data: { quality: 'Good', value: '123' },
+        pointId: 'item1',
+        timestamp: testData.constants.dates.FAKE_NOW
+      },
       trackedInstant: '2021-01-02T00:00:00.000Z'
     });
   });
@@ -798,7 +796,7 @@ describe('SouthOPCUA', () => {
     );
     expect(historyRead).toHaveBeenCalled();
     expect(result).toEqual({
-      value: [],
+      value: null,
       trackedInstant: null
     });
     const expectedLogs = new Map();

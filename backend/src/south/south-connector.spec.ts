@@ -258,7 +258,7 @@ describe('SouthConnector with file query', () => {
       testData.south.list[0].items as Array<SouthConnectorItemEntity<SouthFolderScannerItemSettings>>
     );
 
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling directQuery: file query error`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when querying items with direct access: file query error`);
   });
 });
 
@@ -356,8 +356,8 @@ describe('SouthConnector with history and subscription', () => {
       testData.constants.dates.FAKE_NOW
     );
     expect(south.directQuery).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling historyQuery: history query error`);
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling directQuery: last point query error`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when querying items with history capabilities: history query error`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when querying items with direct access: last point query error`);
 
     await south.run(testData.scanMode.list[0].id, testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>);
 
