@@ -715,8 +715,19 @@ describe('NorthConnector', () => {
 
   it('should cache without transform with max number of elements', async () => {
     north.connectorConfiguration.caching.throttling.maxNumberOfElements = 1;
-    await north['cacheWithoutTransform']({ type: 'time-values', content: [{}, {}] } as OIBusContent);
-    expect(cacheService.addCacheContent).toHaveBeenCalledTimes(2);
+    const a = { pointId: 'a', timestamp: '2026-01-01T00:00:00.000Z', data: { value: '1' } };
+    const b = { pointId: 'b', timestamp: '2026-01-01T00:00:01.000Z', data: { value: '2' } };
+    const c = { pointId: 'c', timestamp: '2026-01-01T00:00:02.000Z', data: { value: '3' } };
+    await north['cacheWithoutTransform']({ type: 'time-values', content: [a, b, c] } as OIBusContent);
+
+    // Each chunk file must contain ONLY its own slice, not the full payload
+    expect(cacheService.addCacheContent).toHaveBeenCalledTimes(3);
+    expect(Readable.from).toHaveBeenNthCalledWith(1, JSON.stringify([a]));
+    expect(Readable.from).toHaveBeenNthCalledWith(2, JSON.stringify([b]));
+    expect(Readable.from).toHaveBeenNthCalledWith(3, JSON.stringify([c]));
+    expect(cacheService.addCacheContent).toHaveBeenNthCalledWith(1, mockStream, { contentType: 'time-values', numberOfElement: 1 });
+    expect(cacheService.addCacheContent).toHaveBeenNthCalledWith(2, mockStream, { contentType: 'time-values', numberOfElement: 1 });
+    expect(cacheService.addCacheContent).toHaveBeenNthCalledWith(3, mockStream, { contentType: 'time-values', numberOfElement: 1 });
   });
 
   it('should cache without transform with any-content', async () => {
