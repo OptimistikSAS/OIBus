@@ -99,7 +99,9 @@ describe('Logger', () => {
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({
       base: undefined,
-      level: 'trace',
+      // Parent level is the most-verbose level across enabled transports.
+      // Test data has every transport at 'info', so the parent collapses to 'info'.
+      level: 'info',
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets }
     });
@@ -174,7 +176,9 @@ describe('Logger', () => {
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({
       base: undefined,
-      level: 'trace',
+      // Parent level is now the most-verbose level across enabled transports.
+      // Test data has every transport at 'info', so the parent collapses to 'info'.
+      level: 'info',
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets }
     });
@@ -206,7 +210,9 @@ describe('Logger', () => {
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({
       base: undefined,
-      level: 'trace',
+      // Parent level is now the most-verbose level across enabled transports.
+      // Test data has every transport at 'info', so the parent collapses to 'info'.
+      level: 'info',
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets }
     });

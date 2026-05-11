@@ -18,7 +18,9 @@ export const createConnectionOptions = async (
     rejectUnauthorized: connectionSettings.rejectUnauthorized,
     queueQoSZero: false,
     log: (...args: Array<object | string>) => {
-      // Log all arguments as a single message
+      // The MQTT client calls this on every internal event (chatty). Without
+      // the gate, JSON.stringify runs even when no transport accepts trace.
+      if (!logger.isLevelEnabled('trace')) return;
       logger.trace(args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' '));
     },
     resubscribe: connectionSettings.persistent || false,
