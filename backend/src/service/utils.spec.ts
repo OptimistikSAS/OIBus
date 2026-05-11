@@ -1406,6 +1406,17 @@ describe('Service utils', () => {
       expect(testIPOnFilter([], '192.168.1.1')).toEqual(false);
     });
 
+    it('should cache compiled regexes across repeated calls (perf contract)', () => {
+      // Sanity: repeated calls against the same filter set must keep working —
+      // protects against any future regression that drops the regex cache.
+      const ipFilters = ['10.0.*.*', '192.168.1.*'];
+      for (let i = 0; i < 50; i++) {
+        expect(testIPOnFilter(ipFilters, '10.0.0.1')).toEqual(true);
+        expect(testIPOnFilter(ipFilters, '192.168.1.42')).toEqual(true);
+        expect(testIPOnFilter(ipFilters, '172.16.0.1')).toEqual(false);
+      }
+    });
+
     it('should return true for a matching IPv4 address', () => {
       expect(testIPOnFilter(['192.168.1.*'], '192.168.1.1')).toEqual(true);
       expect(testIPOnFilter(['192.168.*.*'], '192.168.1.1')).toEqual(true);

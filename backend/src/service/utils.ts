@@ -779,34 +779,64 @@ const formatRegex = (ip: string) => {
 
 const LOCALHOST_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1', '::ffff:7f00:1', '0:0:0:0:0:0:0:1'];
 
+/**
+ * Per-filter compiled regex cache. `testIPOnFilter` runs on every HTTP request
+ * via the IP-filter middleware; The set of filters
+ * is bounded by the operator's configuration, so an unbounded cache is fine.
+ */
+const ipFilterRegexCache = new Map<string, RegExp>();
+const getFilterRegex = (filter: string): RegExp => {
+  let regex = ipFilterRegexCache.get(filter);
+  if (!regex) {
+    regex = new RegExp(formatRegex(filter));
+    ipFilterRegexCache.set(filter, regex);
+  }
+  return regex;
+};
+
+// Hoisted (was `new RegExp(...)` per call before): the request's IP shape only
+// needs to be classified once, not once per filter.
+const IPV4_PATTERN = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+const IPV4_MAPPED_PATTERN = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/;
+
 export const testIPOnFilter = (ipFilters: Array<string>, ipToCheck: string): boolean => {
-  return [...LOCALHOST_ADDRESSES, ...ipFilters].some(filter => {
-    if (filter === '*') {
-      return true;
-    }
+  // Classify the inbound IP once.
+  const isIPv4 = IPV4_PATTERN.test(ipToCheck);
+  const ipv4MappedMatch = !isIPv4 ? ipToCheck.match(IPV4_MAPPED_PATTERN) : null;
+  // For an IPv4 request, the mapped form (`::ffff:1.2.3.4`) lets a v4-shaped
+  // filter still match — keep that behaviour but compute the string once.
+  const mappedIpv4Form = isIPv4 ? `::ffff:${ipToCheck}` : null;
 
-    // Format the regex for IPv4
-    const formattedRegexIPv4 = formatRegex(filter);
-    const regexIPv4 = new RegExp(formattedRegexIPv4);
+  for (const filter of LOCALHOST_ADDRESSES) {
+    if (matchesFilter(filter, ipToCheck, isIPv4, mappedIpv4Form, ipv4MappedMatch)) return true;
+  }
+  for (const filter of ipFilters) {
+    if (matchesFilter(filter, ipToCheck, isIPv4, mappedIpv4Form, ipv4MappedMatch)) return true;
+  }
+  return false;
+};
 
-    // Format the regex for IPv6
-    const formattedRegexIPv6 = formatRegex(filter);
-    const regexIPv6 = new RegExp(formattedRegexIPv6);
+const matchesFilter = (
+  filter: string,
+  ipToCheck: string,
+  isIPv4: boolean,
+  mappedIpv4Form: string | null,
+  ipv4MappedMatch: RegExpMatchArray | null
+): boolean => {
+  if (filter === '*') return true;
+  const regex = getFilterRegex(filter);
 
-    // Test both IPv4 and IPv6 formats
-    if (/^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(ipToCheck)) {
-      return regexIPv4.test(ipToCheck) || regexIPv6.test(`::ffff:${ipToCheck}`);
-    } else {
-      // Check if the ipToCheck is an IPv6-mapped IPv4 address
-      const ipv4MappedPattern = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/;
-      const match = ipToCheck.match(ipv4MappedPattern);
-      if (match) {
-        const ipv4Part = match[1];
-        return regexIPv4.test(ipv4Part) || regexIPv6.test(ipToCheck);
-      }
-      return regexIPv6.test(ipToCheck);
-    }
-  });
+  if (isIPv4) {
+    // Plain IPv4: test the v4 form first; also try the mapped form so a
+    // `192.168.*.*`-style filter matches an `::ffff:192.168.x.x` peer.
+    return regex.test(ipToCheck) || regex.test(mappedIpv4Form!);
+  }
+  if (ipv4MappedMatch) {
+    // Inbound is `::ffff:1.2.3.4` — try both the raw form and the v4 part.
+    return regex.test(ipv4MappedMatch[1]) || regex.test(ipToCheck);
+  }
+  // Pure IPv6 (or other) — single test.
+  return regex.test(ipToCheck);
 };
 
 export const sanitizeFilename = (originalName: string): string => {
