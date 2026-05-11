@@ -1793,12 +1793,22 @@ describe('Service utils', () => {
       expect(result).toEqual([[item1], [item2]]);
     });
 
-    it('should group items by group.id when syncWithGroup is true and southType is in SOUTH_SINGLE_ITEMS', () => {
+    it('should group items with the same group.id when syncWithGroup is true and southType supports grouping', () => {
       const group = { ...baseGroup, id: 'g1' };
       const item1 = { ...baseItem, id: 'item1', group, syncWithGroup: true };
       const item2 = { ...baseItem, id: 'item2', group, syncWithGroup: true };
-      const result = groupItemsByGroup('mssql', [item1, item2]);
+      // opcua is NOT in SOUTH_SINGLE_ITEMS, so grouping is enabled
+      const result = groupItemsByGroup('opcua', [item1, item2]);
       expect(result).toEqual([[item1, item2]]);
+    });
+
+    it('should treat every item as a singleton when southType is in SOUTH_SINGLE_ITEMS, even if syncWithGroup is true', () => {
+      const group = { ...baseGroup, id: 'g1' };
+      const item1 = { ...baseItem, id: 'item1', group, syncWithGroup: true };
+      const item2 = { ...baseItem, id: 'item2', group, syncWithGroup: true };
+      // mssql IS in SOUTH_SINGLE_ITEMS — grouping must be ignored
+      const result = groupItemsByGroup('mssql', [item1, item2]);
+      expect(result).toEqual([[item1], [item2]]);
     });
 
     it('should create separate sub-arrays for items with different group.ids', () => {
@@ -1806,8 +1816,18 @@ describe('Service utils', () => {
       const group2 = { ...baseGroup, id: 'g2' };
       const item1 = { ...baseItem, id: 'item1', group: group1, syncWithGroup: true };
       const item2 = { ...baseItem, id: 'item2', group: group2, syncWithGroup: true };
-      const result = groupItemsByGroup('mssql', [item1, item2]);
+      const result = groupItemsByGroup('opcua', [item1, item2]);
       expect(result).toEqual([[item1], [item2]]);
+    });
+
+    it('should handle mixed items — grouped and ungrouped in the same list', () => {
+      const group = { ...baseGroup, id: 'g1' };
+      const grouped1 = { ...baseItem, id: 'item1', group, syncWithGroup: true };
+      const grouped2 = { ...baseItem, id: 'item2', group, syncWithGroup: true };
+      const ungrouped = { ...baseItem, id: 'item3', group: null, syncWithGroup: false };
+      const result = groupItemsByGroup('opcua', [grouped1, ungrouped, grouped2]);
+      // grouped1 and grouped2 share group g1; ungrouped is always a singleton
+      expect(result).toEqual([[grouped1, grouped2], [ungrouped]]);
     });
   });
 });

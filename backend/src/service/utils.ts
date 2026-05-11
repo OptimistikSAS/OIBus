@@ -955,7 +955,7 @@ export const groupItemsByGroup = <I extends SouthItemSettings>(
 ): Array<Array<SouthConnectorItemEntity<I>>> => {
   const groupedItemsList: Array<Array<SouthConnectorItemEntity<I>>> = [];
   for (const item of items) {
-    if (!(items[0].group && items[0].syncWithGroup && SOUTH_SINGLE_ITEMS.includes(southType))) {
+    if (!item.group || !item.syncWithGroup || SOUTH_SINGLE_ITEMS.includes(southType)) {
       groupedItemsList.push([item]);
     } else {
       const groupIndex = groupedItemsList.findIndex(element => element[0].group && element[0].group.id === item.group!.id);
