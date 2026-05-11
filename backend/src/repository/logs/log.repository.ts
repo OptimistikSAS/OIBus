@@ -100,18 +100,27 @@ export default class LogRepository {
     return (this.database.prepare(query).get() as { count: number }).count;
   };
 
-  delete = (numberOfLogsToDelete: number): void => {
-    const query = `DELETE FROM ${LOG_TABLE} WHERE ROWID IN (SELECT ROWID FROM ${LOG_TABLE} LIMIT ?);`;
-    this.database.prepare(query).run(numberOfLogsToDelete);
+  /**
+   * Delete the OLDEST `numberOfLogsToDelete` rows.
+   *
+   * Returns the number of rows actually deleted (may be < requested if the
+   * table has fewer rows), so the caller can update its own counters without
+   * issuing a follow-up `SELECT COUNT(*)`.
+   */
+  delete = (numberOfLogsToDelete: number): number => {
+    const query = `DELETE FROM ${LOG_TABLE} WHERE ROWID IN (SELECT ROWID FROM ${LOG_TABLE} ORDER BY ROWID ASC LIMIT ?);`;
+    const result = this.database.prepare(query).run(numberOfLogsToDelete);
+    return result.changes;
   };
 
   deleteLogsByScopeId = (scopeType: ScopeType, scopeId: string): void => {
     this.database.prepare(`DELETE FROM ${LOG_TABLE} WHERE scope_type = ? AND scope_id = ?`).run(scopeType, scopeId);
   };
 
-  vacuum = (): void => {
-    this.database.exec('VACUUM');
-  };
+  // Note: no vacuum methods here. The v3.8.0 migration enables
+  // `auto_vacuum = FULL` on the logs DB, so SQLite reclaims free pages itself
+  // on any transaction that frees them. The previous full-VACUUM-on-startup
+  // and periodic-VACUUM-after-deletion paths are both gone.
 
   private toLog(result: Record<string, string>): OIBusLog {
     return {
