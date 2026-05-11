@@ -96,7 +96,9 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   }
 
   async flushMessages(): Promise<void> {
-    const messageToParse = Array.from(this.bufferedMessages);
+    // Swap-and-walk: take ownership of the current buffer in O(1) and let the
+    // message handler accumulate into a fresh one. Avoids the Array.from copy.
+    const messageToParse = this.bufferedMessages;
     this.bufferedMessages = [];
     if (this.flushTimeout) {
       clearTimeout(this.flushTimeout);
@@ -105,21 +107,23 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     if (messageToParse.length) {
       this.logger.debug(`Flushing ${messageToParse.length} messages`);
       try {
+        const payload = new Array<{ message: string; timestamp: Instant; item: { id: string; name: string; topic: string } }>(
+          messageToParse.length
+        );
+        const uniqueItems = new Set<SouthConnectorItemEntity<SouthMQTTItemSettings>>();
+        for (let i = 0; i < messageToParse.length; i++) {
+          const element = messageToParse[i];
+          payload[i] = {
+            message: element.message,
+            timestamp: element.timestamp,
+            item: { id: element.item.id, name: element.item.name, topic: element.item.settings.topic }
+          };
+          uniqueItems.add(element.item);
+        }
         await this.addContent(
-          {
-            type: 'any-content',
-            content: JSON.stringify(
-              messageToParse.map(element => {
-                return {
-                  message: element.message,
-                  timestamp: element.timestamp,
-                  item: { id: element.item.id, name: element.item.name, topic: element.item.settings.topic }
-                };
-              })
-            )
-          },
+          { type: 'any-content', content: JSON.stringify(payload) },
           DateTime.now().toUTC().toISO(),
-          [...new Set(messageToParse.map(element => element.item))]
+          Array.from(uniqueItems)
         );
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
