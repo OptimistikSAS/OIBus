@@ -954,16 +954,26 @@ export const groupItemsByGroup = <I extends SouthItemSettings>(
   items: Array<SouthConnectorItemEntity<I>>
 ): Array<Array<SouthConnectorItemEntity<I>>> => {
   const groupedItemsList: Array<Array<SouthConnectorItemEntity<I>>> = [];
+  // Sidecar map for O(1) group lookup. The arrays stored here are the SAME
+  // references as in groupedItemsList, so pushing to one updates both.
+  // groupedItemsList is the source of truth for output order; the map is just
+  // an index. Connectors in SOUTH_SINGLE_ITEMS skip the map entirely (every
+  // item is forced to be its own singleton, so there's no reason to index).
+  const supportsGrouping = !SOUTH_SINGLE_ITEMS.includes(southType);
+  const groupArraysById = new Map<string, Array<SouthConnectorItemEntity<I>>>();
+
   for (const item of items) {
-    if (!item.group || !item.syncWithGroup || SOUTH_SINGLE_ITEMS.includes(southType)) {
+    if (!item.group || !item.syncWithGroup || !supportsGrouping) {
       groupedItemsList.push([item]);
+      continue;
+    }
+    const existing = groupArraysById.get(item.group.id);
+    if (existing) {
+      existing.push(item);
     } else {
-      const groupIndex = groupedItemsList.findIndex(element => element[0].group && element[0].group.id === item.group!.id);
-      if (groupIndex !== -1) {
-        groupedItemsList[groupIndex].push(item);
-      } else {
-        groupedItemsList.push([item]);
-      }
+      const newGroup = [item];
+      groupedItemsList.push(newGroup);
+      groupArraysById.set(item.group.id, newGroup);
     }
   }
   return groupedItemsList;
