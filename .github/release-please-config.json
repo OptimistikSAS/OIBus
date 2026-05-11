@@ -71,6 +71,14 @@
       "type": "json",
       "path": "launcher/package-lock.json",
       "jsonpath": "packages[\"\"].version"
+    },
+    {
+      "type": "generic",
+      "path": "build/docker/Dockerfile"
+    },
+    {
+      "type": "generic",
+      "path": "documentation/docs/developer/docker.mdx"
     }
   ]
 }
