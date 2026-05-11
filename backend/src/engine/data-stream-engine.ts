@@ -447,7 +447,11 @@ export default class DataStreamEngine {
   }
 
   /**
-   * Method called by South connectors to add content to the appropriate Norths
+   * Method called by South connectors to add content to the appropriate Norths.
+   *
+   * Fan-out is parallel: each enabled North caches concurrently, so total latency
+   * is `max(perNorthTime)` instead of `sum`. A failure in one North no longer
+   * blocks the others — errors are logged per-North via the per-promise catch.
    */
   async addContent(
     southId: string,
@@ -455,11 +459,19 @@ export default class DataStreamEngine {
     queryTime: Instant,
     items: Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
   ) {
+    const pending: Array<Promise<void>> = [];
     for (const north of this.northConnectors.values()) {
-      if (north.north.isEnabled()) {
-        await north.north.cacheContent(data, { source: 'south', southId, queryTime, items });
-      }
+      if (!north.north.isEnabled()) continue;
+      pending.push(
+        north.north.cacheContent(data, { source: 'south', southId, queryTime, items }).catch((error: unknown) => {
+          this._logger.error(
+            `Error while caching content to North "${north.north.connectorConfiguration.name}" ` +
+              `(${north.north.connectorConfiguration.id}): ${(error as Error).message}`
+          );
+        })
+      );
     }
+    await Promise.all(pending);
   }
 
   /**
