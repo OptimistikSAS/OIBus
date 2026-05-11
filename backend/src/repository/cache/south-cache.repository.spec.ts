@@ -85,49 +85,53 @@ describe('SouthCacheRepository', () => {
   });
 
   describe('saveItemLastValue', () => {
-    it('should insert if not exists', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce(undefined);
+    it('should execute a single statement (no SELECT-then-write round-trip)', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO'));
+      // Exactly one prepare(), no preliminary SELECT.
+      expect(mockDatabase.prepare).toHaveBeenCalledTimes(1);
+      expect(mockDatabase.get).not.toHaveBeenCalled();
+      const sql: string = (mockDatabase.prepare as jest.Mock).mock.calls[0][0];
+      // INSERT OR REPLACE is SQLite shorthand for "insert; on conflict, delete + insert again".
+      expect(sql).toContain('INSERT OR REPLACE INTO "south_item_cache_south1"');
+      // Args follow the INSERT column order: group_id, item_id, query_time, value, tracked_instant.
+      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'item1', 'now', '1', 'now');
     });
 
-    it('should update by item_id only and also update group_id', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({});
-      repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'UPDATE "south_item_cache_south1" SET group_id = ?, query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ?'
-        )
-      );
-      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'now', '1', 'now', 'item1');
-    });
-
-    it('should update with null group_id when item has no group', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({});
+    it('should pass null group_id through when item has no group', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: null, value: 1, trackedInstant: 'now', queryTime: 'now' });
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(
-        expect.stringContaining(
-          'UPDATE "south_item_cache_south1" SET group_id = ?, query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ?'
-        )
-      );
-      expect(mockDatabase.run).toHaveBeenCalledWith(null, 'now', '1', 'now', 'item1');
+      expect(mockDatabase.run).toHaveBeenCalledWith(null, 'item1', 'now', '1', 'now');
     });
 
-    it('should insert with correct args when row already exists for a different group_id', () => {
-      // Simulates the bug-fix scenario: item was stored under groupId=null,
-      // then the item was placed in a group — the lookup still finds it (by item_id only)
-      // and issues an UPDATE rather than a duplicate INSERT.
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce({ item_id: 'item1', group_id: null });
+    it('should rewrite group_id when the row already exists', () => {
+      // INSERT OR REPLACE deletes the existing row and inserts the new one, so
+      // the new group_id is whatever the caller just passed — same semantic as
+      // the old "find by item_id, UPDATE group_id" branch, in a single
+      // statement.
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 42, trackedInstant: 'now', queryTime: 'now' });
-      // Must UPDATE (not INSERT) and must update group_id to 'group1'
-      expect(mockDatabase.prepare).toHaveBeenCalledWith(expect.stringContaining('UPDATE'));
-      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'now', '42', 'now', 'item1');
+      const sql: string = (mockDatabase.prepare as jest.Mock).mock.calls[0][0];
+      expect(sql).toContain('INSERT OR REPLACE');
+      expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'item1', 'now', '42', 'now');
     });
 
     it('should store null when value is null', () => {
-      (mockDatabase.get as jest.Mock).mockReturnValueOnce(undefined);
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: null, trackedInstant: 'now', queryTime: 'now' });
       expect(mockDatabase.run).toHaveBeenCalledWith('group1', 'item1', 'now', null, 'now');
+    });
+
+    it('should reuse the cached prepared statement on subsequent saves for the same connector', () => {
+      repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'g', value: 1, trackedInstant: 't', queryTime: 't' });
+      repository.saveItemLastValue('south1', { itemId: 'item2', groupId: 'g', value: 2, trackedInstant: 't', queryTime: 't' });
+      // prepare() ran once total (cache hit on the second call).
+      expect(mockDatabase.prepare).toHaveBeenCalledTimes(1);
+      expect(mockDatabase.run).toHaveBeenCalledTimes(2);
+    });
+
+    it('should drop the cached statement when the table is recreated', () => {
+      repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'g', value: 1, trackedInstant: 't', queryTime: 't' });
+      repository.createItemValueTable('south1'); // invalidates the cache
+      repository.saveItemLastValue('south1', { itemId: 'item2', groupId: 'g', value: 2, trackedInstant: 't', queryTime: 't' });
+      // 1 UPSERT prepare + 1 CREATE TABLE prepare + 1 second UPSERT prepare
+      expect(mockDatabase.prepare).toHaveBeenCalledTimes(3);
     });
   });
 
