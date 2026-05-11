@@ -101,14 +101,21 @@ describe('Repository with populated database', () => {
     });
 
     it('should delete logs', () => {
-      repository.delete(1);
+      // delete() returns the actual number of rows removed so callers can
+      // update their own counters without a follow-up SELECT COUNT(*).
+      const deletedCount = repository.delete(1);
+      expect(deletedCount).toBe(1);
       expect(repository.count()).toEqual(testData.logs.list.length - 1);
 
       repository.deleteLogsByScopeId('south', testData.logs.list[0].scopeId as string);
       expect(repository.count()).toEqual(testData.logs.list.length - 2);
 
-      repository.vacuum();
+      // No vacuum() / incrementalVacuum() to assert here — the v3.8.0 logs
+      // migration sets `auto_vacuum = FULL`, so SQLite reclaims free pages
+      // itself as part of the DELETE transaction. The repository no longer
+      // exposes any vacuum API.
     });
+
 
     it('should search scopes and find by id', () => {
       const result = repository.suggestScopes(testData.logs.list[2].scopeName as string);
