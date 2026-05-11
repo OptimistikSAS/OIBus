@@ -366,6 +366,9 @@ export default class SouthOPCUA
     testingItem = false
   ): Promise<{ trackedInstant: Instant | null; value: OIBusTimeValue | null }> {
     let lastValue: OIBusTimeValue | null = null;
+    // Track the most-recent timestamp in epoch-ms so we can compare numerically
+    // and avoid re-parsing lastValue.timestamp ISO string on every history value.
+    let lastValueTimestampMs = -Infinity;
     const itemsByAggregates = new Map<
       Aggregate,
       Map<Resampling | undefined, Array<{ nodeId: NodeId; item: SouthConnectorItemEntity<SouthOPCUAItemSettings> }>>
@@ -409,18 +412,36 @@ export default class SouthOPCUA
       for (const [resampling, resampledItems] of aggregatedItems.entries()) {
         const logs = new Map<string, { description: string; affectedNodes: Array<string> }>();
 
-        let nodesToRead: Array<HistoryReadValueIdOptions> = resampledItems.map(item => ({
-          continuationPoint: undefined,
-          dataEncoding: undefined,
-          indexRange: undefined,
-          nodeId: item.nodeId
+        // Each entry carries its associated item alongside the node descriptor so
+        // we can look up the item by index (O(1)) instead of via .find() per result
+        // (which was O(N²) per response). The .filter() below preserves the pairing
+        // for continuation-point round-trips.
+        let nodesToRead: Array<{
+          nodeToRead: HistoryReadValueIdOptions;
+          item: SouthConnectorItemEntity<SouthOPCUAItemSettings>;
+        }> = resampledItems.map(({ nodeId, item }) => ({
+          nodeToRead: {
+            continuationPoint: undefined,
+            dataEncoding: undefined,
+            indexRange: undefined,
+            nodeId
+          },
+          item
         }));
         const totalNodes = resampledItems.length;
+        // Hoist once instead of rebuilding per continuation-point round-trip
+        const resampledItemsAsItems = resampledItems.map(({ item }) => item);
         this.logger.trace(`Reading ${totalNodes} items with aggregate ${aggregate} and resampling ${resampling}`);
         do {
           const batchValues: Array<OIBusTimeValue> = [];
           const startRequest = DateTime.now();
-          const request = getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
+          const request = getHistoryReadRequest(
+            startTime,
+            endTime,
+            aggregate,
+            resampling,
+            nodesToRead.map(n => n.nodeToRead)
+          );
           const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
           this.logger.debug(`HA request done in ${requestDuration} ms`);
           request.requestHeader.timeoutHint = this.connector.settings.readTimeout;
@@ -437,9 +458,8 @@ export default class SouthOPCUA
             );
 
             nodesToRead = nodesToRead
-              .map((node, i) => {
+              .map(({ nodeToRead: node, item: associatedItem }, i) => {
                 const result = response.results![i];
-                const associatedItem = resampledItems.find(item => item.nodeId === node.nodeId)!;
 
                 if (
                   ![StatusCodes.Good.value, StatusCodes.GoodNoData.value, StatusCodes.GoodMoreData.value].includes(result.statusCode.value)
@@ -447,10 +467,10 @@ export default class SouthOPCUA
                   if (!logs.has(result.statusCode.name)) {
                     logs.set(result.statusCode.name, {
                       description: result.statusCode.description,
-                      affectedNodes: [associatedItem.item.name]
+                      affectedNodes: [associatedItem.name]
                     });
                   } else {
-                    logs.get(result.statusCode.name)!.affectedNodes.push(associatedItem.item.name);
+                    logs.get(result.statusCode.name)!.affectedNodes.push(associatedItem.name);
                   }
                 } else if (result.historyData && (result.historyData as HistoryDataOptions).dataValues) {
                   const historyDataValues = (result.historyData as HistoryDataOptions).dataValues!.filter(
@@ -462,13 +482,14 @@ export default class SouthOPCUA
                       `${result.statusCode.name}, continuation point is ${result.continuationPoint}`
                   );
                   for (const historyValue of historyDataValues) {
-                    const value = parseOPCUAValue(associatedItem.item.name, historyValue.value, this.logger);
+                    const value = parseOPCUAValue(associatedItem.name, historyValue.value, this.logger);
                     if (!value) {
                       continue;
                     }
                     const selectedTimestamp = historyValue.sourceTimestamp ?? historyValue.serverTimestamp;
+                    const selectedTimestampMs = selectedTimestamp!.getTime();
                     const timeValue: OIBusTimeValue = {
-                      pointId: associatedItem.item.name,
+                      pointId: associatedItem.name,
                       timestamp: selectedTimestamp!.toISOString(),
                       data: {
                         value,
@@ -476,15 +497,16 @@ export default class SouthOPCUA
                       }
                     };
                     batchValues.push(timeValue);
-                    if (!lastValue || selectedTimestamp!.getTime() > new Date(lastValue.timestamp).getTime()) {
+                    if (selectedTimestampMs > lastValueTimestampMs) {
                       lastValue = timeValue;
+                      lastValueTimestampMs = selectedTimestampMs;
                     }
                   }
                 }
 
                 return {
-                  ...node,
-                  continuationPoint: result.continuationPoint,
+                  nodeToRead: { ...node, continuationPoint: result.continuationPoint },
+                  item: associatedItem,
                   status: result.statusCode,
                   hasData:
                     result.historyData &&
@@ -493,20 +515,16 @@ export default class SouthOPCUA
                 };
               })
               .filter(
-                node =>
-                  node.hasData &&
-                  [StatusCodes.Good.value, StatusCodes.GoodNoData.value, StatusCodes.GoodMoreData.value].includes(node.status.value) &&
-                  node.continuationPoint &&
-                  node.continuationPoint.length > 0
+                entry =>
+                  entry.hasData &&
+                  [StatusCodes.Good.value, StatusCodes.GoodNoData.value, StatusCodes.GoodMoreData.value].includes(entry.status.value) &&
+                  entry.nodeToRead.continuationPoint &&
+                  entry.nodeToRead.continuationPoint.length > 0
               );
 
             this.logger.debug(`Adding ${batchValues.length} values between ${startTime} and ${endTime}`);
             if (!testingItem) {
-              await this.addContent(
-                { type: 'time-values', content: batchValues },
-                startRequest.toUTC().toISO(),
-                resampledItems.map(item => item.item)
-              );
+              await this.addContent({ type: 'time-values', content: batchValues }, startRequest.toUTC().toISO(), resampledItemsAsItems);
               this.logger.trace(`Continue read for ${nodesToRead.length}/${totalNodes} nodes with pending data`);
             }
           } else {
@@ -516,16 +534,20 @@ export default class SouthOPCUA
         } while (nodesToRead.length > 0);
 
         // If all is retrieved, clear continuation points
-        nodesToRead = resampledItems.map(item => ({
-          continuationPoint: undefined,
-          dataEncoding: undefined,
-          indexRange: undefined,
-          nodeId: item.nodeId
-        }));
-
-        const historyRequest = getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
-        historyRequest.releaseContinuationPoints = true;
-        const response = await session.historyRead(historyRequest);
+        const releaseRequest = getHistoryReadRequest(
+          startTime,
+          endTime,
+          aggregate,
+          resampling,
+          resampledItems.map(({ nodeId }) => ({
+            continuationPoint: undefined,
+            dataEncoding: undefined,
+            indexRange: undefined,
+            nodeId
+          }))
+        );
+        releaseRequest.releaseContinuationPoints = true;
+        const response = await session.historyRead(releaseRequest);
 
         if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
           this.logger.error(`Error while releasing continuation points: ${response.responseHeader.serviceResult.description}`);
@@ -534,10 +556,13 @@ export default class SouthOPCUA
       }
     }
 
-    const mostRecentValue = lastValue as OIBusTimeValue | null;
+    // TypeScript's control-flow analysis can't see assignments inside the .map()
+    // callback above, so it narrows lastValue to its initial type (null) here.
+    // The `as` cast disables narrowing for the use site.
+    const result = lastValue as OIBusTimeValue | null;
     return {
-      trackedInstant: mostRecentValue?.timestamp ?? null,
-      value: mostRecentValue
+      trackedInstant: result?.timestamp ?? null,
+      value: result
     };
   }
 
@@ -673,7 +698,9 @@ export default class SouthOPCUA
   }
 
   async flushMessages(): Promise<void> {
-    const valuesToSend = Array.from(this.bufferedValues);
+    // Swap-and-walk: take ownership of the current buffer in O(1) and let the
+    // subscription handler accumulate into a fresh one. Avoids the Array.from copy.
+    const valuesToSend = this.bufferedValues;
     this.bufferedValues = [];
     if (this.flushTimeout) {
       clearTimeout(this.flushTimeout);
@@ -682,18 +709,18 @@ export default class SouthOPCUA
     if (valuesToSend.length) {
       this.logger.debug(`Flushing ${valuesToSend.length} messages`);
       try {
-        await this.addContent(
-          {
-            type: 'time-values',
-            content: valuesToSend.map(element => ({
-              pointId: element.item.name,
-              timestamp: element.timestamp,
-              data: { value: element.value, quality: element.quality }
-            }))
-          },
-          DateTime.now().toUTC().toISO(),
-          [...new Set(valuesToSend.map(element => element.item))]
-        );
+        const content = new Array<OIBusTimeValue>(valuesToSend.length);
+        const uniqueItems = new Set<SouthConnectorItemEntity<SouthOPCUAItemSettings>>();
+        for (let i = 0; i < valuesToSend.length; i++) {
+          const element = valuesToSend[i];
+          content[i] = {
+            pointId: element.item.name,
+            timestamp: element.timestamp,
+            data: { value: element.value, quality: element.quality }
+          };
+          uniqueItems.add(element.item);
+        }
+        await this.addContent({ type: 'time-values', content }, DateTime.now().toUTC().toISO(), Array.from(uniqueItems));
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
       }
