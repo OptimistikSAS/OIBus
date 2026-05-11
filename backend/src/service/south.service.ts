@@ -396,7 +396,7 @@ export default class SouthService {
     const item = this.findItemById(southId, itemId);
 
     // Get the last value from the cache
-    const lastValue = this.southCacheRepository.getItemLastValue(southId, item.group?.id || null, itemId);
+    const lastValue = this.southCacheRepository.getItemLastValue(southId, itemId);
 
     return {
       groupId: item.group?.id || null,

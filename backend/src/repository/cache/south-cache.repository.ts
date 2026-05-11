@@ -42,17 +42,11 @@ export default class SouthCacheRepository {
   /**
    * Get last value for an item
    */
-  getItemLastValue(connectorId: string, groupId: string | null, itemId: string): Omit<SouthItemLastValue, 'itemName' | 'groupName'> | null {
+  getItemLastValue(connectorId: string, itemId: string): Omit<SouthItemLastValue, 'itemName' | 'groupName'> | null {
     const tableName = `south_item_cache_${connectorId}`;
-    let whereClause = 'WHERE item_id = ?';
-    const queryParams = [itemId];
-    if (groupId) {
-      whereClause += ` AND group_id = ?`;
-      queryParams.push(groupId);
-    }
-    const query = `SELECT group_id, item_id, query_time, value, tracked_instant FROM "${tableName}" ${whereClause};`;
+    const query = `SELECT group_id, item_id, query_time, value, tracked_instant FROM "${tableName}" WHERE item_id = ?;`;
     try {
-      const result = this._database.prepare(query).get(...queryParams) as Record<string, string> | undefined;
+      const result = this._database.prepare(query).get(itemId) as Record<string, string> | undefined;
       if (!result) return null;
       return this.toSouthItemLastValue(result);
     } catch {
@@ -66,7 +60,7 @@ export default class SouthCacheRepository {
    */
   saveItemLastValue(connectorId: string, command: Omit<SouthItemLastValue, 'itemName' | 'groupName'>): void {
     const tableName = `south_item_cache_${connectorId}`;
-    const existing = this.getItemLastValue(connectorId, command.groupId, command.itemId);
+    const existing = this.getItemLastValue(connectorId, command.itemId);
 
     const valueStr = command.value !== null && command.value !== undefined ? JSON.stringify(command.value) : null;
 
@@ -74,32 +68,18 @@ export default class SouthCacheRepository {
       const insertQuery = `INSERT INTO "${tableName}" (group_id, item_id, query_time, value, tracked_instant) VALUES (?, ?, ?, ?, ?);`;
       this._database.prepare(insertQuery).run(command.groupId, command.itemId, command.queryTime, valueStr, command.trackedInstant);
     } else {
-      let whereClause = 'WHERE item_id = ?';
-      const updateParams: Array<string | null> = [command.queryTime, valueStr, command.trackedInstant, command.itemId];
-      if (command.groupId) {
-        whereClause += ' AND group_id = ?';
-        updateParams.push(command.groupId);
-      } else {
-        whereClause += ' AND group_id IS NULL';
-      }
-      const updateQuery = `UPDATE "${tableName}" SET query_time = ?, value = ?, tracked_instant = ? ${whereClause};`;
-      this._database.prepare(updateQuery).run(...updateParams);
+      // Also update group_id so a row created before the item was added to (or removed from)
+      // a group always reflects the current group association.
+      const updateQuery = `UPDATE "${tableName}" SET group_id = ?, query_time = ?, value = ?, tracked_instant = ? WHERE item_id = ?;`;
+      this._database.prepare(updateQuery).run(command.groupId, command.queryTime, valueStr, command.trackedInstant, command.itemId);
     }
   }
 
-  deleteItemValue(connectorId: string, groupId: string | null, itemId: string | null): void {
+  deleteItemValue(connectorId: string, itemId: string): void {
     const tableName = `south_item_cache_${connectorId}`;
-    let whereClause = 'WHERE item_id = ?';
-    const queryParams: Array<string | null> = [itemId];
-    if (groupId) {
-      whereClause += ' AND group_id = ?';
-      queryParams.push(groupId);
-    } else {
-      whereClause += ' AND group_id IS NULL';
-    }
-    const query = `DELETE FROM "${tableName}" ${whereClause};`;
+    const query = `DELETE FROM "${tableName}" WHERE item_id = ?;`;
     try {
-      this._database.prepare(query).run(...queryParams);
+      this._database.prepare(query).run(itemId);
     } catch {
       // Ignore if table/item fails
     }
