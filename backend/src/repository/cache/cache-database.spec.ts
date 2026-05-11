@@ -24,7 +24,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should return null from getItemLastValue when table does not exist', () => {
-      const result = repository.getItemLastValue('nonexistent-connector', 'groupId', 'someItemId');
+      const result = repository.getItemLastValue('nonexistent-connector', 'someItemId');
       assert.strictEqual(result, null);
     });
 
@@ -35,7 +35,7 @@ describe('Repository with populated database', () => {
           `INSERT INTO "south_item_cache_invalidJsonConnector" (item_id, group_id, query_time, value, tracked_instant) VALUES (?, ?, ?, ?, ?)`
         )
         .run('item1', null, null, 'not valid json', null);
-      const result = repository.getItemLastValue('invalidJsonConnector', null, 'item1');
+      const result = repository.getItemLastValue('invalidJsonConnector', 'item1');
       assert.notStrictEqual(result, null);
       assert.strictEqual(result!.itemId, 'item1');
       assert.strictEqual(result!.value, 'not valid json');
@@ -43,7 +43,7 @@ describe('Repository with populated database', () => {
     });
 
     it('should ignore deleteItemValue when table does not exist', () => {
-      assert.doesNotThrow(() => repository.deleteItemValue('nonexistent-connector', 'groupId', 'itemId'));
+      assert.doesNotThrow(() => repository.deleteItemValue('nonexistent-connector', 'itemId'));
     });
 
     it('should save and update item with group id', () => {
@@ -55,7 +55,7 @@ describe('Repository with populated database', () => {
         queryTime: 'now2',
         trackedInstant: 'ts2'
       });
-      const result = repository.getItemLastValue('southId', 'group1', 'item1');
+      const result = repository.getItemLastValue('southId', 'item1');
       assert.strictEqual(result!.value, 'v2');
       assert.strictEqual(result!.trackedInstant, 'ts2');
     });
@@ -63,23 +63,23 @@ describe('Repository with populated database', () => {
     it('should save and update item with null group id', () => {
       repository.saveItemLastValue('southId', { itemId: 'item2', groupId: null, value: 'v1', queryTime: 'now', trackedInstant: 'ts1' });
       repository.saveItemLastValue('southId', { itemId: 'item2', groupId: null, value: 'v2', queryTime: 'now2', trackedInstant: 'ts2' });
-      const result = repository.getItemLastValue('southId', null, 'item2');
+      const result = repository.getItemLastValue('southId', 'item2');
       assert.strictEqual(result!.value, 'v2');
       assert.strictEqual(result!.trackedInstant, 'ts2');
     });
 
     it('should delete item by groupId and itemId', () => {
       repository.saveItemLastValue('southId', { itemId: 'item3', groupId: 'group1', value: 'v', queryTime: 'now', trackedInstant: 'now' });
-      assert.ok(repository.getItemLastValue('southId', 'group1', 'item3'));
-      repository.deleteItemValue('southId', 'group1', 'item3');
-      assert.strictEqual(repository.getItemLastValue('southId', 'group1', 'item3'), null);
+      assert.ok(repository.getItemLastValue('southId', 'item3'));
+      repository.deleteItemValue('southId', 'item3');
+      assert.strictEqual(repository.getItemLastValue('southId', 'item3'), null);
     });
 
     it('should delete item with null groupId using IS NULL', () => {
       repository.saveItemLastValue('southId', { itemId: 'item4', groupId: null, value: 'v', queryTime: 'now', trackedInstant: 'now' });
-      assert.ok(repository.getItemLastValue('southId', null, 'item4'));
-      repository.deleteItemValue('southId', null, 'item4');
-      assert.strictEqual(repository.getItemLastValue('southId', null, 'item4'), null);
+      assert.ok(repository.getItemLastValue('southId', 'item4'));
+      repository.deleteItemValue('southId', 'item4');
+      assert.strictEqual(repository.getItemLastValue('southId', 'item4'), null);
     });
   });
 });
