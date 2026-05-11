@@ -25,7 +25,7 @@ import { Readable } from 'node:stream';
 import { createTransformer } from '../service/transformer.service';
 import IgnoreTransformer from '../transformers/ignore-transformer';
 import IsoTransformer from '../transformers/iso-transformer';
-import { NorthTransformerWithOptions, SourceOriginSouth } from '../model/transformer.model';
+import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { CONTENT_FOLDER } from '../model/engine.model';
 
 /**
@@ -70,12 +70,99 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.metricsEvent.emit('cache-size', cacheSize);
   };
 
+  /**
+   * Resolver lookup for findTransformer. Built lazily on first use and rebuilt
+   * when the connector configuration changes (via the setter below). Maps:
+   *   - "southId\0itemId" → items-level transformer (with its position in the
+   *     connector.transformers array so we can preserve list-order priority
+   *     when multiple transformers match different items in the same batch)
+   *   - "southId\0itemId" → group-level transformer (same shape)
+   *   - "southId"          → south-level fallback transformer
+   *   - "dataSourceId"     → oibus-api transformer
+   *   - one entry for the oianalytics-setpoint transformer
+   */
+  private transformerLookup: {
+    itemLevel: Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>;
+    groupLevel: Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>;
+    southLevel: Map<string, NorthTransformerWithOptions>;
+    apiLevel: Map<string, NorthTransformerWithOptions>;
+    oianalyticsSetpoint: NorthTransformerWithOptions | undefined;
+  } | null = null;
+
   set connectorConfiguration(connectorConfiguration: NorthConnectorEntity<T>) {
     this.connector = connectorConfiguration;
+    // Invalidate the lookup; rebuilt lazily on the next findTransformer call.
+    this.transformerLookup = null;
   }
 
   get connectorConfiguration() {
     return this.connector;
+  }
+
+  /**
+   * Force a transformer-lookup rebuild. Used internally when `connectorConfiguration`
+   * is reassigned, and exposed for tests that mutate `connector.transformers`
+   * in place (which the setter would otherwise miss). Production code reloads
+   * the whole connector via the setter and never mutates transformer entries
+   * in place, so this is a test/internal hatch only.
+   */
+  protected rebuildTransformerCache(): void {
+    const itemLevel = new Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>();
+    const groupLevel = new Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>();
+    const southLevel = new Map<string, NorthTransformerWithOptions>();
+    const apiLevel = new Map<string, NorthTransformerWithOptions>();
+    let oianalyticsSetpoint: NorthTransformerWithOptions | undefined;
+
+    // Use the null character as a path separator — guaranteed to never appear
+    // in an itemId / southId, so the composite key collapses uniquely.
+    const compositeKey = (southId: string, itemId: string) => `${southId}\0${itemId}`;
+
+    this.connector.transformers.forEach((t, listIndex) => {
+      const source = t.source;
+      if (source.type === 'south') {
+        const entry = { transformer: t, listIndex };
+        // Items-level: every item in the transformer's items list maps to this
+        // transformer. First-wins so order in `connector.transformers` matters.
+        for (const item of source.items) {
+          const key = compositeKey(source.south.id, item.id);
+          if (!itemLevel.has(key)) {
+            itemLevel.set(key, entry);
+          }
+        }
+        // Group-level: every item in the group maps to this transformer.
+        if (source.group) {
+          for (const item of source.group.items) {
+            const key = compositeKey(source.south.id, item.id);
+            if (!groupLevel.has(key)) {
+              groupLevel.set(key, entry);
+            }
+          }
+        }
+        // South-level fallback: only for transformers with no items and no group.
+        if (!source.group && source.items.length === 0) {
+          if (!southLevel.has(source.south.id)) {
+            southLevel.set(source.south.id, t);
+          }
+        }
+      } else if (source.type === 'oibus-api') {
+        if (!apiLevel.has(source.dataSourceId)) {
+          apiLevel.set(source.dataSourceId, t);
+        }
+      } else if (source.type === 'oianalytics-setpoint') {
+        if (!oianalyticsSetpoint) {
+          oianalyticsSetpoint = t;
+        }
+      }
+    });
+
+    this.transformerLookup = { itemLevel, groupLevel, southLevel, apiLevel, oianalyticsSetpoint };
+  }
+
+  private getTransformerLookup() {
+    if (!this.transformerLookup) {
+      this.rebuildTransformerCache();
+    }
+    return this.transformerLookup!;
   }
 
   async start(): Promise<void> {
@@ -309,51 +396,45 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   }
 
   private findTransformer(metadataSource: CacheMetadataSource): NorthTransformerWithOptions | undefined {
+    const lookup = this.getTransformerLookup();
+
     if (metadataSource.source === 'south') {
-      // First, find transformer based on items (most specific)
-      let transformer = this.connector.transformers.find(
-        element =>
-          element.source.type === 'south' &&
-          element.source.south.id === metadataSource.southId &&
-          metadataSource.items
-            .map(item => item.id)
-            .some(itemId => (element.source as SourceOriginSouth).items.map(item => item.id).includes(itemId))
-      );
+      // For items-level and group-level matches we need to preserve the
+      // original `.find()` semantics: among all transformers matching ANY of
+      // the batch's items, return the one earliest in `connector.transformers`.
+      // We track that via `listIndex` stored at cache build time and pick the
+      // smallest one across the batch's items.
+      const pickEarliest = (table: Map<string, { transformer: NorthTransformerWithOptions; listIndex: number }>) => {
+        let best: { transformer: NorthTransformerWithOptions; listIndex: number } | undefined;
+        for (const item of metadataSource.items) {
+          const candidate = table.get(`${metadataSource.southId}\0${item.id}`);
+          if (candidate && (!best || candidate.listIndex < best.listIndex)) {
+            best = candidate;
+            // Tiny shortcut: index 0 is the floor, can't beat it.
+            if (best.listIndex === 0) break;
+          }
+        }
+        return best?.transformer;
+      };
 
-      // Second, find transformer by group of items (i.e. if one item from source is included in the transformer group items list
-      if (!transformer) {
-        transformer = this.connector.transformers.find(
-          element =>
-            element.source.type === 'south' &&
-            element.source.south.id === metadataSource.southId &&
-            element.source.group &&
-            metadataSource.items
-              .map(item => item.id)
-              .some(itemId => (element.source as SourceOriginSouth).group!.items.map(item => item.id).includes(itemId))
-        );
-      }
+      // 1) Items-level (most specific)
+      const byItem = pickEarliest(lookup.itemLevel);
+      if (byItem) return byItem;
 
-      // Last, find transformer by south without group nor items
-      if (!transformer) {
-        transformer = this.connector.transformers.find(
-          element =>
-            element.source.type === 'south' &&
-            element.source.south.id === metadataSource.southId &&
-            !element.source.group &&
-            element.source.items.length === 0
-        );
-      }
-      return transformer;
+      // 2) Group-level
+      const byGroup = pickEarliest(lookup.groupLevel);
+      if (byGroup) return byGroup;
+
+      // 3) South-level fallback
+      return lookup.southLevel.get(metadataSource.southId);
     }
 
     if (metadataSource.source === 'oibus-api') {
-      return this.connector.transformers.find(
-        element => element.source.type === 'oibus-api' && element.source.dataSourceId === metadataSource.dataSourceId
-      );
+      return lookup.apiLevel.get(metadataSource.dataSourceId);
     }
 
     if (metadataSource.source === 'oianalytics-setpoints') {
-      return this.connector.transformers.find(element => element.source.type === 'oianalytics-setpoint');
+      return lookup.oianalyticsSetpoint;
     }
 
     return undefined;
