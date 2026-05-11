@@ -3,7 +3,7 @@ import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service
 
 import pino from 'pino';
 import { CronJob } from 'cron';
-import { generateIntervals, groupItemsByGroup, validateCronExpression } from '../service/utils';
+import { delay, generateIntervals, groupItemsByGroup, validateCronExpression } from '../service/utils';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
 import testData from '../tests/utils/test-data';
 import SouthFolderScanner from './south-folder-scanner/south-folder-scanner';
@@ -484,6 +484,47 @@ describe('SouthConnector with history and subscription', () => {
       `Connector is stopping. Exiting history query at interval 0: [2020-02-02T02:02:02.222Z, 2021-02-02T02:02:02.222Z]`
     );
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('should resolve deferred promise and exit run when stopping is detected between groups', async () => {
+    // Two separate groups so the loop has a second iteration to detect stopping
+    (groupItemsByGroup as jest.Mock).mockImplementationOnce(() => [
+      [testData.south.list[2].items[0]] as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
+      [testData.south.list[2].items[1]] as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
+    ]);
+
+    // First group handler sets stopping=true; second group should never be reached
+    south.historyQueryHandler = jest.fn().mockImplementationOnce(async () => {
+      south['stopping'] = true;
+    });
+    south.directQuery = jest.fn();
+
+    const resolveSpy = jest.spyOn(south, 'resolveDeferredPromise');
+
+    await south.run(testData.scanMode.list[0].id, testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>);
+
+    expect(logger.debug).toHaveBeenCalledWith('Connector is stopping. Exiting run');
+    expect(resolveSpy).toHaveBeenCalled();
+    // Only the first group should have been queried
+    expect(south.historyQueryHandler).toHaveBeenCalledTimes(1);
+  });
+
+  it('should skip inter-group delay when stopping is detected after first group', async () => {
+    // Two separate groups — items have readDelay: 200, so delay would normally fire between them
+    (groupItemsByGroup as jest.Mock).mockImplementationOnce(() => [
+      [testData.south.list[2].items[0]] as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>,
+      [testData.south.list[2].items[1]] as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>
+    ]);
+
+    south.historyQueryHandler = jest.fn().mockImplementationOnce(async () => {
+      south['stopping'] = true;
+    });
+    south.directQuery = jest.fn();
+
+    await south.run(testData.scanMode.list[0].id, testData.south.list[2].items as Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>);
+
+    // delay must NOT have been called because stopping was true when the guard was evaluated
+    expect(delay).not.toHaveBeenCalled();
   });
 
   it('should use group historian settings when syncWithGroup is true', async () => {
