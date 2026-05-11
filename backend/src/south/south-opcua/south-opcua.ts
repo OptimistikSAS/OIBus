@@ -289,7 +289,7 @@ export default class SouthOPCUA
         return { type: 'time-values', content: result };
       } else {
         const result = await this.getHAValues([item], testingSettings.history!.startTime, testingSettings.history!.endTime, session, true);
-        return { type: 'time-values', content: result.value };
+        return { type: 'time-values', content: result.value ? [result.value] : [] };
       }
     } finally {
       await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
@@ -348,11 +348,7 @@ export default class SouthOPCUA
       if (!this.client) {
         throw new Error('OPCUA client not set');
       }
-      const result = await this.getHAValues(items, startTime, endTime, this.client);
-      return {
-        trackedInstant: result.trackedInstant,
-        value: result.value.length > 0 ? result.value[result.value.length - 1] : null
-      };
+      return await this.getHAValues(items, startTime, endTime, this.client);
     } catch (error: unknown) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -368,8 +364,8 @@ export default class SouthOPCUA
     endTime: Instant,
     session: ClientSession,
     testingItem = false
-  ): Promise<{ trackedInstant: Instant | null; value: Array<OIBusTimeValue> }> {
-    let maxTimestamp: number | null = null;
+  ): Promise<{ trackedInstant: Instant | null; value: OIBusTimeValue | null }> {
+    let lastValue: OIBusTimeValue | null = null;
     const itemsByAggregates = new Map<
       Aggregate,
       Map<Resampling | undefined, Array<{ nodeId: NodeId; item: SouthConnectorItemEntity<SouthOPCUAItemSettings> }>>
@@ -384,9 +380,14 @@ export default class SouthOPCUA
         continue;
       }
 
-      if (!itemsByAggregates.has(item.settings.haMode!.aggregate)) {
+      // Normalise resampling: null and undefined both mean "no resampling" and must
+      // map to the same bucket so items aren't split into separate historyRead requests.
+      const aggregate = item.settings.haMode!.aggregate;
+      const resampling = item.settings.haMode!.resampling ?? undefined;
+
+      if (!itemsByAggregates.has(aggregate)) {
         itemsByAggregates.set(
-          item.settings.haMode!.aggregate,
+          aggregate,
           new Map<
             Resampling,
             Array<{
@@ -396,16 +397,14 @@ export default class SouthOPCUA
           >()
         );
       }
-      if (!itemsByAggregates.get(item.settings.haMode!.aggregate!)!.has(item.settings.haMode!.resampling)) {
-        itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, [{ nodeId, item }]);
+      const resamplingMap = itemsByAggregates.get(aggregate)!;
+      if (!resamplingMap.has(resampling)) {
+        resamplingMap.set(resampling, [{ nodeId, item }]);
       } else {
-        const currentList = itemsByAggregates.get(item.settings.haMode!.aggregate)!.get(item.settings.haMode!.resampling)!;
-        currentList.push({ nodeId, item });
-        itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, currentList);
+        resamplingMap.get(resampling)!.push({ nodeId, item });
       }
     }
 
-    let values: Array<OIBusTimeValue> = [];
     for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
       for (const [resampling, resampledItems] of aggregatedItems.entries()) {
         const logs = new Map<string, { description: string; affectedNodes: Array<string> }>();
@@ -416,8 +415,10 @@ export default class SouthOPCUA
           indexRange: undefined,
           nodeId: item.nodeId
         }));
-        this.logger.trace(`Reading ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
+        const totalNodes = resampledItems.length;
+        this.logger.trace(`Reading ${totalNodes} items with aggregate ${aggregate} and resampling ${resampling}`);
         do {
+          const batchValues: Array<OIBusTimeValue> = [];
           const startRequest = DateTime.now();
           const request = getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
           const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
@@ -430,7 +431,10 @@ export default class SouthOPCUA
           }
 
           if (response.results) {
-            this.logger.debug(`Received a response of ${response.results.length} nodes`);
+            this.logger.debug(
+              `Received a response of ${response.results.length}/${totalNodes} nodes` +
+                (response.results.length < totalNodes ? ` (${totalNodes - response.results.length} completed in a previous batch)` : '')
+            );
 
             nodesToRead = nodesToRead
               .map((node, i) => {
@@ -463,16 +467,18 @@ export default class SouthOPCUA
                       continue;
                     }
                     const selectedTimestamp = historyValue.sourceTimestamp ?? historyValue.serverTimestamp;
-                    maxTimestamp =
-                      !maxTimestamp || selectedTimestamp!.getTime() > maxTimestamp ? selectedTimestamp!.getTime() : maxTimestamp;
-                    values.push({
+                    const timeValue: OIBusTimeValue = {
                       pointId: associatedItem.item.name,
                       timestamp: selectedTimestamp!.toISOString(),
                       data: {
                         value,
                         quality: historyValue.statusCode.name
                       }
-                    });
+                    };
+                    batchValues.push(timeValue);
+                    if (!lastValue || selectedTimestamp!.getTime() > new Date(lastValue.timestamp).getTime()) {
+                      lastValue = timeValue;
+                    }
                   }
                 }
 
@@ -494,15 +500,14 @@ export default class SouthOPCUA
                   node.continuationPoint.length > 0
               );
 
-            this.logger.debug(`Adding ${values.length} values between ${startTime} and ${endTime}`);
+            this.logger.debug(`Adding ${batchValues.length} values between ${startTime} and ${endTime}`);
             if (!testingItem) {
               await this.addContent(
-                { type: 'time-values', content: values },
+                { type: 'time-values', content: batchValues },
                 startRequest.toUTC().toISO(),
                 resampledItems.map(item => item.item)
               );
-              values = [];
-              this.logger.trace(`Continue read for ${nodesToRead.length} points`);
+              this.logger.trace(`Continue read for ${nodesToRead.length}/${totalNodes} nodes with pending data`);
             }
           } else {
             this.logger.error('No result found in response');
@@ -529,9 +534,10 @@ export default class SouthOPCUA
       }
     }
 
+    const mostRecentValue = lastValue as OIBusTimeValue | null;
     return {
-      trackedInstant: maxTimestamp ? DateTime.fromMillis(maxTimestamp).toUTC().toISO() : null,
-      value: values
+      trackedInstant: mostRecentValue?.timestamp ?? null,
+      value: mostRecentValue
     };
   }
 
