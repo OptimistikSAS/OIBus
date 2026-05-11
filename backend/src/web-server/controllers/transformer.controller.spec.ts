@@ -13,7 +13,7 @@ import {
 import type { CustomTransformer } from '../../model/transformer.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import TransformerServiceMock from '../../tests/__mocks__/service/transformer-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import { createPageFromArray } from '../../../shared/model/types';
@@ -48,7 +48,7 @@ describe('TransformerController', () => {
     transformerService = new TransformerServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { transformerService, userService }),
+      services: createMockServices({ transformerService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockTransformerServiceModule.toTransformerDTO = mock.fn((transformer: unknown, getUserInfo: (id: string) => void) => {

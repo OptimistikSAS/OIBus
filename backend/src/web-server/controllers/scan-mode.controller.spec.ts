@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { ScanModeCommandDTO, ValidatedCronExpression } from '../../../shared/model/scan-mode.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import type { ScanModeController as ScanModeControllerShape } from './scan-mode.controller';
@@ -37,7 +37,7 @@ describe('ScanModeController', () => {
     scanModeService = new ScanModeServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { scanModeService, userService }),
+      services: createMockServices({ scanModeService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockScanModeServiceModule.toScanModeDTO = mock.fn((scanMode: unknown, getUserInfo: (id: string) => void) => {

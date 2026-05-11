@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { LogSearchParam, Scope } from '../../../shared/model/logs.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import LogServiceMock from '../../tests/__mocks__/service/log-service.mock';
 import { createPageFromArray } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -32,7 +32,7 @@ describe('LogController', () => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
     logService = new LogServiceMock();
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { logService })
+      services: createMockServices({ logService })
     } as Partial<CustomExpressRequest>;
     mockLogServiceModule.toLogDTO = mock.fn((log: unknown) => log);
     controller = new LogController();

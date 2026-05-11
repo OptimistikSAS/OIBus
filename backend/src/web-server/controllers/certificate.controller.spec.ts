@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { CertificateCommandDTO } from '../../../shared/model/certificate.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import CertificateServiceMock from '../../tests/__mocks__/service/certificate-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import type { CertificateController as CertificateControllerShape } from './certificate.controller';
@@ -37,7 +37,7 @@ describe('CertificateController', () => {
     certificateService = new CertificateServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { certificateService, userService }),
+      services: createMockServices({ certificateService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockCertServiceModule.toCertificateDTO = mock.fn((cert: unknown, getUserInfo: (id: string) => void) => {

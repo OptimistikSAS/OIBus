@@ -12,7 +12,7 @@ import {
 import type { SouthItemGroupEntity } from '../../model/south-connector.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import SouthServiceMock from '../../tests/__mocks__/service/south-service.mock';
 import ScanModeServiceMock from '../../tests/__mocks__/service/scan-mode-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
@@ -81,7 +81,7 @@ describe('SouthConnectorController', () => {
     };
     mockRes.status = mock.fn(() => mockRes);
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { southService, scanModeService, oIBusService, userService }),
+      services: createMockServices({ southService, scanModeService, oIBusService, userService }),
       user: { id: 'test', login: 'testUser' },
       res: mockRes as unknown as import('express').Response // partial mock of express.Response — only used properties are defined
     } as Partial<CustomExpressRequest>;

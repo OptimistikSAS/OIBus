@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import OIAnalyticsRegistrationServiceMock from '../../tests/__mocks__/service/oia/oianalytics-registration-service.mock';
 import type { OIAnalyticsRegistrationController as OIAnalyticsRegistrationControllerShape } from './oianalytics-registration.controller';
 
@@ -33,7 +33,7 @@ describe('OIAnalyticsRegistrationController', () => {
     registrationService = new OIAnalyticsRegistrationServiceMock();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-      services: Object.assign({} as CustomExpressRequest['services'], { oIAnalyticsRegistrationService: registrationService })
+      services: createMockServices({ oIAnalyticsRegistrationService: registrationService })
     } as Partial<CustomExpressRequest>;
     mockRegistrationServiceModule.toOIAnalyticsRegistrationDTO = mock.fn((settings: unknown) => settings);
     controller = new OIAnalyticsRegistrationController();

@@ -10,7 +10,7 @@ import {
 } from '../../../shared/model/history-query.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import HistoryQueryServiceMock from '../../tests/__mocks__/service/history-query-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
@@ -91,11 +91,11 @@ describe('HistoryQueryController', () => {
     };
     mockRes.status = mock.fn(() => mockRes);
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], {
+      services: createMockServices({
         historyQueryService,
         southService: {
           getInstalledSouthManifests: mock.fn(() => [{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }])
-        },
+        } as unknown as CustomExpressRequest['services']['southService'],
         oIBusService,
         userService
       }),
