@@ -1,39 +1,57 @@
 import OIBusTransformer from '../../oibus-transformer';
 import { CacheMetadata, CacheMetadataSource, OIBusTimeValue } from '../../../../shared/model/engine.model';
 import { ReadStream } from 'node:fs';
-import { pipeline, Readable, Transform } from 'node:stream';
-import { promisify } from 'node:util';
-import { generateRandomId } from '../../../service/utils';
+import { Readable } from 'node:stream';
+import { generateRandomId, streamToString } from '../../../service/utils';
 import { Instant } from '../../../model/types';
 import { DateTime } from 'luxon';
 import { TransformerTimeValuesToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
 
-const pipelineAsync = promisify(pipeline);
-
 export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'time-values-to-oianalytics';
 
+  /**
+   * Stream entry point — kept for callers that genuinely hand us a stream
+   * (e.g. file-on-disk paths). Reuses `streamToString` (utils) instead of the
+   * old manual `Transform` + `pipelineAsync` + `Buffer.concat` chain, and then
+   * delegates to `transformInMemory` so the actual work lives in one place.
+   */
   async transform(
     data: ReadStream | Readable,
+    source: CacheMetadataSource,
+    filename: string | null
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
+    const text = await streamToString(data);
+    return this.transformInMemory(JSON.parse(text) as Array<OIBusTimeValue>, source, filename);
+  }
+
+  /**
+   * In-memory fast path. Caller in `executeTransformation` already has the
+   * `Array<OIBusTimeValue>` in hand; this override skips the JSON.stringify →
+   * stream → collect-chunks → JSON.parse round-trip the streaming API would
+   * otherwise force.
+   */
+  override async transformInMemory(
+    data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
-    // Collect the data from the stream
-    const chunks: Array<Buffer> = [];
-    await pipelineAsync(
-      data,
-      new Transform({
-        transform(chunk, encoding, callback) {
-          chunks.push(chunk);
-          callback();
-        }
-      })
-    );
-    const content: Array<OIBusTimeValue> = (JSON.parse(Buffer.concat(chunks).toString('utf-8')) as Array<OIBusTimeValue>).map(value => ({
-      pointId: value.pointId,
-      timestamp: this.formatInstant(value.timestamp, this.options.precision),
-      data: { value: value.data.value }
-    }));
+    // Tolerate both the Array (in-memory fast path) and a serialised JSON
+    // string (default base-class fallback would call us via Readable + parse).
+    const values: Array<OIBusTimeValue> = Array.isArray(data)
+      ? (data as Array<OIBusTimeValue>)
+      : (JSON.parse(String(data)) as Array<OIBusTimeValue>);
+
+    const precision = this.options.precision;
+    const content = new Array<{ pointId: string; timestamp: Instant; data: { value: unknown } }>(values.length);
+    for (let i = 0; i < values.length; i++) {
+      const v = values[i];
+      content[i] = {
+        pointId: v.pointId,
+        timestamp: this.formatInstant(v.timestamp, precision),
+        data: { value: v.data.value }
+      };
+    }
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,

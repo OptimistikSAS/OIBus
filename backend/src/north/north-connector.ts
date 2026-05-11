@@ -375,6 +375,11 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {
     const transformer = createTransformer(config, this.connector, this.logger);
 
+    // In-memory payloads (time-values / setpoint / any-content) go through
+    // `transformInMemory`, which lets specialised transformers (e.g. the
+    // OIAnalytics one) bypass the JSON.stringify → stream → collect-chunks →
+    // JSON.parse round-trip. The base-class default still streamifies for
+    // transformers that haven't been specialised
     switch (data.type) {
       case 'time-values':
         {
@@ -385,7 +390,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
             // Chunk processing
             for (let i = 0; i < content.length; i += maxElements) {
               const chunk = content.slice(i, i + maxElements);
-              const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(chunk)), source, null);
+              const { metadata, output } = await transformer.transformInMemory(chunk, source, null);
               await this.cacheService.addCacheContent(output, {
                 contentType: metadata.contentType,
                 contentFilename: metadata.contentFile,
@@ -394,7 +399,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
             }
           } else {
             // Single batch
-            const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(content)), source, null);
+            const { metadata, output } = await transformer.transformInMemory(content, source, null);
             await this.cacheService.addCacheContent(output, {
               contentType: metadata.contentType,
               contentFilename: metadata.contentFile,
@@ -406,7 +411,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
       case 'setpoint':
         {
-          const { metadata, output } = await transformer.transform(Readable.from(JSON.stringify(data.content)), source, null);
+          const { metadata, output } = await transformer.transformInMemory(data.content, source, null);
           await this.cacheService.addCacheContent(output, {
             contentType: metadata.contentType,
             contentFilename: metadata.contentFile,
@@ -416,7 +421,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         break;
       case 'any-content':
         {
-          const { metadata, output } = await transformer.transform(Readable.from(data.content), source, null);
+          // any-content is already a serialised string; pass it through as-is
+          // so the default base-class fallback can wrap it without an extra
+          // JSON.stringify round-trip (string is short-circuited).
+          const { metadata, output } = await transformer.transformInMemory(data.content, source, null);
           await this.cacheService.addCacheContent(output, {
             contentType: metadata.contentType,
             contentFilename: metadata.contentFile,
@@ -427,6 +435,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
       case 'any':
         {
+          // True file-on-disk path stays on the stream API — we don't want to
+          // slurp the whole file into memory.
           const randomId = generateRandomId(10);
           const { name, ext } = path.parse(data.filePath);
           const cacheFilename = `${name}-${randomId}${ext}`;

@@ -14,7 +14,16 @@ jest.mock('../../../service/utils', () => ({
   convertDelimiter: jest.fn().mockReturnValue(';'),
   convertQuoteChar: jest.fn().mockReturnValue('"'),
   convertEscapeChar: jest.fn().mockReturnValue('"'),
-  convertNewline: jest.fn().mockReturnValue('')
+  convertNewline: jest.fn().mockReturnValue(''),
+  streamToString: jest.fn(
+    (stream: NodeJS.ReadableStream) =>
+      new Promise((resolve, reject) => {
+        const chunks: Array<Buffer> = [];
+        stream.on('data', (chunk: Buffer | string) => chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk));
+        stream.on('error', reject);
+        stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+      })
+  )
 }));
 jest.mock('papaparse');
 

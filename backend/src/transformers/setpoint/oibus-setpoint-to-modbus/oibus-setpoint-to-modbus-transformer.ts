@@ -1,52 +1,52 @@
 import OIBusTransformer from '../../oibus-transformer';
 import { ReadStream } from 'node:fs';
-import { pipeline, Readable, Transform } from 'node:stream';
+import { Readable } from 'node:stream';
 import { CacheMetadata, CacheMetadataSource, OIBusSetpoint } from '../../../../shared/model/engine.model';
-import { promisify } from 'node:util';
-import { generateRandomId } from '../../../service/utils';
+import { generateRandomId, streamToString } from '../../../service/utils';
 import { OIBusModbusValue } from '../../connector-types.model';
 import { TransformerSetpointToModbusSettings } from '../../../../shared/model/transformer-settings.model';
-
-const pipelineAsync = promisify(pipeline);
 
 export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
   public static transformerName = 'setpoint-to-modbus';
 
   async transform(
     data: ReadStream | Readable,
+    source: CacheMetadataSource,
+    filename: string | null
+  ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
+    const text = await streamToString(data);
+    return this.transformInMemory(JSON.parse(text) as Array<OIBusSetpoint>, source, filename);
+  }
+
+  override async transformInMemory(
+    data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
-    // Collect the data from the stream
-    const chunks: Array<Buffer> = [];
-    await pipelineAsync(
-      data,
-      new Transform({
-        transform(chunk, encoding, callback) {
-          chunks.push(chunk);
-          callback();
-        }
-      })
-    );
-    const stringContent = Buffer.concat(chunks).toString('utf-8');
-    // Combine the chunks into a single buffer
-    const content: Array<OIBusModbusValue> = (JSON.parse(stringContent) as Array<OIBusSetpoint>)
-      .map(element => {
-        const mappedElement = this.options.mapping.find(matchingElement => matchingElement.reference === element.reference);
-        if (!mappedElement) return null;
+    const setpoints: Array<OIBusSetpoint> = Array.isArray(data)
+      ? (data as Array<OIBusSetpoint>)
+      : (JSON.parse(String(data)) as Array<OIBusSetpoint>);
 
-        return {
-          address: mappedElement.address,
-          value: mappedElement.modbusType === 'coil' ? Boolean(element.value) : parseInt(element.value as string),
-          modbusType: mappedElement.modbusType
-        };
-      })
-      .filter((mappedElement): mappedElement is OIBusModbusValue => mappedElement !== null);
+    // Index the mapping by reference once instead of scanning it N times via
+    // `.find()` per setpoint. Cheap and avoids quadratic behaviour for large
+    // mappings paired with large setpoint batches.
+    const mappingByRef = new Map(this.options.mapping.map(m => [m.reference, m]));
+
+    const content: Array<OIBusModbusValue> = [];
+    for (const element of setpoints) {
+      const mapped = mappingByRef.get(element.reference);
+      if (!mapped) continue;
+      content.push({
+        address: mapped.address,
+        value: mapped.modbusType === 'coil' ? Boolean(element.value) : parseInt(element.value as string),
+        modbusType: mapped.modbusType
+      });
+    }
 
     const metadata: CacheMetadata = {
       contentFile: `${generateRandomId(10)}.json`,
-      contentSize: 0, // It will be set outside the transformer, once the file is written
-      createdAt: '', // It will be set outside the transformer, once the file is written
+      contentSize: 0,
+      createdAt: '',
       numberOfElement: content.length,
       contentType: 'modbus'
     };
