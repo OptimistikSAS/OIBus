@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { NorthConnectorCommandDTO, OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import NorthServiceMock from '../../tests/__mocks__/service/north-service.mock';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
@@ -47,7 +47,7 @@ describe('NorthConnectorController', () => {
     oIBusService = new OIBusServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { northService, oIBusService, userService }),
+      services: createMockServices({ northService, oIBusService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockNorthServiceModule.toNorthConnectorDTO = mock.fn((connector: unknown, getUserInfo: (id: string) => void) => {

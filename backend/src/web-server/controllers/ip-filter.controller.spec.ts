@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import IPFilterServiceMock from '../../tests/__mocks__/service/ip-filter-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import type { IPFilterController as IPFilterControllerShape } from './ip-filter.controller';
@@ -37,7 +37,7 @@ describe('IPFilterController', () => {
     ipFilterService = new IPFilterServiceMock();
     userService = new UserServiceMock();
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { ipFilterService, userService }),
+      services: createMockServices({ ipFilterService, userService }),
       user: { id: 'test', login: 'testUser' }
     } as Partial<CustomExpressRequest>;
     mockIPFilterServiceModule.toIPFilterDTO = mock.fn((ipFilter: unknown, getUserInfo: (id: string) => void) => {

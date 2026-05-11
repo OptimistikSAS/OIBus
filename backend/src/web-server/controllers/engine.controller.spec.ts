@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { EngineSettingsCommandDTO, EngineSettingsUpdateResultDTO } from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import type { EngineController as EngineControllerShape } from './engine.controller';
@@ -33,7 +33,7 @@ describe('EngineController', () => {
     userService = new UserServiceMock();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-      services: Object.assign({} as CustomExpressRequest['services'], { oIBusService, userService })
+      services: createMockServices({ oIBusService, userService })
     } as Partial<CustomExpressRequest>;
     mockOIBusServiceModule.toEngineSettingsDTO = mock.fn((settings: unknown) => settings);
     controller = new EngineController();

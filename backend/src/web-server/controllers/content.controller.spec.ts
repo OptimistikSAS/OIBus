@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import { CustomExpressRequest } from '../express';
-import { reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import OIBusServiceMock from '../../tests/__mocks__/service/oibus-service.mock';
 import type { ContentController as ContentControllerShape } from './content.controller';
 
@@ -25,7 +25,7 @@ describe('ContentController', () => {
   beforeEach(() => {
     oIBusService = new OIBusServiceMock();
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { oIBusService })
+      services: createMockServices({ oIBusService })
     } as Partial<CustomExpressRequest>;
     controller = new ContentController();
   });

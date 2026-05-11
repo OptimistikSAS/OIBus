@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { CommandSearchParam } from '../../../shared/model/command.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import OIAnalyticsCommandServiceMock from '../../tests/__mocks__/service/oia/oianalytics-command-service.mock';
 import { createPageFromArray } from '../../../shared/model/types';
 import type { OIAnalyticsCommandController as OIAnalyticsCommandControllerShape } from './oianalytics-command.controller';
@@ -33,7 +33,7 @@ describe('OIAnalyticsCommandController', () => {
   beforeEach(() => {
     commandService = new OIAnalyticsCommandServiceMock();
     mockRequest = {
-      services: Object.assign({} as CustomExpressRequest['services'], { oIAnalyticsCommandService: commandService })
+      services: createMockServices({ oIAnalyticsCommandService: commandService })
     } as Partial<CustomExpressRequest>;
     mockCommandServiceModule.toOIBusCommandDTO = mock.fn((command: unknown) => command);
     controller = new OIAnalyticsCommandController();

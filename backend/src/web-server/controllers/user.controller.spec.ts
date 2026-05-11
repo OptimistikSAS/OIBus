@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { ChangePasswordCommand, UserCommandDTO, UserSearchParam } from '../../../shared/model/user.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, fixTsoaModuleResolution } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
 import UserServiceMock from '../../tests/__mocks__/service/user-service.mock';
 import { createPageFromArray } from '../../../shared/model/types';
 import type { UserController as UserControllerShape } from './user.controller';
@@ -31,7 +31,7 @@ describe('UserController', () => {
     userService = new UserServiceMock();
     mockRequest = {
       user: { id: testData.users.list[0].id, login: testData.users.list[0].login },
-      services: Object.assign({} as CustomExpressRequest['services'], { userService })
+      services: createMockServices({ userService })
     } as Partial<CustomExpressRequest>;
     mockUserServiceModule.toUserDTO = mock.fn((user: unknown) => user);
     controller = new UserController();

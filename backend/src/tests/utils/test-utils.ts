@@ -1,5 +1,18 @@
 import assert from 'node:assert/strict';
 import Database from 'better-sqlite3';
+import type { CustomExpressRequest } from '../../web-server/express';
+import CertificateServiceMock from '../__mocks__/service/certificate-service.mock';
+import HistoryQueryServiceMock from '../__mocks__/service/history-query-service.mock';
+import IPFilterServiceMock from '../__mocks__/service/ip-filter-service.mock';
+import LogServiceMock from '../__mocks__/service/log-service.mock';
+import NorthServiceMock from '../__mocks__/service/north-service.mock';
+import OIAnalyticsCommandServiceMock from '../__mocks__/service/oia/oianalytics-command-service.mock';
+import OIAnalyticsRegistrationServiceMock from '../__mocks__/service/oia/oianalytics-registration-service.mock';
+import OIBusServiceMock from '../__mocks__/service/oibus-service.mock';
+import ScanModeServiceMock from '../__mocks__/service/scan-mode-service.mock';
+import SouthServiceMock from '../__mocks__/service/south-service.mock';
+import TransformerServiceMock from '../__mocks__/service/transformer-service.mock';
+import UserServiceMock from '../__mocks__/service/user-service.mock';
 import { setImmediate } from 'node:timers';
 import { migrateCrypto, migrateEntities, migrateLogs, migrateMetrics, migrateSouthCache } from '../../migration/migration-service';
 import path from 'node:path';
@@ -43,6 +56,24 @@ const METRICS_TEST_DATABASE = path.resolve('src', 'tests', 'test-metrics.db');
 const CACHE_TEST_DATABASE = path.resolve('src', 'tests', 'test-cache.db');
 
 export const flushPromises = () => new Promise(setImmediate);
+
+export function createMockServices(overrides: Record<string, unknown> = {}): CustomExpressRequest['services'] {
+  return {
+    certificateService: new CertificateServiceMock() as unknown as CustomExpressRequest['services']['certificateService'],
+    historyQueryService: new HistoryQueryServiceMock() as unknown as CustomExpressRequest['services']['historyQueryService'],
+    ipFilterService: new IPFilterServiceMock() as unknown as CustomExpressRequest['services']['ipFilterService'],
+    logService: new LogServiceMock() as unknown as CustomExpressRequest['services']['logService'],
+    northService: new NorthServiceMock() as unknown as CustomExpressRequest['services']['northService'],
+    oIAnalyticsCommandService: new OIAnalyticsCommandServiceMock() as unknown as CustomExpressRequest['services']['oIAnalyticsCommandService'],
+    oIAnalyticsRegistrationService: new OIAnalyticsRegistrationServiceMock() as unknown as CustomExpressRequest['services']['oIAnalyticsRegistrationService'],
+    oIBusService: new OIBusServiceMock() as unknown as CustomExpressRequest['services']['oIBusService'],
+    scanModeService: new ScanModeServiceMock() as unknown as CustomExpressRequest['services']['scanModeService'],
+    southService: new SouthServiceMock() as unknown as CustomExpressRequest['services']['southService'],
+    transformerService: new TransformerServiceMock() as unknown as CustomExpressRequest['services']['transformerService'],
+    userService: new UserServiceMock() as unknown as CustomExpressRequest['services']['userService'],
+    ...overrides
+  } as CustomExpressRequest['services'];
+}
 
 /**
  * Fix for tsx resolving 'tsoa' to tsoa.json (the TSOA config file) rather than the
