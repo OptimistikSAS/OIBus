@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { createReadStream, ReadStream } from 'node:fs';
+import { createReadStream, createWriteStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 
 import { determineContentTypeFromFilename, generateRandomId, processCacheFileContent } from '../utils';
@@ -16,10 +16,39 @@ import {
 import { DateTime } from 'luxon';
 import DeferredPromise from '../deferred-promise';
 import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
-import { Readable } from 'node:stream';
+import { Readable, Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 const DEBOUNCED_LOG_S = 10_000;
 const DEBOUNCED_SIZE_WARNING_S = 60_000;
+// Bound for the startup-scan file-read fan-out. Keeps the open-FD count in check
+// even when the cache contains tens of thousands of files. Empirical sweet spot
+// for SSDs; very small impact below ~16 and diminishing returns above ~64.
+const STARTUP_SCAN_CONCURRENCY = 32;
+
+/**
+ * Run an async mapper over `items` with at most `limit` operations in flight.
+ * Used to read many metadata files in parallel at startup without exhausting
+ * file descriptors. Errors per item are surfaced to the caller via the mapper.
+ */
+const parallelMap = async <T, R>(items: ReadonlyArray<T>, limit: number, fn: (item: T) => Promise<R>): Promise<Array<R>> => {
+  if (items.length === 0) return [];
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const worker = async (): Promise<void> => {
+    while (true) {
+      const i = nextIndex++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i]);
+    }
+  };
+  const workers: Array<Promise<void>> = [];
+  for (let i = 0; i < Math.min(limit, items.length); i++) {
+    workers.push(worker());
+  }
+  await Promise.all(workers);
+  return results;
+};
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
@@ -32,6 +61,9 @@ export default class CacheService {
 
   private updateCache$: DeferredPromise | null = null;
   private queue: Array<{ filename: string; metadata: CacheMetadata }> = [];
+
+  private _queuedElementsCount = 0;
+  private _queuedRawFilesCount = 0;
   private _cacheSizeEventEmitter: EventEmitter = new EventEmitter();
   private cacheSize: CacheSize = {
     cache: 0,
@@ -68,68 +100,82 @@ export default class CacheService {
   }
 
   async start(): Promise<void> {
-    const contentList = await fs.readdir(path.join(this.cacheFolder, METADATA_FOLDER));
-    const filesWithCreationDate: Array<{ filename: string; metadata: CacheMetadata }> = [];
-    let cacheSize = 0;
-    for (const filename of contentList) {
-      const filePath = path.join(this.cacheFolder, METADATA_FOLDER, filename);
-      try {
-        const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
-        cacheSize += metadata.contentSize;
-        filesWithCreationDate.push({ filename, metadata });
-      } catch (error: unknown) {
-        this.logger.error(`Error while reading cache file "${filePath}": ${(error as Error).message}`);
-      }
-    }
-    // Sort the compact queue to have the oldest file first
-    this.queue = filesWithCreationDate.sort((a, b) =>
+    // Scan the three independent folders concurrently. Within each folder, the
+    // per-file metadata reads are bounded-parallel so we don't blow past the
+    // OS file-descriptor limit on caches with tens of thousands of entries.
+    const [cacheResult, errorResult, archiveResult] = await Promise.all([
+      this.scanCacheFolder(this.cacheFolder, 'cache'),
+      this.scanCacheFolder(this.errorFolder, 'error'),
+      this.scanCacheFolder(this.archiveFolder, 'archive')
+    ]);
+
+    // Sort the queue to have the oldest file first
+    this.queue = cacheResult.entries.sort((a, b) =>
       DateTime.fromISO(a.metadata.createdAt).diff(DateTime.fromISO(b.metadata.createdAt)).toMillis()
     );
+    this.recomputeQueueCounters();
+
     if (this.queue.length > 0) {
       this.logger.info(`${this.queue.length} content in cache`);
     } else {
       this.logger.debug('No content in cache');
     }
-
-    const errorFiles = await fs.readdir(path.join(this.errorFolder, METADATA_FOLDER));
-    let errorSize = 0;
-    if (errorFiles.length > 0) {
-      this.logger.warn(`${errorFiles.length} content errored`);
-      for (const filename of errorFiles) {
-        const filePath = path.join(this.errorFolder, METADATA_FOLDER, filename);
-        try {
-          const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
-          errorSize += metadata.contentSize;
-        } catch (error: unknown) {
-          this.logger.error(`Error while reading errored file "${filePath}": ${(error as Error).message}`);
-        }
-      }
+    if (errorResult.totalFilenames > 0) {
+      this.logger.warn(`${errorResult.totalFilenames} content errored`);
     } else {
       this.logger.debug('No content errored');
     }
-
-    const archiveFiles = await fs.readdir(path.join(this.archiveFolder, METADATA_FOLDER));
-    let archiveSize = 0;
-    if (archiveFiles.length > 0) {
-      this.logger.debug(`${archiveFiles.length} content archived`);
-      for (const filename of archiveFiles) {
-        const filePath = path.join(this.archiveFolder, METADATA_FOLDER, filename);
-        try {
-          const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
-          archiveSize += metadata.contentSize;
-        } catch (error: unknown) {
-          this.logger.error(`Error while reading archived file "${filePath}": ${(error as Error).message}`);
-        }
-      }
+    if (archiveResult.totalFilenames > 0) {
+      this.logger.debug(`${archiveResult.totalFilenames} content archived`);
     } else {
       this.logger.debug('No content archived');
     }
 
     this.cacheSize = {
-      cache: cacheSize,
-      error: errorSize,
-      archive: archiveSize
+      cache: cacheResult.size,
+      error: errorResult.size,
+      archive: archiveResult.size
     };
+  }
+
+  /**
+   * Read every metadata file in a folder using bounded-parallel IO. Files that
+   * fail to parse are logged and skipped (matching the previous sequential
+   * behaviour). Returns the loaded entries and the aggregated content size.
+   */
+  private async scanCacheFolder(
+    folder: string,
+    label: DataFolderType
+  ): Promise<{ entries: Array<{ filename: string; metadata: CacheMetadata }>; size: number; totalFilenames: number }> {
+    const metadataFolder = path.join(folder, METADATA_FOLDER);
+    const filenames = await fs.readdir(metadataFolder);
+    if (filenames.length === 0) {
+      return { entries: [], size: 0, totalFilenames: 0 };
+    }
+
+    // Past-participle phrasing matches the pre-refactor log messages exactly,
+    // which downstream operators and tests rely on for grepping.
+    const fileLabel = label === 'cache' ? 'cache' : label === 'error' ? 'errored' : 'archived';
+    const parsed = await parallelMap(filenames, STARTUP_SCAN_CONCURRENCY, async filename => {
+      const filePath = path.join(metadataFolder, filename);
+      try {
+        const metadata: CacheMetadata = JSON.parse(await fs.readFile(filePath, { encoding: 'utf8' }));
+        return { filename, metadata };
+      } catch (error: unknown) {
+        this.logger.error(`Error while reading ${fileLabel} file "${filePath}": ${(error as Error).message}`);
+        return null;
+      }
+    });
+
+    const entries: Array<{ filename: string; metadata: CacheMetadata }> = [];
+    let size = 0;
+    for (const p of parsed) {
+      if (p) {
+        entries.push(p);
+        size += p.metadata.contentSize;
+      }
+    }
+    return { entries, size, totalFilenames: filenames.length };
   }
 
   stop(): void {
@@ -159,10 +205,19 @@ export default class CacheService {
     if (this.queue.length === 0) {
       return null;
     }
-    // Otherwise, get the first element from the queue
 
-    if (this.queue[0].metadata.contentType !== 'any') {
-      await this.compactQueue(maxGroupCount, this.queue[0].metadata.contentType);
+    // Decide whether to amortize compaction. Compaction reads ALL same-type
+    // queued files and rewrites them; on every send, with a large backlog,
+    // that's a lot of disk + JSON parse churn. Skip it when:
+    //   - the head file is a raw "any" payload (always sent as-is), OR
+    //   - the head file already has enough elements to fill a batch by itself
+    //     (nothing for compaction to add — the send will take this one file).
+    // `?? 0` keeps the previous behaviour for entries lacking numberOfElement.
+    const head = this.queue[0];
+    const numberOfElement = head.metadata.numberOfElement ?? 0;
+    const shouldCompact = head.metadata.contentType !== 'any' && (maxGroupCount === 0 || numberOfElement < maxGroupCount);
+    if (shouldCompact) {
+      await this.compactQueue(maxGroupCount, head.metadata.contentType);
     }
 
     return this.queue[0];
@@ -171,7 +226,47 @@ export default class CacheService {
   removeCacheContentFromQueue(filename: string): void {
     const idx = this.queue.findIndex(file => file.filename === filename);
     if (idx === -1) return;
+    const removed = this.queue[idx];
     this.queue.splice(idx, 1);
+    this.decrementQueueCounters(removed.metadata);
+  }
+
+  getNumberOfElementsInQueue(): number {
+    return this._queuedElementsCount;
+  }
+
+  getNumberOfRawFilesInQueue(): number {
+    return this._queuedRawFilesCount;
+  }
+
+  private recomputeQueueCounters(): void {
+    let elements = 0;
+    let rawFiles = 0;
+    for (const entry of this.queue) {
+      if (entry.metadata.numberOfElement === 0) {
+        rawFiles++;
+      } else {
+        elements += entry.metadata.numberOfElement;
+      }
+    }
+    this._queuedElementsCount = elements;
+    this._queuedRawFilesCount = rawFiles;
+  }
+
+  private incrementQueueCounters(metadata: CacheMetadata): void {
+    if (metadata.numberOfElement === 0) {
+      this._queuedRawFilesCount++;
+    } else {
+      this._queuedElementsCount += metadata.numberOfElement;
+    }
+  }
+
+  private decrementQueueCounters(metadata: CacheMetadata): void {
+    if (metadata.numberOfElement === 0) {
+      this._queuedRawFilesCount--;
+    } else {
+      this._queuedElementsCount -= metadata.numberOfElement;
+    }
   }
 
   async compactQueue(maxGroupCount: number, contentType: string): Promise<void> {
@@ -214,20 +309,16 @@ export default class CacheService {
       }
 
       // 6. Update Queue Reference
-      // Remove the deleted files from the main queue
+      // Remove the deleted files from the main queue and resync counters: this
+      // path mutates many entries (filter + in-place numberOfElement updates in
+      // overwriteCacheFile) so a single recompute is cheaper than tracking each
+      // delta.
       this.queue = this.queue.filter(el => !compactedFiles.includes(el));
+      this.recomputeQueueCounters();
     } finally {
       this.updateCache$.resolve();
       this.updateCache$ = null;
     }
-  }
-
-  getNumberOfElementsInQueue() {
-    return this.queue.reduce((sum, element) => sum + element.metadata.numberOfElement, 0);
-  }
-
-  getNumberOfRawFilesInQueue() {
-    return this.queue.reduce((sum, element) => (element.metadata.numberOfElement === 0 ? sum + 1 : sum), 0);
   }
 
   cacheIsEmpty(): boolean {
@@ -333,12 +424,34 @@ export default class CacheService {
     }
   ): Promise<void> {
     const filename = generateRandomId(12);
-    await fs.writeFile(path.join(this.cacheFolder, CONTENT_FOLDER, filename), output, { flag: 'w' });
-    const fileStat = await fs.stat(path.join(this.cacheFolder, CONTENT_FOLDER, filename));
-    const metadata = {
+    const contentPath = path.join(this.cacheFolder, CONTENT_FOLDER, filename);
+
+    // Compute contentSize as a side-effect of writing rather than via a
+    // post-write fs.stat() syscall (saving one round-trip per cache add).
+    //   - Buffer:  size is already known.
+    //   - Stream:  pipe through a counting Transform during the write.
+    let contentSize: number;
+    if (Buffer.isBuffer(output)) {
+      await fs.writeFile(contentPath, output, { flag: 'w' });
+      contentSize = output.length;
+    } else {
+      let bytes = 0;
+      const counter = new Transform({
+        transform(chunk: Buffer, _enc, cb) {
+          bytes += chunk.length;
+          cb(null, chunk);
+        }
+      });
+      await pipeline(output, counter, createWriteStream(contentPath, { flags: 'w' }));
+      contentSize = bytes;
+    }
+
+    const metadata: CacheMetadata = {
       contentFile: details.contentFilename || `${filename}.json`,
-      contentSize: fileStat.size,
-      createdAt: DateTime.fromMillis(fileStat.ctimeMs).toUTC().toISO()!,
+      contentSize,
+      // The file was just written, so "now" matches the kernel-reported ctime
+      // we used to fetch via fs.stat — but without the syscall.
+      createdAt: DateTime.now().toUTC().toISO()!,
       numberOfElement: details.numberOfElement || 0,
       contentType: details.contentType
     };
@@ -346,11 +459,9 @@ export default class CacheService {
       encoding: 'utf-8',
       flag: 'w'
     });
-    this.queue.push({
-      filename,
-      metadata
-    });
-    this.cacheSize.cache += fileStat.size;
+    this.queue.push({ filename, metadata });
+    this.incrementQueueCounters(metadata);
+    this.cacheSize.cache += contentSize;
     this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
     this.logger.trace(`File "${filename}" added to cache`);
     this.logCacheState(metadata);
@@ -376,10 +487,8 @@ export default class CacheService {
       await fs.rename(contentOriginPath, contentDestinationPath);
       await fs.rename(metadataOriginPath, metadataDestinationPath);
       if (to === 'cache') {
-        this.queue.push({
-          filename,
-          metadata
-        });
+        this.queue.push({ filename, metadata });
+        this.incrementQueueCounters(metadata);
       }
       this.cacheSize[from] -= metadata.contentSize;
       this.cacheSize[to] += metadata.contentSize;
@@ -433,6 +542,8 @@ export default class CacheService {
       }
     }
     this.queue = [];
+    this._queuedElementsCount = 0;
+    this._queuedRawFilesCount = 0;
     this.cacheSize = {
       cache: 0,
       error: 0,
