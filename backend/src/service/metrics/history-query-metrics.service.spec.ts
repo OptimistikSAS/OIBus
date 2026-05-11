@@ -20,6 +20,10 @@ describe('HistoryMetricsService', () => {
   });
 
   afterEach(() => {
+    // Detach listeners + drain any pending flush. The historyQueryMock is
+    // module-scoped, so without this the next test's emits would also fire
+    // listeners from previous test services.
+    service.destroy();
     jest.useRealTimers();
   });
 
@@ -29,295 +33,44 @@ describe('HistoryMetricsService', () => {
     expect(service.metrics).toEqual(testData.historyQueries.metrics);
   });
 
-  it('should update metrics', () => {
+  it('should update in-memory metrics synchronously and coalesce DB writes', () => {
+    // Fire the full sequence of events in a single tick. In-memory metrics
+    // must update synchronously after each emit, but the DB write is debounced
+    // — we expect exactly one repository.updateMetrics call after the timer.
     historyQueryMock.metricsEvent.emit('north-cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777
-      }
-    });
+    expect(service.metrics.north.currentCacheSize).toBe(999);
+    expect(service.metrics.north.currentErrorSize).toBe(888);
+    expect(service.metrics.north.currentArchiveSize).toBe(777);
 
     historyQueryMock.metricsEvent.emit('north-connect', { lastConnection: testData.constants.dates.DATE_1 });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1
-      }
-    });
+    expect(service.metrics.north.lastConnection).toBe(testData.constants.dates.DATE_1);
 
     historyQueryMock.metricsEvent.emit('north-run-start', { lastRunStart: testData.constants.dates.DATE_2 });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2
-      }
-    });
+    expect(service.metrics.north.lastRunStart).toBe(testData.constants.dates.DATE_2);
 
     historyQueryMock.metricsEvent.emit('north-run-end', {
       lastRunDuration: 888,
-      metadata: {
-        contentSize: 10,
-        contentFile: 'file.csv'
-      },
+      metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'sent'
     });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 10,
-        lastContentSent: 'file.csv'
-      }
-    });
     historyQueryMock.metricsEvent.emit('north-run-end', {
       lastRunDuration: 888,
-      metadata: {
-        contentSize: 10,
-        contentFile: 'file.csv'
-      },
+      metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'archived'
     });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        lastContentSent: 'file.csv'
-      }
-    });
-
     historyQueryMock.metricsEvent.emit('north-run-end', {
       lastRunDuration: 888,
-      metadata: {
-        contentSize: 10,
-        contentFile: 'file.csv'
-      },
+      metadata: { contentSize: 10, contentFile: 'file.csv' },
       action: 'errored'
     });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      }
-    });
-
     historyQueryMock.metricsEvent.emit('north-cache-content-size', 123);
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      }
-    });
 
     historyQueryMock.metricsEvent.emit('south-connect', { lastConnection: testData.constants.dates.DATE_1 });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      },
-      south: {
-        ...testData.historyQueries.metrics.south,
-        lastConnection: testData.constants.dates.DATE_1
-      }
-    });
-
     historyQueryMock.metricsEvent.emit('south-run-start', { lastRunStart: testData.constants.dates.DATE_2 });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      },
-      south: {
-        ...testData.historyQueries.metrics.south,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2
-      }
-    });
-
     historyQueryMock.metricsEvent.emit('south-run-end', { lastRunDuration: 999 });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      },
-      south: {
-        ...testData.historyQueries.metrics.south,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 999
-      }
-    });
-
     historyQueryMock.metricsEvent.emit('south-add-values', { numberOfValuesRetrieved: 10, lastValueRetrieved: {} });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      },
-      south: {
-        ...testData.historyQueries.metrics.south,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 999,
-        numberOfValuesRetrieved: testData.historyQueries.metrics.south.numberOfValuesRetrieved + 10,
-        lastValueRetrieved: {}
-      }
-    });
-
     historyQueryMock.metricsEvent.emit('south-add-file', { lastFileRetrieved: 'last file retrieved' });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      },
-      south: {
-        ...testData.historyQueries.metrics.south,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 999,
-        numberOfValuesRetrieved: testData.historyQueries.metrics.south.numberOfValuesRetrieved + 10,
-        lastValueRetrieved: {},
-        lastFileRetrieved: 'last file retrieved',
-        numberOfFilesRetrieved: testData.historyQueries.metrics.south.numberOfFilesRetrieved + 1
-      }
-    });
-
     historyQueryMock.metricsEvent.emit('south-history-query-start', { running: true, intervalProgress: 20 });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      },
-      south: {
-        ...testData.historyQueries.metrics.south,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 999,
-        numberOfValuesRetrieved: testData.historyQueries.metrics.south.numberOfValuesRetrieved + 10,
-        lastValueRetrieved: {},
-        lastFileRetrieved: 'last file retrieved',
-        numberOfFilesRetrieved: testData.historyQueries.metrics.south.numberOfFilesRetrieved + 1
-      },
-      historyMetrics: {
-        ...testData.historyQueries.metrics.historyMetrics,
-        running: true,
-        intervalProgress: 20
-      }
-    });
-
     historyQueryMock.metricsEvent.emit('south-history-query-interval', {
       running: true,
       intervalProgress: 25,
@@ -326,7 +79,16 @@ describe('HistoryMetricsService', () => {
       currentIntervalNumber: 2,
       numberOfIntervals: 10
     });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
+    historyQueryMock.metricsEvent.emit('south-history-query-stop', { running: false });
+
+    // Still no DB write — debounce timer hasn't fired.
+    expect(historyQueryMetricsRepository.updateMetrics).not.toHaveBeenCalled();
+
+    // Advance past the flush interval; one coalesced write with the final
+    // cumulative state.
+    jest.advanceTimersByTime(1000);
+    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledTimes(1);
+    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenLastCalledWith(testData.historyQueries.list[0].id, {
       ...testData.historyQueries.metrics,
       north: {
         ...testData.historyQueries.metrics.north,
@@ -351,46 +113,6 @@ describe('HistoryMetricsService', () => {
         lastValueRetrieved: {},
         lastFileRetrieved: 'last file retrieved',
         numberOfFilesRetrieved: testData.historyQueries.metrics.south.numberOfFilesRetrieved + 1
-      },
-      historyMetrics: {
-        ...testData.historyQueries.metrics.historyMetrics,
-        running: true,
-        intervalProgress: 25,
-        currentIntervalStart: testData.constants.dates.DATE_1,
-        currentIntervalEnd: testData.constants.dates.DATE_3,
-        currentIntervalNumber: 2,
-        numberOfIntervals: 10
-      }
-    });
-
-    historyQueryMock.metricsEvent.emit('south-history-query-stop', {
-      running: false
-    });
-    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledWith(testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      },
-      south: {
-        ...testData.historyQueries.metrics.south,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 999,
-        numberOfValuesRetrieved: testData.historyQueries.metrics.south.numberOfValuesRetrieved + 10,
-        lastValueRetrieved: {},
-        lastFileRetrieved: 'last file retrieved',
-        numberOfFilesRetrieved: testData.historyQueries.metrics.south.numberOfValuesRetrieved + 1
       },
       historyMetrics: {
         ...testData.historyQueries.metrics.historyMetrics,
@@ -402,6 +124,20 @@ describe('HistoryMetricsService', () => {
         numberOfIntervals: 10
       }
     });
+  });
+
+  it('should flush pending metrics on destroy so the last state survives shutdown', () => {
+    historyQueryMock.metricsEvent.emit('north-cache-content-size', 99);
+    expect(historyQueryMetricsRepository.updateMetrics).not.toHaveBeenCalled();
+    service.destroy();
+    expect(historyQueryMetricsRepository.updateMetrics).toHaveBeenCalledTimes(1);
+  });
+
+  it('should cancel a pending flush on resetMetrics so it cannot race the re-init', () => {
+    historyQueryMock.metricsEvent.emit('north-cache-content-size', 99);
+    service.resetMetrics();
+    jest.advanceTimersByTime(1000);
+    expect(historyQueryMetricsRepository.updateMetrics).not.toHaveBeenCalled();
   });
 
   it('should reset metrics', () => {
@@ -420,14 +156,21 @@ describe('HistoryMetricsService', () => {
     expect(service.stream).toBeDefined();
   });
 
-  it('should write on stream', () => {
+  it('should debounce stream writes alongside DB writes', () => {
     const stream = service.stream;
+    // Drain the 100 ms initial-snapshot timer scheduled by `get stream()`
+    // before installing the spy.
+    jest.advanceTimersByTime(100);
     stream.write = jest.fn();
 
     service.updateMetrics();
-    expect(stream.write).toHaveBeenCalledTimes(1);
-    service.initMetrics();
+    expect(stream.write).not.toHaveBeenCalled();
 
+    jest.advanceTimersByTime(1000);
+    expect(stream.write).toHaveBeenCalledTimes(1);
+
+    // Initial-snapshot push on subscribe still bypasses the debounce.
+    service.initMetrics();
     expect(stream.write).toHaveBeenCalledTimes(2);
   });
 

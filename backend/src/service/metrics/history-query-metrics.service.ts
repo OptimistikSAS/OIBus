@@ -5,8 +5,16 @@ import HistoryQueryMetricsRepository from '../../repository/metrics/history-quer
 import { DateTime } from 'luxon';
 import { Instant } from '../../model/types';
 
+/**
+ * Coalesce DB + SSE writes. Same rationale as south/north metrics services:
+ * high-rate HA reads emit many metric events per second; we collapse them into
+ * a single coalesced write per window. In-memory `_metrics` is always current.
+ */
+const METRICS_FLUSH_INTERVAL_MS = 1000;
+
 export default class HistoryQueryMetricsService {
   private _stream: PassThrough | null = null;
+  private metricsFlushTimer: NodeJS.Timeout | null = null;
   private _metrics: HistoryQueryMetrics = {
     metricsStart: DateTime.now().toUTC().toISO()!,
     north: {
@@ -160,12 +168,26 @@ export default class HistoryQueryMetricsService {
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
+  /** Debounced flush. See METRICS_FLUSH_INTERVAL_MS. */
   updateMetrics(): void {
+    if (this.metricsFlushTimer) return;
+    this.metricsFlushTimer = setTimeout(() => {
+      this.metricsFlushTimer = null;
+      this.flushMetrics();
+    }, METRICS_FLUSH_INTERVAL_MS);
+  }
+
+  private flushMetrics(): void {
     this.historyQueryMetricsRepository.updateMetrics(this.historyQuery.historyQueryConfiguration.id, this._metrics);
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   resetMetrics(): void {
+    // Cancel any pending flush — the row is about to be removed and re-init'd.
+    if (this.metricsFlushTimer) {
+      clearTimeout(this.metricsFlushTimer);
+      this.metricsFlushTimer = null;
+    }
     this.historyQueryMetricsRepository.removeMetrics(this.historyQuery.historyQueryConfiguration.id);
     this.initMetrics();
   }
@@ -185,6 +207,12 @@ export default class HistoryQueryMetricsService {
     this.historyQuery.metricsEvent.off('south-history-query-stop', this.onSouthHistoryQueryStop);
     this.historyQuery.metricsEvent.off('south-add-values', this.onSouthAddValues);
     this.historyQuery.metricsEvent.off('south-add-file', this.onSouthAddFile);
+    // Drain any pending flush so the last seen metrics aren't lost on shutdown.
+    if (this.metricsFlushTimer) {
+      clearTimeout(this.metricsFlushTimer);
+      this.metricsFlushTimer = null;
+      this.flushMetrics();
+    }
     this._stream?.destroy();
     this._stream = null;
   }
