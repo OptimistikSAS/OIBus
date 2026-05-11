@@ -195,12 +195,14 @@ describe('CleanupService', () => {
       });
 
       const now = DateTime.fromISO(testData.constants.dates.FAKE_NOW);
-      (fs.readFile as jest.Mock).mockImplementation((p: string) => {
-        if (p.includes('file1')) return Promise.resolve(createMetadata(now.toUTC().toISO()!));
-        if (p.includes('file2')) return Promise.resolve(createMetadata(now.minus({ hours: 2 }).toUTC().toISO()!));
-        if (p.includes('file3')) return Promise.resolve(createMetadata(now.minus({ hours: 2 }).toUTC().toISO()!));
-        if (p.includes('file4')) return Promise.resolve(createMetadata(now.minus({ hours: 6 }).toUTC().toISO()!));
-        return Promise.resolve('');
+      // Cleanup now uses fs.stat().mtimeMs instead of reading + parsing the
+      // metadata content. The fake-timer system clock matches FAKE_NOW.
+      (fs.stat as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes('file1')) return Promise.resolve({ mtimeMs: now.toMillis() });
+        if (p.includes('file2')) return Promise.resolve({ mtimeMs: now.minus({ hours: 2 }).toMillis() });
+        if (p.includes('file3')) return Promise.resolve({ mtimeMs: now.minus({ hours: 2 }).toMillis() });
+        if (p.includes('file4')) return Promise.resolve({ mtimeMs: now.minus({ hours: 6 }).toMillis() });
+        return Promise.resolve({ mtimeMs: 0 });
       });
 
       await service['cleanNorthConnectors']();
@@ -251,9 +253,9 @@ describe('CleanupService', () => {
         return Promise.resolve([]);
       });
 
-      // 25 hours ago -> should delete
-      const oldDate = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ hours: 25 }).toUTC().toISO()!;
-      (fs.readFile as jest.Mock).mockResolvedValue(createMetadata(oldDate));
+      // 25 hours ago -> should delete (mtime-based now)
+      const oldMtime = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ hours: 25 }).toMillis();
+      (fs.stat as jest.Mock).mockResolvedValue({ mtimeMs: oldMtime });
 
       await service['cleanHistoryQueries']();
 
@@ -266,18 +268,18 @@ describe('CleanupService', () => {
   });
 
   describe('retrieveFilesToDelete (Low Level)', () => {
-    it('should delete corrupt metadata files', async () => {
-      (fs.readdir as jest.Mock).mockResolvedValue(['corrupt.json']);
-      (fs.readFile as jest.Mock).mockResolvedValue('INVALID JSON');
-      (fs.rm as jest.Mock).mockResolvedValue(undefined);
+    it('should skip files whose stat fails (e.g. raced with manual removal) without breaking the scan', async () => {
+      // A file disappearing between readdir and stat is benign — we just skip it.
+      (fs.readdir as jest.Mock).mockResolvedValue(['vanished.json', 'kept.json']);
+      (fs.stat as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes('vanished')) return Promise.reject(new Error('ENOENT'));
+        // kept.json is well within retention — should not be returned.
+        return Promise.resolve({ mtimeMs: DateTime.fromISO(testData.constants.dates.FAKE_NOW).toMillis() });
+      });
 
       const files = await service['retrieveFilesToDelete']('some/folder', 10);
-
-      // It should try to remove the corrupt file from disk
-      expect(fs.rm).toHaveBeenCalledWith(expect.stringContaining('corrupt.json'), { force: true });
-
-      // It should NOT include it in the returned list for the engine (since it's already deleted manually)
       expect(files).toEqual([]);
+      expect(logger.trace).toHaveBeenCalledWith(expect.stringContaining('stat failed'));
     });
 
     it('should handle missing folders gracefully', async () => {
@@ -285,6 +287,27 @@ describe('CleanupService', () => {
 
       const files = await service['retrieveFilesToDelete']('missing/folder', 10);
       expect(files).toEqual([]);
+    });
+
+    it('should return empty when the folder exists but is empty', async () => {
+      (fs.readdir as jest.Mock).mockResolvedValue([]);
+
+      const files = await service['retrieveFilesToDelete']('empty/folder', 10);
+      expect(files).toEqual([]);
+      // No per-file work attempted
+      expect(fs.stat).not.toHaveBeenCalled();
+    });
+
+    it('should select files older than retention based on mtime', async () => {
+      (fs.readdir as jest.Mock).mockResolvedValue(['fresh.json', 'old.json']);
+      const now = DateTime.fromISO(testData.constants.dates.FAKE_NOW);
+      (fs.stat as jest.Mock).mockImplementation((p: string) => {
+        if (p.includes('fresh')) return Promise.resolve({ mtimeMs: now.toMillis() });
+        return Promise.resolve({ mtimeMs: now.minus({ hours: 100 }).toMillis() });
+      });
+
+      const files = await service['retrieveFilesToDelete']('some/folder', 10);
+      expect(files).toEqual(['old.json']);
     });
   });
 

@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import pino from 'pino';
-import { CacheMetadata } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';
@@ -203,32 +202,34 @@ export default class CleanupService {
     } catch {
       return []; // Folder doesn't exist or is empty
     }
-
-    const filesToDelete: Array<string> = [];
-    const now = DateTime.now();
-
-    for (const filename of filenames) {
-      const metadataPath = path.join(metadataFolder, filename);
-      const contentPath = path.join(folderPath, FOLDERS.CONTENT, filename);
-
-      try {
-        const fileContent = await fs.readFile(metadataPath, 'utf8');
-        const metadata: CacheMetadata = JSON.parse(fileContent);
-
-        const fileDate = DateTime.fromISO(metadata.createdAt);
-        // Calculate age
-        const ageInHours = now.diff(fileDate, 'hours').hours;
-
-        if (ageInHours >= retentionDuration) {
-          filesToDelete.push(filename);
-        }
-      } catch (error) {
-        this.logger.error(`Corrupt metadata file "${metadataPath}", deleting: ${(error as Error).message}`);
-        // Auto-heal: delete corrupt files
-        await Promise.all([fs.rm(metadataPath, { force: true }).catch(), fs.rm(contentPath, { force: true }).catch()]);
-      }
+    if (filenames.length === 0) {
+      return [];
     }
-    return filesToDelete;
+
+    // Files in error/archive are never modified after they're written
+    // (compaction only touches the cache folder), so mtime is effectively the
+    // creation time. Corrupt metadata files used to be auto-deleted here as a
+    // side effect of JSON.parse failing; that path is already handled by
+    // `cache.service.start()` at process start, so we can drop the backstop.
+    const retentionMs = retentionDuration * 3600 * 1000;
+    const deletionThreshold = Date.now() - retentionMs;
+
+    const decisions = await Promise.all(
+      filenames.map(async filename => {
+        const metadataPath = path.join(metadataFolder, filename);
+        try {
+          const stat = await fs.stat(metadataPath);
+          return stat.mtimeMs <= deletionThreshold ? filename : null;
+        } catch (error: unknown) {
+          // File vanished between readdir and stat (concurrent cleanup, manual
+          // removal, etc). Nothing to do — log at trace and skip.
+          this.logger.trace(`stat failed for "${metadataPath}": ${(error as Error).message}`);
+          return null;
+        }
+      })
+    );
+
+    return decisions.filter((f): f is string => f !== null);
   }
 
   private extractIdFromFolderName(folderName: string): string | null {
