@@ -749,7 +749,8 @@
               "little-endian": "Little endian"
             },
             "swap-bytes-in-words": "Swap Bytes?",
-            "swap-words-in-dwords": "Swap Words?"
+            "swap-words-in-dwords": "Swap Words?",
+            "grouping-gap": "Max grouping gap (addresses)"
           },
           "mqtt": {
             "url": "URL",
@@ -1462,7 +1463,8 @@
               "little-endian": "Little endian"
             },
             "swap-bytes-in-words": "Swap Bytes?",
-            "swap-words-in-dwords": "Swap Words?"
+            "swap-words-in-dwords": "Swap Words?",
+            "grouping-gap": "Max grouping gap (addresses)"
           },
           "mqtt": {
             "url": "URL",

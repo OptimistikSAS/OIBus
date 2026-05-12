@@ -3196,6 +3196,10 @@
 					},
 					"swapWordsInDWords": {
 						"type": "boolean"
+					},
+					"groupingGap": {
+						"type": "number",
+						"format": "double"
 					}
 				},
 				"required": [
@@ -3207,7 +3211,8 @@
 					"addressOffset",
 					"endianness",
 					"swapBytesInWords",
-					"swapWordsInDWords"
+					"swapWordsInDWords",
+					"groupingGap"
 				],
 				"type": "object",
 				"additionalProperties": false

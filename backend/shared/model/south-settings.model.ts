@@ -425,6 +425,7 @@ export interface SouthModbusSettings {
   endianness: SouthModbusSettingsEndianness;
   swapBytesInWords: boolean;
   swapWordsInDWords: boolean;
+  groupingGap: number;
 }
 
 export interface SouthMQTTSettings {

@@ -7,6 +7,8 @@ import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import net from 'node:net';
 import { NorthModbusSettings } from '../../shared/model/north-settings.model';
 
+export const parseAddress = (address: string): number => (/^0x[0-9a-f]+$/i.test(address) ? parseInt(address, 16) : parseInt(address, 10));
+
 export const readCoil = async (client: ModbusTCPClient, address: number): Promise<string> => {
   const { response } = await client.readCoils(address, 1);
   return response.body.valuesAsArray[0].toString();

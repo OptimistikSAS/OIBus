@@ -36,7 +36,7 @@ async function generateSettingsInterfaces() {
 async function generateSettingsInterfacesForConnectorType(connectorType: ConnectorType) {
   const manifests = listFiles(`./src/${connectorType.toLowerCase()}`)
     .filter(file => file.endsWith('manifest.ts'))
-    .map(file => file.replace('./src', '.').replace('.ts', ''));
+    .map(file => file.replace('./src', '.').replace('.ts', '.js'));
 
   const settingsTypesToGenerate: TypeGenerationDescription = {
     imports: new Set<string>(),
@@ -63,7 +63,7 @@ async function generateSettingsInterfacesForConnectorType(connectorType: Connect
 async function generateSettingsInterfacesForTransformers() {
   const manifests = listFiles(`./src/transformers`)
     .filter(file => file.endsWith('manifest.ts'))
-    .map(file => file.replace('./src', '.').replace('.ts', ''));
+    .map(file => file.replace('./src', '.').replace('.ts', '.js'));
 
   const settingsTypesToGenerate: TypeGenerationDescription = {
     imports: new Set<string>(),
