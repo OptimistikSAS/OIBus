@@ -1,19 +1,17 @@
-import { DurationPipe } from './duration.pipe';
+import { describe, beforeEach, expect, test } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
+import { DurationPipe } from './duration.pipe';
 
 describe('DurationPipe', () => {
   let pipe: DurationPipe;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [provideI18nTesting()]
-    });
-
+    TestBed.configureTestingModule({ providers: [provideI18nTesting()] });
     pipe = TestBed.runInInjectionContext(() => new DurationPipe());
   });
 
-  it('should format a duration in long style by default', () => {
+  test('should format a duration in long style by default', () => {
     expect(pipe.transform(30_000)).toBe('30 seconds');
     expect(pipe.transform(60_000)).toBe('1 minute');
     expect(pipe.transform(61_000)).toBe('1 minute, 1 second');
@@ -30,7 +28,7 @@ describe('DurationPipe', () => {
     expect(pipe.transform(7_320_000)).toBe('2 hours, 2 minutes');
   });
 
-  it('should format a duration in short style', () => {
+  test('should format a duration in short style', () => {
     expect(pipe.transform(30_000, 'short')).toBe('30 s');
     expect(pipe.transform(60_000, 'short')).toBe('1 min');
     expect(pipe.transform(61_000, 'short')).toBe('1 min, 1 s');
@@ -47,7 +45,7 @@ describe('DurationPipe', () => {
     expect(pipe.transform(7_320_000, 'short')).toBe('2 h, 2 min');
   });
 
-  it('should format a duration in short style and hourMinute type ', () => {
+  test('should format a duration in short style and hourMinute type', () => {
     expect(pipe.transform(0, 'short', 'hourMinute')).toBe('0 h, 0 min');
     expect(pipe.transform(30_000, 'short', 'hourMinute')).toBe('0 h, 0 min');
     expect(pipe.transform(60_000, 'short', 'hourMinute')).toBe('0 h, 1 min');
