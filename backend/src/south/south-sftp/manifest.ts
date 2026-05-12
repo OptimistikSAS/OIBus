@@ -395,7 +395,7 @@ const manifest: SouthConnectorManifest = {
             {
               type: 'boolean',
               key: 'recursive',
-              translationKey: 'configuration.oibus.manifest.items.south.sftp.recursive',
+              translationKey: 'configuration.oibus.manifest.south.items.sftp.recursive',
               defaultValue: false,
               validators: [
                 {
