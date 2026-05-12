@@ -1,13 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
-import { CurrentUserService } from '../shared/current-user.service';
-import { UserDTO } from '../../../../backend/shared/model/user.model';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-
-import { EngineService } from '../services/engine.service';
-import { OIBusInfo } from '../../../../backend/shared/model/engine.model';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { of, switchMap } from 'rxjs';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { CurrentUserService } from '../shared/current-user.service';
+import { EngineService } from '../services/engine.service';
 import { PageTitleDirective } from '../services/page-title.directive';
 
 @Component({
@@ -25,27 +23,13 @@ import { PageTitleDirective } from '../services/page-title.directive';
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss'
 })
-export class NavbarComponent implements OnInit {
-  private currentUserService = inject(CurrentUserService);
-  private engineService = inject(EngineService);
+export class NavbarComponent {
+  private readonly currentUserService = inject(CurrentUserService);
+  private readonly engineService = inject(EngineService);
 
-  user: UserDTO | null = null;
-  info: OIBusInfo | null = null;
-
-  ngOnInit() {
-    this.currentUserService
-      .get()
-      .pipe(
-        switchMap(user => {
-          this.user = user;
-          if (this.user) {
-            return this.engineService.info$;
-          }
-          return of(null);
-        })
-      )
-      .subscribe(info => (this.info = info));
-  }
+  private readonly user$ = this.currentUserService.get();
+  readonly user = toSignal(this.user$, { initialValue: null });
+  readonly info = toSignal(this.user$.pipe(switchMap(user => (user ? this.engineService.info$ : of(null)))), { initialValue: null });
 
   logout() {
     this.currentUserService.logout();

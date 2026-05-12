@@ -1,10 +1,10 @@
-<oib-page-title [title]="info?.oibusName" />
+<oib-page-title [title]="info()?.oibusName" />
 <nav class="navbar navbar-dark navbar-expand oi-navbar-top">
   <a class="navbar-brand" routerLink="/">
     <img src="/logo-oibus.png" alt="logo" style="height: 24px; margin: 5px; padding-left: 5px" />
   </a>
   <div id="navbar" class="navbar-collapse collapse">
-    @if (user) {
+    @if (user(); as user) {
       <ul class="navbar-nav me-auto d-none d-md-flex">
         <li class="nav-item">
           <a class="nav-link" routerLink="/engine" translate="nav.engine"></a>
@@ -41,7 +41,7 @@
       </ul>
       <ul class="navbar-nav d-none d-md-flex me-2">
         <li>
-          @if (info) {
+          @if (info(); as info) {
             <span class="navbar-text" id="navbar-version" translate="nav.version" [translateParams]="{ version: info.version }"></span>
           }
         </li>

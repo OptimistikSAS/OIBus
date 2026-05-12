@@ -9,12 +9,12 @@
         <span translate="home.north.title"></span>
       </h1>
     </div>
-    @for (northRow of northRows; track northRow) {
+    @for (northRow of northRows(); track northRow) {
       <div class="row justify-content-center">
         @for (north of northRow; track north.id) {
           <div class="col-4">
-            @if (homeMetrics && homeMetrics.norths[north.id]) {
-              <oib-north-metrics [connectorMetrics]="homeMetrics.norths[north.id]" [displayButton]="true" [northConnector]="north" />
+            @if (homeMetrics() && homeMetrics()!.norths[north.id]) {
+              <oib-north-metrics [connectorMetrics]="homeMetrics()!.norths[north.id]" [displayButton]="true" [northConnector]="north" />
             }
           </div>
         }
@@ -32,8 +32,8 @@
       </div>
       <div class="row justify-content-center">
         <div class="col-lg-12 col-xl-8">
-          @if (homeMetrics && homeMetrics.engine) {
-            <oib-engine-metrics [metrics]="homeMetrics.engine" [displayButton]="true" />
+          @if (homeMetrics() && homeMetrics()!.engine) {
+            <oib-engine-metrics [metrics]="homeMetrics()!.engine" [displayButton]="true" />
           }
         </div>
       </div>
@@ -49,12 +49,12 @@
           <span translate="home.south.title"></span>
         </h1>
       </div>
-      @for (southRow of southRows; track southRow) {
+      @for (southRow of southRows(); track southRow) {
         <div class="row justify-content-center">
           @for (south of southRow; track south.id) {
             <div class="col-4">
-              @if (homeMetrics && homeMetrics.souths[south.id]) {
-                <oib-south-metrics [connectorMetrics]="homeMetrics.souths[south.id]" [displayButton]="true" [southConnector]="south" />
+              @if (homeMetrics() && homeMetrics()!.souths[south.id]) {
+                <oib-south-metrics [connectorMetrics]="homeMetrics()!.souths[south.id]" [displayButton]="true" [southConnector]="south" />
               }
             </div>
           }
