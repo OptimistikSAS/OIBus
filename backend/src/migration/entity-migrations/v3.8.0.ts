@@ -970,10 +970,14 @@ async function addModbusGroupingGap(knex: Knex): Promise<void> {
     const settings = JSON.parse(connector.settings);
     if (settings.groupingGap === undefined) {
       settings.groupingGap = 0;
-      await knex(SOUTH_CONNECTORS_TABLE)
-        .update({ settings: JSON.stringify(settings) })
-        .where('id', connector.id);
     }
+    if (settings.networkTimeout === undefined) {
+      settings.networkTimeout = 15000;
+    }
+
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .update({ settings: JSON.stringify(settings) })
+      .where('id', connector.id);
   }
 }
 
