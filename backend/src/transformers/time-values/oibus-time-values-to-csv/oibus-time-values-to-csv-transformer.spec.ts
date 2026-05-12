@@ -5,6 +5,7 @@ import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import { streamToString } from '../../../service/utils';
 import type OIBusTimeValuesToCsvTransformerType from './oibus-time-values-to-csv-transformer';
 import timeValuesToCsvManifest from './manifest';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
@@ -22,7 +23,8 @@ before(() => {
     convertDelimiter: mock.fn(() => ';'),
     convertQuoteChar: mock.fn(() => '"'),
     convertEscapeChar: mock.fn(() => '"'),
-    convertNewline: mock.fn(() => '')
+    convertNewline: mock.fn(() => ''),
+    streamToString: mock.fn(streamToString)
   };
   mockPapaparse = { unparse: mock.fn(() => 'csv content') };
   mockModule(nodeRequire, '../../../service/utils', mockUtils);

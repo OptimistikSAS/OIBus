@@ -12,5 +12,5 @@ export default class LoggerMock implements ILogger {
   error = mock.fn<AnyFn>();
   fatal = mock.fn<AnyFn>();
   child = mock.fn((_bindings: Record<string, unknown>, _options?: Record<string, unknown>): ILogger => new LoggerMock());
-  isLevelEnabled = mock.fn((_level: string): boolean => false);
+  isLevelEnabled = mock.fn((_level: string): boolean => true);
 }

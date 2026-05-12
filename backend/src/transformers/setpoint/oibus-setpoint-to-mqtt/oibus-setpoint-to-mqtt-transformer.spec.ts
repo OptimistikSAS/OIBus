@@ -5,6 +5,7 @@ import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import { streamToString } from '../../../service/utils';
 import type OIBusSetpointToMQTTTransformerType from './oibus-setpoint-to-mqtt-transformer';
 import setpointToMqttManifest from './manifest';
 import { OIBusSetpoint } from '../../../../shared/model/engine.model';
@@ -15,7 +16,7 @@ let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let OIBusSetpointToMQTTTransformer: typeof OIBusSetpointToMQTTTransformerType;
 
 before(() => {
-  mockUtils = { generateRandomId: mock.fn(() => 'randomId') };
+  mockUtils = { generateRandomId: mock.fn(() => 'randomId'), streamToString: mock.fn(streamToString) };
   mockModule(nodeRequire, '../../../service/utils', mockUtils);
   const mod = reloadModule<{ default: typeof OIBusSetpointToMQTTTransformerType }>(nodeRequire, './oibus-setpoint-to-mqtt-transformer');
   OIBusSetpointToMQTTTransformer = mod.default;

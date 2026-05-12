@@ -5,6 +5,7 @@ import { Readable } from 'stream';
 import testData from '../../../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule } from '../../../tests/utils/test-utils';
 import PinoLogger from '../../../tests/__mocks__/service/logger/logger.mock';
+import { streamToString } from '../../../service/utils';
 import type OIBusTimeValuesToOIAnalyticsTransformerType from './oibus-time-values-to-oianalytics-transformer';
 import timeValuesToOianalyticsManifest from './manifest';
 import { OIBusTimeValue } from '../../../../shared/model/engine.model';
@@ -15,7 +16,7 @@ let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let OIBusTimeValuesToOIAnalyticsTransformer: typeof OIBusTimeValuesToOIAnalyticsTransformerType;
 
 before(() => {
-  mockUtils = { generateRandomId: mock.fn(() => 'randomId') };
+  mockUtils = { generateRandomId: mock.fn(() => 'randomId'), streamToString: mock.fn(streamToString) };
   mockModule(nodeRequire, '../../../service/utils', mockUtils);
   const mod = reloadModule<{ default: typeof OIBusTimeValuesToOIAnalyticsTransformerType }>(
     nodeRequire,

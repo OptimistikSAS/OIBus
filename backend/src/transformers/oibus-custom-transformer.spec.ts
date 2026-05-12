@@ -5,6 +5,7 @@ import { Readable } from 'stream';
 import testData from '../tests/utils/test-data';
 import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
+import { streamToString } from '../service/utils';
 import type OIBusCustomTransformerType from './oibus-custom-transformer';
 import { CustomTransformer } from '../model/transformer.model';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
@@ -28,7 +29,7 @@ let mockSandboxServiceObj: { execute: ReturnType<typeof mock.fn> };
 let OIBusCustomTransformer: typeof OIBusCustomTransformerType;
 
 before(() => {
-  mockUtils = { generateRandomId: mock.fn(() => 'randomId') };
+  mockUtils = { generateRandomId: mock.fn(() => 'randomId'), streamToString: mock.fn(streamToString) };
   mockSandboxServiceObj = { execute: mock.fn(async () => sandboxOutput) };
   mockModule(nodeRequire, '../service/utils', mockUtils);
   mockModule(nodeRequire, '../service/sandbox.service', {
