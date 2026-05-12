@@ -774,15 +774,13 @@ export class SouthDetailComponent implements OnDestroy {
   }
 
   viewItemLastValue(item: SouthConnectorItemDTO) {
+    const modalRef = this.modalService.open(ViewItemValueModalComponent, { size: 'lg' });
+    const component: ViewItemValueModalComponent = modalRef.componentInstance;
+    component.prepare(this.southConnector!.type);
+
     this.southConnectorService.getItemLastValue(this.southConnector!.id, item.id!).subscribe({
-      next: lastValue => {
-        const modalRef = this.modalService.open(ViewItemValueModalComponent, { size: 'lg' });
-        const component: ViewItemValueModalComponent = modalRef.componentInstance;
-        component.prepareForDisplay(lastValue, this.getGroupName(item));
-      },
-      error: error => {
-        this.notificationService.error('south.items.last-value-error', { error: error.message });
-      }
+      next: lastValue => component.setData(lastValue, this.getGroupName(item)),
+      error: error => component.setError(error.message)
     });
   }
 

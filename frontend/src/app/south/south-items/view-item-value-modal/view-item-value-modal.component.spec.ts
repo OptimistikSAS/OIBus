@@ -20,6 +20,18 @@ class ViewItemValueModalComponentTester extends ComponentTester<ViewItemValueMod
   get modalBody() {
     return this.element('.modal-body')!;
   }
+
+  get spinner() {
+    return this.element('.spinner-border');
+  }
+
+  get errorAlert() {
+    return this.element('.alert-danger');
+  }
+
+  get infoAlert() {
+    return this.element('.alert-info');
+  }
 }
 
 describe('ViewItemValueModalComponent', () => {
@@ -64,8 +76,50 @@ describe('ViewItemValueModalComponent', () => {
     await tester.change();
   });
 
+  // --- Loading state ---
+
+  it('should show a spinner before data arrives', async () => {
+    tester.componentInstance.prepare('opcua');
+    await tester.change();
+
+    expect(tester.spinner).not.toBeNull();
+    expect(tester.element('.container-fluid')).toBeNull();
+  });
+
+  it('should hide the spinner once data arrives', async () => {
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
+    await tester.change();
+
+    expect(tester.spinner).toBeNull();
+    expect(tester.element('.container-fluid')).not.toBeNull();
+  });
+
+  // --- Error state ---
+
+  it('should show an error alert when setError is called', async () => {
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setError('Connection refused');
+    await tester.change();
+
+    expect(tester.spinner).toBeNull();
+    expect(tester.errorAlert).not.toBeNull();
+    expect(tester.errorAlert!.textContent).toContain('Connection refused');
+  });
+
+  it('should not show content when in error state', async () => {
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setError('Timeout');
+    await tester.change();
+
+    expect(tester.element('.container-fluid')).toBeNull();
+  });
+
+  // --- Dismiss ---
+
   it('should dismiss when close button in header is clicked', async () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithValue, 'Test Group');
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
     await tester.change();
 
     tester.closeButton.click();
@@ -74,7 +128,8 @@ describe('ViewItemValueModalComponent', () => {
   });
 
   it('should dismiss when footer close button is clicked', async () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithValue, 'Test Group');
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
     await tester.change();
 
     tester.footerCloseButton.click();
@@ -82,8 +137,11 @@ describe('ViewItemValueModalComponent', () => {
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
 
-  it('should display item name, query time and tracked instant when prepared with data', async () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithValue, 'Test Group');
+  // --- Content rendering ---
+
+  it('should display item name and value when data is set', async () => {
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
     await tester.change();
 
     expect(tester.modalBody.textContent).toContain('My Item');
@@ -91,27 +149,32 @@ describe('ViewItemValueModalComponent', () => {
   });
 
   it('should have hasValue true when value is set', () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithValue, 'Test Group');
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
     expect(tester.componentInstance.hasValue).toBe(true);
   });
 
   it('should have hasValue false when value is null', () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueNoValue, 'Test Group');
+    tester.componentInstance.prepare('sqlite');
+    tester.componentInstance.setData(itemLastValueNoValue, 'Test Group');
     expect(tester.componentInstance.hasValue).toBe(false);
   });
 
   it('should have isFileArray false for generic object value', () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithValue, 'Test Group');
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
     expect(tester.componentInstance.isFileArray).toBe(false);
   });
 
   it('should have isFileArray true for array of objects with filename', () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithFileArray, 'Test Group');
+    tester.componentInstance.prepare('folder-scanner');
+    tester.componentInstance.setData(itemLastValueWithFileArray, 'Test Group');
     expect(tester.componentInstance.isFileArray).toBe(true);
   });
 
   it('should return fileArray for file-like value', () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithFileArray, 'Test Group');
+    tester.componentInstance.prepare('folder-scanner');
+    tester.componentInstance.setData(itemLastValueWithFileArray, 'Test Group');
     const files = tester.componentInstance.fileArray;
     expect(files.length).toBe(2);
     expect(files[0].filename).toBe('file1.txt');
@@ -121,12 +184,14 @@ describe('ViewItemValueModalComponent', () => {
   });
 
   it('should return empty fileArray when not file array', () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithValue, 'Test Group');
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
     expect(tester.componentInstance.fileArray).toEqual([]);
   });
 
   it('should display file table when value is file array', async () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithFileArray, 'Test Group');
+    tester.componentInstance.prepare('folder-scanner');
+    tester.componentInstance.setData(itemLastValueWithFileArray, 'Test Group');
     await tester.change();
 
     expect(tester.modalBody.textContent).toContain('file1.txt');
@@ -135,7 +200,8 @@ describe('ViewItemValueModalComponent', () => {
   });
 
   it('should display JSON for generic value', async () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueWithValue, 'Test Group');
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
     await tester.change();
 
     expect(tester.modalBody.textContent).toContain('foo');
@@ -144,9 +210,38 @@ describe('ViewItemValueModalComponent', () => {
   });
 
   it('should display item name when prepared with no value', async () => {
-    tester.componentInstance.prepareForDisplay(itemLastValueNoValue, 'Test Group');
+    tester.componentInstance.prepare('sqlite');
+    tester.componentInstance.setData(itemLastValueNoValue, 'Test Group');
     await tester.change();
 
     expect(tester.modalBody.textContent).toContain('Empty Item');
+  });
+
+  // --- isGroupedConnector ---
+
+  it('should have isGroupedConnector true for a grouped connector type', () => {
+    tester.componentInstance.prepare('opcua');
+    expect(tester.componentInstance.isGroupedConnector).toBe(true);
+  });
+
+  it('should have isGroupedConnector false for a single-item connector type', () => {
+    tester.componentInstance.prepare('sqlite');
+    expect(tester.componentInstance.isGroupedConnector).toBe(false);
+  });
+
+  it('should show group-value notice for grouped connectors', async () => {
+    tester.componentInstance.prepare('opcua');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
+    await tester.change();
+
+    expect(tester.infoAlert).not.toBeNull();
+  });
+
+  it('should not show group-value notice for single-item connectors', async () => {
+    tester.componentInstance.prepare('sqlite');
+    tester.componentInstance.setData(itemLastValueWithValue, 'Test Group');
+    await tester.change();
+
+    expect(tester.infoAlert).toBeNull();
   });
 });

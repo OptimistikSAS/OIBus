@@ -2385,7 +2385,9 @@
         "value": "Cached Value",
         "no-value": "No cached value",
         "filename": "Filename",
-        "modified-time": "Modified Time"
+        "modified-time": "Modified Time",
+        "group-value-notice": "This connector queries items in groups. The value shown here reflects the last result retrieved for the item's group, not exclusively for this item.",
+        "error-title": "Could not retrieve the last cached value"
       },
       "all-deleted": "South connector items deleted",
       "delete-all": "Delete all",
