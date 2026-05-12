@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, it, mock, type Mock } from 'node:test'
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { encryptionService } from './encryption.service';
-import { clearProxyAgentCache, HTTPRequest, ReqOptions } from './http-request.utils';
+import { clearProxyAgentCache, HTTPRequest, ReqOptions, retryableHttpStatusCodes } from './http-request.utils';
 import { createMockResponse } from '../tests/__mocks__/undici.mock';
 import { version } from '../../package.json';
 
@@ -16,6 +16,22 @@ interface UndiciRequestOptions {
   signal?: AbortSignal;
   dispatcher?: { isMockProxyAgent?: boolean; isMockAgent?: boolean };
 }
+
+describe('retryableHttpStatusCodes', () => {
+  it('should include all expected retryable status codes', () => {
+    assert.ok(retryableHttpStatusCodes.includes(401));
+    assert.ok(retryableHttpStatusCodes.includes(403));
+    assert.ok(retryableHttpStatusCodes.includes(404));
+    assert.ok(retryableHttpStatusCodes.includes(407));
+    assert.ok(retryableHttpStatusCodes.includes(408));
+    assert.ok(retryableHttpStatusCodes.includes(429));
+    assert.ok(retryableHttpStatusCodes.includes(500));
+    assert.ok(retryableHttpStatusCodes.includes(502));
+    assert.ok(retryableHttpStatusCodes.includes(503));
+    assert.ok(retryableHttpStatusCodes.includes(504));
+    assert.ok(retryableHttpStatusCodes.includes(511));
+  });
+});
 
 describe('HTTPRequest Service', () => {
   const testUrl = 'http://example.com/api';
