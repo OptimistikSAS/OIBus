@@ -210,6 +210,32 @@ const manifest: SouthConnectorManifest = {
           columns: 4,
           displayInViewMode: true
         }
+      },
+      {
+        type: 'number',
+        key: 'groupingGap',
+        translationKey: 'configuration.oibus.manifest.south.modbus.grouping-gap',
+        defaultValue: 0,
+        unit: null,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['0']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['100']
+          }
+        ],
+        displayProperties: {
+          row: 3,
+          columns: 4,
+          displayInViewMode: false
+        }
       }
     ]
   },

@@ -165,6 +165,7 @@ export async function up(knex: Knex): Promise<void> {
   await populateItemHistorianFields(knex);
   await removeThrottlingFieldsInConnectorSettings(knex);
   await migrateCsvTransformerOptions(knex);
+  await addModbusGroupingGap(knex);
 }
 
 async function addCreatedByAndUpdatedBy(knex: Knex): Promise<void> {
@@ -956,6 +957,22 @@ async function migrateCsvTransformerOptions(knex: Knex): Promise<void> {
       await knex(table)
         .where('id', instance.id)
         .update({ options: JSON.stringify(options) });
+    }
+  }
+}
+
+async function addModbusGroupingGap(knex: Knex): Promise<void> {
+  const modbusSouth: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
+    .select('id', 'settings')
+    .where('type', 'modbus');
+
+  for (const connector of modbusSouth) {
+    const settings = JSON.parse(connector.settings);
+    if (settings.groupingGap === undefined) {
+      settings.groupingGap = 0;
+      await knex(SOUTH_CONNECTORS_TABLE)
+        .update({ settings: JSON.stringify(settings) })
+        .where('id', connector.id);
     }
   }
 }

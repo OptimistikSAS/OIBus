@@ -896,6 +896,7 @@ const models: TsoaRoute.Models = {
             "endianness": {"ref":"SouthModbusSettingsEndianness","required":true},
             "swapBytesInWords": {"dataType":"boolean","required":true},
             "swapWordsInDWords": {"dataType":"boolean","required":true},
+            "groupingGap": {"dataType":"double","required":true},
         },
         "additionalProperties": false,
     },

@@ -11,9 +11,22 @@ import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../.
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import { connectSocket, readCoil, readDiscreteInputRegister, readHoldingRegister, readInputRegister } from '../../service/utils-modbus';
+import {
+  connectSocket,
+  getNumberOfWords,
+  getValueFromBuffer,
+  parseAddress,
+  readCoil,
+  readDiscreteInputRegister,
+  readHoldingRegister,
+  readInputRegister
+} from '../../service/utils-modbus';
 import { Instant } from '../../model/types';
 import type { ILogger } from '../../model/logger.model';
+
+// Modbus Application Protocol limits (spec v1.1b3, §6.1 / §6.2 / §6.3 / §6.4)
+const MAX_COIL_READ_COUNT = 2000; // FC01 / FC02
+const MAX_REGISTER_WORD_COUNT = 125; // FC03 / FC04
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -128,19 +141,38 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         throw new Error('Could not read address: Modbus client not set');
       }
       const startRequest = DateTime.now();
-      for (const item of items) {
-        dataValues.push(...(await this.modbusFunction(this.modbusClient, item)));
+      // Single timestamp for all values in this scan cycle
+      const timestamp = startRequest.toUTC().toISO();
+      // Offset is connector-level: compute once
+      const offset = this.connector.settings.addressOffset === 'modbus' ? 0 : -1;
+
+      // Pre-compute numeric addresses for all items in one pass
+      const resolvedItems = items.map(item => ({ item, address: parseAddress(item.settings.address) + offset }));
+
+      // Group by modbusType
+      const groups = new Map<string, Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; address: number }>>();
+      for (const resolved of resolvedItems) {
+        const key = resolved.item.settings.modbusType;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(resolved);
       }
+
+      // Sort each group by address and issue batched requests
+      const groupingGap = this.connector.settings.groupingGap;
+      for (const [type, group] of groups) {
+        group.sort((a, b) => a.address - b.address);
+        if (type === 'coil' || type === 'discrete-input') {
+          dataValues.push(...(await this.queryBitsGrouped(type as 'coil' | 'discrete-input', group, timestamp, groupingGap)));
+        } else if (type === 'input-register' || type === 'holding-register') {
+          dataValues.push(
+            ...(await this.queryRegistersGrouped(type as 'input-register' | 'holding-register', group, timestamp, groupingGap))
+          );
+        }
+      }
+
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
-      await this.addContent(
-        {
-          type: 'time-values',
-          content: dataValues
-        },
-        startRequest.toUTC().toISO(),
-        items
-      );
+      await this.addContent({ type: 'time-values', content: dataValues }, startRequest.toUTC().toISO(), items);
     } catch (error: unknown) {
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
@@ -149,6 +181,129 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       throw error;
     }
     return dataValues.length > 0 ? dataValues[dataValues.length - 1] : null;
+  }
+
+  /**
+   * Read a batch of coil or discrete-input items in as few requests as possible.
+   * Items must already be sorted by address. Runs where the address gap between two adjacent items
+   * is at most `groupingGap + 1` are merged into a single request; filler bits in the gaps are
+   * read but discarded. Each run is then chunked to stay within the FC01/FC02 limit of 2 000 coils.
+   */
+  private async queryBitsGrouped(
+    type: 'coil' | 'discrete-input',
+    sortedItems: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; address: number }>,
+    timestamp: string,
+    groupingGap: number
+  ): Promise<Array<OIBusTimeValue>> {
+    const results: Array<OIBusTimeValue> = [];
+    let i = 0;
+    while (i < sortedItems.length) {
+      // Find the end of a run where every gap between adjacent items is ≤ groupingGap
+      let j = i + 1;
+      while (j < sortedItems.length && sortedItems[j].address <= sortedItems[j - 1].address + 1 + groupingGap) {
+        j++;
+      }
+      const batch = sortedItems.slice(i, j);
+      // Chunk the run to stay within the FC01/FC02 limit (measured as inclusive address range)
+      let c = 0;
+      while (c < batch.length) {
+        let chunkEnd = c + 1;
+        while (chunkEnd < batch.length && batch[chunkEnd].address - batch[c].address + 1 <= MAX_COIL_READ_COUNT) {
+          chunkEnd++;
+        }
+        const chunk = batch.slice(c, chunkEnd);
+        const count = chunk[chunk.length - 1].address - chunk[0].address + 1; // includes gap bits
+        const { response } =
+          type === 'coil'
+            ? await this.modbusClient!.readCoils(chunk[0].address, count)
+            : await this.modbusClient!.readDiscreteInputs(chunk[0].address, count);
+        const values = response.body.valuesAsArray;
+        for (const { item, address } of chunk) {
+          results.push({ pointId: item.name, timestamp, data: { value: values[address - chunk[0].address].toString() } });
+        }
+        c = chunkEnd;
+      }
+      i = j;
+    }
+    return results;
+  }
+
+  /**
+   * Read a batch of input-register or holding-register items in as few requests as possible.
+   * Items must already be sorted by address. Runs where the address gap between two adjacent items
+   * (after accounting for the preceding item's word width) is at most `groupingGap` are merged into
+   * a single request; filler words in the gaps are read but discarded. Each run is then chunked to
+   * stay within the FC03/FC04 limit of 125 words.
+   */
+  private async queryRegistersGrouped(
+    type: 'input-register' | 'holding-register',
+    sortedItems: Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; address: number }>,
+    timestamp: string,
+    groupingGap: number
+  ): Promise<Array<OIBusTimeValue>> {
+    const results: Array<OIBusTimeValue> = [];
+    let i = 0;
+    while (i < sortedItems.length) {
+      // Find the end of a run where every gap between adjacent items is ≤ groupingGap
+      let j = i + 1;
+      while (
+        j < sortedItems.length &&
+        sortedItems[j].address <=
+          sortedItems[j - 1].address + getNumberOfWords(sortedItems[j - 1].item.settings.data!.dataType!) + groupingGap
+      ) {
+        j++;
+      }
+      const batch = sortedItems.slice(i, j);
+      // Chunk the run to stay within the FC03/FC04 limit.
+      // Span (first → last address + its word width) is used because gap words count against the
+      // 125-word ceiling even though they are not mapped to any item.
+      let c = 0;
+      while (c < batch.length) {
+        let chunkEnd = c + 1;
+        while (chunkEnd < batch.length) {
+          const last = batch[chunkEnd];
+          const span = last.address - batch[c].address + getNumberOfWords(last.item.settings.data!.dataType!);
+          if (span > MAX_REGISTER_WORD_COUNT) break;
+          chunkEnd++;
+        }
+        const chunk = batch.slice(c, chunkEnd);
+        const chunkStartAddress = chunk[0].address;
+        const chunkLastItem = chunk[chunk.length - 1];
+        const chunkWords = chunkLastItem.address - chunkStartAddress + getNumberOfWords(chunkLastItem.item.settings.data!.dataType!);
+
+        const { response } =
+          type === 'input-register'
+            ? await this.modbusClient!.readInputRegisters(chunkStartAddress, chunkWords)
+            : await this.modbusClient!.readHoldingRegisters(chunkStartAddress, chunkWords);
+
+        const fullBuffer = response.body.valuesAsBuffer;
+        for (const { item, address } of chunk) {
+          const wordOffset = address - chunkStartAddress;
+          const numWords = getNumberOfWords(item.settings.data!.dataType!);
+          // Copy the slice so that in-place swap operations in getValueFromBuffer do not corrupt
+          // adjacent items' data in the shared response buffer.
+          const slice = Buffer.from(fullBuffer.subarray(wordOffset * 2, (wordOffset + numWords) * 2));
+          results.push({
+            pointId: item.name,
+            timestamp,
+            data: {
+              value: getValueFromBuffer(
+                slice,
+                item.settings.data!.multiplierCoefficient!,
+                item.settings.data!.dataType!,
+                this.connector.settings.swapWordsInDWords,
+                this.connector.settings.swapBytesInWords,
+                this.connector.settings.endianness,
+                item.settings.data!.bitIndex
+              )
+            }
+          });
+        }
+        c = chunkEnd;
+      }
+      i = j;
+    }
+    return results;
   }
 
   /**
