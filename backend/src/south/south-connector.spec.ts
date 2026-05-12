@@ -244,6 +244,40 @@ describe('SouthConnector', () => {
       assert.strictEqual(south['cronByScanModeIds'].size, 0);
     });
 
+    it('should not create a cron for the item scan mode when the item is synced to a group', () => {
+      const groupScanMode = testData.scanMode.list[0];
+      const itemScanMode = testData.scanMode.list[1]; // different from the group's scan mode
+      const group = {
+        id: 'groupId1',
+        name: 'group1',
+        scanMode: groupScanMode,
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+
+      south['connector'].groups = [group];
+      south['connector'].items = [
+        {
+          ...testData.south.list[0].items[0],
+          scanMode: itemScanMode,
+          group,
+          syncWithGroup: true
+        }
+      ];
+
+      south.updateCronJobs();
+
+      // Only the group's scan mode should have a cron — not the item's own scan mode
+      assert.strictEqual(south['cronByScanModeIds'].size, 1);
+      assert.ok(south['cronByScanModeIds'].has(groupScanMode.id!));
+      assert.ok(!south['cronByScanModeIds'].has(itemScanMode.id!));
+    });
+
     it('should use another logger', async () => {
       (logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       south.setLogger(anotherLogger);
