@@ -54,6 +54,10 @@ class CustomStream extends Stream {
   destroy() {
     return this;
   }
+
+  setKeepAlive(_enable: boolean, _initialDelay?: number): this {
+    return this;
+  }
 }
 
 describe('South Modbus', () => {
@@ -151,6 +155,7 @@ describe('South Modbus', () => {
       swapWordsInDWords: false,
       retryInterval: 10000,
       connectTimeout: 30000,
+      networkTimeout: 15000,
       groupingGap: 0
     },
     groups: [],
@@ -328,6 +333,7 @@ describe('South Modbus', () => {
     const disconnectMock = mock.fn(async (): Promise<void> => undefined);
     south.disconnect = disconnectMock;
     (south as unknown as Record<string, unknown>)['reconnectTimeout'] = setTimeout(() => null, 1000);
+    const setKeepAliveMock = mock.method(mockedEmitter, 'setKeepAlive');
 
     await south.connect();
 
@@ -345,6 +351,50 @@ describe('South Modbus', () => {
       )
     );
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(setKeepAliveMock.mock.calls.length, 1);
+    assert.deepStrictEqual(setKeepAliveMock.mock.calls[0].arguments, [true, configuration.settings.networkTimeout]);
+  });
+
+  it('should reconnect when socket closes unexpectedly between scans', async () => {
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+
+    await south.connect();
+
+    // Simulate an unexpected socket close (e.g. server-side idle timeout)
+    mockedEmitter.emit('close');
+    // Flush the async close handler (it awaits disconnect())
+    await Promise.resolve();
+    await Promise.resolve();
+
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.ok(
+      logger.warn.mock.calls.some((c: { arguments: Array<unknown> }) =>
+        (c.arguments[0] as string).includes('Modbus socket closed unexpectedly')
+      )
+    );
+
+    // Ticking the retry interval should trigger a new connect (new Socket creation)
+    mock.timers.tick(configuration.settings.retryInterval);
+    assert.strictEqual(socketMock.mock.calls.length, 2);
+  });
+
+  it('should not reconnect when socket closes during an explicit disconnect', async () => {
+    const disconnectMock = mock.fn(async (): Promise<void> => undefined);
+    south.disconnect = disconnectMock;
+    (south as unknown as Record<string, unknown>)['disconnecting'] = true;
+
+    await south.connect();
+
+    // Simulate a close event while disconnecting is true
+    mockedEmitter.emit('close');
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // The close handler must be a no-op when disconnecting
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    mock.timers.tick(configuration.settings.retryInterval);
+    assert.strictEqual(socketMock.mock.calls.length, 1);
   });
 
   it('should properly reconnect on connect error when not disconnecting', async () => {

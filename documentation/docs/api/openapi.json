@@ -3177,6 +3177,10 @@
 						"type": "number",
 						"format": "double"
 					},
+					"networkTimeout": {
+						"type": "number",
+						"format": "double"
+					},
 					"retryInterval": {
 						"type": "number",
 						"format": "double"
@@ -3206,6 +3210,7 @@
 					"host",
 					"port",
 					"connectTimeout",
+					"networkTimeout",
 					"retryInterval",
 					"slaveId",
 					"addressOffset",

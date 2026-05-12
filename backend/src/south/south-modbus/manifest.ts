@@ -33,7 +33,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 4,
+          columns: 10,
           displayInViewMode: true
         }
       },
@@ -59,7 +59,7 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 4,
+          columns: 2,
           displayInViewMode: true
         }
       },
@@ -84,7 +84,33 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 0,
+          row: 1,
+          columns: 4,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'number',
+        key: 'networkTimeout',
+        translationKey: 'configuration.oibus.manifest.south.modbus.network-timeout',
+        unit: 'ms',
+        defaultValue: 15000,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          },
+          {
+            type: 'MINIMUM',
+            arguments: ['100']
+          },
+          {
+            type: 'MAXIMUM',
+            arguments: ['60000']
+          }
+        ],
+        displayProperties: {
+          row: 1,
           columns: 4,
           displayInViewMode: true
         }
@@ -136,7 +162,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 2,
           columns: 4,
           displayInViewMode: true
         }
@@ -154,7 +180,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 1,
+          row: 2,
           columns: 4,
           displayInViewMode: true
         }
@@ -172,7 +198,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 3,
           columns: 4,
           displayInViewMode: true
         }
@@ -189,7 +215,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 3,
           columns: 4,
           displayInViewMode: true
         }
@@ -206,7 +232,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 2,
+          row: 3,
           columns: 4,
           displayInViewMode: true
         }

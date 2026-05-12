@@ -62,6 +62,20 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       this.socket = new net.Socket();
       this.modbusClient = new client.TCP(this.socket, this.connector.settings.slaveId);
       await connectSocket(this.socket, this.connector.settings);
+      // Enable TCP keepalive probes so idle connections survive firewall / NAT
+      // idle timeouts and stale connections are detected at the OS level.
+      this.socket.setKeepAlive(true, this.connector.settings.networkTimeout);
+      // Detect unexpected disconnections between scan cycles (server-side
+      // timeout, network interruption, etc.) and reconnect immediately so the
+      // next scan cycle does not fail on a dead socket.
+      this.socket.once('close', async () => {
+        if (this.disconnecting) return;
+        this.logger.warn(`Modbus socket closed unexpectedly. Reconnecting in ${this.connector.settings.retryInterval} ms`);
+        await this.disconnect();
+        if (this.connector.enabled) {
+          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+        }
+      });
       this.logger.info(`Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port}`);
       await super.connect();
     } catch (error: unknown) {
@@ -175,7 +189,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       await this.addContent({ type: 'time-values', content: dataValues }, startRequest.toUTC().toISO(), items);
     } catch (error: unknown) {
       await this.disconnect();
-      if (!this.disconnecting && this.connector.enabled) {
+      if (!this.disconnecting && this.connector.enabled && !this.reconnectTimeout) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
       throw error;

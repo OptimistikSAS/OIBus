@@ -419,6 +419,7 @@ export interface SouthModbusSettings {
   host: string;
   port: number;
   connectTimeout: number;
+  networkTimeout: number;
   retryInterval: number;
   slaveId: number;
   addressOffset: SouthModbusSettingsAddressOffset;

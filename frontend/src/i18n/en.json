@@ -1450,6 +1450,7 @@
             "host": "Host",
             "port": "Port",
             "connect-timeout": "Connection timeout",
+            "network-timeout": "Network timeout",
             "retry-interval": "Retry interval",
             "slave-id": "Slave ID",
             "address-offset": {
