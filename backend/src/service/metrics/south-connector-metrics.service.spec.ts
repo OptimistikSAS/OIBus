@@ -108,9 +108,11 @@ describe('SouthConnectorMetricsService', () => {
   it('should debounce stream writes alongside DB writes', () => {
     const stream = service.stream;
     const writeSpy = mock.method(stream, 'write', () => true);
+    mock.timers.tick(100);      // drain the stream-init write
+    writeSpy.mock.resetCalls(); // start counting from 0
 
-    // updateMetrics() schedules a flush; no synchronous stream write.
     service.updateMetrics();
+    mock.timers.tick(1000);
     assert.strictEqual(writeSpy.mock.calls.length, 1);
     service.initMetrics();
     assert.strictEqual(writeSpy.mock.calls.length, 2);
