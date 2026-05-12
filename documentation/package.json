@@ -28,8 +28,8 @@
     "cronstrue": "3.14.0",
     "prism-react-renderer": "2.4.1",
     "prop-types": "15.8.1",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "redocusaurus": "2.5.0"
   },
   "devDependencies": {
