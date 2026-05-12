@@ -161,7 +161,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     // Collect all unique scan modes from enabled items (excluding 'subscription')
     const scanModes = new Map<string, ScanMode>();
     this.connector.items
-      .filter(item => item.scanMode && item.scanMode.id && item.scanMode.id !== 'subscription' && item.enabled)
+      .filter(
+        item =>
+          item.scanMode && item.scanMode.id && item.scanMode.id !== 'subscription' && item.enabled && !(item.syncWithGroup && item.group) // group items are covered by the groups pass below
+      )
       .forEach(item => scanModes.set(item.scanMode!.id!, item.scanMode!));
 
     this.connector.groups
