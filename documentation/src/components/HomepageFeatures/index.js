@@ -63,9 +63,9 @@ const Feature = ({ Svg, title, description }) => (
 );
 
 Feature.propTypes = {
-  Svg: PropTypes.string.isRequired,
-  title: PropTypes.string.isRequired,
-  description: PropTypes.object.isRequired
+  Svg: PropTypes.elementType.isRequired,
+  title: PropTypes.node.isRequired,
+  description: PropTypes.node.isRequired
 };
 
 export default function HomepageFeatures() {

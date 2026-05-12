@@ -10,7 +10,7 @@ import TabItem from '@theme/TabItem';
 
 <Tabs>
   <TabItem value="windows-installer" label="Installer" default>
-    ## Download
+    <h2 id="download-windows-installer">Download</h2>
     <div style={{ display: "flex", justifyContent: "space-around" }}>
       <DownloadButton
         link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-win_x64-setup-v${packageInfo.version}.exe`}>
@@ -21,7 +21,8 @@ import TabItem from '@theme/TabItem';
       </DownloadButton>
     </div>
 
-    ## Installation Steps
+    <h2 id="installation-steps-windows-installer">Installation Steps</h2>
+
     1. **Run the Installer**
     Launch the downloaded installer. You will see the welcome screen:
     <div style={{ textAlign: 'center' }}>
@@ -57,14 +58,16 @@ import TabItem from '@theme/TabItem';
     Once the installation is complete, you'll see a confirmation screen.
     Proceed to the [first access guide](./first-access.mdx) to configure OIBus.
 
-    ## Update OIBus
+    <h2 id="update-oibus-windows-installer">Update OIBus</h2>
+
     - Use the **OIBus Windows Installer** to update.
     - Specify the current executable and configuration paths.
     - Choose to **keep** or **replace** your existing configuration.
     - The OIBus service will briefly stop during the update.
     - On first startup after the update, the `oibus.db` configuration database will be automatically upgraded.
 
-    ## Uninstall OIBus
+    <h2 id="uninstall-oibus-windows-installer">Uninstall OIBus</h2>
+
     1. Navigate to the OIBus binary folder.
     2. Run `unin000.exe` as an administrator:
     <div style={{ textAlign: 'center' }}>
@@ -78,7 +81,7 @@ import TabItem from '@theme/TabItem';
   </TabItem>
 
   <TabItem value="windows-scripts" label="Scripts">
-    ## Download
+    <h2 id="download-windows-scripts">Download</h2>
 
     <div style={{ display: "flex", justifyContent: "space-around" }}>
       <DownloadButton
@@ -90,7 +93,7 @@ import TabItem from '@theme/TabItem';
       </DownloadButton>
     </div>
 
-    ## Installation Steps
+    <h2 id="installation-steps-windows-scripts">Installation Steps</h2>
 
     1. **Extract the Zip Archive**
 
@@ -136,14 +139,16 @@ import TabItem from '@theme/TabItem';
 
     Proceed to the [first access guide](./first-access.mdx) to configure OIBus.
 
-    ## Update OIBus
+    <h2 id="update-oibus-windows-scripts">Update OIBus</h2>
+
     1. Extract the new files from the zip archive.
     2. Open the **Windows Service Manager** and stop the OIBus service.
     3. Replace the old files in the OIBus executable directory with the new ones.
     4. Restart the OIBus service.
     5. On first startup, the `oibus.db` configuration database will be automatically upgraded.
 
-    ## Uninstall OIBus
+    <h2 id="uninstall-oibus-windows-scripts">Uninstall OIBus</h2>
+
     Run the following command in an **administrator terminal**:
     ```` commandline title="Example with terminal outputs"
     uninstall.bat -n "OIBus"
