@@ -21,6 +21,7 @@ services:
     networks:
       - oibus-network
     restart: unless-stopped
+    profiles: [ "iot" ]
 
   modbus-server:
     image: oitc/modbus-server
@@ -33,6 +34,7 @@ services:
     networks:
       - oibus-network
     restart: unless-stopped
+    profiles: [ "iot" ]
 
   mqtt-broker:
     image: eclipse-mosquitto
@@ -53,25 +55,7 @@ services:
     networks:
       - oibus-network
     restart: unless-stopped
-
-  mqtt-simulator:
-    image: python:3.14-slim
-    container_name: oibus_mqtt-simulator
-    volumes:
-      - ./docker/mosquitto/mqtt_simulator.py:/app/mqtt_simulator.py
-    environment:
-      MQTT_USER: oibus
-      MQTT_PASSWORD: ${MQTT_PASSWORD:-pass}
-      MQTT_BROKER: mqtt-broker
-      MQTT_PORT: 1883
-    working_dir: /app
-    command: >
-      sh -c "pip show paho-mqtt > /dev/null 2>&1 || pip install paho-mqtt
-      && python -u mqtt_simulator.py"
-    depends_on:
-      - mqtt-broker
-    networks:
-      - oibus-network
+    profiles: [ "iot" ]
 
   postgres:
     image: postgres:latest
@@ -85,6 +69,7 @@ services:
     networks:
       - oibus-network
     restart: unless-stopped
+    profiles: [ "database" ]
 
   oibus:
     image: ghcr.io/optimistiksas/oibus:latest
@@ -137,7 +122,7 @@ services:
     networks:
       - oibus-network
     restart: unless-stopped
-    profiles: [ "testing" ]
+    profiles: [ "ftp" ]
 
   sftp-server:
     image: atmoz/sftp
@@ -150,7 +135,31 @@ services:
     networks:
       - oibus-network
     restart: unless-stopped
-    profiles: [ "testing" ]
+    profiles: [ "ftp" ]
+
+  simulator:
+    image: python:3.14-slim
+    container_name: oibus_simulator
+    volumes:
+      - ./docker/simulator/simulator.py:/app/simulator.py
+    environment:
+      MODBUS_HOST: modbus-server
+      MODBUS_PORT: 5020
+      MODBUS_SLAVE_ID: 1
+      MODBUS_UPDATE_INTERVAL: 2
+      MQTT_BROKER: mqtt-broker
+      MQTT_PORT: 1883
+      MQTT_USER: oibus
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-pass}
+      MQTT_UPDATE_INTERVAL: 2
+      RETRY_INTERVAL: 10
+    working_dir: /app
+    command: >
+      sh -c "pip install --quiet paho-mqtt 'pymodbus==3.6.9'
+      && python -u simulator.py"
+    networks:
+      - oibus-network
+    profiles: [ "simulator" ]
 
 networks:
   oibus-network:

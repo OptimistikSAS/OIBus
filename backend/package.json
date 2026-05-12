@@ -34,7 +34,14 @@
     "internal:build:lib-macos-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=x64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_platform=darwin --target_arch=x64",
     "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=arm64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
     "internal:build:lib-linux-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=x64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=x64 --target_platform=linux",
-    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=arm64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=linux"
+    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=arm64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=linux",
+    "docker:iot": "docker compose -f ../docker-compose.yml --profile iot up -d",
+    "docker:simulator": "docker compose -f ../docker-compose.yml --profile iot --profile simulator up -d",
+    "docker:database": "docker compose -f ../docker-compose.yml --profile database up -d",
+    "docker:ftp": "docker compose -f ../docker-compose.yml --profile ftp up -d",
+    "docker:dev": "docker compose -f ../docker-compose.yml --profile iot --profile simulator --profile database up -d",
+    "docker:all": "docker compose -f ../docker-compose.yml --profile iot --profile simulator --profile database --profile ftp --profile oibus up -d",
+    "docker:down": "docker compose -f ../docker-compose.yml --profile iot --profile simulator --profile database --profile ftp --profile oibus down"
   },
   "keywords": [
     "Optimistik"
