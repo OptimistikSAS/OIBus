@@ -4,11 +4,8 @@ import { Readable } from 'node:stream';
 import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.model';
 import { CustomTransformer } from '../model/transformer.model';
 import { sandboxService } from '../service/sandbox.service';
-import { promisify } from 'node:util';
-import { generateRandomId } from '../service/utils';
+import { generateRandomId, streamToString } from '../service/utils';
 import type { ILogger } from '../model/logger.model';
-
-const pipelineAsync = promisify(pipeline);
 
 export default class OIBusCustomTransformer extends OIBusTransformer {
   constructor(

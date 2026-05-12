@@ -357,10 +357,11 @@ describe('CleanupService', () => {
 
     it('should return empty when the folder exists but is empty', async () => {
       mock.method(fs, 'readdir', mock.fn(async () => []));
+      const statMock = mock.method(fs, 'stat', mock.fn());
 
       const files = await (service as any)['retrieveFilesToDelete']('empty/folder', 10);
       assert.deepStrictEqual(files, []);
-      assert.strictEqual((fs.stat as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+      assert.strictEqual(statMock.mock.calls.length, 0);
     });
 
     it('should select files older than retention based on mtime', async () => {

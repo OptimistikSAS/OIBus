@@ -24,7 +24,6 @@ export default class LogRepositoryMock extends LogRepository {
   override getScopeById = mock.fn((_id: string): Scope | null => null);
   override saveAll = mock.fn((_logsToStore: Array<PinoLog>): void => undefined);
   override count = mock.fn((): number => 0);
-  override delete = mock.fn((_numberOfLogsToDelete: number): void => undefined);
+  override delete = mock.fn((_numberOfLogsToDelete: number): number => 0);
   override deleteLogsByScopeId = mock.fn((_scopeType: ScopeType, _scopeId: string): void => undefined);
-  override vacuum = mock.fn((): void => undefined);
 }

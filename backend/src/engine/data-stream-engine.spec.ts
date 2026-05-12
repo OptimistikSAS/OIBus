@@ -649,25 +649,25 @@ describe('DataStreamEngine', () => {
 
     it('should fan out addContent in parallel and let a failing North not block the others', async () => {
       await engine.start(northList, [], []);
-      (mockedNorth1.isEnabled as jest.Mock).mockReturnValue(true);
-      (mockedNorth2.isEnabled as jest.Mock).mockReturnValue(true);
+      mockedNorth1.isEnabled.mock.mockImplementation(() => true);
+      mockedNorth2.isEnabled.mock.mockImplementation(() => true);
 
       // North1 fails; North2 must still be called and addContent must not reject
-      (mockedNorth1.cacheContent as jest.Mock).mockRejectedValueOnce(new Error('North1 boom'));
-      (mockedNorth2.cacheContent as jest.Mock).mockResolvedValueOnce(undefined);
+      mockedNorth1.cacheContent.mock.mockImplementationOnce(() => Promise.reject(new Error('North1 boom')));
+      mockedNorth2.cacheContent.mock.mockImplementationOnce(async () => undefined);
 
       const mockData: OIBusContent = { type: 'time-values', content: [] };
-      await expect(engine.addContent('south-1', mockData, '2023-01-01', [])).resolves.toBeUndefined();
+      await engine.addContent('south-1', mockData, '2023-01-01', []);
 
-      expect(mockedNorth1.cacheContent).toHaveBeenCalled();
-      expect(mockedNorth2.cacheContent).toHaveBeenCalled();
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('North1 boom'));
+      assert.ok(mockedNorth1.cacheContent.mock.calls.length > 0);
+      assert.ok(mockedNorth2.cacheContent.mock.calls.length > 0);
+      assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('North1 boom')));
     });
 
     it('should run North caches concurrently (not sequentially)', async () => {
       await engine.start(northList, [], []);
-      (mockedNorth1.isEnabled as jest.Mock).mockReturnValue(true);
-      (mockedNorth2.isEnabled as jest.Mock).mockReturnValue(true);
+      mockedNorth1.isEnabled.mock.mockImplementation(() => true);
+      mockedNorth2.isEnabled.mock.mockImplementation(() => true);
 
       // Resolve North1 only AFTER North2 has been invoked. If the loop were
       // sequential (await per iteration), this would deadlock — Promise.all
@@ -676,16 +676,16 @@ describe('DataStreamEngine', () => {
       const north1Gate = new Promise<void>(resolve => {
         releaseNorth1 = resolve;
       });
-      (mockedNorth1.cacheContent as jest.Mock).mockImplementationOnce(() => north1Gate);
-      (mockedNorth2.cacheContent as jest.Mock).mockImplementationOnce(async () => {
+      mockedNorth1.cacheContent.mock.mockImplementationOnce(() => north1Gate);
+      mockedNorth2.cacheContent.mock.mockImplementationOnce(async () => {
         releaseNorth1(); // North2 unblocks North1
       });
 
       const mockData: OIBusContent = { type: 'time-values', content: [] };
       await engine.addContent('south-1', mockData, '2023-01-01', []);
 
-      expect(mockedNorth1.cacheContent).toHaveBeenCalled();
-      expect(mockedNorth2.cacheContent).toHaveBeenCalled();
+      assert.ok(mockedNorth1.cacheContent.mock.calls.length > 0);
+      assert.ok(mockedNorth2.cacheContent.mock.calls.length > 0);
     });
   });
 

@@ -6,4 +6,5 @@ export interface ILogger {
   error(obj: unknown, msg?: string, ...args: Array<unknown>): void;
   fatal(obj: unknown, msg?: string, ...args: Array<unknown>): void;
   child(bindings: Record<string, unknown>, options?: Record<string, unknown>): ILogger;
+  isLevelEnabled(level: string): boolean;
 }
