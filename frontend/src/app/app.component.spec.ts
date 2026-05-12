@@ -54,6 +54,7 @@ describe('AppComponent', () => {
 
     currentUserService.get.and.returnValue(of(currentUser));
     engineService.getInfo.and.returnValue(of({ version: '3.0' } as OIBusInfo));
+    (engineService as unknown as { info$: unknown }).info$ = of({ version: '3.0' } as OIBusInfo);
     tester = new AppComponentTester();
     await tester.change();
   });
