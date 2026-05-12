@@ -61,7 +61,7 @@ const manifest: NorthConnectorManifest = {
       {
         type: 'number',
         key: 'connectTimeout',
-        translationKey: 'configuration.oibus.manifest.north.mqtt.connect-timeout',
+        translationKey: 'configuration.oibus.manifest.north.modbus.connect-timeout',
         unit: 'ms',
         defaultValue: 10000,
         validators: [
