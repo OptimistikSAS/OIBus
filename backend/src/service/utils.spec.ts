@@ -895,6 +895,30 @@ describe('Service utils', () => {
     });
   });
 
+  describe('convertQuoteChar', () => {
+    it('should convert all quote char options', () => {
+      assert.deepStrictEqual(utils.convertQuoteChar('DOUBLE_QUOTE'), '"');
+      assert.deepStrictEqual(utils.convertQuoteChar('SINGLE_QUOTE'), "'");
+      assert.deepStrictEqual(utils.convertQuoteChar('NONE'), '');
+    });
+  });
+
+  describe('convertEscapeChar', () => {
+    it('should convert all escape char options', () => {
+      assert.deepStrictEqual(utils.convertEscapeChar('BACKSLASH'), '\\');
+      assert.deepStrictEqual(utils.convertEscapeChar('DOUBLE_QUOTE'), '"');
+    });
+  });
+
+  describe('convertNewline', () => {
+    it('should convert all newline options', () => {
+      assert.deepStrictEqual(utils.convertNewline('CRLF'), '\r\n');
+      assert.deepStrictEqual(utils.convertNewline('LF'), '\n');
+      assert.deepStrictEqual(utils.convertNewline('CR'), '\r');
+      assert.deepStrictEqual(utils.convertNewline('DEFAULT'), '');
+    });
+  });
+
   describe('convertDateTimeToInstant', () => {
     beforeEach(() => {
       mock.method(DateTime, 'fromJSDate', (date: Date) => {
