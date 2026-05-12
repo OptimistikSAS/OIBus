@@ -35,6 +35,33 @@ Use the tester below to see how these three settings affect the decoded value fo
 
 <ModbusDataFormatTester />
 
+### Query Optimisation
+
+| Setting          | Description                                                                                                                                                                                     | Example Value |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| **Grouping gap** | Maximum address gap (in registers) allowed when merging non-consecutive items of the same type into a single Modbus request. Set to `0` to batch only strictly consecutive addresses (default). | `0` – `100`   |
+
+OIBus always groups items of the same Modbus type (coil, discrete input, input register, holding register) whose addresses are consecutive into a single request, reducing round-trips to the device.
+
+With a **grouping gap > 0**, items that are almost—but not quite—consecutive are also merged. For example, three holding registers at addresses 1, 3, and 5 would normally require three separate requests. With a grouping gap of 2, all three are read in one request (the two intermediate filler registers are fetched and discarded).
+
+:::tip When to increase the grouping gap
+
+A larger gap trades a small amount of extra data on the wire (filler registers) for fewer TCP round-trips. This is usually beneficial when the device is slow to respond or when the network latency is high. Keep it at `0` if minimising traffic is more important than minimising round-trips.
+
+:::
+
+:::info Protocol limits
+
+Regardless of the grouping gap, OIBus never exceeds the Modbus specification limits per request:
+
+- **Coils / Discrete inputs (FC01 / FC02):** 2 000 bits maximum.
+- **Input registers / Holding registers (FC03 / FC04):** 125 words maximum.
+
+Ranges that exceed these limits are automatically split into multiple requests.
+
+:::
+
 ## Item Settings
 
 | Setting                | Description                                                                                                                                                                           | Example Value      |
