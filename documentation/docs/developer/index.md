@@ -412,18 +412,22 @@ We welcome contributions that _measure_ OIBus's behaviour under realistic load a
 targeted fix or simply document the finding. The repository ships a `docker-compose.yml` with simulated
 sources and destinations specifically to make this kind of work approachable:
 
-| Container                    | Purpose                                                                             |
-| ---------------------------- | ----------------------------------------------------------------------------------- |
-| `opcua-server`               | Microsoft `opc-plc` server with configurable nodes — drives South-OPC UA load tests |
-| `modbus-server`              | `oitc/modbus-server` — drives South-Modbus tests                                    |
-| `mqtt-broker`                | Eclipse Mosquitto + a Python simulator that publishes values                        |
-| `postgres`                   | Postgres database for South-PostgreSQL                                              |
-| `ftp-server` / `sftp-server` | File-based sources                                                                  |
-| `nginx`                      | Front proxy when testing the full deployment                                        |
+| Container                    | Profile    | Purpose                                                                              |
+| ---------------------------- | ---------- | ------------------------------------------------------------------------------------ |
+| `opcua-server`               | _(default)_ | Microsoft `opc-plc` — OPC UA server with 8 configurable nodes and historian support |
+| `modbus-server`              | _(default)_ | `oitc/modbus-server` — Modbus TCP server                                            |
+| `simulator`                  | _(default)_ | Python script writing sinusoidal values to both Modbus and MQTT                     |
+| `mqtt-broker`                | _(default)_ | Eclipse Mosquitto broker (authenticated, WebSocket on port 9001)                    |
+| `postgres`                   | _(default)_ | PostgreSQL for South-PostgreSQL                                                     |
+| `ftp-server` / `sftp-server` | `testing`  | File-based sources                                                                   |
+| `oibus` / `nginx`            | `oibus`    | Full OIBus runtime + reverse proxy for end-to-end testing                           |
 
 Bring the stack up with `docker compose up -d` (some services live behind the `testing` / `oibus` Docker
 Compose profiles — see the file for details). Then configure OIBus to point at the simulators and observe
 behaviour as you ramp item counts, scan-mode frequency, or batch sizes.
+
+Full details on every service, its image, the simulated signals, and configuration options are in the
+[Local Test Stack](./local-test-stack.md) page.
 
 **What's most useful to measure:**
 
