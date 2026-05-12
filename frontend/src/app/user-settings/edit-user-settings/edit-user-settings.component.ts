@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Timezone } from '../../../../../backend/shared/model/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
@@ -46,7 +46,7 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
     lastName: [null as string | null, [Validators.maxLength(50)]],
     timezone: ['' as Timezone, Validators.required]
   });
-  editedUserSettings: UserDTO | null = null;
+  editedUserSettings = signal<UserDTO | null>(null);
 
   state = new ObservableState();
 
@@ -74,16 +74,16 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
 
     const formValue = this.form.value;
     const command: UserCommandDTO = {
-      email: this.editedUserSettings!.email,
-      login: this.editedUserSettings!.login,
+      email: this.editedUserSettings()!.email,
+      login: this.editedUserSettings()!.login,
       firstName: formValue.firstName!,
       lastName: formValue.lastName!,
-      language: this.editedUserSettings!.language!,
+      language: this.editedUserSettings()!.language!,
       timezone: formValue.timezone!
     };
 
     this.userSettingsService
-      .update(this.editedUserSettings!.id, command)
+      .update(this.editedUserSettings()!.id, command)
       .pipe(
         this.state.pendingUntilFinalization(),
         tap(() => {
@@ -111,7 +111,7 @@ export class EditUserSettingsComponent implements CanComponentDeactivate {
   private loadSettingsAndPopulate(): Observable<UserDTO> {
     return this.userSettingsService.currentUser().pipe(
       tap(settings => {
-        this.editedUserSettings = settings;
+        this.editedUserSettings.set(settings);
         const formValue = {
           firstName: settings.firstName,
           lastName: settings.lastName,

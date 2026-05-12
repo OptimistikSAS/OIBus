@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
@@ -42,14 +42,14 @@ export class ChangePasswordModalComponent {
       { validators: samePasswordValidator }
     )
   });
-  error = false;
+  error = signal(false);
 
   save() {
     if (!this.form.valid) {
       return;
     }
 
-    this.error = false;
+    this.error.set(false);
     const formValue = this.form.value;
     const command: ChangePasswordCommand = {
       currentPassword: formValue.currentPassword!,
@@ -67,7 +67,7 @@ export class ChangePasswordModalComponent {
           this.notificationService.success('user-settings.change-password.password-changed');
           this.modal.close();
         },
-        error: () => (this.error = true)
+        error: () => this.error.set(true)
       });
   }
 
