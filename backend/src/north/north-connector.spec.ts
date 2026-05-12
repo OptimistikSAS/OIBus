@@ -30,8 +30,6 @@ import type NorthFileWriterClass from './north-file-writer/north-file-writer';
 import { OIBusError } from '../model/engine.model';
 import path from 'node:path';
 import { DateTime } from 'luxon';
-import type { ReadStream } from 'node:fs';
-import type { Readable } from 'node:stream';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -621,7 +619,7 @@ describe('NorthConnector', () => {
       contentType: 'time-values'
     };
     const outputStream = Buffer.from('outputStream');
-    oiBusTransformer.transform.mock.mockImplementation(async () => ({ metadata, output: outputStream }));
+    oiBusTransformer.transformInMemory.mock.mockImplementation(async () => ({ metadata, output: outputStream }));
 
     await north.cacheContent(testData.oibusContent[0], {
       source: 'south',
@@ -629,17 +627,14 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    const readableFromMock = realReadable['from'] as ReturnType<typeof mock.fn>;
-    assert.strictEqual(readableFromMock.mock.calls.length, 1);
-    assert.deepStrictEqual(readableFromMock.mock.calls[0].arguments[0], JSON.stringify(testData.oibusContent[0].content));
-
-    assert.strictEqual(oiBusTransformer.transform.mock.calls.length, 1);
-    assert.deepStrictEqual(oiBusTransformer.transform.mock.calls[0].arguments[1], {
+    assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls.length, 1);
+    assert.deepStrictEqual(oiBusTransformer.transformInMemory.mock.calls[0].arguments[0], testData.oibusContent[0].content);
+    assert.deepStrictEqual(oiBusTransformer.transformInMemory.mock.calls[0].arguments[1], {
       source: 'south',
       southId: testData.south.list[1].id,
       items: []
     });
-    assert.strictEqual(oiBusTransformer.transform.mock.calls[0].arguments[2], null);
+    assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls[0].arguments[2], null);
 
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], outputStream);
@@ -670,7 +665,7 @@ describe('NorthConnector', () => {
     const outputStream2 = Buffer.from('outputStream2');
 
     let transformCallCount = 0;
-    oiBusTransformer.transform.mock.mockImplementation(async () => {
+    oiBusTransformer.transformInMemory.mock.mockImplementation(async () => {
       transformCallCount += 1;
       return { metadata, output: transformCallCount === 1 ? outputStream1 : outputStream2 };
     });
@@ -681,8 +676,6 @@ describe('NorthConnector', () => {
       items: [] as Array<SouthConnectorItemEntity<SouthItemSettings>> | Array<HistoryQueryItemEntity<SouthItemSettings>>
     } as CacheMetadataSourceOriginSouth);
 
-    const readableFromMock = realReadable['from'] as ReturnType<typeof mock.fn>;
-    assert.strictEqual(readableFromMock.mock.calls.length, 2);
     assert.strictEqual(transformerServiceExports.createTransformer.mock.calls.length, 1);
 
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 2);
@@ -810,37 +803,42 @@ describe('NorthConnector', () => {
   });
 
   it('should find transformer from south metadata', () => {
+    const expectedTransformer = north['connector'].transformers[0];
+
     assert.deepStrictEqual(
       north['findTransformer']({
         source: 'south',
         southId: testData.south.list[0].id,
         items: [testData.south.list[0].items[0]]
       } as CacheMetadataSource),
-      north['connector'].transformers[0]
+      expectedTransformer
     );
 
-    (north['connector'].transformers[0].source as SourceOriginSouth).items = [];
+    (expectedTransformer.source as SourceOriginSouth).items = [];
+    north['rebuildTransformerCache']();
     assert.deepStrictEqual(
       north['findTransformer']({
         source: 'south',
         southId: testData.south.list[0].id,
         items: [testData.south.list[0].items[0]]
       } as CacheMetadataSource),
-      north['connector'].transformers[0]
+      expectedTransformer
     );
 
-    north['connector'].transformers[0].source = { type: 'oibus-api', dataSourceId: 'id' };
+    expectedTransformer.source = { type: 'oibus-api', dataSourceId: 'id' };
+    north['rebuildTransformerCache']();
     assert.deepStrictEqual(
       north['findTransformer']({
         source: 'oibus-api',
         dataSourceId: 'id'
       } as CacheMetadataSource),
-      north['connector'].transformers[0]
+      expectedTransformer
     );
   });
 
   it('should find transformer from south metadata at group level', () => {
-    (north['connector'].transformers[0].source as SourceOriginSouth) = {
+    const expectedTransformer = north['connector'].transformers[0];
+    (expectedTransformer.source as SourceOriginSouth) = {
       type: 'south',
       south: { id: testData.south.list[0].id } as SouthConnectorEntityLight,
       group: {
@@ -853,21 +851,18 @@ describe('NorthConnector', () => {
     };
     north['rebuildTransformerCache']();
 
-    // Suppress unused variable warning
-    void itemWithMatchingGroup;
-
     assert.deepStrictEqual(
       north['findTransformer']({
         source: 'south',
         southId: testData.south.list[0].id,
         items: [{ id: testData.south.list[0].items[0].id }]
       } as CacheMetadataSource),
-      north['connector'].transformers[0]
+      expectedTransformer
     );
 
     assert.notDeepStrictEqual(
       north['findTransformer']({ source: 'south', southId: 'southId1', items: [{ id: 'anotherId' }] } as CacheMetadataSource),
-      north['connector'].transformers[0]
+      expectedTransformer
     );
   });
 
@@ -879,12 +874,12 @@ describe('NorthConnector', () => {
       items: [testData.south.list[0].items[0]]
     } as CacheMetadataSource);
     const cachedBefore = north['transformerLookup'];
-    expect(cachedBefore).not.toBeNull();
+    assert.notStrictEqual(cachedBefore, null);
 
     // Production path: connector config is replaced entirely → setter fires.
     north.connectorConfiguration = { ...north['connector'], transformers: [] } as (typeof north)['connector'];
     // Setter must drop the cache so the next lookup rebuilds it.
-    expect(north['transformerLookup']).toBeNull();
+    assert.strictEqual(north['transformerLookup'], null);
 
     // Next call sees the new (empty) transformer list.
     const result = north['findTransformer']({
@@ -892,7 +887,7 @@ describe('NorthConnector', () => {
       southId: testData.south.list[0].id,
       items: [testData.south.list[0].items[0]]
     } as CacheMetadataSource);
-    expect(result).toBeUndefined();
+    assert.strictEqual(result, undefined);
   });
 
   it('should handle no transformer when not supporting type', async () => {
@@ -922,7 +917,7 @@ describe('NorthConnector', () => {
       id: 'northId'
     } as NorthTransformerWithOptions;
     const outputBuffer = Buffer.from('output');
-    const transform = mock.fn(async (_data: ReadStream | Readable, _source: CacheMetadataSource, _filename: string | null) => ({
+    const transformInMemory = mock.fn(async (_data: unknown, _source: CacheMetadataSource, _filename: string | null) => ({
       output: outputBuffer,
       metadata: {
         contentFile: '',
@@ -932,13 +927,13 @@ describe('NorthConnector', () => {
         createdAt: ''
       } satisfies CacheMetadata
     }));
-    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transform }) as OIBusTransformerMock);
+    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transformInMemory }) as unknown as OIBusTransformerMock);
     await north['executeTransformation']({ type: 'any-content', content: '' } as OIBusContent, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);
-    assert.strictEqual(transform.mock.calls.length, 1);
-    assert.deepStrictEqual(transform.mock.calls[0].arguments[1], { source: 'oianalytics-setpoints' });
-    assert.strictEqual(transform.mock.calls[0].arguments[2], null);
+    assert.strictEqual(transformInMemory.mock.calls.length, 1);
+    assert.deepStrictEqual(transformInMemory.mock.calls[0].arguments[1], { source: 'oianalytics-setpoints' });
+    assert.strictEqual(transformInMemory.mock.calls[0].arguments[2], null);
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], outputBuffer);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
@@ -953,7 +948,7 @@ describe('NorthConnector', () => {
       id: 'northId'
     } as NorthTransformerWithOptions;
     const outputBuffer = Buffer.from('output');
-    const transform = mock.fn(async (_data: ReadStream | Readable, _source: CacheMetadataSource, _filename: string | null) => ({
+    const transformInMemory = mock.fn(async (_data: unknown, _source: CacheMetadataSource, _filename: string | null) => ({
       output: outputBuffer,
       metadata: {
         contentFile: '',
@@ -963,13 +958,13 @@ describe('NorthConnector', () => {
         createdAt: ''
       } satisfies CacheMetadata
     }));
-    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transform }) as OIBusTransformerMock);
+    transformerServiceExports.createTransformer.mock.mockImplementation(() => ({ transformInMemory }) as unknown as OIBusTransformerMock);
     await north['executeTransformation']({ type: 'setpoint', content: [] } as OIBusContent, options, {
       source: 'oianalytics-setpoints'
     } as CacheMetadataSource);
-    assert.strictEqual(transform.mock.calls.length, 1);
-    assert.deepStrictEqual(transform.mock.calls[0].arguments[1], { source: 'oianalytics-setpoints' });
-    assert.strictEqual(transform.mock.calls[0].arguments[2], null);
+    assert.strictEqual(transformInMemory.mock.calls.length, 1);
+    assert.deepStrictEqual(transformInMemory.mock.calls[0].arguments[1], { source: 'oianalytics-setpoints' });
+    assert.strictEqual(transformInMemory.mock.calls[0].arguments[2], null);
     assert.strictEqual(cacheService.addCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], outputBuffer);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {

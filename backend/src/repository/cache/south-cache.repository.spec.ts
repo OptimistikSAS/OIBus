@@ -115,8 +115,8 @@ describe('SouthCacheRepository', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'g', value: 1, trackedInstant: 't', queryTime: 't' });
       repository.saveItemLastValue('south1', { itemId: 'item2', groupId: 'g', value: 2, trackedInstant: 't', queryTime: 't' });
       // prepare() ran once total (cache hit on the second call).
-      expect(mockDatabase.prepare).toHaveBeenCalledTimes(1);
-      expect(mockDatabase.run).toHaveBeenCalledTimes(2);
+      assert.strictEqual(prepareMock.mock.calls.length, 1);
+      assert.strictEqual(runMock.mock.calls.length, 2);
     });
 
     it('should drop the cached statement when the table is recreated', () => {
@@ -124,7 +124,7 @@ describe('SouthCacheRepository', () => {
       repository.createItemValueTable('south1'); // invalidates the cache
       repository.saveItemLastValue('south1', { itemId: 'item2', groupId: 'g', value: 2, trackedInstant: 't', queryTime: 't' });
       // 1 UPSERT prepare + 1 CREATE TABLE prepare + 1 second UPSERT prepare
-      expect(mockDatabase.prepare).toHaveBeenCalledTimes(3);
+      assert.strictEqual(prepareMock.mock.calls.length, 3);
     });
   });
 
@@ -132,9 +132,7 @@ describe('SouthCacheRepository', () => {
     it('should delete by item_id only', () => {
       repository.deleteItemValue('south1', 'item1');
       assert.ok(
-        prepareMock.mock.calls.some(c =>
-          (c.arguments[0] as string).includes('DELETE FROM "south_item_cache_south1" WHERE item_id = ?')
-        )
+        prepareMock.mock.calls.some(c => (c.arguments[0] as string).includes('DELETE FROM "south_item_cache_south1" WHERE item_id = ?'))
       );
       assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['item1']);
     });

@@ -578,32 +578,32 @@ describe('CacheService', () => {
       { filename: 'f3.json', metadata: { ...fileList[2].metadata, numberOfElement: 7 } }
     ];
     service['recomputeQueueCounters']();
-    expect(service.getNumberOfElementsInQueue()).toEqual(12);
+    assert.strictEqual(service.getNumberOfElementsInQueue(), 12);
   });
 
   it('should maintain queue counters incrementally as content is added and removed', async () => {
-    (fs.writeFile as jest.Mock).mockResolvedValue(undefined);
-    (generateRandomId as jest.Mock).mockReturnValue('counter-test');
+    writeFileMock.mock.mockImplementation(async () => undefined);
+    generateRandomIdMock.mock.mockImplementation(() => 'counter-test');
 
     // Initial state: empty queue → both counters zero.
-    expect(service.getNumberOfElementsInQueue()).toBe(0);
-    expect(service.getNumberOfRawFilesInQueue()).toBe(0);
+    assert.strictEqual(service.getNumberOfElementsInQueue(), 0);
+    assert.strictEqual(service.getNumberOfRawFilesInQueue(), 0);
 
     // Add a 10-element batch → numberOfElement bumps, rawFiles stays put.
     await service.addCacheContent(Buffer.from('payload-1'), { contentType: 'time-values', numberOfElement: 10 });
-    expect(service.getNumberOfElementsInQueue()).toBe(10);
-    expect(service.getNumberOfRawFilesInQueue()).toBe(0);
+    assert.strictEqual(service.getNumberOfElementsInQueue(), 10);
+    assert.strictEqual(service.getNumberOfRawFilesInQueue(), 0);
 
     // Add a raw file (numberOfElement omitted/zero) → rawFiles bumps.
-    (generateRandomId as jest.Mock).mockReturnValueOnce('counter-test-2');
+    generateRandomIdMock.mock.mockImplementationOnce(() => 'counter-test-2');
     await service.addCacheContent(Buffer.from('payload-2'), { contentType: 'any' });
-    expect(service.getNumberOfElementsInQueue()).toBe(10);
-    expect(service.getNumberOfRawFilesInQueue()).toBe(1);
+    assert.strictEqual(service.getNumberOfElementsInQueue(), 10);
+    assert.strictEqual(service.getNumberOfRawFilesInQueue(), 1);
 
     // Remove the raw file from the queue → rawFiles decrements.
     service.removeCacheContentFromQueue('counter-test-2');
-    expect(service.getNumberOfRawFilesInQueue()).toBe(0);
-    expect(service.getNumberOfElementsInQueue()).toBe(10);
+    assert.strictEqual(service.getNumberOfRawFilesInQueue(), 0);
+    assert.strictEqual(service.getNumberOfElementsInQueue(), 10);
   });
 
   it('should properly filter files', () => {

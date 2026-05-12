@@ -498,7 +498,7 @@ describe('SouthOPCUA', () => {
     const mockedClient = { close: mock.fn(async () => undefined) };
     const createSessionMock = mock.fn(async () => mockedClient as unknown as ClientSession);
     const getDAValuesMock = mock.fn(async () => []);
-    const getHAValuesMock = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const getHAValuesMock = mock.fn(async () => ({ value: null, trackedInstant: null }));
     south.createSession = createSessionMock;
     south.getDAValues = getDAValuesMock;
     south.getHAValues = getHAValuesMock;
@@ -531,7 +531,7 @@ describe('SouthOPCUA', () => {
     const createSessionMock = mock.fn(async () => mockedClient as unknown as ClientSession);
     south.createSession = createSessionMock;
     south.getDAValues = mock.fn(async () => []);
-    south.getHAValues = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    south.getHAValues = mock.fn(async () => ({ value: null, trackedInstant: null }));
     const fsMock = mock.method(fs, 'rm', async () => undefined);
 
     await south.testItem(configuration.items[3], { history: undefined });
@@ -548,7 +548,7 @@ describe('SouthOPCUA', () => {
       throw new Error('get session error');
     });
     const getDAValuesMock = mock.fn(async () => []);
-    const getHAValuesMock = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const getHAValuesMock = mock.fn(async () => ({ value: null, trackedInstant: null }));
     south.createSession = createSessionMock;
     south.getDAValues = getDAValuesMock;
     south.getHAValues = getHAValuesMock;
@@ -564,7 +564,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should properly manage history query', async () => {
-    const getHAValuesMock = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const getHAValuesMock = mock.fn(async () => ({ value: null, trackedInstant: null }));
     south.getHAValues = getHAValuesMock;
     south['client'] = {} as unknown as ClientSession;
     await south.historyQuery(
@@ -622,7 +622,7 @@ describe('SouthOPCUA', () => {
   });
 
   it('should throw error when querying history with client not set', async () => {
-    const getHAValuesMock = mock.fn(async () => ({ value: [], trackedInstant: null }));
+    const getHAValuesMock = mock.fn(async () => ({ value: null, trackedInstant: null }));
     south.getHAValues = getHAValuesMock;
 
     await assert.rejects(
@@ -805,13 +805,11 @@ describe('SouthOPCUA', () => {
     );
     assert.ok(historyRead.mock.calls.length >= 1);
     assert.deepStrictEqual(result, {
-      value: [
-        {
-          data: { quality: 'Good', value: '123' },
-          pointId: 'item1',
-          timestamp: testData.constants.dates.FAKE_NOW
-        }
-      ],
+      value: {
+        data: { quality: 'Good', value: '123' },
+        pointId: 'item1',
+        timestamp: testData.constants.dates.FAKE_NOW
+      },
       trackedInstant: '2021-01-02T00:00:00.000Z'
     });
   });
@@ -955,7 +953,7 @@ describe('SouthOPCUA', () => {
     );
     assert.ok(historyRead.mock.calls.length >= 1);
     assert.deepStrictEqual(result, {
-      value: [],
+      value: null,
       trackedInstant: null
     });
     const expectedLogs = new Map();
