@@ -25,10 +25,7 @@
     "lint": "eslint src/",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "test": "node --import tsx --test --test-reporter=tap 'src/**/*.spec.ts'",
-    "test:spec": "node --import tsx --test --test-reporter=spec 'src/**/*.spec.ts'",
-    "test:coverage": "node --import tsx --test --experimental-test-coverage --test-coverage-exclude='src/**/*.spec.ts' 'src/**/*.spec.ts'",
-    "test:watch": "node --import tsx --test --watch 'src/**/*.spec.ts'"
+    "test": "node --import tsx --experimental-config-file=package.json --test 'src/**/*.spec.ts'"
   },
   "keywords": [
     "Optimistik"
@@ -52,6 +49,13 @@
     "tsx": "4.21.0",
     "typescript": "5.4.5",
     "typescript-eslint": "8.59.2"
+  },
+  "testRunner": {
+    "experimental-test-coverage": true,
+    "test-reporter": "spec",
+    "test-coverage-exclude": [
+      "src/**/*.spec.ts"
+    ]
   },
   "pkg": {
     "assets": [

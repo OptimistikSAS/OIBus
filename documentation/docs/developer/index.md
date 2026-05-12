@@ -16,7 +16,6 @@ Welcome to the OIBus developer community! This guide will help you get started w
 | Git                       | Version control                               | ✅          | [git-scm.com](https://git-scm.com/downloads)                                            |
 | Node.js                   | JavaScript runtime (see `.nvmrc` for version) | ✅          | [nodejs.org](https://nodejs.org/) (or install via `nvm`)                                |
 | nvm                       | Node version manager                          | Recommended | [nvm install guide](https://github.com/nvm-sh/nvm)                                      |
-| Angular CLI               | Frontend tooling                              | Recommended | `npm install -g @angular/cli`                                                           |
 | VS Code or IntelliJ       | Code editor                                   | Recommended | [VS Code](https://code.visualstudio.com/) · [IntelliJ](https://www.jetbrains.com/idea/) |
 | DBeaver or SQLite browser | Database inspection                           | Optional    | [DBeaver](https://dbeaver.io/) · [SQLite browser](https://sqlitebrowser.org/)           |
 
@@ -133,8 +132,7 @@ npm start  # Starts on http://localhost:3000
 ### 6. (Optional) Set Up the Launcher
 
 Skip this unless you're working on the supervisor / auto-update path. The launcher is a standalone Node
-package with its own dependencies, its own test runner (`node --test`, not Jest), and a separate Node
-version pin (`node >= 24`, see `launcher/package.json`).
+package with its own dependencies and a separate Node version pin (`node >= 24`, see `launcher/package.json`).
 
 ```bash
 cd launcher
@@ -266,14 +264,16 @@ this format — the individual commits on your branch can be looser.
 
 All changes must include tests:
 
-- **Backend**: [Jest](https://jestjs.io/)
-- **Frontend**: [Jasmine](https://jasmine.github.io/)
-- **Launcher**: Node's built-in [`node --test`](https://nodejs.org/api/test.html) (no Jest)
+- **Backend**: Node's built-in [`node:test`](https://nodejs.org/api/test.html) runner, with TypeScript
+  transpiled on the fly via [`tsx`](https://tsx.is/). Coverage is collected automatically when running
+  `npm test` (see `testRunner` in `backend/package.json` for the exclude list).
+- **Frontend**: [Jasmine](https://jasmine.github.io/) via the Angular test harness.
+- **Launcher**: Same `node:test` runner as the backend.
 
 Run tests with:
 
 ```bash
-# Backend tests
+# Backend — runs all specs with coverage
 cd backend
 npm test
 
@@ -329,12 +329,12 @@ We follow a [Code of Conduct](https://github.com/OptimistikSAS/OIBus/blob/main/D
 
 ### Technologies Used
 
-| Area          | Technology   | Learning Resources                                                          |
-| ------------- | ------------ | --------------------------------------------------------------------------- |
-| Backend       | Node.js      | [Node.js Docs](https://nodejs.org/en/docs/)                                 |
-| Frontend      | Angular      | [Angular Docs](https://angular.io/docs)                                     |
-| Documentation | Docusaurus   | [Docusaurus Docs](https://docusaurus.io/)                                   |
-| Testing       | Jest/Jasmine | [Jest Docs](https://jestjs.io/), [Jasmine Docs](https://jasmine.github.io/) |
+| Area          | Technology          | Learning Resources                                                                             |
+| ------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
+| Backend       | Node.js             | [Node.js Docs](https://nodejs.org/en/docs/)                                                    |
+| Frontend      | Angular             | [Angular Docs](https://angular.io/docs)                                                        |
+| Documentation | Docusaurus          | [Docusaurus Docs](https://docusaurus.io/)                                                      |
+| Testing       | node:test / Jasmine | [node:test Docs](https://nodejs.org/api/test.html), [Jasmine Docs](https://jasmine.github.io/) |
 
 ### Recommended Reading
 
@@ -356,9 +356,11 @@ section that's directly useful when working on the codebase — not generic land
   show up in every repository.
 - [Knex migrations](https://knexjs.org/guide/migrations.html) — schema changes go through Knex; the
   migration files under `backend/src/migration/` follow this guide's conventions.
-- [Jest](https://jestjs.io/docs/getting-started) — backend test framework, with particular focus on the
-  [mocking](https://jestjs.io/docs/mock-functions) and [fake timers](https://jestjs.io/docs/timer-mocks)
-  pages (both are used heavily in connector specs).
+- [Node.js `node:test`](https://nodejs.org/api/test.html) — the test runner used by both the backend and
+  the launcher. Key sections: [mocking](https://nodejs.org/api/test.html#mocking),
+  [mock timers](https://nodejs.org/api/test.html#class-mocktimers), and
+  [coverage](https://nodejs.org/api/test.html#collecting-code-coverage) (both are used heavily in
+  connector specs).
 - [Docusaurus](https://docusaurus.io/docs) — for editing the documentation site itself.
 - [Conventional Commits](https://www.conventionalcommits.org/) and
   [Semantic Versioning](https://semver.org/) — the commit-message format and release versioning
