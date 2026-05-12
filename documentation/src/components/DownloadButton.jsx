@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const DownloadButton = ({ children, link, color }) => (
+const DownloadButton = ({ children, link, color = '#009ee0' }) => (
   <div
     style={{
       marginBottom: '20px',
@@ -32,9 +32,7 @@ const DownloadButton = ({ children, link, color }) => (
 DownloadButton.propTypes = {
   link: PropTypes.string.isRequired,
   color: PropTypes.string,
-  children: PropTypes.object.isRequired
+  children: PropTypes.node.isRequired
 };
-
-DownloadButton.defaultProps = { color: '#009ee0' };
 
 export default DownloadButton;

@@ -2,7 +2,7 @@ import CodeBlock from '@theme/CodeBlock';
 import DownloadButton from '../../../src/components/DownloadButton';
 import packageInfo from '../../../package.json';
 
-## Download
+<h2 id="download-linux">Download</h2>
 
 <div style={{ display: 'flex', justifyContent: 'space-around' }}>
   <DownloadButton
@@ -88,7 +88,7 @@ sudo systemctl restart oibus   # restart the service
 sudo journalctl -u oibus -f    # stream live logs
 ```
 
-## Update OIBus
+<h2 id="update-oibus-linux">Update OIBus</h2>
 
 1. Download the latest version and extract it.
 2. Stop the service: `sudo systemctl stop oibus`
@@ -97,7 +97,7 @@ sudo journalctl -u oibus -f    # stream live logs
 
 The `oibus.db` configuration database is upgraded automatically on first startup after an update.
 
-## Uninstall OIBus
+<h2 id="uninstall-oibus-linux">Uninstall OIBus</h2>
 
 Navigate to the OIBus binary directory and run:
 
