@@ -62,6 +62,8 @@ class EditSouthItemModalComponent {
   private translateService = inject(TranslateService);
 
   mode: 'create' | 'edit' | 'copy' = 'create';
+  /** True when opened from south-detail (saves directly to API); false when opened from edit-south (changes are applied in-memory). */
+  directSave = true;
   state = new ObservableState();
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
@@ -377,6 +379,7 @@ class EditSouthItemModalComponent {
   onAddGroup() {
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
+    component.directSave = this.directSave;
     component.prepareForCreation(this.scanModes, this.groups, this.manifest);
     modalRef.result
       .pipe(
@@ -396,6 +399,7 @@ class EditSouthItemModalComponent {
     event.stopPropagation();
     const modalRef = this.modalService.open(EditSouthItemGroupModalComponent, { backdrop: 'static' });
     const component: EditSouthItemGroupModalComponent = modalRef.componentInstance;
+    component.directSave = this.directSave;
     component.prepareForEdition(this.scanModes, this.groups, this.manifest, group);
 
     modalRef.result

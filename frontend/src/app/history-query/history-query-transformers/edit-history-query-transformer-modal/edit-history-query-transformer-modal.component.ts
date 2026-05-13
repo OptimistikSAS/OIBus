@@ -50,6 +50,8 @@ export class EditHistoryQueryTransformerModalComponent {
 
   state = new ObservableState();
   mode: 'create' | 'edit' = 'create';
+  /** True when opened from history-query-detail (saves directly to API); false when opened from edit-history-query (changes are applied in-memory). */
+  directSave = true;
   form: FormGroup<{
     transformer: FormControl<TransformerDTO | null>;
     options: FormGroup;

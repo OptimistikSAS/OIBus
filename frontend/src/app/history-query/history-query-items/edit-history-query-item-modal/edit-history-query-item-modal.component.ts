@@ -50,6 +50,8 @@ export class EditHistoryQueryItemModalComponent {
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' | 'copy' = 'create';
+  /** True when opened from history-query-detail (saves directly to API); false when opened from edit-history-query (changes are applied in-memory). */
+  directSave = true;
   state = new ObservableState();
   historyId!: string;
   fromSouth: string | null = null;

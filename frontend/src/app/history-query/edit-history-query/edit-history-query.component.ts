@@ -622,6 +622,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       }
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+    component.directSave = false;
     component.prepareForCreation(this.inMemoryItems, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
       this.inMemoryItems = [...this.inMemoryItems, command];
@@ -633,6 +634,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   duplicateItem(item: HistoryQueryItemCommandDTO) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+    component.directSave = false;
     component.prepareForCopy(this.inMemoryItems, item, this.historyId, this.fromSouthId, this.southConnectorCommand, this.southManifest!);
     modalRef.result.subscribe((command: HistoryQueryItemCommandDTO) => {
       this.inMemoryItems = [...this.inMemoryItems, command];
@@ -651,6 +653,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
       }
     });
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
+    component.directSave = false;
     const tableIndex = this.inMemoryItems.findIndex(i => i.id === item.id || i.name === item.name);
     component.prepareForEdition(
       this.inMemoryItems,

@@ -68,6 +68,7 @@ export class HistoryQueryTransformersComponent {
       }
     });
     const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
+    component.directSave = this.saveChangesDirectly();
 
     component.prepareForCreation(
       this.southType(),
@@ -113,6 +114,7 @@ export class HistoryQueryTransformersComponent {
       }
     });
     const component: EditHistoryQueryTransformerModalComponent = modalRef.componentInstance;
+    component.directSave = this.saveChangesDirectly();
 
     component.prepareForEdition(
       this.southType(),
