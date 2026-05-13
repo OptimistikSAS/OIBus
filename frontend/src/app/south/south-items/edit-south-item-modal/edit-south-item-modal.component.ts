@@ -412,7 +412,9 @@ class EditSouthItemModalComponent {
           this.groups.push(groupResult);
         }
         if (this.form!.controls.groupId.value === groupResult.id) {
-          this.form!.controls.groupId.setValue(groupResult.id);
+          // The currently-selected group was edited — re-apply sync logic so the item's
+          // inherited scan mode (and historian fields) reflect the group's new settings.
+          this.applySyncLogicWhenSelectingGroup(groupResult);
         }
       });
   }

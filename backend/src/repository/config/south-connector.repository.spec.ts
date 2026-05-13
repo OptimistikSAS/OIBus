@@ -499,4 +499,46 @@ describe('SouthConnectorRepository', () => {
     assert.ok(savedItem.group);
     assert.notStrictEqual(savedItem.group.id, 'temp_newgroup');
   });
+
+  it('should update existing group properties when saving the south connector', () => {
+    const groupRepository = new SouthItemGroupRepository(database);
+
+    // Create a real group with the first scan mode
+    const group = groupRepository.create(
+      {
+        name: 'Group To Update',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
+
+    const south: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    south.items = [];
+
+    // Mutate the group (new name, different scan mode, new history settings)
+    const updatedGroup: SouthItemGroupEntityLight = {
+      ...group,
+      name: 'Updated Group Name',
+      scanMode: testData.scanMode.list[1],
+      overlap: 500,
+      maxReadInterval: 3600,
+      readDelay: 200
+    };
+    south.groups = [updatedGroup];
+    south.updatedBy = 'updateUser';
+
+    repository.saveSouth(south);
+
+    const savedGroup = groupRepository.findById(group.id);
+    assert.ok(savedGroup, 'Group should still exist after saveSouth');
+    assert.strictEqual(savedGroup.name, 'Updated Group Name');
+    assert.strictEqual(savedGroup.scanMode.id, testData.scanMode.list[1].id);
+    assert.strictEqual(savedGroup.overlap, 500);
+    assert.strictEqual(savedGroup.maxReadInterval, 3600);
+    assert.strictEqual(savedGroup.readDelay, 200);
+  });
 });

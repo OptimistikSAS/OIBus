@@ -95,6 +95,22 @@ export default class SouthConnectorRepository {
         south.groups[south.groups.findIndex(group => group.id === groupToCreate.id)] = newGroup;
       }
 
+      // Update existing groups (name, scan mode, history settings may have changed via the connector edit form)
+      const updateGroupStmt = this.database.prepare(
+        `UPDATE ${SOUTH_ITEM_GROUPS_TABLE} SET name = ?, scan_mode_id = ?, overlap = ?, max_read_interval = ?, read_delay = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
+      );
+      for (const group of south.groups.filter(g => g.id && !g.id.startsWith('temp_'))) {
+        updateGroupStmt.run(
+          group.name,
+          group.scanMode?.id ?? null,
+          group.overlap ?? null,
+          group.maxReadInterval ?? null,
+          group.readDelay ?? null,
+          south.updatedBy,
+          group.id
+        );
+      }
+
       if (south.items.length > 0) {
         this.database
           .prepare(
