@@ -34,6 +34,8 @@ export class EditSouthItemGroupModalComponent {
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
 
   mode: 'create' | 'edit' = 'create';
+  /** True when opened from south-detail (saves directly to API); false when opened from edit-south (changes are applied in-memory). */
+  directSave = true;
   state = new ObservableState();
   scanModes: Array<ScanModeDTO> = [];
   manifest!: SouthConnectorManifest;

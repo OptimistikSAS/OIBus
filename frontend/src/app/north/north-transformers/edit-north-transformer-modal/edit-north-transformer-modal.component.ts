@@ -64,6 +64,8 @@ export class EditNorthTransformerModalComponent {
 
   state = new ObservableState();
   mode: 'create' | 'edit' = 'create';
+  /** True when opened from north-detail (saves directly to API); false when opened from edit-north (changes are applied in-memory). */
+  directSave = true;
   form: FormGroup<{
     source: FormControl<{
       dataSourceType: DataSourceType | null;

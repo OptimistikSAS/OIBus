@@ -295,6 +295,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       }
     });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    component.directSave = false;
     component.prepareForCreation(
       this.inMemoryItems,
       this.scanModes,
@@ -316,6 +317,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   duplicateItem(item: SouthConnectorItemCommandDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl', backdrop: 'static' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    component.directSave = false;
     component.prepareForCopy(
       this.inMemoryItems,
       this.scanModes,
@@ -345,6 +347,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       }
     });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    component.directSave = false;
 
     const tableIndex = this.inMemoryItems.findIndex(i => i.id === southItem.id || i.name === southItem.name);
     component.prepareForEdition(
