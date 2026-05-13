@@ -2399,7 +2399,8 @@
       "read-delay": "Read delay",
       "overlap": "Overlap",
       "scan-mode-change-warning": "Changing scan mode when max instant per item is disabled might lead to data duplication or loss.",
-      "sync-with-group": "Sync with group"
+      "sync-with-group": "Sync with group",
+      "not-synced-notice": "Item uses its own historian settings (not synchronized with group)"
     },
     "groups": {
       "create-title": "Create a new group",

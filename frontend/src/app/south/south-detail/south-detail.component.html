@@ -195,12 +195,84 @@
                 </div>
               </div>
 
+              <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
+              <ng-template #scheduleTooltip>
+                @if (tooltipItem) {
+                  <div class="text-start schedule-tooltip-content">
+                    @if (tooltipItem.group) {
+                      <div><strong translate="south.items.group"></strong>: {{ tooltipItem.group.standardSettings.name }}</div>
+                      @if (tooltipItem.syncWithGroup) {
+                        <div>
+                          <strong translate="south.items.scan-mode"></strong>: {{ tooltipItem.group.standardSettings.scanMode.name }}
+                        </div>
+                        @if (manifest!.modes.history) {
+                          @if (tooltipItem.group.historySettings.maxReadInterval !== null) {
+                            <div>
+                              <strong translate="south.items.max-read-interval"></strong>:
+                              {{ tooltipItem.group.historySettings.maxReadInterval }}s
+                            </div>
+                          }
+                          @if (tooltipItem.group.historySettings.readDelay !== null) {
+                            <div>
+                              <strong translate="south.items.read-delay"></strong>: {{ tooltipItem.group.historySettings.readDelay }}ms
+                            </div>
+                          }
+                          @if (tooltipItem.group.historySettings.overlap !== null) {
+                            <div><strong translate="south.items.overlap"></strong>: {{ tooltipItem.group.historySettings.overlap }}ms</div>
+                          }
+                        }
+                      } @else {
+                        <div>
+                          <strong translate="south.items.scan-mode"></strong>: {{ tooltipItem.group!.standardSettings.scanMode.name }}
+                        </div>
+                        @if (manifest!.modes.history) {
+                          @if (tooltipItem.maxReadInterval !== null) {
+                            <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
+                          }
+                          @if (tooltipItem.readDelay !== null) {
+                            <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
+                          }
+                          @if (tooltipItem.overlap !== null) {
+                            <div><strong translate="south.items.overlap"></strong>: {{ tooltipItem.overlap }}ms</div>
+                          }
+                        }
+                        <div class="text-warning mt-1">⚠ {{ 'south.items.not-synced-notice' | translate }}</div>
+                      }
+                    } @else {
+                      <div>
+                        <strong translate="south.items.scan-mode"></strong>:
+                        {{
+                          tooltipItem.scanMode?.id === 'subscription'
+                            ? ('scan-mode.subscription' | translate)
+                            : tooltipItem.scanMode?.name || ''
+                        }}
+                      </div>
+                      @if (manifest!.modes.history) {
+                        @if (tooltipItem.maxReadInterval !== null) {
+                          <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
+                        }
+                        @if (tooltipItem.readDelay !== null) {
+                          <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
+                        }
+                        @if (tooltipItem.overlap !== null) {
+                          <div><strong translate="south.items.overlap"></strong>: {{ tooltipItem.overlap }}ms</div>
+                        }
+                      }
+                    }
+                  </div>
+                }
+              </ng-template>
+
               <table class="mb-2 table table-sm table-hover oib-table">
                 <thead class="light">
                   <tr>
                     <th></th>
                     <th style="width: 6rem; text-align: center">
-                      <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('enabled')">
+                      <button
+                        type="button"
+                        style="background: none; border: none; font-weight: bold; white-space: nowrap"
+                        (click)="toggleColumnSort('enabled')"
+                      >
                         <span translate="south.items.status" class="me-2"></span>
                         <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.enabled] }}"></span>
                       </button>
@@ -211,20 +283,10 @@
                         <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
                       </button>
                     </th>
-                    <th style="width: 8rem">
+                    <th style="width: 14rem">
                       <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('group')">
                         <span translate="south.items.group" class="me-2"></span>
                         <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.group] }}"></span>
-                      </button>
-                    </th>
-                    <th style="width: 8rem">
-                      <button
-                        type="button"
-                        style="background: none; border: none; font-weight: bold"
-                        (click)="toggleColumnSort('scanMode')"
-                      >
-                        <span translate="south.items.scan-mode" class="me-2"></span>
-                        <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.scanMode] }}"></span>
                       </button>
                     </th>
                     <th style="width: 10rem">
@@ -252,7 +314,7 @@
                 </thead>
                 <tbody>
                   @for (item of displayedItems.content; track item.name) {
-                    <tr class="south-item">
+                    <tr class="south-item" (mouseenter)="tooltipItem = item">
                       <td style="text-align: center">
                         <input
                           type="checkbox"
@@ -270,12 +332,23 @@
                         }
                       </td>
                       <td>{{ item.name }}</td>
-                      <td>{{ getGroupName(item) }}</td>
-                      @if (item.scanMode?.id === 'subscription') {
-                        <td translate="scan-mode.subscription"></td>
-                      } @else {
-                        <td>{{ item.scanMode?.name || '' }}</td>
-                      }
+                      <td>
+                        <span [ngbTooltip]="scheduleTooltip" container="body" tooltipClass="schedule-tooltip">
+                          @if (!item.group) {
+                            @if (item.scanMode?.id === 'subscription') {
+                              <span translate="scan-mode.subscription"></span>
+                            } @else {
+                              {{ item.scanMode?.name || '' }}
+                            }
+                          } @else {
+                            {{ item.group.standardSettings.name }}
+                            <span class="text-muted">({{ item.group.standardSettings.scanMode.name }})</span>
+                            @if (!item.syncWithGroup) {
+                              <i class="fa fa-warning text-warning ms-1" aria-hidden="true"></i>
+                            }
+                          }
+                        </span>
+                      </td>
                       <td>{{ item.createdAt | datetime: 'ff' }}</td>
                       <td>{{ item.updatedAt | datetime: 'ff' }}</td>
                       <td class="text-nowrap action-buttons">

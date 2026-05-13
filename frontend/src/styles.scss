@@ -853,6 +853,17 @@ val-errors > div {
   text-align: left;
 }
 
+.schedule-tooltip .tooltip-inner {
+  max-width: 300px;
+  text-align: left;
+  white-space: normal;
+  font-size: 0.8rem;
+
+  .schedule-tooltip-content > div {
+    line-height: 1.5;
+  }
+}
+
 .oib-south-items {
   .form-check-input {
     opacity: 1 !important;

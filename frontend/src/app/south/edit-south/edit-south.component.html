@@ -200,6 +200,68 @@
                   </div>
                 </div>
 
+                <!-- Tooltip template for the schedule column — bound to tooltipItem set on row hover -->
+                <ng-template #scheduleTooltip>
+                  @if (tooltipItem) {
+                    @let group = getTooltipGroup(tooltipItem);
+                    <div class="text-start schedule-tooltip-content">
+                      @if (group) {
+                        <div><strong translate="south.items.group"></strong>: {{ tooltipItem.groupName }}</div>
+                        @if (tooltipItem.syncWithGroup) {
+                          <div><strong translate="south.items.scan-mode"></strong>: {{ getEffectiveScanModeName(tooltipItem) }}</div>
+                          @if (manifest!.modes.history) {
+                            @if (group.historySettings.maxReadInterval !== null) {
+                              <div>
+                                <strong translate="south.items.max-read-interval"></strong>: {{ group.historySettings.maxReadInterval }}s
+                              </div>
+                            }
+                            @if (group.historySettings.readDelay !== null) {
+                              <div><strong translate="south.items.read-delay"></strong>: {{ group.historySettings.readDelay }}ms</div>
+                            }
+                            @if (group.historySettings.overlap !== null) {
+                              <div><strong translate="south.items.overlap"></strong>: {{ group.historySettings.overlap }}ms</div>
+                            }
+                          }
+                        } @else {
+                          <div><strong translate="south.items.scan-mode"></strong>: {{ getEffectiveScanModeName(tooltipItem) }}</div>
+                          @if (manifest!.modes.history) {
+                            @if (tooltipItem.maxReadInterval !== null) {
+                              <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
+                            }
+                            @if (tooltipItem.readDelay !== null) {
+                              <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
+                            }
+                            @if (tooltipItem.overlap !== null) {
+                              <div><strong translate="south.items.overlap"></strong>: {{ tooltipItem.overlap }}ms</div>
+                            }
+                          }
+                          <div class="text-warning mt-1">⚠ {{ 'south.items.not-synced-notice' | translate }}</div>
+                        }
+                      } @else {
+                        <div>
+                          <strong translate="south.items.scan-mode"></strong>:
+                          {{
+                            tooltipItem.scanModeId === 'subscription'
+                              ? ('scan-mode.subscription' | translate)
+                              : tooltipItem.scanModeName || ''
+                          }}
+                        </div>
+                        @if (manifest!.modes.history) {
+                          @if (tooltipItem.maxReadInterval !== null) {
+                            <div><strong translate="south.items.max-read-interval"></strong>: {{ tooltipItem.maxReadInterval }}s</div>
+                          }
+                          @if (tooltipItem.readDelay !== null) {
+                            <div><strong translate="south.items.read-delay"></strong>: {{ tooltipItem.readDelay }}ms</div>
+                          }
+                          @if (tooltipItem.overlap !== null) {
+                            <div><strong translate="south.items.overlap"></strong>: {{ tooltipItem.overlap }}ms</div>
+                          }
+                        }
+                      }
+                    </div>
+                  }
+                </ng-template>
+
                 <table class="mb-2 table table-sm table-hover oib-table">
                   <thead class="light">
                     <tr>
@@ -207,7 +269,7 @@
                       <th style="width: 6rem; text-align: center">
                         <button
                           type="button"
-                          style="background: none; border: none; font-weight: bold"
+                          style="background: none; border: none; font-weight: bold; white-space: nowrap"
                           (click)="toggleColumnSort('enabled')"
                         >
                           <span translate="south.items.status" class="me-2"></span>
@@ -220,20 +282,10 @@
                           <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
                         </button>
                       </th>
-                      <th style="width: 8rem">
+                      <th style="width: 14rem">
                         <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('group')">
                           <span translate="south.items.group" class="me-2"></span>
                           <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.group] }}"></span>
-                        </button>
-                      </th>
-                      <th style="width: 8rem">
-                        <button
-                          type="button"
-                          style="background: none; border: none; font-weight: bold"
-                          (click)="toggleColumnSort('scanMode')"
-                        >
-                          <span translate="south.items.scan-mode" class="me-2"></span>
-                          <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.scanMode] }}"></span>
                         </button>
                       </th>
                       <th style="width: 8rem"></th>
@@ -241,7 +293,7 @@
                   </thead>
                   <tbody>
                     @for (item of displayedItems.content; track item.name) {
-                      <tr class="south-item">
+                      <tr class="south-item" (mouseenter)="tooltipItem = item">
                         <td style="text-align: center">
                           <input
                             type="checkbox"
@@ -259,12 +311,23 @@
                           }
                         </td>
                         <td>{{ item.name }}</td>
-                        <td>{{ getGroupName(item) }}</td>
-                        @if (item.scanModeId === 'subscription') {
-                          <td translate="scan-mode.subscription"></td>
-                        } @else {
-                          <td>{{ item.scanModeName }}</td>
-                        }
+                        <td>
+                          <span [ngbTooltip]="scheduleTooltip" container="body" tooltipClass="schedule-tooltip">
+                            @if (!item.groupId) {
+                              @if (item.scanModeId === 'subscription') {
+                                <span translate="scan-mode.subscription"></span>
+                              } @else {
+                                {{ item.scanModeName || '' }}
+                              }
+                            } @else {
+                              {{ item.groupName }}
+                              <span class="text-muted">({{ getEffectiveScanModeName(item) }})</span>
+                              @if (!item.syncWithGroup) {
+                                <i class="fa fa-warning text-warning ms-1" aria-hidden="true"></i>
+                              }
+                            }
+                          </span>
+                        </td>
                         <td class="text-nowrap action-buttons">
                           <div class="pull-right">
                             <!-- Edit button -->

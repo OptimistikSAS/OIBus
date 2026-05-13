@@ -130,6 +130,9 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   inMemoryGroups: Array<SouthItemGroupCommandDTO> = [];
 
+  /** The item currently hovered in the list — drives the schedule details tooltip. */
+  tooltipItem: SouthConnectorItemCommandDTO | null = null;
+
   // Mass action properties
   selectedItems = new Map<string, SouthConnectorItemCommandDTO>();
   isAllSelected = false;
@@ -565,7 +568,11 @@ export class EditSouthComponent implements CanComponentDeactivate {
       if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
       if (groupFilter === 'none' && item.groupId) return false;
       if (groupFilter && groupFilter !== 'none' && item.groupId !== groupFilter) return false;
-      if (scanModeFilter && item.scanModeId !== scanModeFilter) return false;
+      if (scanModeFilter) {
+        const group = item.groupId ? this.inMemoryGroups.find(g => g.id === item.groupId) : null;
+        const effectiveScanModeId = group ? group.standardSettings.scanModeId : item.scanModeId;
+        if (effectiveScanModeId !== scanModeFilter) return false;
+      }
       if (statusFilter === 'enabled' && !item.enabled) return false;
       if (statusFilter === 'disabled' && item.enabled) return false;
       return true;
@@ -729,6 +736,30 @@ export class EditSouthComponent implements CanComponentDeactivate {
 
   getGroupName(item: SouthConnectorItemCommandDTO): string {
     return item.groupName || this.translateService.instant('south.items.group-none');
+  }
+
+  /** Looks up the in-memory group for an item (null when the item has no group). */
+  getTooltipGroup(item: SouthConnectorItemCommandDTO): SouthItemGroupCommandDTO | null {
+    if (!item.groupId) return null;
+    return this.inMemoryGroups.find(g => g.id === item.groupId) ?? null;
+  }
+
+  /**
+   * Returns the scan mode name that is effectively active for the item.
+   * - Item in a group and synced → group's scan mode.
+   * - Otherwise (no group) → item's own scan mode.
+   */
+  getEffectiveScanModeName(item: SouthConnectorItemCommandDTO): string {
+    if (item.scanModeId === 'subscription') {
+      return this.translateService.instant('scan-mode.subscription');
+    }
+    if (item.groupId) {
+      const group = this.inMemoryGroups.find(g => g.id === item.groupId);
+      if (group) {
+        return this.scanModes.find(s => s.id === group.standardSettings.scanModeId)?.name ?? item.scanModeName ?? '';
+      }
+    }
+    return item.scanModeName ?? '';
   }
 
   protected readonly asFormGroup = asFormGroup;
