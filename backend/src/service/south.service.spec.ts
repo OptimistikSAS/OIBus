@@ -1496,7 +1496,7 @@ describe('South Service', () => {
       );
     });
 
-    it('should update a group', () => {
+    it('should update a group', async () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
         standardSettings: {
@@ -1541,16 +1541,18 @@ describe('South Service', () => {
         )
       );
       southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup]);
+      engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
 
-      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command);
+      const result = await service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command);
       assert.strictEqual(result.name, 'Updated Group');
       assert.strictEqual(result.scanMode.id, testData.scanMode.list[1].id);
       assert.strictEqual(result.maxReadInterval, 3600);
       assert.strictEqual(result.readDelay, 200);
       assert.strictEqual(southItemGroupRepository.update.mock.calls.length, 1);
+      assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
 
-    it('should update a group with null maxReadInterval and zero readDelay', () => {
+    it('should update a group with null maxReadInterval and zero readDelay', async () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
         standardSettings: {
@@ -1595,8 +1597,9 @@ describe('South Service', () => {
         )
       );
       southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup]);
+      engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
 
-      const result = service.updateGroup(testData.south.list[0].id, 'groupToUpdateNull', 'testUser', command);
+      const result = await service.updateGroup(testData.south.list[0].id, 'groupToUpdateNull', 'testUser', command);
       assert.strictEqual(result.name, 'Updated Name Only');
       assert.strictEqual(result.maxReadInterval, null);
       assert.strictEqual(result.readDelay, 0);
@@ -1607,9 +1610,10 @@ describe('South Service', () => {
       assert.strictEqual(entity.maxReadInterval, null);
       assert.strictEqual(entity.readDelay, 0);
       assert.strictEqual(updateCall.arguments[2], 'testUser');
+      assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
 
-    it('should throw error when updating non-existent group', () => {
+    it('should throw error when updating non-existent group', async () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
         standardSettings: {
@@ -1625,13 +1629,13 @@ describe('South Service', () => {
 
       southItemGroupRepository.findById.mock.mockImplementation(() => null);
 
-      assert.throws(
-        () => service.updateGroup(testData.south.list[0].id, 'nonExistentGroup', 'testUser', command),
+      await assert.rejects(
+        async () => service.updateGroup(testData.south.list[0].id, 'nonExistentGroup', 'testUser', command),
         new NotFoundError('South item group "nonExistentGroup" not found')
       );
     });
 
-    it('should throw error when updating group that belongs to different south connector', () => {
+    it('should throw error when updating group that belongs to different south connector', async () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
         standardSettings: {
@@ -1662,13 +1666,13 @@ describe('South Service', () => {
 
       southItemGroupRepository.findById.mock.mockImplementation(() => groupFromDifferentSouth);
 
-      assert.throws(
-        () => service.updateGroup(testData.south.list[0].id, 'groupFromOtherSouth', 'testUser', command),
+      await assert.rejects(
+        async () => service.updateGroup(testData.south.list[0].id, 'groupFromOtherSouth', 'testUser', command),
         new NotFoundError(`South item group "groupFromOtherSouth" does not belong to south connector "${testData.south.list[0].id}"`)
       );
     });
 
-    it('should throw error when update fails to find updated group', () => {
+    it('should throw error when update fails to find updated group', async () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
         standardSettings: {
@@ -1705,13 +1709,13 @@ describe('South Service', () => {
       );
       southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup]);
 
-      assert.throws(
-        () => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command),
+      await assert.rejects(
+        async () => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command),
         new NotFoundError('Failed to update south item group "groupToUpdate"')
       );
     });
 
-    it('should throw error when updating group with duplicate name', () => {
+    it('should throw error when updating group with duplicate name', async () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
         standardSettings: {
@@ -1758,8 +1762,8 @@ describe('South Service', () => {
       southItemGroupRepository.findById.mock.mockImplementation(() => existingGroup);
       southItemGroupRepository.findBySouthId.mock.mockImplementation(() => [existingGroup, otherGroup]);
 
-      assert.throws(
-        () => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command),
+      await assert.rejects(
+        async () => service.updateGroup(testData.south.list[0].id, 'groupToUpdate', 'testUser', command),
         new OIBusValidationError('A group with name "Existing Group" already exists for this south connector')
       );
     });

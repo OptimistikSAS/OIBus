@@ -689,8 +689,8 @@ export default class SouthService {
     return this.southItemGroupRepository.create(groupEntity, user);
   }
 
-  updateGroup(southId: string, groupId: string, user: string, command: SouthItemGroupCommandDTO): SouthItemGroupEntity {
-    this.findById(southId); // Verify south connector exists
+  async updateGroup(southId: string, groupId: string, user: string, command: SouthItemGroupCommandDTO): Promise<SouthItemGroupEntity> {
+    const southConnector = this.findById(southId);
     const existingGroup = this.southItemGroupRepository.findById(groupId);
     if (!existingGroup) {
       throw new NotFoundError(`South item group "${groupId}" not found`);
@@ -723,6 +723,8 @@ export default class SouthService {
     if (!updated) {
       throw new NotFoundError(`Failed to update south item group "${groupId}"`);
     }
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    await this.engine.reloadSouthItems(southConnector);
     return updated;
   }
 
