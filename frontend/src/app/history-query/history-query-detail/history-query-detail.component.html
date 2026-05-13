@@ -75,11 +75,10 @@
             </span>
           </h1>
           <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted small">
-              {{ 'history-query.query-time-range.start' | translate }}:
+            <span class="d-flex align-items-center text-muted small">
+              <i class="fa fa-calendar me-1"></i>
               {{ historyQuery.queryTimeRange.startTime | datetime: 'mediumWithSeconds' }}
-              &ndash;
-              {{ 'history-query.query-time-range.end' | translate }}:
+              <i class="fa fa-arrow-right oib-fa-arrow"></i>
               {{ historyQuery.queryTimeRange.endTime | datetime: 'mediumWithSeconds' }}
             </span>
             <span class="text-disabled me-2">

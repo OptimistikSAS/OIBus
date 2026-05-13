@@ -1,5 +1,8 @@
-<div class="d-flex">
+<div class="d-flex" [class.align-items-start]="label()">
   <div class="me-2 flex-grow-1">
+    @if (label()) {
+      <label class="form-label mb-1" [translate]="label()"></label>
+    }
     <ng-template [ngTemplateOutlet]="dateTemplate() || defaultDateTemplate" [ngTemplateOutletContext]="{ $implicit: dateCtrl }" />
   </div>
   <div>
