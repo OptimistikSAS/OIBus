@@ -130,6 +130,9 @@ export class SouthDetailComponent implements OnDestroy {
   isAllSelected = false;
   isIndeterminate = false;
 
+  /** The item currently hovered in the list — drives the schedule details tooltip. */
+  tooltipItem: SouthConnectorItemDTO | null = null;
+
   columnSortStates: { [key in keyof TableData]: ColumnSortState } = {
     name: ColumnSortState.INDETERMINATE,
     scanMode: ColumnSortState.INDETERMINATE,
@@ -573,10 +576,12 @@ export class SouthDetailComponent implements OnDestroy {
       if (searchText && !item.name.toLowerCase().includes(searchText.toLowerCase())) return false;
       if (groupFilter === 'none' && item.group) return false;
       if (groupFilter && groupFilter !== 'none' && item.group?.id !== groupFilter) return false;
-      if (scanModeFilter && item.scanMode?.id !== scanModeFilter) return false;
+      if (scanModeFilter) {
+        const effectiveScanModeId = item.group ? item.group.standardSettings.scanMode.id : item.scanMode?.id;
+        if (effectiveScanModeId !== scanModeFilter) return false;
+      }
       if (statusFilter === 'enabled' && !item.enabled) return false;
-      if (statusFilter === 'disabled' && item.enabled) return false;
-      return true;
+      return !(statusFilter === 'disabled' && item.enabled);
     });
   }
 
