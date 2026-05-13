@@ -14,6 +14,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
 import { CurrentUserService } from '../current-user.service';
+import { TranslateDirective } from '@ngx-translate/core';
 
 /**
  * Component combining a ng-bootstrap input date picker and a ng-bootstrap time picker, which can be used
@@ -61,7 +62,7 @@ import { CurrentUserService } from '../current-user.service';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => DatetimepickerComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => DatetimepickerComponent), multi: true }
   ],
-  imports: [NgTemplateOutlet, DatepickerContainerComponent, NgbInputDatepicker, ReactiveFormsModule, NgbTimepicker]
+  imports: [NgTemplateOutlet, DatepickerContainerComponent, NgbInputDatepicker, ReactiveFormsModule, NgbTimepicker, TranslateDirective]
 })
 export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {
   private fb = inject(NonNullableFormBuilder);
@@ -72,6 +73,7 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
 
   readonly timeTemplate = contentChild<TemplateRef<any>>('time');
 
+  label = input('');
   displaySeconds = input(false);
   timezone = input(this.currentUserService.getTimezone());
 

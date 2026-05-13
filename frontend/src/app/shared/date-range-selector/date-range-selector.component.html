@@ -17,18 +17,18 @@
   </div>
 
   @if (internalForm.controls.rangeType.value === 'custom') {
-    <div class="row">
-      <div class="col-6">
-        <div class="form-group">
-          <label class="form-label" [translate]="startLabel"></label>
-          <oib-datetimepicker formControlName="startTime" />
+    <div class="border rounded p-3">
+      <div class="d-flex">
+        <div class="flex-grow-1">
+          <oib-datetimepicker formControlName="startTime" [label]="startLabel" />
           <val-errors controlName="startTime" />
         </div>
-      </div>
-      <div class="col-6">
-        <div class="form-group">
-          <label class="form-label" [translate]="endLabel"></label>
-          <oib-datetimepicker formControlName="endTime" />
+        <!-- Wrapper skips past the label row, then centers the icon inside exactly one form-control height -->
+        <div style="align-self: start; padding-top: 1.75rem; height: calc(1.5em + 0.75rem + 2px); display: flex; align-items: center">
+          <i class="fa fa-arrow-right oib-fa-arrow"></i>
+        </div>
+        <div class="flex-grow-1">
+          <oib-datetimepicker formControlName="endTime" [label]="endLabel" />
           <val-errors controlName="endTime" />
         </div>
       </div>
