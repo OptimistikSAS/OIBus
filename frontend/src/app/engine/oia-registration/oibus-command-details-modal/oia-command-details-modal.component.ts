@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { TranslateDirective } from '@ngx-translate/core';
@@ -17,10 +17,10 @@ import { OIBusCommandDTO } from '../../../../../../backend/shared/model/command.
 export class OiaCommandDetailsModalComponent {
   private activeModal = inject(NgbActiveModal);
 
-  command: OIBusCommandDTO | null = null;
+  command = signal<OIBusCommandDTO | null>(null);
 
   prepare(command: OIBusCommandDTO) {
-    this.command = command;
+    this.command.set(command);
   }
 
   close() {

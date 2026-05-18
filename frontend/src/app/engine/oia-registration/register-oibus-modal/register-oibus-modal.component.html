@@ -625,19 +625,19 @@
     <!-- Test Connection Feedback -->
     <div class="row mt-3">
       <div class="col-12">
-        @if (testLoading) {
+        @if (testLoading()) {
           <div class="text-center">
             <div class="spinner-border" id="test-spinner" role="status"></div>
           </div>
         }
-        @if (testError) {
+        @if (testError()) {
           <div class="alert alert-danger" id="test-error">
             <div translate="oia-module.registration.test-connection-error"></div>
             <hr />
-            <div style="overflow-wrap: break-word">{{ testError }}</div>
+            <div style="overflow-wrap: break-word">{{ testError() }}</div>
           </div>
         }
-        @if (testSuccess) {
+        @if (testSuccess()) {
           <div class="alert alert-info" id="test-success" translate="oia-module.registration.test-connection-success"></div>
         }
       </div>
@@ -651,7 +651,7 @@
       type="button"
       class="btn btn-secondary"
       (click)="testConnection()"
-      [disabled]="testLoading"
+      [disabled]="testLoading()"
       translationKey="oia-module.registration.test-connection"
       iconClass=""
       id="test-connection-button"

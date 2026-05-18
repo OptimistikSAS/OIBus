@@ -1,7 +1,8 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
-import { EngineMetrics, EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
+import { EngineMetrics } from '../../../../backend/shared/model/engine.model';
 import { AsyncPipe } from '@angular/common';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
@@ -35,31 +36,26 @@ import { TransformerListComponent } from './transformer-list/transformer-list.co
   templateUrl: './engine-detail.component.html',
   styleUrl: './engine-detail.component.scss'
 })
-export class EngineDetailComponent implements OnInit, OnDestroy {
+export class EngineDetailComponent {
   private engineService = inject(EngineService);
   private windowService = inject(WindowService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
-  private cd = inject(ChangeDetectorRef);
+  private destroyRef = inject(DestroyRef);
 
-  engineSettings: EngineSettingsDTO | null = null;
-  connectorStream: EventSource | null = null;
-  metrics: EngineMetrics | null = null;
+  readonly engineSettings = toSignal(this.engineService.getEngineSettings());
+  metrics = signal<EngineMetrics | null>(null);
   restarting = new ObservableState();
 
-  ngOnInit() {
-    this.engineService.getEngineSettings().subscribe(settings => {
-      this.engineSettings = settings;
-    });
-
+  constructor() {
     const token = this.windowService.getStorageItem('oibus-token');
-    this.connectorStream = new EventSource(`/sse/engine?token=${token}`, { withCredentials: true });
-    this.connectorStream.onmessage = (event: MessageEvent) => {
+    const stream = new EventSource(`/sse/engine?token=${token}`, { withCredentials: true });
+    stream.onmessage = (event: MessageEvent) => {
       if (event && event.data) {
-        this.metrics = JSON.parse(event.data);
-        this.cd.detectChanges();
+        this.metrics.set(JSON.parse(event.data));
       }
     };
+    this.destroyRef.onDestroy(() => stream.close());
   }
 
   restart() {
@@ -75,9 +71,5 @@ export class EngineDetailComponent implements OnInit, OnDestroy {
       .subscribe(() => {
         this.notificationService.success('engine.restart-complete');
       });
-  }
-
-  ngOnDestroy() {
-    this.connectorStream?.close();
   }
 }

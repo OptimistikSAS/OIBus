@@ -1,4 +1,4 @@
-import { Component, computed, inject, ViewChild, OnInit } from '@angular/core';
+import { Component, computed, inject, ViewChild } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -47,7 +47,7 @@ import { TransformerTestComponent } from '../transformer-test/transformer-test.c
     TransformerTestComponent
   ]
 })
-export class EditTransformerModalComponent implements OnInit {
+export class EditTransformerModalComponent {
   private modal = inject(NgbActiveModal);
   private transformerService = inject(TransformerService);
   private unsavedChangesConfirmation = inject(UnsavedChangesConfirmationService);
@@ -78,6 +78,14 @@ export class EditTransformerModalComponent implements OnInit {
   private readonly formValue = toSignal(this.form.valueChanges.pipe(startWith(this.form.value)));
   private readonly formValid = toSignal(this.form.statusChanges.pipe(startWith(this.form.status)));
 
+  constructor() {
+    this.form.controls.language.valueChanges.subscribe(() => {
+      if (this.mode === 'create') {
+        this.generateCodeTemplate();
+      }
+    });
+  }
+
   readonly transformerCommand = computed<CustomTransformerCommandDTO | null>(() => {
     if (this.formValid() !== 'VALID') return null;
     if (this.mode === 'edit' && !this.customTransformer) return null;
@@ -105,14 +113,6 @@ export class EditTransformerModalComponent implements OnInit {
       }
     };
   });
-
-  ngOnInit() {
-    this.form.controls.language.valueChanges.subscribe(() => {
-      if (this.mode === 'create') {
-        this.generateCodeTemplate();
-      }
-    });
-  }
 
   prepareForCreation() {
     this.mode = 'create';

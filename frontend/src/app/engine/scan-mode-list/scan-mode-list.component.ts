@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import { firstValueFrom, switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -36,7 +36,7 @@ const PAGE_SIZE = 20;
   templateUrl: './scan-mode-list.component.html',
   styleUrl: './scan-mode-list.component.scss'
 })
-export class ScanModeListComponent implements OnInit {
+export class ScanModeListComponent {
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
@@ -48,7 +48,7 @@ export class ScanModeListComponent implements OnInit {
   sortField: ScanModeSortField = null;
   sortDirection: SortDirection = 'asc';
 
-  ngOnInit() {
+  constructor() {
     this.scanModeService.list().subscribe(scanModes => {
       this.allScanModes = this.excludeSubscriptionScanModes(scanModes);
       this.updateList(0);
