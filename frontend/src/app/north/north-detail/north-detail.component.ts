@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
@@ -48,7 +48,8 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
   styleUrl: './north-detail.component.scss',
   providers: [PageLoader, BooleanEnumPipe]
 })
-export class NorthDetailComponent implements OnInit, OnDestroy {
+export class NorthDetailComponent {
+  private destroyRef = inject(DestroyRef);
   private windowService = inject(WindowService);
   private northConnectorService = inject(NorthConnectorService);
   private scanModeService = inject(ScanModeService);
@@ -72,7 +73,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   oibusInfo: OIBusInfo | null = null;
   northId: string | null = null;
 
-  ngOnInit() {
+  constructor() {
     combineLatest([
       this.scanModeService.list(),
       this.certificateService.list(),
@@ -84,7 +85,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
       this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
       this.oibusInfo = engineInfo;
     });
-    this.route.paramMap
+    const routeSub = this.route.paramMap
       .pipe(
         switchMap(params => {
           this.northId = params.get('northId');
@@ -132,6 +133,10 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
           });
         this.manifest = manifest;
       });
+    this.destroyRef.onDestroy(() => {
+      routeSub.unsubscribe();
+      this.connectorStream?.close();
+    });
   }
 
   updateInMemoryTransformers(_transformers: Array<TransformerDTOWithOptions> | null) {
@@ -191,10 +196,6 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
         this.cd.detectChanges();
       }
     };
-  }
-
-  ngOnDestroy() {
-    this.connectorStream?.close();
   }
 
   onClipboardCopy(result: boolean) {

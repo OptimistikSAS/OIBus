@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { of, switchMap, tap } from 'rxjs';
@@ -37,7 +37,7 @@ import { CacheExploreComponent } from '../../shared/cache-explore/cache-explore.
     SaveButtonComponent
   ]
 })
-export class ExploreNorthCacheComponent implements OnInit {
+export class ExploreNorthCacheComponent {
   private route = inject(ActivatedRoute);
   private northConnectorService = inject(NorthConnectorService);
   private notificationService = inject(NotificationService);
@@ -48,19 +48,7 @@ export class ExploreNorthCacheComponent implements OnInit {
   cacheContent: CacheSearchResult | null = null;
   state = new ObservableState();
 
-  form = inject(NonNullableFormBuilder).group(
-    {
-      start: [DateTime.now().minus({ hour: 1 }).set({ second: 0, millisecond: 0 }).toUTC().toISO() as Instant, Validators.required],
-      end: [DateTime.now().set({ second: 0, millisecond: 0 }).toUTC().toISO() as Instant, Validators.required],
-      nameContains: [''],
-      maxNumberOfFilesReturned: [1000 as number, [Validators.required, Validators.min(0)]]
-    },
-    {
-      validators: [ascendingDates]
-    }
-  );
-
-  ngOnInit() {
+  constructor() {
     this.route.paramMap
       .pipe(
         switchMap(params => {
@@ -75,6 +63,18 @@ export class ExploreNorthCacheComponent implements OnInit {
         this.northConnector = northConnector;
       });
   }
+
+  form = inject(NonNullableFormBuilder).group(
+    {
+      start: [DateTime.now().minus({ hour: 1 }).set({ second: 0, millisecond: 0 }).toUTC().toISO() as Instant, Validators.required],
+      end: [DateTime.now().set({ second: 0, millisecond: 0 }).toUTC().toISO() as Instant, Validators.required],
+      nameContains: [''],
+      maxNumberOfFilesReturned: [1000 as number, [Validators.required, Validators.min(0)]]
+    },
+    {
+      validators: [ascendingDates]
+    }
+  );
 
   submit() {
     if (!this.form.valid) {

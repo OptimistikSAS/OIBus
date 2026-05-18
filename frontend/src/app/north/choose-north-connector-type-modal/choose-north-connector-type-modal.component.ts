@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -16,7 +16,7 @@ import { ReactiveFormsModule } from '@angular/forms';
   styleUrl: './choose-north-connector-type-modal.component.scss',
   imports: [ReactiveFormsModule, TranslateDirective, OIBusNorthTypeEnumPipe, OIBusNorthTypeDescriptionEnumPipe, OIBusNorthCategoryEnumPipe]
 })
-export class ChooseNorthConnectorTypeModalComponent implements OnInit {
+export class ChooseNorthConnectorTypeModalComponent {
   private modal = inject(NgbActiveModal);
   private northConnectorService = inject(NorthConnectorService);
   private router = inject(Router);
@@ -24,7 +24,7 @@ export class ChooseNorthConnectorTypeModalComponent implements OnInit {
   northTypes: Array<NorthType> = [];
   groupedNorthTypes: Array<{ category: string; types: Array<NorthType> }> = [];
 
-  ngOnInit() {
+  constructor() {
     this.northConnectorService.getNorthTypes().subscribe(types => {
       this.northTypes = types;
       this.groupNorthTypes();
