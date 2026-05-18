@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -95,7 +95,7 @@ export interface TableData {
   styleUrl: './history-query-detail.component.scss',
   providers: [PageLoader]
 })
-export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
+export class HistoryQueryDetailComponent {
   private historyQueryService = inject(HistoryQueryService);
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
@@ -111,6 +111,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   private windowService = inject(WindowService);
   private cd = inject(ChangeDetectorRef);
   private translateService = inject(TranslateService);
+  private destroyRef = inject(DestroyRef);
 
   historyQuery: HistoryQueryDTO | null = null;
   northDisplayedSettings: Array<{ key: string; value: string }> = [];
@@ -147,7 +148,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   };
   currentColumnSort: keyof TableData | null = null;
 
-  ngOnInit() {
+  constructor() {
     combineLatest([
       this.scanModeService.list(),
       this.certificateService.list(),
@@ -159,7 +160,8 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       this.transformers = transformers;
       this.oibusInfo = engineInfo;
     });
-    this.route.paramMap
+
+    const routeSub = this.route.paramMap
       .pipe(
         switchMap(params => {
           this.historyQueryId = params.get('historyQueryId') || '';
@@ -249,6 +251,11 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     merge(this.searchControl.valueChanges, this.statusFilterControl.valueChanges).subscribe(() => {
       this.resetPage();
     });
+
+    this.destroyRef.onDestroy(() => {
+      routeSub.unsubscribe();
+      this.historyStream?.close();
+    });
   }
 
   updateInMemoryTransformers(_transformers: Array<HistoryTransformerDTOWithOptions> | null) {
@@ -279,10 +286,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
         }
       }
     });
-  }
-
-  ngOnDestroy() {
-    this.historyStream?.close();
   }
 
   toggleHistoryQuery(newStatus: HistoryQueryStatus) {

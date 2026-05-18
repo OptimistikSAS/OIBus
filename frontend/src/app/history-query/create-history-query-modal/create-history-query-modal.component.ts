@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
@@ -26,7 +26,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation
     SaveButtonComponent
   ]
 })
-export class CreateHistoryQueryModalComponent implements OnInit {
+export class CreateHistoryQueryModalComponent {
   private modal = inject(NgbActiveModal);
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
@@ -68,9 +68,7 @@ export class CreateHistoryQueryModalComponent implements OnInit {
         this.createForm.controls.southType.enable();
       }
     });
-  }
 
-  ngOnInit() {
     combineLatest([
       this.northConnectorService.getNorthTypes(),
       this.northConnectorService.list(),
