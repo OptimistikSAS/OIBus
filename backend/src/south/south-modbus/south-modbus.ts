@@ -163,24 +163,34 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       // Pre-compute numeric addresses for all items in one pass
       const resolvedItems = items.map(item => ({ item, address: parseAddress(item.settings.address) + offset }));
 
-      // Group by modbusType
-      const groups = new Map<string, Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; address: number }>>();
-      for (const resolved of resolvedItems) {
-        const key = resolved.item.settings.modbusType;
-        if (!groups.has(key)) groups.set(key, []);
-        groups.get(key)!.push(resolved);
-      }
+      // batchQuery may be undefined on connectors created before this setting existed; treat that as true
+      if (this.connector.settings.batchQuery) {
+        // Batch mode: group by modbusType and issue as few requests as possible
+        const groups = new Map<string, Array<{ item: SouthConnectorItemEntity<SouthModbusItemSettings>; address: number }>>();
+        for (const resolved of resolvedItems) {
+          const key = resolved.item.settings.modbusType;
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key)!.push(resolved);
+        }
 
-      // Sort each group by address and issue batched requests
-      const groupingGap = this.connector.settings.groupingGap;
-      for (const [type, group] of groups) {
-        group.sort((a, b) => a.address - b.address);
-        if (type === 'coil' || type === 'discrete-input') {
-          dataValues.push(...(await this.queryBitsGrouped(type as 'coil' | 'discrete-input', group, timestamp, groupingGap)));
-        } else if (type === 'input-register' || type === 'holding-register') {
-          dataValues.push(
-            ...(await this.queryRegistersGrouped(type as 'input-register' | 'holding-register', group, timestamp, groupingGap))
-          );
+        const groupingGap = this.connector.settings.groupingGap!;
+        for (const [type, group] of groups) {
+          group.sort((a, b) => a.address - b.address);
+          if (type === 'coil' || type === 'discrete-input') {
+            dataValues.push(...(await this.queryBitsGrouped(type as 'coil' | 'discrete-input', group, timestamp, groupingGap)));
+          } else if (type === 'input-register' || type === 'holding-register') {
+            dataValues.push(
+              ...(await this.queryRegistersGrouped(type as 'input-register' | 'holding-register', group, timestamp, groupingGap))
+            );
+          }
+        }
+      } else {
+        // Individual mode: one request per point
+        for (const { item } of resolvedItems) {
+          const values = await this.modbusFunction(this.modbusClient, item);
+          for (const v of values) {
+            dataValues.push({ ...v, timestamp });
+          }
         }
       }
 

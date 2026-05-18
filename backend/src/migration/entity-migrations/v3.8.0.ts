@@ -971,6 +971,9 @@ async function addModbusGroupingGap(knex: Knex): Promise<void> {
     if (settings.groupingGap === undefined) {
       settings.groupingGap = 0;
     }
+    if (settings.batchQuery === undefined) {
+      settings.batchQuery = false;
+    }
     if (settings.networkTimeout === undefined) {
       settings.networkTimeout = 15000;
     }

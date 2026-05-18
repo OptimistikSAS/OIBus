@@ -17,7 +17,13 @@ const manifest: SouthConnectorManifest = {
       visible: true,
       wrapInBox: false
     },
-    enablingConditions: [],
+    enablingConditions: [
+      {
+        referralPathFromRoot: 'batchQuery',
+        targetPathFromRoot: 'groupingGap',
+        values: [true]
+      }
+    ],
     validators: [],
     attributes: [
       {
@@ -238,6 +244,23 @@ const manifest: SouthConnectorManifest = {
         }
       },
       {
+        type: 'boolean',
+        key: 'batchQuery',
+        translationKey: 'configuration.oibus.manifest.south.modbus.batch-query',
+        defaultValue: false,
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 4,
+          columns: 4,
+          displayInViewMode: false
+        }
+      },
+      {
         type: 'number',
         key: 'groupingGap',
         translationKey: 'configuration.oibus.manifest.south.modbus.grouping-gap',
@@ -258,7 +281,7 @@ const manifest: SouthConnectorManifest = {
           }
         ],
         displayProperties: {
-          row: 3,
+          row: 4,
           columns: 4,
           displayInViewMode: false
         }

@@ -1465,7 +1465,8 @@
             },
             "swap-bytes-in-words": "Swap Bytes?",
             "swap-words-in-dwords": "Swap Words?",
-            "grouping-gap": "Max grouping gap (addresses)"
+            "grouping-gap": "Max grouping gap (addresses)",
+            "batch-query": "Group batch queries?"
           },
           "mqtt": {
             "url": "URL",

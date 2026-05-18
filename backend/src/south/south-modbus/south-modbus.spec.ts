@@ -156,6 +156,7 @@ describe('South Modbus', () => {
       retryInterval: 10000,
       connectTimeout: 30000,
       networkTimeout: 15000,
+      batchQuery: false,
       groupingGap: 0
     },
     groups: [],
@@ -461,7 +462,7 @@ describe('South Modbus', () => {
     assert.strictEqual((south as unknown as Record<string, unknown>)['reconnectTimeout'], null);
   });
 
-  it('should query items via directQuery with batched requests', async () => {
+  it('should query items via directQuery with batched requests when batchQuery is true', async () => {
     // Test data addresses (addressOffset = 'modbus', offset = 0):
     //   id1: 0x4E80 = 20096  holding-register uint16 (1 word)
     //   id2: 20097            holding-register uint16 (1 word)  ← consecutive with id1
@@ -493,6 +494,10 @@ describe('South Modbus', () => {
       readInputRegisters: readInputRegistersMock,
       readCoils: readCoilsMock,
       readDiscreteInputs: readDiscreteInputsMock
+    };
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true }
     };
 
     const disconnectMock = mock.fn(async (): Promise<void> => undefined);
@@ -531,6 +536,41 @@ describe('South Modbus', () => {
     assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], configuration.items);
   });
 
+  it('should query each item individually when batchQuery is false', async () => {
+    // configuration.settings.batchQuery is already false — individual mode is the default.
+    // Each of the 6 items must produce exactly one util-function call, regardless of address proximity.
+    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '100');
+    utilsModbusExports.readInputRegister = mock.fn(async (): Promise<string> => '200');
+    utilsModbusExports.readCoil = mock.fn(async (): Promise<string> => '1');
+    utilsModbusExports.readDiscreteInputRegister = mock.fn(async (): Promise<string> => '0');
+
+    (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+    const addContentMock = mock.fn(
+      async (_data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> =>
+        undefined
+    );
+    south.addContent = addContentMock;
+
+    await south.directQuery(configuration.items);
+
+    // 3 holding-register items (id1, id2, id6) → 3 individual calls
+    assert.strictEqual(utilsModbusExports.readHoldingRegister.mock.calls.length, 3);
+    // 1 input-register (id3)
+    assert.strictEqual(utilsModbusExports.readInputRegister.mock.calls.length, 1);
+    // 1 coil (id5)
+    assert.strictEqual(utilsModbusExports.readCoil.mock.calls.length, 1);
+    // 1 discrete-input (id4)
+    assert.strictEqual(utilsModbusExports.readDiscreteInputRegister.mock.calls.length, 1);
+
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    // All 6 items produce a value
+    assert.strictEqual(addContentMock.mock.calls[0].arguments[0].content!.length, 6);
+    // All values share the single scan-cycle timestamp (modbusFunction's own timestamp is overridden)
+    for (const v of addContentMock.mock.calls[0].arguments[0].content as Array<{ timestamp: string }>) {
+      assert.strictEqual(v.timestamp, testData.constants.dates.FAKE_NOW);
+    }
+  });
+
   it('should merge non-consecutive items into one request when groupingGap covers the gap', async () => {
     // Three holding-register uint16 items at addresses 1, 3, 5 (gap of 2 between each).
     // With groupingGap = 2 all three should be merged into readHoldingRegisters(1, 5).
@@ -562,7 +602,7 @@ describe('South Modbus', () => {
     // groupingGap = 0: gap of 2 exceeds tolerance → 3 separate requests
     (south as unknown as Record<string, unknown>)['connector'] = {
       ...configuration,
-      settings: { ...configuration.settings, groupingGap: 0 }
+      settings: { ...configuration.settings, batchQuery: true, groupingGap: 0 }
     };
     await south.directQuery(gapItems);
     assert.strictEqual(readHoldingRegistersMock.mock.calls.length, 3);
@@ -575,7 +615,7 @@ describe('South Modbus', () => {
     // groupingGap = 2: gap of 2 is within tolerance → 1 merged request covering addresses 1–5
     (south as unknown as Record<string, unknown>)['connector'] = {
       ...configuration,
-      settings: { ...configuration.settings, groupingGap: 2 }
+      settings: { ...configuration.settings, batchQuery: true, groupingGap: 2 }
     };
     await south.directQuery(gapItems);
     assert.strictEqual(readHoldingRegistersMock.mock.calls.length, 1);
@@ -588,6 +628,10 @@ describe('South Modbus', () => {
       throw new Error('modbus function error');
     });
     (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true }
+    };
     (south as unknown as Record<string, unknown>)['disconnecting'] = true;
     const disconnectMock = mock.fn(async (): Promise<void> => undefined);
     south.disconnect = disconnectMock;
@@ -607,6 +651,10 @@ describe('South Modbus', () => {
       throw new Error('modbus function error');
     });
     (south as unknown as Record<string, unknown>)['modbusClient'] = { readHoldingRegisters: readHoldingRegistersMock };
+    (south as unknown as Record<string, unknown>)['connector'] = {
+      ...configuration,
+      settings: { ...configuration.settings, batchQuery: true }
+    };
     (south as unknown as Record<string, unknown>)['disconnecting'] = false;
     const disconnectMock = mock.fn(async (): Promise<void> => undefined);
     south.disconnect = disconnectMock;
