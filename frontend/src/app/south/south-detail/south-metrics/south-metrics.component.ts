@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit, inject, input, linkedSignal } from '@angular/core';
+import { Component, NgZone, effect, inject, input, linkedSignal } from '@angular/core';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorLightDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorMetrics } from '../../../../../../backend/shared/model/engine.model';
@@ -17,7 +17,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
   styleUrl: './south-metrics.component.scss',
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, NgbTooltip, TranslateModule]
 })
-export class SouthMetricsComponent implements OnInit {
+export class SouthMetricsComponent {
   private zone = inject(NgZone);
   private router = inject(Router);
   private southService = inject(SouthConnectorService);
@@ -29,12 +29,14 @@ export class SouthMetricsComponent implements OnInit {
   readonly displayButton = input(false);
   readonly connectorMetrics = input.required<SouthConnectorMetrics>();
 
-  ngOnInit(): void {
-    if (!this.manifest()) {
-      this.southService.getSouthManifest(this.southConnector().type).subscribe(manifest => {
-        this.manifestOrSouthConnectorTypeManifest.set(manifest);
-      });
-    }
+  constructor() {
+    effect(() => {
+      if (!this.manifest()) {
+        this.southService.getSouthManifest(this.southConnector().type).subscribe(manifest => {
+          this.manifestOrSouthConnectorTypeManifest.set(manifest);
+        });
+      }
+    });
   }
 
   resetMetrics() {

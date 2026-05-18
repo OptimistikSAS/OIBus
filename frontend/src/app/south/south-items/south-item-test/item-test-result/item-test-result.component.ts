@@ -1,4 +1,4 @@
-import { afterRenderEffect, Component, computed, ElementRef, OnDestroy, output, signal, viewChild } from '@angular/core';
+import { afterRenderEffect, Component, computed, DestroyRef, ElementRef, inject, output, signal, viewChild } from '@angular/core';
 import { OIBusContent, OIBusTimeValue } from '../../../../../../../backend/shared/model/engine.model';
 import { createPageFromArray, Page } from '../../../../../../../backend/shared/model/types';
 import { LoadingSpinnerComponent } from '../../../../shared/loading-spinner/loading-spinner.component';
@@ -25,7 +25,7 @@ function emptyPage<T>(): Page<T> {
   styleUrl: './item-test-result.component.scss',
   imports: [LoadingSpinnerComponent, TranslatePipe, PaginationComponent, ProgressbarComponent]
 })
-export class ItemTestResultComponent implements OnDestroy {
+export class ItemTestResultComponent {
   private readonly _result = signal<OIBusContent | null>(null);
   get result() {
     return this._result();
@@ -68,6 +68,7 @@ export class ItemTestResultComponent implements OnDestroy {
   });
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => this.editorView?.destroy());
     afterRenderEffect(() => {
       const container = this.editorContainer();
       if (!container) {
@@ -94,10 +95,6 @@ export class ItemTestResultComponent implements OnDestroy {
         this.writeValueChunked(newContent);
       }
     });
-  }
-
-  ngOnDestroy(): void {
-    this.editorView?.destroy();
   }
 
   get currentDisplayModeIcon() {

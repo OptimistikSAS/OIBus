@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
@@ -45,7 +45,7 @@ const PAGE_SIZE = 15;
   templateUrl: './south-list.component.html',
   styleUrl: './south-list.component.scss'
 })
-export class SouthListComponent implements OnInit {
+export class SouthListComponent {
   private confirmationService = inject(ConfirmationService);
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
@@ -67,7 +67,7 @@ export class SouthListComponent implements OnInit {
     { label: 'south.enabled', class: 'green-dot' }
   ];
 
-  ngOnInit() {
+  constructor() {
     this.southConnectorService.list().subscribe(souths => {
       this.allSouths = souths;
       this.states.clear();
