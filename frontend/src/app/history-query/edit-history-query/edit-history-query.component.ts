@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject, OnInit } from '@angular/core';
+import { Component, forwardRef, inject } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import {
@@ -122,7 +122,7 @@ export interface TableData {
     }
   ]
 })
-export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate {
+export class EditHistoryQueryComponent implements CanComponentDeactivate {
   private historyQueryService = inject(HistoryQueryService);
   private northConnectorService = inject(NorthConnectorService);
   private southConnectorService = inject(SouthConnectorService);
@@ -219,7 +219,7 @@ export class EditHistoryQueryComponent implements OnInit, CanComponentDeactivate
   };
   currentColumnSort: keyof TableData | null = 'name';
 
-  ngOnInit() {
+  constructor() {
     combineLatest([
       this.scanModeService.list(),
       this.certificateService.list(),

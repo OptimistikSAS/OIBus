@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
@@ -45,7 +45,7 @@ const PAGE_SIZE = 15;
   templateUrl: './history-query-list.component.html',
   styleUrl: './history-query-list.component.scss'
 })
-export class HistoryQueryListComponent implements OnInit {
+export class HistoryQueryListComponent {
   private confirmationService = inject(ConfirmationService);
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
@@ -71,7 +71,7 @@ export class HistoryQueryListComponent implements OnInit {
     { label: 'enums.status.ABORTED', class: 'red-dot' }
   ];
 
-  ngOnInit() {
+  constructor() {
     this.historyQueryService.list().subscribe(queries => {
       this.allHistoryQueries = queries;
       this.states.clear();
