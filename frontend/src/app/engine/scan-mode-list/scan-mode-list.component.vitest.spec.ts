@@ -18,12 +18,14 @@ class ScanModeListComponentTester {
   readonly fixture = TestBed.createComponent(ScanModeListComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly scanModes = this.root.getByCss('tbody tr');
-  readonly addButton = this.root.getByCss('#add-scan-mode');
   readonly deleteButtons = this.root.getByCss('.delete-scan-mode');
   readonly editButtons = this.root.getByCss('.edit-scan-mode');
+  readonly addScanMode = this.root.getByCss('#add-scan-mode');
+  readonly noScanMode = this.root.getByCss('#no-scan-mode');
 }
 
 describe('ScanModeListComponent', () => {
+  let tester: ScanModeListComponentTester;
   let scanModeService: MockObject<ScanModeService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
@@ -47,37 +49,28 @@ describe('ScanModeListComponent', () => {
   });
 
   describe('with scan modes', () => {
-    let tester: ScanModeListComponentTester;
-
     beforeEach(() => {
       scanModeService.list.mockReturnValue(of(testData.scanMode.list as unknown as Array<ScanModeDTO>));
       tester = new ScanModeListComponentTester();
-      tester.fixture.detectChanges();
     });
 
-    test('should display a list of scan modes', async () => {
-      await expect.element(tester.scanModes).toHaveLength(testData.scanMode.list.filter(s => s.id !== 'subscription').length);
+    test('should display a list of scan modes (excluding subscription)', async () => {
+      const nonSubscriptionCount = testData.scanMode.list.filter(s => s.id !== 'subscription').length;
+      await expect.element(tester.scanModes).toHaveLength(nonSubscriptionCount);
     });
 
     test('should delete a scan mode', async () => {
+      const nonSubscriptionScanModes = testData.scanMode.list.filter(s => s.id !== 'subscription');
       confirmationService.confirm.mockReturnValue(of(undefined));
       scanModeService.delete.mockReturnValue(of(undefined));
 
       await tester.deleteButtons.nth(0).click();
 
       expect(confirmationService.confirm).toHaveBeenCalled();
-      expect(scanModeService.delete).toHaveBeenCalledWith('scanModeId1');
-      expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.deleted', { name: 'scanMode1' });
-    });
-
-    test('should open add modal', async () => {
-      const fakeEditComponent = createMock(EditScanModeModalComponent);
-      modalService.mockClosedModal(fakeEditComponent, { name: 'new-scan-mode' } as ScanModeDTO);
-
-      await tester.addButton.click();
-
-      expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
-      expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.created', { name: 'new-scan-mode' });
+      expect(scanModeService.delete).toHaveBeenCalledWith(nonSubscriptionScanModes[0].id);
+      expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.deleted', {
+        name: nonSubscriptionScanModes[0].name
+      });
     });
 
     test('should open edit modal', async () => {
@@ -88,6 +81,25 @@ describe('ScanModeListComponent', () => {
 
       expect(fakeEditComponent.prepareForEdition).toHaveBeenCalled();
       expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.updated', { name: 'updated-scan-mode' });
+    });
+
+    test('should open add modal', async () => {
+      const fakeEditComponent = createMock(EditScanModeModalComponent);
+      modalService.mockClosedModal(fakeEditComponent, { name: 'new-scan-mode' } as ScanModeDTO);
+
+      await tester.addScanMode.click();
+
+      expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
+      expect(notificationService.success).toHaveBeenCalledWith('engine.scan-mode.created', { name: 'new-scan-mode' });
+    });
+  });
+
+  describe('with no scan modes', () => {
+    test('should display an empty list', async () => {
+      scanModeService.list.mockReturnValue(of([]));
+      tester = new ScanModeListComponentTester();
+
+      await expect.element(tester.noScanMode).toBeInTheDocument();
     });
   });
 });

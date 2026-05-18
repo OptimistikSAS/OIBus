@@ -1,15 +1,17 @@
 import { TestBed } from '@angular/core/testing';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { EditScanModeModalComponent } from './edit-scan-mode-modal.component';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { ScanModeService } from '../../../services/scan-mode.service';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
-import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { ScanModeDTO, ValidatedCronExpression } from '../../../../../../backend/shared/model/scan-mode.model';
 
 class EditScanModeModalComponentTester {
   readonly fixture = TestBed.createComponent(EditScanModeModalComponent);
@@ -33,17 +35,26 @@ describe('EditScanModeModalComponent', () => {
   beforeEach(() => {
     scanModeService = createMock(ScanModeService);
     activeModal = createMock(NgbActiveModal);
+    const unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
 
     scanModeService.list.mockReturnValue(of([]));
     scanModeService.verifyCron.mockReturnValue(
-      of({ isValid: true, humanReadableForm: 'every second', nextExecutions: [], errorMessage: '' })
+      of({
+        isValid: true,
+        expression: '* * * * *',
+        errorMessage: '',
+        nextExecutions: [],
+        humanReadableForm: ''
+      } as ValidatedCronExpression)
     );
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideHttpClientTesting(),
         { provide: ScanModeService, useValue: scanModeService },
-        { provide: NgbActiveModal, useValue: activeModal }
+        { provide: NgbActiveModal, useValue: activeModal },
+        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
       ]
     });
 

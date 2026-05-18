@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { page } from 'vitest/browser';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { ActivatedRoute, provideRouter } from '@angular/router';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { OIARegistrationComponent } from './oia-registration.component';
 import { EngineService } from '../../services/engine.service';
@@ -78,6 +79,7 @@ describe('OIARegistrationComponent', () => {
       providers: [
         provideI18nTesting(),
         provideRouter([]),
+        provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: activatedRouteStub },
         { provide: EngineService, useValue: engineService },
         { provide: OibusCommandService, useValue: commandService },
