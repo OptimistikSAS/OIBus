@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -43,7 +43,7 @@ const PAGE_SIZE = 15;
   templateUrl: './north-list.component.html',
   styleUrl: './north-list.component.scss'
 })
-export class NorthListComponent implements OnInit {
+export class NorthListComponent {
   private confirmationService = inject(ConfirmationService);
   private notificationService = inject(NotificationService);
   private modalService = inject(ModalService);
@@ -65,7 +65,7 @@ export class NorthListComponent implements OnInit {
     { label: 'north.enabled', class: 'green-dot' }
   ];
 
-  ngOnInit() {
+  constructor() {
     this.northConnectorService.list().subscribe(norths => {
       this.allNorths = norths;
       this.states.clear();

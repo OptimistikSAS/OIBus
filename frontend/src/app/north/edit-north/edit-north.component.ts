@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject, OnInit } from '@angular/core';
+import { Component, forwardRef, inject } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
@@ -64,7 +64,7 @@ import { toSourceCommand } from '../../shared/utils/utils';
     }
   ]
 })
-export class EditNorthComponent implements OnInit, CanComponentDeactivate {
+export class EditNorthComponent implements CanComponentDeactivate {
   private northConnectorService = inject(NorthConnectorService);
   private fb = inject(NonNullableFormBuilder);
   private notificationService = inject(NotificationService);
@@ -131,7 +131,7 @@ export class EditNorthComponent implements OnInit, CanComponentDeactivate {
     }
   };
 
-  ngOnInit() {
+  constructor() {
     combineLatest([
       this.scanModeService.list(),
       this.certificateService.list(),
