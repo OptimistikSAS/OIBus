@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import { firstValueFrom, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -36,7 +36,7 @@ const PAGE_SIZE = 20;
   templateUrl: './ip-filter-list.component.html',
   styleUrl: './ip-filter-list.component.scss'
 })
-export class IpFilterListComponent implements OnInit {
+export class IpFilterListComponent {
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
@@ -48,7 +48,7 @@ export class IpFilterListComponent implements OnInit {
   sortField: IpFilterSortField = null;
   sortDirection: SortDirection = 'asc';
 
-  ngOnInit() {
+  constructor() {
     this.ipFilterService.list().subscribe(ipFilterList => {
       this.allIpFilters = ipFilterList;
       this.updateList(0);

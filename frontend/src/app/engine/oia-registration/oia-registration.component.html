@@ -1,4 +1,4 @@
-@if (registration) {
+@if (registration(); as reg) {
   <div class="oib-padded-container">
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
@@ -10,7 +10,7 @@
             <h1 class="oib-title" translate="oia-module.title"></h1>
           </div>
         </div>
-        @if (registration.status === 'NOT_REGISTERED') {
+        @if (reg.status === 'NOT_REGISTERED') {
           <div class="w-100 text-center oib-search-form mt-2 py-3">
             <div class="mb-2">
               <span translate="oia-module.registration.not-registered"></span>
@@ -20,7 +20,7 @@
             </button>
           </div>
         }
-        @if (registration.status === 'PENDING') {
+        @if (reg.status === 'PENDING') {
           <div class="oib-search-form mt-2 py-3">
             <div class="w-100 text-center">
               <div class="mb-2">
@@ -28,12 +28,12 @@
                 <span translate="common.colon-separator"></span>
               </div>
               <div>
-                <h1>{{ registration.activationCode }}</h1>
+                <h1>{{ reg.activationCode }}</h1>
               </div>
               <div>
                 <span translate="oia-module.registration.expiration-date"></span>
                 <span translate="common.colon-separator"></span>
-                <span>{{ registration.activationExpirationDate! | datetime: 'mediumWithSeconds' }}</span>
+                <span>{{ reg.activationExpirationDate! | datetime: 'mediumWithSeconds' }}</span>
               </div>
               <button type="button" class="btn btn-outline-secondary btn-sm" id="unregister-button" (click)="unregister()">
                 <span translate="oia-module.registration.unregister"></span>
@@ -41,16 +41,16 @@
             </div>
           </div>
         }
-        @if (registration.status === 'REGISTERED') {
+        @if (reg.status === 'REGISTERED') {
           <div class="oib-search-form mt-2 py-3">
             <div class="w-100 text-center">
               <span
                 translate="oia-module.registration.registered"
-                [translateParams]="{ activationDate: registration.activationDate | datetime: 'mediumWithSeconds' }"
+                [translateParams]="{ activationDate: reg.activationDate | datetime: 'mediumWithSeconds' }"
               ></span>
             </div>
             <div class="w-100 text-center mb-2">
-              <a [href]="registration.host" target="_blank">{{ registration.host }}</a>
+              <a [href]="reg.host" target="_blank">{{ reg.host }}</a>
             </div>
             <div class="text-center">
               <button type="button" class="btn btn-outline-secondary btn-sm me-2" id="register-unregister-button" (click)="unregister()">
@@ -64,7 +64,7 @@
         }
       </div>
     </div>
-    @if (registration.status === 'REGISTERED') {
+    @if (reg.status === 'REGISTERED') {
       <div class="row justify-content-center mt-3">
         <div class="col">
           <h2 class="oib-title" translate="oia-module.commands.title"></h2>

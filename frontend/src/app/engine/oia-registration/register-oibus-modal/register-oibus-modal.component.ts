@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators, FormGroup, FormControl } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
@@ -31,9 +31,9 @@ export class RegisterOibusModalComponent {
   private notificationService = inject(NotificationService);
   state = new ObservableState();
   testState = new ObservableState();
-  testLoading = false;
-  testSuccess = false;
-  testError: string | null = null;
+  testLoading = signal(false);
+  testSuccess = signal(false);
+  testError = signal<string | null>(null);
 
   form = this.fb.group({
     host: ['', Validators.required],
@@ -197,22 +197,22 @@ export class RegisterOibusModalComponent {
     };
 
     // Reset test state
-    this.testLoading = true;
-    this.testSuccess = false;
-    this.testError = null;
+    this.testLoading.set(true);
+    this.testSuccess.set(false);
+    this.testError.set(null);
 
     this.oibusService
       .testOIAnalyticsConnection(command)
       .pipe(this.testState.pendingUntilFinalization())
       .subscribe({
         next: () => {
-          this.testSuccess = true;
-          this.testLoading = false;
+          this.testSuccess.set(true);
+          this.testLoading.set(false);
           this.notificationService.success('oia-module.registration.test-connection-success');
         },
         error: (httpError: any) => {
-          this.testError = httpError.error?.message || httpError.message || 'Unknown error occurred';
-          this.testLoading = false;
+          this.testError.set(httpError.error?.message || httpError.message || 'Unknown error occurred');
+          this.testLoading.set(false);
         }
       });
   }

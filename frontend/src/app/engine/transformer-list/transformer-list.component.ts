@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject } from '@angular/core';
 
 import { firstValueFrom, switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -36,7 +36,7 @@ const PAGE_SIZE = 20;
   templateUrl: './transformer-list.component.html',
   styleUrl: './transformer-list.component.scss'
 })
-export class TransformerListComponent implements OnInit {
+export class TransformerListComponent {
   private confirmationService = inject(ConfirmationService);
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
@@ -48,7 +48,7 @@ export class TransformerListComponent implements OnInit {
   sortField: TransformerSortField = null;
   sortDirection: SortDirection = 'asc';
 
-  ngOnInit() {
+  constructor() {
     this.transformerService.list().subscribe(transformers => {
       this.allTransformers = transformers.filter(element => element.type === 'custom') as Array<CustomTransformerDTO>;
       this.updateList(0);
