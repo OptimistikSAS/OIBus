@@ -18,13 +18,14 @@ class IpFilterListComponentTester {
   readonly fixture = TestBed.createComponent(IpFilterListComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly ipFilters = this.root.getByCss('tbody tr');
-  readonly addButton = this.root.getByCss('#add-ip-filter');
   readonly deleteButtons = this.root.getByCss('.delete-ip-filter');
   readonly editButtons = this.root.getByCss('.edit-ip-filter');
+  readonly addIpFilter = this.root.getByCss('#add-ip-filter');
   readonly noIpFilter = this.root.getByCss('#no-ip-filter');
 }
 
 describe('IpFilterListComponent', () => {
+  let tester: IpFilterListComponentTester;
   let ipFilterService: MockObject<IpFilterService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
@@ -48,16 +49,14 @@ describe('IpFilterListComponent', () => {
   });
 
   describe('with ip filters', () => {
-    let tester: IpFilterListComponentTester;
-
     beforeEach(() => {
       ipFilterService.list.mockReturnValue(of(testData.ipFilters.list as unknown as Array<IPFilterDTO>));
       tester = new IpFilterListComponentTester();
-      tester.fixture.detectChanges();
     });
 
     test('should display a list of ip filters', async () => {
       await expect.element(tester.ipFilters).toHaveLength(2);
+      await expect.element(tester.ipFilters.nth(0).getByCss('td')).toHaveLength(6);
     });
 
     test('should delete an ip filter', async () => {
@@ -68,39 +67,42 @@ describe('IpFilterListComponent', () => {
       await tester.deleteButtons.nth(0).click();
 
       expect(confirmationService.confirm).toHaveBeenCalled();
-      expect(ipFilterService.delete).toHaveBeenCalledWith('ipFilterId1');
+      expect(ipFilterService.delete).toHaveBeenCalledWith(testData.ipFilters.list[0].id);
       expect(ipFilterService.list).toHaveBeenCalledTimes(1);
-      expect(notificationService.success).toHaveBeenCalledWith('engine.ip-filter.deleted', { address: '192.168.1.1' });
+      expect(notificationService.success).toHaveBeenCalledWith('engine.ip-filter.deleted', {
+        address: testData.ipFilters.list[0].address
+      });
     });
 
     test('should open edit modal', async () => {
       const fakeEditComponent = createMock(EditIpFilterModalComponent);
-      modalService.mockClosedModal(fakeEditComponent, { address: 'new-address' } as IPFilterDTO);
+      modalService.mockClosedModal(fakeEditComponent, { address: 'new-address' });
+      ipFilterService.list.mockClear();
 
       await tester.editButtons.nth(0).click();
 
       expect(fakeEditComponent.prepareForEdition).toHaveBeenCalled();
-      expect(ipFilterService.list).toHaveBeenCalledTimes(2);
+      expect(ipFilterService.list).toHaveBeenCalledTimes(1);
       expect(notificationService.success).toHaveBeenCalledWith('engine.ip-filter.updated', { address: 'new-address' });
     });
 
     test('should open add modal', async () => {
       const fakeEditComponent = createMock(EditIpFilterModalComponent);
-      modalService.mockClosedModal(fakeEditComponent, { address: 'new-address' } as IPFilterDTO);
+      modalService.mockClosedModal(fakeEditComponent, { address: 'new-address' });
+      ipFilterService.list.mockClear();
 
-      await tester.addButton.click();
+      await tester.addIpFilter.click();
 
       expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
-      expect(ipFilterService.list).toHaveBeenCalledTimes(2);
+      expect(ipFilterService.list).toHaveBeenCalledTimes(1);
       expect(notificationService.success).toHaveBeenCalledWith('engine.ip-filter.created', { address: 'new-address' });
     });
   });
 
   describe('with no ip filters', () => {
-    test('should display empty state', async () => {
+    test('should display an empty list', async () => {
       ipFilterService.list.mockReturnValue(of([]));
-      const tester = new IpFilterListComponentTester();
-      tester.fixture.detectChanges();
+      tester = new IpFilterListComponentTester();
 
       await expect.element(tester.noIpFilter).toBeInTheDocument();
     });

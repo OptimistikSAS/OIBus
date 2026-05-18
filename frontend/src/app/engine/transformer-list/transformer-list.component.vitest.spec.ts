@@ -11,19 +11,20 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
 import testData from '../../../../../backend/src/tests/utils/test-data';
-import { CustomTransformerDTO } from '../../../../../backend/shared/model/transformer.model';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { CustomTransformerDTO, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';
 
 class TransformerListComponentTester {
   readonly fixture = TestBed.createComponent(TransformerListComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly transformers = this.root.getByCss('tbody tr');
-  readonly addButton = this.root.getByCss('#add-transformer');
   readonly deleteButtons = this.root.getByCss('.delete-transformer');
-  readonly editButtons = this.root.getByCss('.edit-transformer');
+  readonly addTransformer = this.root.getByCss('#add-transformer');
+  readonly noTransformer = this.root.getByCss('#no-transformer');
 }
 
 describe('TransformerListComponent', () => {
+  let tester: TransformerListComponentTester;
   let transformerService: MockObject<TransformerService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
@@ -47,23 +48,21 @@ describe('TransformerListComponent', () => {
   });
 
   describe('with transformers', () => {
-    let tester: TransformerListComponentTester;
-
     beforeEach(() => {
-      transformerService.list.mockReturnValue(of(testData.transformers.customList as unknown as Array<CustomTransformerDTO>));
+      transformerService.list.mockReturnValue(of(testData.transformers.customList as unknown as Array<TransformerDTO>));
       tester = new TransformerListComponentTester();
-      tester.fixture.detectChanges();
     });
 
-    test('should display a list of transformers', async () => {
+    test('should display a list of custom transformers', async () => {
       await expect.element(tester.transformers).toHaveLength(testData.transformers.customList.length);
     });
 
     test('should delete a transformer', async () => {
       const transformer = testData.transformers.customList[0] as unknown as CustomTransformerDTO;
+      transformerService.list.mockClear();
       confirmationService.confirm.mockReturnValue(of(undefined));
       transformerService.delete.mockReturnValue(of(undefined));
-      transformerService.list.mockReturnValue(of([]));
+      transformerService.list.mockReturnValue(of(testData.transformers.customList as unknown as Array<TransformerDTO>));
 
       await tester.deleteButtons.nth(0).click();
 
@@ -77,15 +76,24 @@ describe('TransformerListComponent', () => {
     test('should open add modal', async () => {
       const fakeEditComponent = createMock(EditTransformerModalComponent);
       const newTransformer = testData.transformers.customList[0] as unknown as CustomTransformerDTO;
-      transformerService.list.mockReturnValue(of([]));
       modalService.mockClosedModal(fakeEditComponent, newTransformer);
+      transformerService.list.mockReturnValue(of(testData.transformers.customList as unknown as Array<TransformerDTO>));
 
-      await tester.addButton.click();
+      await tester.addTransformer.click();
 
       expect(fakeEditComponent.prepareForCreation).toHaveBeenCalled();
       expect(notificationService.success).toHaveBeenCalledWith('configuration.oibus.manifest.transformers.created', {
         name: newTransformer.name
       });
+    });
+  });
+
+  describe('with no transformers', () => {
+    test('should display an empty list', async () => {
+      transformerService.list.mockReturnValue(of([]));
+      tester = new TransformerListComponentTester();
+
+      await expect.element(tester.noTransformer).toBeInTheDocument();
     });
   });
 });

@@ -1,12 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 import { EditIpFilterModalComponent } from './edit-ip-filter-modal.component';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { IpFilterService } from '../../../services/ip-filter.service';
+import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
 import { IPFilterDTO } from '../../../../../../backend/shared/model/ip-filter.model';
@@ -32,12 +34,15 @@ describe('EditIpFilterModalComponent', () => {
   beforeEach(() => {
     ipFilterService = createMock(IpFilterService);
     activeModal = createMock(NgbActiveModal);
+    const unsavedChangesConfirmationService = createMock(UnsavedChangesConfirmationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideHttpClientTesting(),
         { provide: IpFilterService, useValue: ipFilterService },
-        { provide: NgbActiveModal, useValue: activeModal }
+        { provide: NgbActiveModal, useValue: activeModal },
+        { provide: UnsavedChangesConfirmationService, useValue: unsavedChangesConfirmationService }
       ]
     });
 
