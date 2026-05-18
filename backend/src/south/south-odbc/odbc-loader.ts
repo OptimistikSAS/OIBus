@@ -5,12 +5,15 @@ export interface IOdbc {
   }>;
 }
 
-import odbcModule from 'odbc';
-
 let odbc: IOdbc | null = null;
 
 export async function importOdbc(): Promise<IOdbc | null> {
-  return (odbcModule as IOdbc | null) ?? null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return (require('odbc') as IOdbc | null) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function loadOdbc(): Promise<IOdbc | null> {

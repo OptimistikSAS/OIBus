@@ -49,6 +49,16 @@ jobs:
           echo "Pre-release: ${{ steps.release_info.outputs.prerelease }}"
           echo "Tag name: ${{ steps.release_info.outputs.tag_name }}"
 
+      - name: Install unixODBC development library (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: sudo apt-get install -y unixodbc-dev
+
+      - name: Install unixODBC development library (macOS)
+        if: ${{ runner.os == 'macOS' }}
+        shell: bash
+        run: brew install unixodbc
+
       - name: Setup environment
         uses: ./.github/actions/setup_environment
         with:
