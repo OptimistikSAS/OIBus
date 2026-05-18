@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, inject, OnDestroy } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -92,7 +92,7 @@ export interface TableData {
   styleUrl: './south-detail.component.scss',
   providers: [PageLoader]
 })
-export class SouthDetailComponent implements OnDestroy {
+export class SouthDetailComponent {
   private windowService = inject(WindowService);
   private southConnectorService = inject(SouthConnectorService);
   private scanModeService = inject(ScanModeService);
@@ -102,10 +102,10 @@ export class SouthDetailComponent implements OnDestroy {
   private modalService = inject(ModalService);
   private engineService = inject(EngineService);
   private translateService = inject(TranslateService);
+  private destroyRef = inject(DestroyRef);
 
   protected router = inject(Router);
   private route = inject(ActivatedRoute);
-  private cd = inject(ChangeDetectorRef);
 
   southConnector: SouthConnectorDTO | null = null;
   manifest: SouthConnectorManifest | null = null;
@@ -121,7 +121,7 @@ export class SouthDetailComponent implements OnDestroy {
   scanModes: Array<ScanModeDTO> = [];
   certificates: Array<CertificateDTO> = [];
 
-  connectorMetrics: SouthConnectorMetrics | null = null;
+  connectorMetrics = signal<SouthConnectorMetrics | null>(null);
   connectorStream: EventSource | null = null;
   oibusInfo: OIBusInfo | null = null;
 
@@ -200,10 +200,10 @@ export class SouthDetailComponent implements OnDestroy {
         this.connectorStream = new EventSource(`/sse/south/${this.southConnector!.id}?token=${token}`, { withCredentials: true });
         this.connectorStream.addEventListener('message', (event: MessageEvent) => {
           if (event && event.data) {
-            this.connectorMetrics = JSON.parse(event.data);
-            this.cd.detectChanges();
+            this.connectorMetrics.set(JSON.parse(event.data));
           }
         });
+        this.destroyRef.onDestroy(() => this.connectorStream?.close());
       });
 
     // Subscribe to filter control changes
@@ -825,10 +825,6 @@ export class SouthDetailComponent implements OnDestroy {
           this.southConnector = southConnector;
         });
     }
-  }
-
-  ngOnDestroy() {
-    this.connectorStream?.close();
   }
 
   onClipboardCopy(result: boolean) {

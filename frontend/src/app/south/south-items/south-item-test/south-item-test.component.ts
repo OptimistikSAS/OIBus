@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, effect, inject, input, OnInit, viewChild } from '@angular/core';
+import { AfterContentInit, Component, effect, inject, input, viewChild } from '@angular/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
@@ -35,7 +35,7 @@ import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-rang
     ItemTestResultComponent
   ]
 })
-class SouthItemTestComponent implements AfterContentInit, OnInit {
+class SouthItemTestComponent implements AfterContentInit {
   private translate = inject(TranslateService);
 
   readonly testResultView = viewChild.required<ItemTestResultComponent>('testResultViewComponent');
@@ -68,10 +68,6 @@ class SouthItemTestComponent implements AfterContentInit, OnInit {
 
   currentDisplayMode: ContentDisplayMode | null = null;
   availableDisplayModes: Array<ContentDisplayMode> = [];
-
-  ngOnInit() {
-    this.initForm();
-  }
 
   constructor() {
     effect(() => this.manifest() && this.initForm());

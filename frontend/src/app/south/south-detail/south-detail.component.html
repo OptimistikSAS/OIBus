@@ -30,8 +30,8 @@
           </span>
         </div>
         <!-- South metrics -->
-        @if (connectorMetrics) {
-          <oib-south-metrics [connectorMetrics]="connectorMetrics" [manifest]="manifest" [southConnector]="southConnector" />
+        @if (connectorMetrics()) {
+          <oib-south-metrics [connectorMetrics]="connectorMetrics()!" [manifest]="manifest" [southConnector]="southConnector" />
         }
         <!-- Specific settings -->
         <oib-box>

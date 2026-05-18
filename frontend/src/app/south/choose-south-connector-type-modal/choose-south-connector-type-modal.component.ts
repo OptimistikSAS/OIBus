@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -15,7 +15,7 @@ import { ReactiveFormsModule } from '@angular/forms';
   styleUrl: './choose-south-connector-type-modal.component.scss',
   imports: [ReactiveFormsModule, TranslateDirective, OIBusSouthCategoryEnumPipe, OIBusSouthTypeEnumPipe, OIBusSouthTypeDescriptionEnumPipe]
 })
-export class ChooseSouthConnectorTypeModalComponent implements OnInit {
+export class ChooseSouthConnectorTypeModalComponent {
   private modal = inject(NgbActiveModal);
   private southConnectorService = inject(SouthConnectorService);
   private router = inject(Router);
@@ -23,7 +23,7 @@ export class ChooseSouthConnectorTypeModalComponent implements OnInit {
   southTypes: Array<SouthType> = [];
   groupedSouthTypes: Array<{ category: string; types: Array<SouthType> }> = [];
 
-  ngOnInit() {
+  constructor() {
     this.southConnectorService.getSouthTypes().subscribe(types => {
       this.southTypes = types;
       this.groupSouthTypes();
