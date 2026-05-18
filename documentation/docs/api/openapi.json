@@ -3201,6 +3201,9 @@
 					"swapWordsInDWords": {
 						"type": "boolean"
 					},
+					"batchQuery": {
+						"type": "boolean"
+					},
 					"groupingGap": {
 						"type": "number",
 						"format": "double"
@@ -3217,7 +3220,7 @@
 					"endianness",
 					"swapBytesInWords",
 					"swapWordsInDWords",
-					"groupingGap"
+					"batchQuery"
 				],
 				"type": "object",
 				"additionalProperties": false
