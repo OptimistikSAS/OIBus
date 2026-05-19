@@ -214,10 +214,45 @@ interface ICommandTransformerService {
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
+/**
+ * Extracts a human-readable message from any thrown value.
+ *
+ * Node.js / undici network errors can arrive as an {@link AggregateError}
+ * (e.g. ECONNREFUSED) whose top-level `.message` is empty while the actual
+ * reasons live inside `.errors[]`. This helper recurses into sub-errors and
+ * `Error.cause` so that callers always receive a non-empty, descriptive string.
+ */
+function getErrorMessage(error: unknown): string {
+  if (error instanceof AggregateError) {
+    const subMessages = error.errors.map(getErrorMessage).filter(Boolean);
+    return subMessages.length > 0 ? subMessages.join('; ') : error.message || error.toString();
+  }
+  if (error instanceof Error) {
+    const parts: Array<string> = [];
+    if (error.message) parts.push(error.message);
+    const cause = (error as Error & { cause?: unknown }).cause;
+    if (cause != null) {
+      const causeMsg = getErrorMessage(cause);
+      if (causeMsg) parts.push(causeMsg);
+    }
+    return parts.join(': ') || error.toString();
+  }
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
 export default class OIAnalyticsCommandService {
-  private retrieveCommandsInterval: NodeJS.Timeout | undefined = undefined;
-  private ongoingRetrieveCommands = false;
-  private ongoingExecuteCommand = false;
+  private isRetrievingCommands = false;
+  private isExecutingCommand = false;
+  private isAckFlushInProgress = false;
+  private readonly ackQueue = new Map<string, OIBusCommand>();
+  private refreshCommandsTimeout: NodeJS.Timeout | null = null;
+  private ackRetryTimeout: NodeJS.Timeout | null = null;
+  private stopped = false;
   public commandEvent: EventEmitter = new EventEmitter(); // Used to trigger command execution
 
   constructor(
@@ -271,28 +306,25 @@ export default class OIAnalyticsCommandService {
   }
 
   async start(): Promise<void> {
-    this.retrieveCommandsInterval = setTimeout(
-      this.checkCommands.bind(this),
-      this.oIAnalyticsRegistrationService.getRegistrationSettings()!.commandRefreshInterval * 1000
-    );
-
     this.oIBusService.loggerEvent.on('updated', (logger: ILogger) => {
       this.logger = logger;
     });
 
-    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
-      const registrationSettings = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
-      clearTimeout(this.retrieveCommandsInterval);
-
-      if (registrationSettings.status === 'REGISTERED') {
-        this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registrationSettings.commandRefreshInterval * 1000);
+    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', async () => {
+      if (this.stopped) return;
+      if (this.refreshCommandsTimeout) {
+        clearTimeout(this.refreshCommandsTimeout);
+        this.refreshCommandsTimeout = null;
       }
+      await this.refreshCommands();
     });
 
     this.commandEvent.on('next', async () => {
-      await this.executeCommand();
+      await this.processNextCommand();
     });
     this.commandEvent.emit('next');
+
+    await this.refreshCommands();
   }
 
   search(searchParams: CommandSearchParam): Page<OIBusCommand> {
@@ -300,11 +332,11 @@ export default class OIAnalyticsCommandService {
   }
 
   findById(commandId: string): OIBusCommand {
-    const historyQuery = this.oIAnalyticsCommandRepository.findById(commandId);
-    if (!historyQuery) {
+    const command = this.oIAnalyticsCommandRepository.findById(commandId);
+    if (!command) {
       throw new NotFoundError(`OIAnalytics command "${commandId}" not found`);
     }
-    return historyQuery;
+    return command;
   }
 
   delete(commandId: string): void {
@@ -312,39 +344,42 @@ export default class OIAnalyticsCommandService {
     return this.oIAnalyticsCommandRepository.delete(command.id);
   }
 
-  async checkCommands(): Promise<void> {
+  async refreshCommands(): Promise<void> {
+    if (this.stopped) return;
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIAnalytics not registered. OIBus won't retrieve commands`);
       return;
     }
 
-    if (this.ongoingRetrieveCommands) {
-      this.logger.trace(`OIBus is already retrieving commands from OIAnalytics`);
-      this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registration.commandRefreshInterval * 1000);
+    if (this.isRetrievingCommands) {
+      this.logger.warn(
+        `OIBus is already retrieving commands from OIAnalytics. Increase refresh interval (currently ${registration.commandRefreshInterval} seconds)`
+      );
+      this.refreshCommandsTimeout = setTimeout(this.refreshCommands.bind(this), registration.commandRefreshInterval * 1000);
       return;
     }
-    this.ongoingRetrieveCommands = true;
+    this.isRetrievingCommands = true;
 
     try {
-      // First, check if the commands already retrieved have been cancelled
-      await this.checkRetrievedCommands(registration);
+      // First, check if the commands already retrieved have been canceled
+      await this.checkForCancelledCommands(registration);
       // Second, retrieve commands from OIAnalytics
-      await this.retrieveCommands(registration);
+      await this.fetchNewCommands(registration);
     } catch (error: unknown) {
-      this.ongoingRetrieveCommands = false;
-      this.logger.error((error as Error).message);
-      this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registration.commandRetryInterval * 1000);
+      this.isRetrievingCommands = false;
+      this.logger.error(getErrorMessage(error));
+      this.refreshCommandsTimeout = setTimeout(this.refreshCommands.bind(this), registration.commandRetryInterval * 1000);
       return;
     }
 
-    await this.sendAckCommands(registration);
-    this.ongoingRetrieveCommands = false;
+    await this.acknowledgeCommands(registration);
+    this.isRetrievingCommands = false;
+    this.refreshCommandsTimeout = setTimeout(this.refreshCommands.bind(this), registration.commandRefreshInterval * 1000);
     this.commandEvent.emit('next');
-    this.retrieveCommandsInterval = setTimeout(this.checkCommands.bind(this), registration.commandRefreshInterval * 1000);
   }
 
-  async sendAckCommands(registration: OIAnalyticsRegistration): Promise<void> {
+  async acknowledgeCommands(registration: OIAnalyticsRegistration): Promise<void> {
     const commandsToAck = this.oIAnalyticsCommandRepository.list({
       status: [],
       types: [],
@@ -363,8 +398,9 @@ export default class OIAnalyticsCommandService {
         this.oIAnalyticsCommandRepository.markAsAcknowledged(command.id);
         this.logger.trace(`Command ${command.id} of type ${command.type} acknowledged`);
       } catch (error: unknown) {
-        this.logger.error(`Error while acknowledging command ${command.id} of type ${command.type}: ${(error as Error).message}`);
-        if ((error as Error).message.startsWith('404 - ')) {
+        const errorMessage = getErrorMessage(error);
+        this.logger.error(`Error while acknowledging command ${command.id} of type ${command.type}: ${errorMessage}`);
+        if (errorMessage.startsWith('404 - ')) {
           this.oIAnalyticsCommandRepository.markAsAcknowledged(command.id);
         }
       }
@@ -372,9 +408,9 @@ export default class OIAnalyticsCommandService {
   }
 
   /**
-   * Check if retrieved commands have been cancelled on OIAnalytics before running them
+   * Check if retrieved commands have been canceled on OIAnalytics before running them
    */
-  async checkRetrievedCommands(registration: OIAnalyticsRegistration): Promise<void> {
+  async checkForCancelledCommands(registration: OIAnalyticsRegistration): Promise<void> {
     const pendingCommands = this.oIAnalyticsCommandRepository.list({
       status: ['RETRIEVED'],
       types: [],
@@ -395,11 +431,11 @@ export default class OIAnalyticsCommandService {
         }
       }
     } catch (error: unknown) {
-      throw new Error(`Error while checking PENDING commands status: ${(error as Error).message}`);
+      throw new Error(`Error while checking PENDING commands status: ${getErrorMessage(error)}`);
     }
   }
 
-  async retrieveCommands(registration: OIAnalyticsRegistration): Promise<void> {
+  async fetchNewCommands(registration: OIAnalyticsRegistration): Promise<void> {
     try {
       const newCommands = await this.oIAnalyticsClient.retrievePendingCommands(registration);
       if (newCommands.length > 0) {
@@ -409,37 +445,30 @@ export default class OIAnalyticsCommandService {
         }
       }
     } catch (error: unknown) {
-      throw new Error(`Error while retrieving commands: ${(error as Error).message}`);
+      throw new Error(`Error while retrieving commands: ${getErrorMessage(error)}`);
     }
   }
 
-  async executeCommand(): Promise<void> {
+  async processNextCommand(): Promise<void> {
+    if (this.stopped) return;
+    if (this.isExecutingCommand) {
+      this.logger.trace(`A command is already being executed`);
+      return;
+    }
+
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
       this.logger.trace(`OIAnalytics not registered. OIBus won't retrieve commands`);
       return;
     }
 
-    if (this.ongoingExecuteCommand) {
-      this.logger.trace(`A command is already being executed`);
-      return;
-    }
-
-    // Retrieve stored commands, already retrieved from OIAnalytics
-    const commandsToExecute = this.oIAnalyticsCommandRepository.list({
-      status: ['RETRIEVED', 'RUNNING'],
-      types: [],
-      ack: undefined,
-      start: undefined,
-      end: undefined
-    });
-    if (commandsToExecute.length === 0) {
+    const command = this.oIAnalyticsCommandRepository.findFirstToExecute();
+    if (!command) {
       this.logger.trace(`No command to execute`);
       return;
     }
-    const engineSettings = this.oIBusService.getEngineSettings();
-    const command = commandsToExecute[0];
 
+    const engineSettings = this.oIBusService.getEngineSettings();
     if (command.targetVersion !== engineSettings.version) {
       this.oIAnalyticsCommandRepository.markAsErrored(
         command.id,
@@ -448,12 +477,14 @@ export default class OIAnalyticsCommandService {
       this.commandEvent.emit('next');
       return;
     }
+
     if (!this.checkCommandPermission(command, registration)) {
       this.oIAnalyticsCommandRepository.markAsErrored(command.id, `Command ${command.id} of type ${command.type} is not authorized`);
       this.commandEvent.emit('next');
       return;
     }
-    this.ongoingExecuteCommand = true;
+
+    this.isExecutingCommand = true;
     this.oIAnalyticsCommandRepository.markAsRunning(command.id);
     this.logger.info(`Executing command ${command.type} (${command.id})`);
     try {
@@ -628,17 +659,16 @@ export default class OIAnalyticsCommandService {
           break;
       }
     } catch (error: unknown) {
-      this.ongoingExecuteCommand = false;
+      const errorMessage = getErrorMessage(error);
       this.logger.error(
-        `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: ${(error as Error).message}`
+        `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: ${errorMessage}`
       );
-      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
-      this.commandEvent.emit('next');
-      return;
+      this.oIAnalyticsCommandRepository.markAsErrored(command.id, errorMessage);
     }
-    this.ongoingExecuteCommand = false;
-    await this.sendAckCommands(registration);
+    this.isExecutingCommand = false;
+
     this.commandEvent.emit('next');
+    await this.enqueueAck(command);
   }
 
   /**
@@ -646,8 +676,16 @@ export default class OIAnalyticsCommandService {
    */
   async stop(): Promise<void> {
     this.logger.debug(`Stopping OIAnalytics command service...`);
-    clearTimeout(this.retrieveCommandsInterval);
-    this.retrieveCommandsInterval = undefined;
+    this.stopped = true;
+    this.commandEvent.removeAllListeners();
+    if (this.refreshCommandsTimeout) {
+      clearTimeout(this.refreshCommandsTimeout);
+      this.refreshCommandsTimeout = null;
+    }
+    if (this.ackRetryTimeout) {
+      clearTimeout(this.ackRetryTimeout);
+      this.ackRetryTimeout = null;
+    }
     this.logger.debug(`OIAnalytics command service stopped`);
   }
 
@@ -1319,66 +1357,129 @@ export default class OIAnalyticsCommandService {
   }
 
   async executeSearchNorthCacheContentCommand(command: OIBusSearchNorthCacheContentCommand): Promise<void> {
-    try {
-      const result = await this.oIBusService.searchCacheContent('north', command.northConnectorId, command.commandContent);
-      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
-    } catch (error: unknown) {
-      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
-    }
+    const result = await this.oIBusService.searchCacheContent('north', command.northConnectorId, command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   async executeSearchHistoryCacheContentCommand(command: OIBusSearchHistoryCacheContentCommand): Promise<void> {
-    try {
-      const result = await this.oIBusService.searchCacheContent('history', command.historyQueryId, command.commandContent);
-      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
-    } catch (error: unknown) {
-      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
-    }
+    const result = await this.oIBusService.searchCacheContent('history', command.historyQueryId, command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   async executeGetNorthCacheFileContentCommand(command: OIBusGetNorthCacheFileContentCommand): Promise<void> {
-    try {
-      const result = await this.oIBusService.getFileFromCache(
-        'north',
-        command.northConnectorId,
-        command.commandContent.folder,
-        command.commandContent.filename
-      );
-      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
-    } catch (error: unknown) {
-      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
-    }
+    const result = await this.oIBusService.getFileFromCache(
+      'north',
+      command.northConnectorId,
+      command.commandContent.folder,
+      command.commandContent.filename
+    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   async executeGetHistoryCacheFileContentCommand(command: OIBusGetHistoryCacheFileContentCommand): Promise<void> {
-    try {
-      const result = await this.oIBusService.getFileFromCache(
-        'history',
-        command.historyQueryId,
-        command.commandContent.folder,
-        command.commandContent.filename
-      );
-      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
-    } catch (error: unknown) {
-      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
-    }
+    const result = await this.oIBusService.getFileFromCache(
+      'history',
+      command.historyQueryId,
+      command.commandContent.folder,
+      command.commandContent.filename
+    );
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), JSON.stringify(result));
   }
 
   async executeUpdateNorthCacheContentCommand(command: OIBusUpdateNorthCacheContentCommand): Promise<void> {
-    try {
-      await this.oIBusService.updateCacheContent('north', command.northConnectorId, command.commandContent);
-      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Cache updated successfully');
-    } catch (error: unknown) {
-      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
-    }
+    await this.oIBusService.updateCacheContent('north', command.northConnectorId, command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Cache updated successfully');
   }
 
   async executeUpdateHistoryCacheContentCommand(command: OIBusUpdateHistoryCacheContentCommand): Promise<void> {
+    await this.oIBusService.updateCacheContent('history', command.historyQueryId, command.commandContent);
+    this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Cache updated successfully');
+  }
+
+  /**
+   * Add a command to the pending ack queue and trigger an immediate flush attempt.
+   * If a flush is already in progress or a retry is already scheduled, the new entry
+   * will be picked up when that flush runs (either directly or via the retry).
+   *
+   * NOTE: restart-engine and update-version terminate the process before this is called.
+   * Their acks are sent on the next boot by acknowledgeCommands inside refreshCommands.
+   */
+  private async enqueueAck(command: OIBusCommand): Promise<void> {
+    this.ackQueue.set(command.id, command);
+    await this.sendPendingAcks();
+  }
+
+  /**
+   * Send all queued commands to OIAnalytics in a single request.
+   *
+   * On success: marks each command as acknowledged and removes it from the queue.
+   * On 404: treats all as acknowledged (server has already dropped them).
+   * On network failure: leaves commands in the queue and schedules a background retry
+   *   via setTimeout — the function returns immediately so the process can exit freely.
+   *   Commands added to the queue while a retry is pending are sent together on the next flush.
+   */
+  private async sendPendingAcks(): Promise<void> {
+    if (this.stopped) return;
+    if (this.ackRetryTimeout) {
+      clearTimeout(this.ackRetryTimeout);
+      this.ackRetryTimeout = null;
+    }
+
+    if (this.ackQueue.size === 0) return;
+
+    const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
+    if (registration.status !== 'REGISTERED') {
+      this.logger.trace(`OIAnalytics not registered. OIBus won't ack commands`);
+      return;
+    }
+
+    this.isAckFlushInProgress = true;
+
+    // Snapshot the current queue and fetch up-to-date statuses from the repository
+    const commandIds = [...this.ackQueue.keys()];
+    const freshCommands = commandIds.map(id => this.oIAnalyticsCommandRepository.findById(id)).filter((c): c is OIBusCommand => c != null);
+
+    // Drop IDs that no longer exist locally
+    for (const id of commandIds) {
+      if (!freshCommands.some(c => c.id === id)) {
+        this.ackQueue.delete(id);
+      }
+    }
+
+    if (freshCommands.length === 0) {
+      this.isAckFlushInProgress = false;
+      return;
+    }
+
     try {
-      await this.oIBusService.updateCacheContent('history', command.historyQueryId, command.commandContent);
-      this.oIAnalyticsCommandRepository.markAsCompleted(command.id, DateTime.now().toUTC().toISO(), 'Cache updated successfully');
+      await this.oIAnalyticsClient.updateCommandStatus(registration, JSON.stringify(freshCommands));
+      for (const cmd of freshCommands) {
+        this.oIAnalyticsCommandRepository.markAsAcknowledged(cmd.id);
+        this.ackQueue.delete(cmd.id);
+      }
+      this.logger.trace(`${freshCommands.length} command(s) acknowledged`);
+      this.isAckFlushInProgress = false;
     } catch (error: unknown) {
-      this.oIAnalyticsCommandRepository.markAsErrored(command.id, (error as Error).message);
+      this.isAckFlushInProgress = false;
+      const message = getErrorMessage(error);
+      if (message.startsWith('404 - ')) {
+        for (const cmd of freshCommands) {
+          this.oIAnalyticsCommandRepository.markAsAcknowledged(cmd.id);
+          this.ackQueue.delete(cmd.id);
+        }
+        this.logger.trace(`${freshCommands.length} command(s) acknowledged (404 - already removed on server)`);
+        return;
+      }
+      // Network failure: do not mark as acknowledged; keep commands in queue for the retry
+      const freshRegistration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
+      this.logger.error(
+        `Error while acknowledging ${freshCommands.length} command(s): ${message}. ` +
+          `Retrying in ${freshRegistration.commandRetryInterval}s`
+      );
+      this.ackRetryTimeout = setTimeout(
+        () => this.sendPendingAcks().catch(err => this.logger.error(`Unexpected error in ack flush: ${getErrorMessage(err)}`)),
+        freshRegistration.commandRetryInterval * 1000
+      );
     }
   }
 

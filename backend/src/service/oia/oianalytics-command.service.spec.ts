@@ -285,8 +285,8 @@ describe('OIAnalytics Command Service', () => {
       `OIBus updated to version ${(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand).commandContent.version.slice(1)}, launcher updated to version ${testData.engine.settings.launcherVersion}`
     ]);
 
-    // Prevent background executeCommand (triggered by commandEvent.emit('next') in start()) from
-    // running real logic. Return [] so it sees no commands and exits immediately.
+    // Prevent acknowledgeCommands/checkForCancelledCommands (called by refreshCommands in start())
+    // from doing anything. findFirstToExecute already defaults to null so processNextCommand exits immediately.
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
     mock.method(process, 'exit', () => undefined as never);
     mock.method(process, 'kill', () => undefined as unknown as void);
@@ -318,13 +318,13 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should check commands', async () => {
-    // Use fake timers so that setTimeout calls in checkCommands are captured and never fire,
+    // Use fake timers so that setTimeout calls in refreshCommands are captured and never fire,
     // preventing async activity after the test ends.
     mock.timers.enable({ apis: ['setTimeout'] });
 
-    service.sendAckCommands = mock.fn(async () => undefined);
-    service.checkRetrievedCommands = mock.fn(async () => undefined);
-    service.retrieveCommands = mock.fn(async () => undefined);
+    service.acknowledgeCommands = mock.fn(async () => undefined);
+    service.checkForCancelledCommands = mock.fn(async () => undefined);
+    service.fetchNewCommands = mock.fn(async () => undefined);
 
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementation(
       seq(
@@ -334,14 +334,14 @@ describe('OIAnalytics Command Service', () => {
       )
     );
 
-    service.checkCommands();
-    await service.checkCommands();
+    service.refreshCommands();
+    await service.refreshCommands();
     assert.ok(
-      (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c => c.arguments[0] === 'OIBus is already retrieving commands from OIAnalytics'
+      (logger.warn.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0].startsWith('OIBus is already retrieving commands from OIAnalytics')
       )
     );
-    await service.checkCommands();
+    await service.refreshCommands();
     assert.ok(
       (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
         c => c.arguments[0] === "OIAnalytics not registered. OIBus won't retrieve commands"
@@ -354,25 +354,66 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should fail to check commands and retry', async () => {
-    service.retrieveCommands = mock.fn(async () => {
+    service.fetchNewCommands = mock.fn(async () => {
       throw new Error('retrieve command error');
     });
-    service.checkRetrievedCommands = mock.fn(async () => undefined);
-    const sendAckCommandsMock = mock.fn(async () => undefined);
-    service.sendAckCommands = sendAckCommandsMock;
+    service.checkForCancelledCommands = mock.fn(async () => undefined);
+    const acknowledgeCommandsMock = mock.fn(async () => undefined);
+    service.acknowledgeCommands = acknowledgeCommandsMock;
 
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.completed);
 
-    await service.checkCommands();
-    assert.strictEqual(sendAckCommandsMock.mock.calls.length, 0);
+    await service.refreshCommands();
+    assert.strictEqual(acknowledgeCommandsMock.mock.calls.length, 0);
     assert.ok((logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'retrieve command error'));
     // Cancel the retry timer to prevent async activity after test ends
     await service.stop();
   });
 
+  it('should display proper error message on AggregateError in refreshCommands', async () => {
+    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    service.fetchNewCommands = mock.fn(async () => {
+      throw networkError;
+    });
+    service.checkForCancelledCommands = mock.fn(async () => undefined);
+    service.acknowledgeCommands = mock.fn(async () => undefined);
+
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.completed);
+
+    await service.refreshCommands();
+
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0] === 'connect ECONNREFUSED 127.0.0.1:4200'
+      )
+    );
+    await service.stop();
+  });
+
+  it('should display proper error message for Error with cause in refreshCommands', async () => {
+    const cause = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    const fetchError = Object.assign(new TypeError('fetch failed'), { cause });
+    service.fetchNewCommands = mock.fn(async () => {
+      throw fetchError;
+    });
+    service.checkForCancelledCommands = mock.fn(async () => undefined);
+    service.acknowledgeCommands = mock.fn(async () => undefined);
+
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => testData.oIAnalytics.registration.completed);
+
+    await service.refreshCommands();
+
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0] === 'fetch failed: connect ECONNREFUSED 127.0.0.1:4200'
+      )
+    );
+    await service.stop();
+  });
+
   it('should send ack', async () => {
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
-    await service.sendAckCommands(testData.oIAnalytics.registration.completed);
+    await service.acknowledgeCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.updateCommandStatus.mock.calls.length, testData.oIAnalytics.commands.oIBusList.length);
     assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, testData.oIAnalytics.commands.oIBusList.length);
@@ -387,7 +428,7 @@ describe('OIAnalytics Command Service', () => {
 
   it('should not send ack if no command to ack', async () => {
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => []);
-    await service.sendAckCommands(testData.oIAnalytics.registration.completed);
+    await service.acknowledgeCommands(testData.oIAnalytics.registration.completed);
 
     assert.ok((logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to ack'));
   });
@@ -408,7 +449,7 @@ describe('OIAnalytics Command Service', () => {
       )
     );
 
-    await service.sendAckCommands(testData.oIAnalytics.registration.completed);
+    await service.acknowledgeCommands(testData.oIAnalytics.registration.completed);
 
     assert.ok(
       (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
@@ -424,11 +465,31 @@ describe('OIAnalytics Command Service', () => {
     ]);
   });
 
+  it('should display proper error message on AggregateError in acknowledgeCommands', async () => {
+    const command = testData.oIAnalytics.commands.oIBusList[0];
+    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    oIAnalyticsClient.updateCommandStatus.mock.mockImplementationOnce(async () => {
+      throw networkError;
+    });
+
+    await service.acknowledgeCommands(testData.oIAnalytics.registration.completed);
+
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c =>
+          c.arguments[0] ===
+          `Error while acknowledging command ${command.id} of type ${command.type}: connect ECONNREFUSED 127.0.0.1:4200`
+      )
+    );
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 0);
+  });
+
   it('should check retrieved command', async () => {
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
     oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => testData.oIAnalytics.commands.oIAnalyticsList);
 
-    await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
+    await service.checkForCancelledCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.retrieveCancelledCommands.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsCommandRepository.cancel.mock.calls.length, testData.oIAnalytics.commands.oIAnalyticsList.length);
@@ -446,13 +507,13 @@ describe('OIAnalytics Command Service', () => {
       throw new Error('error');
     });
     await assert.rejects(
-      () => service.checkRetrievedCommands(testData.oIAnalytics.registration.completed),
+      () => service.checkForCancelledCommands(testData.oIAnalytics.registration.completed),
       new Error('Error while checking PENDING commands status: error')
     );
 
     // empty case
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => []);
-    await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
+    await service.checkForCancelledCommands(testData.oIAnalytics.registration.completed);
     assert.ok(
       (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command retrieved to check')
     );
@@ -462,7 +523,7 @@ describe('OIAnalytics Command Service', () => {
     oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList);
     oIAnalyticsClient.retrieveCancelledCommands.mock.mockImplementationOnce(async () => []);
 
-    await service.checkRetrievedCommands(testData.oIAnalytics.registration.completed);
+    await service.checkForCancelledCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.retrieveCancelledCommands.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsCommandRepository.cancel.mock.calls.length, 0);
@@ -472,7 +533,7 @@ describe('OIAnalytics Command Service', () => {
   it('should retrieve commands', async () => {
     oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => testData.oIAnalytics.commands.oIAnalyticsList);
 
-    await service.retrieveCommands(testData.oIAnalytics.registration.completed);
+    await service.fetchNewCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.retrievePendingCommands.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsCommandRepository.create.mock.calls.length, testData.oIAnalytics.commands.oIAnalyticsList.length);
@@ -486,7 +547,7 @@ describe('OIAnalytics Command Service', () => {
       throw new Error('error');
     });
     await assert.rejects(
-      () => service.retrieveCommands(testData.oIAnalytics.registration.completed),
+      () => service.fetchNewCommands(testData.oIAnalytics.registration.completed),
       new Error('Error while retrieving commands: error')
     );
   });
@@ -494,7 +555,7 @@ describe('OIAnalytics Command Service', () => {
   it('should retrieve commands and do nothing', async () => {
     oIAnalyticsClient.retrievePendingCommands.mock.mockImplementationOnce(async () => []);
 
-    await service.retrieveCommands(testData.oIAnalytics.registration.completed);
+    await service.fetchNewCommands(testData.oIAnalytics.registration.completed);
 
     assert.strictEqual(oIAnalyticsClient.retrievePendingCommands.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsCommandRepository.create.mock.calls.length, 0);
@@ -502,15 +563,15 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute update-version command without updating launcher', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[0]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
     const exitMock = mock.method(process, 'exit', () => undefined as never);
     mock.method(fs, 'unlink', async () => undefined);
     mock.method(fs, 'writeFile', async () => undefined);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
-    assert.strictEqual(oIAnalyticsRegistrationService.getRegistrationSettings.mock.calls.length, 1);
-    assert.ok(oIAnalyticsCommandRepository.list.mock.calls.length > 0);
+    assert.strictEqual(oIAnalyticsRegistrationService.getRegistrationSettings.mock.calls.length, 2);
+    assert.ok(oIAnalyticsCommandRepository.findFirstToExecute.mock.calls.length > 0);
     assert.strictEqual(oIAnalyticsCommandRepository.markAsRunning.mock.calls.length, 1);
     assert.ok(oIBusService.getEngineSettings.mock.calls.length > 0);
     assert.strictEqual(oIAnalyticsClient.downloadFile.mock.calls.length, 1);
@@ -529,12 +590,10 @@ describe('OIAnalytics Command Service', () => {
         updateLauncher: true
       }
     };
-    oIAnalyticsCommandRepository.list.mock.mockImplementation(
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementation(
       seq(
-        () => [launcherCommand], // first executeCommand's commandsToExecute
-        () => [], // sendAckCommands after first executeCommand
-        () => [launcherCommand], // second executeCommand's commandsToExecute
-        () => [] // sendAckCommands after second executeCommand
+        () => launcherCommand, // first processNextCommand
+        () => launcherCommand // second processNextCommand
       )
     );
     const killMock = mock.method(process, 'kill', () => true as unknown as void);
@@ -551,7 +610,7 @@ describe('OIAnalytics Command Service', () => {
     mock.method(fs, 'writeFile', async () => undefined);
     mock.method(process, 'exit', () => undefined as never);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.strictEqual(oIAnalyticsClient.downloadFile.mock.calls.length, 1);
     assert.strictEqual(mockUtils.unzip.mock.calls.length, 1);
@@ -564,7 +623,7 @@ describe('OIAnalytics Command Service', () => {
     assert.strictEqual(osTypeMock.mock.calls.length, 1);
     assert.strictEqual(killMock.mock.calls.length, 1);
 
-    await service.executeCommand();
+    await service.processNextCommand();
     assert.ok(
       (fsFsMock.mock.calls as Array<{ arguments: [string, string] }>).some(
         c => c.arguments[0].includes('oibus-launcher.exe') && c.arguments[1].includes('oibus-launcher_backup.exe')
@@ -573,7 +632,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should not execute update-version command if a command is already being executed', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[0]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
     mock.method(process, 'exit', () => undefined as never);
     mockUtils.delay.mock.mockImplementationOnce(
       () =>
@@ -582,8 +641,8 @@ describe('OIAnalytics Command Service', () => {
         })
     );
 
-    service.executeCommand();
-    await service.executeCommand();
+    service.processNextCommand();
+    await service.processNextCommand();
 
     assert.ok(
       (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'A command is already being executed')
@@ -598,7 +657,7 @@ describe('OIAnalytics Command Service', () => {
       status: 'PENDING'
     }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.ok(
       (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(
@@ -608,17 +667,17 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should not execute a command if no command found', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => []);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => null);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.ok((logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to execute'));
   });
 
   it('should execute update-engine-settings command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[1]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[1]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.strictEqual(encryptionService.decryptTextWithPrivateKey.mock.calls.length, 0);
     assert.deepStrictEqual(oIBusService.updateEngineSettings.mock.calls[0].arguments, [
@@ -636,9 +695,9 @@ describe('OIAnalytics Command Service', () => {
     const command: OIBusUpdateEngineSettingsCommand = JSON.parse(JSON.stringify(testData.oIAnalytics.commands.oIBusList[1]));
     command.commandContent.logParameters.loki.password = 'test';
 
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIBusService.updateEngineSettings.mock.calls[0].arguments, [
       (command as OIBusUpdateEngineSettingsCommand).commandContent,
@@ -653,9 +712,9 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute update-registration-settings command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[15]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[15]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsRegistrationService.editRegistrationSettings.mock.calls[0].arguments, [
       {
@@ -777,10 +836,10 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute restart-engine command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[2]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[2]);
     const exitMock = mock.method(process, 'exit', () => undefined as never);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
       testData.oIAnalytics.commands.oIBusList[2].id,
@@ -792,9 +851,9 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute update-scan-mode command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[3]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[3]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(scanModeService.update.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[3] as OIBusUpdateScanModeCommand).scanModeId,
@@ -809,7 +868,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute update-south command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[4]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[4]);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
@@ -817,7 +876,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(southService.update.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[4] as OIBusUpdateSouthConnectorCommand).southConnectorId,
@@ -832,7 +891,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute update-north command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[5]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[5]);
     northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
@@ -840,7 +899,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(northService.update.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[5] as OIBusUpdateNorthConnectorCommand).northConnectorId,
@@ -855,9 +914,9 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute delete-scan-mode command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[6]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[6]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(scanModeService.delete.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[6] as OIBusDeleteScanModeCommand).scanModeId
@@ -870,9 +929,9 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute delete-south command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[7]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[7]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(southService.delete.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[7] as OIBusDeleteSouthConnectorCommand).southConnectorId
@@ -885,9 +944,9 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute delete-north command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[8]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[8]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(northService.delete.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[8] as OIBusDeleteNorthConnectorCommand).northConnectorId
@@ -900,9 +959,9 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute create-scan-mode command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[9]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[9]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(scanModeService.create.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[9] as OIBusCreateScanModeCommand).commandContent,
@@ -916,7 +975,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute create-south command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[10]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[10]);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
@@ -924,7 +983,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(southService.create.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[10] as OIBusCreateSouthConnectorCommand).commandContent,
@@ -939,7 +998,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute create-north command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[11]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[11]);
     northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
@@ -947,7 +1006,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(northService.create.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent,
@@ -962,7 +1021,7 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute create-or-update-south-items-from-csv command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[14]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
     southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
     southService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: testData.south.list[0].items.map(item =>
@@ -971,7 +1030,7 @@ describe('OIAnalytics Command Service', () => {
       errors: [] as Array<{ item: Record<string, string>; error: string }>
     }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(southService.findById.mock.calls[0].arguments, [
       (testData.oIAnalytics.commands.oIBusList[14] as OIBusCreateOrUpdateSouthConnectorItemsFromCSVCommand).southConnectorId
@@ -992,12 +1051,12 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute create-or-update-south-items-from-csv command and throw an error if south not found', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[14]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[14]);
     southService.findById.mock.mockImplementationOnce((southId: string) => {
       throw new Error(`South connector ${southId} not found`);
     });
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       testData.oIAnalytics.commands.oIBusList[14].id,
@@ -1010,7 +1069,7 @@ describe('OIAnalytics Command Service', () => {
       JSON.stringify(testData.oIAnalytics.commands.oIBusList[14])
     );
     command.commandContent.deleteItemsNotPresent = true;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.findById.mock.mockImplementationOnce(() => testData.south.list[0]);
     southService.checkImportItems.mock.mockImplementationOnce(async () => ({
       items: testData.south.list[0].items.map(item =>
@@ -1022,7 +1081,7 @@ describe('OIAnalytics Command Service', () => {
       ]
     }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(southService.checkImportItems.mock.calls[0].arguments, [
       testData.south.list[0].type,
@@ -1038,7 +1097,7 @@ describe('OIAnalytics Command Service', () => {
 
   it('should catch error when execution fails', async () => {
     const command = testData.oIAnalytics.commands.oIBusList[11];
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
@@ -1049,7 +1108,7 @@ describe('OIAnalytics Command Service', () => {
       throw new Error('command execution error');
     });
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.ok(
       (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
@@ -1061,15 +1120,64 @@ describe('OIAnalytics Command Service', () => {
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'command execution error']);
   });
 
+  it('should display proper error message on AggregateError during command execution', async () => {
+    const command = testData.oIAnalytics.commands.oIBusList[11];
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+    northService.listManifest.mock.mockImplementationOnce(() => [
+      {
+        ...testData.north.manifest,
+        id: (testData.oIAnalytics.commands.oIBusList[11] as OIBusCreateNorthConnectorCommand).commandContent.type
+      }
+    ]);
+    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    northService.create.mock.mockImplementationOnce(async () => {
+      throw networkError;
+    });
+
+    await service.processNextCommand();
+
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c =>
+          c.arguments[0] ===
+          `Error while executing command ${command.id} (retrieved ${command.retrievedDate}) of type ${command.type}. Error: connect ECONNREFUSED 127.0.0.1:4200`
+      )
+    );
+    assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
+      command.id,
+      'connect ECONNREFUSED 127.0.0.1:4200'
+    ]);
+  });
+
+  it('should display proper error message on AggregateError in sendPendingAcks', async () => {
+    // Run a command successfully so it gets enqueued for ack, then fail the ack with AggregateError
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[1]);
+    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    oIAnalyticsClient.updateCommandStatus.mock.mockImplementationOnce(async () => {
+      throw networkError;
+    });
+
+    await service.processNextCommand();
+
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200')
+      )
+    );
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 0);
+    // Cancel the scheduled retry to prevent async activity after the test ends
+    await service.stop();
+  });
+
   it('should not execute command if target version is not the same', async () => {
     const command = testData.oIAnalytics.commands.oIBusList[11];
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.getEngineSettings.mock.mockImplementationOnce(() => ({
       ...testData.engine.settings,
       version: 'bad version'
     }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
@@ -1079,7 +1187,7 @@ describe('OIAnalytics Command Service', () => {
 
   it('should not execute command if permission is not right', async () => {
     const command = testData.oIAnalytics.commands.oIBusList[11];
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...testData.oIAnalytics.registration.completed,
       commandPermissions: {
@@ -1088,7 +1196,7 @@ describe('OIAnalytics Command Service', () => {
       }
     }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
@@ -1097,10 +1205,10 @@ describe('OIAnalytics Command Service', () => {
   });
 
   it('should execute regenerate-cipher-keys command', async () => {
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [testData.oIAnalytics.commands.oIBusList[12]]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[12]);
     mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsRegistrationService.updateKeys.mock.calls[0].arguments, ['private key', 'public key']);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
@@ -1118,9 +1226,9 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       commandContent: {} as IPFilterCommandDTO
     } as OIBusCreateIPFilterCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(ipFilterService.create.mock.calls[0].arguments, [command.commandContent, 'oianalytics']);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
@@ -1138,9 +1246,9 @@ describe('OIAnalytics Command Service', () => {
       ipFilterId: 'ipFilterId',
       commandContent: {} as IPFilterCommandDTO
     } as OIBusUpdateIPFilterCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(ipFilterService.update.mock.calls[0].arguments, [command.ipFilterId, command.commandContent, 'oianalytics']);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
@@ -1157,9 +1265,9 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       ipFilterId: 'ipFilterId'
     } as OIBusDeleteIPFilterCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(ipFilterService.delete.mock.calls[0].arguments, [command.ipFilterId]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
@@ -1176,9 +1284,9 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       commandContent: {} as CertificateCommandDTO
     } as OIBusCreateCertificateCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(certificateService.create.mock.calls[0].arguments, [command.commandContent, 'oianalytics']);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
@@ -1196,9 +1304,9 @@ describe('OIAnalytics Command Service', () => {
       certificateId: 'certificateId',
       commandContent: {} as CertificateCommandDTO
     } as OIBusUpdateCertificateCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(certificateService.update.mock.calls[0].arguments, [
       command.certificateId,
@@ -1219,9 +1327,9 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       certificateId: 'certificateId'
     } as OIBusDeleteCertificateCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(certificateService.delete.mock.calls[0].arguments, [command.certificateId]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
@@ -1239,7 +1347,7 @@ describe('OIAnalytics Command Service', () => {
       southConnectorId: 'southConnectorId',
       commandContent: testData.south.command
     } as OIBusTestSouthConnectorCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
@@ -1247,7 +1355,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(southService.testSouth.mock.calls[0].arguments, [
       command.southConnectorId,
@@ -1276,7 +1384,7 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestSouthConnectorItemCommand;
 
     const testItemResult: OIBusContent = { type: 'any-content', content: '' };
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.testItem.mock.mockImplementationOnce(async () => testItemResult);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
@@ -1287,7 +1395,7 @@ describe('OIAnalytics Command Service', () => {
     const completeTestItemMock = mock.fn();
     (service as unknown as { completeTestItemCommand: typeof completeTestItemMock }).completeTestItemCommand = completeTestItemMock;
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(southService.testItem.mock.calls[0].arguments, [
       command.southConnectorId,
@@ -1308,7 +1416,7 @@ describe('OIAnalytics Command Service', () => {
       northConnectorId: 'northConnectorId',
       commandContent: testData.north.command
     } as OIBusTestNorthConnectorCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     northService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.north.manifest,
@@ -1316,7 +1424,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(northService.testNorth.mock.calls[0].arguments, [
       command.northConnectorId,
@@ -1340,7 +1448,7 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: undefined,
       commandContent: testData.historyQueries.command
     } as OIBusCreateHistoryQueryCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
@@ -1354,7 +1462,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.create.mock.calls[0].arguments, [
       command.commandContent,
@@ -1378,7 +1486,7 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'h1',
       commandContent: { resetCache: false, historyQuery: testData.historyQueries.command }
     } as OIBusUpdateHistoryQueryCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
@@ -1392,7 +1500,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.update.mock.calls[0].arguments, [
       command.historyQueryId,
@@ -1414,9 +1522,9 @@ describe('OIAnalytics Command Service', () => {
       targetVersion: testData.engine.settings.version,
       historyQueryId: 'h1'
     } as OIBusDeleteHistoryQueryCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.delete.mock.calls[0].arguments, [command.historyQueryId]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
@@ -1445,9 +1553,9 @@ describe('OIAnalytics Command Service', () => {
       ) as Array<HistoryQueryItemDTO>,
       errors: [] as Array<{ item: Record<string, string>; error: string }>
     }));
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.findById.mock.calls[0].arguments, [command.historyQueryId]);
     assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
@@ -1482,9 +1590,9 @@ describe('OIAnalytics Command Service', () => {
     historyQueryService.findById.mock.mockImplementationOnce((historyId: string) => {
       throw new Error(`History query ${historyId} not found`);
     });
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
@@ -1514,9 +1622,9 @@ describe('OIAnalytics Command Service', () => {
         { item: { name: 'item2' } as Record<string, string>, error: 'error2' }
       ]
     }));
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.checkImportItems.mock.calls[0].arguments, [
       testData.historyQueries.list[0].southType,
@@ -1539,7 +1647,7 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'historyId',
       commandContent: testData.historyQueries.command
     } as OIBusTestHistoryQueryNorthConnectionCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
@@ -1553,7 +1661,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.testNorth.mock.calls[0].arguments, [
       command.historyQueryId,
@@ -1577,7 +1685,7 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'historyId',
       commandContent: testData.historyQueries.command
     } as OIBusTestHistoryQuerySouthConnectionCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
         ...testData.south.manifest,
@@ -1591,7 +1699,7 @@ describe('OIAnalytics Command Service', () => {
       }
     ]);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.testSouth.mock.calls[0].arguments, [
       command.historyQueryId,
@@ -1622,7 +1730,7 @@ describe('OIAnalytics Command Service', () => {
     } as OIBusTestHistoryQuerySouthItemCommand;
 
     const testItemResult: OIBusContent = { type: 'any-content', content: '' };
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     historyQueryService.testItem.mock.mockImplementationOnce(async () => testItemResult);
     southService.listManifest.mock.mockImplementationOnce(() => [
       {
@@ -1633,7 +1741,7 @@ describe('OIAnalytics Command Service', () => {
     const completeTestItemMock = mock.fn();
     (service as unknown as { completeTestItemCommand: typeof completeTestItemMock }).completeTestItemCommand = completeTestItemMock;
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.testItem.mock.calls[0].arguments, [
       command.historyQueryId,
@@ -1658,9 +1766,9 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusUpdateHistoryQueryStatusCommand;
 
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.start.mock.calls[0].arguments, [command.historyQueryId]);
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsCompleted.mock.calls[1].arguments, [
@@ -1670,9 +1778,9 @@ describe('OIAnalytics Command Service', () => {
     ]);
 
     command.commandContent.historyQueryStatus = 'PAUSED';
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(historyQueryService.pause.mock.calls[0].arguments, [command.historyQueryId]);
     assert.ok(
@@ -1682,9 +1790,9 @@ describe('OIAnalytics Command Service', () => {
     );
 
     command.commandContent.historyQueryStatus = 'ERRORED';
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
 
-    await service.executeCommand();
+    await service.processNextCommand();
     assert.ok(
       (oIAnalyticsCommandRepository.markAsErrored.mock.calls as Array<{ arguments: Array<unknown> }>).some(
         c =>
@@ -1712,14 +1820,14 @@ describe('OIAnalytics Command Service', () => {
       commandContent: [{ reference: 'reference', value: '123456' }]
     };
 
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     northService.executeSetpoint.mock.mockImplementationOnce(
       async (_northId: string, _commandContent: Array<{ reference: string; value: string }>, callback: (s: string) => void) => {
         callback('ok');
       }
     );
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.strictEqual(northService.executeSetpoint.mock.calls[0].arguments[0], command.northConnectorId);
     assert.deepStrictEqual(northService.executeSetpoint.mock.calls[0].arguments[1], command.commandContent);
@@ -1743,7 +1851,7 @@ describe('OIAnalytics Command Service', () => {
       northConnectorId: 'northId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     const searchResult: CacheSearchResult = {
       searchDate: testData.constants.dates.FAKE_NOW,
       metrics: testData.north.metrics,
@@ -1753,7 +1861,7 @@ describe('OIAnalytics Command Service', () => {
     };
     oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => searchResult);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
@@ -1781,7 +1889,7 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'historyId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchHistoryCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     const searchResult: CacheSearchResult = {
       searchDate: testData.constants.dates.FAKE_NOW,
       metrics: testData.north.metrics,
@@ -1791,7 +1899,7 @@ describe('OIAnalytics Command Service', () => {
     };
     oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => searchResult);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.strictEqual(oIBusService.searchCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(oIBusService.searchCacheContent.mock.calls[0].arguments, [
@@ -1822,7 +1930,7 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetNorthCacheFileContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     const fileContent: FileCacheContent = {
       content: 'content',
       contentFilename: 'my_file.txt',
@@ -1832,7 +1940,7 @@ describe('OIAnalytics Command Service', () => {
     };
     oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => fileContent);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIBusService.getFileFromCache.mock.calls[0].arguments, [
       'north',
@@ -1863,7 +1971,7 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetHistoryCacheFileContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     const fileContent: FileCacheContent = {
       content: 'content',
       contentFilename: 'my_file.txt',
@@ -1873,7 +1981,7 @@ describe('OIAnalytics Command Service', () => {
     };
     oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => fileContent);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIBusService.getFileFromCache.mock.calls[0].arguments, [
       'history',
@@ -1923,10 +2031,10 @@ describe('OIAnalytics Command Service', () => {
         }
       }
     } as OIBusUpdateNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => undefined);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.strictEqual(oIBusService.updateCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(oIBusService.updateCacheContent.mock.calls[0].arguments, [
@@ -1976,10 +2084,10 @@ describe('OIAnalytics Command Service', () => {
         }
       }
     } as OIBusUpdateHistoryCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => undefined);
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.strictEqual(oIBusService.updateCacheContent.mock.calls.length, 1);
     assert.deepStrictEqual(oIBusService.updateCacheContent.mock.calls[0].arguments, [
@@ -2007,7 +2115,7 @@ describe('OIAnalytics Command Service', () => {
       northConnectorId: 'northId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...testData.oIAnalytics.registration.completed,
       commandPermissions: {
@@ -2016,7 +2124,7 @@ describe('OIAnalytics Command Service', () => {
       }
     }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
@@ -2040,7 +2148,7 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetNorthCacheFileContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...testData.oIAnalytics.registration.completed,
       commandPermissions: {
@@ -2049,7 +2157,7 @@ describe('OIAnalytics Command Service', () => {
       }
     }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
@@ -2078,7 +2186,7 @@ describe('OIAnalytics Command Service', () => {
         archive: { remove: [], move: [] }
       }
     } as OIBusUpdateNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIAnalyticsRegistrationService.getRegistrationSettings.mock.mockImplementationOnce(() => ({
       ...testData.oIAnalytics.registration.completed,
       commandPermissions: {
@@ -2087,7 +2195,7 @@ describe('OIAnalytics Command Service', () => {
       }
     }));
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
@@ -2108,12 +2216,12 @@ describe('OIAnalytics Command Service', () => {
       northConnectorId: 'northId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => {
       throw new Error('North northId1 not found');
     });
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'North northId1 not found']);
   });
@@ -2134,12 +2242,12 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetNorthCacheFileContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => {
       throw new Error('File not found');
     });
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'File not found']);
   });
@@ -2165,12 +2273,12 @@ describe('OIAnalytics Command Service', () => {
         archive: { remove: [], move: [] }
       }
     } as OIBusUpdateNorthCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => {
       throw new Error('error while removing file');
     });
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'error while removing file']);
   });
@@ -2188,12 +2296,12 @@ describe('OIAnalytics Command Service', () => {
       historyQueryId: 'historyId1',
       commandContent: { start: undefined, end: undefined, nameContains: 'test', maxNumberOfFilesReturned: 1000 }
     } as OIBusSearchHistoryCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.searchCacheContent.mock.mockImplementationOnce(async () => {
       throw new Error('History historyId1 not found');
     });
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [
       command.id,
@@ -2217,12 +2325,12 @@ describe('OIAnalytics Command Service', () => {
         filename: 'file.txt'
       }
     } as OIBusGetHistoryCacheFileContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.getFileFromCache.mock.mockImplementationOnce(async () => {
       throw new Error('File not found');
     });
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'File not found']);
   });
@@ -2248,12 +2356,12 @@ describe('OIAnalytics Command Service', () => {
         archive: { remove: [], move: [] }
       }
     } as OIBusUpdateHistoryCacheContentCommand;
-    oIAnalyticsCommandRepository.list.mock.mockImplementationOnce(() => [command]);
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     oIBusService.updateCacheContent.mock.mockImplementationOnce(async () => {
       throw new Error('Update failed');
     });
 
-    await service.executeCommand();
+    await service.processNextCommand();
 
     assert.deepStrictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments, [command.id, 'Update failed']);
   });
@@ -2313,7 +2421,7 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
   });
 
   it('should change logger', async () => {
-    // Prevent background executeCommand from running real logic
+    // Prevent background processNextCommand from running real logic
     oIAnalyticsCommandRepository.list.mock.mockImplementation(() => []);
     mock.method(process, 'exit', () => undefined as never);
     mock.method(process, 'kill', () => undefined as unknown as void);
@@ -2328,7 +2436,8 @@ describe('OIAnalytics Command service with ignoreRemoteUpdate', () => {
   });
 
   it('should not run an update', async () => {
-    await service.executeCommand();
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
+    await service.processNextCommand();
     assert.ok(
       (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
         c =>

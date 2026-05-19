@@ -116,6 +116,16 @@ export default class OIAnalyticsCommandRepository {
     return result ? this.toOIBusCommand(result as Record<string, string>) : null;
   }
 
+  findFirstToExecute(): OIBusCommand | null {
+    const query = `SELECT *
+                   FROM ${COMMANDS_TABLE}
+                   WHERE status IN ('RETRIEVED', 'RUNNING')
+                   ORDER BY retrieved_date ASC
+                   LIMIT 1;`;
+    const result = this.database.prepare(query).get();
+    return result ? this.toOIBusCommand(result as Record<string, string>) : null;
+  }
+
   create(command: OIAnalyticsFetchCommandDTO): void {
     // retrieved_date, type, status, ack
     const queryParams = [command.id, DateTime.now().toUTC().toISO(), command.type, 'RETRIEVED', 0, command.targetVersion];
