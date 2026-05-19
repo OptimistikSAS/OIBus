@@ -24,6 +24,10 @@ class AboutComponentTester {
   readonly processId = this.root.getByCss('#process-id');
   readonly hostname = this.root.getByCss('#hostname');
   readonly license = this.root.getByCss('#license');
+
+  constructor() {
+    this.fixture.detectChanges();
+  }
 }
 
 describe('AboutComponent', () => {

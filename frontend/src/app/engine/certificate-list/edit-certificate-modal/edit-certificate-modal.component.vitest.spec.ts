@@ -57,6 +57,7 @@ describe('EditCertificateModalComponent', () => {
   describe('create mode', () => {
     beforeEach(() => {
       tester.componentInstance.prepareForCreation();
+      tester.fixture.detectChanges();
     });
 
     test('should have an empty form with default and with regenerate not visible', async () => {
@@ -70,6 +71,7 @@ describe('EditCertificateModalComponent', () => {
 
     test('should not save if invalid', async () => {
       await tester.save.click();
+      tester.fixture.detectChanges();
 
       // name + 5 certificate fields
       await expect.element(tester.validationErrors).toHaveLength(6);
@@ -133,6 +135,7 @@ describe('EditCertificateModalComponent', () => {
     beforeEach(() => {
       certificateService.findById.mockReturnValue(of(certificateToUpdate));
       tester.componentInstance.prepareForEdition(certificateToUpdate);
+      tester.fixture.detectChanges();
     });
 
     test('should have a populated form', async () => {
@@ -144,6 +147,7 @@ describe('EditCertificateModalComponent', () => {
     test('should not save if invalid', async () => {
       await tester.name.fill('');
       await tester.save.click();
+      tester.fixture.detectChanges();
 
       await expect.element(tester.validationErrors).toHaveLength(1);
       expect(activeModal.close).not.toHaveBeenCalled();
@@ -174,6 +178,7 @@ describe('EditCertificateModalComponent', () => {
       await tester.name.fill('new-name');
       await tester.description.fill('A longer and updated description of my certificate');
       await tester.regenerateCertificate.click();
+      tester.fixture.detectChanges();
       await tester.countryName.fill('fr');
       await tester.stateOrProvinceName.fill('sa');
       await tester.localityName.fill('ch');
@@ -210,6 +215,7 @@ describe('EditCertificateModalComponent', () => {
   describe('unsaved changes', () => {
     beforeEach(() => {
       tester.componentInstance.prepareForCreation();
+      tester.fixture.detectChanges();
     });
 
     test('should return true from canDismiss when form is pristine', () => {

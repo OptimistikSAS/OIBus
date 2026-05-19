@@ -24,6 +24,10 @@ class CertificateListComponentTester {
   readonly editButtons = this.root.getByCss('.edit-certificate');
   readonly noCertificate = this.root.getByCss('#no-certificate');
   readonly certificates = this.root.getByCss('tbody tr');
+
+  constructor() {
+    this.fixture.detectChanges();
+  }
 }
 
 describe('CertificateListComponent', () => {

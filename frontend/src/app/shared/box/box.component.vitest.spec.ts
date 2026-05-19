@@ -18,6 +18,10 @@ class BoxComponentTester {
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly title = this.root.getByCss('.oib-box-title');
   readonly content = this.root.getByCss('.box-content');
+
+  constructor() {
+    this.fixture.detectChanges();
+  }
 }
 
 describe('BoxComponent', () => {

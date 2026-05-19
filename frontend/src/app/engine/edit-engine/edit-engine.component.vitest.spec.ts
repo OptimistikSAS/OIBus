@@ -38,6 +38,10 @@ class EditEngineComponentTester {
   readonly oiaLevel = this.root.getByCss('#oia-level');
   readonly oiaInterval = this.root.getByCss('#oia-interval');
   readonly submitButton = this.root.getByCss('#save-button');
+
+  constructor() {
+    this.fixture.detectChanges();
+  }
 }
 
 describe('EditEngineComponent', () => {

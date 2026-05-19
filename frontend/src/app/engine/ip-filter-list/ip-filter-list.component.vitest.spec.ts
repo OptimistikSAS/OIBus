@@ -22,6 +22,10 @@ class IpFilterListComponentTester {
   readonly editButtons = this.root.getByCss('.edit-ip-filter');
   readonly addIpFilter = this.root.getByCss('#add-ip-filter');
   readonly noIpFilter = this.root.getByCss('#no-ip-filter');
+
+  constructor() {
+    this.fixture.detectChanges();
+  }
 }
 
 describe('IpFilterListComponent', () => {

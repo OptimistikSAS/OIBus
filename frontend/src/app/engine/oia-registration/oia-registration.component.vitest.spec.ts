@@ -97,6 +97,8 @@ describe('OIARegistrationComponent', () => {
   test('should display NOT_REGISTERED state', async () => {
     const tester = new OIARegistrationComponentTester();
     tester.fixture.detectChanges();
+    vi.advanceTimersByTime(0); // fire timer(0, ...) so registration signal is populated
+    tester.fixture.detectChanges();
 
     await expect.element(tester.title).toBeInTheDocument();
     await expect.element(tester.registerButton).toBeInTheDocument();
