@@ -86,9 +86,8 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
-    httpOptions.body = this.connector.settings.compress
-      ? await streamToString(fileStream.pipe(zlib.createGzip({ level: 9 })))
-      : await streamToString(fileStream);
+    const content = await streamToString(fileStream);
+    httpOptions.body = this.connector.settings.compress ? zlib.gzipSync(content) : content;
     httpOptions.query = { dataSourceId: this.connector.name };
 
     let response: ReqResponse;
