@@ -39,11 +39,6 @@ runs:
       working-directory: frontend
       run: npx playwright install chromium
 
-    - name: Run frontend unit tests
-      shell: bash
-      working-directory: frontend
-      run: npm test
-
     - name: Run frontend Vitest tests
       shell: bash
       working-directory: frontend
