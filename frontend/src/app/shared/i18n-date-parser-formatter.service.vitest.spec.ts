@@ -1,0 +1,42 @@
+import { TestBed } from '@angular/core/testing';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { I18nDateParserFormatterService } from './i18n-date-parser-formatter.service';
+import { NgbDateAdapter, NgbDateParserFormatter, NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
+import { IsoDateAdapterService } from './iso-date-adapter.service';
+import { IsoTimeAdapterService } from './iso-time-adapter.service';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
+
+describe('I18nDateParserFormatterService', () => {
+  let service: NgbDateParserFormatter;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideI18nTesting(),
+        { provide: NgbDateAdapter, useClass: IsoDateAdapterService },
+        { provide: NgbDateParserFormatter, useClass: I18nDateParserFormatterService },
+        { provide: NgbTimeAdapter, useClass: IsoTimeAdapterService }
+      ]
+    });
+    service = TestBed.inject(NgbDateParserFormatter);
+  });
+
+  test('should be properly provided', () => {
+    expect(service instanceof I18nDateParserFormatterService).toBe(true);
+  });
+
+  test('should format', () => {
+    expect(service.format(null)).toBe('');
+    expect(service.format({ year: 2018, month: 2, day: 14 })).toBe('14/02/2018');
+  });
+
+  test('should parse', () => {
+    expect(service.parse('')).toBeNull();
+    expect(service.parse('2018/02/14')).toBeNull();
+    expect(service.parse('18-02-14')).toBeNull();
+    expect(service.parse('abcd-ef-gh')).toBeNull();
+    expect(service.parse('29/02/2018')).toBeNull();
+    expect(service.parse('14/02/2018')).toEqual({ year: 2018, month: 2, day: 14 });
+    expect(service.parse('4/2/2018')).toEqual({ year: 2018, month: 2, day: 4 });
+  });
+});

@@ -1,7 +1,7 @@
 import { Type } from '@angular/core';
 import { vi } from 'vitest';
 import { MockedFunction } from '@vitest/spy';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { of } from 'rxjs';
 
 function collectMethodNames(proto: unknown): Array<string> {
@@ -60,9 +60,11 @@ export function stubRoute(options: StubRouteOptions = {}): Partial<ActivatedRout
   return {
     params: of(params),
     queryParams: of(queryParams),
+    queryParamMap: of(convertToParamMap(queryParams)),
     snapshot: {
       params,
-      queryParams
+      queryParams,
+      queryParamMap: convertToParamMap(queryParams)
     }
   } as Partial<ActivatedRoute>;
 }

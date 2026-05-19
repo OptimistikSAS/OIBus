@@ -70,7 +70,7 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true,
-              "polyfills": ["@angular/localize/init"]
+              "polyfills": ["zone.js", "@angular/localize/init"]
             }
           },
           "defaultConfiguration": "production"
