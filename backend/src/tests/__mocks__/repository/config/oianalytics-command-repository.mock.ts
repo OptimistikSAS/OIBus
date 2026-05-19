@@ -14,6 +14,7 @@ export default class OianalyticsCommandRepositoryMock extends OIAnalyticsCommand
     super({} as Database);
   }
   override findAll = mock.fn((): Array<OIBusCommand> => []);
+  override findFirstToExecute = mock.fn((): OIBusCommand | null => null);
   override search = mock.fn(
     (_searchParams: CommandSearchParam): Page<OIBusCommand> => ({
       content: [],
