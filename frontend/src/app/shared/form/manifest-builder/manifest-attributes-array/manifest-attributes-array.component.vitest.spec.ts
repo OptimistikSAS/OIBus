@@ -131,18 +131,18 @@ describe('ManifestAttributesArrayComponent', () => {
 
     mockModalService.open.mockReturnValue(createModalInstance());
 
-    openAttributeEditorSpy = vi.spyOn(ManifestAttributesArrayComponent.prototype as any, 'openAttributeEditor').mockImplementation(function (
-      initialise = true
-    ) {
-      const DummyComponent = function () {} as any;
-      const modal = (mockModalService.open as unknown as (...args: unknown[]) => any)(DummyComponent);
+    openAttributeEditorSpy = vi
+      .spyOn(ManifestAttributesArrayComponent.prototype as any, 'openAttributeEditor')
+      .mockImplementation(function (initialise = true) {
+        const DummyComponent = function () {} as any;
+        const modal = (mockModalService.open as unknown as (...args: Array<unknown>) => any)(DummyComponent);
 
-      (modal.componentInstance as any).setContextPath();
-      if (initialise) {
-        (modal.componentInstance as any).prepareForCreation();
-      }
-      return Promise.resolve(modal);
-    });
+        (modal.componentInstance as any).setContextPath();
+        if (initialise) {
+          (modal.componentInstance as any).prepareForCreation();
+        }
+        return Promise.resolve(modal);
+      });
 
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), { provide: ModalService, useValue: mockModalService }]
@@ -179,7 +179,7 @@ describe('ManifestAttributesArrayComponent', () => {
         attr => (attr as any).displayProperties?.displayInViewMode
       );
 
-      expect(displayableAttributes.length).toBe(3);
+      expect(displayableAttributes.length).toBe(3); // type, key, translationKey
     });
 
     test('should filter out non-displayable attributes', () => {
@@ -188,7 +188,7 @@ describe('ManifestAttributesArrayComponent', () => {
         attr => (attr as any).displayProperties?.displayInViewMode
       );
 
-      expect(displayableAttributes.length).toBe(3);
+      expect(displayableAttributes.length).toBe(3); // type, key, translationKey
     });
   });
 
@@ -378,7 +378,7 @@ describe('ManifestAttributesArrayComponent', () => {
 
     test('should show empty state when all items are deleted', () => {
       tester.deleteButtons[0].click();
-      tester.deleteButtons[0].click();
+      tester.deleteButtons[0].click(); // Delete the second item
       tester.detectChanges();
 
       expect(tester.attributesTable).toBeNull();
@@ -413,16 +413,19 @@ describe('ManifestAttributesArrayComponent', () => {
     });
 
     test('should format string values correctly', () => {
+      // Check that the table displays the data
       expect(tester.attributesTable).toBeDefined();
       expect(tester.tableRows.length).toBe(3);
     });
 
     test('should format number values correctly', () => {
+      // Check that the table displays the data
       expect(tester.attributesTable).toBeDefined();
       expect(tester.tableRows.length).toBe(3);
     });
 
     test('should format boolean values correctly', () => {
+      // Boolean values are translated, so we check for the presence of the cell
       const booleanRow = tester.tableRows.find(row => row.textContent?.includes('booleanKey'));
       expect(booleanRow).toBeDefined();
     });
@@ -430,6 +433,7 @@ describe('ManifestAttributesArrayComponent', () => {
 
   describe('Pagination', () => {
     beforeEach(() => {
+      // Set up paginated array attribute
       tester.componentInstance.arrayAttribute = {
         ...tester.componentInstance.arrayAttribute,
         paginate: true,
@@ -445,6 +449,7 @@ describe('ManifestAttributesArrayComponent', () => {
       };
       tester.detectChanges();
 
+      // With pagination disabled, it should not be visible
       expect(tester.pagination).toBeNull();
     });
   });
@@ -473,6 +478,8 @@ describe('ManifestAttributesArrayComponent', () => {
         throw new Error('Modal error');
       });
 
+      // The component should handle the error gracefully
+      // We just test that the button click doesn't crash the component
       expect(() => {
         tester.addButton.click();
       }).not.toThrow();
@@ -516,6 +523,7 @@ describe('ManifestAttributesArrayComponent', () => {
       tester.componentInstance.attributesControl.setValue(testAttributes);
       tester.detectChanges();
 
+      // Just test that the edit button exists and can be clicked
       expect(tester.editButtons.length).toBe(1);
       expect(tester.editButtons[0]).toBeDefined();
     });

@@ -10,7 +10,7 @@ import { OIBusArrayAttribute } from '../../../../../../backend/shared/model/form
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { MockModalService, provideModalTesting } from '../../mock-modal.service.spec';
+import { MockModalService, provideModalTesting } from '../../mock-modal.service.testing';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { beforeEach, describe, expect, test } from 'vitest';

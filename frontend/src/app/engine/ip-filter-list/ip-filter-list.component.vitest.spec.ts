@@ -9,7 +9,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
+import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
