@@ -5,7 +5,8 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusInstantAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusInstantFormControlComponent } from './oibus-instant-form-control.component';
-import { provideCurrentUser } from '../../current-user-testing';
+import { provideCurrentUser } from '../../current-user-testing-vitest';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test-oibus-instant-form-control-component',
@@ -58,18 +59,18 @@ describe('OIBusInstantFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should create the component', () => {
+  test('should create the component', () => {
     expect(tester.componentInstance).toBeDefined();
   });
 
-  it('should display a label with the correct translation key', () => {
+  test('should display a label with the correct translation key', () => {
     expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Field name');
+    expect(tester.label.nativeElement.textContent).toContain('Field name');
   });
 
-  it('should display an input with the correct form control name', () => {
+  test('should display an input with the correct form control name', () => {
     expect(tester.field).toBeDefined();
     tester.field.fillWith('123');
-    expect(tester.field).toHaveValue('123');
+    expect(tester.field.nativeElement).toHaveValue('123');
   });
 });

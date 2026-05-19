@@ -5,6 +5,7 @@ import { ManifestAttributeEditorModalComponent } from './manifest-attribute-edit
 import { OIBusAttribute } from '../../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 @Component({
   template: ` <oib-manifest-attribute-editor-modal /> `,
@@ -109,7 +110,6 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     return this.elements('.invalid-feedback')!;
   }
 
-  // Helper methods to check if type-specific sections are visible
   isStringSectionVisible() {
     return this.defaultValueStringInput !== null;
   }
@@ -153,10 +153,10 @@ class TestComponentTester extends ComponentTester<TestComponent> {
 
 describe('ManifestAttributeEditorModalComponent', () => {
   let tester: TestComponentTester;
-  let mockActiveModal: jasmine.SpyObj<NgbActiveModal>;
+  let mockActiveModal: { close: ReturnType<typeof vi.fn>; dismiss: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    mockActiveModal = jasmine.createSpyObj('NgbActiveModal', ['close', 'dismiss']);
+    mockActiveModal = { close: vi.fn(), dismiss: vi.fn() };
 
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: mockActiveModal }]
@@ -167,29 +167,28 @@ describe('ManifestAttributeEditorModalComponent', () => {
   });
 
   describe('Component Initialization', () => {
-    it('should create the component', () => {
+    test('should create the component', () => {
       expect(tester.componentInstance).toBeDefined();
     });
 
-    it('should initialize with default values', () => {
+    test('should initialize with default values', () => {
       expect(tester.typeSelect).toBeDefined();
-      expect(tester.typeSelect).toHaveSelectedValue('string');
-      expect(tester.keyInput).toHaveValue('');
-      expect(tester.translationKeyInput).toHaveValue('');
-      expect(tester.rowInput).toHaveValue('0');
-      expect(tester.columnsInput).toHaveValue('4');
-      expect(tester.displayInViewModeCheckbox).toBeChecked();
+      expect(tester.typeSelect!.nativeElement.value).toBe('string');
+      expect(tester.keyInput.nativeElement).toHaveValue('');
+      expect(tester.translationKeyInput.nativeElement).toHaveValue('');
+      expect(tester.rowInput.nativeElement.value).toBe('0');
+      expect(tester.columnsInput.nativeElement.value).toBe('4');
+      expect(tester.displayInViewModeCheckbox.nativeElement).toBeChecked();
     });
 
-    it('should display all available attribute types', () => {
+    test('should display all available attribute types', () => {
       expect(tester.typeSelect).toBeDefined();
-      // The select contains translated text, so we just check that it exists and has options
       expect(tester.typeSelect!.element('option')).toBeDefined();
     });
   });
 
   describe('Modal Preparation', () => {
-    it('should prepare for creation mode', () => {
+    test('should prepare for creation mode', () => {
       expect(tester.modalComponent).toBeDefined();
       tester.modalComponent!.prepareForCreation();
       tester.detectChanges();
@@ -197,11 +196,11 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.modalComponent?.mode).toBe('create');
       expect(tester.modalComponent?.attribute).toBeNull();
       expect(tester.typeSelect).toBeDefined();
-      expect(tester.typeSelect).toHaveSelectedValue('string');
-      expect(tester.keyInput).toHaveValue('');
+      expect(tester.typeSelect!.nativeElement.value).toBe('string');
+      expect(tester.keyInput.nativeElement).toHaveValue('');
     });
 
-    it('should prepare for edit mode', () => {
+    test('should prepare for edit mode', () => {
       const testAttribute: OIBusAttribute = {
         type: 'string',
         key: 'testKey',
@@ -221,13 +220,13 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.modalComponent?.mode).toBe('edit');
       expect(tester.modalComponent?.attribute).toEqual(testAttribute);
       expect(tester.typeSelect).toBeDefined();
-      expect(tester.typeSelect).toHaveSelectedValue('string');
-      expect(tester.keyInput).toHaveValue('testKey');
-      expect(tester.translationKeyInput).toHaveValue('test.translation.key');
-      expect(tester.defaultValueStringInput).toHaveValue('test value');
-      expect(tester.rowInput).toHaveValue('1');
-      expect(tester.columnsInput).toHaveValue('6');
-      expect(tester.displayInViewModeCheckbox).not.toBeChecked();
+      expect(tester.typeSelect!.nativeElement.value).toBe('string');
+      expect(tester.keyInput.nativeElement).toHaveValue('testKey');
+      expect(tester.translationKeyInput.nativeElement).toHaveValue('test.translation.key');
+      expect(tester.defaultValueStringInput.nativeElement).toHaveValue('test value');
+      expect(tester.rowInput.nativeElement.value).toBe('1');
+      expect(tester.columnsInput.nativeElement.value).toBe('6');
+      expect(tester.displayInViewModeCheckbox.nativeElement).not.toBeChecked();
     });
   });
 
@@ -237,7 +236,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       tester.detectChanges();
     });
 
-    it('should show string-specific fields for string type', () => {
+    test('should show string-specific fields for string type', () => {
       tester.typeSelect!.selectValue('string');
       tester.detectChanges();
 
@@ -247,7 +246,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.isBooleanSectionVisible()).toBe(false);
     });
 
-    it('should show number-specific fields for number type', () => {
+    test('should show number-specific fields for number type', () => {
       tester.typeSelect!.selectValue('number');
       tester.detectChanges();
 
@@ -257,7 +256,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.isBooleanSectionVisible()).toBe(false);
     });
 
-    it('should show boolean-specific fields for boolean type', () => {
+    test('should show boolean-specific fields for boolean type', () => {
       tester.typeSelect!.selectValue('boolean');
       tester.detectChanges();
 
@@ -267,7 +266,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.isNumberSectionVisible()).toBe(false);
     });
 
-    it('should show code-specific fields for code type', () => {
+    test('should show code-specific fields for code type', () => {
       tester.typeSelect!.selectValue('code');
       tester.detectChanges();
 
@@ -277,18 +276,17 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.isNumberSectionVisible()).toBe(false);
     });
 
-    it('should show string-select-specific fields for string-select type', () => {
+    test('should show string-select-specific fields for string-select type', () => {
       tester.typeSelect!.selectValue('string-select');
       tester.detectChanges();
 
       expect(tester.isStringSelectSectionVisible()).toBe(true);
       expect(tester.isDisplayPropertiesVisible()).toBe(true);
-      // String-select also shows string section for default value
       expect(tester.isStringSectionVisible()).toBe(true);
       expect(tester.isNumberSectionVisible()).toBe(false);
     });
 
-    it('should show timezone-specific fields for timezone type', () => {
+    test('should show timezone-specific fields for timezone type', () => {
       tester.typeSelect!.selectValue('timezone');
       tester.detectChanges();
 
@@ -298,7 +296,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.isNumberSectionVisible()).toBe(false);
     });
 
-    it('should show scan-mode-specific fields for scan-mode type', () => {
+    test('should show scan-mode-specific fields for scan-mode type', () => {
       tester.typeSelect!.selectValue('scan-mode');
       tester.detectChanges();
 
@@ -308,7 +306,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.isNumberSectionVisible()).toBe(false);
     });
 
-    it('should show object-specific fields for object type', () => {
+    test('should show object-specific fields for object type', () => {
       tester.typeSelect!.selectValue('object');
       tester.detectChanges();
 
@@ -318,7 +316,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.isNumberSectionVisible()).toBe(false);
     });
 
-    it('should show array-specific fields for array type', () => {
+    test('should show array-specific fields for array type', () => {
       tester.typeSelect!.selectValue('array');
       tester.detectChanges();
 
@@ -335,40 +333,34 @@ describe('ManifestAttributeEditorModalComponent', () => {
       tester.detectChanges();
     });
 
-    it('should reset type-specific fields when changing type', () => {
-      // Set up a number attribute with values
+    test('should reset type-specific fields when changing type', () => {
       tester.typeSelect!.selectValue('number');
       tester.defaultValueNumberInput.fillWith('42');
       tester.unitInput.fillWith('ms');
       tester.detectChanges();
 
-      // Change to string type
       tester.typeSelect!.selectValue('string');
       tester.detectChanges();
 
-      // Type-specific fields should be reset
-      expect(tester.defaultValueStringInput).toHaveValue('');
+      expect(tester.defaultValueStringInput.nativeElement).toHaveValue('');
       expect(tester.isNumberSectionVisible()).toBe(false);
       expect(tester.isStringSectionVisible()).toBe(true);
     });
 
-    it('should maintain common fields when changing type', () => {
-      // Set common fields
+    test('should maintain common fields when changing type', () => {
       tester.keyInput.fillWith('testKey');
       tester.translationKeyInput.fillWith('test.translation.key');
       tester.rowInput.fillWith('2');
       tester.columnsInput.fillWith('8');
       tester.detectChanges();
 
-      // Change type
       tester.typeSelect!.selectValue('boolean');
       tester.detectChanges();
 
-      // Common fields should be maintained
-      expect(tester.keyInput).toHaveValue('testKey');
-      expect(tester.translationKeyInput).toHaveValue('test.translation.key');
-      expect(tester.rowInput).toHaveValue('2');
-      expect(tester.columnsInput).toHaveValue('8');
+      expect(tester.keyInput.nativeElement).toHaveValue('testKey');
+      expect(tester.translationKeyInput.nativeElement).toHaveValue('test.translation.key');
+      expect(tester.rowInput.nativeElement.value).toBe('2');
+      expect(tester.columnsInput.nativeElement.value).toBe('8');
     });
   });
 
@@ -378,35 +370,34 @@ describe('ManifestAttributeEditorModalComponent', () => {
       tester.detectChanges();
     });
 
-    it('should validate required fields', () => {
-      // Leave required fields empty
+    test('should validate required fields', () => {
       tester.keyInput.fillWith('');
       tester.translationKeyInput.fillWith('');
       tester.detectChanges();
 
-      expect(tester.form).toHaveClass('ng-invalid');
+      expect(tester.form.nativeElement).toHaveClass('ng-invalid');
     });
 
-    it('should be valid with required fields filled', () => {
+    test('should be valid with required fields filled', () => {
       tester.keyInput.fillWith('testKey');
       tester.translationKeyInput.fillWith('test.translation.key');
       tester.detectChanges();
 
-      expect(tester.form).toHaveClass('ng-valid');
+      expect(tester.form.nativeElement).toHaveClass('ng-valid');
     });
 
-    it('should validate column range', () => {
+    test('should validate column range', () => {
       tester.columnsInput.fillWith('0');
       tester.detectChanges();
 
-      expect(tester.form).toHaveClass('ng-invalid');
+      expect(tester.form.nativeElement).toHaveClass('ng-invalid');
     });
 
-    it('should validate row minimum value', () => {
+    test('should validate row minimum value', () => {
       tester.rowInput.fillWith('-1');
       tester.detectChanges();
 
-      expect(tester.form).toHaveClass('ng-invalid');
+      expect(tester.form.nativeElement).toHaveClass('ng-invalid');
     });
   });
 
@@ -416,13 +407,13 @@ describe('ManifestAttributeEditorModalComponent', () => {
       tester.detectChanges();
     });
 
-    it('should dismiss modal when cancel button is clicked', () => {
+    test('should dismiss modal when cancel button is clicked', () => {
       tester.cancelButton.click();
 
       expect(mockActiveModal.dismiss).toHaveBeenCalled();
     });
 
-    it('should close modal with attribute when form is valid and submitted', () => {
+    test('should close modal with attribute when form is valid and submitted', () => {
       tester.keyInput.fillWith('testKey');
       tester.translationKeyInput.fillWith('test.translation.key');
       tester.detectChanges();
@@ -430,13 +421,12 @@ describe('ManifestAttributeEditorModalComponent', () => {
       tester.modalComponent!.submit();
 
       expect(mockActiveModal.close).toHaveBeenCalled();
-      const closedAttribute = mockActiveModal.close.calls.mostRecent().args[0];
+      const closedAttribute = mockActiveModal.close.mock.calls.at(-1)![0];
       expect(closedAttribute.type).toBe('string');
       expect(closedAttribute.key).toBe('testKey');
     });
 
-    it('should not close modal when form is invalid', () => {
-      // Leave required fields empty
+    test('should not close modal when form is invalid', () => {
       tester.keyInput.fillWith('');
       tester.detectChanges();
 
@@ -452,7 +442,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       tester.detectChanges();
     });
 
-    it('should correctly identify string type', () => {
+    test('should correctly identify string type', () => {
       tester.typeSelect!.selectValue('string');
       tester.detectChanges();
 
@@ -460,7 +450,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.modalComponent!.isNumberType()).toBe(false);
     });
 
-    it('should correctly identify number type', () => {
+    test('should correctly identify number type', () => {
       tester.typeSelect!.selectValue('number');
       tester.detectChanges();
 
@@ -468,7 +458,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect(tester.modalComponent!.isStringType()).toBe(false);
     });
 
-    it('should correctly identify displayable types', () => {
+    test('should correctly identify displayable types', () => {
       const displayableTypes = ['string', 'number', 'boolean', 'code', 'string-select', 'timezone', 'scan-mode'];
 
       displayableTypes.forEach(type => {
@@ -493,7 +483,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       tester.detectChanges();
     });
 
-    it('should handle empty number values', () => {
+    test('should handle empty number values', () => {
       tester.typeSelect!.selectValue('number');
       tester.defaultValueNumberInput.fillWith('');
       tester.detectChanges();
@@ -502,7 +492,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect((attribute as any).defaultValue).toBeNull();
     });
 
-    it('should handle empty selectable values for string-select', () => {
+    test('should handle empty selectable values for string-select', () => {
       tester.typeSelect!.selectValue('string-select');
       tester.selectableValuesInput.fillWith('');
       tester.detectChanges();
@@ -511,7 +501,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect((attribute as any).selectableValues).toEqual([]);
     });
 
-    it('should handle comma-separated selectable values with spaces', () => {
+    test('should handle comma-separated selectable values with spaces', () => {
       tester.typeSelect!.selectValue('string-select');
       tester.selectableValuesInput.fillWith('value1, value2 , value3');
       tester.detectChanges();
@@ -520,7 +510,7 @@ describe('ManifestAttributeEditorModalComponent', () => {
       expect((attribute as any).selectableValues).toEqual(['value1', 'value2', 'value3']);
     });
 
-    it('should handle default values for array pagination', () => {
+    test('should handle default values for array pagination', () => {
       tester.typeSelect!.selectValue('array');
       tester.numberOfElementsInput.fillWith('');
       tester.detectChanges();

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
 import { ValErrorDelayDirective } from './val-error-delay.directive';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test-val-error-delay-component',
@@ -32,9 +33,9 @@ describe('ValErrorAnimationDirective', () => {
     await tester.change();
   });
 
-  // Using fakeAsync does not work here, probably because the directive does everything out of the Angular zone.
-  // Since the delay is short, waiting for the delay is OK.
-  it('should create an instance', (done: DoneFn) => {
+  // The directive does everything out of the Angular zone so fakeAsync does not work.
+  // Since the delay is short, we wait for it using a real timeout.
+  test('should create an instance', async () => {
     expect(tester.error).toBeNull();
 
     tester.componentInstance.showError = true;
@@ -43,9 +44,7 @@ describe('ValErrorAnimationDirective', () => {
     expect(tester.error).not.toBeNull();
     expect(tester.error).not.toBeVisible();
 
-    setTimeout(() => {
-      expect(tester.error).toBeVisible();
-      done();
-    }, 170);
+    await new Promise<void>(resolve => setTimeout(resolve, 170));
+    expect(tester.error).toBeVisible();
   });
 });

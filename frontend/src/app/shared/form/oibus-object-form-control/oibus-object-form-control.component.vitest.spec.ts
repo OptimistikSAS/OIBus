@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { createMock } from 'ngx-speculoos';
 
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { OIBusObjectAttribute } from '../../../../../../backend/shared/model/form.model';
@@ -13,6 +12,8 @@ import { NotificationService } from '../../notification.service';
 import { ModalService } from '../../modal.service';
 import { OIBusObjectFormControlComponent } from './oibus-object-form-control.component';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { createMock } from '../../../../test/vitest-create-mock';
 
 @Component({
   selector: 'oib-test-oibus-object-form-control-host-component',
@@ -150,40 +151,37 @@ describe('OIBusObjectFormControlComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should organise attributes into the expected rows', () => {
+  test('should organise attributes into the expected rows', () => {
     const rows = component.formRows();
 
     expect(rows.length).toBe(2);
 
     const firstRow = rows[0];
-    expect(firstRow.wrapInRow).toBeTrue();
+    expect(firstRow.wrapInRow).toBe(true);
     expect(firstRow.columns.map(column => column.attribute.key)).toEqual(['name', 'enabled']);
 
     const objectRow = rows.find(row => !row.wrapInRow && row.columns[0].attribute.type === 'object');
     expect(objectRow).toBeDefined();
   });
 
-  it('should apply enabling conditions to the form group', () => {
+  test('should apply enabling conditions to the form group', () => {
     const rows = component.formRows();
     expect(rows.length).toBe(2);
 
-    expect(hostComponent.group.get('name')!.disabled).toBeTrue();
+    expect(hostComponent.group.get('name')!.disabled).toBe(true);
 
     hostComponent.group.get('enabled')!.setValue(true);
 
-    expect(hostComponent.group.get('name')!.disabled).toBeFalse();
+    expect(hostComponent.group.get('name')!.disabled).toBe(false);
   });
 
-  it('should call addEnablingConditions with the form group and enabling conditions', () => {
-    // Since addEnablingConditions is called in the constructor, we can't easily spy on it
-    // Instead, we'll test that the enabling conditions are applied by checking the form state
+  test('should call addEnablingConditions with the form group and enabling conditions', () => {
     component.formRows();
 
-    // The enabling conditions should be applied, so the 'name' field should be disabled initially
-    expect(hostComponent.group.get('name')!.disabled).toBeTrue();
+    expect(hostComponent.group.get('name')!.disabled).toBe(true);
   });
 
-  it('should cast abstract controls to form controls and groups', () => {
+  test('should cast abstract controls to form controls and groups', () => {
     const testGroup = new FormGroup({});
     const testControl = new FormControl('value');
 

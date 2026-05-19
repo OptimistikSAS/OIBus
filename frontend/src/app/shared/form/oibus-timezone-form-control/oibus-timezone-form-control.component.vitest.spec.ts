@@ -1,12 +1,13 @@
-import { fakeAsync, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { OIBusTimezoneFormControlComponent } from './oibus-timezone-form-control.component';
 import { OIBusTimezoneAttribute } from '../../../../../../backend/shared/model/form.model';
-import { TestTypeahead } from '../typeahead.test-utils';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../typeahead';
 
 @Component({
   selector: 'oib-test-oibus-timezone-form-control-component',
@@ -46,13 +47,21 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     return this.input('input')!;
   }
 
-  get timezoneTypeahead() {
-    return this.custom('#testKey', TestTypeahead)!;
+  get suggestions() {
+    return this.elements('ngb-typeahead-window.dropdown-menu button.dropdown-item');
+  }
+
+  get suggestionLabels() {
+    return this.suggestions.map(s => s.textContent?.trim() ?? '');
   }
 }
 
 describe('OIBusTimezoneFormControlComponent', () => {
   let tester: TestComponentTester;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
@@ -63,21 +72,30 @@ describe('OIBusTimezoneFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should create the component', () => {
+  test('should create the component', () => {
     expect(tester.componentInstance).toBeDefined();
   });
 
-  it('should display a label with the correct translation key', () => {
+  test('should display a label with the correct translation key', () => {
     expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Timezone');
+    expect(tester.label.nativeElement.textContent).toContain('Timezone');
   });
 
-  it('should have typeahead functionality', fakeAsync(() => {
-    expect(tester.timezoneTypeahead).toHaveValue('');
+  test('should have typeahead functionality', async () => {
+    vi.useFakeTimers();
+    expect(tester.field.nativeElement).toHaveValue('');
 
-    tester.timezoneTypeahead.fillWith('Par');
-    expect(tester.timezoneTypeahead.suggestionLabels).toEqual(['America/Paramaribo', 'Europe/Paris']);
-    tester.timezoneTypeahead.selectLabel('Europe/Paris');
-    expect(tester.timezoneTypeahead).toHaveValue('Europe/Paris');
-  }));
+    tester.field.fillWith('Par');
+    vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
+    await tester.change();
+
+    expect(tester.suggestionLabels).toEqual(['America/Paramaribo', 'Europe/Paris']);
+
+    const europeParisBtn = tester.suggestions.find(s => s.textContent?.trim() === 'Europe/Paris');
+    (europeParisBtn!.nativeElement as HTMLElement).click();
+    vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
+    await tester.change();
+
+    expect(tester.field.nativeElement).toHaveValue('Europe/Paris');
+  });
 });

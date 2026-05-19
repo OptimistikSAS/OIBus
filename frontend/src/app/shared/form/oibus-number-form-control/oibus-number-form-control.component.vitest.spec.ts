@@ -2,31 +2,32 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { OIBusBooleanAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusNumberAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { OIBusBooleanFormControlComponent } from './oibus-boolean-form-control.component';
+import { OIBusNumberFormControlComponent } from './oibus-number-form-control.component';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
-  selector: 'oib-test-oibus-boolean-form-control-component',
+  selector: 'oib-test-oibus-number-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">
-        <oib-oibus-boolean-form-control [booleanAttribute]="booleanAttribute" />
+        <oib-oibus-number-form-control [numberAttribute]="numberAttribute" />
       </ng-container>
     </form>
   `,
-  imports: [ReactiveFormsModule, OIBusBooleanFormControlComponent]
+  imports: [ReactiveFormsModule, OIBusNumberFormControlComponent]
 })
 class TestComponent {
-  booleanAttribute: OIBusBooleanAttribute = {
-    type: 'boolean',
+  numberAttribute: OIBusNumberAttribute = {
+    type: 'number',
     key: 'testKey',
     translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name'
-  } as OIBusBooleanAttribute;
+  } as OIBusNumberAttribute;
 
   formGroup = new FormGroup({
     testGroup: new FormGroup({
-      testKey: new FormControl(false)
+      testKey: new FormControl('')
     })
   });
 }
@@ -45,7 +46,7 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-describe('OIBusBooleanFormControlComponent', () => {
+describe('OIBusNumberFormControlComponent', () => {
   let tester: TestComponentTester;
 
   beforeEach(async () => {
@@ -57,18 +58,18 @@ describe('OIBusBooleanFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should create the component', () => {
+  test('should create the component', () => {
     expect(tester.componentInstance).toBeDefined();
   });
 
-  it('should display a label with the correct translation key', () => {
+  test('should display a label with the correct translation key', () => {
     expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Field name');
+    expect(tester.label.nativeElement.textContent).toContain('Field name');
   });
 
-  it('should display an input with the correct form control name', () => {
+  test('should display an input with the correct form control name', () => {
     expect(tester.field).toBeDefined();
-    tester.field.check();
-    expect(tester.field).toBeChecked();
+    tester.field.fillWith('123');
+    expect(tester.field.nativeElement.value).toBe('123');
   });
 });

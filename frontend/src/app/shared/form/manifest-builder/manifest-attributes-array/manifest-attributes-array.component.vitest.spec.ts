@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { ManifestAttributesArrayComponent } from './manifest-attributes-array.component';
@@ -7,6 +7,7 @@ import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ModalService } from '../../../modal.service';
 import { of } from 'rxjs';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 @Component({
   template: ` <oib-manifest-attributes-array [label]="arrayAttribute.translationKey" [control]="attributesControl" /> `,
@@ -105,30 +106,36 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
+const flushPromises = () => new Promise<void>(resolve => setTimeout(resolve, 0));
+
 describe('ManifestAttributesArrayComponent', () => {
   let tester: TestComponentTester;
-  let mockModalService: jasmine.SpyObj<ModalService>;
-  let openAttributeEditorSpy: jasmine.Spy;
+  let mockModalService: { open: ReturnType<typeof vi.fn> };
+  let openAttributeEditorSpy: ReturnType<typeof vi.fn>;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   beforeEach(() => {
-    mockModalService = jasmine.createSpyObj('ModalService', ['open']);
+    mockModalService = { open: vi.fn() };
 
     const createModalInstance = (resultValue?: any) => ({
       result: of(resultValue !== undefined ? resultValue : {}),
       componentInstance: {
-        setContextPath: jasmine.createSpy('setContextPath'),
-        prepareForCreation: jasmine.createSpy('prepareForCreation'),
-        prepareForEdition: jasmine.createSpy('prepareForEdition')
+        setContextPath: vi.fn(),
+        prepareForCreation: vi.fn(),
+        prepareForEdition: vi.fn()
       }
     });
 
-    mockModalService.open.and.returnValue(createModalInstance() as any);
+    mockModalService.open.mockReturnValue(createModalInstance());
 
-    openAttributeEditorSpy = spyOn<any>(ManifestAttributesArrayComponent.prototype, 'openAttributeEditor').and.callFake(function (
+    openAttributeEditorSpy = vi.spyOn(ManifestAttributesArrayComponent.prototype as any, 'openAttributeEditor').mockImplementation(function (
       initialise = true
     ) {
       const DummyComponent = function () {} as any;
-      const modal = mockModalService.open(DummyComponent);
+      const modal = (mockModalService.open as unknown as (...args: unknown[]) => any)(DummyComponent);
 
       (modal.componentInstance as any).setContextPath();
       if (initialise) {
@@ -146,61 +153,61 @@ describe('ManifestAttributesArrayComponent', () => {
   });
 
   describe('Component Initialization', () => {
-    it('should create the component', () => {
+    test('should create the component', () => {
       expect(tester.componentInstance).toBeDefined();
     });
 
-    it('should display the add button', () => {
+    test('should display the add button', () => {
       expect(tester.addButton).toBeDefined();
       expect(tester.addButton.element('span.fa.fa-plus')).toBeDefined();
     });
 
-    it('should show empty state when no attributes', () => {
+    test('should show empty state when no attributes', () => {
       expect(tester.attributesTable).toBeNull();
-      expect(tester.emptyState).toContainText('No attributes defined');
+      expect(tester.emptyState.nativeElement.textContent).toContain('No attributes defined');
     });
 
-    it('should display box title', () => {
+    test('should display box title', () => {
       expect(tester.boxTitle).toBeDefined();
     });
   });
 
   describe('Column Building', () => {
-    it('should build columns from root attribute', () => {
+    test('should build columns from root attribute', () => {
       const component = tester.componentInstance;
       const displayableAttributes = component.arrayAttribute.rootAttribute.attributes.filter(
         attr => (attr as any).displayProperties?.displayInViewMode
       );
 
-      expect(displayableAttributes.length).toBe(3); // type, key, translationKey
+      expect(displayableAttributes.length).toBe(3);
     });
 
-    it('should filter out non-displayable attributes', () => {
+    test('should filter out non-displayable attributes', () => {
       const component = tester.componentInstance;
       const displayableAttributes = component.arrayAttribute.rootAttribute.attributes.filter(
         attr => (attr as any).displayProperties?.displayInViewMode
       );
 
-      expect(displayableAttributes.length).toBe(3); // type, key, translationKey
+      expect(displayableAttributes.length).toBe(3);
     });
   });
 
   describe('Add Item Functionality', () => {
-    it('should open modal when add button is clicked', fakeAsync(() => {
+    test('should open modal when add button is clicked', async () => {
       tester.addButton.click();
-      tick();
+      await flushPromises();
       expect(openAttributeEditorSpy).toHaveBeenCalled();
-    }));
+    });
 
-    it('should prepare modal for creation', fakeAsync(() => {
+    test('should prepare modal for creation', async () => {
       tester.addButton.click();
-      tick();
+      await flushPromises();
       expect(openAttributeEditorSpy).toHaveBeenCalled();
-      const modal = mockModalService.open.calls.mostRecent().returnValue as { componentInstance: any };
+      const modal = mockModalService.open.mock.results.at(-1)?.value as { componentInstance: any };
       expect(modal.componentInstance.prepareForCreation).toHaveBeenCalled();
-    }));
+    });
 
-    it('should add new item when modal returns result', fakeAsync(() => {
+    test('should add new item when modal returns result', async () => {
       const newAttribute = {
         type: 'string',
         key: 'newKey',
@@ -208,21 +215,21 @@ describe('ManifestAttributesArrayComponent', () => {
         defaultValue: 'new value'
       };
 
-      mockModalService.open.and.returnValue({
+      mockModalService.open.mockReturnValue({
         result: of(newAttribute),
         componentInstance: {
-          setContextPath: jasmine.createSpy('setContextPath'),
-          prepareForCreation: jasmine.createSpy('prepareForCreation'),
-          prepareForEdition: jasmine.createSpy('prepareForEdition')
+          setContextPath: vi.fn(),
+          prepareForCreation: vi.fn(),
+          prepareForEdition: vi.fn()
         }
-      } as any);
+      });
 
       tester.addButton.click();
-      tick();
+      await flushPromises();
       tester.detectChanges();
 
       expect(tester.componentInstance.attributesControl.value).toContain(newAttribute);
-    }));
+    });
   });
 
   describe('Edit Item Functionality', () => {
@@ -245,22 +252,22 @@ describe('ManifestAttributesArrayComponent', () => {
       tester.detectChanges();
     });
 
-    it('should display table when attributes exist', () => {
+    test('should display table when attributes exist', () => {
       expect(tester.attributesTable).toBeDefined();
       expect(tester.tableRows.length).toBe(2);
     });
 
-    it('should show edit buttons for each row', () => {
+    test('should show edit buttons for each row', () => {
       expect(tester.editButtons.length).toBe(2);
     });
 
-    it('should open modal when edit button is clicked', fakeAsync(() => {
+    test('should open modal when edit button is clicked', async () => {
       tester.editButtons[0].click();
-      tick();
+      await flushPromises();
       expect(openAttributeEditorSpy).toHaveBeenCalled();
-    }));
+    });
 
-    it('should update item when modal returns result', fakeAsync(() => {
+    test('should update item when modal returns result', async () => {
       const updatedAttribute = {
         type: 'string',
         key: 'updatedKey',
@@ -268,22 +275,22 @@ describe('ManifestAttributesArrayComponent', () => {
         defaultValue: 'updated value'
       };
 
-      mockModalService.open.and.returnValue({
+      mockModalService.open.mockReturnValue({
         result: of(updatedAttribute),
         componentInstance: {
-          setContextPath: jasmine.createSpy('setContextPath'),
-          prepareForCreation: jasmine.createSpy('prepareForCreation'),
-          prepareForEdition: jasmine.createSpy('prepareForEdition')
+          setContextPath: vi.fn(),
+          prepareForCreation: vi.fn(),
+          prepareForEdition: vi.fn()
         }
-      } as any);
+      });
 
       tester.editButtons[0].click();
-      tick();
+      await flushPromises();
       tester.detectChanges();
 
       const currentValue = tester.componentInstance.attributesControl.value;
-      expect(currentValue?.[0]).toEqual(jasmine.objectContaining(updatedAttribute));
-    }));
+      expect(currentValue?.[0]).toEqual(expect.objectContaining(updatedAttribute));
+    });
   });
 
   describe('Copy Item Functionality', () => {
@@ -300,17 +307,17 @@ describe('ManifestAttributesArrayComponent', () => {
       tester.detectChanges();
     });
 
-    it('should show copy buttons for each row', () => {
+    test('should show copy buttons for each row', () => {
       expect(tester.copyButtons.length).toBe(1);
     });
 
-    it('should open modal when copy button is clicked', fakeAsync(() => {
+    test('should open modal when copy button is clicked', async () => {
       tester.copyButtons[0].click();
-      tick();
+      await flushPromises();
       expect(openAttributeEditorSpy).toHaveBeenCalled();
-    }));
+    });
 
-    it('should add copied item when modal returns result', fakeAsync(() => {
+    test('should add copied item when modal returns result', async () => {
       const copiedAttribute = {
         type: 'string',
         key: 'testKey_copy',
@@ -318,23 +325,23 @@ describe('ManifestAttributesArrayComponent', () => {
         defaultValue: 'test value'
       };
 
-      mockModalService.open.and.returnValue({
+      mockModalService.open.mockReturnValue({
         result: of(copiedAttribute),
         componentInstance: {
-          setContextPath: jasmine.createSpy('setContextPath'),
-          prepareForCreation: jasmine.createSpy('prepareForCreation'),
-          prepareForEdition: jasmine.createSpy('prepareForEdition')
+          setContextPath: vi.fn(),
+          prepareForCreation: vi.fn(),
+          prepareForEdition: vi.fn()
         }
-      } as any);
+      });
 
       tester.copyButtons[0].click();
-      tick();
+      await flushPromises();
       tester.detectChanges();
 
       const currentValue = tester.componentInstance.attributesControl.value;
       expect(currentValue?.length).toBe(2);
       expect(currentValue?.[1]).toEqual(copiedAttribute);
-    }));
+    });
   });
 
   describe('Delete Item Functionality', () => {
@@ -357,11 +364,11 @@ describe('ManifestAttributesArrayComponent', () => {
       tester.detectChanges();
     });
 
-    it('should show delete buttons for each row', () => {
+    test('should show delete buttons for each row', () => {
       expect(tester.deleteButtons.length).toBe(2);
     });
 
-    it('should remove item when delete button is clicked', () => {
+    test('should remove item when delete button is clicked', () => {
       const initialLength = tester.componentInstance.attributesControl.value?.length || 0;
       tester.deleteButtons[0].click();
       tester.detectChanges();
@@ -369,13 +376,13 @@ describe('ManifestAttributesArrayComponent', () => {
       expect(tester.componentInstance.attributesControl.value?.length).toBe(initialLength - 1);
     });
 
-    it('should show empty state when all items are deleted', () => {
+    test('should show empty state when all items are deleted', () => {
       tester.deleteButtons[0].click();
-      tester.deleteButtons[0].click(); // Delete the second item
+      tester.deleteButtons[0].click();
       tester.detectChanges();
 
       expect(tester.attributesTable).toBeNull();
-      expect(tester.emptyState).toContainText('No attributes defined');
+      expect(tester.emptyState.nativeElement.textContent).toContain('No attributes defined');
     });
   });
 
@@ -405,20 +412,17 @@ describe('ManifestAttributesArrayComponent', () => {
       tester.detectChanges();
     });
 
-    it('should format string values correctly', () => {
-      // Check that the table displays the data
+    test('should format string values correctly', () => {
       expect(tester.attributesTable).toBeDefined();
       expect(tester.tableRows.length).toBe(3);
     });
 
-    it('should format number values correctly', () => {
-      // Check that the table displays the data
+    test('should format number values correctly', () => {
       expect(tester.attributesTable).toBeDefined();
       expect(tester.tableRows.length).toBe(3);
     });
 
-    it('should format boolean values correctly', () => {
-      // Boolean values are translated, so we check for the presence of the cell
+    test('should format boolean values correctly', () => {
       const booleanRow = tester.tableRows.find(row => row.textContent?.includes('booleanKey'));
       expect(booleanRow).toBeDefined();
     });
@@ -426,7 +430,6 @@ describe('ManifestAttributesArrayComponent', () => {
 
   describe('Pagination', () => {
     beforeEach(() => {
-      // Set up paginated array attribute
       tester.componentInstance.arrayAttribute = {
         ...tester.componentInstance.arrayAttribute,
         paginate: true,
@@ -435,42 +438,41 @@ describe('ManifestAttributesArrayComponent', () => {
       tester.detectChanges();
     });
 
-    it('should not show pagination when paginate is disabled', () => {
+    test('should not show pagination when paginate is disabled', () => {
       tester.componentInstance.arrayAttribute = {
         ...tester.componentInstance.arrayAttribute,
         paginate: false
       };
       tester.detectChanges();
 
-      // With pagination disabled, it should not be visible
       expect(tester.pagination).toBeNull();
     });
   });
 
   describe('Input Properties', () => {
-    it('should accept control input', () => {
+    test('should accept control input', () => {
       expect(tester.componentInstance.attributesControl).toBeDefined();
     });
 
-    it('should accept arrayAttribute input', () => {
+    test('should accept arrayAttribute input', () => {
       expect(tester.componentInstance.arrayAttribute).toBeDefined();
       expect(tester.componentInstance.arrayAttribute.type).toBe('array');
     });
   });
 
   describe('Error Handling', () => {
-    it('should handle empty control value', () => {
+    test('should handle empty control value', () => {
       tester.componentInstance.attributesControl.setValue([]);
       tester.detectChanges();
 
-      expect(tester.emptyState).toContainText('No attributes defined');
+      expect(tester.emptyState.nativeElement.textContent).toContain('No attributes defined');
     });
 
-    it('should handle modal service errors gracefully', () => {
-      mockModalService.open.and.throwError('Modal error');
+    test('should handle modal service errors gracefully', () => {
+      mockModalService.open.mockImplementation(() => {
+        throw new Error('Modal error');
+      });
 
-      // The component should handle the error gracefully
-      // We just test that the button click doesn't crash the component
       expect(() => {
         tester.addButton.click();
       }).not.toThrow();
@@ -478,7 +480,7 @@ describe('ManifestAttributesArrayComponent', () => {
   });
 
   describe('Integration with Form Control', () => {
-    it('should update form control when items are added', fakeAsync(() => {
+    test('should update form control when items are added', async () => {
       const newAttribute = {
         type: 'string',
         key: 'newKey',
@@ -486,23 +488,23 @@ describe('ManifestAttributesArrayComponent', () => {
         defaultValue: 'new value'
       };
 
-      mockModalService.open.and.returnValue({
+      mockModalService.open.mockReturnValue({
         result: of(newAttribute),
         componentInstance: {
-          setContextPath: jasmine.createSpy('setContextPath'),
-          prepareForCreation: jasmine.createSpy('prepareForCreation'),
-          prepareForEdition: jasmine.createSpy('prepareForEdition')
+          setContextPath: vi.fn(),
+          prepareForCreation: vi.fn(),
+          prepareForEdition: vi.fn()
         }
-      } as any);
+      });
 
       tester.addButton.click();
-      tick();
+      await flushPromises();
       tester.detectChanges();
 
       expect(tester.componentInstance.attributesControl.value).toContain(newAttribute);
-    }));
+    });
 
-    it('should update form control when items are edited', () => {
+    test('should update form control when items are edited', () => {
       const testAttributes = [
         {
           type: 'string',
@@ -514,12 +516,11 @@ describe('ManifestAttributesArrayComponent', () => {
       tester.componentInstance.attributesControl.setValue(testAttributes);
       tester.detectChanges();
 
-      // Just test that the edit button exists and can be clicked
       expect(tester.editButtons.length).toBe(1);
       expect(tester.editButtons[0]).toBeDefined();
     });
 
-    it('should update form control when items are deleted', () => {
+    test('should update form control when items are deleted', () => {
       const testAttributes = [
         {
           type: 'string',

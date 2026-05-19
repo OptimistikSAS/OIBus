@@ -2,27 +2,31 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { OIBusNumberAttribute } from '../../../../../../backend/shared/model/form.model';
+import { OIBusCodeAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
-import { OIBusNumberFormControlComponent } from './oibus-number-form-control.component';
+import { OIBusCodeFormControlComponent } from './oibus-code-form-control.component';
+import { By } from '@angular/platform-browser';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
-  selector: 'oib-test-oibus-number-form-control-component',
+  selector: 'oib-test-oibus-code-form-control-component',
   template: `
     <form [formGroup]="formGroup">
       <ng-container formGroupName="testGroup">
-        <oib-oibus-number-form-control [numberAttribute]="numberAttribute" />
+        <oib-oibus-code-form-control [codeAttribute]="codeAttribute" />
       </ng-container>
     </form>
   `,
-  imports: [ReactiveFormsModule, OIBusNumberFormControlComponent]
+  imports: [ReactiveFormsModule, OIBusCodeFormControlComponent]
 })
 class TestComponent {
-  numberAttribute: OIBusNumberAttribute = {
-    type: 'number',
+  codeAttribute: OIBusCodeAttribute = {
+    type: 'code',
     key: 'testKey',
-    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name'
-  } as OIBusNumberAttribute;
+    translationKey: 'configuration.oibus.manifest.south.items.mssql.date-time-fields.field-name',
+    contentType: 'sql',
+    defaultValue: null
+  } as OIBusCodeAttribute;
 
   formGroup = new FormGroup({
     testGroup: new FormGroup({
@@ -41,11 +45,11 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 
   get field() {
-    return this.input('input')!;
+    return this.debugElement.query(By.directive(OIBusCodeFormControlComponent))!;
   }
 }
 
-describe('OIBusNumberFormControlComponent', () => {
+describe('OIBusCodeFormControlComponent', () => {
   let tester: TestComponentTester;
 
   beforeEach(async () => {
@@ -57,18 +61,16 @@ describe('OIBusNumberFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should create the component', () => {
+  test('should create the component', () => {
     expect(tester.componentInstance).toBeDefined();
   });
 
-  it('should display a label with the correct translation key', () => {
+  test('should display a label with the correct translation key', () => {
     expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Field name');
+    expect(tester.label.nativeElement.textContent).toContain('Field name');
   });
 
-  it('should display an input with the correct form control name', () => {
+  test('should display an input with the correct form control name', () => {
     expect(tester.field).toBeDefined();
-    tester.field.fillWith('123');
-    expect(tester.field).toHaveValue('123');
   });
 });

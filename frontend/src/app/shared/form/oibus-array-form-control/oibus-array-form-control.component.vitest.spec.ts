@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { Component } from '@angular/core';
-import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
+import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusArrayFormControlComponent } from './oibus-array-form-control.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
@@ -13,6 +13,8 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { MockModalService, provideModalTesting } from '../../mock-modal.service.spec';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { beforeEach, describe, expect, test } from 'vitest';
+import { createMock } from '../../../../test/vitest-create-mock';
 
 @Component({
   selector: 'oib-test-oibus-array-form-control-component',
@@ -101,7 +103,7 @@ describe('OIBusArrayFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should add an element', async () => {
+  test('should add an element', async () => {
     const mockModalService = TestBed.inject(MockModalService);
     const fakeModalComponent = createMock(OIBusEditArrayElementModalComponent);
     mockModalService.mockClosedModal(fakeModalComponent);
@@ -116,7 +118,7 @@ describe('OIBusArrayFormControlComponent', () => {
     );
   });
 
-  it('should edit an element', async () => {
+  test('should edit an element', async () => {
     const mockModalService = TestBed.inject(MockModalService);
     const fakeModalComponent = createMock(OIBusEditArrayElementModalComponent);
     mockModalService.mockClosedModal(fakeModalComponent);
@@ -133,7 +135,7 @@ describe('OIBusArrayFormControlComponent', () => {
     );
   });
 
-  it('should copy an element', async () => {
+  test('should copy an element', async () => {
     const mockModalService = TestBed.inject(MockModalService);
     const fakeModalComponent = createMock(OIBusEditArrayElementModalComponent);
     mockModalService.mockClosedModal(fakeModalComponent);
@@ -150,7 +152,7 @@ describe('OIBusArrayFormControlComponent', () => {
     );
   });
 
-  it('should delete an element', async () => {
+  test('should delete an element', async () => {
     const mockModalService = TestBed.inject(MockModalService);
     const fakeModalComponent = createMock(OIBusEditArrayElementModalComponent);
     mockModalService.mockClosedModal(fakeModalComponent);

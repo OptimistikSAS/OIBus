@@ -8,6 +8,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { OibusCertificateFormControlComponent } from './oibus-certificate-form-control.component';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test-oibus-certificate-form-control-component',
@@ -65,25 +66,25 @@ describe('OIBusCertificateFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should create the component', () => {
+  test('should create the component', () => {
     expect(tester.componentInstance).toBeDefined();
   });
 
-  it('should display a label with the correct translation key', () => {
+  test('should display a label with the correct translation key', () => {
     expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Field name');
+    expect(tester.label.nativeElement.textContent).toContain('Field name');
   });
 
-  it('should display a select with the correct form control name', () => {
+  test('should display a select with the correct form control name', () => {
     expect(tester.field).toBeDefined();
     tester.field.selectValue('certificate1');
-    expect(tester.field).toHaveSelectedLabel('Certificate 1');
-    expect(tester.field).toHaveSelectedValue('certificate1');
+    expect(tester.field.nativeElement.value).toBe('certificate1');
+    expect(tester.field.nativeElement.selectedOptions[0]?.text?.trim()).toBe('Certificate 1');
   });
 
-  it('should display options for each selectable value', () => {
+  test('should display options for each selectable value', () => {
     expect(tester.options.length).toBe(3); // One for the null option and one for each value
-    expect(tester.options[1]).toContainText('Certificate 1');
-    expect(tester.options[2]).toContainText('Certificate 2');
+    expect(tester.options[1].nativeElement.textContent).toContain('Certificate 1');
+    expect(tester.options[2].nativeElement.textContent).toContain('Certificate 2');
   });
 });
