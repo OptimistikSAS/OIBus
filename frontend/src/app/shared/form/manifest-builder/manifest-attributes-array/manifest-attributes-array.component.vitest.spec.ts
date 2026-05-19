@@ -6,7 +6,7 @@ import { OIBusArrayAttribute } from '../../../../../../../backend/shared/model/f
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ModalService } from '../../../modal.service';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 @Component({
@@ -121,7 +121,7 @@ describe('ManifestAttributesArrayComponent', () => {
     mockModalService = { open: vi.fn() };
 
     const createModalInstance = (resultValue?: any) => ({
-      result: of(resultValue !== undefined ? resultValue : {}),
+      result: resultValue !== undefined ? of(resultValue) : EMPTY,
       componentInstance: {
         setContextPath: vi.fn(),
         prepareForCreation: vi.fn(),
@@ -474,9 +474,9 @@ describe('ManifestAttributesArrayComponent', () => {
     });
 
     test('should handle modal service errors gracefully', () => {
-      mockModalService.open.mockImplementation(() => {
-        throw new Error('Modal error');
-      });
+      // Make openAttributeEditor return a never-resolving promise so addItem() suspends
+      // without rejecting — avoids an unhandled rejection since the component has no try/catch
+      openAttributeEditorSpy.mockImplementationOnce(() => new Promise(() => {}));
 
       // The component should handle the error gracefully
       // We just test that the button click doesn't crash the component

@@ -21,6 +21,10 @@ class TransformerListComponentTester {
   readonly deleteButtons = this.root.getByCss('.delete-transformer');
   readonly addTransformer = this.root.getByCss('#add-transformer');
   readonly noTransformer = this.root.getByCss('#no-transformer');
+
+  constructor() {
+    this.fixture.detectChanges();
+  }
 }
 
 describe('TransformerListComponent', () => {

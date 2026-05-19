@@ -22,6 +22,10 @@ class ScanModeListComponentTester {
   readonly editButtons = this.root.getByCss('.edit-scan-mode');
   readonly addScanMode = this.root.getByCss('#add-scan-mode');
   readonly noScanMode = this.root.getByCss('#no-scan-mode');
+
+  constructor() {
+    this.fixture.detectChanges();
+  }
 }
 
 describe('ScanModeListComponent', () => {

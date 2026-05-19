@@ -20,6 +20,10 @@ class LoginComponentTester {
   readonly loginButton = this.root.getByCss('#login-button');
   readonly validationErrors = this.root.getByCss('val-errors div');
   readonly alert = this.root.getByRole('alert');
+
+  constructor() {
+    this.fixture.detectChanges();
+  }
 }
 
 describe('LoginComponent', () => {
@@ -59,6 +63,7 @@ describe('LoginComponent', () => {
 
   test('should validate', async () => {
     await tester.loginButton.click();
+    tester.fixture.detectChanges();
 
     await expect.element(tester.validationErrors).toHaveLength(2);
   });
@@ -82,6 +87,7 @@ describe('LoginComponent', () => {
     await tester.login.fill('johndoe');
     await tester.password.fill('passw0rd');
     await tester.loginButton.click();
+    tester.fixture.detectChanges();
 
     expect(currentUserService.loginWithPassword).toHaveBeenCalledWith('johndoe', 'passw0rd');
     expect(router.navigateByUrl).not.toHaveBeenCalled();

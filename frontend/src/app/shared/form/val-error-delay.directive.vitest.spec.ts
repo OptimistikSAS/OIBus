@@ -42,9 +42,9 @@ describe('ValErrorAnimationDirective', () => {
     tester.detectChanges();
 
     expect(tester.error).not.toBeNull();
-    expect(tester.error).not.toBeVisible();
+    expect(tester.error!.nativeElement).not.toBeVisible();
 
     await new Promise<void>(resolve => setTimeout(resolve, 170));
-    expect(tester.error).toBeVisible();
+    expect(tester.error!.nativeElement).toBeVisible();
   });
 });

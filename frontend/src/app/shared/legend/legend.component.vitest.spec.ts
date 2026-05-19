@@ -23,6 +23,7 @@ describe('LegendComponent', () => {
       { label: 'north.disabled', class: 'grey-dot' },
       { label: 'north.enabled', class: 'green-dot' }
     ]);
+    tester.fixture.detectChanges();
   });
 
   test('should display a legend list', async () => {
