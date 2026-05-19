@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test-form-control-validation-component',
@@ -48,19 +49,19 @@ describe('FormControlValidationDirective', () => {
     await tester.change();
   });
 
-  it('should add the is-invalid CSS class when touched', () => {
-    expect(tester.lastName).not.toHaveClass('is-invalid');
+  test('should add the is-invalid CSS class when touched', () => {
+    expect(tester.lastName.nativeElement).not.toHaveClass('is-invalid');
 
     tester.lastName.dispatchEventOfType('blur');
 
-    expect(tester.lastName).toHaveClass('is-invalid');
+    expect(tester.lastName.nativeElement).toHaveClass('is-invalid');
   });
 
-  it('should add the is-invalid CSS class when enclosing form is submitted', () => {
-    expect(tester.lastName).not.toHaveClass('is-invalid');
+  test('should add the is-invalid CSS class when enclosing form is submitted', () => {
+    expect(tester.lastName.nativeElement).not.toHaveClass('is-invalid');
 
     tester.save.click();
 
-    expect(tester.lastName).toHaveClass('is-invalid');
+    expect(tester.lastName.nativeElement).toHaveClass('is-invalid');
   });
 });

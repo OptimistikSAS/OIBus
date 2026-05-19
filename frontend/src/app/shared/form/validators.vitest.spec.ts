@@ -7,31 +7,32 @@ import {
   mqttTopicOverlapValidator,
   validateCsvMqttTopics
 } from './validators';
+import { describe, expect, test } from 'vitest';
 
 describe('Custom Validators', () => {
   describe('uniqueFieldNamesValidator', () => {
-    it('should return null for empty array', () => {
+    test('should return null for empty array', () => {
       const validator = uniqueFieldNamesValidator('fieldName');
       const control = new FormControl([]);
 
       expect(validator(control)).toBeNull();
     });
 
-    it('should return null for null value', () => {
+    test('should return null for null value', () => {
       const validator = uniqueFieldNamesValidator('fieldName');
       const control = new FormControl(null);
 
       expect(validator(control)).toBeNull();
     });
 
-    it('should return null for non-array value', () => {
+    test('should return null for non-array value', () => {
       const validator = uniqueFieldNamesValidator('fieldName');
       const control = new FormControl('not an array');
 
       expect(validator(control)).toBeNull();
     });
 
-    it('should return null when all field names are unique', () => {
+    test('should return null when all field names are unique', () => {
       const validator = uniqueFieldNamesValidator('fieldName');
       const control = new FormControl([
         { fieldName: 'field1', type: 'string' },
@@ -42,7 +43,7 @@ describe('Custom Validators', () => {
       expect(validator(control)).toBeNull();
     });
 
-    it('should return error when field names are duplicated', () => {
+    test('should return error when field names are duplicated', () => {
       const validator = uniqueFieldNamesValidator('fieldName');
       const control = new FormControl([
         { fieldName: 'field1', type: 'string' },
@@ -53,7 +54,7 @@ describe('Custom Validators', () => {
       expect(validator(control)).toEqual({ duplicateFieldNames: true });
     });
 
-    it('should ignore empty/falsy field names', () => {
+    test('should ignore empty/falsy field names', () => {
       const validator = uniqueFieldNamesValidator('fieldName');
       const control = new FormControl([
         { fieldName: 'field1', type: 'string' },
@@ -65,7 +66,7 @@ describe('Custom Validators', () => {
       expect(validator(control)).toBeNull();
     });
 
-    it('should work with different field keys', () => {
+    test('should work with different field keys', () => {
       const validator = uniqueFieldNamesValidator('customKey');
       const control = new FormControl([
         { customKey: 'value1', other: 'data' },
@@ -78,28 +79,28 @@ describe('Custom Validators', () => {
   });
 
   describe('singleTrueValidator', () => {
-    it('should return null for empty array', () => {
+    test('should return null for empty array', () => {
       const validator = singleTrueValidator('useAsReference');
       const control = new FormControl([]);
 
       expect(validator(control)).toBeNull();
     });
 
-    it('should return null for null value', () => {
+    test('should return null for null value', () => {
       const validator = singleTrueValidator('useAsReference');
       const control = new FormControl(null);
 
       expect(validator(control)).toBeNull();
     });
 
-    it('should return null for non-array value', () => {
+    test('should return null for non-array value', () => {
       const validator = singleTrueValidator('useAsReference');
       const control = new FormControl('not an array');
 
       expect(validator(control)).toBeNull();
     });
 
-    it('should return null when no items have true value', () => {
+    test('should return null when no items have true value', () => {
       const validator = singleTrueValidator('useAsReference');
       const control = new FormControl([
         { fieldName: 'field1', useAsReference: false },
@@ -110,7 +111,7 @@ describe('Custom Validators', () => {
       expect(validator(control)).toBeNull();
     });
 
-    it('should return null when exactly one item has true value', () => {
+    test('should return null when exactly one item has true value', () => {
       const validator = singleTrueValidator('useAsReference');
       const control = new FormControl([
         { fieldName: 'field1', useAsReference: false },
@@ -121,7 +122,7 @@ describe('Custom Validators', () => {
       expect(validator(control)).toBeNull();
     });
 
-    it('should return error when multiple items have true value', () => {
+    test('should return error when multiple items have true value', () => {
       const validator = singleTrueValidator('useAsReference');
       const control = new FormControl([
         { fieldName: 'field1', useAsReference: true },
@@ -132,7 +133,7 @@ describe('Custom Validators', () => {
       expect(validator(control)).toEqual({ onlyOneReference: true });
     });
 
-    it('should return error when all items have true value', () => {
+    test('should return error when all items have true value', () => {
       const validator = singleTrueValidator('useAsReference');
       const control = new FormControl([
         { fieldName: 'field1', useAsReference: true },
@@ -143,7 +144,7 @@ describe('Custom Validators', () => {
       expect(validator(control)).toEqual({ onlyOneReference: true });
     });
 
-    it('should work with different field keys', () => {
+    test('should work with different field keys', () => {
       const validator = singleTrueValidator('isActive');
       const control = new FormControl([
         { name: 'item1', isActive: true },
@@ -154,7 +155,7 @@ describe('Custom Validators', () => {
       expect(validator(control)).toEqual({ onlyOneReference: true });
     });
 
-    it('should handle mixed boolean values correctly', () => {
+    test('should handle mixed boolean values correctly', () => {
       const validator = singleTrueValidator('useAsReference');
       const control = new FormControl([
         { fieldName: 'field1', useAsReference: 'true' },
@@ -168,11 +169,10 @@ describe('Custom Validators', () => {
   });
 
   describe('Integration tests', () => {
-    it('should work together when both validators are applied', () => {
+    test('should work together when both validators are applied', () => {
       const uniqueValidator = uniqueFieldNamesValidator('fieldName');
       const singleTrueValidator_ = singleTrueValidator('useAsReference');
 
-      // Valid case: unique names and single true
       const validControl = new FormControl([
         { fieldName: 'field1', useAsReference: true },
         { fieldName: 'field2', useAsReference: false },
@@ -182,7 +182,6 @@ describe('Custom Validators', () => {
       expect(uniqueValidator(validControl)).toBeNull();
       expect(singleTrueValidator_(validControl)).toBeNull();
 
-      // Invalid case: duplicate names
       const duplicateNamesControl = new FormControl([
         { fieldName: 'field1', useAsReference: true },
         { fieldName: 'field1', useAsReference: false }
@@ -191,7 +190,6 @@ describe('Custom Validators', () => {
       expect(uniqueValidator(duplicateNamesControl)).toEqual({ duplicateFieldNames: true });
       expect(singleTrueValidator_(duplicateNamesControl)).toBeNull();
 
-      // Invalid case: multiple true values
       const multipleTrueControl = new FormControl([
         { fieldName: 'field1', useAsReference: true },
         { fieldName: 'field2', useAsReference: true }
@@ -209,7 +207,7 @@ describe('Custom Validators', () => {
     };
 
     describe('when expectedHeaders is empty', () => {
-      it('should return null', async () => {
+      test('should return null', async () => {
         const file = createMockFile('header1,header2\nvalue1,value2');
         const result = await validateCsvHeaders(file, ',', []);
         expect(result).toBeNull();
@@ -217,7 +215,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when file is empty', () => {
-      it('should return validation error with missing headers', async () => {
+      test('should return validation error with missing headers', async () => {
         const file = createMockFile('');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -232,7 +230,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when file has only empty lines', () => {
-      it('should return validation error with missing headers', async () => {
+      test('should return validation error with missing headers', async () => {
         const file = createMockFile('\n\n\n');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -247,7 +245,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when first line is empty', () => {
-      it('should return validation error with missing headers', async () => {
+      test('should return validation error with missing headers', async () => {
         const file = createMockFile('   \nvalue1,value2');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -262,7 +260,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when headers match exactly', () => {
-      it('should return null', async () => {
+      test('should return null', async () => {
         const file = createMockFile('header1,header2\nvalue1,value2');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -272,7 +270,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when headers match with different order', () => {
-      it('should return null', async () => {
+      test('should return null', async () => {
         const file = createMockFile('header2,header1\nvalue2,value1');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -282,7 +280,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when headers have extra whitespace', () => {
-      it('should trim headers and validate correctly', async () => {
+      test('should trim headers and validate correctly', async () => {
         const file = createMockFile(' header1 , header2 \nvalue1,value2');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -292,7 +290,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when file has missing headers', () => {
-      it('should return validation error with missing headers', async () => {
+      test('should return validation error with missing headers', async () => {
         const file = createMockFile('header1\nvalue1');
         const expectedHeaders = ['header1', 'header2', 'header3'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -307,7 +305,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when file has extra headers', () => {
-      it('should return validation error with extra headers', async () => {
+      test('should return validation error with extra headers', async () => {
         const file = createMockFile('header1,header2,header3\nvalue1,value2,value3');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -322,7 +320,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when file has both missing and extra headers', () => {
-      it('should return validation error with both missing and extra headers', async () => {
+      test('should return validation error with both missing and extra headers', async () => {
         const file = createMockFile('header1,header3\nvalue1,value3');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -337,7 +335,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when using different delimiters', () => {
-      it('should handle semicolon delimiter', async () => {
+      test('should handle semicolon delimiter', async () => {
         const file = createMockFile('header1;header2\nvalue1;value2');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ';', expectedHeaders);
@@ -345,7 +343,7 @@ describe('Custom Validators', () => {
         expect(result).toBeNull();
       });
 
-      it('should handle pipe delimiter', async () => {
+      test('should handle pipe delimiter', async () => {
         const file = createMockFile('header1|header2\nvalue1|value2');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, '|', expectedHeaders);
@@ -353,7 +351,7 @@ describe('Custom Validators', () => {
         expect(result).toBeNull();
       });
 
-      it('should handle tab delimiter', async () => {
+      test('should handle tab delimiter', async () => {
         const file = createMockFile('header1\theader2\nvalue1\tvalue2');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, '\t', expectedHeaders);
@@ -363,7 +361,7 @@ describe('Custom Validators', () => {
     });
 
     describe('when file reading fails', () => {
-      it('should return validation error with missing headers', async () => {
+      test('should return validation error with missing headers', async () => {
         const mockFile = {
           text: () => Promise.reject(new Error('File read error'))
         } as unknown as File;
@@ -381,7 +379,7 @@ describe('Custom Validators', () => {
     });
 
     describe('edge cases', () => {
-      it('should handle single header file', async () => {
+      test('should handle single header file', async () => {
         const file = createMockFile('header1\nvalue1');
         const expectedHeaders = ['header1'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -389,7 +387,7 @@ describe('Custom Validators', () => {
         expect(result).toBeNull();
       });
 
-      it('should handle empty header names', async () => {
+      test('should handle empty header names', async () => {
         const file = createMockFile('header1,,header3\nvalue1,,value3');
         const expectedHeaders = ['header1', 'header3'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -402,7 +400,7 @@ describe('Custom Validators', () => {
         });
       });
 
-      it('should handle case-sensitive header comparison', async () => {
+      test('should handle case-sensitive header comparison', async () => {
         const file = createMockFile('Header1,HEADER2\nvalue1,value2');
         const expectedHeaders = ['header1', 'header2'];
         const result = await validateCsvHeaders(file, ',', expectedHeaders);
@@ -419,23 +417,23 @@ describe('Custom Validators', () => {
 
   describe('MQTT Topic Validation', () => {
     describe('doMqttTopicsOverlap', () => {
-      it('should return true for identical topics', () => {
+      test('should return true for identical topics', () => {
         expect(doMqttTopicsOverlap('/oibus/counter', '/oibus/counter')).toBe(true);
       });
 
-      it('should return true for overlapping wildcard patterns', () => {
+      test('should return true for overlapping wildcard patterns', () => {
         expect(doMqttTopicsOverlap('/oibus/counter', '/oibus/#')).toBe(true);
         expect(doMqttTopicsOverlap('/oibus/#', '/oibus/counter')).toBe(true);
         expect(doMqttTopicsOverlap('/oibus/counter', '/oibus/+')).toBe(true);
         expect(doMqttTopicsOverlap('/oibus/+', '/oibus/counter')).toBe(true);
       });
 
-      it('should return false for non-overlapping topics', () => {
+      test('should return false for non-overlapping topics', () => {
         expect(doMqttTopicsOverlap('/oibus/counter', '/other/topic')).toBe(false);
         expect(doMqttTopicsOverlap('/oibus/counter', '/oibus/other')).toBe(false);
       });
 
-      it('should handle edge cases', () => {
+      test('should handle edge cases', () => {
         expect(doMqttTopicsOverlap('', '')).toBe(true);
         expect(doMqttTopicsOverlap('topic', 'topic')).toBe(true);
         expect(doMqttTopicsOverlap('topic', '#')).toBe(true);
@@ -443,7 +441,7 @@ describe('Custom Validators', () => {
     });
 
     describe('mqttTopicOverlapValidator', () => {
-      it('should return null when no conflicts exist', () => {
+      test('should return null when no conflicts exist', () => {
         const existingTopics = ['/oibus/counter', '/other/topic'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl('/different/topic');
@@ -451,7 +449,7 @@ describe('Custom Validators', () => {
         expect(validator(control)).toBeNull();
       });
 
-      it('should return error when conflict exists', () => {
+      test('should return error when conflict exists', () => {
         const existingTopics = ['/oibus/counter', '/oibus/#'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl('/oibus/temperature');
@@ -464,7 +462,7 @@ describe('Custom Validators', () => {
         });
       });
 
-      it('should return error for multiple conflicts', () => {
+      test('should return error for multiple conflicts', () => {
         const existingTopics = ['/oibus/+', '/oibus/#'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl('/oibus/counter');
@@ -477,7 +475,7 @@ describe('Custom Validators', () => {
         });
       });
 
-      it('should return null for empty current topic', () => {
+      test('should return null for empty current topic', () => {
         const existingTopics = ['/oibus/counter'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl('');
@@ -485,7 +483,7 @@ describe('Custom Validators', () => {
         expect(validator(control)).toBeNull();
       });
 
-      it('should return null for null current topic', () => {
+      test('should return null for null current topic', () => {
         const existingTopics = ['/oibus/counter'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl(null);
@@ -493,7 +491,7 @@ describe('Custom Validators', () => {
         expect(validator(control)).toBeNull();
       });
 
-      it('should return null for whitespace-only topic', () => {
+      test('should return null for whitespace-only topic', () => {
         const existingTopics = ['/oibus/counter'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl('   ');
@@ -501,7 +499,7 @@ describe('Custom Validators', () => {
         expect(validator(control)).toBeNull();
       });
 
-      it('should handle non-string current topic', () => {
+      test('should handle non-string current topic', () => {
         const existingTopics = ['/oibus/counter'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl(123);
@@ -509,14 +507,14 @@ describe('Custom Validators', () => {
         expect(validator(control)).toBeNull();
       });
 
-      it('should handle empty existing topics array', () => {
+      test('should handle empty existing topics array', () => {
         const validator = mqttTopicOverlapValidator([]);
         const control = new FormControl('/oibus/counter');
 
         expect(validator(control)).toBeNull();
       });
 
-      it('should handle wildcard patterns correctly', () => {
+      test('should handle wildcard patterns correctly', () => {
         const existingTopics = ['/oibus/+'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl('/oibus/counter');
@@ -529,7 +527,7 @@ describe('Custom Validators', () => {
         });
       });
 
-      it('should handle multi-level wildcard patterns', () => {
+      test('should handle multi-level wildcard patterns', () => {
         const existingTopics = ['/oibus/#'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl('/oibus/counter/value');
@@ -542,7 +540,7 @@ describe('Custom Validators', () => {
         });
       });
 
-      it('should not conflict with non-overlapping wildcards', () => {
+      test('should not conflict with non-overlapping wildcards', () => {
         const existingTopics = ['/other/+'];
         const validator = mqttTopicOverlapValidator(existingTopics);
         const control = new FormControl('/oibus/counter');
@@ -558,19 +556,19 @@ describe('Custom Validators', () => {
       return new File([blob], 'test.csv', { type: 'text/csv' });
     };
 
-    it('should return null when no existing MQTT topics', async () => {
+    test('should return null when no existing MQTT topics', async () => {
       const file = createMockFile('name,settings_topic\ntest,/oibus/counter');
       const result = await validateCsvMqttTopics(file, ',', []);
       expect(result).toBeNull();
     });
 
-    it('should return null when no settings_topic column', async () => {
+    test('should return null when no settings_topic column', async () => {
       const file = createMockFile('name,enabled\ntest,true');
       const result = await validateCsvMqttTopics(file, ',', ['/existing/topic']);
       expect(result).toBeNull();
     });
 
-    it('should detect conflicts with existing topics', async () => {
+    test('should detect conflicts with existing topics', async () => {
       const file = createMockFile('name,settings_topic\ntest,/oibus/counter');
       const result = await validateCsvMqttTopics(file, ',', ['/oibus/#']);
 
@@ -578,7 +576,7 @@ describe('Custom Validators', () => {
       expect(result?.topicErrors[0].conflictingTopics).toContain('/oibus/counter');
     });
 
-    it('should detect conflicts within CSV file', async () => {
+    test('should detect conflicts within CSV file', async () => {
       const file = createMockFile('name,settings_topic\ntest1,/oibus/#\ntest2,/oibus/counter');
       const result = await validateCsvMqttTopics(file, ',', []);
 
@@ -587,13 +585,13 @@ describe('Custom Validators', () => {
       expect(result?.topicErrors[0].conflictingTopics).toContain('/oibus/counter');
     });
 
-    it('should handle empty CSV file', async () => {
+    test('should handle empty CSV file', async () => {
       const file = createMockFile('');
       const result = await validateCsvMqttTopics(file, ',', ['/existing/topic']);
       expect(result).toBeNull();
     });
 
-    it('should handle file reading error', async () => {
+    test('should handle file reading error', async () => {
       const mockFile = {
         text: () => Promise.reject(new Error('File read error'))
       } as unknown as File;

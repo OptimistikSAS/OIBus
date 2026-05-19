@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { Component, inject as inject_1 } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
@@ -8,6 +8,7 @@ import { provideNgbConfigTesting } from './oi-ngb-testing';
 import { OpenTypeaheadOnFocusDirective } from './open-typeahead-on-focus.directive';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { NGB_ARIA_LIVE_DELAY, TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 class UserService {
   suggestByText(_name: string): Observable<Array<unknown>> {
@@ -47,47 +48,59 @@ describe('OpenTypeaheadOnFocusDirective', () => {
   let tester: TestComponentTester;
   let userService: UserService;
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(async () => {
     TestBed.configureTestingModule({
       providers: [provideNgbConfigTesting(), UserService]
     });
     userService = TestBed.inject(UserService);
-    spyOn(userService, 'suggestByText').and.callThrough();
+    vi.spyOn(userService, 'suggestByText');
     tester = new TestComponentTester();
     await tester.change();
   });
 
-  it('should call search on focus', fakeAsync(() => {
+  test('should call search on focus', async () => {
+    vi.useFakeTimers();
     tester.typeahead.dispatchEventOfType('focus');
-    // we need two debounce because there is one from the focus directive and one in the search itself.
-    tick(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    vi.advanceTimersByTime(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    await tester.change();
     expect(userService.suggestByText).toHaveBeenCalledWith('');
-    tick(NGB_ARIA_LIVE_DELAY);
-  }));
+    vi.advanceTimersByTime(NGB_ARIA_LIVE_DELAY);
+  });
 
-  it('should not call search on focus when there is a value', fakeAsync(() => {
+  test('should not call search on focus when there is a value', async () => {
+    vi.useFakeTimers();
     tester.componentInstance.name.setValue('Cédric');
     tester.typeahead.dispatchEventOfType('focus');
-    tick(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    vi.advanceTimersByTime(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    await tester.change();
     expect(userService.suggestByText).not.toHaveBeenCalled();
-  }));
+  });
 
-  it('should not call search on focus when there is a blur just after', fakeAsync(() => {
+  test('should not call search on focus when there is a blur just after', async () => {
+    vi.useFakeTimers();
     tester.typeahead.dispatchEventOfType('focus');
     tester.typeahead.dispatchEventOfType('blur');
-    tick(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    vi.advanceTimersByTime(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    await tester.change();
     expect(userService.suggestByText).not.toHaveBeenCalled();
-  }));
+  });
 
-  it('should not call search on focus when the popup is already opened', fakeAsync(() => {
+  test('should not call search on focus when the popup is already opened', async () => {
+    vi.useFakeTimers();
     tester.typeahead.dispatchEventOfType('input');
-    tick(TYPEAHEAD_DEBOUNCE_TIME);
+    vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
+    await tester.change();
     expect(userService.suggestByText).toHaveBeenCalledTimes(1);
     expect(tester.typeahead.elements('ngb-typeahead-window.dropdown-menu button.dropdown-item').length).toBe(1);
-    tick(TYPEAHEAD_DEBOUNCE_TIME);
+    vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
 
     tester.typeahead.dispatchEventOfType('focus');
-    tick(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    vi.advanceTimersByTime(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    await tester.change();
     expect(userService.suggestByText).toHaveBeenCalledTimes(1);
-  }));
+  });
 });

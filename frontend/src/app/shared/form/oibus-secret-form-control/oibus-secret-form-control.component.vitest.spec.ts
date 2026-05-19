@@ -5,6 +5,8 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusSecretAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusSecretFormControlComponent } from './oibus-secret-form-control.component';
+import { OIBUS_FORM_MODE } from '../oibus-form-mode.token';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test-oibus-secret-form-control-component',
@@ -45,8 +47,6 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-import { OIBUS_FORM_MODE } from '../oibus-form-mode.token';
-
 describe('OIBusSecretFormControlComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -54,14 +54,14 @@ describe('OIBusSecretFormControlComponent', () => {
     });
   });
 
-  it('should render without placeholder when mode is create', async () => {
+  test('should render without placeholder when mode is create', async () => {
     const tester = new TestComponentTester();
     await tester.change();
 
     expect(tester.field.nativeElement.getAttribute('placeholder')).toBeNull();
   });
 
-  it('should display placeholder when mode is edit', async () => {
+  test('should display placeholder when mode is edit', async () => {
     TestBed.overrideProvider(OIBUS_FORM_MODE, { useValue: () => 'edit' });
     const tester = new TestComponentTester();
     await tester.change();

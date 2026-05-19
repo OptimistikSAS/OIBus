@@ -8,6 +8,7 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusScanModeFormControlComponent } from './oibus-scan-mode-form-control.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test-oibus-scan-mode-form-control-component',
@@ -66,25 +67,25 @@ describe('OIBusScanModeFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should create the component', () => {
+  test('should create the component', () => {
     expect(tester.componentInstance).toBeDefined();
   });
 
-  it('should display a label with the correct translation key', () => {
+  test('should display a label with the correct translation key', () => {
     expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Field name');
+    expect(tester.label.nativeElement.textContent).toContain('Field name');
   });
 
-  it('should display a select with the correct form control name', () => {
+  test('should display a select with the correct form control name', () => {
     expect(tester.field).toBeDefined();
     tester.field.selectLabel('Subscription');
-    expect(tester.field).toHaveSelectedLabel('Subscription');
+    expect(tester.field.nativeElement.selectedOptions[0]?.text?.trim()).toBe('Subscription');
   });
 
-  it('should display options for each selectable value', () => {
+  test('should display options for each selectable value', () => {
     expect(tester.options.length).toBe(4); // One for the null option and one for each value
-    expect(tester.options[1]).toContainText('scanMode1');
-    expect(tester.options[2]).toContainText('scanMode2');
-    expect(tester.options[3]).toContainText('Subscription');
+    expect(tester.options[1].nativeElement.textContent).toContain('scanMode1');
+    expect(tester.options[2].nativeElement.textContent).toContain('scanMode2');
+    expect(tester.options[3].nativeElement.textContent).toContain('Subscription');
   });
 });

@@ -17,6 +17,7 @@ import {
 } from '../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 describe('FormUtils', () => {
   let translateService: TranslateService;
@@ -53,7 +54,7 @@ describe('FormUtils', () => {
   });
 
   describe('buildColumn', () => {
-    it('should build columns for simple attributes', () => {
+    test('should build columns for simple attributes', () => {
       const attribute: OIBusObjectAttribute = {
         type: 'object',
         key: 'testObject',
@@ -101,7 +102,7 @@ describe('FormUtils', () => {
       ]);
     });
 
-    it('should build columns for nested object attributes', () => {
+    test('should build columns for nested object attributes', () => {
       const attribute: OIBusObjectAttribute = {
         type: 'object',
         key: 'parent',
@@ -146,7 +147,7 @@ describe('FormUtils', () => {
       expect(result).toEqual([{ path: ['child', 'name'], type: 'string', translationKey: 'test.child.name' }]);
     });
 
-    it('should filter out attributes not displayed in view mode', () => {
+    test('should filter out attributes not displayed in view mode', () => {
       const attribute: OIBusObjectAttribute = {
         type: 'object',
         key: 'testObject',
@@ -190,7 +191,7 @@ describe('FormUtils', () => {
       expect(result).toEqual([{ path: ['visibleField'], type: 'string', translationKey: 'test.visible' }]);
     });
 
-    it('should handle array attributes by returning empty array', () => {
+    test('should handle array attributes by returning empty array', () => {
       const attribute: OIBusObjectAttribute = {
         type: 'object',
         key: 'testObject',
@@ -230,7 +231,7 @@ describe('FormUtils', () => {
       expect(result).toEqual([]);
     });
 
-    it('should handle all supported attribute types', () => {
+    test('should handle all supported attribute types', () => {
       const attribute: OIBusObjectAttribute = {
         type: 'object',
         key: 'testObject',
@@ -345,34 +346,33 @@ describe('FormUtils', () => {
       }
     };
 
-    it('should format string values', () => {
+    test('should format string values', () => {
       const result = FormUtils.formatValue(testElement, ['name'], 'string', 'test.name', translateService, mockScanModes);
       expect(result).toBe('John Doe');
     });
 
-    it('should format number values', () => {
+    test('should format number values', () => {
       const result = FormUtils.formatValue(testElement, ['age'], 'number', 'test.age', translateService, mockScanModes);
       expect(result).toBe(30);
     });
 
-    it('should format boolean values with translation', () => {
+    test('should format boolean values with translation', () => {
       const result = FormUtils.formatValue(testElement, ['isActive'], 'boolean', 'test.boolean', translateService, mockScanModes);
       expect(result).toBe('Yes');
     });
 
-    it('should format scan-mode values by finding the name', () => {
+    test('should format scan-mode values by finding the name', () => {
       const result = FormUtils.formatValue(testElement, ['scanModeId'], 'scan-mode', 'test.scan-mode', translateService, mockScanModes);
       expect(result).toBe('Scan Mode 1');
     });
 
-    it('should format string-select values with translation', () => {
-      // Mock the translation service to return a specific value
-      spyOn(translateService, 'instant').and.returnValue('Option 1');
+    test('should format string-select values with translation', () => {
+      vi.spyOn(translateService, 'instant').mockReturnValue('Option 1');
       const result = FormUtils.formatValue(testElement, ['selectValue'], 'string-select', 'test.select', translateService, mockScanModes);
       expect(result).toBe('Option 1');
     });
 
-    it('should return empty string for object and array types', () => {
+    test('should return empty string for object and array types', () => {
       const objectResult = FormUtils.formatValue(testElement, ['nested'], 'object', 'test.object', translateService, mockScanModes);
       const arrayResult = FormUtils.formatValue(testElement, ['arrayField'], 'array', 'test.array', translateService, mockScanModes);
 
@@ -380,12 +380,12 @@ describe('FormUtils', () => {
       expect(arrayResult).toBe('');
     });
 
-    it('should return empty string for undefined values', () => {
+    test('should return empty string for undefined values', () => {
       const result = FormUtils.formatValue(testElement, ['nonExistentField'], 'string', 'test.string', translateService, mockScanModes);
       expect(result).toBe('');
     });
 
-    it('should handle nested path values', () => {
+    test('should handle nested path values', () => {
       const result = FormUtils.formatValue(
         testElement,
         ['nested', 'value'],
@@ -397,7 +397,7 @@ describe('FormUtils', () => {
       expect(result).toBe('nested value');
     });
 
-    it('should handle all supported types', () => {
+    test('should handle all supported types', () => {
       const testData = {
         stringVal: 'test string',
         numberVal: 42,
@@ -434,49 +434,49 @@ describe('FormUtils', () => {
       direct: 'direct value'
     };
 
-    it('should get direct property values', () => {
+    test('should get direct property values', () => {
       const result = FormUtils.getValueByPath(testObject, ['direct']);
       expect(result).toBe('direct value');
     });
 
-    it('should get nested property values', () => {
+    test('should get nested property values', () => {
       const result = FormUtils.getValueByPath(testObject, ['level1', 'simple']);
       expect(result).toBe('simple value');
     });
 
-    it('should get deeply nested property values', () => {
+    test('should get deeply nested property values', () => {
       const result = FormUtils.getValueByPath(testObject, ['level1', 'level2', 'level3']);
       expect(result).toBe('deep value');
     });
 
-    it('should return undefined for non-existent paths', () => {
+    test('should return undefined for non-existent paths', () => {
       const result = FormUtils.getValueByPath(testObject, ['nonExistent']);
       expect(result).toBeUndefined();
     });
 
-    it('should return undefined for partially non-existent paths', () => {
+    test('should return undefined for partially non-existent paths', () => {
       const result = FormUtils.getValueByPath(testObject, ['level1', 'nonExistent']);
       expect(result).toBeUndefined();
     });
 
-    it('should handle empty path', () => {
+    test('should handle empty path', () => {
       const result = FormUtils.getValueByPath(testObject, []);
       expect(result).toBe(testObject);
     });
 
-    it('should handle null and undefined objects', () => {
+    test('should handle null and undefined objects', () => {
       expect(FormUtils.getValueByPath(null, ['path'])).toBeNull();
       expect(FormUtils.getValueByPath(undefined, ['path'])).toBeUndefined();
     });
 
-    it('should handle array access', () => {
+    test('should handle array access', () => {
       const result = FormUtils.getValueByPath(testObject, ['level1', 'level2', 'array', '0']);
       expect(result).toBe(1);
     });
   });
 
   describe('integration tests', () => {
-    it('should work together for a complete column building and value formatting scenario', () => {
+    test('should work together for a complete column building and value formatting scenario', () => {
       const complexAttribute: OIBusObjectAttribute = {
         type: 'object',
         key: 'user',
@@ -549,7 +549,6 @@ describe('FormUtils', () => {
         }
       };
 
-      // Build columns
       const columns = FormUtils.buildColumn(complexAttribute.attributes, []);
 
       expect(columns.length).toBe(3);
@@ -557,7 +556,6 @@ describe('FormUtils', () => {
       expect(columns[1]).toEqual({ path: ['age'], type: 'number', translationKey: 'test.user.age' });
       expect(columns[2]).toEqual({ path: ['address', 'city'], type: 'string', translationKey: 'test.user.address.city' });
 
-      // Format values using the columns
       const nameValue = FormUtils.formatValue(
         testData,
         columns[0].path,

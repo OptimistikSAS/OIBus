@@ -5,6 +5,7 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusStringFormControlComponent } from './oibus-string-form-control.component';
 import { OIBusStringAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test-oibus-string-form-control-component',
@@ -57,18 +58,18 @@ describe('OIBusStringFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should create the component', () => {
+  test('should create the component', () => {
     expect(tester.componentInstance).toBeDefined();
   });
 
-  it('should display a label with the correct translation key', () => {
+  test('should display a label with the correct translation key', () => {
     expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Field name');
+    expect(tester.label.nativeElement.textContent).toContain('Field name');
   });
 
-  it('should display an input with the correct form control name', () => {
+  test('should display an input with the correct form control name', () => {
     expect(tester.field).toBeDefined();
     tester.field.fillWith('test');
-    expect(tester.field).toHaveValue('test');
+    expect(tester.field.nativeElement).toHaveValue('test');
   });
 });

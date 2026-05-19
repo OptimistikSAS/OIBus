@@ -1,13 +1,19 @@
 import { inMemoryTypeahead } from './typeahead';
 import { Subject } from 'rxjs';
-import { fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 
 describe('typeahead', () => {
   interface Item {
     label: string;
   }
 
-  it('should filter shorter first, and sort by label', fakeAsync(() => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test('should filter shorter first, and sort by label', () => {
+    vi.useFakeTimers();
+
     const items: Array<Item> = [
       'A',
       'A1',
@@ -41,19 +47,19 @@ describe('typeahead', () => {
     typeahead(source).subscribe(array => results.push(array));
 
     source.next('a');
-    tick(20);
+    vi.advanceTimersByTime(20);
     source.next('a1');
-    tick(20);
+    vi.advanceTimersByTime(20);
     source.next('a');
-    tick(300);
+    vi.advanceTimersByTime(300);
 
     source.next('');
-    tick(20);
+    vi.advanceTimersByTime(20);
     source.next('1');
-    tick(300);
+    vi.advanceTimersByTime(300);
 
     expect(results.length).toBe(2);
     expect(results[0].map(i => i.label)).toEqual(['A', 'A1', 'A1000']);
     expect(results[1].map(i => i.label)).toEqual(['A1', 'B1', 'C1', 'C10', 'D1', 'D10', 'E1', 'E10', 'F1', 'F10']);
-  }));
+  });
 });

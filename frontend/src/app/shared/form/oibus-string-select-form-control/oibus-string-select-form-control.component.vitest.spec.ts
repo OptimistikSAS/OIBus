@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OIBusStringSelectFormControlComponent } from './oibus-string-select-form-control.component';
 import { OIBusStringSelectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test-oibus-string-select-form-control-component',
@@ -63,25 +64,25 @@ describe('OIBusStringSelectFormControlComponent', () => {
     await tester.change();
   });
 
-  it('should create the component', () => {
+  test('should create the component', () => {
     expect(tester.componentInstance).toBeDefined();
   });
 
-  it('should display a label with the correct translation key', () => {
+  test('should display a label with the correct translation key', () => {
     expect(tester.label).toBeDefined();
-    expect(tester.label).toContainText('Type');
+    expect(tester.label.nativeElement.textContent).toContain('Type');
   });
 
-  it('should display a select with the correct form control name', () => {
+  test('should display a select with the correct form control name', () => {
     expect(tester.field).toBeDefined();
     tester.field.selectValue('iso-string');
-    expect(tester.field).toHaveSelectedLabel('ISO String');
-    expect(tester.field).toHaveSelectedValue('iso-string');
+    expect(tester.field.nativeElement.value).toBe('iso-string');
+    expect(tester.field.nativeElement.selectedOptions[0]?.text?.trim()).toBe('ISO String');
   });
 
-  it('should display options for each selectable value', () => {
+  test('should display options for each selectable value', () => {
     expect(tester.options.length).toBe(3); // One for the null option and one for each value
-    expect(tester.options[1]).toContainText('ISO String');
-    expect(tester.options[2]).toContainText('UNIX epoch (s)');
+    expect(tester.options[1].nativeElement.textContent).toContain('ISO String');
+    expect(tester.options[2].nativeElement.textContent).toContain('UNIX epoch (s)');
   });
 });
