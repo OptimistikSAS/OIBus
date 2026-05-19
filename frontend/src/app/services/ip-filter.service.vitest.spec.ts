@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+
 import { IpFilterService } from './ip-filter.service';
 import { IPFilterDTO } from '../../../../backend/shared/model/ip-filter.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
@@ -19,7 +20,7 @@ describe('IpFilterService', () => {
 
   afterEach(() => http.verify());
 
-  it('should get all IP filters', () => {
+  test('should get all IP filters', () => {
     let expectedIpFilters: Array<IPFilterDTO> = [];
     service.list().subscribe(ipFilters => (expectedIpFilters = ipFilters));
 
@@ -28,7 +29,7 @@ describe('IpFilterService', () => {
     expect(expectedIpFilters.length).toBe(2);
   });
 
-  it('should get an IP filter', () => {
+  test('should get an IP filter', () => {
     let expectedIpFilter: IPFilterDTO | null = null;
     const ipFilter = { id: 'id1' } as IPFilterDTO;
 
@@ -38,7 +39,7 @@ describe('IpFilterService', () => {
     expect(expectedIpFilter!).toEqual(ipFilter);
   });
 
-  it('should create an IP filter', () => {
+  test('should create an IP filter', () => {
     let done = false;
     const command = testData.ipFilters.command;
 
@@ -49,7 +50,7 @@ describe('IpFilterService', () => {
     expect(done).toBe(true);
   });
 
-  it('should update an IP filter', () => {
+  test('should update an IP filter', () => {
     let done = false;
     const command = testData.ipFilters.command;
 
@@ -60,7 +61,7 @@ describe('IpFilterService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete an IP filter', () => {
+  test('should delete an IP filter', () => {
     let done = false;
     service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/ip-filters/id1' });

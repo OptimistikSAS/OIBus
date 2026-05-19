@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
   selector: 'oib-test',
@@ -29,7 +30,7 @@ describe('PageTitleDirective', () => {
     await tester.change();
   });
 
-  it('should set the page title', () => {
+  test('should set the page title', () => {
     expect(titleService.getTitle()).toBe('OIBus - OIBus name');
   });
 });

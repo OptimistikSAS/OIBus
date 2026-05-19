@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+
 import { Page } from '../../../../backend/shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { LogService } from './log.service';
@@ -20,7 +21,7 @@ describe('LogService', () => {
 
   afterEach(() => http.verify());
 
-  it('should search Logs', () => {
+  test('should search Logs', () => {
     let expectedLogs: Page<LogDTO> | null = null;
     const logs = toPage<LogDTO>([
       {
@@ -62,7 +63,7 @@ describe('LogService', () => {
     expect(expectedLogs!).toEqual(logs);
   });
 
-  it('should suggest scopes by name', () => {
+  test('should suggest scopes by name', () => {
     let expectedScopes: Array<Scope> = [];
     const scopes: Array<Scope> = [
       {
@@ -86,7 +87,7 @@ describe('LogService', () => {
     expect(expectedScopes!).toEqual(scopes);
   });
 
-  it('should get scope by id', () => {
+  test('should get scope by id', () => {
     let expectedScope: Scope | null = null;
     const scope: Scope = {
       scopeId: 'id1',

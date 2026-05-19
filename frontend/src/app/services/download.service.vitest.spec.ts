@@ -1,5 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { DownloadService } from './download.service';
 
 describe('DownloadService', () => {
@@ -12,37 +14,37 @@ describe('DownloadService', () => {
     service = TestBed.inject(DownloadService);
   });
 
-  it('should be created', () => {
+  test('should be created', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should download a blob from HttpResponse', () => {
+  test('should download a blob from HttpResponse', () => {
     const mockBlob = new Blob(['test content'], { type: 'text/plain' });
     const mockResponse = new HttpResponse<Blob>({ body: mockBlob });
     const filename = 'test-file.txt';
 
-    spyOn(service, 'downloadFile').and.callThrough();
-    spyOn(URL, 'createObjectURL').and.returnValue('mock-url');
-    spyOn(document, 'createElement').and.returnValue({
+    vi.spyOn(service, 'downloadFile');
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('mock-url');
+    vi.spyOn(document, 'createElement').mockReturnValue({
       href: '',
       download: '',
-      click: jasmine.createSpy('click'),
-      setAttribute: jasmine.createSpy('setAttribute')
-    } as unknown as HTMLAnchorElement);
+      click: vi.fn(),
+      setAttribute: vi.fn()
+    } as unknown as HTMLElement);
 
     service.download(mockResponse, filename);
 
     expect(service.downloadFile).toHaveBeenCalledWith({ blob: mockBlob, name: filename });
   });
 
-  it('should download a file', () => {
+  test('should download a file', () => {
     const mockBlob = new Blob(['test content'], { type: 'text/plain' });
     const filename = 'test-file.txt';
 
-    spyOn(URL, 'createObjectURL').and.returnValue('mock-url');
-    spyOn(URL, 'revokeObjectURL');
-    const linkSpy = jasmine.createSpyObj('a', ['click']);
-    spyOn(document, 'createElement').and.returnValue(linkSpy);
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('mock-url');
+    vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
+    const linkSpy = { click: vi.fn(), href: '', download: '' };
+    vi.spyOn(document, 'createElement').mockReturnValue(linkSpy as unknown as HTMLElement);
 
     service.downloadFile({ blob: mockBlob, name: filename });
 

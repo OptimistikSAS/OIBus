@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { HistoryQueryService } from './history-query.service';
 import { HistoryQueryDTO, HistoryQueryItemDTO, HistoryQueryLightDTO } from '../../../../backend/shared/model/history-query.model';
@@ -28,7 +28,7 @@ describe('HistoryQueryService', () => {
 
   afterEach(() => http.verify());
 
-  it('should get all History queries', () => {
+  test('should get all History queries', () => {
     let expectedHistoryQueries: Array<HistoryQueryLightDTO> = [];
     service.list().subscribe(historyQueries => (expectedHistoryQueries = historyQueries));
 
@@ -37,7 +37,7 @@ describe('HistoryQueryService', () => {
     expect(expectedHistoryQueries.length).toBe(2);
   });
 
-  it('should get a History query', () => {
+  test('should get a History query', () => {
     let expectedHistoryQuery: HistoryQueryDTO | null = null;
     const historyQuery = { id: 'id1' } as HistoryQueryDTO;
 
@@ -47,7 +47,7 @@ describe('HistoryQueryService', () => {
     expect(expectedHistoryQuery!).toEqual(historyQuery);
   });
 
-  it('should create a History query', () => {
+  test('should create a History query', () => {
     let done = false;
     const command = testData.historyQueries.command;
 
@@ -58,7 +58,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should update a History query', () => {
+  test('should update a History query', () => {
     let done = false;
     const command = testData.historyQueries.command;
 
@@ -69,7 +69,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete a History query', () => {
+  test('should delete a History query', () => {
     let done = false;
     service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1' });
@@ -77,7 +77,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should add or edit a History query transformer with options', () => {
+  test('should add or edit a History query transformer with options', () => {
     let done = false;
     service.addOrEditTransformer('id1', {} as HistoryTransformerDTOWithOptions).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/transformers' });
@@ -85,7 +85,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should remove a History query transformer', () => {
+  test('should remove a History query transformer', () => {
     let done = false;
     service.removeTransformer('id1', 'transformerId').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1/transformers/transformerId' });
@@ -93,7 +93,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should search History query items', () => {
+  test('should search History query items', () => {
     let expectedItems: Page<HistoryQueryItemDTO> | null = null;
     const southConnectorItems = toPage<HistoryQueryItemDTO>([
       {
@@ -114,7 +114,7 @@ describe('HistoryQueryService', () => {
     expect(expectedItems!).toEqual(southConnectorItems);
   });
 
-  it('should get a History query item', () => {
+  test('should get a History query item', () => {
     let expectedItem: object | null = null;
     const southConnectorItem = { id: 'itemId1' };
 
@@ -124,7 +124,7 @@ describe('HistoryQueryService', () => {
     expect(expectedItem!).toEqual(southConnectorItem);
   });
 
-  it('should create a History query item', () => {
+  test('should create a History query item', () => {
     let done = false;
     const command = testData.historyQueries.itemCommand;
 
@@ -135,7 +135,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should update a History query item', () => {
+  test('should update a History query item', () => {
     let done = false;
     const command = testData.historyQueries.itemCommand;
 
@@ -146,7 +146,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete a History query item', () => {
+  test('should delete a History query item', () => {
     let done = false;
     service.deleteItem('id1', 'itemId1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1/items/itemId1' });
@@ -154,7 +154,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should enable a History query item', () => {
+  test('should enable a History query item', () => {
     let done = false;
     service.enableItem('id1', 'historyItemId1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items/historyItemId1/enable' });
@@ -162,7 +162,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should disable a History query item', () => {
+  test('should disable a History query item', () => {
     let done = false;
     service.disableItem('id1', 'historyItemId1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items/historyItemId1/disable' });
@@ -170,7 +170,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should enable History query items', () => {
+  test('should enable History query items', () => {
     let done = false;
     service.enableItems('id1', ['historyItemId1', 'historyItemId2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items/enable' });
@@ -178,7 +178,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should disable History query items', () => {
+  test('should disable History query items', () => {
     let done = false;
     service.disableItems('id1', ['historyItemId1', 'historyItemId2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items/disable' });
@@ -186,7 +186,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete History query items', () => {
+  test('should delete History query items', () => {
     let done = false;
     service.deleteItems('id1', ['historyItemId1', 'historyItemId2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history/id1/items/delete' });
@@ -194,7 +194,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete all South connector items', () => {
+  test('should delete all South connector items', () => {
     let done = false;
     service.deleteAllItems('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history/id1/items' });
@@ -202,10 +202,10 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should download csv items', () => {
+  test('should download csv items', () => {
     let downloaded = false;
 
-    spyOn(downloadService, 'download');
+    vi.spyOn(downloadService, 'download').mockImplementation(() => {});
     service.itemsToCsv('southType', [], 'historyQueryName', ';').subscribe(() => (downloaded = true));
 
     http
@@ -219,10 +219,10 @@ describe('HistoryQueryService', () => {
     expect(downloadService.download).toHaveBeenCalled();
   });
 
-  it('should download history south items blob', () => {
+  test('should download history south items blob', () => {
     let downloaded = false;
 
-    spyOn(downloadService, 'download');
+    vi.spyOn(downloadService, 'download').mockImplementation(() => {});
     service.exportItems('id1', 'historyQueryName', ';').subscribe(() => (downloaded = true));
 
     http
@@ -236,7 +236,7 @@ describe('HistoryQueryService', () => {
     expect(downloadService.download).toHaveBeenCalled();
   });
 
-  it('should check import history south items', () => {
+  test('should check import history south items', () => {
     const file = new Blob() as File;
     const delimiter = ',';
     const expectedFormData = new FormData();
@@ -256,10 +256,9 @@ describe('HistoryQueryService', () => {
     expect(actualImportation).toBe(true);
   });
 
-  it('should import history south items', () => {
-    const file = new Blob() as File;
+  test('should import history south items', () => {
     const expectedFormData = new FormData();
-    expectedFormData.set('file', file);
+    expectedFormData.set('items', new Blob([JSON.stringify([])], { type: 'application/json' }), 'items.json');
     let actualImportation = false;
 
     service.importItems('id1', []).subscribe(() => {
@@ -273,7 +272,7 @@ describe('HistoryQueryService', () => {
     expect(actualImportation).toBe(true);
   });
 
-  it('should start a History query', () => {
+  test('should start a History query', () => {
     let done = false;
 
     service.start('id1').subscribe(() => (done = true));
@@ -283,7 +282,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should stop a History query', () => {
+  test('should stop a History query', () => {
     let done = false;
 
     service.pause('id1').subscribe(() => (done = true));
@@ -293,7 +292,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should test a History query North connector connection', () => {
+  test('should test a History query North connector connection', () => {
     let done = false;
     const command = testData.north.command;
 
@@ -304,7 +303,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should test a History query South connector connection', () => {
+  test('should test a History query South connector connection', () => {
     let done = false;
     const command = testData.south.command;
 
@@ -315,7 +314,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should test a History query item', () => {
+  test('should test a History query item', () => {
     let done = false;
     const itemSettings = testData.south.itemCommand.settings;
     const southSettings = testData.south.command.settings;
@@ -332,7 +331,7 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
-  it('should search cache content', () => {
+  test('should search cache content', () => {
     let result: CacheSearchResult | null = null;
     const historyCacheFiles: CacheSearchResult = {} as CacheSearchResult;
 
@@ -354,7 +353,7 @@ describe('HistoryQueryService', () => {
     expect(result!).toEqual(historyCacheFiles);
   });
 
-  it('should get cache file content', () => {
+  test('should get cache file content', () => {
     let result: FileCacheContent | null = null;
     const historyCacheFileContent: FileCacheContent = {} as FileCacheContent;
     service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (result = c));
@@ -368,7 +367,7 @@ describe('HistoryQueryService', () => {
     expect(result!).toEqual(historyCacheFileContent);
   });
 
-  it('should update cache', () => {
+  test('should update cache', () => {
     let done = false;
     const updateCommand = {} as CacheContentUpdateCommand;
     service.updateCacheContent('id1', updateCommand).subscribe(() => (done = true));

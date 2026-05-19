@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+
 import { CertificateService } from './certificate.service';
 import { CertificateDTO } from '../../../../backend/shared/model/certificate.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
@@ -19,7 +20,7 @@ describe('CertificateService', () => {
 
   afterEach(() => http.verify());
 
-  it('should find all', () => {
+  test('should find all', () => {
     let expectedCertificates: Array<CertificateDTO> = [];
     service.list().subscribe(certificates => (expectedCertificates = certificates));
 
@@ -28,7 +29,7 @@ describe('CertificateService', () => {
     expect(expectedCertificates.length).toBe(2);
   });
 
-  it('should get an certificate', () => {
+  test('should get a certificate', () => {
     let expectedCertificate: CertificateDTO | null = null;
     const externalSource = { id: 'id1' } as CertificateDTO;
 
@@ -38,7 +39,7 @@ describe('CertificateService', () => {
     expect(expectedCertificate!).toEqual(externalSource);
   });
 
-  it('should create an certificate', () => {
+  test('should create a certificate', () => {
     let done = false;
     const command = testData.certificates.command;
 
@@ -49,7 +50,7 @@ describe('CertificateService', () => {
     expect(done).toBe(true);
   });
 
-  it('should update an certificate', () => {
+  test('should update a certificate', () => {
     let done = false;
     const command = testData.certificates.command;
 
@@ -60,7 +61,7 @@ describe('CertificateService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete an certificate', () => {
+  test('should delete a certificate', () => {
     let done = false;
     service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/certificates/id1' });
