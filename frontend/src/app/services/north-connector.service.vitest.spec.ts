@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { NorthConnectorService } from './north-connector.service';
 import {
@@ -27,7 +27,7 @@ describe('NorthConnectorService', () => {
 
   afterEach(() => http.verify());
 
-  it('should get all North connector manifests', () => {
+  test('should get all North connector manifests', () => {
     let expectedNorthConnectorTypes: Array<NorthType> = [];
     service.getNorthTypes().subscribe(types => (expectedNorthConnectorTypes = types));
 
@@ -39,7 +39,7 @@ describe('NorthConnectorService', () => {
     expect(expectedNorthConnectorTypes.length).toBe(2);
   });
 
-  it('should get a North connector manifest', () => {
+  test('should get a North connector manifest', () => {
     let expectedManifest: NorthConnectorManifest | null = null;
     service.getNorthManifest('console').subscribe(manifest => (expectedManifest = manifest));
 
@@ -48,7 +48,7 @@ describe('NorthConnectorService', () => {
     expect(expectedManifest!).toEqual(testData.north.manifest);
   });
 
-  it('should get all North connectors', () => {
+  test('should get all North connectors', () => {
     let expectedNorthConnectors: Array<NorthConnectorLightDTO> = [];
     service.list().subscribe(northConnectors => (expectedNorthConnectors = northConnectors));
 
@@ -57,7 +57,7 @@ describe('NorthConnectorService', () => {
     expect(expectedNorthConnectors.length).toBe(2);
   });
 
-  it('should get a North connector', () => {
+  test('should get a North connector', () => {
     let expectedNorthConnector: NorthConnectorDTO | null = null;
     const northConnector = { id: 'id1' } as NorthConnectorDTO;
 
@@ -67,7 +67,7 @@ describe('NorthConnectorService', () => {
     expect(expectedNorthConnector!).toEqual(northConnector);
   });
 
-  it('should create a North connector', () => {
+  test('should create a North connector', () => {
     let done = false;
     const command = testData.north.command;
 
@@ -78,7 +78,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should update a North connector', () => {
+  test('should update a North connector', () => {
     let done = false;
     const command = testData.north.command;
 
@@ -89,7 +89,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete a North connector', () => {
+  test('should delete a North connector', () => {
     let done = false;
     service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1' });
@@ -97,7 +97,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should add or edit a North connector transformer with options', () => {
+  test('should add or edit a North connector transformer with options', () => {
     let done = false;
     service.addOrEditTransformer('id1', {} as TransformerDTOWithOptions).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/transformers' });
@@ -105,7 +105,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should remove a North connector transformer', () => {
+  test('should remove a North connector transformer', () => {
     let done = false;
     service.removeTransformer('id1', 'transformerId').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/transformers/transformerId' });
@@ -113,7 +113,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should search cache content', () => {
+  test('should search cache content', () => {
     let result: CacheSearchResult | null = null;
     const northCacheFiles: CacheSearchResult = {} as CacheSearchResult;
 
@@ -135,7 +135,7 @@ describe('NorthConnectorService', () => {
     expect(result!).toEqual(northCacheFiles);
   });
 
-  it('should get cache file content', () => {
+  test('should get cache file content', () => {
     let result: FileCacheContent | null = null;
     const northCacheFileContent: FileCacheContent = {} as FileCacheContent;
     service.getCacheFileContent('id1', 'cache', 'file1').subscribe(c => (result = c));
@@ -149,7 +149,7 @@ describe('NorthConnectorService', () => {
     expect(result!).toEqual(northCacheFileContent);
   });
 
-  it('should update cache', () => {
+  test('should update cache', () => {
     let done = false;
     const updateCommand = {} as CacheContentUpdateCommand;
     service.updateCacheContent('id1', updateCommand).subscribe(() => (done = true));
@@ -161,7 +161,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should reset North metrics', () => {
+  test('should reset North metrics', () => {
     let done = false;
 
     service.resetMetrics('id1').subscribe(() => (done = true));
@@ -171,7 +171,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should test a North connector connection', () => {
+  test('should test a North connector connection', () => {
     let done = false;
     const command = testData.north.command;
 
@@ -182,7 +182,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should start a North', () => {
+  test('should start a North', () => {
     let done = false;
 
     service.start('id1').subscribe(() => (done = true));
@@ -192,7 +192,7 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should stop a North', () => {
+  test('should stop a North', () => {
     let done = false;
 
     service.stop('id1').subscribe(() => (done = true));

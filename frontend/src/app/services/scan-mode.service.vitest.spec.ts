@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+
 import { ScanModeService } from './scan-mode.service';
 import { ScanModeDTO, ValidatedCronExpression } from '../../../../backend/shared/model/scan-mode.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
@@ -19,7 +20,7 @@ describe('ScanModeService', () => {
 
   afterEach(() => http.verify());
 
-  it('should get all scan modes', () => {
+  test('should get all scan modes', () => {
     let expectedScanModes: Array<ScanModeDTO> = [];
     service.list().subscribe(scanModes => (expectedScanModes = scanModes));
 
@@ -28,7 +29,7 @@ describe('ScanModeService', () => {
     expect(expectedScanModes.length).toBe(2);
   });
 
-  it('should get a scan mode', () => {
+  test('should get a scan mode', () => {
     let expectedScanMode: ScanModeDTO | null = null;
     const scanMode = { id: 'id1' } as ScanModeDTO;
 
@@ -38,7 +39,7 @@ describe('ScanModeService', () => {
     expect(expectedScanMode!).toEqual(scanMode);
   });
 
-  it('should create a scan mode', () => {
+  test('should create a scan mode', () => {
     let done = false;
     const command = testData.scanMode.command;
 
@@ -49,7 +50,7 @@ describe('ScanModeService', () => {
     expect(done).toBe(true);
   });
 
-  it('should update a scan mode', () => {
+  test('should update a scan mode', () => {
     let done = false;
     const command = testData.scanMode.command;
 
@@ -60,7 +61,7 @@ describe('ScanModeService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete a scan mode', () => {
+  test('should delete a scan mode', () => {
     let done = false;
     service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/scan-modes/id1' });
@@ -68,7 +69,7 @@ describe('ScanModeService', () => {
     expect(done).toBe(true);
   });
 
-  it('should verify a cron expression', () => {
+  test('should verify a cron expression', () => {
     let expectedValidatedCronExpression: ValidatedCronExpression | null = null;
     const validatedCronExpression: ValidatedCronExpression = {
       isValid: true,
@@ -83,7 +84,7 @@ describe('ScanModeService', () => {
     expect(expectedValidatedCronExpression!).toEqual(validatedCronExpression);
   });
 
-  it('should return invalid result when cron expression is not valid', () => {
+  test('should return invalid result when cron expression is not valid', () => {
     let expectedValidatedCronExpression: ValidatedCronExpression | null = null;
     const validatedCronExpression: ValidatedCronExpression = {
       isValid: false,

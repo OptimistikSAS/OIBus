@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+
 import { SouthConnectorService } from './south-connector.service';
 import {
   SouthConnectorDTO,
@@ -31,7 +32,7 @@ describe('SouthConnectorService', () => {
 
   afterEach(() => http.verify());
 
-  it('should get all South connector types', () => {
+  test('should get all South connector types', () => {
     let expectedSouthConnectorTypes: Array<SouthType> = [];
     service.getSouthTypes().subscribe(types => (expectedSouthConnectorTypes = types));
 
@@ -43,7 +44,7 @@ describe('SouthConnectorService', () => {
     expect(expectedSouthConnectorTypes.length).toBe(2);
   });
 
-  it('should get a South connector manifest', () => {
+  test('should get a South connector manifest', () => {
     let expectedManifest: SouthConnectorManifest | null = null;
     service.getSouthManifest('mqtt').subscribe(manifest => (expectedManifest = manifest));
 
@@ -52,7 +53,7 @@ describe('SouthConnectorService', () => {
     expect(expectedManifest!).toEqual(testData.south.manifest);
   });
 
-  it('should get all South connectors', () => {
+  test('should get all South connectors', () => {
     let expectedSouthConnectors: Array<SouthConnectorLightDTO> = [];
     service.list().subscribe(southConnectors => (expectedSouthConnectors = southConnectors));
 
@@ -61,7 +62,7 @@ describe('SouthConnectorService', () => {
     expect(expectedSouthConnectors.length).toBe(2);
   });
 
-  it('should get a South connector', () => {
+  test('should get a South connector', () => {
     let expectedSouthConnector: SouthConnectorDTO | null = null;
     const southConnector = { id: 'id1' } as SouthConnectorDTO;
 
@@ -71,7 +72,7 @@ describe('SouthConnectorService', () => {
     expect(expectedSouthConnector!).toEqual(southConnector);
   });
 
-  it('should create a South connector', () => {
+  test('should create a South connector', () => {
     let done = false;
     const command = testData.south.command;
 
@@ -82,7 +83,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should update a South connector', () => {
+  test('should update a South connector', () => {
     let done = false;
     const command = testData.south.command;
 
@@ -93,7 +94,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete a South connector', () => {
+  test('should delete a South connector', () => {
     let done = false;
     service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/south/id1' });
@@ -101,7 +102,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should search South connector items', () => {
+  test('should search South connector items', () => {
     let expectedSouthConnectorItems: Page<SouthConnectorItemDTO> | null = null;
     const southConnectorItems = toPage<SouthConnectorItemDTO>([
       {
@@ -130,7 +131,7 @@ describe('SouthConnectorService', () => {
     expect(expectedSouthConnectorItems!).toEqual(southConnectorItems);
   });
 
-  it('should get a South connector item', () => {
+  test('should get a South connector item', () => {
     let expectedSouthConnectorItem: object | null = null;
     const southConnectorItem = { id: 'southItemId1' };
 
@@ -140,7 +141,7 @@ describe('SouthConnectorService', () => {
     expect(expectedSouthConnectorItem!).toEqual(southConnectorItem);
   });
 
-  it('should create a South connector item', () => {
+  test('should create a South connector item', () => {
     let done = false;
     const command = testData.south.itemCommand;
 
@@ -151,7 +152,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should update a South connector item', () => {
+  test('should update a South connector item', () => {
     let done = false;
     const command = testData.south.itemCommand;
 
@@ -162,7 +163,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete a South connector item', () => {
+  test('should delete a South connector item', () => {
     let done = false;
     service.deleteItem('id1', 'southItemId1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/south/id1/items/southItemId1' });
@@ -170,7 +171,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should enable a South connector item', () => {
+  test('should enable a South connector item', () => {
     let done = false;
     service.enableItem('id1', 'southItemId1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/southItemId1/enable' });
@@ -178,7 +179,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should disable a South connector item', () => {
+  test('should disable a South connector item', () => {
     let done = false;
     service.disableItem('id1', 'southItemId1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/southItemId1/disable' });
@@ -186,7 +187,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should enable South connector items', () => {
+  test('should enable South connector items', () => {
     let done = false;
     service.enableItems('id1', ['southItemId1', 'southItemId2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/enable' });
@@ -194,7 +195,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should disable South connector items', () => {
+  test('should disable South connector items', () => {
     let done = false;
     service.disableItems('id1', ['southItemId1', 'southItemId2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/disable' });
@@ -202,7 +203,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete South connector items', () => {
+  test('should delete South connector items', () => {
     let done = false;
     service.deleteItems('id1', ['southItemId1', 'southItemId2']).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/delete' });
@@ -210,7 +211,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should delete all South connector items', () => {
+  test('should delete all South connector items', () => {
     let done = false;
     service.deleteAllItems('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/south/id1/items' });
@@ -218,7 +219,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should reset South metrics', () => {
+  test('should reset South metrics', () => {
     let done = false;
 
     service.resetMetrics('id1').subscribe(() => (done = true));
@@ -228,10 +229,10 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should download csv items', () => {
+  test('should download csv items', () => {
     let downloaded = false;
 
-    spyOn(downloadService, 'download');
+    vi.spyOn(downloadService, 'download').mockImplementation(() => {});
     service.itemsToCsv('southType', [], 'southName', ';').subscribe(() => (downloaded = true));
 
     http
@@ -245,10 +246,10 @@ describe('SouthConnectorService', () => {
     expect(downloadService.download).toHaveBeenCalled();
   });
 
-  it('should download items blob', () => {
+  test('should download items blob', () => {
     let downloaded = false;
 
-    spyOn(downloadService, 'download');
+    vi.spyOn(downloadService, 'download').mockImplementation(() => {});
     service.exportItems('id1', 'southName', ';').subscribe(() => (downloaded = true));
 
     http
@@ -262,7 +263,7 @@ describe('SouthConnectorService', () => {
     expect(downloadService.download).toHaveBeenCalled();
   });
 
-  it('should check import items', () => {
+  test('should check import items', () => {
     const file = new Blob() as File;
     const expectedFormData = new FormData();
     const delimiter = ',';
@@ -282,10 +283,9 @@ describe('SouthConnectorService', () => {
     expect(actualImportation).toBe(true);
   });
 
-  it('should import items', () => {
-    const file = new Blob() as File;
+  test('should import items', () => {
     const expectedFormData = new FormData();
-    expectedFormData.set('file', file);
+    expectedFormData.set('items', new Blob([JSON.stringify([])], { type: 'application/json' }), 'items.json');
 
     let actualImportation = false;
 
@@ -300,7 +300,7 @@ describe('SouthConnectorService', () => {
     expect(actualImportation).toBe(true);
   });
 
-  it('should test a South connector connection', () => {
+  test('should test a South connector connection', () => {
     let done = false;
     const command = testData.south.command;
 
@@ -311,7 +311,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should start a South', () => {
+  test('should start a South', () => {
     let done = false;
 
     service.start('id1').subscribe(() => (done = true));
@@ -321,7 +321,7 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
-  it('should stop a South', () => {
+  test('should stop a South', () => {
     let done = false;
 
     service.stop('id1').subscribe(() => (done = true));
