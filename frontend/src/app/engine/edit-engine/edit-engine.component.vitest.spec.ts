@@ -11,7 +11,7 @@ import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.mo
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
 import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/port-redirect-modal.component';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
+import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 

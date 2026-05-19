@@ -9,7 +9,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { TransformerService } from '../../services/transformer.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
+import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
 import testData from '../../../../../backend/src/tests/utils/test-data';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { CustomTransformerDTO, TransformerDTO } from '../../../../../backend/shared/model/transformer.model';

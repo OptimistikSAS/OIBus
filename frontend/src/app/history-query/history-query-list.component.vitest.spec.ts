@@ -12,7 +12,7 @@ import { ConfirmationService } from '../shared/confirmation.service';
 import { ModalService } from '../shared/modal.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { provideModalTesting } from '../shared/mock-modal.service.spec';
+import { provideModalTesting } from '../shared/mock-modal.service.testing';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { HistoryQueryLightDTO } from '../../../../backend/shared/model/history-query.model';
 

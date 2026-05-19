@@ -9,7 +9,7 @@ import { NorthConnectorService } from '../services/north-connector.service';
 import { NotificationService } from '../shared/notification.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
-import { provideModalTesting } from '../shared/mock-modal.service.spec';
+import { provideModalTesting } from '../shared/mock-modal.service.testing';
 import { provideRouter } from '@angular/router';
 import testData from '../../../../backend/src/tests/utils/test-data';
 import { NorthConnectorLightDTO } from '../../../../backend/shared/model/north-connector.model';
