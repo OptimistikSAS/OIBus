@@ -48,6 +48,7 @@ describe('NorthOIAnalytics', () => {
   const testOIAnalyticsConnectionMock = mock.fn(async () => undefined);
 
   const createGzipMock = mock.fn(() => mockGzipStream);
+  const gzipSyncMock = mock.fn(() => Buffer.from('gzipped-content'));
 
   const httpRequestExports = {
     __esModule: true,
@@ -97,11 +98,13 @@ describe('NorthOIAnalytics', () => {
     getUrlMock.mock.resetCalls();
     testOIAnalyticsConnectionMock.mock.resetCalls();
     createGzipMock.mock.resetCalls();
+    gzipSyncMock.mock.resetCalls();
     readStreamPipeMock.mock.resetCalls();
     (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get.mock.resetCalls();
 
     // node:zlib is a built-in module and cannot be patched via mockModule; use mock.method instead
     mock.method(zlib, 'createGzip', createGzipMock as unknown as typeof zlib.createGzip);
+    mock.method(zlib, 'gzipSync', gzipSyncMock as unknown as typeof zlib.gzipSync);
 
     buildHttpOptionsMock.mock.mockImplementation(async () => ({
       headers: { 'custom-header': 'val' },
@@ -184,16 +187,22 @@ describe('NorthOIAnalytics', () => {
 
       await north.handleContent(mockReadStream, metadata);
 
-      assert.strictEqual(readStreamPipeMock.mock.calls.length, 1);
-      assert.strictEqual(createGzipMock.mock.calls.length, 1);
-      assert.deepStrictEqual(createGzipMock.mock.calls[0].arguments, [{ level: 9 }]);
-
+      // streamToString reads the raw file stream (no pipe through createGzip)
       assert.strictEqual(streamToStringMock.mock.calls.length, 1);
-      assert.deepStrictEqual(streamToStringMock.mock.calls[0].arguments, [mockGzipStream]);
+      assert.deepStrictEqual(streamToStringMock.mock.calls[0].arguments, [mockReadStream]);
+
+      // gzipSync compresses the string content synchronously, returning a Buffer
+      assert.strictEqual(gzipSyncMock.mock.calls.length, 1);
+      assert.deepStrictEqual(gzipSyncMock.mock.calls[0].arguments, ['stream-content-string']);
+
+      // createGzip is not used for values (only for file uploads)
+      assert.strictEqual(createGzipMock.mock.calls.length, 0);
+      assert.strictEqual(readStreamPipeMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
-      const [url] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
+      const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
       assert.ok(url.href.includes('/api/oianalytics/oibus/time-values/compressed'));
+      assertContains(options, { body: Buffer.from('gzipped-content') });
     });
 
     it('should throw OIBusError on fetch failure', async () => {
