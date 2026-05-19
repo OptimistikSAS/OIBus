@@ -2,6 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    restoreMocks: true,
     browser: {
       screenshotFailures: false,
       server: {
