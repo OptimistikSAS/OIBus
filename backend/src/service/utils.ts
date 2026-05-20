@@ -1008,3 +1008,34 @@ export const groupItemsByGroup = <I extends SouthItemSettings>(
   }
   return groupedItemsList;
 };
+
+/**
+ * Extracts a human-readable message from any thrown value.
+ *
+ * Node.js / undici network errors can arrive as an {@link AggregateError}
+ * (e.g. ECONNREFUSED) whose top-level `.message` is empty while the actual
+ * reasons live inside `.errors[]`. This helper recurses into sub-errors and
+ * `Error.cause` so that callers always receive a non-empty, descriptive string.
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof AggregateError) {
+    const subMessages = error.errors.map(getErrorMessage).filter(Boolean);
+    return subMessages.length > 0 ? subMessages.join('; ') : error.message || error.toString();
+  }
+  if (error instanceof Error) {
+    const parts: Array<string> = [];
+    if (error.message) parts.push(error.message);
+    const cause = (error as Error & { cause?: unknown }).cause;
+    if (cause != null) {
+      const causeMsg = getErrorMessage(cause);
+      if (causeMsg) parts.push(causeMsg);
+    }
+    return parts.join(': ') || error.toString();
+  }
+  if (typeof error === 'string') return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}

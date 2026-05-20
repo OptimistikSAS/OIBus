@@ -37,6 +37,7 @@ import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import { Language } from '../../../shared/model/types';
 import type { ILogger } from '../../model/logger.model';
+import { getErrorMessage } from '../utils';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -46,6 +47,8 @@ export default class OIAnalyticsMessageService {
   protected runProgress$: DeferredPromise | null = null;
   protected stopTimeout: NodeJS.Timeout | null = null;
   protected retryMessageInterval: NodeJS.Timeout | null = null;
+  private stopped = false;
+  private registrationEventHandler: (() => void) | null = null;
 
   constructor(
     private oIAnalyticsMessageRepository: OIAnalyticsMessageRepository,
@@ -64,12 +67,13 @@ export default class OIAnalyticsMessageService {
   ) {}
 
   start(): void {
-    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', () => {
+    this.registrationEventHandler = () => {
       this.createFullConfigMessageIfNotPending();
       this.createFullHistoryQueriesMessageIfNotPending();
       this.messagesQueue = this.oIAnalyticsMessageRepository.list({ status: ['PENDING'], types: [], start: undefined, end: undefined });
       this.triggerRun.emit('next'); // trigger next if messages are already pending and not trigger by the creation function
-    });
+    };
+    this.oIAnalyticsRegistrationService.registrationEvent.on('updated', this.registrationEventHandler);
 
     this.createFullConfigMessageIfNotPending();
     this.createFullHistoryQueriesMessageIfNotPending();
@@ -86,10 +90,14 @@ export default class OIAnalyticsMessageService {
   }
 
   async run(): Promise<void> {
+    if (this.stopped) return;
+
     if (this.retryMessageInterval) {
       clearTimeout(this.retryMessageInterval);
       this.retryMessageInterval = null;
     }
+
+    if (this.messagesQueue.length === 0) return;
 
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings()!;
     if (registration.status !== 'REGISTERED') {
@@ -112,12 +120,13 @@ export default class OIAnalyticsMessageService {
       this.oIAnalyticsMessageRepository.markAsCompleted(message.id, DateTime.now().toUTC().toISO());
       this.removeMessageFromQueue(message.id);
     } catch (error: unknown) {
-      if ((error as Error).message.includes('Bad Request')) {
-        this.logger.error(`Error while sending message ${message.id} of type ${message.type}: ${(error as Error).message}`);
-        this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), (error as Error).message);
+      const errorMessage = getErrorMessage(error);
+      if (errorMessage.includes('Bad Request')) {
+        this.logger.error(`Error while sending message ${message.id} of type ${message.type}: ${errorMessage}`);
+        this.oIAnalyticsMessageRepository.markAsErrored(message.id, DateTime.now().toUTC().toISO(), errorMessage);
         this.removeMessageFromQueue(message.id);
       } else {
-        this.logger.error(`Retrying message ${message.id} of type ${message.type} after error: ${(error as Error).message}`);
+        this.logger.error(`Retrying message ${message.id} of type ${message.type} after error: ${errorMessage}`);
         this.retryMessageInterval = setTimeout(this.run.bind(this), registration.messageRetryInterval * 1000);
       }
     }
@@ -130,6 +139,11 @@ export default class OIAnalyticsMessageService {
   async stop(): Promise<void> {
     this.logger.debug(`Stopping OIAnalytics message service...`);
 
+    this.stopped = true;
+    if (this.registrationEventHandler) {
+      this.oIAnalyticsRegistrationService.registrationEvent.off('updated', this.registrationEventHandler);
+      this.registrationEventHandler = null;
+    }
     this.triggerRun.removeAllListeners();
     if (this.runProgress$) {
       if (!this.stopTimeout) {
