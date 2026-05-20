@@ -16,11 +16,12 @@ import JoiValidator from '../../web-server/controllers/validators/joi.validator'
 import { RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.model';
 import { NotFoundError } from '../../model/types';
+import { getErrorMessage } from '../utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
 // Mocked module exports — mutated in-place between tests
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let mockUtils: Record<string, unknown>;
 let mockUtilsOianalytics: Record<string, ReturnType<typeof mock.fn>>;
 let mockEncryptionService: { encryptionService: EncryptionServiceMock };
 
@@ -33,7 +34,8 @@ before(() => {
   mockUtils = {
     getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
     createFolder: mock.fn(),
-    filesExists: mock.fn()
+    filesExists: mock.fn(),
+    getErrorMessage
   };
   mockUtilsOianalytics = {
     testOIAnalyticsConnection: mock.fn()
@@ -144,7 +146,9 @@ describe('OIAnalytics Registration Service', () => {
     oIAnalyticsClient.register.mock.mockImplementationOnce(async () => result);
     oIAnalyticsClient.register.mock.mockImplementationOnce(async () => result);
 
-    mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
+    mock.method(crypto, 'generateKeyPair', (_type: unknown, _options: unknown, cb: (err: null, pub: string, priv: string) => void) => {
+      cb(null, 'public key', 'private key');
+    });
     const checkRegistrationMock = mock.fn(async () => undefined);
     service.checkRegistration = checkRegistrationMock;
 
@@ -246,7 +250,9 @@ describe('OIAnalytics Registration Service', () => {
       expirationDate: testData.constants.dates.FAKE_NOW,
       activationCode: '123ABC'
     };
-    mock.method(crypto, 'generateKeyPairSync', () => ({ publicKey: 'public key', privateKey: 'private key' }));
+    mock.method(crypto, 'generateKeyPair', (_type: unknown, _options: unknown, cb: (err: null, pub: string, priv: string) => void) => {
+      cb(null, 'public key', 'private key');
+    });
     oIAnalyticsClient.register.mock.mockImplementationOnce(async () => result);
 
     await service.register(command, testData.users.list[0].id);
@@ -431,6 +437,22 @@ describe('OIAnalytics Registration Service', () => {
     assert.strictEqual(oIAnalyticsClient.checkRegistration.mock.calls.length, 1);
     assert.ok(
       logger.error.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0] === 'Error while checking registration: error')
+    );
+  });
+
+  it('should check registration but fail with AggregateError and log proper message', async () => {
+    oIAnalyticsRegistrationRepository.get = mock.fn(() => testData.oIAnalytics.registration.pending);
+    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    oIAnalyticsClient.checkRegistration.mock.mockImplementationOnce(() => {
+      throw networkError;
+    });
+
+    await service.checkRegistration();
+
+    assert.ok(
+      logger.error.mock.calls.some((c: { arguments: Array<string> }) =>
+        c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200')
+      )
     );
   });
 

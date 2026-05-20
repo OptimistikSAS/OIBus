@@ -23,11 +23,12 @@ import IsoTransformer from '../../transformers/iso-transformer';
 import DeferredPromise from '../deferred-promise';
 import { DateTime } from 'luxon';
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
+import { getErrorMessage } from '../utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
 // Mocked module exports — mutated in-place between tests
-let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
+let mockUtils: Record<string, unknown>;
 let mockEncryptionService: { encryptionService: EncryptionServiceMock };
 
 let OIAnalyticsMessageService: new (
@@ -38,7 +39,8 @@ before(() => {
   mockUtils = {
     getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
     createFolder: mock.fn(),
-    filesExists: mock.fn()
+    filesExists: mock.fn(),
+    getErrorMessage
   };
   mockEncryptionService = {
     encryptionService: new EncryptionServiceMock('', '')
@@ -278,6 +280,56 @@ describe('OIAnalytics Message Service', () => {
       logger.error.mock.calls[0].arguments[0],
       `Error while sending message ${testData.oIAnalytics.messages.oIBusList[0].id} of type ${testData.oIAnalytics.messages.oIBusList[0].type}: Bad Request`
     );
+  });
+
+  it('should display proper error message on AggregateError in run', async () => {
+    const networkError = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    oIAnalyticsClient.sendConfiguration = mock.fn(async () => {
+      throw networkError;
+    });
+
+    service.start();
+    await flushPromises();
+
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(c =>
+        c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200')
+      )
+    );
+  });
+
+  it('should display proper error message for Error with cause (AggregateError) in run', async () => {
+    const cause = new AggregateError([new Error('connect ECONNREFUSED 127.0.0.1:4200')], '');
+    const fetchError = Object.assign(new TypeError('fetch failed'), { cause });
+    oIAnalyticsClient.sendConfiguration = mock.fn(async () => {
+      throw fetchError;
+    });
+
+    service.start();
+    await flushPromises();
+
+    assert.ok(
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
+        c => c.arguments[0].includes('fetch failed') && c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200')
+      )
+    );
+  });
+
+  it('should not execute run after service is stopped', async () => {
+    // stop() sets stopped = true even on a never-started service
+    await service.stop();
+    oIAnalyticsClient.sendConfiguration = mock.fn(async () => undefined);
+    await service.run();
+    assert.strictEqual(oIAnalyticsClient.sendConfiguration.mock.calls.length, 0);
+    assert.strictEqual(oIAnalyticsMessageRepository.markAsCompleted.mock.calls.length, 0);
+  });
+
+  it('should handle empty queue gracefully in run without throwing', async () => {
+    // Before the fix, an empty queue caused TypeError inside run() that triggered infinite retry
+    service['messagesQueue'] = [];
+    await service.run();
+    assert.strictEqual(oIAnalyticsMessageRepository.markAsCompleted.mock.calls.length, 0);
+    assert.strictEqual(logger.error.mock.calls.length, 0);
   });
 });
 

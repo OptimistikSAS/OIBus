@@ -1,5 +1,5 @@
 import { testOIAnalyticsConnection } from '../utils-oianalytics';
-import { getOIBusInfo } from '../utils';
+import { getOIBusInfo, getErrorMessage } from '../utils';
 import { encryptionService } from '../encryption.service';
 import { DateTime } from 'luxon';
 import OIAnalyticsRegistrationRepository from '../../repository/config/oianalytics-registration.repository';
@@ -66,18 +66,27 @@ export default class OIAnalyticsRegistrationService {
     }
 
     const oibusInfo = getOIBusInfo(engineSettings);
-    // Generate an RSA key pair
-    const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 4096,
-      publicKeyEncoding: {
-        type: 'spki', // Recommended format for a public key
-        format: 'pem' // Output format for the key
-      },
-      privateKeyEncoding: {
-        type: 'pkcs8', // Recommended format for a private key
-        format: 'pem' // Output format for the key
-      }
-    });
+    // Generate an RSA key pair asynchronously to avoid blocking the event loop
+    const { publicKey, privateKey } = await new Promise<{ publicKey: string; privateKey: string }>((resolve, reject) =>
+      crypto.generateKeyPair(
+        'rsa',
+        {
+          modulusLength: 4096,
+          publicKeyEncoding: {
+            type: 'spki', // Recommended format for a public key
+            format: 'pem' // Output format for the key
+          },
+          privateKeyEncoding: {
+            type: 'pkcs8', // Recommended format for a private key
+            format: 'pem' // Output format for the key
+          }
+        },
+        (err, pub, priv) => {
+          if (err) reject(err);
+          else resolve({ publicKey: pub, privateKey: priv });
+        }
+      )
+    );
 
     const result = await this.oIAnalyticsClient.register(command, oibusInfo, publicKey);
     this.oIAnalyticsRegistrationRepository.register(
@@ -120,7 +129,7 @@ export default class OIAnalyticsRegistrationService {
         this.registrationEvent.emit('updated'); // used to update logger and other oianalytics services
       }
     } catch (error: unknown) {
-      this.logger.error(`Error while checking registration: ${(error as Error).message}`);
+      this.logger.error(`Error while checking registration: ${getErrorMessage(error)}`);
     }
     this.ongoingCheckRegistration = false;
   }

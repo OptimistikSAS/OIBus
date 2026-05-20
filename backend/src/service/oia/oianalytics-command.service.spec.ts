@@ -23,6 +23,7 @@ import TransformerServiceMock from '../../tests/__mocks__/service/transformer-se
 import EncryptionServiceMock from '../../tests/__mocks__/service/encryption-service.mock';
 
 import { version } from '../../../package.json';
+import { getErrorMessage } from '../utils';
 import { createPageFromArray } from '../../../shared/model/types';
 import { NotFoundError } from '../../model/types';
 import {
@@ -100,7 +101,8 @@ const encryptionService = new EncryptionServiceMock('', '');
 const mockUtils = {
   delay: mock.fn(async () => undefined),
   getOIBusInfo: mock.fn(() => testData.engine.oIBusInfo),
-  unzip: mock.fn()
+  unzip: mock.fn(),
+  getErrorMessage
 };
 
 let OIAnalyticsCommandService: typeof OIAnalyticsCommandServiceType;
@@ -210,7 +212,9 @@ function resetAllMocks() {
   }
   // utils
   for (const val of Object.values(mockUtils)) {
-    val.mock.resetCalls();
+    if (val && typeof (val as { mock?: unknown }).mock === 'object') {
+      (val as { mock: { resetCalls(): void } }).mock.resetCalls();
+    }
   }
 }
 
