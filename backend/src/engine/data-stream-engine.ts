@@ -290,7 +290,8 @@ export default class DataStreamEngine {
 
   async reloadSouthItems(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>): Promise<void> {
     const south = this.getSouth(southConnector.id).south;
-    south.connectorConfiguration = this.southConnectorRepository.findSouthById(southConnector.id)!;
+    // Only reload the items list — the connector's other settings (type, name, etc.) haven't changed.
+    south.connectorConfiguration.items = this.southConnectorRepository.findAllItemsForSouth(southConnector.id);
     if (south.isEnabled()) {
       if (south.hasDirectQuery() || south.hasHistoryQuery()) {
         south.updateCronJobs();
