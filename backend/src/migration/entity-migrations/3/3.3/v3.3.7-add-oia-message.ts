@@ -1,14 +1,10 @@
 import { Knex } from 'knex';
-import { version } from '../../../package.json';
 import CreateTableBuilder = Knex.CreateTableBuilder;
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const ENGINES_TABLE = 'engines';
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
-
-export const SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES = ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'] as const;
-export type SouthModbusItemSettingsModbusType = (typeof SOUTH_MODBUS_ITEM_SETTINGS_MODBUS_TYPES)[number];
 
 export const SOUTH_MODBUS_ITEM_SETTINGS_DATA_DATA_TYPES = [
   'Bit',
@@ -25,7 +21,7 @@ export type SouthModbusItemSettingsDataDataType = (typeof SOUTH_MODBUS_ITEM_SETT
 
 interface OldSouthModbusItemSettings {
   address: string;
-  modbusType: SouthModbusItemSettingsModbusType;
+  modbusType: 'coil' | 'discreteInput' | 'inputRegister' | 'holdingRegister';
   dataType: SouthModbusItemSettingsDataDataType;
   multiplierCoefficient: number;
   bitIndex: number;
@@ -33,7 +29,7 @@ interface OldSouthModbusItemSettings {
 
 interface NewSouthModbusItemSettings {
   address: string;
-  modbusType: SouthModbusItemSettingsModbusType;
+  modbusType: 'coil' | 'discreteInput' | 'inputRegister' | 'holdingRegister';
   data: {
     dataType: SouthModbusItemSettingsDataDataType;
     multiplierCoefficient: number;
@@ -90,7 +86,7 @@ async function createOIAMessageTable(knex: Knex): Promise<void> {
 }
 
 async function addVersionInEngineSettings(knex: Knex) {
-  await knex.schema.raw(`ALTER TABLE ${ENGINES_TABLE} ADD oibus_version NOT NULL DEFAULT "${version}"`);
+  await knex.schema.raw(`ALTER TABLE ${ENGINES_TABLE} ADD oibus_version NOT NULL DEFAULT "3.8.0"`);
 }
 
 export async function down(_knex: Knex): Promise<void> {

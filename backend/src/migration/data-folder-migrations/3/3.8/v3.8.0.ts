@@ -1,10 +1,11 @@
 import { Knex } from 'knex';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { filesExists, getCommandLineArguments } from '../../service/utils';
-import { Instant } from '../../../shared/model/types';
+import { filesExists, getCommandLineArguments } from '../../../../service/utils';
 
 const { configFile } = getCommandLineArguments();
+
+type Instant = string;
 
 const CONTENT_FOLDER = 'content';
 const METADATA_FOLDER = 'metadata';

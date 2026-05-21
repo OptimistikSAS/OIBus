@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
-import { CRYPTO_TABLE } from '../../repository/crypto/crypto.repository';
+
+const CRYPTO_TABLE = 'crypto';
 
 export async function up(knex: Knex): Promise<void> {
   await createCryptoTable(knex);
