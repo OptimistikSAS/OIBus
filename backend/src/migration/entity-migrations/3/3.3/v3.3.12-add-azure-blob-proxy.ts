@@ -1,5 +1,5 @@
 import { Knex } from 'knex';
-import { NorthAzureBlobSettingsAuthentication } from '../../../shared/model/north-settings.model';
+import { NorthAzureBlobSettingsAuthentication } from '../../../../../shared/model/north-settings.model';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';
 
@@ -7,7 +7,7 @@ interface OldNorthAzureBlobSettings {
   account: string;
   container: string;
   path: string | null;
-  authentication: NorthAzureBlobSettingsAuthentication;
+  authentication: 'access-key' | 'sas-token' | 'aad' | 'external';
   sasToken?: string | null;
   accessKey?: string | null;
   tenantId?: string | null;

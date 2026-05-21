@@ -1,7 +1,8 @@
 import { Knex } from 'knex';
-import { generateRandomId } from '../../service/utils';
-import { Timezone } from '../../../shared/model/types';
+import { generateRandomId } from '../../../../service/utils';
 import { DateTime } from 'luxon';
+
+type Timezone = string;
 
 const TRANSFORMERS_TABLE = 'transformers';
 const NORTH_CONNECTORS_TABLE = 'north_connectors';

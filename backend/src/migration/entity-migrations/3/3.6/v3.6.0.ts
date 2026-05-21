@@ -1,5 +1,4 @@
 import { Knex } from 'knex';
-import { SouthMQTTSettingsAuthentication, SouthMQTTSettingsQos, SouthOPCSettingsMode } from '../../../shared/model/south-settings.model';
 
 const OIANALYTICS_MESSAGE_TABLE = 'oianalytics_messages';
 const COMMANDS_TABLE = 'commands';
@@ -11,9 +10,18 @@ const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
 const SUBSCRIPTION_TABLE = 'subscription';
 
+interface SouthMQTTSettingsAuthentication {
+  type: 'none' | 'basic' | 'cert';
+  username?: string;
+  password?: string | null;
+  certFilePath?: string;
+  keyFilePath?: string;
+  caFilePath?: string;
+}
+
 interface OldSouthMQTTSettings {
   url: string;
-  qos: SouthMQTTSettingsQos;
+  qos: '0' | '1' | '2';
   persistent?: boolean;
   authentication: SouthMQTTSettingsAuthentication;
   rejectUnauthorized: boolean;
@@ -23,7 +31,7 @@ interface OldSouthMQTTSettings {
 
 interface NewSouthMQTTSettings {
   url: string;
-  qos: SouthMQTTSettingsQos;
+  qos: '0' | '1' | '2';
   persistent?: boolean;
   authentication: SouthMQTTSettingsAuthentication;
   rejectUnauthorized: boolean;
@@ -57,7 +65,7 @@ interface NewSouthOPCSettings {
   retryInterval: number;
   host: string;
   serverName: string;
-  mode: SouthOPCSettingsMode;
+  mode: 'hda' | 'da';
 }
 
 export async function up(knex: Knex): Promise<void> {

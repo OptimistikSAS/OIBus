@@ -1,19 +1,34 @@
 import { Knex } from 'knex';
-import {
-  SouthOPCUASettingsAuthentication,
-  SouthOPCUASettingsSecurityMode,
-  SouthOPCUASettingsSecurityPolicy
-} from '../../../shared/model/south-settings.model';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const HISTORY_QUERIES_TABLE = 'history_queries';
+
+interface SouthOPCUASettingsAuthentication {
+  type: 'none' | 'basic' | 'cert';
+  username?: string;
+  password?: string | null;
+  certFilePath?: string;
+  keyFilePath?: string;
+}
 
 export interface OldSouthOPCUASettings {
   url: string;
   keepSessionAlive: boolean;
   retryInterval: number;
-  securityMode: SouthOPCUASettingsSecurityMode;
-  securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;
+  securityMode: 'none' | 'sign' | 'sign-and-encrypt';
+  securityPolicy?:
+    | 'none'
+    | 'basic128'
+    | 'basic192'
+    | 'basic256'
+    | 'basic128-rsa15'
+    | 'basic192-rsa15'
+    | 'basic256-rsa15'
+    | 'basic256-sha256'
+    | 'aes128-sha256-rsa-oaep'
+    | 'pub-sub-aes-128-ctr'
+    | 'pub-sub-aes-256-ctr'
+    | null;
   authentication: SouthOPCUASettingsAuthentication;
 }
 
@@ -22,8 +37,20 @@ export interface NewSouthOPCUASettings {
   keepSessionAlive: boolean;
   retryInterval: number;
   readTimeout: number;
-  securityMode: SouthOPCUASettingsSecurityMode;
-  securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;
+  securityMode: 'none' | 'sign' | 'sign-and-encrypt';
+  securityPolicy?:
+    | 'none'
+    | 'basic128'
+    | 'basic192'
+    | 'basic256'
+    | 'basic128-rsa15'
+    | 'basic192-rsa15'
+    | 'basic256-rsa15'
+    | 'basic256-sha256'
+    | 'aes128-sha256-rsa-oaep'
+    | 'pub-sub-aes-128-ctr'
+    | 'pub-sub-aes-256-ctr'
+    | null;
   authentication: SouthOPCUASettingsAuthentication;
 }
 

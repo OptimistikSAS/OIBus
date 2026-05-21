@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
 import path from 'node:path';
-import { filesExists } from '../../service/utils';
+import { filesExists } from '../../../../service/utils';
 import fs from 'node:fs/promises';
 
 const NORTH_CONNECTORS_TABLE = 'north_connectors';

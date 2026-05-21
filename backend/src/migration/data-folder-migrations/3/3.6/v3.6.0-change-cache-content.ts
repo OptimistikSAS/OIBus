@@ -1,12 +1,20 @@
 import { Knex } from 'knex';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { createFolder, generateRandomId, getCommandLineArguments } from '../../service/utils';
-import { OIBusTimeValue } from '../../../shared/model/engine.model';
+import { createFolder, generateRandomId, getCommandLineArguments } from '../../../../service/utils';
 import { DateTime } from 'luxon';
-import { Instant } from '../../../shared/model/types';
 
 const { configFile } = getCommandLineArguments();
+
+type Instant = string;
+interface OIBusTimeValue {
+  pointId: string;
+  timestamp: Instant;
+  data: {
+    value: string | number;
+    [key: string]: string | number;
+  };
+}
 
 const CONTENT_FOLDER = 'content';
 const METADATA_FOLDER = 'metadata';

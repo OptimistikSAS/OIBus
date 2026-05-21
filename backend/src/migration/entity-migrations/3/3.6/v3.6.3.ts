@@ -1,18 +1,22 @@
 import { Knex } from 'knex';
-import { SouthOPCUAItemSettingsHaMode, SouthOPCUAItemSettingsMode } from '../../../shared/model/south-settings.model';
 
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 const SOUTH_ITEMS_TABLE = 'south_items';
 
+interface SouthOPCUAItemSettingsHaMode {
+  aggregate: 'raw' | 'average' | 'minimum' | 'maximum' | 'count';
+  resampling?: 'none' | '1s' | '10s' | '30s' | '1min' | '1h' | '1d';
+}
+
 interface OldSouthOPCUAItemSettings {
   nodeId: string;
-  mode: SouthOPCUAItemSettingsMode;
+  mode: 'ha' | 'da';
   haMode?: SouthOPCUAItemSettingsHaMode | null;
 }
 
 interface NewSouthOPCUAItemSettings {
   nodeId: string;
-  mode: SouthOPCUAItemSettingsMode;
+  mode: 'ha' | 'da';
   haMode?: SouthOPCUAItemSettingsHaMode | null;
   timestampOrigin: string;
 }
