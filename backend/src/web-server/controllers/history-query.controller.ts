@@ -27,6 +27,7 @@ import { OIBusSouthType } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import HistoryQueryService, { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
+import SouthService from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -38,7 +39,7 @@ import {
   OIBusConnectionTestResult,
   OIBusContent
 } from '../../../shared/model/engine.model';
-import { HistoryTransformerDTOWithOptions, TransformerDTOWithOptions } from '../../../shared/model/transformer.model';
+import { HistoryTransformerDTOWithOptions } from '../../../shared/model/transformer.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import { HistoryTransformerWithOptions } from '../../model/transformer.model';
 import fs from 'node:fs/promises';
@@ -465,7 +466,9 @@ export class HistoryQueryController extends Controller {
       const fileContent = await fs.readFile(itemsFile.path, 'utf8');
       const items: Array<HistoryQueryItemDTO> = JSON.parse(fileContent);
 
-      const csv = itemToFlattenedCSV(items, delimiter);
+      const southService = request.services.southService as SouthService;
+      const itemSettingsSchema = southService.getManifest(southType).items.rootAttribute;
+      const csv = itemToFlattenedCSV(items, delimiter, itemSettingsSchema, true);
       request.res!.attachment('items.csv');
       request.res!.contentType('text/csv; charset=utf-8');
       request.res!.status(200).send(csv);
@@ -491,13 +494,17 @@ export class HistoryQueryController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
+    const southService = request.services.southService as SouthService;
     const historyQuery = historyQueryService.findById(historyId);
+    const itemSettingsSchema = southService.getManifest(historyQuery.southType).items.rootAttribute;
     const csv = itemToFlattenedCSV(
       historyQuery.items.map(
         item =>
           toHistoryQueryItemDTO(item, historyQuery.southType, id => request.services.userService.getUserInfo(id)) as HistoryQueryItemDTO
       ),
-      command.delimiter
+      command.delimiter,
+      itemSettingsSchema,
+      true
     );
     request.res!.attachment('items.csv');
     request.res!.contentType('text/csv; charset=utf-8');
@@ -513,6 +520,7 @@ export class HistoryQueryController extends Controller {
   async checkImportItems(
     @Path() southType: string,
     @FormField() delimiter: string,
+    @FormField() deleteItemsNotPresent: string,
     @UploadedFile('itemsToImport') itemsToImportFile: Express.Multer.File,
     @UploadedFile('currentItems') currentItemsFile: Express.Multer.File,
     @Request() request: CustomExpressRequest
@@ -525,13 +533,11 @@ export class HistoryQueryController extends Controller {
 
     try {
       const itemsToImportContent = await fs.readFile(itemsToImportFile.path, 'utf8');
-      const currentItemsContent = await fs.readFile(currentItemsFile.path, 'utf8');
-      return await historyQueryService.checkImportItems(
-        southType,
-        itemsToImportContent,
-        delimiter,
-        JSON.parse(currentItemsContent) as Array<HistoryQueryItemDTO>
-      );
+      const existingItems =
+        deleteItemsNotPresent === 'true'
+          ? []
+          : (JSON.parse(await fs.readFile(currentItemsFile.path, 'utf8')) as Array<HistoryQueryItemDTO>);
+      return await historyQueryService.checkImportItems(southType, itemsToImportContent, delimiter, existingItems);
     } finally {
       try {
         await fs.unlink(itemsToImportFile.path);
@@ -556,6 +562,7 @@ export class HistoryQueryController extends Controller {
   async importItems(
     @Path() historyId: string,
     @UploadedFile('items') itemsFile: Express.Multer.File,
+    @FormField() deleteItemsNotPresent: string,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
@@ -565,7 +572,7 @@ export class HistoryQueryController extends Controller {
     try {
       const fileContent = await fs.readFile(itemsFile.path, 'utf8');
       const items: Array<HistoryQueryItemCommandDTO> = JSON.parse(fileContent);
-      await historyQueryService.importItems(historyId, items, request.user.id);
+      await historyQueryService.importItems(historyId, items, request.user.id, deleteItemsNotPresent === 'true');
     } finally {
       try {
         await fs.unlink(itemsFile.path);

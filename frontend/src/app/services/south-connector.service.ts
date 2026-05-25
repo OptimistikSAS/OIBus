@@ -253,7 +253,7 @@ export class SouthConnectorService {
 
     return this.http
       .post(`/api/south/${southType}/items/to-csv`, formData, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${filename}.csv`)));
+      .pipe(map(response => this.downloadService.download(response, filename)));
   }
 
   /**
@@ -262,7 +262,7 @@ export class SouthConnectorService {
   exportItems(southId: string, filename: string, delimiter: string): Observable<void> {
     return this.http
       .post(`/api/south/${southId}/items/export`, { delimiter }, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${filename}.csv`)));
+      .pipe(map(response => this.downloadService.download(response, filename)));
   }
 
   /**
@@ -272,7 +272,8 @@ export class SouthConnectorService {
     southType: string,
     currentItems: Array<SouthConnectorItemDTO> | Array<SouthConnectorItemCommandDTO>,
     file: File,
-    delimiter: string
+    delimiter: string,
+    deleteItemsNotPresent = false
   ): Observable<{
     items: Array<SouthConnectorItemDTO>;
     errors: Array<{
@@ -285,16 +286,18 @@ export class SouthConnectorService {
     // Convert the current items to a Blob and append it as a file
     formData.set('currentItems', new Blob([JSON.stringify(currentItems)], { type: 'application/json' }), 'currentItems.json');
     formData.set('delimiter', delimiter);
+    formData.set('deleteItemsNotPresent', String(deleteItemsNotPresent));
     return this.http.post<{
       items: Array<SouthConnectorItemDTO>;
       errors: Array<{ item: Record<string, string>; error: string }>;
     }>(`/api/south/${southType}/items/import/check`, formData);
   }
 
-  importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>): Observable<void> {
+  importItems(southId: string, items: Array<SouthConnectorItemCommandDTO>, deleteItemsNotPresent = false): Observable<void> {
     const formData = new FormData();
     // Convert the string to a Blob and append it as a file
     formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');
+    formData.set('deleteItemsNotPresent', String(deleteItemsNotPresent));
 
     return this.http.post<void>(`/api/south/${southId}/items/import`, formData);
   }

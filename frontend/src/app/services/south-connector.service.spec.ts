@@ -270,6 +270,7 @@ describe('SouthConnectorService', () => {
     expectedFormData.set('itemsToImport', file);
     expectedFormData.set('currentItems', new Blob([JSON.stringify([])], { type: 'application/json' }), 'currentItems.json');
     expectedFormData.set('delimiter', delimiter);
+    expectedFormData.set('deleteItemsNotPresent', 'false');
     let actualImportation = false;
 
     service.checkImportItems('southType', [], file, delimiter).subscribe(() => {
@@ -286,6 +287,7 @@ describe('SouthConnectorService', () => {
   test('should import items', () => {
     const expectedFormData = new FormData();
     expectedFormData.set('items', new Blob([JSON.stringify([])], { type: 'application/json' }), 'items.json');
+    expectedFormData.set('deleteItemsNotPresent', 'false');
 
     let actualImportation = false;
 

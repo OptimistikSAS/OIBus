@@ -8730,6 +8730,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsSouthConnectorController_checkImportItems: Record<string, TsoaRoute.ParameterSchema> = {
                 southType: {"in":"path","name":"southType","required":true,"dataType":"string"},
                 delimiter: {"in":"formData","name":"delimiter","required":true,"dataType":"string"},
+                deleteItemsNotPresent: {"in":"formData","name":"deleteItemsNotPresent","required":true,"dataType":"string"},
                 itemsToImportFile: {"in":"formData","name":"itemsToImport","required":true,"dataType":"file"},
                 currentItemsFile: {"in":"formData","name":"currentItems","required":true,"dataType":"file"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
@@ -8774,6 +8775,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsSouthConnectorController_importItems: Record<string, TsoaRoute.ParameterSchema> = {
                 southId: {"in":"path","name":"southId","required":true,"dataType":"string"},
                 itemsFile: {"in":"formData","name":"items","required":true,"dataType":"file"},
+                deleteItemsNotPresent: {"in":"formData","name":"deleteItemsNotPresent","required":true,"dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/api/south/:southId/items/import',
@@ -10951,6 +10953,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsHistoryQueryController_checkImportItems: Record<string, TsoaRoute.ParameterSchema> = {
                 southType: {"in":"path","name":"southType","required":true,"dataType":"string"},
                 delimiter: {"in":"formData","name":"delimiter","required":true,"dataType":"string"},
+                deleteItemsNotPresent: {"in":"formData","name":"deleteItemsNotPresent","required":true,"dataType":"string"},
                 itemsToImportFile: {"in":"formData","name":"itemsToImport","required":true,"dataType":"file"},
                 currentItemsFile: {"in":"formData","name":"currentItems","required":true,"dataType":"file"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
@@ -10995,6 +10998,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
         const argsHistoryQueryController_importItems: Record<string, TsoaRoute.ParameterSchema> = {
                 historyId: {"in":"path","name":"historyId","required":true,"dataType":"string"},
                 itemsFile: {"in":"formData","name":"items","required":true,"dataType":"file"},
+                deleteItemsNotPresent: {"in":"formData","name":"deleteItemsNotPresent","required":true,"dataType":"string"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
         app.post('/api/history/:historyId/items/import',

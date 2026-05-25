@@ -269,13 +269,13 @@ export class HistoryQueryService {
 
     return this.http
       .post(`/api/history/${southType}/items/to-csv`, formData, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${filename}.csv`)));
+      .pipe(map(response => this.downloadService.download(response, filename)));
   }
 
-  exportItems(historyQueryId: string, fileName: string, delimiter: string): Observable<void> {
+  exportItems(historyQueryId: string, filename: string, delimiter: string): Observable<void> {
     return this.http
       .post(`/api/history/${historyQueryId}/items/export`, { delimiter }, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${fileName}.csv`)));
+      .pipe(map(response => this.downloadService.download(response, filename)));
   }
 
   /**
@@ -285,7 +285,8 @@ export class HistoryQueryService {
     southType: string,
     currentItems: Array<HistoryQueryItemDTO | HistoryQueryItemCommandDTO>,
     file: File,
-    delimiter: string
+    delimiter: string,
+    deleteItemsNotPresent = false
   ): Observable<{
     items: Array<HistoryQueryItemDTO>;
     errors: Array<{
@@ -298,16 +299,18 @@ export class HistoryQueryService {
     // Convert the string to a Blob and append it as a file
     formData.set('currentItems', new Blob([JSON.stringify(currentItems)], { type: 'application/json' }), 'currentItems.json');
     formData.set('delimiter', delimiter);
+    formData.set('deleteItemsNotPresent', String(deleteItemsNotPresent));
     return this.http.post<{
       items: Array<HistoryQueryItemDTO>;
       errors: Array<{ item: HistoryQueryItemDTO; error: string }>;
     }>(`/api/history/${southType}/items/import/check`, formData);
   }
 
-  importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO>): Observable<void> {
+  importItems(historyId: string, items: Array<HistoryQueryItemCommandDTO>, deleteItemsNotPresent = false): Observable<void> {
     const formData = new FormData();
     // Convert the string to a Blob and append it as a file
     formData.set('items', new Blob([JSON.stringify(items)], { type: 'application/json' }), 'items.json');
+    formData.set('deleteItemsNotPresent', String(deleteItemsNotPresent));
     return this.http.post<void>(`/api/history/${historyId}/items/import`, formData);
   }
 
