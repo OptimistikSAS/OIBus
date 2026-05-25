@@ -243,6 +243,7 @@ describe('HistoryQueryService', () => {
     expectedFormData.set('itemsToImport', file);
     expectedFormData.set('currentItems', new Blob([JSON.stringify([])], { type: 'application/json' }), 'currentItems.json');
     expectedFormData.set('delimiter', delimiter);
+    expectedFormData.set('deleteItemsNotPresent', 'false');
     let actualImportation = false;
 
     service.checkImportItems('southType', [], file, delimiter).subscribe(() => {
@@ -259,6 +260,7 @@ describe('HistoryQueryService', () => {
   test('should import history south items', () => {
     const expectedFormData = new FormData();
     expectedFormData.set('items', new Blob([JSON.stringify([])], { type: 'application/json' }), 'items.json');
+    expectedFormData.set('deleteItemsNotPresent', 'false');
     let actualImportation = false;
 
     service.importItems('id1', []).subscribe(() => {

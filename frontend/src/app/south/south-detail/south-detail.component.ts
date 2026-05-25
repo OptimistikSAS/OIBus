@@ -442,55 +442,58 @@ export class SouthDetailComponent {
         this.southConnector!.items.map(item => (item.settings as any)?.topic).filter(
           topic => topic && typeof topic === 'string' && topic.trim()
         ),
+        true,
         true
       );
     } else {
-      modal.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false);
+      modal.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false, true);
     }
 
     modal.result.subscribe(response => {
       if (!response) return;
-      this.checkImportItems(response.file, response.delimiter);
+      this.checkImportItems(response.file, response.delimiter, response.eraseExisting);
     });
   }
 
-  checkImportItems(file: File, delimiter: string) {
-    this.southConnectorService.checkImportItems(this.manifest!.id, this.southConnector!.items, file, delimiter).subscribe(result => {
-      const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
-      const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
-      const commandItems: Array<SouthConnectorItemCommandDTO> = result.items.map(
-        item =>
-          ({
-            id: item.id,
-            name: item.name,
-            enabled: item.enabled,
-            settings: item.settings,
-            scanModeId: item.scanMode?.id || null,
-            scanModeName: item.scanMode?.name || null,
-            groupId: item.group?.id || null,
-            groupName: item.group?.standardSettings.name ?? null,
-            syncWithGroup: item.syncWithGroup,
-            maxReadInterval: item.maxReadInterval,
-            readDelay: item.readDelay,
-            overlap: item.overlap
-          }) as SouthConnectorItemCommandDTO
-      );
-      component.prepare(this.manifest!, this.southConnector!.items, commandItems, result.errors, this.scanModes);
-      modalRef.result
-        .pipe(
-          switchMap((newItems: Array<SouthConnectorItemCommandDTO>) => {
-            return this.southConnectorService.importItems(this.southConnector!.id, newItems);
-          }),
-          switchMap(() => {
-            return this.southConnectorService.findById(this.southConnector!.id);
-          })
-        )
-        .subscribe(southConnector => {
-          this.southConnector = southConnector;
-          this.resetPage();
-          this.notificationService.success(`south.items.import.imported`);
-        });
-    });
+  checkImportItems(file: File, delimiter: string, deleteItemsNotPresent = false) {
+    this.southConnectorService
+      .checkImportItems(this.manifest!.id, this.southConnector!.items, file, delimiter, deleteItemsNotPresent)
+      .subscribe(result => {
+        const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
+        const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
+        const commandItems: Array<SouthConnectorItemCommandDTO> = result.items.map(
+          item =>
+            ({
+              id: item.id,
+              name: item.name,
+              enabled: item.enabled,
+              settings: item.settings,
+              scanModeId: item.scanMode?.id || null,
+              scanModeName: item.scanMode?.name || null,
+              groupId: item.group?.id || null,
+              groupName: item.group?.standardSettings.name ?? null,
+              syncWithGroup: item.syncWithGroup,
+              maxReadInterval: item.maxReadInterval,
+              readDelay: item.readDelay,
+              overlap: item.overlap
+            }) as SouthConnectorItemCommandDTO
+        );
+        component.prepare(this.manifest!, this.southConnector!.items, commandItems, result.errors, this.scanModes);
+        modalRef.result
+          .pipe(
+            switchMap((newItems: Array<SouthConnectorItemCommandDTO>) => {
+              return this.southConnectorService.importItems(this.southConnector!.id, newItems, deleteItemsNotPresent);
+            }),
+            switchMap(() => {
+              return this.southConnectorService.findById(this.southConnector!.id);
+            })
+          )
+          .subscribe(southConnector => {
+            this.southConnector = southConnector;
+            this.resetPage();
+            this.notificationService.success(`south.items.import.imported`);
+          });
+      });
   }
 
   addOrEditGroup(command: {

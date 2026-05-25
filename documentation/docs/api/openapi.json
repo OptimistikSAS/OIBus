@@ -30793,7 +30793,7 @@
 	},
 	"info": {
 		"title": "OIBus API",
-		"version": "3.7.14",
+		"version": "3.8.0",
 		"description": "OIBus API is a RESTful interface for managing industrial data flows. It allows you to configure connectors, schedule data collection, transform and route data, monitor system health, and secure communications. Designed for developers and system integrators, it enables seamless integration between industrial systems and enterprise applications.",
 		"license": {
 			"name": "EUPL"
@@ -32444,6 +32444,9 @@
 									"delimiter": {
 										"type": "string"
 									},
+									"deleteItemsNotPresent": {
+										"type": "string"
+									},
 									"itemsToImport": {
 										"type": "string",
 										"format": "binary"
@@ -32455,6 +32458,7 @@
 								},
 								"required": [
 									"delimiter",
+									"deleteItemsNotPresent",
 									"itemsToImport",
 									"currentItems"
 								]
@@ -32498,10 +32502,14 @@
 									"items": {
 										"type": "string",
 										"format": "binary"
+									},
+									"deleteItemsNotPresent": {
+										"type": "string"
 									}
 								},
 								"required": [
-									"items"
+									"items",
+									"deleteItemsNotPresent"
 								]
 							}
 						}
@@ -35081,6 +35089,9 @@
 									"delimiter": {
 										"type": "string"
 									},
+									"deleteItemsNotPresent": {
+										"type": "string"
+									},
 									"itemsToImport": {
 										"type": "string",
 										"format": "binary"
@@ -35092,6 +35103,7 @@
 								},
 								"required": [
 									"delimiter",
+									"deleteItemsNotPresent",
 									"itemsToImport",
 									"currentItems"
 								]
@@ -35135,10 +35147,14 @@
 									"items": {
 										"type": "string",
 										"format": "binary"
+									},
+									"deleteItemsNotPresent": {
+										"type": "string"
 									}
 								},
 								"required": [
-									"items"
+									"items",
+									"deleteItemsNotPresent"
 								]
 							}
 						}

@@ -15,6 +15,7 @@ import cronstrue from 'cronstrue';
 import cronparser from 'cron-parser';
 import { ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { OIBusSouthType, SOUTH_SINGLE_ITEMS, SouthConnectorItemDTO } from '../../shared/model/south-connector.model';
+import { OIBusObjectAttribute } from '../../shared/model/form.model';
 import { ScanMode } from '../model/scan-mode.model';
 import { HistoryQueryItemDTO } from '../../shared/model/history-query.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
@@ -718,42 +719,46 @@ export const checkGroups = (
 export const itemToFlattenedCSV = (
   items: Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
   delimiter: string,
-  scanModes?: Array<ScanMode>
+  itemSettingsSchema: OIBusObjectAttribute,
+  isHistoryQuery = false
 ): string => {
-  const columns: Set<string> = new Set<string>([
-    'name',
-    'enabled',
-    'scanMode',
-    'group',
-    'maxReadInterval',
-    'readDelay',
-    'overlap',
-    'syncWithGroup'
-  ]);
+  const columns: Set<string> = new Set<string>(['name', 'enabled']);
+  if (!isHistoryQuery) {
+    columns.add('scanMode');
+    columns.add('group');
+    columns.add('maxReadInterval');
+    columns.add('readDelay');
+    columns.add('overlap');
+    columns.add('syncWithGroup');
+  }
+
+  // Pre-populate settings columns from the schema so that optional fields
+  // absent from every item (e.g. haMode when all items are in DA mode)
+  // still appear as headers in the exported CSV.
+  const settingsAttributes =
+    (itemSettingsSchema.attributes.find(element => element.key === 'settings') as OIBusObjectAttribute)?.attributes ?? [];
+  for (const attr of settingsAttributes) {
+    columns.add(`settings_${attr.key}`);
+  }
 
   return csv.unparse(
     items.map(item => {
-      const { group, ...itemWithoutGroup } = item as SouthConnectorItemDTO;
-      const flattenedItem: Record<string, string | number | object | boolean | null> = {
-        ...itemWithoutGroup
-      };
-      if (scanModes) {
+      let flattenedItem: Record<string, string | number | object | boolean | null>;
+      if (isHistoryQuery) {
+        flattenedItem = { ...(item as HistoryQueryItemDTO) };
+      } else {
+        const { group, ...itemWithoutGroup } = item as SouthConnectorItemDTO;
+        flattenedItem = { ...itemWithoutGroup };
         flattenedItem.scanMode = (item as SouthConnectorItemDTO).scanMode?.name || '';
-      }
-      // Add group name to CSV
-      flattenedItem.group = group?.standardSettings.name || '';
-      // Fall back to group settings for null item-level historian fields
-      if (group) {
-        if (flattenedItem.maxReadInterval === null) flattenedItem.maxReadInterval = group.historySettings.maxReadInterval;
-        if (flattenedItem.readDelay === null) flattenedItem.readDelay = group.historySettings.readDelay;
-        if (flattenedItem.overlap === null) flattenedItem.overlap = group.historySettings.overlap;
+        flattenedItem.group = group?.standardSettings.name || '';
       }
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        columns.add(`settings_${itemSettingsKey}`);
-        if (typeof itemSettingsValue === 'object') {
-          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
-        } else {
-          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue as string;
+        if (columns.has(`settings_${itemSettingsKey}`)) {
+          if (typeof itemSettingsValue === 'object') {
+            flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
+          } else {
+            flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue as string;
+          }
         }
       }
       delete flattenedItem.id;

@@ -18,6 +18,7 @@ import type { HistoryQueryItemDTO } from '../../shared/model/history-query.model
 import type { OIBusError as OIBusErrorType } from '../model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
+import { OIBusObjectAttribute } from '../../shared/model/form.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -1360,22 +1361,7 @@ describe('Service utils', () => {
             }
           ] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
           ',',
-          testData.scanMode.list
-        ),
-        'csv content'
-      );
-    });
-
-    it('should properly convert without scan modes', () => {
-      assert.deepStrictEqual(
-        utils.itemToFlattenedCSV(
-          [
-            ...testData.south.list[2].items.map(item => ({ ...item, settings: { ...item.settings, objectSettings: {} } })),
-            {
-              ...testData.south.list[2].items[0]
-            }
-          ] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
-          ','
+          { attributes: [] } as unknown as OIBusObjectAttribute
         ),
         'csv content'
       );
@@ -1413,14 +1399,16 @@ describe('Service utils', () => {
         overlap: null
       } as unknown as SouthConnectorItemDTO;
 
-      utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', testData.scanMode.list);
+      utils.itemToFlattenedCSV(
+        [item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
+        ',',
+        { attributes: [] } as unknown as OIBusObjectAttribute,
+        true
+      );
 
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
       const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
       assert.notStrictEqual(capturedData, null);
-      assert.deepStrictEqual(capturedData[0].maxReadInterval, 3600);
-      assert.deepStrictEqual(capturedData[0].readDelay, 200);
-      assert.deepStrictEqual(capturedData[0].overlap, 5);
     });
 
     it('should flatten items with scanModes', () => {
@@ -1438,19 +1426,7 @@ describe('Service utils', () => {
         overlap: 0,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
-      const scanModes = [
-        {
-          id: 'sm1',
-          name: 'Every 10s',
-          cron: '*/10 * * * * *',
-          description: '',
-          createdBy: '',
-          updatedBy: '',
-          createdAt: '',
-          updatedAt: ''
-        }
-      ];
-      const result = utils.itemToFlattenedCSV([baseItem], ',', scanModes);
+      const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
       assert.strictEqual(result, 'csv content');
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
     });
@@ -1470,7 +1446,7 @@ describe('Service utils', () => {
         overlap: 0,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
-      const result = utils.itemToFlattenedCSV([baseItem], ',');
+      const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
       assert.strictEqual(result, 'csv content');
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
     });
@@ -1501,12 +1477,8 @@ describe('Service utils', () => {
           historySettings: { maxReadInterval: 9999, readDelay: 500, overlap: 10 }
         }
       } as unknown as SouthConnectorItemDTO;
-      utils.itemToFlattenedCSV([itemWithNulls], ',');
+      utils.itemToFlattenedCSV([itemWithNulls], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
-      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
-      assert.deepStrictEqual(capturedData[0].maxReadInterval, 9999);
-      assert.deepStrictEqual(capturedData[0].readDelay, 500);
-      assert.deepStrictEqual(capturedData[0].overlap, 10);
     });
   });
 

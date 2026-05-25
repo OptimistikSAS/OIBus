@@ -541,6 +541,7 @@ describe('SouthConnectorController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
+    southService.getManifest = mock.fn(() => testData.south.manifest);
     const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -563,6 +564,7 @@ describe('SouthConnectorController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
+    southService.getManifest = mock.fn(() => testData.south.manifest);
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => {
       throw new Error('unlink error');
@@ -586,6 +588,7 @@ describe('SouthConnectorController', () => {
     const command = { delimiter };
 
     southService.findById = mock.fn(() => testData.south.list[0]);
+    southService.getManifest = mock.fn(() => testData.south.manifest);
     scanModeService.list = mock.fn(() => []);
 
     await controller.exportItems(southId, command, mockRequest as CustomExpressRequest);
@@ -626,6 +629,7 @@ describe('SouthConnectorController', () => {
     const result = await controller.checkImportItems(
       southType,
       delimiter,
+      'false',
       itemsToImportFile,
       currentItemsFile,
       mockRequest as CustomExpressRequest
@@ -655,7 +659,7 @@ describe('SouthConnectorController', () => {
     } as Express.Multer.File;
 
     await assert.rejects(
-      controller.checkImportItems(southType, delimiter, itemsToImportFile, undefined!, mockRequest as CustomExpressRequest),
+      controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, undefined!, mockRequest as CustomExpressRequest),
       { message: 'Missing "itemsToImport" or "currentItems"' }
     );
   });
@@ -670,20 +674,21 @@ describe('SouthConnectorController', () => {
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => undefined);
 
-    await controller.importItems(southId, itemsFile, mockRequest as CustomExpressRequest);
+    await controller.importItems(southId, itemsFile, 'false', mockRequest as CustomExpressRequest);
 
     assert.strictEqual(southService.importItems.mock.calls.length, 1);
     assert.deepStrictEqual(southService.importItems.mock.calls[0].arguments, [
       southId,
       [{ id: '1', name: 'item1', scanModeName: 'scan1' }],
-      'test'
+      'test',
+      false
     ]);
   });
 
   it('should throw an error if items file is missing in importItems', async () => {
     const southId = testData.south.list[0].id;
 
-    await assert.rejects(controller.importItems(southId, undefined!, mockRequest as CustomExpressRequest), {
+    await assert.rejects(controller.importItems(southId, undefined!, 'false', mockRequest as CustomExpressRequest), {
       message: 'Missing file "items"'
     });
   });
@@ -698,7 +703,7 @@ describe('SouthConnectorController', () => {
       throw new Error('unlink error');
     });
 
-    await assert.doesNotReject(controller.importItems('southId', itemsFile, mockRequest as CustomExpressRequest));
+    await assert.doesNotReject(controller.importItems('southId', itemsFile, 'false', mockRequest as CustomExpressRequest));
   });
 
   it('should list groups for a south connector', async () => {

@@ -94,7 +94,8 @@ describe('HistoryQueryController', () => {
       services: createMockServices({
         historyQueryService,
         southService: {
-          getInstalledSouthManifests: mock.fn(() => [{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }])
+          getInstalledSouthManifests: mock.fn(() => [{ ...testData.south.manifest, id: testData.historyQueries.list[0].southType }]),
+          getManifest: mock.fn(() => testData.south.manifest)
         } as unknown as CustomExpressRequest['services']['southService'],
         oIBusService,
         userService
@@ -570,6 +571,7 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
+    (mockRequest.services!.southService as any).getManifest = mock.fn(() => testData.south.manifest);
     const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -592,6 +594,7 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
+    (mockRequest.services!.southService as any).getManifest = mock.fn(() => testData.south.manifest);
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => {
       throw new Error('unlink error');
@@ -655,6 +658,7 @@ describe('HistoryQueryController', () => {
     const result = await controller.checkImportItems(
       southType,
       delimiter,
+      'false',
       itemsToImportFile,
       currentItemsFile,
       mockRequest as CustomExpressRequest
@@ -684,7 +688,7 @@ describe('HistoryQueryController', () => {
     } as Express.Multer.File;
 
     await assert.rejects(
-      controller.checkImportItems(southType, delimiter, itemsToImportFile, undefined!, mockRequest as CustomExpressRequest),
+      controller.checkImportItems(southType, delimiter, 'false', itemsToImportFile, undefined!, mockRequest as CustomExpressRequest),
       { message: 'Missing "itemsToImport" or "currentItems"' }
     );
   });
@@ -699,20 +703,21 @@ describe('HistoryQueryController', () => {
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => undefined);
 
-    await controller.importItems(historyId, itemsFile, mockRequest as CustomExpressRequest);
+    await controller.importItems(historyId, itemsFile, 'false', mockRequest as CustomExpressRequest);
 
     assert.strictEqual(historyQueryService.importItems.mock.calls.length, 1);
     assert.deepStrictEqual(historyQueryService.importItems.mock.calls[0].arguments, [
       historyId,
       [{ id: '1', name: 'item1', scanModeName: 'scan1' }],
-      'test'
+      'test',
+      false
     ]);
   });
 
   it('should throw an error if items file is missing in importItems', async () => {
     const historyId = testData.historyQueries.list[0].id;
 
-    await assert.rejects(controller.importItems(historyId, undefined!, mockRequest as CustomExpressRequest), {
+    await assert.rejects(controller.importItems(historyId, undefined!, 'false', mockRequest as CustomExpressRequest), {
       message: 'Missing file "items"'
     });
   });
@@ -727,7 +732,7 @@ describe('HistoryQueryController', () => {
       throw new Error('unlink error');
     });
 
-    await assert.doesNotReject(controller.importItems('southId', itemsFile, mockRequest as CustomExpressRequest));
+    await assert.doesNotReject(controller.importItems('southId', itemsFile, 'false', mockRequest as CustomExpressRequest));
   });
 
   it('should add or edit a transformer', async () => {

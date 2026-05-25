@@ -484,29 +484,31 @@ export class HistoryQueryDetailComponent {
         expectedHeaders.push(`settings_${setting.key}`);
       }
     });
-    modalRef.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false);
+    modalRef.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false, true);
     modalRef.result.subscribe(response => {
       if (!response) return;
-      this.checkImportItems(response.file, response.delimiter);
+      this.checkImportItems(response.file, response.delimiter, response.eraseExisting);
     });
   }
 
-  checkImportItems(file: File, delimiter: string) {
-    this.historyQueryService.checkImportItems(this.southManifest!.id, this.historyQuery!.items, file, delimiter).subscribe(result => {
-      const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
-      const component: ImportHistoryQueryItemsModalComponent = modalRef.componentInstance;
-      component.prepare(this.southManifest!, this.historyQuery!.items, result.items, result.errors);
-      modalRef.result
-        .pipe(
-          switchMap((newItems: Array<HistoryQueryItemCommandDTO>) => {
-            return this.historyQueryService.importItems(this.historyQuery!.id, newItems);
-          })
-        )
-        .subscribe(() => {
-          this.notificationService.success('history-query.items.imported');
-          this.refreshHistoryQuery();
-        });
-    });
+  checkImportItems(file: File, delimiter: string, deleteItemsNotPresent = false) {
+    this.historyQueryService
+      .checkImportItems(this.southManifest!.id, this.historyQuery!.items, file, delimiter, deleteItemsNotPresent)
+      .subscribe(result => {
+        const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
+        const component: ImportHistoryQueryItemsModalComponent = modalRef.componentInstance;
+        component.prepare(this.southManifest!, this.historyQuery!.items, result.items, result.errors);
+        modalRef.result
+          .pipe(
+            switchMap((newItems: Array<HistoryQueryItemCommandDTO>) => {
+              return this.historyQueryService.importItems(this.historyQuery!.id, newItems, deleteItemsNotPresent);
+            })
+          )
+          .subscribe(() => {
+            this.notificationService.success('history-query.items.imported');
+            this.refreshHistoryQuery();
+          });
+      });
   }
 
   getFieldValue(element: any, field: string): string {

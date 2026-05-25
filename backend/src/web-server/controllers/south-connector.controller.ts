@@ -39,7 +39,6 @@ import SouthService, {
 } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import ScanModeService from '../../service/scan-mode.service';
 import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import fs from 'node:fs/promises';
@@ -486,7 +485,9 @@ export class SouthConnectorController extends Controller {
         delete item.scanModeName;
         return item;
       });
-      const csv = itemToFlattenedCSV(items, delimiter);
+      const southService = request.services.southService as SouthService;
+      const itemSettingsSchema = southService.getManifest(southType).items.rootAttribute;
+      const csv = itemToFlattenedCSV(items, delimiter, itemSettingsSchema);
       request.res!.attachment('items.csv');
       request.res!.contentType('text/csv; charset=utf-8');
       request.res!.status(200).send(csv);
@@ -512,15 +513,15 @@ export class SouthConnectorController extends Controller {
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
-    const scanModeService = request.services.scanModeService as ScanModeService;
     const southConnector = southService.findById(southId);
+    const itemSettingsSchema = southService.getManifest(southConnector.type).items.rootAttribute;
     const csv = itemToFlattenedCSV(
       southConnector.items.map(
         item =>
           toSouthConnectorItemDTO(item, southConnector.type, id => request.services.userService.getUserInfo(id)) as SouthConnectorItemDTO
       ),
       command.delimiter,
-      scanModeService.list()
+      itemSettingsSchema
     );
     request.res!.attachment('items.csv');
     request.res!.contentType('text/csv; charset=utf-8');
@@ -536,6 +537,7 @@ export class SouthConnectorController extends Controller {
   async checkImportItems(
     @Path() southType: string,
     @FormField() delimiter: string,
+    @FormField() deleteItemsNotPresent: string,
     @UploadedFile('itemsToImport') itemsToImportFile: Express.Multer.File,
     @UploadedFile('currentItems') currentItemsFile: Express.Multer.File,
     @Request() request: CustomExpressRequest
@@ -548,13 +550,11 @@ export class SouthConnectorController extends Controller {
 
     try {
       const itemsToImportContent = await fs.readFile(itemsToImportFile.path, 'utf8');
-      const currentItemsContent = await fs.readFile(currentItemsFile.path, 'utf8');
-      return await southService.checkImportItems(
-        southType,
-        itemsToImportContent,
-        delimiter,
-        JSON.parse(currentItemsContent) as Array<SouthConnectorItemDTO>
-      );
+      const existingItems =
+        deleteItemsNotPresent === 'true'
+          ? []
+          : (JSON.parse(await fs.readFile(currentItemsFile.path, 'utf8')) as Array<SouthConnectorItemDTO>);
+      return await southService.checkImportItems(southType, itemsToImportContent, delimiter, existingItems);
     } finally {
       try {
         await fs.unlink(itemsToImportFile.path);
@@ -578,6 +578,7 @@ export class SouthConnectorController extends Controller {
   async importItems(
     @Path() southId: string,
     @UploadedFile('items') itemsFile: Express.Multer.File,
+    @FormField() deleteItemsNotPresent: string,
     @Request() request: CustomExpressRequest
   ): Promise<void> {
     const southService = request.services.southService as SouthService;
@@ -587,7 +588,7 @@ export class SouthConnectorController extends Controller {
     try {
       const fileContent = await fs.readFile(itemsFile.path, 'utf8');
       const items: Array<SouthConnectorItemCommandDTO> = JSON.parse(fileContent);
-      await southService.importItems(southId, items, request.user.id);
+      await southService.importItems(southId, items, request.user.id, deleteItemsNotPresent === 'true');
     } finally {
       try {
         await fs.unlink(itemsFile.path);
