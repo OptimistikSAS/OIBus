@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
 import { Component, inject as inject_1 } from '@angular/core';
-import { ComponentTester } from 'ngx-speculoos';
 import { debounceTime, distinctUntilChanged, Observable, of, switchMap } from 'rxjs';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { provideNgbConfigTesting } from './oi-ngb-testing';
@@ -9,6 +8,7 @@ import { OpenTypeaheadOnFocusDirective } from './open-typeahead-on-focus.directi
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { NGB_ARIA_LIVE_DELAY, TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 
 class UserService {
   suggestByText(_name: string): Observable<Array<unknown>> {
@@ -34,14 +34,11 @@ class TestComponent {
     );
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-
-  get typeahead() {
-    return this.testElement.input('input')!;
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly typeahead = this.root.getByCss('input');
+  readonly suggestions = page.getByCss('ngb-typeahead-window.dropdown-menu button.dropdown-item');
 }
 
 describe('OpenTypeaheadOnFocusDirective', () => {
@@ -52,55 +49,55 @@ describe('OpenTypeaheadOnFocusDirective', () => {
     vi.useRealTimers();
   });
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideNgbConfigTesting(), UserService]
     });
     userService = TestBed.inject(UserService);
     vi.spyOn(userService, 'suggestByText');
     tester = new TestComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
   test('should call search on focus', async () => {
     vi.useFakeTimers();
-    tester.typeahead.dispatchEventOfType('focus');
-    vi.advanceTimersByTime(2 * TYPEAHEAD_DEBOUNCE_TIME);
-    await tester.change();
+    tester.typeahead.element().dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    tester.fixture.detectChanges();
     expect(userService.suggestByText).toHaveBeenCalledWith('');
-    vi.advanceTimersByTime(NGB_ARIA_LIVE_DELAY);
+    await vi.advanceTimersByTimeAsync(NGB_ARIA_LIVE_DELAY);
   });
 
   test('should not call search on focus when there is a value', async () => {
     vi.useFakeTimers();
-    tester.componentInstance.name.setValue('Cédric');
-    tester.typeahead.dispatchEventOfType('focus');
-    vi.advanceTimersByTime(2 * TYPEAHEAD_DEBOUNCE_TIME);
-    await tester.change();
+    tester.fixture.componentInstance.name.setValue('Cédric');
+    tester.typeahead.element().dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    tester.fixture.detectChanges();
     expect(userService.suggestByText).not.toHaveBeenCalled();
   });
 
   test('should not call search on focus when there is a blur just after', async () => {
     vi.useFakeTimers();
-    tester.typeahead.dispatchEventOfType('focus');
-    tester.typeahead.dispatchEventOfType('blur');
-    vi.advanceTimersByTime(2 * TYPEAHEAD_DEBOUNCE_TIME);
-    await tester.change();
+    tester.typeahead.element().dispatchEvent(new Event('focus'));
+    tester.typeahead.element().dispatchEvent(new Event('blur'));
+    await vi.advanceTimersByTimeAsync(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    tester.fixture.detectChanges();
     expect(userService.suggestByText).not.toHaveBeenCalled();
   });
 
   test('should not call search on focus when the popup is already opened', async () => {
     vi.useFakeTimers();
-    tester.typeahead.dispatchEventOfType('input');
-    vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
-    await tester.change();
+    tester.typeahead.element().dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(TYPEAHEAD_DEBOUNCE_TIME);
+    tester.fixture.detectChanges();
     expect(userService.suggestByText).toHaveBeenCalledTimes(1);
-    expect(tester.typeahead.elements('ngb-typeahead-window.dropdown-menu button.dropdown-item').length).toBe(1);
-    vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
+    await expect.element(tester.suggestions).toHaveLength(1);
+    await vi.advanceTimersByTimeAsync(TYPEAHEAD_DEBOUNCE_TIME);
 
-    tester.typeahead.dispatchEventOfType('focus');
-    vi.advanceTimersByTime(2 * TYPEAHEAD_DEBOUNCE_TIME);
-    await tester.change();
+    tester.typeahead.element().dispatchEvent(new Event('focus'));
+    await vi.advanceTimersByTimeAsync(2 * TYPEAHEAD_DEBOUNCE_TIME);
+    tester.fixture.detectChanges();
     expect(userService.suggestByText).toHaveBeenCalledTimes(1);
   });
 });

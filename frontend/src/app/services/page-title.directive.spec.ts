@@ -2,7 +2,6 @@ import { PageTitleDirective } from './page-title.directive';
 import { Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
-import { ComponentTester } from 'ngx-speculoos';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 @Component({
@@ -12,22 +11,14 @@ import { beforeEach, describe, expect, test } from 'vitest';
 })
 class TestComponent {}
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-}
-
 describe('PageTitleDirective', () => {
   let titleService: Title;
-  let tester: TestComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({});
 
     titleService = TestBed.inject(Title);
-    tester = new TestComponentTester();
-    await tester.change();
+    TestBed.createComponent(TestComponent).detectChanges();
   });
 
   test('should set the page title', () => {

@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { provideRouter } from '@angular/router';
-import { ComponentTester } from 'ngx-speculoos';
 import { provideI18nTesting } from '../i18n/mock-i18n';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
@@ -11,19 +10,13 @@ import { EngineService } from './services/engine.service';
 import { OIBusInfo } from '../../../backend/shared/model/engine.model';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { createMock, MockObject } from '../test/vitest-create-mock';
+import { page } from 'vitest/browser';
 
-class AppComponentTester extends ComponentTester<AppComponent> {
-  constructor() {
-    super(AppComponent);
-  }
-
-  get navbar() {
-    return this.element('oib-navbar');
-  }
-
-  get routerOutlet() {
-    return this.element('router-outlet');
-  }
+class AppComponentTester {
+  readonly fixture = TestBed.createComponent(AppComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly navbar = this.root.getByCss('oib-navbar');
+  readonly routerOutlet = this.root.getByCss('router-outlet');
 }
 
 describe('AppComponent', () => {
@@ -39,7 +32,7 @@ describe('AppComponent', () => {
     timezone: 'Asia/Tokyo'
   } as UserDTO;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     windowService = createMock(WindowService);
     currentUserService = createMock(CurrentUserService);
     engineService = createMock(EngineService);
@@ -58,14 +51,14 @@ describe('AppComponent', () => {
     engineService.getInfo.mockReturnValue(of({ version: '3.0' } as OIBusInfo));
     (engineService as unknown as { info$: unknown }).info$ = of({ version: '3.0' } as OIBusInfo);
     tester = new AppComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
-  test('should have a navbar', () => {
-    expect(tester.navbar).not.toBeNull();
+  test('should have a navbar', async () => {
+    await expect.element(tester.navbar).toBeInTheDocument();
   });
 
-  test('should have a router outlet', () => {
-    expect(tester.routerOutlet).not.toBeNull();
+  test('should have a router outlet', async () => {
+    await expect.element(tester.routerOutlet).toBeInTheDocument();
   });
 });
