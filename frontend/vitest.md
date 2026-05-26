@@ -41,60 +41,15 @@ using the locator pattern for component testing.
 
 ## Table of Contents
 
-1. [Test File Changes](#test-file-changes)
-2. [Locator Pattern](#locator-pattern)
-3. [Assertions](#assertions)
-4. [Mocking](#mocking)
-5. [Time Mocking](#time-mocking)
-6. [Stub Measurement Typeahead](#stub-measurement-typeahead)
-7. [ngb-typeahead Interactions](#ngb-typeahead-interactions)
-8. [Period Duration Selection](#period-duration-selection)
-9. [Datetime Picker](#datetime-picker)
-10. [Common Patterns](#common-patterns)
-
-## Test File Changes
-
-When migrating an existing Jasmine/Karma spec, rename the file with `git mv` from `*.spec.ts` to `*.vitest.spec.ts` instead of creating a new file and deleting the old one. This preserves file history and makes review easier.
-
-### Imports
-
-**Before:**
-
-```typescript
-import { ComponentTester, createMock } from 'ngx-speculoos';
-```
-
-**After:**
-
-```typescript
-import { page, Locator } from 'vitest/browser';
-import { beforeEach, describe, expect, test } from 'vitest';
-import { createMock, MockObject } from '../test/vitest-create-mock';
-```
-
-### Test Structure
-
-**Before:**
-
-```typescript
-describe('MyComponent', () => {
-  it('should work', () => {
-    // test code
-  });
-});
-```
-
-**After:**
-
-```typescript
-describe('MyComponent', () => {
-  test('should work', async () => {
-    // test code with async/await
-  });
-});
-```
-
-Note: Replace `it()` with `test()` and make test functions `async`.
+1. [Locator Pattern](#locator-pattern)
+2. [Assertions](#assertions)
+3. [Mocking](#mocking)
+4. [Time Mocking](#time-mocking)
+5. [Stub Measurement Typeahead](#stub-measurement-typeahead)
+6. [ngb-typeahead Interactions](#ngb-typeahead-interactions)
+7. [Period Duration Selection](#period-duration-selection)
+8. [Datetime Picker](#datetime-picker)
+9. [Common Patterns](#common-patterns)
 
 ## Locator Pattern
 
@@ -938,7 +893,6 @@ class TestComponentTester {
   - [ ] Replace typeahead interactions (`fillWith`, `suggestionLabels`, `selectLabel`) with new locator extensions
   - [ ] Remove unnecessary stability waits; use `await tester.fixture.whenStable()` only when needed
   - [ ] Replace `provideCurrentUser` with `provideCurrentUser` from `current-user-testing-vitest`
-  - [ ] Rename the file by replacing `.spec.ts` by `.vitest.spec.test`
   - [ ] Run tests and fix any remaining issues
 
 ## Notes

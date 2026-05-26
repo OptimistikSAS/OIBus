@@ -99,36 +99,12 @@
           }
         },
         "test": {
-          "builder": "@angular/build:karma",
-          "options": {
-            "main": "src/test.ts",
-            "aot": true,
-            "polyfills": ["zone.js", "zone.js/testing", "@angular/localize/init"],
-            "tsConfig": "tsconfig.spec.json",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": ["src/styles.scss"],
-            "stylePreprocessorOptions": {
-              "sass": {
-                "silenceDeprecations": ["import"]
-              }
-            },
-            "exclude": ["src/**/*.vitest.spec.ts"],
-            "karmaConfig": "karma.conf.cjs"
-          }
-        },
-        "vitest": {
           "builder": "@angular/build:unit-test",
           "options": {
-            "tsConfig": "tsconfig.vitest.json",
             "buildTarget": "::vitest",
             "browsers": ["chromiumHeadless"],
             "runnerConfig": true,
-            "include": ["src/**/*.vitest.spec.ts"],
+            "include": ["src/**/*.spec.ts"],
             "setupFiles": ["src/test/test.ts"]
           }
         }

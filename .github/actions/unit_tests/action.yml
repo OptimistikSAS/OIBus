@@ -34,15 +34,15 @@ runs:
       working-directory: frontend
       run: npm run build
 
-    - name: Install Playwright browser for frontend Vitest tests
+    - name: Install Playwright browser for frontend unit tests
       shell: bash
       working-directory: frontend
       run: npx playwright install chromium
 
-    - name: Run frontend Vitest tests
+    - name: Run frontend unit tests
       shell: bash
       working-directory: frontend
-      run: npm run vitest
+      run: npm test
 
     - name: Build launcher
       shell: bash
