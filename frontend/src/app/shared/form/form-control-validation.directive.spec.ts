@@ -2,8 +2,8 @@ import { FormControlValidationDirective } from './form-control-validation.direct
 import { Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
-import { ComponentTester } from 'ngx-speculoos';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-form-control-validation-component',
@@ -25,43 +25,38 @@ class FormComponent {
   submit() {}
 }
 
-class FormComponentTester extends ComponentTester<FormComponent> {
-  constructor() {
-    super(FormComponent);
-  }
-
-  get lastName() {
-    return this.input('#lastName')!;
-  }
-
-  get save() {
-    return this.button('#save')!;
-  }
+class FormComponentTester {
+  readonly fixture = TestBed.createComponent(FormComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly lastName = this.root.getByCss('#lastName');
+  readonly save = this.root.getByRole('button', { name: 'Save' });
 }
 
 describe('FormControlValidationDirective', () => {
   let tester: FormComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({});
 
     tester = new FormComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
-  test('should add the is-invalid CSS class when touched', () => {
-    expect(tester.lastName.nativeElement).not.toHaveClass('is-invalid');
+  test('should add the is-invalid CSS class when touched', async () => {
+    await expect.element(tester.lastName).not.toHaveClass('is-invalid');
 
-    tester.lastName.dispatchEventOfType('blur');
+    tester.lastName.element().dispatchEvent(new Event('blur'));
+    tester.fixture.detectChanges();
 
-    expect(tester.lastName.nativeElement).toHaveClass('is-invalid');
+    await expect.element(tester.lastName).toHaveClass('is-invalid');
   });
 
-  test('should add the is-invalid CSS class when enclosing form is submitted', () => {
-    expect(tester.lastName.nativeElement).not.toHaveClass('is-invalid');
+  test('should add the is-invalid CSS class when enclosing form is submitted', async () => {
+    await expect.element(tester.lastName).not.toHaveClass('is-invalid');
 
-    tester.save.click();
+    await tester.save.click();
+    tester.fixture.detectChanges();
 
-    expect(tester.lastName.nativeElement).toHaveClass('is-invalid');
+    await expect.element(tester.lastName).toHaveClass('is-invalid');
   });
 });
