@@ -1,8 +1,5 @@
-import { ComponentTester } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal.component';
 import { FormGroup } from '@angular/forms';
 import testData from '../../../../../../../backend/src/tests/utils/test-data';
@@ -10,30 +7,18 @@ import { OIBusObjectAttribute } from '../../../../../../../backend/shared/model/
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
-import { DefaultValidationErrorsComponent } from '../../../default-validation-errors/default-validation-errors.component';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 import { createMock, MockObject } from '../../../../../test/vitest-create-mock';
 
-class OIBusEditArrayElementModalComponentTester extends ComponentTester<OIBusEditArrayElementModalComponent> {
-  constructor() {
-    super(OIBusEditArrayElementModalComponent);
-  }
-
-  get title() {
-    return this.element('h3');
-  }
-
-  get settings() {
-    return this.debugElement.query(By.directive(OIBusObjectFormControlComponent))!;
-  }
-
-  get save() {
-    return this.button('#save-button')!;
-  }
-
-  get cancel() {
-    return this.button('#cancel-button')!;
-  }
+class OIBusEditArrayElementModalComponentTester {
+  readonly fixture = TestBed.createComponent(OIBusEditArrayElementModalComponent);
+  readonly component = this.fixture.componentInstance;
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly title = this.root.getByRole('heading', { level: 3 });
+  readonly save = this.root.getByCss('#save-button');
+  readonly cancel = this.root.getByCss('#cancel-button');
+  readonly settings = this.root.getByCss('oib-oibus-object-form-control');
 }
 
 describe('OIBusEditArrayElementModalComponent', () => {
@@ -62,40 +47,39 @@ describe('OIBusEditArrayElementModalComponent', () => {
       providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
 
-    TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
-
     tester = new OIBusEditArrayElementModalComponentTester();
+    tester.fixture.detectChanges();
   });
 
-  test('should cancel', () => {
-    tester.cancel.click();
+  test('should cancel', async () => {
+    await tester.cancel.click();
     expect(fakeActiveModal.dismiss).toHaveBeenCalled();
   });
 
   test('should create an element', async () => {
-    tester.componentInstance.prepareForCreation(scanModes, certificates, form, objectAttribute);
-    await tester.change();
-    expect(tester.title!.nativeElement.textContent).toContain('Create an element');
-    expect(tester.settings).toBeDefined();
-    tester.save.click();
+    tester.component.prepareForCreation(scanModes, certificates, form, objectAttribute);
+    tester.fixture.detectChanges();
+    await expect.element(tester.title).toHaveTextContent('Create an element');
+    await expect.element(tester.settings).toBeInTheDocument();
+    await tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith({});
   });
 
   test('should edit an element', async () => {
-    tester.componentInstance.prepareForEdition(scanModes, certificates, form, {}, objectAttribute);
-    await tester.change();
-    expect(tester.title!.nativeElement.textContent).toContain('Edit an element');
-    expect(tester.settings).toBeDefined();
-    tester.save.click();
+    tester.component.prepareForEdition(scanModes, certificates, form, {}, objectAttribute);
+    tester.fixture.detectChanges();
+    await expect.element(tester.title).toHaveTextContent('Edit an element');
+    await expect.element(tester.settings).toBeInTheDocument();
+    await tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith({});
   });
 
   test('should copy an element', async () => {
-    tester.componentInstance.prepareForCopy(scanModes, certificates, form, {}, objectAttribute);
-    await tester.change();
-    expect(tester.title!.nativeElement.textContent).toContain('Create an element');
-    expect(tester.settings).toBeDefined();
-    tester.save.click();
+    tester.component.prepareForCopy(scanModes, certificates, form, {}, objectAttribute);
+    tester.fixture.detectChanges();
+    await expect.element(tester.title).toHaveTextContent('Create an element');
+    await expect.element(tester.settings).toBeInTheDocument();
+    await tester.save.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith({});
   });
 });

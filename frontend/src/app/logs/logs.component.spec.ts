@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
 import { LogsComponent } from './logs.component';
-import { ComponentTester } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { LogService } from '../services/log.service';
@@ -14,40 +13,28 @@ import { PageLoader } from '../shared/page-loader.service';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 import { createMock, MockObject, stubRoute } from '../../test/vitest-create-mock';
 
-class LogsComponentTester extends ComponentTester<LogsComponent> {
-  constructor() {
-    super(LogsComponent);
-  }
-
-  get emptyContainer() {
-    return this.element('.empty');
-  }
-
-  get logs() {
-    return this.elements('tbody tr');
-  }
-
-  get autoReloadButton() {
-    return this.button('#auto-reload-toggle');
-  }
-
-  get searchButton() {
-    return this.button('#search-button');
-  }
-
-  get pauseIcon() {
-    return this.element('#auto-reload-toggle .fa-pause');
-  }
-
-  get playIcon() {
-    return this.element('#auto-reload-toggle .fa-play');
-  }
+class LogsComponentTester {
+  readonly fixture = TestBed.createComponent(LogsComponent);
+  readonly component = this.fixture.componentInstance;
+  readonly root = page.getByCss(`#${this.fixture.nativeElement.id}`);
+  readonly emptyContainer = this.root.getByCss('.empty');
+  readonly logs = this.root.getByCss('tbody tr');
+  readonly autoReloadButton = this.root.getByCss('#auto-reload-toggle');
+  readonly searchButton = this.root.getByCss('#search-button');
+  readonly pauseIcon = this.root.getByCss('#auto-reload-toggle .fa-pause');
+  readonly playIcon = this.root.getByCss('#auto-reload-toggle .fa-play');
+  readonly buttonContainer = this.root.getByCss('.d-flex.gap-2');
 
   setEmbedded(embedded: boolean) {
     this.fixture.componentRef.setInput('embedded', embedded);
-    this.detectChanges();
+    this.fixture.detectChanges();
+  }
+
+  cells(rowIndex: number) {
+    return this.logs.nth(rowIndex).getByCss('td');
   }
 }
 
@@ -113,16 +100,14 @@ describe('LogsComponent', () => {
 
   test('should have empty page', async () => {
     logService.search.mockReturnValue(of(emptyLogPage));
-    await tester.change();
+    tester.fixture.detectChanges();
 
-    expect(tester.emptyContainer!.textContent).toContain('No log found');
+    await expect.element(tester.emptyContainer).toHaveTextContent('No log found');
   });
 
   test('should have log page', async () => {
     logService.search.mockReturnValue(of(logPage));
-    await tester.change();
-    await Promise.resolve();
-    await tester.change();
+    tester.fixture.detectChanges();
 
     expect(logService.search).toHaveBeenCalledWith({
       messageContent: undefined,
@@ -133,18 +118,18 @@ describe('LogsComponent', () => {
       levels: ['info', 'error'],
       page: 2
     });
-    expect(tester.logs.length).toBe(2);
+    await expect.element(tester.logs).toHaveLength(2);
 
-    expect(tester.logs[0].elements('td').length).toBe(5);
-    expect(tester.logs[0].elements('td')[1].textContent).toContain('1 Jan 2023, 01:00:00');
-    expect(tester.logs[0].elements('td')[2].textContent).toContain('Internal');
-    expect(tester.logs[0].elements('td')[3].textContent?.trim()).toBe('');
-    expect(tester.logs[0].elements('td')[4].textContent).toContain('my log 1');
+    await expect.element(tester.cells(0)).toHaveLength(5);
+    await expect.element(tester.cells(0).nth(1)).toHaveTextContent('1 Jan 2023, 01:00:00');
+    await expect.element(tester.cells(0).nth(2)).toHaveTextContent('Internal');
+    expect(tester.cells(0).nth(3).element().textContent?.trim()).toBe('');
+    await expect.element(tester.cells(0).nth(4)).toHaveTextContent('my log 1');
 
-    expect(tester.logs[1].elements('td')[1].textContent).toContain('2 Jan 2023, 01:00:00');
-    expect(tester.logs[1].elements('td')[2].textContent).toContain('South');
-    expect(tester.logs[1].elements('td')[3].textContent).toContain('My South');
-    expect(tester.logs[1].elements('td')[4].textContent).toContain('my log 2');
+    await expect.element(tester.cells(1).nth(1)).toHaveTextContent('2 Jan 2023, 01:00:00');
+    await expect.element(tester.cells(1).nth(2)).toHaveTextContent('South');
+    await expect.element(tester.cells(1).nth(3)).toHaveTextContent('My South');
+    await expect.element(tester.cells(1).nth(4)).toHaveTextContent('my log 2');
   });
 
   test('should add selected scope and clear input on typeahead selection', () => {
@@ -155,12 +140,12 @@ describe('LogsComponent', () => {
       preventDefault: vi.fn()
     } as any;
 
-    const form = tester.componentInstance.searchForm;
+    const form = tester.component.searchForm;
     form.controls.scopeIds.setValue('someValue');
 
-    tester.componentInstance.selectScope(event);
+    tester.component.selectScope(event);
 
-    expect(tester.componentInstance.selectedScopes()).toContain(scope);
+    expect(tester.component.selectedScopes()).toContain(scope);
     expect(form.controls.scopeIds.value).toBe('');
     expect(event.preventDefault).toHaveBeenCalled();
   });
@@ -170,40 +155,39 @@ describe('LogsComponent', () => {
       { scopeId: '1', scopeName: 'A' },
       { scopeId: '2', scopeName: 'B' }
     ];
-    tester.componentInstance.selectedScopes.set(scopes);
+    tester.component.selectedScopes.set(scopes);
 
-    tester.componentInstance.removeScope(scopes[0]);
+    tester.component.removeScope(scopes[0]);
 
-    expect(tester.componentInstance.selectedScopes()).toEqual([scopes[1]]);
+    expect(tester.component.selectedScopes()).toEqual([scopes[1]]);
   });
 
   test('should return correct class for known log level', () => {
-    const result = tester.componentInstance.getLevelClass('error');
+    const result = tester.component.getLevelClass('error');
     expect(result).toBe('red-dot');
   });
 
   test('should fallback to red-dot for unknown log level', () => {
-    const result = tester.componentInstance.getLevelClass('unknown' as any);
+    const result = tester.component.getLevelClass('unknown' as any);
     expect(result).toBe('red-dot');
   });
 
   test('should build search params from route', () => {
-    const params = tester.componentInstance.toSearchParams(route as any);
+    const params = tester.component.toSearchParams(route as any);
     expect(params.messageContent).toBeUndefined();
     expect(params.scopeTypes).toEqual([]);
     expect(params.levels).toEqual(['info', 'error']);
     expect(params.page).toBe(2);
   });
 
-  test('should fetch logs periodically if page is 0, no end date, and not paused', async () => {
+  test('should fetch logs periodically if page is 0, no end date, and not paused', () => {
     vi.useFakeTimers();
     pageLoader.pageLoads$ = new BehaviorSubject<number>(0);
-    tester.componentInstance.autoReloadPaused.set(false);
+    tester.component.autoReloadPaused.set(false);
     logService.search.mockReturnValue(of(logPage));
 
-    await tester.change();
     vi.advanceTimersByTime(10_000);
-    await tester.change();
+    tester.fixture.detectChanges();
 
     expect(logService.search).toHaveBeenCalledTimes(2);
   });
@@ -213,34 +197,34 @@ describe('LogsComponent', () => {
       logService.search.mockReturnValue(of(logPage));
     });
 
-    test('should initially have auto-reload enabled', () => {
+    test('should initially have auto-reload enabled', async () => {
       vi.useFakeTimers();
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      expect(tester.componentInstance.autoReloadPaused()).toBe(false);
-      expect(tester.pauseIcon).toBeTruthy();
-      expect(tester.playIcon).toBeFalsy();
+      expect(tester.component.autoReloadPaused()).toBe(false);
+      await expect.element(tester.pauseIcon).toBeInTheDocument();
+      await expect.element(tester.playIcon).not.toBeInTheDocument();
     });
 
-    test('should display pause icon when auto-reload is active', () => {
+    test('should display pause icon when auto-reload is active', async () => {
       vi.useFakeTimers();
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      expect(tester.pauseIcon).toBeTruthy();
-      expect(tester.playIcon).toBeFalsy();
+      await expect.element(tester.pauseIcon).toBeInTheDocument();
+      await expect.element(tester.playIcon).not.toBeInTheDocument();
     });
 
-    test('should display play icon when auto-reload is paused', () => {
+    test('should display play icon when auto-reload is paused', async () => {
       vi.useFakeTimers();
-      tester.componentInstance.autoReloadPaused.set(true);
+      tester.component.autoReloadPaused.set(true);
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      expect(tester.autoReloadButton).toBeTruthy();
-      expect(tester.pauseIcon).toBeFalsy();
-      expect(tester.playIcon).toBeTruthy();
+      await expect.element(tester.autoReloadButton).toBeInTheDocument();
+      await expect.element(tester.pauseIcon).not.toBeInTheDocument();
+      await expect.element(tester.playIcon).toBeInTheDocument();
     });
 
     test('should toggle auto-reload state when button is clicked', async () => {
@@ -248,24 +232,24 @@ describe('LogsComponent', () => {
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      expect(tester.componentInstance.autoReloadPaused()).toBe(false);
-      expect(tester.pauseIcon).toBeTruthy();
+      expect(tester.component.autoReloadPaused()).toBe(false);
+      await expect.element(tester.pauseIcon).toBeInTheDocument();
 
-      tester.autoReloadButton!.click();
+      await tester.autoReloadButton.click();
       vi.advanceTimersByTime(100);
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.componentInstance.autoReloadPaused()).toBe(true);
-      expect(tester.playIcon).toBeTruthy();
-      expect(tester.pauseIcon).toBeFalsy();
+      expect(tester.component.autoReloadPaused()).toBe(true);
+      await expect.element(tester.playIcon).toBeInTheDocument();
+      await expect.element(tester.pauseIcon).not.toBeInTheDocument();
 
-      tester.autoReloadButton!.click();
+      await tester.autoReloadButton.click();
       vi.advanceTimersByTime(100);
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.componentInstance.autoReloadPaused()).toBe(false);
-      expect(tester.pauseIcon).toBeTruthy();
-      expect(tester.playIcon).toBeFalsy();
+      expect(tester.component.autoReloadPaused()).toBe(false);
+      await expect.element(tester.pauseIcon).toBeInTheDocument();
+      await expect.element(tester.playIcon).not.toBeInTheDocument();
     });
 
     test('should not trigger immediate reload when resuming with end date', async () => {
@@ -273,43 +257,41 @@ describe('LogsComponent', () => {
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      tester.componentInstance.searchForm.patchValue({ end: '2023-01-01T00:00:00.000Z' });
+      tester.component.searchForm.patchValue({ end: '2023-01-01T00:00:00.000Z' });
 
-      tester.componentInstance.autoReloadPaused.set(true);
-      vi.advanceTimersByTime(100);
-      await tester.change();
-
-      expect(tester.autoReloadButton).toBeTruthy();
-      tester.autoReloadButton!.click();
+      tester.component.autoReloadPaused.set(true);
       vi.advanceTimersByTime(100);
 
-      expect(tester.componentInstance.autoReloadPaused()).toBe(false);
+      await expect.element(tester.autoReloadButton).toBeInTheDocument();
+      await tester.autoReloadButton.click();
+      vi.advanceTimersByTime(100);
+
+      expect(tester.component.autoReloadPaused()).toBe(false);
       expect(pageLoader.loadPage).not.toHaveBeenCalled();
     });
 
-    test('should have both pause/resume and search buttons in the same container', () => {
+    test('should have both pause/resume and search buttons in the same container', async () => {
       vi.useFakeTimers();
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      const buttonContainer = tester.element('.d-flex.gap-2');
-      expect(buttonContainer).toBeTruthy();
-      expect(buttonContainer?.nativeElement.children.length).toBe(2);
-      expect(tester.autoReloadButton).toBeTruthy();
-      expect(tester.searchButton).toBeTruthy();
+      await expect.element(tester.buttonContainer).toBeInTheDocument();
+      expect(tester.buttonContainer.element().children.length).toBe(2);
+      await expect.element(tester.autoReloadButton).toBeInTheDocument();
+      await expect.element(tester.searchButton).toBeInTheDocument();
     });
 
-    test('should use correct button classes', () => {
+    test('should use correct button classes', async () => {
       vi.useFakeTimers();
       tester.setEmbedded(false);
       vi.advanceTimersByTime(100);
 
-      expect(tester.autoReloadButton).toBeTruthy();
-      expect(tester.autoReloadButton?.nativeElement.classList).toContain('btn');
-      expect(tester.autoReloadButton?.nativeElement.classList).toContain('btn-primary');
-      expect(tester.searchButton).toBeTruthy();
-      expect(tester.searchButton?.nativeElement.classList).toContain('btn');
-      expect(tester.searchButton?.nativeElement.classList).toContain('btn-primary');
+      await expect.element(tester.autoReloadButton).toBeInTheDocument();
+      expect(tester.autoReloadButton.element().classList).toContain('btn');
+      expect(tester.autoReloadButton.element().classList).toContain('btn-primary');
+      await expect.element(tester.searchButton).toBeInTheDocument();
+      expect(tester.searchButton.element().classList).toContain('btn');
+      expect(tester.searchButton.element().classList).toContain('btn-primary');
     });
   });
 
@@ -319,26 +301,26 @@ describe('LogsComponent', () => {
       const scopes1: Array<Scope> = [{ scopeId: '1', scopeName: 'A' }];
       logService.suggestScopes.mockReturnValue(of(scopes1));
       let result: Array<Scope> | undefined;
-      tester.componentInstance.scopeTypeahead(of('foo')).subscribe(r => (result = r));
+      tester.component.scopeTypeahead(of('foo')).subscribe(r => (result = r));
       vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
       expect(logService.suggestScopes).toHaveBeenCalledWith('foo');
       expect(result).toBe(scopes1);
-      expect(tester.componentInstance.noLogMatchingWarning()).toBe(false);
+      expect(tester.component.noLogMatchingWarning()).toBe(false);
 
       const scopes2: Array<Scope> = [];
       logService.suggestScopes.mockReturnValue(of(scopes2));
-      tester.componentInstance.scopeTypeahead(of('bar')).subscribe(r => (result = r));
+      tester.component.scopeTypeahead(of('bar')).subscribe(r => (result = r));
       vi.advanceTimersByTime(TYPEAHEAD_DEBOUNCE_TIME);
       expect(logService.suggestScopes).toHaveBeenCalledWith('bar');
       expect(result).toBe(scopes2);
-      expect(tester.componentInstance.noLogMatchingWarning()).toBe(true);
+      expect(tester.component.noLogMatchingWarning()).toBe(true);
     });
 
     test('triggerSearch should navigate with correct queryParams', () => {
       const router = TestBed.inject(Router);
       vi.spyOn(router, 'navigate').mockImplementation(() => Promise.resolve(true));
 
-      tester.componentInstance.searchForm.patchValue({
+      tester.component.searchForm.patchValue({
         start: 'AAA',
         end: 'BBB',
         messageContent: 'MSG',
@@ -348,9 +330,9 @@ describe('LogsComponent', () => {
         page: 0
       });
       const sc: Scope = { scopeId: 'X', scopeName: 'NX' };
-      tester.componentInstance.selectedScopes.set([sc]);
+      tester.component.selectedScopes.set([sc]);
 
-      tester.componentInstance.triggerSearch();
+      tester.component.triggerSearch();
       expect(router.navigate).toHaveBeenCalledWith([], {
         queryParams: {
           start: 'AAA',
@@ -365,31 +347,31 @@ describe('LogsComponent', () => {
     });
 
     test('ngOnDestroy should unsubscribe the subscription', () => {
-      const sub: Subscription = tester.componentInstance.subscription;
+      const sub: Subscription = tester.component.subscription;
       expect(sub.closed).toBe(false);
-      tester.componentInstance.ngOnDestroy();
+      tester.component.ngOnDestroy();
       expect(sub.closed).toBe(true);
     });
 
     test('selectScope should add a scope, clear input and preventDefault', () => {
       const scope: Scope = { scopeId: '1', scopeName: 'N' };
       const ev: any = { item: scope, preventDefault: vi.fn() };
-      tester.componentInstance.selectScope(ev);
-      expect(tester.componentInstance.selectedScopes()).toEqual([scope]);
-      expect(tester.componentInstance.searchForm.controls.scopeIds.value).toBe('');
+      tester.component.selectScope(ev);
+      expect(tester.component.selectedScopes()).toEqual([scope]);
+      expect(tester.component.searchForm.controls.scopeIds.value).toBe('');
       expect(ev.preventDefault).toHaveBeenCalled();
     });
 
     test('removeScope should remove the given scope', () => {
       const a: Scope = { scopeId: 'A', scopeName: 'A' };
       const b: Scope = { scopeId: 'B', scopeName: 'B' };
-      tester.componentInstance.selectedScopes.set([a, b]);
-      tester.componentInstance.removeScope(a);
-      expect(tester.componentInstance.selectedScopes()).toEqual([b]);
+      tester.component.selectedScopes.set([a, b]);
+      tester.component.removeScope(a);
+      expect(tester.component.selectedScopes()).toEqual([b]);
     });
 
     test('getLevelClass should return correct class or fallback', () => {
-      const cmp = tester.componentInstance;
+      const cmp = tester.component;
       expect(cmp.getLevelClass('error')).toBe('red-dot');
       expect(cmp.getLevelClass('warn')).toBe('yellow-dot');
       expect(cmp.getLevelClass('info')).toBe('green-dot');

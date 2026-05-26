@@ -9,10 +9,6 @@ class NotificationComponentTester {
   readonly fixture = TestBed.createComponent(NotificationComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly toasts = this.root.getByCss('ngb-toast');
-
-  detectChanges() {
-    this.fixture.detectChanges();
-  }
 }
 
 describe('NotificationComponent', () => {
@@ -23,7 +19,7 @@ describe('NotificationComponent', () => {
     TestBed.configureTestingModule({ providers: [provideI18nTesting()] });
     tester = new NotificationComponentTester();
     notificationService = TestBed.inject(NotificationService);
-    tester.detectChanges();
+    tester.fixture.detectChanges();
   });
 
   afterEach(() => {
@@ -38,22 +34,22 @@ describe('NotificationComponent', () => {
     vi.useFakeTimers();
 
     notificationService.success('common.save');
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await vi.advanceTimersByTimeAsync(2500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-success');
     await expect.element(tester.toasts.nth(0)).toHaveTextContent('Save');
 
     notificationService.success('common.cancel');
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(2);
 
     await vi.advanceTimersByTimeAsync(3000);
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(1);
 
     await vi.advanceTimersByTimeAsync(5000);
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
   });
 
@@ -61,13 +57,13 @@ describe('NotificationComponent', () => {
     vi.useFakeTimers();
 
     notificationService.error('common.save');
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-danger');
     await expect.element(tester.toasts.nth(0)).toHaveTextContent('Save');
     await vi.advanceTimersByTimeAsync(5000);
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
   });
 
@@ -75,13 +71,13 @@ describe('NotificationComponent', () => {
     vi.useFakeTimers();
 
     notificationService.errorMessage('common.save');
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-danger');
     await expect.element(tester.toasts.nth(0)).toHaveTextContent('common.save');
     await vi.advanceTimersByTimeAsync(5000);
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
   });
 
@@ -89,13 +85,13 @@ describe('NotificationComponent', () => {
     vi.useFakeTimers();
 
     notificationService.success('engine.updated');
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await vi.advanceTimersByTimeAsync(500);
     await expect.element(tester.toasts).toHaveLength(1);
     await expect.element(tester.toasts.nth(0)).toHaveClass('bg-success');
     await expect.element(tester.toasts.nth(0)).toHaveTextContent('Engine settings updated');
     await vi.advanceTimersByTimeAsync(5000);
-    tester.detectChanges();
+    tester.fixture.detectChanges();
     await expect.element(tester.toasts).toHaveLength(0);
   });
 });

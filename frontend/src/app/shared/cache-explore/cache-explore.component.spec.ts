@@ -1,5 +1,4 @@
 import { TestBed } from '@angular/core/testing';
-import { ComponentTester } from 'ngx-speculoos';
 import { Component, signal } from '@angular/core';
 import { CacheExploreComponent } from './cache-explore.component';
 import { BehaviorSubject } from 'rxjs';
@@ -9,6 +8,7 @@ import { CacheContentUpdateCommand, CacheOperation, CacheSearchResult } from '..
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../current-user-testing-vitest';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   template: `<oib-cache-explore
@@ -67,56 +67,49 @@ class TestComponent {
   >(undefined);
 }
 
-class CacheExploreComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
+class CacheExploreComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly component = this.fixture.componentInstance;
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly snapshotWarning = this.root.getByCss('.alert-info');
+  readonly dirtyWarning = this.root.getByCss('.alert-warning');
+  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
+  readonly cacheContent = this.root.getByCss('oib-cache-content');
+  readonly spinner = this.root.getByCss('.fa-spinner');
+
+  get cacheExplore(): CacheExploreComponent {
+    return this.fixture.debugElement.query(By.directive(CacheExploreComponent)).componentInstance;
   }
 
-  get snapshotWarning() {
-    return this.element('.alert-info');
-  }
-
-  get dirtyWarning() {
-    return this.element('.alert-warning');
-  }
-
-  get saveButton() {
-    return this.button('button.btn-primary');
-  }
-
-  get cacheContent() {
-    return this.elements('oib-cache-content');
-  }
-
-  get cacheSearchComponent(): CacheExploreComponent {
-    return this.debugElement.query(By.directive(CacheExploreComponent)).componentInstance;
+  handleOperation(operation: CacheOperation) {
+    this.cacheExplore.handleOperation(operation);
+    this.fixture.detectChanges();
   }
 }
 
 describe('CacheExploreComponent', () => {
   let tester: CacheExploreComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting(), provideCurrentUser()]
     });
 
     tester = new CacheExploreComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
-  test('should display snapshot warning initially', () => {
-    expect(tester.snapshotWarning).not.toBeNull();
-    expect(tester.snapshotWarning!.textContent).toContain(' The state of the cache may have changed in OIBus since the search.');
+  test('should display snapshot warning initially', async () => {
+    await expect.element(tester.snapshotWarning).toHaveTextContent('The state of the cache may have changed in OIBus since the search.');
   });
 
-  test('should NOT display dirty warning or save button initially', () => {
-    expect(tester.dirtyWarning).toBeNull();
-    expect(tester.saveButton).toBeNull();
+  test('should NOT display dirty warning or save button initially', async () => {
+    await expect.element(tester.dirtyWarning).not.toBeInTheDocument();
+    await expect.element(tester.saveButton).not.toBeInTheDocument();
   });
 
-  test('should display 3 north-cache-content components (cache, error, archive)', () => {
-    expect(tester.cacheContent.length).toBe(3);
+  test('should display 3 north-cache-content components (cache, error, archive)', async () => {
+    await expect.element(tester.cacheContent).toHaveLength(3);
   });
 
   test('should handle REMOVE operation and enable save', async () => {
@@ -126,12 +119,11 @@ describe('CacheExploreComponent', () => {
       filenames: ['file-cache-1.json']
     };
 
-    tester.cacheSearchComponent.handleOperation(operation);
-    await tester.change();
+    tester.handleOperation(operation);
 
-    expect(tester.dirtyWarning).not.toBeNull();
-    expect(tester.saveButton).not.toBeNull();
-    expect(tester.saveButton!.disabled).toBe(false);
+    await expect.element(tester.dirtyWarning).toBeInTheDocument();
+    await expect.element(tester.saveButton).toBeInTheDocument();
+    await expect.element(tester.saveButton).not.toBeDisabled();
   });
 
   test('should handle MOVE operation and enable save', async () => {
@@ -142,25 +134,23 @@ describe('CacheExploreComponent', () => {
       filenames: ['file-error-1.json']
     };
 
-    tester.cacheSearchComponent.handleOperation(operation);
-    await tester.change();
+    tester.handleOperation(operation);
 
-    expect(tester.dirtyWarning).not.toBeNull();
-    expect(tester.saveButton).not.toBeNull();
+    await expect.element(tester.dirtyWarning).toBeInTheDocument();
+    await expect.element(tester.saveButton).toBeInTheDocument();
   });
 
   test('should emit update command on save', async () => {
-    tester.cacheSearchComponent.handleOperation({
+    tester.handleOperation({
       action: 'move',
       source: 'error',
       destination: 'cache',
       filenames: ['file-error-1.json']
     });
-    await tester.change();
 
-    await tester.saveButton!.click();
+    await tester.saveButton.click();
 
-    const emittedCommand = tester.componentInstance.lastUpdateCommand();
+    const emittedCommand = tester.component.lastUpdateCommand();
     expect(emittedCommand).toBeDefined();
 
     expect(emittedCommand!.type).toBe('north');
@@ -177,17 +167,16 @@ describe('CacheExploreComponent', () => {
   });
 
   test('should disable save button when pending', async () => {
-    tester.cacheSearchComponent.handleOperation({
+    tester.handleOperation({
       action: 'remove',
       folder: 'cache',
       filenames: ['file-cache-1.json']
     });
-    await tester.change();
 
-    tester.componentInstance.state().isPending.next(true);
-    await tester.change();
+    tester.component.state().isPending.next(true);
+    tester.fixture.detectChanges();
 
-    expect(tester.saveButton!.disabled).toBe(true);
-    expect(tester.element('.fa-spinner')).not.toBeNull();
+    await expect.element(tester.saveButton).toBeDisabled();
+    await expect.element(tester.spinner).toBeInTheDocument();
   });
 });

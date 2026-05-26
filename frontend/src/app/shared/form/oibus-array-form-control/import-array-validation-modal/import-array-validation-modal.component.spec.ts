@@ -1,23 +1,27 @@
 import { ImportArrayValidationModalComponent } from './import-array-validation-modal.component';
-import { ComponentTester } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { OIBusArrayAttribute } from '../../../../../../../backend/shared/model/form.model';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 import { createMock, MockObject } from '../../../../../test/vitest-create-mock';
 
-class ImportArrayValidationModalComponentTester extends ComponentTester<ImportArrayValidationModalComponent> {
-  constructor() {
-    super(ImportArrayValidationModalComponent);
-  }
+class ImportArrayValidationModalComponentTester {
+  readonly fixture = TestBed.createComponent(ImportArrayValidationModalComponent);
+  readonly component = this.fixture.componentInstance;
+  readonly root = page.getByCss(`#${this.fixture.nativeElement.id}`);
+  readonly saveButton = this.root.getByCss('#save-button');
+  readonly cancelButton = this.root.getByCss('#cancel-button');
+  readonly tableRows = this.root.getByCss('tbody tr');
 
-  get saveButton() {
-    return this.button('#save-button')!;
-  }
-
-  get cancelButton() {
-    return this.button('#cancel-button')!;
+  prepare(
+    arrayAttribute: OIBusArrayAttribute,
+    newElements: Array<Record<string, unknown>>,
+    errors: Array<{ element: Record<string, string>; error: string }>
+  ) {
+    this.component.prepare(arrayAttribute, newElements, errors);
+    this.fixture.detectChanges();
   }
 }
 
@@ -90,15 +94,15 @@ describe('ImportArrayValidationModalComponent', () => {
 
   describe('Component initialization', () => {
     test('should create', () => {
-      tester.detectChanges();
-      expect(tester.componentInstance).toBeTruthy();
+      tester.fixture.detectChanges();
+      expect(tester.component).toBeTruthy();
     });
 
     test('should initialize with empty lists', () => {
-      tester.detectChanges();
-      expect(tester.componentInstance.newElementList).toEqual([]);
-      expect(tester.componentInstance.errorList).toEqual([]);
-      expect(tester.componentInstance.columns).toEqual([]);
+      tester.fixture.detectChanges();
+      expect(tester.component.newElementList).toEqual([]);
+      expect(tester.component.errorList).toEqual([]);
+      expect(tester.component.columns).toEqual([]);
     });
   });
 
@@ -110,15 +114,14 @@ describe('ImportArrayValidationModalComponent', () => {
       ];
       const errors = [{ element: { name: 'badItem' }, error: 'Invalid format' }];
 
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, newElements, errors);
+      tester.prepare(mockArrayAttribute, newElements, errors);
 
-      expect(tester.componentInstance.arrayAttribute).toBe(mockArrayAttribute);
-      expect(tester.componentInstance.newElementList).toEqual(newElements);
-      expect(tester.componentInstance.errorList).toEqual(errors);
-      expect(tester.componentInstance.columns).toEqual(['fieldName', 'name', 'nested_value']);
-      expect(tester.componentInstance.displayedElementsNew.totalElements).toBe(2);
-      expect(tester.componentInstance.displayedElementsError.totalElements).toBe(1);
+      expect(tester.component.arrayAttribute).toBe(mockArrayAttribute);
+      expect(tester.component.newElementList).toEqual(newElements);
+      expect(tester.component.errorList).toEqual(errors);
+      expect(tester.component.columns).toEqual(['fieldName', 'name', 'nested_value']);
+      expect(tester.component.displayedElementsNew.totalElements).toBe(2);
+      expect(tester.component.displayedElementsError.totalElements).toBe(1);
     });
 
     test('should extract and sort columns correctly', () => {
@@ -127,35 +130,31 @@ describe('ImportArrayValidationModalComponent', () => {
         { zField: 'z2', bField: 'b' }
       ];
 
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, newElements, []);
+      tester.prepare(mockArrayAttribute, newElements, []);
 
-      expect(tester.componentInstance.columns).toEqual(['aField', 'bField', 'mField', 'zField']);
+      expect(tester.component.columns).toEqual(['aField', 'bField', 'mField', 'zField']);
     });
 
     test('should handle empty newItems list', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], []);
+      tester.prepare(mockArrayAttribute, [], []);
 
-      expect(tester.componentInstance.newElementList).toEqual([]);
-      expect(tester.componentInstance.columns).toEqual([]);
-      expect(tester.componentInstance.displayedElementsNew.totalElements).toBe(0);
+      expect(tester.component.newElementList).toEqual([]);
+      expect(tester.component.columns).toEqual([]);
+      expect(tester.component.displayedElementsNew.totalElements).toBe(0);
     });
   });
 
   describe('cancel method', () => {
     test('should dismiss modal', () => {
-      tester.detectChanges();
-      tester.componentInstance.cancel();
+      tester.fixture.detectChanges();
+      tester.component.cancel();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
     });
 
-    test('should dismiss modal when cancel button is clicked', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [{ name: 'test' }], []);
-      tester.detectChanges();
+    test('should dismiss modal when cancel button is clicked', async () => {
+      tester.prepare(mockArrayAttribute, [{ name: 'test' }], []);
 
-      tester.cancelButton.click();
+      await tester.cancelButton.click();
       expect(fakeActiveModal.dismiss).toHaveBeenCalled();
     });
   });
@@ -163,107 +162,100 @@ describe('ImportArrayValidationModalComponent', () => {
   describe('submit method', () => {
     test('should close modal with newElementList', () => {
       const newElements = [{ name: 'item1' }, { name: 'item2' }];
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, newElements, []);
-      tester.componentInstance.submit();
+      tester.prepare(mockArrayAttribute, newElements, []);
+      tester.component.submit();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith(newElements);
     });
 
-    test('should close modal when save button is clicked', () => {
+    test('should close modal when save button is clicked', async () => {
       const newElements = [{ name: 'item1' }];
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, newElements, []);
-      tester.detectChanges();
+      tester.prepare(mockArrayAttribute, newElements, []);
 
-      tester.saveButton.click();
+      await tester.saveButton.click();
       expect(fakeActiveModal.close).toHaveBeenCalledWith(newElements);
     });
 
-    test('should disable save button when newElementList is empty', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], []);
-      tester.detectChanges();
+    test('should disable save button when newElementList is empty', async () => {
+      tester.prepare(mockArrayAttribute, [], []);
 
-      expect(tester.saveButton.disabled).toBe(true);
+      await expect.element(tester.saveButton).toBeDisabled();
     });
 
-    test('should enable save button when newElementList has elements', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [{ name: 'item1' }], []);
-      tester.detectChanges();
+    test('should enable save button when newElementList has elements', async () => {
+      tester.prepare(mockArrayAttribute, [{ name: 'item1' }], []);
 
-      expect(tester.saveButton.disabled).toBe(false);
+      await expect.element(tester.saveButton).not.toBeDisabled();
     });
   });
 
   describe('getFieldValue method', () => {
     beforeEach(() => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], []);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [], []);
     });
 
     test('should return string value directly', () => {
       const item = { name: 'test' };
-      expect(tester.componentInstance.getFieldValue(item, 'name')).toBe('test');
+      expect(tester.component.getFieldValue(item, 'name')).toBe('test');
     });
 
     test('should return number as string', () => {
       const item = { count: 42 };
-      expect(tester.componentInstance.getFieldValue(item, 'count')).toBe('42');
+      expect(tester.component.getFieldValue(item, 'count')).toBe('42');
     });
 
     test('should return boolean as string', () => {
       const item = { active: true };
-      expect(tester.componentInstance.getFieldValue(item, 'active')).toBe('true');
+      expect(tester.component.getFieldValue(item, 'active')).toBe('true');
     });
 
     test('should stringify object values', () => {
       const item = { nested: { key: 'value' } };
-      const result = tester.componentInstance.getFieldValue(item, 'nested');
+      const result = tester.component.getFieldValue(item, 'nested');
       expect(result).toBe('{"key":"value"}');
     });
 
     test('should return empty string for undefined', () => {
       const item = { existing: 'value' };
-      expect(tester.componentInstance.getFieldValue(item, 'nonexistent')).toBe('');
+      expect(tester.component.getFieldValue(item, 'nonexistent')).toBe('');
     });
 
     test('should return empty string for null', () => {
       const item = { value: null };
-      expect(tester.componentInstance.getFieldValue(item, 'value')).toBe('');
+      expect(tester.component.getFieldValue(item, 'value')).toBe('');
     });
 
     test('should handle nested paths with underscore separator', () => {
       const item = { nested_value: 'test' };
-      expect(tester.componentInstance.getFieldValue(item, 'nested_value')).toBe('test');
+      expect(tester.component.getFieldValue(item, 'nested_value')).toBe('test');
     });
 
     test('should handle deeply nested paths', () => {
       const item = { level1: { level2: { level3: 'deep' } } };
-      expect(tester.componentInstance.getFieldValue(item, 'level1_level2_level3')).toBe('deep');
+      expect(tester.component.getFieldValue(item, 'level1_level2_level3')).toBe('deep');
     });
   });
 
   describe('getValueByPath method (via getFieldValue)', () => {
     beforeEach(() => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], []);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [], []);
     });
 
     test('should return value for simple path via getFieldValue', () => {
       const item = { key: 'value' };
-      expect(tester.componentInstance.getFieldValue(item, 'key')).toBe('value');
+      expect(tester.component.getFieldValue(item, 'key')).toBe('value');
     });
 
     test('should return value for nested path via getFieldValue', () => {
       const item = { level1: { level2: 'nested' } };
-      expect(tester.componentInstance.getFieldValue(item, 'level1_level2')).toBe('nested');
+      expect(tester.component.getFieldValue(item, 'level1_level2')).toBe('nested');
     });
 
     test('should return empty string for nonexistent path via getFieldValue', () => {
       const item = { existing: 'value' };
-      expect(tester.componentInstance.getFieldValue(item, 'nonexistent')).toBe('');
+      expect(tester.component.getFieldValue(item, 'nonexistent')).toBe('');
     });
   });
 
@@ -274,16 +266,16 @@ describe('ImportArrayValidationModalComponent', () => {
         newItems.push({ name: `item${i}`, id: i });
       }
 
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, newItems, []);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, newItems, []);
 
-      expect(tester.componentInstance.displayedElementsNew.totalElements).toBe(25);
-      expect(tester.componentInstance.displayedElementsNew.totalPages).toBe(2);
-      expect(tester.componentInstance.displayedElementsNew.content.length).toBe(20);
+      expect(tester.component.displayedElementsNew.totalElements).toBe(25);
+      expect(tester.component.displayedElementsNew.totalPages).toBe(2);
+      expect(tester.component.displayedElementsNew.content.length).toBe(20);
 
-      tester.componentInstance.changePageNew(1);
-      expect(tester.componentInstance.displayedElementsNew.number).toBe(1);
-      expect(tester.componentInstance.displayedElementsNew.content.length).toBe(5);
+      tester.component.changePageNew(1);
+      expect(tester.component.displayedElementsNew.number).toBe(1);
+      expect(tester.component.displayedElementsNew.content.length).toBe(5);
     });
 
     test('should paginate error items correctly', () => {
@@ -292,34 +284,34 @@ describe('ImportArrayValidationModalComponent', () => {
         errors.push({ element: { name: `item${i}` }, error: `Error ${i}` });
       }
 
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], errors);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [], errors);
 
-      expect(tester.componentInstance.displayedElementsError.totalElements).toBe(25);
-      expect(tester.componentInstance.displayedElementsError.totalPages).toBe(2);
-      expect(tester.componentInstance.displayedElementsError.content.length).toBe(20);
+      expect(tester.component.displayedElementsError.totalElements).toBe(25);
+      expect(tester.component.displayedElementsError.totalPages).toBe(2);
+      expect(tester.component.displayedElementsError.content.length).toBe(20);
 
-      tester.componentInstance.changePageError(1);
-      expect(tester.componentInstance.displayedElementsError.number).toBe(1);
-      expect(tester.componentInstance.displayedElementsError.content.length).toBe(5);
+      tester.component.changePageError(1);
+      expect(tester.component.displayedElementsError.number).toBe(1);
+      expect(tester.component.displayedElementsError.content.length).toBe(5);
     });
 
     test('should handle empty pagination for new items', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], []);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [], []);
 
-      expect(tester.componentInstance.displayedElementsNew.totalElements).toBe(0);
-      expect(tester.componentInstance.displayedElementsNew.totalPages).toBe(0);
-      expect(tester.componentInstance.displayedElementsNew.content.length).toBe(0);
+      expect(tester.component.displayedElementsNew.totalElements).toBe(0);
+      expect(tester.component.displayedElementsNew.totalPages).toBe(0);
+      expect(tester.component.displayedElementsNew.content.length).toBe(0);
     });
 
     test('should handle empty pagination for error items', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], []);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [], []);
 
-      expect(tester.componentInstance.displayedElementsError.totalElements).toBe(0);
-      expect(tester.componentInstance.displayedElementsError.totalPages).toBe(0);
-      expect(tester.componentInstance.displayedElementsError.content.length).toBe(0);
+      expect(tester.component.displayedElementsError.totalElements).toBe(0);
+      expect(tester.component.displayedElementsError.totalPages).toBe(0);
+      expect(tester.component.displayedElementsError.content.length).toBe(0);
     });
   });
 
@@ -330,10 +322,10 @@ describe('ImportArrayValidationModalComponent', () => {
         { name: 'item2', field: 'field2', extra: 'extra' }
       ];
 
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, items, []);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, items, []);
 
-      const columns = tester.componentInstance.columns;
+      const columns = tester.component.columns;
       expect(columns).toContain('name');
       expect(columns).toContain('field');
       expect(columns).toContain('extra');
@@ -343,33 +335,30 @@ describe('ImportArrayValidationModalComponent', () => {
     test('should handle items with no common columns', () => {
       const items = [{ field1: 'value1' }, { field2: 'value2' }, { field3: 'value3' }];
 
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, items, []);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, items, []);
 
-      expect(tester.componentInstance.columns).toEqual(['field1', 'field2', 'field3']);
+      expect(tester.component.columns).toEqual(['field1', 'field2', 'field3']);
     });
 
     test('should handle empty items array', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], []);
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [], []);
 
-      expect(tester.componentInstance.columns).toEqual([]);
+      expect(tester.component.columns).toEqual([]);
     });
   });
 
   describe('integration with template', () => {
-    test('should display new items in table', () => {
+    test('should display new items in table', async () => {
       const newItems = [
         { name: 'item1', fieldName: 'field1' },
         { name: 'item2', fieldName: 'field2' }
       ];
 
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, newItems, []);
-      tester.detectChanges();
+      tester.prepare(mockArrayAttribute, newItems, []);
 
-      const tableRows = tester.elements('tbody tr');
-      expect(tableRows.length).toBe(2);
+      await expect.element(tester.tableRows).toHaveLength(2);
     });
 
     test('should display error items in table', () => {
@@ -378,30 +367,30 @@ describe('ImportArrayValidationModalComponent', () => {
         { element: { name: 'badItem2' }, error: 'Error 2' }
       ];
 
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], errors);
-      tester.detectChanges();
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [], errors);
+      tester.fixture.detectChanges();
 
-      expect(tester.componentInstance.displayedElementsError.totalElements).toBe(2);
-      expect(tester.componentInstance.displayedElementsError.content.length).toBe(2);
+      expect(tester.component.displayedElementsError.totalElements).toBe(2);
+      expect(tester.component.displayedElementsError.content.length).toBe(2);
     });
 
     test('should not display error section when there are no errors', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [{ name: 'item1' }], []);
-      tester.detectChanges();
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [{ name: 'item1' }], []);
+      tester.fixture.detectChanges();
 
-      expect(tester.componentInstance.displayedElementsError.totalElements).toBe(0);
-      expect(tester.componentInstance.displayedElementsNew.totalElements).toBe(1);
+      expect(tester.component.displayedElementsError.totalElements).toBe(0);
+      expect(tester.component.displayedElementsNew.totalElements).toBe(1);
     });
 
     test('should not display new items section when there are no new items', () => {
-      tester.detectChanges();
-      tester.componentInstance.prepare(mockArrayAttribute, [], [{ element: { name: 'bad' }, error: 'Error' }]);
-      tester.detectChanges();
+      tester.fixture.detectChanges();
+      tester.component.prepare(mockArrayAttribute, [], [{ element: { name: 'bad' }, error: 'Error' }]);
+      tester.fixture.detectChanges();
 
-      expect(tester.componentInstance.displayedElementsNew.totalElements).toBe(0);
-      expect(tester.componentInstance.displayedElementsError.totalElements).toBe(1);
+      expect(tester.component.displayedElementsNew.totalElements).toBe(0);
+      expect(tester.component.displayedElementsError.totalElements).toBe(1);
     });
   });
 });
