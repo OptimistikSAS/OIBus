@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, ActivatedRoute, RouterEvent } from '@angular/router';
-import { ComponentTester } from 'ngx-speculoos';
 import { provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { BreadcrumbComponent } from './breadcrumb.component';
@@ -12,19 +11,17 @@ import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backen
 import { SouthConnectorDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../../../backend/shared/model/history-query.model';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 import { createMock, MockObject, stubRoute } from '../../../test/vitest-create-mock';
 
-class BreadcrumbComponentTester extends ComponentTester<BreadcrumbComponent> {
-  constructor() {
-    super(BreadcrumbComponent);
-  }
+class BreadcrumbComponentTester {
+  readonly fixture = TestBed.createComponent(BreadcrumbComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly breadcrumbItems = this.root.getByCss('.breadcrumb-item');
+  readonly breadcrumbLinks = this.root.getByCss('.breadcrumb-item a');
 
-  get breadcrumbItems() {
-    return this.elements('.breadcrumb-item');
-  }
-
-  get breadcrumbLinks() {
-    return this.elements('.breadcrumb-item a');
+  item(index: number) {
+    return this.breadcrumbItems.nth(index);
   }
 }
 
@@ -147,19 +144,19 @@ describe('BreadcrumbComponent', () => {
     });
   });
 
-  test('should create', () => {
-    tester = new BreadcrumbComponentTester();
-    expect(tester.componentInstance).toBeTruthy();
-  });
+  async function expectBreadcrumbTexts(texts: Array<string>) {
+    await expect.element(tester.breadcrumbItems).toHaveLength(texts.length);
+    await Promise.all(texts.map((text, index) => expect.element(tester.item(index)).toHaveTextContent(text)));
+  }
 
   test('should not show breadcrumbs on home page', async () => {
     currentUrl = '/';
     TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
     tester = new BreadcrumbComponentTester();
 
-    await tester.change();
+    tester.fixture.detectChanges();
 
-    expect(tester.breadcrumbItems.length).toBe(0);
+    await expect.element(tester.breadcrumbItems).toHaveLength(0);
   });
 
   describe('North routes', () => {
@@ -168,10 +165,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('North');
+      await expectBreadcrumbTexts(['North']);
     });
 
     test('should show breadcrumb for north create', async () => {
@@ -179,11 +175,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('North');
-      expect(tester.breadcrumbItems[1].textContent).toContain('Create');
+      await expectBreadcrumbTexts(['North', 'Create']);
     });
 
     test('should show breadcrumb for north detail', async () => {
@@ -193,11 +187,9 @@ describe('BreadcrumbComponent', () => {
       northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('North');
-      expect(tester.breadcrumbItems[1].textContent).toContain('console-test (console)');
+      await expectBreadcrumbTexts(['North', 'console-test (console)']);
       expect(northConnectorService.findById).toHaveBeenCalledWith('north-1');
     });
 
@@ -208,12 +200,9 @@ describe('BreadcrumbComponent', () => {
       northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(3);
-      expect(tester.breadcrumbItems[0].textContent).toContain('North');
-      expect(tester.breadcrumbItems[1].textContent).toContain('console-test (console)');
-      expect(tester.breadcrumbItems[2].textContent).toContain('Edit');
+      await expectBreadcrumbTexts(['North', 'console-test (console)', 'Edit']);
     });
 
     test('should show breadcrumb for north cache', async () => {
@@ -223,12 +212,9 @@ describe('BreadcrumbComponent', () => {
       northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(3);
-      expect(tester.breadcrumbItems[0].textContent).toContain('North');
-      expect(tester.breadcrumbItems[1].textContent).toContain('console-test (console)');
-      expect(tester.breadcrumbItems[2].textContent).toContain('Cache');
+      await expectBreadcrumbTexts(['North', 'console-test (console)', 'Cache']);
     });
 
     test('should handle error when loading north connector', async () => {
@@ -237,11 +223,9 @@ describe('BreadcrumbComponent', () => {
       northConnectorService.findById.mockReturnValue(throwError(() => new Error('Not found')));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('North');
-      expect(tester.breadcrumbItems[1].textContent).toContain('north-1');
+      await expectBreadcrumbTexts(['North', 'north-1']);
     });
   });
 
@@ -251,10 +235,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('South');
+      await expectBreadcrumbTexts(['South']);
     });
 
     test('should show breadcrumb for south create', async () => {
@@ -262,11 +245,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('South');
-      expect(tester.breadcrumbItems[1].textContent).toContain('Create');
+      await expectBreadcrumbTexts(['South', 'Create']);
     });
 
     test('should show breadcrumb for south detail', async () => {
@@ -275,11 +256,9 @@ describe('BreadcrumbComponent', () => {
       southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('South');
-      expect(tester.breadcrumbItems[1].textContent).toContain('test-south (mqtt)');
+      await expectBreadcrumbTexts(['South', 'test-south (mqtt)']);
       expect(southConnectorService.findById).toHaveBeenCalledWith('south-1');
     });
 
@@ -289,12 +268,9 @@ describe('BreadcrumbComponent', () => {
       southConnectorService.findById.mockReturnValue(of(mockSouthConnector));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(3);
-      expect(tester.breadcrumbItems[0].textContent).toContain('South');
-      expect(tester.breadcrumbItems[1].textContent).toContain('test-south (mqtt)');
-      expect(tester.breadcrumbItems[2].textContent).toContain('Edit');
+      await expectBreadcrumbTexts(['South', 'test-south (mqtt)', 'Edit']);
     });
 
     test('should handle error when loading south connector', async () => {
@@ -303,11 +279,9 @@ describe('BreadcrumbComponent', () => {
       southConnectorService.findById.mockReturnValue(throwError(() => new Error('Not found')));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('South');
-      expect(tester.breadcrumbItems[1].textContent).toContain('south-1');
+      await expectBreadcrumbTexts(['South', 'south-1']);
     });
   });
 
@@ -317,10 +291,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('History');
+      await expectBreadcrumbTexts(['History']);
     });
 
     test('should show breadcrumb for history query create', async () => {
@@ -328,11 +301,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('History');
-      expect(tester.breadcrumbItems[1].textContent).toContain('Create');
+      await expectBreadcrumbTexts(['History', 'Create']);
     });
 
     test('should show breadcrumb for history query detail', async () => {
@@ -341,11 +312,9 @@ describe('BreadcrumbComponent', () => {
       historyQueryService.findById.mockReturnValue(of(mockHistoryQuery));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('History');
-      expect(tester.breadcrumbItems[1].textContent).toContain('test-history');
+      await expectBreadcrumbTexts(['History', 'test-history']);
       expect(historyQueryService.findById).toHaveBeenCalledWith('history-1');
     });
 
@@ -355,12 +324,9 @@ describe('BreadcrumbComponent', () => {
       historyQueryService.findById.mockReturnValue(of(mockHistoryQuery));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(3);
-      expect(tester.breadcrumbItems[0].textContent).toContain('History');
-      expect(tester.breadcrumbItems[1].textContent).toContain('test-history');
-      expect(tester.breadcrumbItems[2].textContent).toContain('Edit');
+      await expectBreadcrumbTexts(['History', 'test-history', 'Edit']);
     });
 
     test('should show breadcrumb for history query cache', async () => {
@@ -369,12 +335,9 @@ describe('BreadcrumbComponent', () => {
       historyQueryService.findById.mockReturnValue(of(mockHistoryQuery));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(3);
-      expect(tester.breadcrumbItems[0].textContent).toContain('History');
-      expect(tester.breadcrumbItems[1].textContent).toContain('test-history');
-      expect(tester.breadcrumbItems[2].textContent).toContain('Cache');
+      await expectBreadcrumbTexts(['History', 'test-history', 'Cache']);
     });
 
     test('should handle error when loading history query', async () => {
@@ -383,11 +346,9 @@ describe('BreadcrumbComponent', () => {
       historyQueryService.findById.mockReturnValue(throwError(() => new Error('Not found')));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('History');
-      expect(tester.breadcrumbItems[1].textContent).toContain('history-1');
+      await expectBreadcrumbTexts(['History', 'history-1']);
     });
   });
 
@@ -397,10 +358,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('Engine');
+      await expectBreadcrumbTexts(['Engine']);
     });
 
     test('should show breadcrumb for engine edit', async () => {
@@ -408,11 +368,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('Engine');
-      expect(tester.breadcrumbItems[1].textContent).toContain('Edit engine settings');
+      await expectBreadcrumbTexts(['Engine', 'Edit engine settings']);
     });
 
     test('should show breadcrumb for engine oianalytics', async () => {
@@ -420,11 +378,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbItems[0].textContent).toContain('Engine');
-      expect(tester.breadcrumbItems[1].textContent).toContain('OIAnalytics registration');
+      await expectBreadcrumbTexts(['Engine', 'OIAnalytics registration']);
     });
   });
 
@@ -434,10 +390,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('Logs');
+      await expectBreadcrumbTexts(['Logs']);
     });
 
     test('should show breadcrumb for about', async () => {
@@ -445,10 +400,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('About');
+      await expectBreadcrumbTexts(['About']);
     });
 
     test('should show breadcrumb for user settings', async () => {
@@ -456,10 +410,9 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('Settings');
+      await expectBreadcrumbTexts(['Settings']);
     });
   });
 
@@ -469,9 +422,8 @@ describe('BreadcrumbComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute() });
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('North');
+      tester.fixture.detectChanges();
+      await expectBreadcrumbTexts(['North']);
 
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
@@ -489,9 +441,8 @@ describe('BreadcrumbComponent', () => {
       currentUrl = '/south';
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
-      expect(tester.breadcrumbItems.length).toBe(1);
-      expect(tester.breadcrumbItems[0].textContent).toContain('South');
+      tester.fixture.detectChanges();
+      await expectBreadcrumbTexts(['South']);
     });
   });
 
@@ -503,14 +454,12 @@ describe('BreadcrumbComponent', () => {
       northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      expect(tester.breadcrumbItems.length).toBe(2);
-      expect(tester.breadcrumbLinks.length).toBe(1);
-      expect(tester.breadcrumbLinks[0].textContent).toContain('North');
-      const lastItem = tester.breadcrumbItems[1];
-      expect(lastItem.elements('a').length).toBe(0);
-      expect(lastItem.textContent).toContain('console-test (console)');
+      await expectBreadcrumbTexts(['North', 'console-test (console)']);
+      await expect.element(tester.breadcrumbLinks).toHaveLength(1);
+      await expect.element(tester.breadcrumbLinks.nth(0)).toHaveTextContent('North');
+      await expect.element(tester.item(1).getByCss('a')).toHaveLength(0);
     });
 
     test('should not make the last breadcrumb item a link', async () => {
@@ -520,11 +469,10 @@ describe('BreadcrumbComponent', () => {
       northConnectorService.getNorthManifest.mockReturnValue(of(mockNorthManifest));
       tester = new BreadcrumbComponentTester();
 
-      await tester.change();
+      tester.fixture.detectChanges();
 
-      const lastItem = tester.breadcrumbItems[2];
-      expect(lastItem.elements('a').length).toBe(0);
-      expect(lastItem.textContent).toContain('Cache');
+      await expect.element(tester.item(2).getByCss('a')).toHaveLength(0);
+      await expect.element(tester.item(2)).toHaveTextContent('Cache');
     });
   });
 });

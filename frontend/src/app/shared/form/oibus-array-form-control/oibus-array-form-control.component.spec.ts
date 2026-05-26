@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { Component } from '@angular/core';
-import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusArrayFormControlComponent } from './oibus-array-form-control.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
@@ -14,6 +13,7 @@ import { MockModalService, provideModalTesting } from '../../mock-modal.service.
 import { OIBusEditArrayElementModalComponent } from './oibus-edit-array-element-modal/oibus-edit-array-element-modal.component';
 import { SouthConnectorService } from '../../../services/south-connector.service';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 import { createMock } from '../../../../test/vitest-create-mock';
 
 @Component({
@@ -64,32 +64,20 @@ class TestComponent {
   };
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-
-  get addElement() {
-    return this.button('#oibus-array-add-element-button')!;
-  }
-
-  get editButtons() {
-    return this.elements('.edit-button')! as Array<TestButton>;
-  }
-
-  get copyButtons() {
-    return this.elements('.copy-button')! as Array<TestButton>;
-  }
-
-  get deleteButtons() {
-    return this.elements('.delete-button')! as Array<TestButton>;
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly component = this.fixture.componentInstance;
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly addElement = this.root.getByCss('#oibus-array-add-element-button');
+  readonly editButtons = this.root.getByCss('.edit-button');
+  readonly copyButtons = this.root.getByCss('.copy-button');
+  readonly deleteButtons = this.root.getByCss('.delete-button');
 }
 
 describe('OIBusArrayFormControlComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClientTesting(),
@@ -100,7 +88,7 @@ describe('OIBusArrayFormControlComponent', () => {
     });
 
     tester = new TestComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
   test('should add an element', async () => {
@@ -111,10 +99,10 @@ describe('OIBusArrayFormControlComponent', () => {
     await tester.addElement.click();
 
     expect(fakeModalComponent.prepareForCreation).toHaveBeenCalledWith(
-      tester.componentInstance.scanModes,
-      tester.componentInstance.certificates,
-      tester.componentInstance.parentGroup,
-      tester.componentInstance.arrayAttribute.rootAttribute
+      tester.component.scanModes,
+      tester.component.certificates,
+      tester.component.parentGroup,
+      tester.component.arrayAttribute.rootAttribute
     );
   });
 
@@ -123,15 +111,15 @@ describe('OIBusArrayFormControlComponent', () => {
     const fakeModalComponent = createMock(OIBusEditArrayElementModalComponent);
     mockModalService.mockClosedModal(fakeModalComponent);
 
-    expect(tester.editButtons.length).toEqual(2);
-    await tester.editButtons[0].click();
+    await expect.element(tester.editButtons).toHaveLength(2);
+    await tester.editButtons.nth(0).click();
 
     expect(fakeModalComponent.prepareForEdition).toHaveBeenCalledWith(
-      tester.componentInstance.scanModes,
-      tester.componentInstance.certificates,
-      tester.componentInstance.parentGroup,
+      tester.component.scanModes,
+      tester.component.certificates,
+      tester.component.parentGroup,
       {},
-      tester.componentInstance.arrayAttribute.rootAttribute
+      tester.component.arrayAttribute.rootAttribute
     );
   });
 
@@ -140,15 +128,15 @@ describe('OIBusArrayFormControlComponent', () => {
     const fakeModalComponent = createMock(OIBusEditArrayElementModalComponent);
     mockModalService.mockClosedModal(fakeModalComponent);
 
-    expect(tester.copyButtons.length).toEqual(2);
-    await tester.copyButtons[0].click();
+    await expect.element(tester.copyButtons).toHaveLength(2);
+    await tester.copyButtons.nth(0).click();
 
     expect(fakeModalComponent.prepareForCopy).toHaveBeenCalledWith(
-      tester.componentInstance.scanModes,
-      tester.componentInstance.certificates,
-      tester.componentInstance.parentGroup,
+      tester.component.scanModes,
+      tester.component.certificates,
+      tester.component.parentGroup,
       {},
-      tester.componentInstance.arrayAttribute.rootAttribute
+      tester.component.arrayAttribute.rootAttribute
     );
   });
 
@@ -157,9 +145,10 @@ describe('OIBusArrayFormControlComponent', () => {
     const fakeModalComponent = createMock(OIBusEditArrayElementModalComponent);
     mockModalService.mockClosedModal(fakeModalComponent);
 
-    expect(tester.deleteButtons.length).toEqual(2);
-    await tester.deleteButtons[0].click();
+    await expect.element(tester.deleteButtons).toHaveLength(2);
+    await tester.deleteButtons.nth(0).click();
+    tester.fixture.detectChanges();
 
-    expect(tester.componentInstance.formControl.value.length).toEqual(1);
+    expect(tester.component.formControl.value.length).toEqual(1);
   });
 });

@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
-import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { ManifestAttributesArrayComponent } from './manifest-attributes-array.component';
 import { OIBusArrayAttribute } from '../../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
@@ -8,6 +7,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { ModalService } from '../../../modal.service';
 import { EMPTY, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   template: ` <oib-manifest-attributes-array [label]="arrayAttribute.translationKey" [control]="attributesControl" /> `,
@@ -60,49 +60,24 @@ class TestComponent {
   };
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly component = this.fixture.componentInstance;
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly addButton = this.root.getByCss('#manifest-attributes-add-button');
+  readonly attributesTable = this.root.getByCss('table');
+  readonly tableRows = this.root.getByCss('tbody tr');
+  readonly editButtons = this.root.getByCss('.edit-button');
+  readonly copyButtons = this.root.getByCss('.copy-button');
+  readonly deleteButtons = this.root.getByCss('.delete-button');
+  readonly emptyState = this.root.getByCss('.oi-details');
+  readonly pagination = this.root.getByCss('oib-pagination');
+  readonly box = this.root.getByCss('oib-box');
+  readonly validationErrors = this.root.getByCss('val-errors');
 
-  get addButton() {
-    return this.button('#manifest-attributes-add-button')!;
-  }
-
-  get attributesTable() {
-    return this.element('table')!;
-  }
-
-  get tableRows() {
-    return this.elements('tbody tr')!;
-  }
-
-  get editButtons() {
-    return this.elements('.edit-button')! as Array<TestButton>;
-  }
-
-  get copyButtons() {
-    return this.elements('.copy-button')! as Array<TestButton>;
-  }
-
-  get deleteButtons() {
-    return this.elements('.delete-button')! as Array<TestButton>;
-  }
-
-  get emptyState() {
-    return this.element('.oi-details')!;
-  }
-
-  get pagination() {
-    return this.element('oib-pagination')!;
-  }
-
-  get boxTitle() {
-    return this.element('ng-template[oibBoxTitle]')!;
-  }
-
-  get validationErrors() {
-    return this.element('val-errors')!;
+  setAttributes(attributes: Array<unknown>) {
+    this.component.attributesControl.setValue(attributes);
+    this.fixture.detectChanges();
   }
 }
 
@@ -149,32 +124,32 @@ describe('ManifestAttributesArrayComponent', () => {
     });
 
     tester = new TestComponentTester();
-    tester.detectChanges();
+    tester.fixture.detectChanges();
   });
 
   describe('Component Initialization', () => {
     test('should create the component', () => {
-      expect(tester.componentInstance).toBeDefined();
+      expect(tester.component).toBeDefined();
     });
 
-    test('should display the add button', () => {
-      expect(tester.addButton).toBeDefined();
-      expect(tester.addButton.element('span.fa.fa-plus')).toBeDefined();
+    test('should display the add button', async () => {
+      await expect.element(tester.addButton).toBeInTheDocument();
+      await expect.element(tester.addButton.getByCss('span.fa.fa-plus')).toBeInTheDocument();
     });
 
-    test('should show empty state when no attributes', () => {
-      expect(tester.attributesTable).toBeNull();
-      expect(tester.emptyState.nativeElement.textContent).toContain('No attributes defined');
+    test('should show empty state when no attributes', async () => {
+      await expect.element(tester.attributesTable).not.toBeInTheDocument();
+      await expect.element(tester.emptyState).toHaveTextContent('No attributes defined');
     });
 
-    test('should display box title', () => {
-      expect(tester.boxTitle).toBeDefined();
+    test('should display box', async () => {
+      await expect.element(tester.box).toBeInTheDocument();
     });
   });
 
   describe('Column Building', () => {
     test('should build columns from root attribute', () => {
-      const component = tester.componentInstance;
+      const component = tester.component;
       const displayableAttributes = component.arrayAttribute.rootAttribute.attributes.filter(
         attr => (attr as any).displayProperties?.displayInViewMode
       );
@@ -183,7 +158,7 @@ describe('ManifestAttributesArrayComponent', () => {
     });
 
     test('should filter out non-displayable attributes', () => {
-      const component = tester.componentInstance;
+      const component = tester.component;
       const displayableAttributes = component.arrayAttribute.rootAttribute.attributes.filter(
         attr => (attr as any).displayProperties?.displayInViewMode
       );
@@ -194,13 +169,13 @@ describe('ManifestAttributesArrayComponent', () => {
 
   describe('Add Item Functionality', () => {
     test('should open modal when add button is clicked', async () => {
-      tester.addButton.click();
+      await tester.addButton.click();
       await flushPromises();
       expect(openAttributeEditorSpy).toHaveBeenCalled();
     });
 
     test('should prepare modal for creation', async () => {
-      tester.addButton.click();
+      await tester.addButton.click();
       await flushPromises();
       expect(openAttributeEditorSpy).toHaveBeenCalled();
       const modal = mockModalService.open.mock.results.at(-1)?.value as { componentInstance: any };
@@ -224,11 +199,11 @@ describe('ManifestAttributesArrayComponent', () => {
         }
       });
 
-      tester.addButton.click();
+      await tester.addButton.click();
       await flushPromises();
-      tester.detectChanges();
+      tester.fixture.detectChanges();
 
-      expect(tester.componentInstance.attributesControl.value).toContain(newAttribute);
+      expect(tester.component.attributesControl.value).toContain(newAttribute);
     });
   });
 
@@ -248,21 +223,20 @@ describe('ManifestAttributesArrayComponent', () => {
           defaultValue: 42
         }
       ];
-      tester.componentInstance.attributesControl.setValue(testAttributes);
-      tester.detectChanges();
+      tester.setAttributes(testAttributes);
     });
 
-    test('should display table when attributes exist', () => {
-      expect(tester.attributesTable).toBeDefined();
-      expect(tester.tableRows.length).toBe(2);
+    test('should display table when attributes exist', async () => {
+      await expect.element(tester.attributesTable).toBeInTheDocument();
+      await expect.element(tester.tableRows).toHaveLength(2);
     });
 
-    test('should show edit buttons for each row', () => {
-      expect(tester.editButtons.length).toBe(2);
+    test('should show edit buttons for each row', async () => {
+      await expect.element(tester.editButtons).toHaveLength(2);
     });
 
     test('should open modal when edit button is clicked', async () => {
-      tester.editButtons[0].click();
+      await tester.editButtons.nth(0).click();
       await flushPromises();
       expect(openAttributeEditorSpy).toHaveBeenCalled();
     });
@@ -284,11 +258,11 @@ describe('ManifestAttributesArrayComponent', () => {
         }
       });
 
-      tester.editButtons[0].click();
+      await tester.editButtons.nth(0).click();
       await flushPromises();
-      tester.detectChanges();
+      tester.fixture.detectChanges();
 
-      const currentValue = tester.componentInstance.attributesControl.value;
+      const currentValue = tester.component.attributesControl.value;
       expect(currentValue?.[0]).toEqual(expect.objectContaining(updatedAttribute));
     });
   });
@@ -303,16 +277,15 @@ describe('ManifestAttributesArrayComponent', () => {
           defaultValue: 'test value'
         }
       ];
-      tester.componentInstance.attributesControl.setValue(testAttributes);
-      tester.detectChanges();
+      tester.setAttributes(testAttributes);
     });
 
-    test('should show copy buttons for each row', () => {
-      expect(tester.copyButtons.length).toBe(1);
+    test('should show copy buttons for each row', async () => {
+      await expect.element(tester.copyButtons).toHaveLength(1);
     });
 
     test('should open modal when copy button is clicked', async () => {
-      tester.copyButtons[0].click();
+      await tester.copyButtons.nth(0).click();
       await flushPromises();
       expect(openAttributeEditorSpy).toHaveBeenCalled();
     });
@@ -334,11 +307,11 @@ describe('ManifestAttributesArrayComponent', () => {
         }
       });
 
-      tester.copyButtons[0].click();
+      await tester.copyButtons.nth(0).click();
       await flushPromises();
-      tester.detectChanges();
+      tester.fixture.detectChanges();
 
-      const currentValue = tester.componentInstance.attributesControl.value;
+      const currentValue = tester.component.attributesControl.value;
       expect(currentValue?.length).toBe(2);
       expect(currentValue?.[1]).toEqual(copiedAttribute);
     });
@@ -360,29 +333,28 @@ describe('ManifestAttributesArrayComponent', () => {
           defaultValue: 42
         }
       ];
-      tester.componentInstance.attributesControl.setValue(testAttributes);
-      tester.detectChanges();
+      tester.setAttributes(testAttributes);
     });
 
-    test('should show delete buttons for each row', () => {
-      expect(tester.deleteButtons.length).toBe(2);
+    test('should show delete buttons for each row', async () => {
+      await expect.element(tester.deleteButtons).toHaveLength(2);
     });
 
-    test('should remove item when delete button is clicked', () => {
-      const initialLength = tester.componentInstance.attributesControl.value?.length || 0;
-      tester.deleteButtons[0].click();
-      tester.detectChanges();
+    test('should remove item when delete button is clicked', async () => {
+      const initialLength = tester.component.attributesControl.value?.length || 0;
+      await tester.deleteButtons.nth(0).click();
 
-      expect(tester.componentInstance.attributesControl.value?.length).toBe(initialLength - 1);
+      expect(tester.component.attributesControl.value?.length).toBe(initialLength - 1);
     });
 
-    test('should show empty state when all items are deleted', () => {
-      tester.deleteButtons[0].click();
-      tester.deleteButtons[0].click(); // Delete the second item
-      tester.detectChanges();
+    test('should show empty state when all items are deleted', async () => {
+      await tester.deleteButtons.nth(0).click();
+      tester.fixture.detectChanges();
+      await tester.deleteButtons.nth(0).click();
+      tester.fixture.detectChanges();
 
-      expect(tester.attributesTable).toBeNull();
-      expect(tester.emptyState.nativeElement.textContent).toContain('No attributes defined');
+      await expect.element(tester.attributesTable).not.toBeInTheDocument();
+      await expect.element(tester.emptyState).toHaveTextContent('No attributes defined');
     });
   });
 
@@ -408,81 +380,76 @@ describe('ManifestAttributesArrayComponent', () => {
           defaultValue: true
         }
       ];
-      tester.componentInstance.attributesControl.setValue(testAttributes);
-      tester.detectChanges();
+      tester.setAttributes(testAttributes);
     });
 
-    test('should format string values correctly', () => {
+    test('should format string values correctly', async () => {
       // Check that the table displays the data
-      expect(tester.attributesTable).toBeDefined();
-      expect(tester.tableRows.length).toBe(3);
+      await expect.element(tester.attributesTable).toBeInTheDocument();
+      await expect.element(tester.tableRows).toHaveLength(3);
     });
 
-    test('should format number values correctly', () => {
+    test('should format number values correctly', async () => {
       // Check that the table displays the data
-      expect(tester.attributesTable).toBeDefined();
-      expect(tester.tableRows.length).toBe(3);
+      await expect.element(tester.attributesTable).toBeInTheDocument();
+      await expect.element(tester.tableRows).toHaveLength(3);
     });
 
-    test('should format boolean values correctly', () => {
+    test('should format boolean values correctly', async () => {
       // Boolean values are translated, so we check for the presence of the cell
-      const booleanRow = tester.tableRows.find(row => row.textContent?.includes('booleanKey'));
-      expect(booleanRow).toBeDefined();
+      await expect.element(tester.tableRows.nth(2)).toHaveTextContent('booleanKey');
     });
   });
 
   describe('Pagination', () => {
     beforeEach(() => {
       // Set up paginated array attribute
-      tester.componentInstance.arrayAttribute = {
-        ...tester.componentInstance.arrayAttribute,
+      tester.component.arrayAttribute = {
+        ...tester.component.arrayAttribute,
         paginate: true,
         numberOfElementPerPage: 2
       };
-      tester.detectChanges();
+      tester.fixture.detectChanges();
     });
 
-    test('should not show pagination when paginate is disabled', () => {
-      tester.componentInstance.arrayAttribute = {
-        ...tester.componentInstance.arrayAttribute,
+    test('should not show pagination when paginate is disabled', async () => {
+      tester.component.arrayAttribute = {
+        ...tester.component.arrayAttribute,
         paginate: false
       };
-      tester.detectChanges();
+      tester.fixture.detectChanges();
 
       // With pagination disabled, it should not be visible
-      expect(tester.pagination).toBeNull();
+      await expect.element(tester.pagination).not.toBeInTheDocument();
     });
   });
 
   describe('Input Properties', () => {
     test('should accept control input', () => {
-      expect(tester.componentInstance.attributesControl).toBeDefined();
+      expect(tester.component.attributesControl).toBeDefined();
     });
 
     test('should accept arrayAttribute input', () => {
-      expect(tester.componentInstance.arrayAttribute).toBeDefined();
-      expect(tester.componentInstance.arrayAttribute.type).toBe('array');
+      expect(tester.component.arrayAttribute).toBeDefined();
+      expect(tester.component.arrayAttribute.type).toBe('array');
     });
   });
 
   describe('Error Handling', () => {
-    test('should handle empty control value', () => {
-      tester.componentInstance.attributesControl.setValue([]);
-      tester.detectChanges();
+    test('should handle empty control value', async () => {
+      tester.setAttributes([]);
 
-      expect(tester.emptyState.nativeElement.textContent).toContain('No attributes defined');
+      await expect.element(tester.emptyState).toHaveTextContent('No attributes defined');
     });
 
-    test('should handle modal service errors gracefully', () => {
+    test('should handle modal service errors gracefully', async () => {
       // Make openAttributeEditor return a never-resolving promise so addItem() suspends
       // without rejecting — avoids an unhandled rejection since the component has no try/catch
       openAttributeEditorSpy.mockImplementationOnce(() => new Promise(() => {}));
 
       // The component should handle the error gracefully
       // We just test that the button click doesn't crash the component
-      expect(() => {
-        tester.addButton.click();
-      }).not.toThrow();
+      await expect(tester.addButton.click()).resolves.toBeUndefined();
     });
   });
 
@@ -504,14 +471,14 @@ describe('ManifestAttributesArrayComponent', () => {
         }
       });
 
-      tester.addButton.click();
+      await tester.addButton.click();
       await flushPromises();
-      tester.detectChanges();
+      tester.fixture.detectChanges();
 
-      expect(tester.componentInstance.attributesControl.value).toContain(newAttribute);
+      expect(tester.component.attributesControl.value).toContain(newAttribute);
     });
 
-    test('should update form control when items are edited', () => {
+    test('should update form control when items are edited', async () => {
       const testAttributes = [
         {
           type: 'string',
@@ -520,15 +487,14 @@ describe('ManifestAttributesArrayComponent', () => {
           defaultValue: 'test value'
         }
       ];
-      tester.componentInstance.attributesControl.setValue(testAttributes);
-      tester.detectChanges();
+      tester.setAttributes(testAttributes);
 
       // Just test that the edit button exists and can be clicked
-      expect(tester.editButtons.length).toBe(1);
-      expect(tester.editButtons[0]).toBeDefined();
+      await expect.element(tester.editButtons).toHaveLength(1);
+      await expect.element(tester.editButtons.nth(0)).toBeInTheDocument();
     });
 
-    test('should update form control when items are deleted', () => {
+    test('should update form control when items are deleted', async () => {
       const testAttributes = [
         {
           type: 'string',
@@ -543,14 +509,12 @@ describe('ManifestAttributesArrayComponent', () => {
           defaultValue: 'test value 2'
         }
       ];
-      tester.componentInstance.attributesControl.setValue(testAttributes);
-      tester.detectChanges();
+      tester.setAttributes(testAttributes);
 
-      tester.deleteButtons[0].click();
-      tester.detectChanges();
+      await tester.deleteButtons.nth(0).click();
 
-      expect(tester.componentInstance.attributesControl.value?.length).toBe(1);
-      expect(tester.componentInstance.attributesControl.value?.[0].key).toBe('testKey2');
+      expect(tester.component.attributesControl.value?.length).toBe(1);
+      expect(tester.component.attributesControl.value?.[0].key).toBe('testKey2');
     });
   });
 });

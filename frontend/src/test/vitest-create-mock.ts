@@ -48,7 +48,6 @@ interface StubRouteOptions {
 
 /**
  * Creates a stub of ActivatedRoute for testing.
- * In Vitest tests, this replaces the `stubRoute` from ngx-speculoos.
  *
  * @param options An object to configure the stubbed route's observables and snapshot.
  * @returns A partial mock of ActivatedRoute.
