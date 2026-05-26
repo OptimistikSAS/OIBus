@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
-import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusSecretAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusSecretFormControlComponent } from './oibus-secret-form-control.component';
 import { OIBUS_FORM_MODE } from '../oibus-form-mode.token';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-oibus-secret-form-control-component',
@@ -33,18 +33,10 @@ class TestComponent {
   });
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-
-  get label() {
-    return this.element('label')!;
-  }
-
-  get field() {
-    return this.input('input')!;
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly field = this.root.getByCss('input');
 }
 
 describe('OIBusSecretFormControlComponent', () => {
@@ -56,16 +48,16 @@ describe('OIBusSecretFormControlComponent', () => {
 
   test('should render without placeholder when mode is create', async () => {
     const tester = new TestComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
 
-    expect(tester.field.nativeElement.getAttribute('placeholder')).toBeNull();
+    await expect.element(tester.field).not.toHaveAttribute('placeholder');
   });
 
   test('should display placeholder when mode is edit', async () => {
     TestBed.overrideProvider(OIBUS_FORM_MODE, { useValue: () => 'edit' });
     const tester = new TestComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
 
-    expect(tester.field.nativeElement.getAttribute('placeholder')).toBe('Leave empty to keep the existing secret');
+    await expect.element(tester.field).toHaveAttribute('placeholder', 'Leave empty to keep the existing secret');
   });
 });

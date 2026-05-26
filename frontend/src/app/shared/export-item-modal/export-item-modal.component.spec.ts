@@ -1,31 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import { ComponentTester } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { ExportItemModalComponent } from './export-item-modal.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { page } from 'vitest/browser';
 
-class ExportSouthItemModalComponentTester extends ComponentTester<ExportItemModalComponent> {
-  constructor() {
-    super(ExportItemModalComponent);
-  }
-
-  get saveButton() {
-    return this.button('#save-button')!;
-  }
-
-  get cancelButton() {
-    return this.button('#cancel-button')!;
-  }
-
-  get delimiter() {
-    return this.select('#delimiter')!;
-  }
-
-  get filename() {
-    return this.input('#filename')!;
-  }
+class ExportSouthItemModalComponentTester {
+  readonly fixture = TestBed.createComponent(ExportItemModalComponent);
+  readonly saveButton = page.getByCss('#save-button');
+  readonly cancelButton = page.getByCss('#cancel-button');
+  readonly delimiter = page.getByCss('#delimiter');
+  readonly filename = page.getByCss('#filename');
 }
 
 describe('ExportSouthItemModalComponent', () => {
@@ -38,19 +24,18 @@ describe('ExportSouthItemModalComponent', () => {
       providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
     tester = new ExportSouthItemModalComponentTester();
+    tester.fixture.detectChanges();
   });
 
   test('should send a delimiter', async () => {
-    await tester.change();
-    tester.delimiter.selectLabel('Comma ,');
-    tester.filename.fillWith('south-item');
-    tester.saveButton.click();
+    await tester.delimiter.selectOptions('Comma ,');
+    await tester.filename.fill('south-item');
+    await tester.saveButton.click();
     expect(fakeActiveModal.close).toHaveBeenCalledWith({ delimiter: ',', filename: 'south-item' });
   });
 
   test('should cancel', async () => {
-    await tester.change();
-    tester.cancelButton.click();
+    await tester.cancelButton.click();
     expect(fakeActiveModal.close).toHaveBeenCalled();
   });
 });

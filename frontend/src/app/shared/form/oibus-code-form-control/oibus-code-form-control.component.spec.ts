@@ -1,12 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
-import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusCodeAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { OIBusCodeFormControlComponent } from './oibus-code-form-control.component';
-import { By } from '@angular/platform-browser';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-oibus-code-form-control-component',
@@ -35,42 +34,30 @@ class TestComponent {
   });
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-
-  get label() {
-    return this.element('label')!;
-  }
-
-  get field() {
-    return this.debugElement.query(By.directive(OIBusCodeFormControlComponent))!;
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly label = this.root.getByText('Field name');
+  readonly field = this.root.getByCss('oib-oibus-code-form-control');
 }
 
 describe('OIBusCodeFormControlComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
-  test('should create the component', () => {
-    expect(tester.componentInstance).toBeDefined();
+  test('should display a label with the correct translation key', async () => {
+    await expect.element(tester.label).toBeInTheDocument();
   });
 
-  test('should display a label with the correct translation key', () => {
-    expect(tester.label).toBeDefined();
-    expect(tester.label.nativeElement.textContent).toContain('Field name');
-  });
-
-  test('should display an input with the correct form control name', () => {
-    expect(tester.field).toBeDefined();
+  test('should display an input with the correct form control name', async () => {
+    await expect.element(tester.field).toBeInTheDocument();
   });
 });

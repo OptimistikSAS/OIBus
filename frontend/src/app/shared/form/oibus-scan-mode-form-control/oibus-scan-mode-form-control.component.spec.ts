@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
-import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { OIBusScanModeAttribute } from '../../../../../../backend/shared/model/form.model';
@@ -9,6 +8,7 @@ import { OIBusScanModeFormControlComponent } from './oibus-scan-mode-form-contro
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-oibus-scan-mode-form-control-component',
@@ -37,55 +37,39 @@ class TestComponent {
   });
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-
-  get label() {
-    return this.element('label')!;
-  }
-
-  get field() {
-    return this.select('select')!;
-  }
-
-  get options() {
-    return this.elements('option')!;
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly label = this.root.getByText('Field name');
+  readonly field = this.root.getByCss('select');
+  readonly options = this.root.getByCss('option');
 }
 
 describe('OIBusScanModeFormControlComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
-  test('should create the component', () => {
-    expect(tester.componentInstance).toBeDefined();
+  test('should display a label with the correct translation key', async () => {
+    await expect.element(tester.label).toBeInTheDocument();
   });
 
-  test('should display a label with the correct translation key', () => {
-    expect(tester.label).toBeDefined();
-    expect(tester.label.nativeElement.textContent).toContain('Field name');
+  test('should display a select with the correct form control name', async () => {
+    await tester.field.selectOptions('Subscription');
+    await expect.element(tester.field).toHaveValue('3: Object');
   });
 
-  test('should display a select with the correct form control name', () => {
-    expect(tester.field).toBeDefined();
-    tester.field.selectLabel('Subscription');
-    expect(tester.field.nativeElement.selectedOptions[0]?.text?.trim()).toBe('Subscription');
-  });
-
-  test('should display options for each selectable value', () => {
-    expect(tester.options.length).toBe(4); // One for the null option and one for each value
-    expect(tester.options[1].nativeElement.textContent).toContain('scanMode1');
-    expect(tester.options[2].nativeElement.textContent).toContain('scanMode2');
-    expect(tester.options[3].nativeElement.textContent).toContain('Subscription');
+  test('should display options for each selectable value', async () => {
+    await expect.element(tester.options).toHaveLength(4); // One for the null option and one for each value
+    await expect.element(tester.options.nth(1)).toHaveTextContent('scanMode1');
+    await expect.element(tester.options.nth(2)).toHaveTextContent('scanMode2');
+    await expect.element(tester.options.nth(3)).toHaveTextContent('Subscription');
   });
 });

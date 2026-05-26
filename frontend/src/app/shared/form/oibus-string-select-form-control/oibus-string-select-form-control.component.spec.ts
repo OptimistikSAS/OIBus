@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
-import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { OIBusStringSelectFormControlComponent } from './oibus-string-select-form-control.component';
 import { OIBusStringSelectAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-oibus-string-select-form-control-component',
@@ -34,55 +34,39 @@ class TestComponent {
   });
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-
-  get label() {
-    return this.element('label')!;
-  }
-
-  get field() {
-    return this.select('select')!;
-  }
-
-  get options() {
-    return this.elements('option')!;
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly label = this.root.getByText('Type');
+  readonly field = this.root.getByCss('select');
+  readonly options = this.root.getByCss('option');
 }
 
 describe('OIBusStringSelectFormControlComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
-  test('should create the component', () => {
-    expect(tester.componentInstance).toBeDefined();
+  test('should display a label with the correct translation key', async () => {
+    await expect.element(tester.label).toBeInTheDocument();
   });
 
-  test('should display a label with the correct translation key', () => {
-    expect(tester.label).toBeDefined();
-    expect(tester.label.nativeElement.textContent).toContain('Type');
+  test('should display a select with the correct form control name', async () => {
+    await tester.field.selectOptions('iso-string');
+    await expect.element(tester.field).toHaveValue('iso-string');
+    await expect.element(tester.options.nth(1)).toHaveTextContent('ISO String');
   });
 
-  test('should display a select with the correct form control name', () => {
-    expect(tester.field).toBeDefined();
-    tester.field.selectValue('iso-string');
-    expect(tester.field.nativeElement.value).toBe('iso-string');
-    expect(tester.field.nativeElement.selectedOptions[0]?.text?.trim()).toBe('ISO String');
-  });
-
-  test('should display options for each selectable value', () => {
-    expect(tester.options.length).toBe(3); // One for the null option and one for each value
-    expect(tester.options[1].nativeElement.textContent).toContain('ISO String');
-    expect(tester.options[2].nativeElement.textContent).toContain('UNIX epoch (s)');
+  test('should display options for each selectable value', async () => {
+    await expect.element(tester.options).toHaveLength(3); // One for the null option and one for each value
+    await expect.element(tester.options.nth(1)).toHaveTextContent('ISO String');
+    await expect.element(tester.options.nth(2)).toHaveTextContent('UNIX epoch (s)');
   });
 });
