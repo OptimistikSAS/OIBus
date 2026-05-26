@@ -57,6 +57,7 @@
     "@vitest/browser-playwright": "4.1.7",
     "angular-eslint": "21.4.0",
     "eslint": "9.39.4",
+    "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "ngx-speculoos": "15.0.0",
     "playwright": "1.60.0",
