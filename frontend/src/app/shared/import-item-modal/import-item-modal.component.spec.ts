@@ -1,35 +1,19 @@
 import { ImportItemModalComponent } from './import-item-modal.component';
-import { ComponentTester } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { page } from 'vitest/browser';
 
-class ImportSouthItemModalComponentTester extends ComponentTester<ImportItemModalComponent> {
-  constructor() {
-    super(ImportItemModalComponent);
-  }
-
-  get saveButton() {
-    return this.button('#save-button')!;
-  }
-
-  get cancelButton() {
-    return this.button('#cancel-button')!;
-  }
-
-  get importButton() {
-    return this.button('#import-button')!;
-  }
-
-  get fileInput() {
-    return this.input('#file')!;
-  }
-
-  get errorAlert() {
-    return this.element('.alert-danger');
-  }
+class ImportSouthItemModalComponentTester {
+  readonly fixture = TestBed.createComponent(ImportItemModalComponent);
+  readonly component = this.fixture.componentInstance;
+  readonly saveButton = page.getByCss('#save-button');
+  readonly cancelButton = page.getByCss('#cancel-button');
+  readonly importButton = page.getByCss('#import-button');
+  readonly fileInput = page.getByCss('#file');
+  readonly errorAlert = page.getByCss('.alert-danger');
 }
 
 describe('ImportSouthItemModalComponent', () => {
@@ -52,12 +36,12 @@ describe('ImportSouthItemModalComponent', () => {
 
   const selectFile = async (comp: ImportItemModalComponent, file: File) => {
     await comp.onFileSelected(file);
-    await tester.change();
+    tester.fixture.detectChanges();
   };
 
   const changeDelimiter = async (comp: ImportItemModalComponent) => {
     await comp.onDelimiterChange();
-    await tester.change();
+    tester.fixture.detectChanges();
   };
 
   beforeEach(() => {
@@ -70,12 +54,12 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should send a delimiter and file when save is clicked', async () => {
-    await tester.change();
+    tester.fixture.detectChanges();
     const file = createMockFile('name,enabled\ntest,true');
-    const comp = tester.componentInstance;
+    const comp = tester.component;
 
     comp.selectedFile = file;
-    await tester.change();
+    tester.fixture.detectChanges();
 
     await tester.saveButton.click();
 
@@ -87,37 +71,38 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should cancel', async () => {
-    await tester.change();
+    tester.fixture.detectChanges();
 
-    tester.cancelButton.click();
+    await tester.cancelButton.click();
     expect(fakeActiveModal.close).toHaveBeenCalled();
   });
 
   test('should select a file', async () => {
-    await tester.change();
-    vi.spyOn(tester.fileInput.nativeElement, 'click').mockImplementation(() => {});
-    tester.importButton.click();
-    expect(tester.fileInput.nativeElement.click).toHaveBeenCalled();
+    tester.fixture.detectChanges();
+    const fileInput = tester.fileInput.element() as HTMLInputElement;
+    vi.spyOn(fileInput, 'click').mockImplementation(() => {});
+    await tester.importButton.click();
+    expect(fileInput.click).toHaveBeenCalled();
   });
 
   test('should disable save button when no file is selected', async () => {
-    await tester.change();
-    expect(tester.saveButton.disabled).toBe(true);
+    tester.fixture.detectChanges();
+    await expect.element(tester.saveButton).toBeDisabled();
   });
 
   test('should enable save button when valid file is selected', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     const file = createZonedFile('name,enabled\ntest,true');
 
     await selectFile(comp, file);
 
-    expect(tester.saveButton.disabled).toBe(false);
+    await expect.element(tester.saveButton).not.toBeDisabled();
   });
 
   test('should show validation error for CSV with missing headers', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = ['name', 'enabled', 'settings_query'];
 
     const file = createZonedFile('name,enabled\ntest,true');
@@ -125,13 +110,13 @@ describe('ImportSouthItemModalComponent', () => {
 
     expect(comp.validationError).toBeTruthy();
     expect(comp.validationError?.missingHeaders).toContain('settings_query');
-    expect(tester.errorAlert).toBeTruthy();
-    expect(tester.saveButton.disabled).toBe(true);
+    await expect.element(tester.errorAlert).toBeInTheDocument();
+    await expect.element(tester.saveButton).toBeDisabled();
   });
 
   test('should show validation error for CSV with extra headers', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = ['name', 'enabled'];
 
     const file = createZonedFile('name,enabled,extra\ntest,true,value');
@@ -139,26 +124,26 @@ describe('ImportSouthItemModalComponent', () => {
 
     expect(comp.validationError).toBeTruthy();
     expect(comp.validationError?.extraHeaders).toContain('extra');
-    expect(tester.errorAlert).toBeTruthy();
-    expect(tester.saveButton.disabled).toBe(true);
+    await expect.element(tester.errorAlert).toBeInTheDocument();
+    await expect.element(tester.saveButton).toBeDisabled();
   });
 
   test('should not show validation error for valid CSV', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = ['name', 'enabled'];
 
     const file = createZonedFile('name,enabled\ntest,true');
     await selectFile(comp, file);
 
     expect(comp.validationError).toBeNull();
-    expect(tester.errorAlert).toBeFalsy();
-    expect(tester.saveButton.disabled).toBe(false);
+    await expect.element(tester.errorAlert).not.toBeInTheDocument();
+    await expect.element(tester.saveButton).not.toBeDisabled();
   });
 
   test('should revalidate when delimiter changes', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = ['name', 'enabled'];
 
     const file = createZonedFile('name;enabled\ntest;true');
@@ -173,8 +158,8 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should handle file drop', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     const file = createMockFile('name,enabled\ntest,true');
     const event = {
       preventDefault: vi.fn(),
@@ -191,8 +176,8 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should handle file input change', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     const file = createMockFile('name,enabled\ntest,true');
     const input = document.createElement('input');
     Object.defineProperty(input, 'files', {
@@ -209,8 +194,8 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should handle empty file', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = ['name', 'enabled'];
 
     const file = createMockFile('');
@@ -221,8 +206,8 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should handle file with only header line', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = ['name', 'enabled'];
 
     const file = createMockFile('name,enabled');
@@ -232,8 +217,8 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should not validate when no expected headers are set', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = [];
 
     const file = createMockFile('anything,here\ndata,value');
@@ -243,8 +228,8 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should handle file with whitespace in headers', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = ['name', 'enabled'];
 
     const file = createMockFile(' name , enabled \ntest,true');
@@ -254,8 +239,8 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   test('should handle file reading error', async () => {
-    await tester.change();
-    const comp = tester.componentInstance;
+    tester.fixture.detectChanges();
+    const comp = tester.component;
     comp.expectedHeaders = ['name', 'enabled'];
 
     const errorFile = new File([new Blob(['content'])], 'error.csv', { type: 'text/csv' });
@@ -268,12 +253,12 @@ describe('ImportSouthItemModalComponent', () => {
   });
 
   describe('MQTT Topic Validation', () => {
-    beforeEach(async () => {
-      await tester.change();
+    beforeEach(() => {
+      tester.fixture.detectChanges();
     });
 
     test('should not show MQTT validation error when not an MQTT connector', async () => {
-      const comp = tester.componentInstance;
+      const comp = tester.component;
       comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
       comp.isMqttConnector = false;
       comp.existingMqttTopics = ['/oibus/counter'];
@@ -285,7 +270,7 @@ describe('ImportSouthItemModalComponent', () => {
     });
 
     test('should show MQTT validation error for overlapping topics', async () => {
-      const comp = tester.componentInstance;
+      const comp = tester.component;
       comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
       comp.isMqttConnector = true;
       comp.existingMqttTopics = ['/oibus/#'];
@@ -298,7 +283,7 @@ describe('ImportSouthItemModalComponent', () => {
     });
 
     test('should not show MQTT validation error when no overlapping topics', async () => {
-      const comp = tester.componentInstance;
+      const comp = tester.component;
       comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
       comp.isMqttConnector = true;
       comp.existingMqttTopics = ['/other/topic'];
@@ -310,7 +295,7 @@ describe('ImportSouthItemModalComponent', () => {
     });
 
     test('should detect overlapping topics within CSV file', async () => {
-      const comp = tester.componentInstance;
+      const comp = tester.component;
       comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
       comp.isMqttConnector = true;
       comp.existingMqttTopics = [];
@@ -324,7 +309,7 @@ describe('ImportSouthItemModalComponent', () => {
     });
 
     test('should disable save button when MQTT validation error exists', async () => {
-      const comp = tester.componentInstance;
+      const comp = tester.component;
       comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
       comp.isMqttConnector = true;
       comp.existingMqttTopics = ['/oibus/#'];
@@ -332,11 +317,11 @@ describe('ImportSouthItemModalComponent', () => {
       const file = createZonedFile('name,enabled,settings_topic\ntest,true,/oibus/counter');
       await selectFile(comp, file);
 
-      expect(tester.saveButton.disabled).toBe(true);
+      await expect.element(tester.saveButton).toBeDisabled();
     });
 
     test('should clear MQTT validation error when file changes', async () => {
-      const comp = tester.componentInstance;
+      const comp = tester.component;
       comp.expectedHeaders = ['name', 'enabled', 'settings_topic'];
       comp.isMqttConnector = true;
       comp.existingMqttTopics = ['/oibus/#'];
