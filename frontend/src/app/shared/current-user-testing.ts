@@ -1,6 +1,6 @@
 import { CurrentUserService } from './current-user.service';
 import { of } from 'rxjs';
-import { createMock } from 'ngx-speculoos';
+import { createMock } from '../../test/vitest-create-mock';
 import { UserDTO } from '../../../../backend/shared/model/user.model';
 import { DEFAULT_TZ } from '../../../../backend/shared/model/types';
 
@@ -15,7 +15,7 @@ const defaultCurrentUser = {
 export function provideCurrentUser(currentUser?: UserDTO) {
   const currentUserService = createMock(CurrentUserService);
   const user = currentUser ?? defaultCurrentUser;
-  currentUserService.get.and.returnValue(of(user));
-  currentUserService.getTimezone.and.returnValue(user.timezone);
+  currentUserService.get.mockReturnValue(of(user));
+  currentUserService.getTimezone.mockReturnValue(user.timezone);
   return { provide: CurrentUserService, useValue: currentUserService };
 }

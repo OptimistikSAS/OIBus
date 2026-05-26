@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
 import { SaveButtonComponent } from './save-button.component';
-import { ComponentTester } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { delay, of } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ObservableState } from './save-button.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-save-button-component',
@@ -31,22 +31,12 @@ class TestComponent {
   }
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-
-  get saveButton() {
-    return this.button('button')!;
-  }
-
-  get spinner() {
-    return this.element('.fa.fa-spinner');
-  }
-
-  get saveIcon() {
-    return this.element('.fa.fa-save');
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly saveButton = this.root.getByRole('button', { name: 'Save' });
+  readonly spinner = this.root.getByCss('.fa.fa-spinner');
+  readonly saveIcon = this.root.getByCss('.fa.fa-save');
 }
 
 describe('SaveButton', () => {
@@ -63,67 +53,69 @@ describe('SaveButton', () => {
   });
 
   describe('with form attribute and without id attribute', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       tester = new TestComponentTester();
-      await tester.change();
+      tester.fixture.detectChanges();
     });
 
-    test('should display the button by default', () => {
-      expect(tester.saveButton.textContent).toContain('Save');
-      expect(tester.saveButton.nativeElement.classList).toContain('btn');
-      expect(tester.saveButton.nativeElement.classList).toContain('btn-primary');
-      expect(tester.saveButton.attr('form')).toBe('test-form');
-      expect(tester.saveButton.attr('id')).toBe('save-button');
-      expect(tester.saveIcon).not.toBeNull();
-      expect(tester.saveButton.disabled).toBe(false);
-      expect(tester.spinner).toBeNull();
+    test('should display the button by default', async () => {
+      await expect.element(tester.saveButton).toHaveTextContent('Save');
+      await expect.element(tester.saveButton).toHaveClass('btn');
+      await expect.element(tester.saveButton).toHaveClass('btn-primary');
+      await expect.element(tester.saveButton).toHaveAttribute('form', 'test-form');
+      await expect.element(tester.saveButton).toHaveAttribute('id', 'save-button');
+      await expect.element(tester.saveIcon).toBeInTheDocument();
+      await expect.element(tester.saveButton).not.toBeDisabled();
+      await expect.element(tester.spinner).not.toBeInTheDocument();
     });
 
     test('should disable the button and display the spinner when saving', async () => {
       vi.useFakeTimers();
-      tester.saveButton.click();
+      await tester.saveButton.click();
+      tester.fixture.detectChanges();
 
-      expect(tester.saveButton.textContent).toContain('Save');
-      expect(tester.saveButton.disabled).toBe(true);
-      expect(tester.spinner).not.toBeNull();
-      expect(tester.saveIcon).toBeNull();
+      await expect.element(tester.saveButton).toHaveTextContent('Save');
+      await expect.element(tester.saveButton).toBeDisabled();
+      await expect.element(tester.spinner).toBeInTheDocument();
+      await expect.element(tester.saveIcon).not.toBeInTheDocument();
 
-      vi.advanceTimersByTime(500);
-      await tester.change();
-      expect(tester.saveButton.disabled).toBe(false);
-      expect(tester.spinner).toBeNull();
-      expect(tester.saveIcon).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(500);
+      tester.fixture.detectChanges();
+      await expect.element(tester.saveButton).not.toBeDisabled();
+      await expect.element(tester.spinner).not.toBeInTheDocument();
+      await expect.element(tester.saveIcon).toBeInTheDocument();
 
       // save again
-      tester.saveButton.click();
+      await tester.saveButton.click();
+      tester.fixture.detectChanges();
 
-      expect(tester.saveButton.textContent).toContain('Save');
-      expect(tester.saveButton.disabled).toBe(true);
-      expect(tester.spinner).not.toBeNull();
-      expect(tester.saveIcon).toBeNull();
+      await expect.element(tester.saveButton).toHaveTextContent('Save');
+      await expect.element(tester.saveButton).toBeDisabled();
+      await expect.element(tester.spinner).toBeInTheDocument();
+      await expect.element(tester.saveIcon).not.toBeInTheDocument();
 
-      vi.advanceTimersByTime(500);
-      await tester.change();
-      expect(tester.saveButton.disabled).toBe(false);
-      expect(tester.spinner).toBeNull();
-      expect(tester.saveIcon).not.toBeNull();
+      await vi.advanceTimersByTimeAsync(500);
+      tester.fixture.detectChanges();
+      await expect.element(tester.saveButton).not.toBeDisabled();
+      await expect.element(tester.spinner).not.toBeInTheDocument();
+      await expect.element(tester.saveIcon).toBeInTheDocument();
     });
 
     test('should disable the button when forceDisabled', async () => {
-      tester.componentInstance.forceDisabled = true;
-      await tester.change();
+      tester.fixture.componentInstance.forceDisabled = true;
+      tester.fixture.detectChanges();
 
-      expect(tester.saveButton.disabled).toBe(true);
+      await expect.element(tester.saveButton).toBeDisabled();
 
-      tester.componentInstance.forceDisabled = false;
-      await tester.change();
+      tester.fixture.componentInstance.forceDisabled = false;
+      tester.fixture.detectChanges();
 
-      expect(tester.saveButton.disabled).toBe(false);
+      await expect.element(tester.saveButton).not.toBeDisabled();
     });
   });
 
   describe('without form attribute and with id attribute', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
       TestBed.overrideTemplate(
         TestComponent,
         `
@@ -134,13 +126,13 @@ describe('SaveButton', () => {
       );
 
       tester = new TestComponentTester();
-      await tester.change();
+      tester.fixture.detectChanges();
     });
 
-    test('should have no form attribute and the specified id the button by default', () => {
-      expect(tester.saveButton.textContent).toContain('Save');
-      expect(tester.saveButton.attr('form')).toBeNull();
-      expect(tester.saveButton.attr('id')).toBe('foo');
+    test('should have no form attribute and the specified id the button by default', async () => {
+      await expect.element(tester.saveButton).toHaveTextContent('Save');
+      await expect.element(tester.saveButton).not.toHaveAttribute('form');
+      await expect.element(tester.saveButton).toHaveAttribute('id', 'foo');
     });
   });
 });

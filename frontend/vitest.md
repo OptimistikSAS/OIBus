@@ -724,24 +724,22 @@ await expect.element(tester.computationResolution).not.toBeInTheDocument(); // c
 
 ## Datetime Picker
 
-To test components using `OiDatetimepickerComponent`, use the `fillWithDate()` locator extension
+To test components using `DatetimepickerComponent`, use the `fillWithDate()` locator extension
 and the `toHaveDisplayedDate()` custom matcher, both defined in `src/test/test.ts`.
 The locator in the tester is just a regular `page.getByCss()` pointing at the datetimepicker element.
 
 **Before:**
 
 ```typescript
-import { TestDatetimepicker } from '../oi-ngb/datetimepicker/datetimepicker.test-utils';
-
 class MyComponentTester extends ComponentTester<TestComponent> {
   get start() {
-    return this.custom('#formula-test-start', TestDatetimepicker);
+    return this.element('#formula-test-start')!;
   }
 }
 
 // In tests:
-tester.start.fillWith('24/09/2019', '12', '30');
-expect(tester.start.displayedValue).toBe('24/09/2019 12:30:00');
+tester.start.fillWith('24/09/2019');
+expect(tester.start.value).toBe('24/09/2019');
 ```
 
 **After:**
@@ -749,7 +747,8 @@ expect(tester.start.displayedValue).toBe('24/09/2019 12:30:00');
 ```typescript
 class MyComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
-  readonly start = page.getByCss('#formula-test-start');
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly start = this.root.getByCss('#formula-test-start');
 }
 
 // In tests:

@@ -3,11 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { DefaultValidationErrorsComponent } from './default-validation-errors.component';
 import { Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ComponentTester } from 'ngx-speculoos';
 import { ValdemortModule } from 'ngx-valdemort';
 import { TranslatePipe } from '@ngx-translate/core';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { beforeEach, describe, expect, test } from 'vitest';
+import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-default-validation-errors-component',
@@ -32,42 +32,37 @@ class TestComponent {
   });
 }
 
-class TestComponentTester extends ComponentTester<TestComponent> {
-  constructor() {
-    super(TestComponent);
-  }
-
-  get age() {
-    return this.input('#age')!;
-  }
-
-  get submit() {
-    return this.button('#submit')!;
-  }
+class TestComponentTester {
+  readonly fixture = TestBed.createComponent(TestComponent);
+  readonly root = page.elementLocator(this.fixture.nativeElement);
+  readonly age = this.root.getByCss('#age');
+  readonly submit = this.root.getByRole('button', { name: 'Submit' });
 }
 
 describe('DefaultValidationErrorsComponent', () => {
   let tester: TestComponentTester;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();
-    await tester.change();
+    tester.fixture.detectChanges();
   });
 
   test('should display validation error with default message', async () => {
-    expect(tester.testElement.textContent).not.toContain('This field is required');
+    await expect.element(tester.root).not.toHaveTextContent('This field is required');
     await tester.submit.click();
-    expect(tester.testElement.textContent).toContain('This field is required');
+    tester.fixture.detectChanges();
+    await expect.element(tester.root).toHaveTextContent('This field is required');
   });
 
   test('should display validation error with i18ned labeled message', async () => {
-    expect(tester.testElement.textContent).not.toContain('Save must be at least 18');
-    await tester.age.fillWith('15');
-    await tester.age.dispatchEventOfType('blur');
-    expect(tester.testElement.textContent).toContain('Save must be at least 18');
+    await expect.element(tester.root).not.toHaveTextContent('Save must be at least 18');
+    await tester.age.fill('15');
+    tester.age.element().dispatchEvent(new Event('blur'));
+    tester.fixture.detectChanges();
+    await expect.element(tester.root).toHaveTextContent('Save must be at least 18');
   });
 });

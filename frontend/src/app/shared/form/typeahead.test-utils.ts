@@ -1,55 +1,49 @@
-import { ComponentTester, TestButton, TestInput } from 'ngx-speculoos';
-import { tick } from '@angular/core/testing';
 import { TYPEAHEAD_DEBOUNCE_TIME } from './typeahead';
-import { DebugElement } from '@angular/core';
+import { vi } from 'vitest';
+import { Locator, page } from 'vitest/browser';
 
 /**
- * A custom TestInput used to test a typeahead.
- * It takes care of triggering the change detection and necessary ticks,
- * making the test easier to write. The test still needs to be wrapped in a `fakeAsync` function though.
- * This behaves like a TestInput, so all usual custom matchers work.
+ * A custom locator helper used to test a typeahead.
+ * It takes care of advancing the debounce timer, making the test easier to write.
  *
  * You can create it directly from the selector of a typeahead input,
- * or from a TestInput.
+ * or from an existing input locator.
  */
-export class TestTypeahead extends TestInput {
-  constructor(tester: ComponentTester<any>, debugElement: DebugElement) {
-    super(tester, debugElement);
-    if (!(debugElement.nativeElement instanceof HTMLInputElement)) {
+export class TestTypeahead {
+  constructor(private readonly input: Locator) {
+    if (!(input.element() instanceof HTMLInputElement)) {
       throw new Error('A test typeahead must wrap an input, but the provided element is not one');
     }
   }
 
   /**
    * Fills the input with the given text,
-   * then ticks for the necessary debounce time.
-   * It returns the TypeaheadTEster,
+   * then advances fake timers for the necessary debounce time.
+   * It returns the TypeaheadTester,
    * allowing to chain another method like `tester.myInput.fillWith('test').selectLabel('test')`.
    */
-  override fillWith(text: string) {
-    super.fillWith(text);
-    tick(TYPEAHEAD_DEBOUNCE_TIME);
-    return this.tester.change();
+  async fillWith(text: string) {
+    await this.input.fill(text);
+    await vi.advanceTimersByTimeAsync(TYPEAHEAD_DEBOUNCE_TIME);
+    return this;
   }
 
   /**
-   * Dispatches a 'Press Enter' event on the input,
-   * then ticks for the necessary debounce time.
+   * Dispatches a 'Press Enter' event on the input, then advances fake timers for the necessary debounce time.
    */
-  pressEnter() {
+  async pressEnter() {
     const pressEnterEvent = new KeyboardEvent('keydown', {
       key: 'Enter',
       bubbles: true
     });
-    this.dispatchEvent(pressEnterEvent);
-    tick(TYPEAHEAD_DEBOUNCE_TIME);
-    this.tester.change();
+    this.input.element().dispatchEvent(pressEnterEvent);
+    await vi.advanceTimersByTimeAsync(TYPEAHEAD_DEBOUNCE_TIME);
   }
 
   /**
    * Closes the selections by pressing escape
    */
-  closeSelection() {
+  async closeSelection() {
     const escape = {
       key: 'Escape',
       code: 'Escape',
@@ -59,17 +53,16 @@ export class TestTypeahead extends TestInput {
     };
     const escapeDownEvent = new KeyboardEvent('keydown', escape);
     const escapeUpEvent = new KeyboardEvent('keyup', escape);
-    this.dispatchEvent(escapeDownEvent);
-    this.dispatchEvent(escapeUpEvent);
-    tick(TYPEAHEAD_DEBOUNCE_TIME);
-    this.tester.change();
+    this.input.element().dispatchEvent(escapeDownEvent);
+    this.input.element().dispatchEvent(escapeUpEvent);
+    await vi.advanceTimersByTimeAsync(TYPEAHEAD_DEBOUNCE_TIME);
   }
 
   /**
-   * Returns the typeahead suggestions (as TestButtons)
+   * Returns the typeahead suggestions.
    */
-  get suggestions(): Array<TestButton> {
-    return this.elements('ngb-typeahead-window.dropdown-menu button.dropdown-item') as Array<TestButton>;
+  get suggestions(): Locator {
+    return page.getByRole('option');
   }
 
   /**
@@ -77,7 +70,7 @@ export class TestTypeahead extends TestInput {
    * making it easy to assert what are the suggestions displayed.
    */
   get suggestionLabels(): Array<string> {
-    return this.suggestions.map(suggestion => suggestion.textContent!);
+    return this.suggestionElements.map(suggestion => suggestion.textContent!);
   }
 
   /**
@@ -85,14 +78,13 @@ export class TestTypeahead extends TestInput {
    * or throws if it cannot be found.
    * Triggers the tick and change detection.
    */
-  selectIndex(index: number) {
-    const suggestions = this.suggestions;
+  async selectIndex(index: number) {
+    const suggestions = this.suggestionElements;
     if (index >= suggestions.length) {
       throw new Error(`Trying to select suggestion with index ${index} but there are only ${suggestions.length} suggestions`);
     }
-    suggestions[index].click();
-    tick(TYPEAHEAD_DEBOUNCE_TIME);
-    this.tester.change();
+    await this.suggestions.nth(index).click();
+    await vi.advanceTimersByTimeAsync(TYPEAHEAD_DEBOUNCE_TIME);
   }
 
   /**
@@ -100,15 +92,18 @@ export class TestTypeahead extends TestInput {
    * or throws if it cannot be find.
    * Triggers the tick and change detection.
    */
-  selectLabel(label: string) {
-    const suggestion = this.suggestions.find(availableSuggestion => availableSuggestion.textContent === label);
-    if (!suggestion) {
+  async selectLabel(label: string) {
+    const index = this.suggestionElements.findIndex(availableSuggestion => availableSuggestion.textContent === label);
+    if (index === -1) {
       throw new Error(
         `Trying to select suggestion with label ${label} but the only suggestions available are: ${this.suggestionLabels.join(', ')}`
       );
     }
-    suggestion.click();
-    tick(TYPEAHEAD_DEBOUNCE_TIME);
-    return this.tester.change();
+    await this.suggestions.nth(index).click();
+    await vi.advanceTimersByTimeAsync(TYPEAHEAD_DEBOUNCE_TIME);
+  }
+
+  private get suggestionElements() {
+    return this.suggestions.elements();
   }
 }
