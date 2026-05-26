@@ -301,13 +301,15 @@ end;
 function CreateLauncherFile: Boolean;
 var
   FileContent: string;
-begin;
-    FileContent := '@echo off' + #13#10
-          + 'echo Stopping ' + FinalServiceName + ' service...' + #13#10
-          + 'nssm.exe stop "' + FinalServiceName + '"' + #13#10
-          + '"' + ExpandConstant('{app}') + '\oibus-launcher.exe" --config "' + FinalDataDir + '"' + #13#10
-          + 'pause';
-    Result := SaveStringToFile(ExpandConstant('{app}') + '\go.bat', FileContent, False);
+  AppDir: string;
+begin
+  AppDir := ExpandConstant('{app}');
+  FileContent := '@echo off' + #13#10
+        + 'echo Stopping ' + FinalServiceName + ' service...' + #13#10
+        + '"' + AppDir + '\nssm.exe" stop "' + FinalServiceName + '"' + #13#10
+        + '"' + AppDir + '\oibus-launcher.exe" --config "' + FinalDataDir + '"' + #13#10
+        + 'pause';
+  Result := SaveStringToFile(AppDir + '\go.bat', FileContent, False);
 end;
 
 function DeleteDataDir(DirToDelete: string): Boolean;
@@ -362,8 +364,9 @@ begin
         end;
      end;
 
-     ExecCmd(ExpandConstant('{cmd}'), '/C "sc.exe stop "' + LegacySvcName + '" >nul 2>&1"', '');
+     ExecCmd('sc.exe', 'stop "' + LegacySvcName + '"', '');
      Sleep(1000);
+     ExecCmd('sc.exe', 'delete "' + LegacySvcName + '"', '');
   end;
 
   if CurStep = ssPostInstall then
@@ -406,7 +409,7 @@ begin
     end;
 
     // 2. Stop Service
-    ExecCmd(ExpandConstant('{cmd}'), '/C "sc.exe stop "' + SvcName + '" >nul 2>&1"', '');
+    ExecCmd('sc.exe', 'stop "' + SvcName + '"', '');
     Sleep(1000);
 
     // 3. Data Removal
@@ -421,6 +424,6 @@ begin
     end;
 
     // 4. Delete Service
-    ExecCmd(ExpandConstant('{cmd}'), '/C "sc.exe delete "' + SvcName + '" >nul 2>&1"', '');
+    ExecCmd('sc.exe', 'delete "' + SvcName + '"', '');
   end;
 end;

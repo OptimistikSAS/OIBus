@@ -10,12 +10,12 @@ if NOT %errorLevel% == 0 (
     goto EOF
 )
 
-set n="OIBus"
+set SERVICE_NAME="OIBus"
 
 :PARSE_PARAMETERS
 if "%~1"=="" goto PARSE_PARAMETERS_DONE
 if "%~1"=="-n" (
-    set "n=%~2"
+    set "SERVICE_NAME=%~2"
     shift
     shift
     goto PARSE_PARAMETERS
@@ -25,9 +25,9 @@ goto PARSE_PARAMETERS
 :PARSE_PARAMETERS_DONE
 
 
-echo Stopping "%n%" service...
-nssm.exe stop "%n%"
+echo Stopping "%SERVICE_NAME%" service...
+nssm.exe stop "%SERVICE_NAME%"
 
-echo Removing "%n%" service...
-nssm.exe remove "%n%" confirm
+echo Removing "%SERVICE_NAME%" service...
+nssm.exe remove "%SERVICE_NAME%" confirm
 pause
