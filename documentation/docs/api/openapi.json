@@ -6633,28 +6633,24 @@
 			},
 			"SouthOPCSettings": {
 				"properties": {
-					"agentUrl": {
-						"type": "string"
-					},
-					"retryInterval": {
-						"type": "number",
-						"format": "double"
-					},
 					"host": {
 						"type": "string"
 					},
 					"serverName": {
 						"type": "string"
 					},
+					"retryInterval": {
+						"type": "number",
+						"format": "double"
+					},
 					"mode": {
 						"$ref": "#/components/schemas/SouthOPCSettingsMode"
 					}
 				},
 				"required": [
-					"agentUrl",
-					"retryInterval",
 					"host",
 					"serverName",
+					"retryInterval",
 					"mode"
 				],
 				"type": "object",

@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "OIBus: full backend",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/backend",
+      "program": "${workspaceFolder}/backend/dist/backend/src/index.js",
+      "args": ["--config", "${workspaceFolder}/data-folder"],
+      "console": "integratedTerminal",
+      "outFiles": [
+        "${workspaceFolder}/backend/dist/**/*.js",
+        "${workspaceFolder}/backend/node_modules/@optimistik/opc-classic/dist/**/*.{js,cjs}"
+      ],
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**",
+        "${workspaceFolder}/backend/node_modules/@optimistik/opc-classic/**"
+      ],
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"],
+      "preLaunchTask": "build-oibus-backend",
+      "env": {
+        "OPC_CLASSIC_AGENT_PATH": "${workspaceFolder}/../../source/repos/OptimistikSAS/opc-classic/dotnet/OpcAgent/bin/Debug/net8.0-windows/OpcAgent.exe",
+        "OPC_AGENT_WAIT_FOR_DEBUGGER": "1"
+      }
+    },
+    {
+      "name": "Attach to OpcAgent.exe (by name)",
+      "type": "coreclr",
+      "request": "attach",
+      "processName": "OpcAgent.exe"
+    },
+    {
+      "name": "Attach to OpcAgent.exe (pick from list)",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickProcess}"
+    }
+  ]
+}

@@ -2,11 +2,10 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
-import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import type { SouthItemSettings, SouthOPCItemSettings, SouthOPCSettings } from '../../../shared/model/south-settings.model';
@@ -15,14 +14,63 @@ import type SouthOpcClass from './south-opc';
 
 const nodeRequire = createRequire(import.meta.url);
 
+// Test doubles for @optimistik/opc-classic. The actual mock.fn instances live
+// in module-level `agentFns` / `clientFns` so they survive across the multiple
+// OpcClient instances the connector creates (e.g. testItem spawns a temp one).
+// Class fields delegate to these so replacing clientFns.hdaRead in a test
+// affects both current and future instances.
+type ValuesHandler = { onValues: (values: Array<unknown>) => void | Promise<void> };
+
+const agentFns = {
+  start: mock.fn(() => undefined),
+  stop: mock.fn(async () => 0 as number | null)
+};
+
+const clientFns = {
+  connect: mock.fn(async (_p: unknown) => ({ connected: true as const })),
+  disconnect: mock.fn(async (_id: string) => ({ disconnected: true as const })),
+  status: mock.fn(async (_id: string) => ({
+    vendorInfo: 'V',
+    productVersion: '1.0',
+    currentTime: '2024-01-01T00:00:00.000Z',
+    startTime: '2024-01-01T00:00:00.000Z',
+    serverState: 'Running',
+    statusInfo: 'ok'
+  })),
+  daRead: mock.fn(async (_p: unknown, _h: ValuesHandler) => undefined),
+  hdaRead: mock.fn(async (_p: unknown, _h: ValuesHandler) => undefined)
+};
+
+function resetMocks() {
+  for (const fn of Object.values(agentFns)) fn.mock.resetCalls();
+  for (const fn of Object.values(clientFns)) fn.mock.resetCalls();
+}
+
+class FakeOpcAgent {
+  start = () => agentFns.start();
+  stop = () => agentFns.stop();
+}
+
+class FakeOpcClient {
+  connect = (p: unknown) => clientFns.connect(p);
+  disconnect = (id: string) => clientFns.disconnect(id);
+  status = (id: string) => clientFns.status(id);
+  daRead = (p: unknown, h: ValuesHandler) => clientFns.daRead(p, h);
+  hdaRead = (p: unknown, h: ValuesHandler) => clientFns.hdaRead(p, h);
+}
+
 describe('South OPC', () => {
   let SouthOpc: typeof SouthOpcClass;
   let south: SouthOpcClass;
 
   const logger = new PinoLogger();
   const addContentCallback = mock.fn(
-    async (_southId: string, _data: OIBusContent, _queryTime: string, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
-      undefined
+    async (
+      _southId: string,
+      _data: OIBusContent,
+      _queryTime: string,
+      _items: Array<SouthConnectorItemEntity<SouthItemSettings>>
+    ) => undefined
   );
   const southCacheRepository = new SouthCacheRepositoryMock() as unknown as SouthCacheRepository;
   let southCacheService: SouthCacheServiceMock;
@@ -34,13 +82,9 @@ describe('South OPC', () => {
     validateCronExpression: mock.fn(() => ({ expression: '' }))
   };
 
-  const httpRequestExports = {
-    HTTPRequest: mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200))
-  };
-
   before(() => {
     mockModule(nodeRequire, '../../service/utils', utilsExports);
-    mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
+    mockModule(nodeRequire, '@optimistik/opc-classic', { OpcAgent: FakeOpcAgent, OpcClient: FakeOpcClient });
     mockModule(nodeRequire, '../../service/south-cache.service', {
       __esModule: true,
       default: function () {
@@ -57,7 +101,6 @@ describe('South OPC', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      agentUrl: 'http://localhost:2224',
       retryInterval: 1000,
       host: 'localhost',
       serverName: 'Matrikon.OPC.Simulation',
@@ -122,8 +165,8 @@ describe('South OPC', () => {
 
   beforeEach(() => {
     southCacheService = new SouthCacheServiceMock();
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     addContentCallback.mock.resetCalls();
+    resetMocks();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthOpc(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
   });
@@ -133,305 +176,209 @@ describe('South OPC', () => {
     mock.restoreAll();
   });
 
-  it('should properly connect to remote agent and disconnect', async () => {
+  it('connects through the spawned agent and disconnects cleanly', async () => {
     await south.connect();
 
-    const connectCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(connectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect`
-    });
-    assert.deepStrictEqual(connectCall.arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({ host: configuration.settings.host, serverName: configuration.settings.serverName, mode: 'hda' }),
-      headers: { 'Content-Type': 'application/json' }
+    assert.strictEqual(agentFns.start.mock.calls.length, 1);
+    assert.strictEqual(clientFns.connect.mock.calls.length, 1);
+    assert.deepStrictEqual(clientFns.connect.mock.calls[0].arguments[0], {
+      connectorId: configuration.id,
+      host: configuration.settings.host,
+      serverName: configuration.settings.serverName,
+      mode: 'hda'
     });
 
     await south.disconnect();
-    const disconnectCall = httpRequestExports.HTTPRequest.mock.calls[1];
-    assertContains(disconnectCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/disconnect`
-    });
-    assert.deepStrictEqual(disconnectCall.arguments[1], { method: 'DELETE' });
+    assert.strictEqual(clientFns.disconnect.mock.calls.length, 1);
+    assert.strictEqual(clientFns.disconnect.mock.calls[0].arguments[0], configuration.id);
+    assert.strictEqual(agentFns.stop.mock.calls.length, 1);
   });
 
-  it('should properly reconnect when connection fails', async () => {
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) throw new Error('connection failed');
-      return createMockResponse(200);
+  it('reconnects when the initial connect call fails', async () => {
+    let attempt = 0;
+    const originalConnect = clientFns.connect;
+    clientFns.connect = mock.fn(async (_p: unknown) => {
+      attempt++;
+      if (attempt === 1) throw new Error('connect failed');
+      return { connected: true as const };
     });
 
-    await south.connect();
-
-    assertContains(httpRequestExports.HTTPRequest.mock.calls[0].arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/connect`
-    });
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
-
-    mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
+    try {
+      await south.connect();
+      assert.strictEqual(attempt, 1);
+      mock.timers.tick(configuration.settings.retryInterval);
+      // After the timer fires the bound connect runs again.
+      await new Promise(r => setImmediate(r));
+      assert.strictEqual(attempt, 2);
+    } finally {
+      clientFns.connect = originalConnect;
+    }
   });
 
-  it('should not reconnect when disconnecting', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      throw new Error('connection failed');
+  it('does not reconnect when disconnecting', async () => {
+    const originalConnect = clientFns.connect;
+    clientFns.connect = mock.fn(async () => {
+      throw new Error('connect failed');
     });
     (south as unknown as Record<string, unknown>)['disconnecting'] = true;
-    const disconnectMock1 = mock.fn(async () => undefined);
-    south.disconnect = disconnectMock1;
+    const disconnectSpy = mock.fn(async () => undefined);
+    south.disconnect = disconnectSpy;
 
-    await south.connect();
-
-    assert.strictEqual(disconnectMock1.mock.calls.length, 0);
-    // no timer should be set — tick confirms no retry
-    mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
+    try {
+      await south.connect();
+      assert.strictEqual(disconnectSpy.mock.calls.length, 0);
+      mock.timers.tick(configuration.settings.retryInterval);
+    } finally {
+      clientFns.connect = originalConnect;
+    }
   });
 
-  it('should properly clear reconnect timeout on disconnect when not connected', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      throw new Error('connection failed');
-    });
-
-    await south.connect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
-
-    await south.disconnect();
-    // After disconnect, timer should be cleared — advancing time must NOT trigger another call
-    mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
-    assert.ok(
-      logger.error.mock.calls.some(
-        (c: { arguments: Array<unknown> }) =>
-          (c.arguments[0] as string).includes('Error while sending connection HTTP request') &&
-          (c.arguments[0] as string).includes(`${configuration.settings.retryInterval} ms`)
-      )
-    );
-  });
-
-  it('should properly clear reconnect timeout on disconnect when connected', async () => {
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) return createMockResponse(200);
-      throw new Error('disconnection failed');
-    });
-
-    await south.connect();
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 1);
-
-    await south.disconnect();
-    // disconnect sends its own request (which fails), no clearTimeout path taken
-    mock.timers.tick(configuration.settings.retryInterval);
-    assert.strictEqual(httpRequestExports.HTTPRequest.mock.calls.length, 2);
-    assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<unknown> }) =>
-        (c.arguments[0] as string).includes('Error while sending disconnection HTTP request')
-      )
-    );
-  });
-
-  it('should test connection successfully', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
+  it('testConnection spawns a temp agent, calls status, then tears down', async () => {
     await assert.doesNotReject(south.testConnection());
+
+    assert.strictEqual(clientFns.connect.mock.calls.length, 1);
+    assert.strictEqual((clientFns.connect.mock.calls[0].arguments[0] as { connectorId: string }).connectorId, `${configuration.id}-test`);
+    assert.strictEqual(clientFns.status.mock.calls.length, 1);
+    assert.strictEqual(clientFns.disconnect.mock.calls.length, 1);
+    assert.strictEqual(agentFns.stop.mock.calls.length, 1);
   });
 
-  it('should test connection fail', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(400, 'bad request'));
-    await assert.rejects(
-      south.testConnection(),
-      new Error('Error occurred when sending connect command to remote agent with status 400. bad request')
-    );
-
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(500, 'another error'));
-    await assert.rejects(south.testConnection(), new Error('Error occurred when sending connect command to remote agent with status 500'));
+  it('testConnection surfaces connect failures', async () => {
+    const originalConnect = clientFns.connect;
+    clientFns.connect = mock.fn(async () => {
+      throw new Error('server not running');
+    });
+    try {
+      await assert.rejects(south.testConnection(), /server not running/);
+    } finally {
+      clientFns.connect = originalConnect;
+    }
   });
 
-  it('should get data from Remote agent', async () => {
+  it('historyQuery groups items by aggregate+resampling and streams batches via addContent', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    const addContentMock = mock.method(
-      south,
-      'addContent',
-      mock.fn(async () => undefined)
-    );
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1)
-        return createMockResponse(200, {
-          recordCount: 2,
-          content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-          maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-        });
-      if (callCount === 2) return createMockResponse(200, { recordCount: 0, content: [], maxInstantRetrieved: '2020-03-01T00:00:00.000Z' });
-      return createMockResponse(200, {
-        recordCount: 1,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }],
-        maxInstantRetrieved: '2020-02-01T00:00:00.000Z'
-      });
+    const addContentMock = mock.method(south, 'addContent', mock.fn(async () => undefined));
+
+    // First group (aggregate=raw, resampling=none) → two items, one batch of values.
+    // Second group (aggregate=average, resampling=10s) → one item, no values.
+    clientFns.hdaRead = mock.fn(async (_p: unknown, h: ValuesHandler) => {
+      const params = _p as { aggregateId: number };
+      if (params.aggregateId === 0) {
+        await h.onValues([
+          { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', value: '1', quality: '0x0' },
+          { pointId: 'item2', timestamp: '2020-03-01T00:00:00.000Z', value: '2', quality: '0x0' }
+        ]);
+      }
     });
 
+    await south.connect();
     const result = await south.historyQuery(configuration.items, startTime, endTime);
 
-    const firstCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(firstCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}/read`
-    });
-    assert.deepStrictEqual(firstCall.arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda',
-        maxReadValues: 3600,
-        intervalReadDelay: 200,
-        aggregate: 'raw',
-        resampling: 'none',
-        startTime,
-        endTime,
-        items: [
-          { name: 'item1', nodeId: 'ns=3;s=Random' },
-          { name: 'item2', nodeId: 'ns=3;s=Counter' }
-        ]
-      }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    // Two distinct group calls.
+    const hdaCalls = clientFns.hdaRead.mock.calls;
+    assert.strictEqual(hdaCalls.length, 2);
 
-    const thirdGroupCall = httpRequestExports.HTTPRequest.mock.calls[1];
-    assert.deepStrictEqual(JSON.parse((thirdGroupCall.arguments[1] as { body: string }).body).items, [
-      { name: 'item3', nodeId: 'ns=3;s=Triangle' }
-    ]);
-
-    assert.deepStrictEqual(result, {
-      trackedInstant: '2020-03-01T00:00:00.001Z',
-      value: { content: [], maxInstantRetrieved: '2020-03-01T00:00:00.000Z', recordCount: 0 }
-    });
-    assert.strictEqual(addContentMock.mock.calls.length, 1);
-    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
-      type: 'time-values',
-      content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-    });
-    assert.strictEqual(addContentMock.mock.calls[0].arguments[1], testData.constants.dates.FAKE_NOW);
-    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0], configuration.items[1]]);
-
-    assert.ok(
-      logger.debug.mock.calls.some((c: { arguments: Array<unknown> }) => c.arguments[0] === 'No result found. Request done in 0 ms')
-    );
-
-    const noUpdateInstant = await south.historyQuery([configuration.items[0]], result!.trackedInstant!, endTime);
-    assert.deepStrictEqual(noUpdateInstant, {
-      trackedInstant: null,
-      value: { content: [{ timestamp: '2020-02-01T00:00:00.000Z' }], maxInstantRetrieved: '2020-02-01T00:00:00.000Z', recordCount: 1 }
-    });
-  });
-
-  it('should manage query error', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    let callCount = 0;
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      callCount++;
-      if (callCount === 1) return createMockResponse(400, 'bad request');
-      return createMockResponse(500);
-    });
-    south.disconnect = mock.fn(async () => undefined);
-    const connectMock = mock.fn(async () => undefined);
-    south.connect = connectMock;
-
-    await assert.rejects(
-      south.historyQuery(configuration.items, startTime, endTime),
-      new Error('Error occurred when querying remote agent with status 400: bad request')
-    );
-    assert.ok(
-      logger.error.mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error occurred when querying remote agent with status 400: bad request'
-      )
-    );
-
-    connectMock.mock.resetCalls();
-    (south as unknown as Record<string, unknown>)['disconnecting'] = true;
-    await assert.rejects(
-      south.historyQuery(configuration.items, startTime, endTime),
-      new Error('Error occurred when querying remote agent with status 500')
-    );
-    assert.strictEqual(connectMock.mock.calls.length, 0);
-  });
-
-  it('should manage fetch error', async () => {
-    const startTime = '2020-01-01T00:00:00.000Z';
-    const endTime = '2022-01-01T00:00:00.000Z';
-
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => {
-      throw new Error('bad request');
-    });
-
-    await assert.rejects(south.historyQuery(configuration.items, startTime, endTime), new Error('bad request'));
-  });
-
-  it('should test item', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) =>
-      createMockResponse(200, {
-        recordCount: 2,
-        content: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-        maxInstantRetrieved: '2020-03-01T00:00:00.000Z'
-      })
-    );
-
-    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    const fetchOptions = {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda',
-        aggregate: configuration.items[0].settings.aggregate,
-        resampling: configuration.items[0].settings.resampling,
-        startTime,
-        endTime,
-        items: [{ nodeId: configuration.items[0].settings.nodeId, name: configuration.items[0].name }]
-      }),
-      headers: { 'Content-Type': 'application/json' }
+    // Aggregate string → native int translation happens in the connector.
+    const firstParams = hdaCalls[0].arguments[0] as {
+      aggregateId: number;
+      resamplingInterval: number;
+      items: Array<{ name: string }>;
     };
-
-    await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
-
-    const testCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(testCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`
-    });
-    assert.deepStrictEqual(testCall.arguments[1], fetchOptions);
-  });
-
-  it('should test item and throw error if bad status', async () => {
-    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(400));
-
-    await assert.rejects(
-      south.testItem(configuration.items[0], testData.south.itemTestingSettings),
-      new Error('Error occurred when sending connect command to remote agent. 400')
+    assert.strictEqual(firstParams.aggregateId, 0); // 'raw'
+    assert.strictEqual(firstParams.resamplingInterval, 0); // 'none'
+    assert.deepStrictEqual(
+      firstParams.items.map(i => i.name),
+      ['item1', 'item2']
     );
 
-    const { startTime, endTime } = testData.south.itemTestingSettings.history!;
-    const testCall = httpRequestExports.HTTPRequest.mock.calls[0];
-    assertContains(testCall.arguments[0] as object, {
-      href: `${configuration.settings.agentUrl}/api/opc/${configuration.id}-test/read`
+    const secondParams = hdaCalls[1].arguments[0] as {
+      aggregateId: number;
+      resamplingInterval: number;
+      items: Array<{ name: string }>;
+    };
+    assert.strictEqual(secondParams.aggregateId, 3); // 'average'
+    assert.strictEqual(secondParams.resamplingInterval, 10); // '10s'
+
+    // addContent was called once for the non-empty batch.
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    const addArgs = addContentMock.mock.calls[0].arguments as [OIBusContent, string, unknown];
+    assert.strictEqual((addArgs[0] as { type: string }).type, 'time-values');
+    assert.strictEqual(addArgs[1], testData.constants.dates.FAKE_NOW);
+
+    // trackedInstant = max timestamp + 1ms.
+    assert.strictEqual(result.trackedInstant, '2020-03-01T00:00:00.001Z');
+    assert.deepStrictEqual(result.value, { recordCount: 2, maxInstantRetrieved: '2020-03-01T00:00:00.000Z' });
+  });
+
+  it('historyQuery in DA mode dispatches daRead with all items in one batch', async () => {
+    const daConfiguration = {
+      ...configuration,
+      settings: { ...configuration.settings, mode: 'da' as const }
+    };
+    south = new SouthOpc(daConfiguration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    const addContentMock = mock.method(south, 'addContent', mock.fn(async () => undefined));
+    clientFns.daRead = mock.fn(async (_p: unknown, h: ValuesHandler) => {
+      await h.onValues([{ pointId: 'item1', timestamp: '2024-06-01T00:00:00.000Z', value: '42', quality: '0x0' }]);
     });
-    assert.deepStrictEqual(testCall.arguments[1], {
-      method: 'PUT',
-      body: JSON.stringify({
-        host: configuration.settings.host,
-        serverName: configuration.settings.serverName,
-        mode: 'hda',
-        aggregate: configuration.items[0].settings.aggregate,
-        resampling: configuration.items[0].settings.resampling,
-        startTime,
-        endTime,
-        items: [{ nodeId: configuration.items[0].settings.nodeId, name: configuration.items[0].name }]
-      }),
-      headers: { 'Content-Type': 'application/json' }
+
+    await south.connect();
+    const result = await south.historyQuery(daConfiguration.items, '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z');
+
+    assert.strictEqual(clientFns.daRead.mock.calls.length, 1);
+    assert.strictEqual(clientFns.hdaRead.mock.calls.length, 0);
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
+    assert.strictEqual(result.trackedInstant, '2024-06-01T00:00:00.001Z');
+  });
+
+  it('historyQuery surfaces errors and reconnects', async () => {
+    await south.connect();
+    clientFns.hdaRead = mock.fn(async () => {
+      throw new Error('hda read blew up');
     });
+    const disconnectSpy = mock.method(south, 'disconnect', mock.fn(async () => undefined));
+    const connectSpy = mock.method(south, 'connect', mock.fn(async () => undefined));
+
+    await assert.rejects(south.historyQuery(configuration.items, '2020-01-01T00:00:00.000Z', '2022-01-01T00:00:00.000Z'), /hda read blew up/);
+    assert.ok(disconnectSpy.mock.calls.length >= 1);
+    assert.ok(connectSpy.mock.calls.length >= 1);
+  });
+
+  it('testItem in HDA mode reads one item and returns the collected values', async () => {
+    clientFns.hdaRead = mock.fn(async (_p: unknown, h: ValuesHandler) => {
+      await h.onValues([
+        { pointId: 'item1', timestamp: '2020-02-01T00:00:00.000Z', value: '1', quality: '0x0' },
+        { pointId: 'item1', timestamp: '2020-03-01T00:00:00.000Z', value: '2', quality: '0x0' }
+      ]);
+    });
+
+    const content = await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+
+    assert.strictEqual(clientFns.hdaRead.mock.calls.length, 1);
+    const params = clientFns.hdaRead.mock.calls[0].arguments[0] as { connectorId: string; aggregateId: number };
+    assert.strictEqual(params.connectorId, `${configuration.id}-test`);
+    assert.strictEqual(params.aggregateId, 0);
+
+    assert.strictEqual(content.type, 'time-values');
+    if (content.type === 'time-values') {
+      assert.strictEqual(content.content.length, 2);
+    }
+  });
+
+  it('testItem in DA mode dispatches daRead instead of hdaRead', async () => {
+    const daConfig = { ...configuration, settings: { ...configuration.settings, mode: 'da' as const } };
+    south = new SouthOpc(daConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+
+    clientFns.daRead = mock.fn(async (_p: unknown, h: ValuesHandler) => {
+      await h.onValues([{ pointId: 'item1', timestamp: '2024-06-01T00:00:00.000Z', value: '42', quality: '0x0' }]);
+    });
+
+    const content = await south.testItem(daConfig.items[0], testData.south.itemTestingSettings);
+
+    assert.strictEqual(clientFns.daRead.mock.calls.length, 1);
+    assert.strictEqual(clientFns.hdaRead.mock.calls.length, 0);
+    assert.strictEqual(content.type, 'time-values');
   });
 });

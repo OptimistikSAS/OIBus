@@ -22,9 +22,9 @@ const manifest: SouthConnectorManifest = {
     attributes: [
       {
         type: 'string',
-        key: 'agentUrl',
-        translationKey: 'configuration.oibus.manifest.south.opc.agent-url',
-        defaultValue: 'http://ip-adress-or-host:2224',
+        key: 'host',
+        defaultValue: 'localhost',
+        translationKey: 'configuration.oibus.manifest.south.opc.host',
         validators: [
           {
             type: 'REQUIRED',
@@ -33,8 +33,25 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 9,
-          displayInViewMode: false
+          columns: 6,
+          displayInViewMode: true
+        }
+      },
+      {
+        type: 'string',
+        key: 'serverName',
+        defaultValue: 'Matrikon.OPC.Simulation',
+        translationKey: 'configuration.oibus.manifest.south.opc.server-name',
+        validators: [
+          {
+            type: 'REQUIRED',
+            arguments: []
+          }
+        ],
+        displayProperties: {
+          row: 0,
+          columns: 4,
+          displayInViewMode: true
         }
       },
       {
@@ -59,42 +76,8 @@ const manifest: SouthConnectorManifest = {
         ],
         displayProperties: {
           row: 0,
-          columns: 3,
+          columns: 2,
           displayInViewMode: false
-        }
-      },
-      {
-        type: 'string',
-        key: 'host',
-        defaultValue: 'localhost',
-        translationKey: 'configuration.oibus.manifest.south.opc.host',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 8,
-          displayInViewMode: true
-        }
-      },
-      {
-        type: 'string',
-        key: 'serverName',
-        defaultValue: 'Matrikon.OPC.Simulation',
-        translationKey: 'configuration.oibus.manifest.south.opc.server-name',
-        validators: [
-          {
-            type: 'REQUIRED',
-            arguments: []
-          }
-        ],
-        displayProperties: {
-          row: 1,
-          columns: 4,
-          displayInViewMode: true
         }
       },
       {

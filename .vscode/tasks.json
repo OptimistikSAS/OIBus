@@ -1,0 +1,14 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-oibus-backend",
+      "type": "shell",
+      "command": "npx",
+      "args": ["tsc", "--sourceMap", "--project", "tsconfig.app.json"],
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "presentation": { "reveal": "silent", "panel": "shared" },
+      "problemMatcher": "$tsc"
+    }
+  ]
+}
