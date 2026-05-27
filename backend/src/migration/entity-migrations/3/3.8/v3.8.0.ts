@@ -583,7 +583,7 @@ async function migrateSouthMQTTItems(
         }));
 
         if (itemLinks.length > 0) {
-          await knex(NORTH_TRANSFORMERS_ITEMS_TABLE).insert(itemLinks);
+          await knex.batchInsert(NORTH_TRANSFORMERS_ITEMS_TABLE, itemLinks, 100);
         }
       }
     }
@@ -838,8 +838,8 @@ async function groupItems(knex: Knex, id: string): Promise<void> {
       }));
       const itemIdsToUpdate = group.map(item => item.item_id);
 
-      // Bulk Insert mapping rows
-      await trx(GROUP_ITEMS_TABLE).insert(groupItemsToInsert);
+      // Bulk Insert mapping rows — batchInsert avoids SQLite SQLITE_LIMIT_COMPOUND_SELECT (500) when there are many items
+      await trx.batchInsert(GROUP_ITEMS_TABLE, groupItemsToInsert, 100);
 
       // Bulk Update all associated items in a single query
       await trx(SOUTH_ITEMS_TABLE).update({ sync_with_group: 1 }).whereIn('id', itemIdsToUpdate);
