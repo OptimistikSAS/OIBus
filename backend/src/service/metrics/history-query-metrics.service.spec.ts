@@ -89,42 +89,45 @@ describe('HistoryMetricsService', () => {
     // cumulative state.
     mock.timers.tick(1000);
     assert.strictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls.length, 1);
-    assert.deepStrictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls[0].arguments, [testData.historyQueries.list[0].id, {
-      ...testData.historyQueries.metrics,
-      north: {
-        ...testData.historyQueries.metrics.north,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 888,
-        contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
-        contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
-        contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
-        contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
-        lastContentSent: 'file.csv'
-      },
-      south: {
-        ...testData.historyQueries.metrics.south,
-        lastConnection: testData.constants.dates.DATE_1,
-        lastRunStart: testData.constants.dates.DATE_2,
-        lastRunDuration: 999,
-        numberOfValuesRetrieved: testData.historyQueries.metrics.south.numberOfValuesRetrieved + 10,
-        lastValueRetrieved: {},
-        lastFileRetrieved: 'last file retrieved',
-        numberOfFilesRetrieved: testData.historyQueries.metrics.south.numberOfFilesRetrieved + 1
-      },
-      historyMetrics: {
-        ...testData.historyQueries.metrics.historyMetrics,
-        running: false,
-        intervalProgress: 25,
-        currentIntervalStart: testData.constants.dates.DATE_1,
-        currentIntervalEnd: testData.constants.dates.DATE_3,
-        currentIntervalNumber: 2,
-        numberOfIntervals: 10
+    assert.deepStrictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls[0].arguments, [
+      testData.historyQueries.list[0].id,
+      {
+        ...testData.historyQueries.metrics,
+        north: {
+          ...testData.historyQueries.metrics.north,
+          currentCacheSize: 999,
+          currentErrorSize: 888,
+          currentArchiveSize: 777,
+          lastConnection: testData.constants.dates.DATE_1,
+          lastRunStart: testData.constants.dates.DATE_2,
+          lastRunDuration: 888,
+          contentCachedSize: testData.historyQueries.metrics.north.contentCachedSize + 123,
+          contentSentSize: testData.historyQueries.metrics.north.contentSentSize + 20,
+          contentArchivedSize: testData.historyQueries.metrics.north.contentArchivedSize + 10,
+          contentErroredSize: testData.historyQueries.metrics.north.contentErroredSize + 10,
+          lastContentSent: 'file.csv'
+        },
+        south: {
+          ...testData.historyQueries.metrics.south,
+          lastConnection: testData.constants.dates.DATE_1,
+          lastRunStart: testData.constants.dates.DATE_2,
+          lastRunDuration: 999,
+          numberOfValuesRetrieved: testData.historyQueries.metrics.south.numberOfValuesRetrieved + 10,
+          lastValueRetrieved: {},
+          lastFileRetrieved: 'last file retrieved',
+          numberOfFilesRetrieved: testData.historyQueries.metrics.south.numberOfFilesRetrieved + 1
+        },
+        historyMetrics: {
+          ...testData.historyQueries.metrics.historyMetrics,
+          running: false,
+          intervalProgress: 25,
+          currentIntervalStart: testData.constants.dates.DATE_1,
+          currentIntervalEnd: testData.constants.dates.DATE_3,
+          currentIntervalNumber: 2,
+          numberOfIntervals: 10
+        }
       }
-    }]);
+    ]);
   });
 
   it('should flush pending metrics on destroy so the last state survives shutdown', () => {
@@ -159,7 +162,7 @@ describe('HistoryMetricsService', () => {
     const stream = service.stream;
     const writeSpy = mock.method(stream, 'write', () => true);
 
-    mock.timers.tick(100);      // drain the stream-init write
+    mock.timers.tick(100); // drain the stream-init write
     writeSpy.mock.resetCalls(); // start counting from 0
 
     service.updateMetrics();

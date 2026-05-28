@@ -14,7 +14,7 @@ class ConcreteTransformer extends OIBusTransformer {
     source: CacheMetadataSource,
     filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
-    const chunks: string[] = [];
+    const chunks: Array<string> = [];
     for await (const chunk of data as AsyncIterable<string | Buffer>) {
       chunks.push(typeof chunk === 'string' ? chunk : chunk.toString());
     }

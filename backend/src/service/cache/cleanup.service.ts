@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { CacheMetadata } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import NorthConnectorRepository from '../../repository/config/north-connector.repository';
 import HistoryQueryRepository from '../../repository/config/history-query.repository';

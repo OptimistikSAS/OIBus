@@ -341,8 +341,8 @@ describe('OIAnalytics Command Service', () => {
     service.refreshCommands();
     await service.refreshCommands();
     assert.ok(
-      (logger.warn.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c => c.arguments[0].startsWith('OIBus is already retrieving commands from OIAnalytics')
+      (logger.warn.mock.calls as Array<{ arguments: Array<string> }>).some(c =>
+        c.arguments[0].startsWith('OIBus is already retrieving commands from OIAnalytics')
       )
     );
     await service.refreshCommands();
@@ -387,9 +387,7 @@ describe('OIAnalytics Command Service', () => {
     await service.refreshCommands();
 
     assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c => c.arguments[0] === 'connect ECONNREFUSED 127.0.0.1:4200'
-      )
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'connect ECONNREFUSED 127.0.0.1:4200')
     );
     await service.stop();
   });
@@ -482,8 +480,7 @@ describe('OIAnalytics Command Service', () => {
     assert.ok(
       (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
         c =>
-          c.arguments[0] ===
-          `Error while acknowledging command ${command.id} of type ${command.type}: connect ECONNREFUSED 127.0.0.1:4200`
+          c.arguments[0] === `Error while acknowledging command ${command.id} of type ${command.type}: connect ECONNREFUSED 127.0.0.1:4200`
       )
     );
     assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 0);
@@ -1164,8 +1161,8 @@ describe('OIAnalytics Command Service', () => {
     await service.processNextCommand();
 
     assert.ok(
-      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(
-        c => c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200')
+      (logger.error.mock.calls as Array<{ arguments: Array<string> }>).some(c =>
+        c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200')
       )
     );
     assert.strictEqual(oIAnalyticsCommandRepository.markAsAcknowledged.mock.calls.length, 0);

@@ -2,14 +2,13 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
 import SouthConnectorRepository from '../repository/config/south-connector.repository';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
-import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../shared/model/scan-mode.model';
+import { ScanModeCommandDTO, ValidatedCronExpression } from '../../shared/model/scan-mode.model';
 import { scanModeSchema } from '../web-server/controllers/validators/oibus-validation-schema';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { validateCronExpression } from './utils';
 import DataStreamEngine from '../engine/data-stream-engine';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import { GetUserInfo } from '../../shared/model/types';
 export { toScanModeDTO } from './scan-mode-dto.utils';
 
 export default class ScanModeService {
@@ -78,4 +77,3 @@ export default class ScanModeService {
     return validateCronExpression(command.cron);
   }
 }
-

@@ -100,7 +100,7 @@ describe('applyFieldProcess', () => {
 
   it('should not allow eval to reach Node.js globals (eval is sandboxed to the vm context)', () => {
     assert.strictEqual(applyFieldProcess(0, 'eval("1 + 1")'), 2);
-    assert.throws(() => applyFieldProcess('x', "eval(\"require('fs')\")"), /Field process evaluation failed/);
+    assert.throws(() => applyFieldProcess('x', 'eval("require(\'fs\')")'), /Field process evaluation failed/);
   });
 
   // ─── Error propagation ───────────────────────────────────────────────────────

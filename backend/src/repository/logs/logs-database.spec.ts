@@ -117,7 +117,6 @@ describe('Repository with populated database', () => {
       // exposes any vacuum API.
     });
 
-
     it('should search scopes and find by id', () => {
       const result = repository.suggestScopes(testData.logs.list[2].scopeName as string);
       assert.deepStrictEqual(result, [{ scopeId: testData.logs.list[2].scopeId, scopeName: testData.logs.list[2].scopeName }]);

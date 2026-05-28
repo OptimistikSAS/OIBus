@@ -90,7 +90,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       query[queryParam.key] = queryParam.value;
     }
 
-    let headers: UndiciHeaders = {};
+    const headers: UndiciHeaders = {};
     let body: Readable | ReadStream;
 
     if (this.connector.settings.sendAs === 'file') {
