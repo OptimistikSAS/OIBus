@@ -394,6 +394,17 @@ describe('SouthFTP', () => {
       assert.strictEqual(mockFtpClient.remove.mock.calls.length, 0);
     });
 
+    it('should update modifiedTime when file already in filesPreserved', async () => {
+      const fileInfo = createMockFileInfo('test.log', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
+      const filesPreserved: Array<{ filename: string; modifiedTime: number }> = [{ filename: 'test.log', modifiedTime: 0 }];
+
+      const item = configuration.items[1]; // preserveFiles: true
+      await south.getFile(fileInfo, item, filesPreserved);
+
+      assert.strictEqual(filesPreserved.length, 1);
+      assert.ok(filesPreserved[0].modifiedTime > 0);
+    });
+
     it('should handle file removal error', async () => {
       const fileInfo = createMockFileInfo('test.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
 

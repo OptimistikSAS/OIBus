@@ -685,6 +685,19 @@ describe('SouthFTP with preserve file and compression', () => {
       )
     );
   });
+
+  it('should update modifiedTime when file already in filesPreserved', async () => {
+    const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
+    const fileInfo = { name: 'myFile1', size: 123, modifyTime: mtimeMs } as FileInfo;
+    const filesPreserved: Array<{ filename: string; modifiedTime: number }> = [{ filename: 'myFile1', modifiedTime: 0 }];
+
+    mock.method(south, 'addContent', mock.fn(async () => undefined));
+
+    await south.getFile(fileInfo, configuration.items[1], filesPreserved);
+
+    assert.strictEqual(filesPreserved.length, 1);
+    assert.strictEqual(filesPreserved[0].modifiedTime, mtimeMs);
+  });
 });
 
 describe('SouthSFTP test connection with private key', () => {
