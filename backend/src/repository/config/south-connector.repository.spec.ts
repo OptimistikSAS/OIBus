@@ -500,6 +500,36 @@ describe('SouthConnectorRepository', () => {
     assert.notStrictEqual(savedItem.group.id, 'temp_newgroup');
   });
 
+  it('should find scan mode for south', () => {
+    const result = repository.findScanModeForSouth(testData.scanMode.list[0].id);
+
+    assert.strictEqual(result.id, testData.scanMode.list[0].id);
+    assert.strictEqual(result.name, testData.scanMode.list[0].name);
+    assert.strictEqual(result.cron, testData.scanMode.list[0].cron);
+  });
+
+  it('should find groups by south id', () => {
+    const groupRepository = new SouthItemGroupRepository(database);
+    groupRepository.create(
+      {
+        name: 'Test Group For Find',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: null,
+        maxReadInterval: null,
+        readDelay: 0
+      },
+      'userTest'
+    );
+
+    const groups = repository.findGroupBySouthId(testData.south.list[0].id);
+
+    assert.ok(Array.isArray(groups));
+    assert.ok(groups.length > 0);
+    assert.ok(groups.some(g => g.name === 'Test Group For Find'));
+    assert.ok(groups.every(g => g.scanMode !== null));
+  });
+
   it('should update existing group properties when saving the south connector', () => {
     const groupRepository = new SouthItemGroupRepository(database);
 
