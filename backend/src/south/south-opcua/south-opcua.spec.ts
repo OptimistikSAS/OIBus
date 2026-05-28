@@ -21,6 +21,7 @@ import {
   SecurityPolicy,
   AttributeIds,
   UserTokenType,
+  MessageSecurityMode,
   TimestampsToReturn,
   AggregateFunction,
   HistoryReadRequest,
@@ -112,6 +113,7 @@ describe('SouthOPCUA', () => {
     SecurityPolicy,
     AttributeIds,
     UserTokenType,
+    MessageSecurityMode,
     TimestampsToReturn,
     AggregateFunction,
     HistoryReadRequest
@@ -311,6 +313,8 @@ describe('SouthOPCUA', () => {
     utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => null);
     cryptoExports.randomUUID.mock.mockImplementation(() => 'randomUUID');
     nodeOPCUAMock.resolveNodeId.mock.mockImplementation((nodeId: unknown) => nodeId);
+    nodeOPCUAMock.OPCUAClient.create.mock.resetCalls();
+    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => null as unknown);
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
     south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
@@ -478,6 +482,53 @@ describe('SouthOPCUA', () => {
     const fsMock = mock.method(fs, 'rm', async () => undefined);
     const testResult = await south.testConnection();
     assert.deepStrictEqual(testResult.items[0], { key: 'State', value: '99' });
+    fsMock.mock.restore();
+  });
+
+  it('should test connection with endpoint discovery, security policies, and aggregates', async () => {
+    const mockEndpointClient = {
+      connect: mock.fn(async () => undefined),
+      getEndpoints: mock.fn(async () => [
+        {
+          securityMode: MessageSecurityMode.None,
+          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#None',
+          userIdentityTokens: [{ tokenType: UserTokenType.Anonymous }, { tokenType: UserTokenType.UserName }]
+        },
+        {
+          securityMode: MessageSecurityMode.SignAndEncrypt,
+          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+          userIdentityTokens: [{ tokenType: UserTokenType.Certificate }]
+        }
+      ]),
+      disconnect: mock.fn(async () => undefined)
+    };
+    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => mockEndpointClient);
+
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      read: mock.fn(async () => [
+        { statusCode: { value: 0 }, value: { value: 0 } },
+        { statusCode: { value: 0 }, value: { value: 'Prosys OPC' } },
+        { statusCode: { value: 0 }, value: { value: 'OPC UA Server' } },
+        { statusCode: { value: 0 }, value: { value: '1.2.3' } },
+        { statusCode: { value: 0 }, value: { value: '1234' } }
+      ]),
+      browse: mock.fn(async () => ({
+        references: [{ displayName: { text: 'Average' } }, { displayName: { text: 'Minimum' } }]
+      }))
+    };
+    south.createSession = mock.fn(async () => mockedClient as unknown as ClientSession);
+    const fsMock = mock.method(fs, 'rm', async () => undefined);
+
+    const testResult = await south.testConnection();
+
+    assert.ok(testResult.items.some(i => i.key === 'State'));
+    assert.ok(testResult.items.some(i => i.key === 'SecurityModes'));
+    assert.ok(testResult.items.some(i => i.key === 'SecurityPolicies'));
+    assert.ok(testResult.items.some(i => i.key === 'AuthenticationModes'));
+    assert.ok(testResult.items.some(i => i.key === 'SupportedAggregates'));
+    assert.strictEqual(mockEndpointClient.connect.mock.calls.length, 1);
+    assert.strictEqual(mockEndpointClient.disconnect.mock.calls.length, 1);
     fsMock.mock.restore();
   });
 
@@ -1199,6 +1250,28 @@ describe('SouthOPCUA', () => {
             scanMode: { id: 'subscription' }
           },
           syncWithGroup: false
+        }
+      ]);
+    });
+
+    it('should filter direct items (DA mode only, non-subscription scanMode)', () => {
+      const result = south.filterDirectItems(items);
+      assert.deepStrictEqual(result, [
+        {
+          id: 'id9',
+          enabled: true,
+          settings: { mode: 'da' },
+          scanMode: testData.scanMode.list[0],
+          group: { scanMode: { id: 'subscription' } },
+          syncWithGroup: false
+        },
+        {
+          id: 'id11',
+          enabled: true,
+          settings: { mode: 'da' },
+          scanMode: testData.scanMode.list[0],
+          group: { scanMode: { id: testData.scanMode.list[0] } },
+          syncWithGroup: true
         }
       ]);
     });
