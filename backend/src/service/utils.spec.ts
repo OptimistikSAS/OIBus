@@ -1451,6 +1451,19 @@ describe('Service utils', () => {
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
     });
 
+    it('should flatten history query items with isHistoryQuery=true', () => {
+      const historyItem = {
+        id: 'hItem1',
+        connectorId: 'conn1',
+        name: 'History Item',
+        enabled: true,
+        settings: { address: '40001' }
+      } as unknown as HistoryQueryItemDTO;
+      const result = utils.itemToFlattenedCSV([historyItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute, true);
+      assert.strictEqual(result, 'csv content');
+      assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+    });
+
     it('should fall back to group historian settings when item fields are null', () => {
       const baseItem = {
         id: 'item1',

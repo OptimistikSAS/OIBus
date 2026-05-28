@@ -48,4 +48,14 @@ describe('HomeMetricsService', () => {
     assert.strictEqual(writeSpy.mock.calls.length, 1);
     assert.ok(service.stream);
   });
+
+  it('should destroy the service and remove listener', () => {
+    const stream = service.stream;
+    const offSpy = mock.method(oIBusService.stream, 'off', mock.fn());
+
+    service.destroy();
+
+    assert.ok(offSpy.mock.calls.length > 0);
+    assert.ok(stream.destroyed);
+  });
 });

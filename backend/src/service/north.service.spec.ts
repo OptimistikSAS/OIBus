@@ -683,4 +683,16 @@ describe('North Service', () => {
       name: group.name
     });
   });
+
+  it('should return oianalytics-setpoint source command as-is from transformerSourceFromCommand', () => {
+    const command = { type: 'oianalytics-setpoint' as const };
+    const result = service.transformerSourceFromCommand(command);
+    assert.deepStrictEqual(result, command);
+  });
+
+  it('should return oibus-api source command as-is from transformerSourceFromCommand', () => {
+    const command = { type: 'oibus-api' as const, dataSourceId: 'ds1' };
+    const result = service.transformerSourceFromCommand(command);
+    assert.deepStrictEqual(result, command);
+  });
 });

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
-import { DataType, StatusCodes, SecurityPolicy, AttributeIds } from 'node-opcua';
+import { DataType, StatusCodes, SecurityPolicy, AttributeIds, MessageSecurityMode, UserTokenType } from 'node-opcua';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, buildNorthEntity, seq } from '../../tests/utils/test-utils';
 import CacheServiceMock from '../../tests/__mocks__/service/cache/cache-service.mock';
@@ -31,6 +31,8 @@ const nodeOpcuaExports = {
   StatusCodes,
   SecurityPolicy,
   AttributeIds,
+  MessageSecurityMode,
+  UserTokenType,
   resolveNodeId: resolveNodeIdMock,
   OPCUACertificateManager: OPCUACertificateManagerMock
 };
@@ -119,6 +121,8 @@ describe('NorthOPCUA', () => {
 
     nodeOPCUAMock.OPCUAClient.createSession.mock.resetCalls();
     nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => mockSession);
+    nodeOPCUAMock.OPCUAClient.create.mock.resetCalls();
+    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => null as unknown);
 
     logger.trace.mock.resetCalls();
     logger.debug.mock.resetCalls();
@@ -423,6 +427,38 @@ describe('NorthOPCUA', () => {
     assert.strictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls.length, 1);
     assert.strictEqual(mockSessionClose.mock.calls.length, 1);
     assert.strictEqual(fsRmMock.mock.calls.length, 1);
+  });
+
+  it('should discover endpoints and populate security info in test connection', async () => {
+    const mockSessionClose = mock.fn(async () => undefined);
+    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: sessionReadMock }));
+
+    const mockEndpointClient = {
+      connect: mock.fn(async () => undefined),
+      getEndpoints: mock.fn(async () => [
+        {
+          securityMode: MessageSecurityMode.None,
+          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#None',
+          userIdentityTokens: [{ tokenType: UserTokenType.Anonymous }, { tokenType: UserTokenType.UserName }]
+        },
+        {
+          securityMode: MessageSecurityMode.SignAndEncrypt,
+          securityPolicyUri: 'http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256',
+          userIdentityTokens: [{ tokenType: UserTokenType.Certificate }]
+        }
+      ]),
+      disconnect: mock.fn(async () => undefined)
+    };
+    nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => mockEndpointClient as unknown);
+
+    const result = await north.testConnection();
+
+    assert.ok(result.items.some(item => item.key === 'SecurityModes'));
+    assert.ok(result.items.some(item => item.key === 'SecurityPolicies'));
+    assert.ok(result.items.some(item => item.key === 'AuthenticationModes'));
+    assert.strictEqual(mockEndpointClient.connect.mock.calls.length, 1);
+    assert.strictEqual(mockEndpointClient.getEndpoints.mock.calls.length, 1);
+    assert.strictEqual(mockEndpointClient.disconnect.mock.calls.length, 1);
   });
 
   it('should throw error if test fails', async () => {
