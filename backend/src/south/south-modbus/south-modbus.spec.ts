@@ -571,6 +571,18 @@ describe('South Modbus', () => {
     }
   });
 
+  it('should apply jbus address offset (offset = -1)', async () => {
+    utilsModbusExports.readHoldingRegister = mock.fn(async (): Promise<string> => '42');
+    (south as unknown as Record<string, unknown>)['modbusClient'] = {};
+    south.addContent = mock.fn(async (): Promise<void> => undefined);
+    configuration.settings.addressOffset = 'jbus';
+
+    await south.directQuery([configuration.items[0]]);
+
+    assert.strictEqual(utilsModbusExports.readHoldingRegister.mock.calls.length, 1);
+    configuration.settings.addressOffset = 'modbus'; // restore
+  });
+
   it('should merge non-consecutive items into one request when groupingGap covers the gap', async () => {
     // Three holding-register uint16 items at addresses 1, 3, 5 (gap of 2 between each).
     // With groupingGap = 2 all three should be merged into readHoldingRegisters(1, 5).
