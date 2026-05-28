@@ -469,6 +469,20 @@ describe('SouthODBC', () => {
       assert.strictEqual(utilsExports.formatInstant.mock.calls.length, 0);
     });
 
+    it('should test item with queryOdbcData and dateTimeFields', async () => {
+      const mockReturnValue = {
+        trackedInstant: null,
+        value: [
+          { timestamp: '2020-02-01 00:00:00.000', anotherTimestamp: 1580515200000 },
+          { timestamp: '2020-03-01 00:00:00.000', anotherTimestamp: 1583020800000 }
+        ]
+      };
+      mock.method(south, 'queryOdbcData', mock.fn(async () => mockReturnValue));
+
+      await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
+      assert.ok(utilsExports.convertDateTimeToInstant.mock.calls.length > 0);
+    });
+
     it('QueryOdbcData in case of item test', async () => {
       const odbcConnection = {
         close: mock.fn(),
