@@ -73,20 +73,23 @@ describe('NorthConnectorMetricsService', () => {
     // final cumulative state.
     mock.timers.tick(1000);
     assert.strictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls.length, 1);
-    assert.deepStrictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [testData.north.list[0].id, {
-      ...testData.north.metrics,
-      currentCacheSize: 999,
-      currentErrorSize: 888,
-      currentArchiveSize: 777,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 888,
-      contentCachedSize: testData.north.metrics.contentCachedSize + 123,
-      contentSentSize: testData.north.metrics.contentSentSize + 20,
-      contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
-      contentErroredSize: testData.north.metrics.contentErroredSize + 10,
-      lastContentSent: 'file.csv'
-    }]);
+    assert.deepStrictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [
+      testData.north.list[0].id,
+      {
+        ...testData.north.metrics,
+        currentCacheSize: 999,
+        currentErrorSize: 888,
+        currentArchiveSize: 777,
+        lastConnection: testData.constants.dates.DATE_1,
+        lastRunStart: testData.constants.dates.DATE_2,
+        lastRunDuration: 888,
+        contentCachedSize: testData.north.metrics.contentCachedSize + 123,
+        contentSentSize: testData.north.metrics.contentSentSize + 20,
+        contentArchivedSize: testData.north.metrics.contentArchivedSize + 10,
+        contentErroredSize: testData.north.metrics.contentErroredSize + 10,
+        lastContentSent: 'file.csv'
+      }
+    ]);
   });
 
   it('should flush pending metrics on destroy so the last state survives shutdown', () => {
@@ -120,7 +123,7 @@ describe('NorthConnectorMetricsService', () => {
   it('should debounce stream writes alongside DB writes', () => {
     const stream = service.stream;
     const writeSpy = mock.method(stream, 'write', () => true);
-    mock.timers.tick(100);      // drain the stream-init write
+    mock.timers.tick(100); // drain the stream-init write
     writeSpy.mock.resetCalls(); // start counting from 0
 
     service.updateMetrics();

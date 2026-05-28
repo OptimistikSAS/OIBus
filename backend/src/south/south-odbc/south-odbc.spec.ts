@@ -477,7 +477,11 @@ describe('SouthODBC', () => {
           { timestamp: '2020-03-01 00:00:00.000', anotherTimestamp: 1583020800000 }
         ]
       };
-      mock.method(south, 'queryOdbcData', mock.fn(async () => mockReturnValue));
+      mock.method(
+        south,
+        'queryOdbcData',
+        mock.fn(async () => mockReturnValue)
+      );
 
       await south.testItem(configuration.items[0], testData.south.itemTestingSettings);
       assert.ok(utilsExports.convertDateTimeToInstant.mock.calls.length > 0);

@@ -6,7 +6,6 @@ import { DateTime } from 'luxon';
 
 import LoggerMock from '../../tests/__mocks__/service/logger/logger.mock';
 import testData from '../../tests/utils/test-data';
-import { CacheMetadata } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
@@ -18,15 +17,6 @@ import HistoryQueryRepositoryMock from '../../tests/__mocks__/repository/config/
 import DataStreamEngineMock from '../../tests/__mocks__/data-stream-engine.mock';
 import OianalyticsMessageRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-message-repository.mock';
 import OianalyticsCommandRepositoryMock from '../../tests/__mocks__/repository/config/oianalytics-command-repository.mock';
-
-const createMetadata = (date: string): string =>
-  JSON.stringify({
-    contentFile: 'file-123.json',
-    contentSize: 100,
-    numberOfElement: 1,
-    createdAt: date,
-    contentType: 'any'
-  } as CacheMetadata);
 
 describe('CleanupService', () => {
   let service: CleanupService;
@@ -307,7 +297,11 @@ describe('CleanupService', () => {
       );
 
       const oldMtime = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ hours: 25 }).toMillis();
-      mock.method(fs, 'stat', mock.fn(async () => ({ mtimeMs: oldMtime })));
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async () => ({ mtimeMs: oldMtime }))
+      );
 
       await (priv()['cleanHistoryQueries'] as unknown as () => Promise<void>)();
 
@@ -325,18 +319,26 @@ describe('CleanupService', () => {
 
   describe('retrieveFilesToDelete (Low Level)', () => {
     it('should skip files whose stat fails (e.g. raced with manual removal) without breaking the scan', async () => {
-      mock.method(fs, 'readdir', mock.fn(async () => ['vanished.json', 'kept.json']));
-      mock.method(fs, 'stat', mock.fn(async (p: unknown) => {
-        if (String(p).includes('vanished')) throw new Error('ENOENT');
-        return { mtimeMs: DateTime.fromISO(testData.constants.dates.FAKE_NOW).toMillis() };
-      }));
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => ['vanished.json', 'kept.json'])
+      );
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async (p: unknown) => {
+          if (String(p).includes('vanished')) throw new Error('ENOENT');
+          return { mtimeMs: DateTime.fromISO(testData.constants.dates.FAKE_NOW).toMillis() };
+        })
+      );
 
       const files = await (priv()['retrieveFilesToDelete'] as unknown as (folder: string, retention: number) => Promise<Array<string>>)(
         'some/folder',
         10
       );
       assert.deepStrictEqual(files, []);
-      assert.ok(logger.trace.mock.calls.some((c: { arguments: unknown[] }) => String(c.arguments[0]).includes('stat failed')));
+      assert.ok(logger.trace.mock.calls.some((c: { arguments: Array<unknown> }) => String(c.arguments[0]).includes('stat failed')));
     });
 
     it('should handle missing folders gracefully', async () => {
@@ -356,23 +358,41 @@ describe('CleanupService', () => {
     });
 
     it('should return empty when the folder exists but is empty', async () => {
-      mock.method(fs, 'readdir', mock.fn(async () => []));
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => [])
+      );
       const statMock = mock.method(fs, 'stat', mock.fn());
 
-      const files = await (service as any)['retrieveFilesToDelete']('empty/folder', 10);
+      const files = await (priv()['retrieveFilesToDelete'] as unknown as (folder: string, retention: number) => Promise<Array<string>>)(
+        'empty/folder',
+        10
+      );
       assert.deepStrictEqual(files, []);
       assert.strictEqual(statMock.mock.calls.length, 0);
     });
 
     it('should select files older than retention based on mtime', async () => {
-      mock.method(fs, 'readdir', mock.fn(async () => ['fresh.json', 'old.json']));
+      mock.method(
+        fs,
+        'readdir',
+        mock.fn(async () => ['fresh.json', 'old.json'])
+      );
       const now = DateTime.fromISO(testData.constants.dates.FAKE_NOW);
-      mock.method(fs, 'stat', mock.fn(async (p: unknown) => {
-        if (String(p).includes('fresh')) return { mtimeMs: now.toMillis() };
-        return { mtimeMs: now.minus({ hours: 100 }).toMillis() };
-      }));
+      mock.method(
+        fs,
+        'stat',
+        mock.fn(async (p: unknown) => {
+          if (String(p).includes('fresh')) return { mtimeMs: now.toMillis() };
+          return { mtimeMs: now.minus({ hours: 100 }).toMillis() };
+        })
+      );
 
-      const files = await (service as any)['retrieveFilesToDelete']('some/folder', 10);
+      const files = await (priv()['retrieveFilesToDelete'] as unknown as (folder: string, retention: number) => Promise<Array<string>>)(
+        'some/folder',
+        10
+      );
       assert.deepStrictEqual(files, ['old.json']);
     });
   });

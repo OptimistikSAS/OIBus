@@ -61,16 +61,19 @@ describe('SouthConnectorMetricsService', () => {
     // Advance past the flush interval; one coalesced write should land.
     mock.timers.tick(1000);
     assert.strictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls.length, 1);
-    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [testData.south.list[0].id, {
-      ...testData.south.metrics,
-      lastConnection: testData.constants.dates.DATE_1,
-      lastRunStart: testData.constants.dates.DATE_2,
-      lastRunDuration: 999,
-      numberOfValuesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 10,
-      lastValueRetrieved: {},
-      lastFileRetrieved: 'last file retrieved',
-      numberOfFilesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 1
-    }]);
+    assert.deepStrictEqual(southConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [
+      testData.south.list[0].id,
+      {
+        ...testData.south.metrics,
+        lastConnection: testData.constants.dates.DATE_1,
+        lastRunStart: testData.constants.dates.DATE_2,
+        lastRunDuration: 999,
+        numberOfValuesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 10,
+        lastValueRetrieved: {},
+        lastFileRetrieved: 'last file retrieved',
+        numberOfFilesRetrieved: testData.south.metrics.numberOfValuesRetrieved + 1
+      }
+    ]);
   });
 
   it('should flush pending metrics on destroy so the last state survives shutdown', () => {
@@ -108,7 +111,7 @@ describe('SouthConnectorMetricsService', () => {
   it('should debounce stream writes alongside DB writes', () => {
     const stream = service.stream;
     const writeSpy = mock.method(stream, 'write', () => true);
-    mock.timers.tick(100);      // drain the stream-init write
+    mock.timers.tick(100); // drain the stream-init write
     writeSpy.mock.resetCalls(); // start counting from 0
 
     service.updateMetrics();

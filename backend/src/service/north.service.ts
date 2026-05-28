@@ -41,7 +41,6 @@ import { SouthConnectorItemEntityLight, SouthItemGroupEntity, SouthItemGroupEnti
 import SouthItemGroupRepository from '../repository/config/south-item-group.repository';
 import { SouthItemGroupLightDTO } from '../../shared/model/south-connector.model';
 
-
 export default class NorthService {
   constructor(
     protected readonly validator: JoiValidator,

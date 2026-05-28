@@ -7,7 +7,7 @@ const nodeRequire = createRequire(import.meta.url);
 
 const staticMiddlewareMock = mock.fn();
 const staticFactoryMock = mock.fn(() => staticMiddlewareMock);
-let webClientMiddleware: () => (req: any, res: any, next: any) => void;
+let webClientMiddleware: () => (req: unknown, res: unknown, next: unknown) => void;
 
 before(() => {
   mockModule(nodeRequire, 'express', { static: staticFactoryMock });

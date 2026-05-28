@@ -6,7 +6,10 @@ import { reloadModule } from '../../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
-type SqliteTransportOptions = { filename: string; maxNumberOfLogs: number };
+interface SqliteTransportOptions {
+  filename: string;
+  maxNumberOfLogs: number;
+}
 type CreateTransport = (opts: SqliteTransportOptions) => unknown;
 
 let createTransport: CreateTransport;
@@ -49,10 +52,7 @@ before(() => {
   nodeRequire.cache[sqlitePath]!.exports = DatabaseMock;
 
   // Mock pino-abstract-transport — captures the source and close handlers for test use
-  const buildMock = (
-    sourceFn: (source: AsyncIterable<PinoLog>) => Promise<void>,
-    opts: { close: () => Promise<void> }
-  ) => {
+  const buildMock = (sourceFn: (source: AsyncIterable<PinoLog>) => Promise<void>, opts: { close: () => Promise<void> }) => {
     capturedSourceFn = sourceFn;
     capturedCloseFn = opts.close;
     return {};
@@ -114,7 +114,14 @@ describe('SqliteTransport (createTransport)', () => {
   it('source handler should push each log into the batch via log()', async () => {
     createTransport({ filename: 'test.db', maxNumberOfLogs: 1000 });
 
-    const log: PinoLog = { msg: 'hello', level: '30', scopeType: 'internal', scopeId: null, scopeName: null, time: '2020-01-01T00:00:00.000Z' };
+    const log: PinoLog = {
+      msg: 'hello',
+      level: '30',
+      scopeType: 'internal',
+      scopeId: null,
+      scopeName: null,
+      time: '2020-01-01T00:00:00.000Z'
+    };
 
     async function* makeSource() {
       yield log;
@@ -131,7 +138,14 @@ describe('SqliteTransport (createTransport)', () => {
   it('close handler should call writeLogs(true) and close the database', async () => {
     createTransport({ filename: 'test.db', maxNumberOfLogs: 1000 });
 
-    const log: PinoLog = { msg: 'bye', level: '20', scopeType: 'internal', scopeId: null, scopeName: null, time: '2020-01-01T00:00:00.000Z' };
+    const log: PinoLog = {
+      msg: 'bye',
+      level: '20',
+      scopeType: 'internal',
+      scopeId: null,
+      scopeName: null,
+      time: '2020-01-01T00:00:00.000Z'
+    };
 
     async function* makeSource() {
       yield log;
@@ -190,7 +204,14 @@ describe('SqliteTransport (createTransport)', () => {
 
     createTransport({ filename: 'test.db', maxNumberOfLogs: 1000 });
 
-    const log: PinoLog = { msg: 'err', level: '50', scopeType: 'internal', scopeId: null, scopeName: null, time: '2020-01-01T00:00:00.000Z' };
+    const log: PinoLog = {
+      msg: 'err',
+      level: '50',
+      scopeType: 'internal',
+      scopeId: null,
+      scopeName: null,
+      time: '2020-01-01T00:00:00.000Z'
+    };
 
     async function* makeSource() {
       yield log;
@@ -206,8 +227,17 @@ describe('SqliteTransport (createTransport)', () => {
   it('writeLogs with ending=true should not reschedule the interval', async () => {
     createTransport({ filename: 'test.db', maxNumberOfLogs: 1000 });
 
-    const log: PinoLog = { msg: 'final', level: '30', scopeType: 'internal', scopeId: null, scopeName: null, time: '2020-01-01T00:00:00.000Z' };
-    async function* makeSource() { yield log; }
+    const log: PinoLog = {
+      msg: 'final',
+      level: '30',
+      scopeType: 'internal',
+      scopeId: null,
+      scopeName: null,
+      time: '2020-01-01T00:00:00.000Z'
+    };
+    async function* makeSource() {
+      yield log;
+    }
     await capturedSourceFn!(makeSource());
 
     await capturedCloseFn!(); // calls writeLogs(ending=true)

@@ -48,8 +48,8 @@ describe('authMiddleware', () => {
     mock.restoreAll();
   });
 
-  const buildMiddleware = () =>
-    authMiddleware(userService as unknown as UserService, encryptionService as unknown as EncryptionService);
+  type LooseMiddleware = (req: unknown, res: unknown, next: unknown) => Promise<void>;
+  const buildMiddleware = () => authMiddleware(userService as unknown as UserService, encryptionService as unknown as EncryptionService) as LooseMiddleware;
 
   describe('Basic Auth', () => {
     it('should call next() and set req.user on valid credentials', async () => {
@@ -59,16 +59,16 @@ describe('authMiddleware', () => {
 
       const req = makeReq('/api/data', { authorization: basicAuthHeader('alice', 'secret') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(mockNext.mock.calls.length, 1);
-      assert.deepStrictEqual((req as any).user, { id: 'u1', login: 'alice' });
+      assert.deepStrictEqual((req as Record<string, unknown>).user, { id: 'u1', login: 'alice' });
     });
 
     it('should return 401 when basic-auth cannot parse the header', async () => {
       const req = makeReq('/api/data', { authorization: 'Basic ' });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(mockNext.mock.calls.length, 0);
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
@@ -78,7 +78,7 @@ describe('authMiddleware', () => {
       userService.getHashedPasswordByLogin = mock.fn(() => null);
       const req = makeReq('/api/data', { authorization: basicAuthHeader('unknown', 'pass') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(mockNext.mock.calls.length, 0);
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
@@ -89,7 +89,7 @@ describe('authMiddleware', () => {
       mock.method(argon2, 'verify', async () => false);
       const req = makeReq('/api/data', { authorization: basicAuthHeader('alice', 'wrong') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(mockNext.mock.calls.length, 0);
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
@@ -103,7 +103,7 @@ describe('authMiddleware', () => {
 
       const req = makeReq('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 200);
       assert.deepStrictEqual(res.json.mock.calls[0].arguments[0], { access_token: 'fake-jwt-token' });
@@ -117,7 +117,7 @@ describe('authMiddleware', () => {
 
       const req = makeReq('/api/users/current-user', { authorization: basicAuthHeader('alice', 'secret') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 200);
       assert.deepStrictEqual(res.json.mock.calls[0].arguments[0], FAKE_USER);
@@ -130,7 +130,7 @@ describe('authMiddleware', () => {
 
       const req = makeReq('/api/users/current-user', { authorization: basicAuthHeader('alice', 'secret') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 404);
     });
@@ -139,7 +139,7 @@ describe('authMiddleware', () => {
       userService.getHashedPasswordByLogin = mock.fn(() => null);
       const req = makeReq('/api/users/authentication', { authorization: basicAuthHeader('alice', 'secret') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 403);
       assert.strictEqual(res.removeHeader.mock.calls.length, 1);
@@ -154,17 +154,19 @@ describe('authMiddleware', () => {
 
       const req = makeReq('/api/data', { authorization: bearerHeader('valid-token') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(mockNext.mock.calls.length, 1);
     });
 
     it('should return 403 when jwt.verify throws', async () => {
-      mock.method(jwt, 'verify', () => { throw new Error('invalid token'); });
+      mock.method(jwt, 'verify', () => {
+        throw new Error('invalid token');
+      });
 
       const req = makeReq('/api/data', { authorization: bearerHeader('bad-token') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 403);
       assert.strictEqual(mockNext.mock.calls.length, 0);
@@ -175,7 +177,7 @@ describe('authMiddleware', () => {
 
       const req = makeReq('/api/data', { authorization: bearerHeader('token') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
     });
@@ -186,7 +188,7 @@ describe('authMiddleware', () => {
 
       const req = makeReq('/api/data', { authorization: bearerHeader('token') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
     });
@@ -197,7 +199,7 @@ describe('authMiddleware', () => {
 
       const req = makeReq('/api/data', { authorization: bearerHeader('token') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
     });
@@ -211,17 +213,19 @@ describe('authMiddleware', () => {
 
       const req = { ...makeReq('/sse/engine'), url: '/sse/engine?token=abc', query: { token: 'abc' } };
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(mockNext.mock.calls.length, 1);
     });
 
     it('should return 403 when SSE jwt.verify throws', async () => {
-      mock.method(jwt, 'verify', () => { throw new Error('expired'); });
+      mock.method(jwt, 'verify', () => {
+        throw new Error('expired');
+      });
 
       const req = { ...makeReq('/sse/engine'), url: '/sse/engine?token=bad', query: { token: 'bad' } };
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 403);
     });
@@ -231,7 +235,7 @@ describe('authMiddleware', () => {
 
       const req = { ...makeReq('/sse/engine'), url: '/sse/engine?token=t', query: { token: 't' } };
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
     });
@@ -241,7 +245,7 @@ describe('authMiddleware', () => {
     it('should return 401 when no authorization header is present', async () => {
       const req = makeReq('/api/data');
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 401);
       assert.strictEqual(mockNext.mock.calls.length, 0);
@@ -250,10 +254,12 @@ describe('authMiddleware', () => {
 
   describe('Unexpected errors', () => {
     it('should return 500 when an unexpected exception is thrown', async () => {
-      userService.getHashedPasswordByLogin = mock.fn(() => { throw new Error('db error'); });
+      userService.getHashedPasswordByLogin = mock.fn(() => {
+        throw new Error('db error');
+      });
       const req = makeReq('/api/data', { authorization: basicAuthHeader('alice', 'secret') });
       const res = makeRes();
-      await buildMiddleware()(req as any, res as any, mockNext as any);
+      await buildMiddleware()(req, res, mockNext);
 
       assert.strictEqual(res.status.mock.calls[0].arguments[0], 500);
       assert.strictEqual(mockNext.mock.calls.length, 0);

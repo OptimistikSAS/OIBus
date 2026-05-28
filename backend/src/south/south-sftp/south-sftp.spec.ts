@@ -691,7 +691,11 @@ describe('SouthFTP with preserve file and compression', () => {
     const fileInfo = { name: 'myFile1', size: 123, modifyTime: mtimeMs } as FileInfo;
     const filesPreserved: Array<{ filename: string; modifiedTime: number }> = [{ filename: 'myFile1', modifiedTime: 0 }];
 
-    mock.method(south, 'addContent', mock.fn(async () => undefined));
+    mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
 
     await south.getFile(fileInfo, configuration.items[1], filesPreserved);
 

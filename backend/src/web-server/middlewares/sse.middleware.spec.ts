@@ -8,6 +8,8 @@ import type OIBusService from '../../service/oibus.service';
 import type HomeMetricsService from '../../service/metrics/home-metrics.service';
 import type HistoryQueryService from '../../service/history-query.service';
 
+type LooseMiddlewareFn = (req: unknown, res: unknown, next: unknown) => void;
+
 const makeMockStream = () => new PassThrough();
 
 const makeServices = (overrides: Record<string, unknown> = {}) => ({
@@ -47,11 +49,14 @@ describe('sseMiddleware', () => {
 
   it('should call next() for non-SSE paths', () => {
     const middleware = sseMiddleware(
-      services.southService, services.northService, services.oIBusService,
-      services.homeMetricsService, services.historyQueryService
-    );
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
     const req = makeReq('/api/data');
-    middleware(req as any, makeRes() as any, mockNext as any);
+    middleware(req, makeRes(), mockNext);
 
     assert.strictEqual(mockNext.mock.calls.length, 1);
   });
@@ -60,48 +65,63 @@ describe('sseMiddleware', () => {
     const stream = makeMockStream();
     services.southService = { getSouthDataStream: mock.fn(() => stream) } as unknown as SouthService;
     const middleware = sseMiddleware(
-      services.southService, services.northService, services.oIBusService,
-      services.homeMetricsService, services.historyQueryService
-    );
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
     const req = makeReq('/sse/south/south1');
     const res = makeRes();
     const pipeSpy = mock.method(stream, 'pipe', () => stream);
 
-    middleware(req as any, res as any, mockNext as any);
+    middleware(req, res, mockNext);
 
     assert.strictEqual(res.set.mock.calls.length, 1);
     assert.strictEqual(pipeSpy.mock.calls.length, 1);
-    assert.strictEqual((services.southService.getSouthDataStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'south1');
+    assert.strictEqual(
+      (services.southService.getSouthDataStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      'south1'
+    );
   });
 
   it('should pipe north stream for /sse/north/:id', () => {
     const stream = makeMockStream();
     services.northService = { getNorthDataStream: mock.fn(() => stream) } as unknown as NorthService;
     const middleware = sseMiddleware(
-      services.southService, services.northService, services.oIBusService,
-      services.homeMetricsService, services.historyQueryService
-    );
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
     const req = makeReq('/sse/north/north1');
     const res = makeRes();
     const pipeSpy = mock.method(stream, 'pipe', () => stream);
 
-    middleware(req as any, res as any, mockNext as any);
+    middleware(req, res, mockNext);
 
     assert.strictEqual(pipeSpy.mock.calls.length, 1);
-    assert.strictEqual((services.northService.getNorthDataStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'north1');
+    assert.strictEqual(
+      (services.northService.getNorthDataStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      'north1'
+    );
   });
 
   it('should pipe engine stream for /sse/engine', () => {
     const stream = makeMockStream();
     services.oIBusService = { stream } as unknown as OIBusService;
     const middleware = sseMiddleware(
-      services.southService, services.northService, services.oIBusService,
-      services.homeMetricsService, services.historyQueryService
-    );
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
     const req = makeReq('/sse/engine');
     const pipeSpy = mock.method(stream, 'pipe', () => stream);
 
-    middleware(req as any, makeRes() as any, mockNext as any);
+    middleware(req, makeRes(), mockNext);
 
     assert.strictEqual(pipeSpy.mock.calls.length, 1);
   });
@@ -110,13 +130,16 @@ describe('sseMiddleware', () => {
     const stream = makeMockStream();
     services.homeMetricsService = { stream } as unknown as HomeMetricsService;
     const middleware = sseMiddleware(
-      services.southService, services.northService, services.oIBusService,
-      services.homeMetricsService, services.historyQueryService
-    );
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
     const req = makeReq('/sse/home');
     const pipeSpy = mock.method(stream, 'pipe', () => stream);
 
-    middleware(req as any, makeRes() as any, mockNext as any);
+    middleware(req, makeRes(), mockNext);
 
     assert.strictEqual(pipeSpy.mock.calls.length, 1);
   });
@@ -125,42 +148,56 @@ describe('sseMiddleware', () => {
     const stream = makeMockStream();
     services.historyQueryService = { getHistoryDataStream: mock.fn(() => stream) } as unknown as HistoryQueryService;
     const middleware = sseMiddleware(
-      services.southService, services.northService, services.oIBusService,
-      services.homeMetricsService, services.historyQueryService
-    );
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
     const req = makeReq('/sse/history-queries/hq1');
     const pipeSpy = mock.method(stream, 'pipe', () => stream);
 
-    middleware(req as any, makeRes() as any, mockNext as any);
+    middleware(req, makeRes(), mockNext);
 
     assert.strictEqual(pipeSpy.mock.calls.length, 1);
-    assert.strictEqual((services.historyQueryService.getHistoryDataStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'hq1');
+    assert.strictEqual(
+      (services.historyQueryService.getHistoryDataStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0],
+      'hq1'
+    );
   });
 
   it('should call next() for /sse path that matches no sub-route', () => {
     const middleware = sseMiddleware(
-      services.southService, services.northService, services.oIBusService,
-      services.homeMetricsService, services.historyQueryService
-    );
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
     const req = makeReq('/sse/unknown-route');
 
-    middleware(req as any, makeRes() as any, mockNext as any);
+    middleware(req, makeRes(), mockNext);
 
     assert.strictEqual(mockNext.mock.calls.length, 1);
   });
 
   it('should return 500 on SSE stream error', () => {
     services.southService = {
-      getSouthDataStream: mock.fn(() => { throw new Error('stream error'); })
+      getSouthDataStream: mock.fn(() => {
+        throw new Error('stream error');
+      })
     } as unknown as SouthService;
     const middleware = sseMiddleware(
-      services.southService, services.northService, services.oIBusService,
-      services.homeMetricsService, services.historyQueryService
-    );
+      services.southService,
+      services.northService,
+      services.oIBusService,
+      services.homeMetricsService,
+      services.historyQueryService
+    ) as LooseMiddlewareFn;
     const req = makeReq('/sse/south/broken');
     const res = makeRes();
 
-    middleware(req as any, res as any, mockNext as any);
+    middleware(req, res, mockNext);
 
     assert.strictEqual(res.status.mock.calls[0].arguments[0], 500);
     assert.strictEqual(res.end.mock.calls.length, 1);

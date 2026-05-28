@@ -9,13 +9,13 @@ import type { CryptoSettings } from '../../../shared/model/engine.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
-type OIAnalyticsOptions = {
+interface OIAnalyticsOptions {
   registrationSettings: OIAnalyticsRegistration;
   interval: number;
   batchLimit?: number;
   cryptoSettings: CryptoSettings;
   certsFolder: string;
-};
+}
 type CreateTransport = (opts: OIAnalyticsOptions) => Promise<unknown>;
 
 let createTransport: CreateTransport;
@@ -48,10 +48,7 @@ const drainMicrotasks = async (levels = 8) => {
 
 before(() => {
   // pino-abstract-transport: capture source and close handlers
-  const buildMock = (
-    sourceFn: (source: AsyncIterable<PinoLog>) => Promise<void>,
-    opts: { close: () => Promise<void> }
-  ) => {
+  const buildMock = (sourceFn: (source: AsyncIterable<PinoLog>) => Promise<void>, opts: { close: () => Promise<void> }) => {
     capturedSourceFn = sourceFn;
     capturedCloseFn = opts.close;
     return {};
@@ -61,7 +58,7 @@ before(() => {
   nodeRequire.cache[pinoAbstractPath]!.exports = { __esModule: true, default: buildMock };
 
   // encryption.service: stable stub whose init delegates to the per-test mock
-  const encryptionStub = { init: (...args: unknown[]) => mockEncryptionInit(...args) };
+  const encryptionStub = { init: (...args: Array<unknown>) => mockEncryptionInit(...args) };
   nodeRequire('../encryption.service');
   const encPath = nodeRequire.resolve('../encryption.service');
   nodeRequire.cache[encPath]!.exports = { __esModule: true, encryptionService: encryptionStub };
@@ -71,7 +68,7 @@ before(() => {
   const httpReqPath = nodeRequire.resolve('../http-request.utils');
   nodeRequire.cache[httpReqPath]!.exports = {
     __esModule: true,
-    HTTPRequest: (...args: unknown[]) => mockHTTPRequest(...args)
+    HTTPRequest: (...args: Array<unknown>) => mockHTTPRequest(...args)
   };
 
   // utils-oianalytics: wrappers for buildHttpOptions and getUrl
@@ -79,8 +76,8 @@ before(() => {
   const utilsOiaPath = nodeRequire.resolve('../utils-oianalytics');
   nodeRequire.cache[utilsOiaPath]!.exports = {
     __esModule: true,
-    buildHttpOptions: (...args: unknown[]) => mockBuildHttpOptions(...args),
-    getUrl: (...args: unknown[]) => mockGetUrl(...args)
+    buildHttpOptions: (...args: Array<unknown>) => mockBuildHttpOptions(...args),
+    getUrl: (...args: Array<unknown>) => mockGetUrl(...args)
   };
 
   createTransport = reloadModule<{ default: CreateTransport }>(nodeRequire, './oianalytics-transport').default;
@@ -101,12 +98,7 @@ afterEach(() => {
   mock.restoreAll();
 });
 
-const makeLog = (
-  msg: string,
-  level = '30',
-  scopeId: string | null = 'scope-1',
-  scopeName: string | null = 'MyScope'
-): PinoLog => ({
+const makeLog = (msg: string, level = '30', scopeId: string | null = 'scope-1', scopeName: string | null = 'MyScope'): PinoLog => ({
   msg,
   level,
   scopeType: 'internal',
@@ -115,7 +107,7 @@ const makeLog = (
   time: '2020-01-01T00:00:00.000Z'
 });
 
-async function* makeSource(logs: PinoLog[]): AsyncIterable<PinoLog> {
+async function* makeSource(logs: Array<PinoLog>): AsyncIterable<PinoLog> {
   for (const log of logs) yield log;
 }
 

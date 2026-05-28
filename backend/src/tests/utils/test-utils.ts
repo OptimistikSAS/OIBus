@@ -64,8 +64,10 @@ export function createMockServices(overrides: Record<string, unknown> = {}): Cus
     ipFilterService: new IPFilterServiceMock() as unknown as CustomExpressRequest['services']['ipFilterService'],
     logService: new LogServiceMock() as unknown as CustomExpressRequest['services']['logService'],
     northService: new NorthServiceMock() as unknown as CustomExpressRequest['services']['northService'],
-    oIAnalyticsCommandService: new OIAnalyticsCommandServiceMock() as unknown as CustomExpressRequest['services']['oIAnalyticsCommandService'],
-    oIAnalyticsRegistrationService: new OIAnalyticsRegistrationServiceMock() as unknown as CustomExpressRequest['services']['oIAnalyticsRegistrationService'],
+    oIAnalyticsCommandService:
+      new OIAnalyticsCommandServiceMock() as unknown as CustomExpressRequest['services']['oIAnalyticsCommandService'],
+    oIAnalyticsRegistrationService:
+      new OIAnalyticsRegistrationServiceMock() as unknown as CustomExpressRequest['services']['oIAnalyticsRegistrationService'],
     oIBusService: new OIBusServiceMock() as unknown as CustomExpressRequest['services']['oIBusService'],
     scanModeService: new ScanModeServiceMock() as unknown as CustomExpressRequest['services']['scanModeService'],
     southService: new SouthServiceMock() as unknown as CustomExpressRequest['services']['southService'],

@@ -7,6 +7,8 @@ import type IpFilterMiddlewareType from './ip-filter.middleware';
 
 const nodeRequire = createRequire(import.meta.url);
 
+type LooseMiddlewareFn = (req: unknown, res: unknown, next: unknown) => void;
+
 let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let IpFilterMiddleware: typeof IpFilterMiddlewareType;
 
@@ -39,7 +41,7 @@ describe('IpFilterMiddleware', () => {
   it('should call next() when IP filters are disabled', () => {
     const middleware = new IpFilterMiddleware([], logger, true);
 
-    middleware.middleware()(mockReq as any, mockRes as any, mockNext as any);
+    (middleware.middleware() as LooseMiddlewareFn)(mockReq, mockRes, mockNext);
 
     assert.strictEqual(mockNext.mock.calls.length, 1);
     assert.strictEqual(mockUtils.testIPOnFilter.mock.calls.length, 0);
@@ -49,7 +51,7 @@ describe('IpFilterMiddleware', () => {
     mockUtils.testIPOnFilter = mock.fn(() => true);
     const middleware = new IpFilterMiddleware(['192.168.1.0/24'], logger, false);
 
-    middleware.middleware()(mockReq as any, mockRes as any, mockNext as any);
+    (middleware.middleware() as LooseMiddlewareFn)(mockReq, mockRes, mockNext);
 
     assert.strictEqual(mockNext.mock.calls.length, 1);
     assert.strictEqual(mockUtils.testIPOnFilter.mock.calls.length, 1);
@@ -60,7 +62,7 @@ describe('IpFilterMiddleware', () => {
     mockUtils.testIPOnFilter = mock.fn(() => false);
     const middleware = new IpFilterMiddleware(['10.0.0.0/8'], logger, false);
 
-    middleware.middleware()(mockReq as any, mockRes as any, mockNext as any);
+    (middleware.middleware() as LooseMiddlewareFn)(mockReq, mockRes, mockNext);
 
     assert.strictEqual(mockNext.mock.calls.length, 0);
     assert.strictEqual(mockRes.status.mock.calls[0].arguments[0], 401);
@@ -74,7 +76,7 @@ describe('IpFilterMiddleware', () => {
     const reqWithoutIp = { ip: undefined };
     const middleware = new IpFilterMiddleware([], logger, false);
 
-    middleware.middleware()(reqWithoutIp as any, mockRes as any, mockNext as any);
+    (middleware.middleware() as LooseMiddlewareFn)(reqWithoutIp, mockRes, mockNext);
 
     assert.strictEqual(mockNext.mock.calls.length, 0);
     assert.strictEqual(mockRes.status.mock.calls[0].arguments[0], 401);

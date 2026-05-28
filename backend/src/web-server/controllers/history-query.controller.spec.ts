@@ -571,7 +571,7 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    (mockRequest.services!.southService as any).getManifest = mock.fn(() => testData.south.manifest);
+    (mockRequest.services!.southService as unknown as Record<string, unknown>).getManifest = mock.fn(() => testData.south.manifest);
     const readFileMock = mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
 
@@ -594,7 +594,7 @@ describe('HistoryQueryController', () => {
       path: 'myFile.csv'
     } as Express.Multer.File;
 
-    (mockRequest.services!.southService as any).getManifest = mock.fn(() => testData.south.manifest);
+    (mockRequest.services!.southService as unknown as Record<string, unknown>).getManifest = mock.fn(() => testData.south.manifest);
     mock.method(fs, 'readFile', async () => JSON.stringify([{ id: '1', name: 'item1', scanModeName: 'scan1' }]));
     mock.method(fs, 'unlink', async () => {
       throw new Error('unlink error');

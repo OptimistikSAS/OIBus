@@ -517,7 +517,8 @@ describe('SouthConnector', () => {
       assert.strictEqual(directQueryMock.mock.calls.length, 1);
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error when querying items with history capabilities: history query error`
+          (c: { arguments: Array<unknown> }) =>
+            c.arguments[0] === `Error when querying items with history capabilities: history query error`
         )
       );
       assert.ok(

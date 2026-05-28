@@ -450,9 +450,7 @@ describe('OIAnalytics Registration Service', () => {
     await service.checkRegistration();
 
     assert.ok(
-      logger.error.mock.calls.some((c: { arguments: Array<string> }) =>
-        c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200')
-      )
+      logger.error.mock.calls.some((c: { arguments: Array<string> }) => c.arguments[0].includes('connect ECONNREFUSED 127.0.0.1:4200'))
     );
   });
 

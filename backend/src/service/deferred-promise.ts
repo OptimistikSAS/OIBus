@@ -3,8 +3,8 @@
  */
 export default class DeferredPromise {
   promise: Promise<void>;
-  reject: any;
-  resolve: any;
+  reject!: (reason?: unknown) => void;
+  resolve!: () => void;
 
   constructor() {
     this.promise = new Promise<void>((resolve, reject) => {

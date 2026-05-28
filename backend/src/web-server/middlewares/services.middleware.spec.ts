@@ -7,6 +7,7 @@ import type { CustomExpressRequest } from '../express';
 describe('createInjectServicesMiddleware', () => {
   it('should inject all 12 services into req.services and call next()', () => {
     const services = createMockServices();
+    type LooseMiddlewareFn = (req: CustomExpressRequest, res: unknown, next: () => void) => void;
     const middleware = createInjectServicesMiddleware(
       services.certificateService,
       services.historyQueryService,
@@ -20,11 +21,13 @@ describe('createInjectServicesMiddleware', () => {
       services.southService,
       services.transformerService,
       services.userService
-    );
+    ) as LooseMiddlewareFn;
 
     const req = {} as CustomExpressRequest;
     let nextCalled = false;
-    middleware(req, {} as any, () => { nextCalled = true; });
+    middleware(req, {}, () => {
+      nextCalled = true;
+    });
 
     assert.strictEqual(nextCalled, true);
     assert.strictEqual(req.services.certificateService, services.certificateService);
