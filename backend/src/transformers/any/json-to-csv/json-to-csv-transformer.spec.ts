@@ -159,6 +159,29 @@ describe('JSONToCSVTransformer', () => {
     assert.strictEqual(jsonToCsvManifest.settings.attributes[0].key, 'filename');
   });
 
+  it('should resolve nested JSON-stringified field via recursive path traversal', async () => {
+    const options = {
+      regex: '.*\\.json',
+      filename: 'nested-test.csv',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*]',
+      fields: [{ jsonPath: '$[*].metadata.nestedField', columnName: 'Nested', dataType: 'string' }]
+    };
+    const inputData = [{ metadata: JSON.stringify({ nestedField: 'value' }) }];
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
+    mockStream.push(JSON.stringify(inputData));
+    mockStream.push(null);
+
+    await flushPromises();
+    await promise;
+
+    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
+    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [{ Nested: 'value' }]);
+  });
+
   describe('fieldProcess', () => {
     it('should apply fieldProcess expression to the typed value before writing to CSV', async () => {
       mockPapaparse.unparse = mock.fn(() => 'csv result');
