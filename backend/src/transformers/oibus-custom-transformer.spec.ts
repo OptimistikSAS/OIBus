@@ -55,6 +55,22 @@ describe('OIBusCustomTransformer', () => {
     mock.timers.reset();
   });
 
+  it('transformInMemory should pass a string directly to runSandbox without re-stringifying', async () => {
+    const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
+    const text = '{"key":"value"}';
+    const result = await transformer.transformInMemory(text, { source: 'test' }, 'test.json');
+    assert.deepStrictEqual(result, sandboxOutput);
+    assert.strictEqual(mockSandboxServiceObj.execute.mock.calls[0].arguments[0], text);
+  });
+
+  it('transformInMemory should JSON.stringify non-string data before calling runSandbox', async () => {
+    const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
+    const data = [{ key: 'value' }];
+    await transformer.transformInMemory(data, { source: 'test' }, null);
+    assert.strictEqual(mockSandboxServiceObj.execute.mock.calls[0].arguments[0], JSON.stringify(data));
+    assert.strictEqual(mockSandboxServiceObj.execute.mock.calls[0].arguments[2], 'randomId.json');
+  });
+
   it('should transform data from a stream and return sandbox result', async () => {
     const transformer = new OIBusCustomTransformer(logger, testData.transformers.list[0] as CustomTransformer, {});
     const dataChunks: Array<OIBusTimeValue> = [
