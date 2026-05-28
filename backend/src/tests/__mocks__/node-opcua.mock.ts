@@ -44,6 +44,10 @@ export default {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   OPCUACertificateManager: function OPCUACertificateManagerMock(this: any) {
     this.state = 0;
+    // Must be a real callable so south/north testConnection can await it during cleanup.
+    // Reset per-test via `nodeOPCUAMock.default.OPCUACertificateManager.prototype.dispose.mock.resetCalls()`
+    // if behaviour beyond "was called" is asserted.
+    this.dispose = mock.fn(async () => undefined);
   },
   resolveNodeId: mock.fn((nodeId: unknown) => nodeId)
 };

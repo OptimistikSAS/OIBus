@@ -1,11 +1,8 @@
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from '../south-interface';
 import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
-import { randomUUID } from 'crypto';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
@@ -18,7 +15,6 @@ import {
   DataValue,
   MessageSecurityMode,
   NodeId,
-  OPCUACertificateManager,
   OPCUAClient,
   resolveNodeId,
   StatusCodes,
@@ -26,14 +22,7 @@ import {
   UserTokenType
 } from 'node-opcua';
 import { HistoryDataOptions, HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
-import {
-  createSessionConfigs,
-  getHistoryReadRequest,
-  getTimestamp,
-  initOPCUACertificateFolders,
-  logMessages,
-  parseOPCUAValue
-} from '../../service/utils-opcua';
+import { createSessionConfigs, getHistoryReadRequest, getTimestamp, logMessages, parseOPCUAValue } from '../../service/utils-opcua';
 import type { ILogger } from '../../model/logger.model';
 
 /**
@@ -43,7 +32,6 @@ export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
   implements SouthHistoryQuery, SouthDirectQuery, SouthSubscription
 {
-  private clientCertificateManager: OPCUACertificateManager | null = null;
   private disconnecting = false;
   private connecting = false;
   private monitoredItems = new Map<string, ClientMonitoredItem>();
@@ -71,20 +59,6 @@ export default class SouthOPCUA
     cacheFolderPath: string
   ) {
     super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
-  }
-
-  override async start(): Promise<void> {
-    await initOPCUACertificateFolders(this.cacheFolderPath);
-    if (!this.clientCertificateManager) {
-      this.clientCertificateManager = new OPCUACertificateManager({
-        rootFolder: path.resolve(this.cacheFolderPath, 'opcua'),
-        automaticallyAcceptUnknownCertificate: true
-      });
-      // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
-      // It is useful for offline instances of OIBus where downloading openssl is not possible
-      this.clientCertificateManager.state = 2;
-    }
-    await super.start();
   }
 
   override async connect(): Promise<void> {
@@ -137,17 +111,6 @@ export default class SouthOPCUA
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
-    const tempCertFolder = `opcua-test-${randomUUID()}`;
-    await initOPCUACertificateFolders(tempCertFolder);
-    const clientCertificateManager = new OPCUACertificateManager({
-      rootFolder: path.resolve(tempCertFolder, 'opcua'),
-      automaticallyAcceptUnknownCertificate: true
-    });
-    // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
-    // It is useful for offline instances of OIBus where downloading openssl is not possible
-    clientCertificateManager.state = 2;
-    this.clientCertificateManager = clientCertificateManager;
-
     const items: Array<{ key: string; value: string }> = [];
     let session: ClientSession | undefined;
     try {
@@ -257,7 +220,6 @@ export default class SouthOPCUA
         // Server does not expose aggregate functions
       }
     } finally {
-      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
       if (session) {
         await session.close();
       }
@@ -270,16 +232,6 @@ export default class SouthOPCUA
     item: SouthConnectorItemEntity<SouthOPCUAItemSettings>,
     testingSettings: SouthConnectorItemTestingSettings
   ): Promise<OIBusContent> {
-    const tempCertFolder = `opcua-test-${randomUUID()}`;
-    await initOPCUACertificateFolders(tempCertFolder);
-    const clientCertificateManager = new OPCUACertificateManager({
-      rootFolder: path.resolve(tempCertFolder, 'opcua'),
-      automaticallyAcceptUnknownCertificate: true
-    });
-    // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
-    // It is useful for offline instances of OIBus where downloading openssl is not possible
-    clientCertificateManager.state = 2;
-
     let session;
     try {
       session = await this.createSession();
@@ -292,7 +244,6 @@ export default class SouthOPCUA
         return { type: 'time-values', content: result.value ? [result.value] : [] };
       }
     } finally {
-      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
       if (session) {
         await session.close();
         session = null;
@@ -327,7 +278,6 @@ export default class SouthOPCUA
       this.connector.id,
       this.connector.name,
       this.connector.settings,
-      this.clientCertificateManager!,
       this.connector.settings.readTimeout
     );
     this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
