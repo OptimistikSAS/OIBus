@@ -267,7 +267,7 @@ describe('SouthConnector', () => {
           scanMode: itemScanMode,
           group,
           syncWithGroup: true
-        }
+        } as unknown as SouthConnectorItemEntity<SouthFolderScannerItemSettings>
       ];
 
       south.updateCronJobs();

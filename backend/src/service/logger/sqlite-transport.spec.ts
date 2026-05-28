@@ -72,7 +72,7 @@ beforeEach(() => {
   mockDbClose = mock.fn();
   capturedSourceFn = null;
   capturedCloseFn = null;
-  mock.timers.enable(['setTimeout', 'clearTimeout']);
+  mock.timers.enable({ apis: ['setTimeout'] });
 });
 
 afterEach(() => {

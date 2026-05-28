@@ -157,7 +157,7 @@ describe('OIAnalytics Registration Service', () => {
     assert.strictEqual(mockEncryptionService.encryptionService.encryptText.mock.calls.length, 1);
     assert.strictEqual(engineRepository.get.mock.calls.length, 1);
     assert.strictEqual(oIAnalyticsClient.register.mock.calls.length, 1);
-    assert.strictEqual(mockUtils.getOIBusInfo.mock.calls.length, 1);
+    assert.strictEqual((mockUtils.getOIBusInfo as ReturnType<typeof mock.fn>).mock.calls.length, 1);
     assert.deepStrictEqual(oIAnalyticsRegistrationRepository.register.mock.calls[0].arguments, [
       testData.oIAnalytics.registration.command,
       result.activationCode,
