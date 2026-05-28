@@ -17,5 +17,11 @@ export default class OIBusTransformerMock {
       _filename: string | null
     ): Promise<{ metadata: CacheMetadata; output: Buffer }> => ({ metadata: {} as CacheMetadata, output: Buffer.alloc(0) })
   );
-  transformInMemory = mock.fn();
+  transformInMemory = mock.fn(
+    async (
+      _data: unknown,
+      _source: CacheMetadataSource,
+      _filename: string | null
+    ): Promise<{ metadata: CacheMetadata; output: Buffer }> => ({ metadata: {} as CacheMetadata, output: Buffer.alloc(0) })
+  );
 }

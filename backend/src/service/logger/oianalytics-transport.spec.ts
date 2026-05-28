@@ -93,7 +93,7 @@ beforeEach(() => {
   mockEncryptionInit = mock.fn(async () => undefined);
   capturedSourceFn = null;
   capturedCloseFn = null;
-  mock.timers.enable(['setInterval', 'clearInterval']);
+  mock.timers.enable({ apis: ['setInterval'] });
 });
 
 afterEach(() => {
@@ -231,7 +231,7 @@ describe('OianalyticsTransport (createTransport)', () => {
     await capturedCloseFn!();
 
     assert.strictEqual(mockHTTPRequest.mock.calls.length, 1);
-    const payload = JSON.parse(mockHTTPRequest.mock.calls[0].arguments[1].body as string) as Array<{
+    const payload = JSON.parse((mockHTTPRequest.mock.calls[0].arguments[1] as { body: string }).body) as Array<{
       scopeId: string | null;
       scopeName: string | null;
     }>;
