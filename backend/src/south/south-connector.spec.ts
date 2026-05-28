@@ -73,7 +73,6 @@ describe('SouthConnector', () => {
     createSessionConfigs: mock.fn(() => []),
     getHistoryReadRequest: mock.fn(() => ({})),
     getTimestamp: mock.fn(() => ''),
-    initOPCUACertificateFolders: mock.fn(async () => undefined),
     logMessages: mock.fn(),
     parseOPCUAValue: mock.fn(() => null)
   };

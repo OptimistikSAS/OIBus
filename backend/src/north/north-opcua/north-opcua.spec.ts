@@ -2,7 +2,6 @@ import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { ReadStream } from 'node:fs';
-import fs from 'node:fs/promises';
 import nodeOPCUAMock from '../../tests/__mocks__/node-opcua.mock';
 import { DataType, StatusCodes, SecurityPolicy, AttributeIds, MessageSecurityMode, UserTokenType } from 'node-opcua';
 import testData from '../../tests/utils/test-data';
@@ -19,10 +18,6 @@ import type NorthOPCUAClass from './north-opcua';
 const nodeRequire = createRequire(import.meta.url);
 
 const resolveNodeIdMock = mock.fn((id: unknown) => id);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const OPCUACertificateManagerMock = mock.fn(function (this: any) {
-  this.state = 0;
-});
 
 const nodeOpcuaExports = {
   __esModule: true,
@@ -33,8 +28,7 @@ const nodeOpcuaExports = {
   AttributeIds,
   MessageSecurityMode,
   UserTokenType,
-  resolveNodeId: resolveNodeIdMock,
-  OPCUACertificateManager: OPCUACertificateManagerMock
+  resolveNodeId: resolveNodeIdMock
 };
 
 const opcuaOptions = {
@@ -56,14 +50,12 @@ describe('NorthOPCUA', () => {
   let sessionCloseMock: ReturnType<typeof mock.fn>;
   let sessionReadMock: ReturnType<typeof mock.fn>;
   let sessionWriteMock: ReturnType<typeof mock.fn>;
-  let fsRmMock: ReturnType<typeof mock.fn>;
 
   const logger = new PinoLogger();
   const cacheService = new CacheServiceMock();
   const oiBusTransformer = new OIBusTransformerMock();
 
   const createSessionConfigsFn = mock.fn(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity }));
-  const initOPCUACertificateFoldersFn = mock.fn(async (_folder: string) => undefined);
   const streamToStringFn = mock.fn(async () => '[]');
 
   const transformerExports = {
@@ -81,8 +73,7 @@ describe('NorthOPCUA', () => {
   };
 
   const utilsOpcuaExports = {
-    createSessionConfigs: createSessionConfigsFn,
-    initOPCUACertificateFolders: initOPCUACertificateFoldersFn
+    createSessionConfigs: createSessionConfigsFn
   };
 
   before(() => {
@@ -105,13 +96,8 @@ describe('NorthOPCUA', () => {
     resolveNodeIdMock.mock.resetCalls();
     resolveNodeIdMock.mock.mockImplementation((id: unknown) => id);
 
-    OPCUACertificateManagerMock.mock.resetCalls();
-
     createSessionConfigsFn.mock.resetCalls();
     createSessionConfigsFn.mock.mockImplementation(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity }));
-
-    initOPCUACertificateFoldersFn.mock.resetCalls();
-    initOPCUACertificateFoldersFn.mock.mockImplementation(async (_folder: string) => undefined);
 
     streamToStringFn.mock.resetCalls();
     streamToStringFn.mock.mockImplementation(async () => '[]');
@@ -129,9 +115,6 @@ describe('NorthOPCUA', () => {
     logger.info.mock.resetCalls();
     logger.warn.mock.resetCalls();
     logger.error.mock.resetCalls();
-
-    // Mock node:fs/promises methods in-place so the SUT's imported fs object is intercepted
-    fsRmMock = mock.method(fs, 'rm', async () => undefined) as ReturnType<typeof mock.fn>;
 
     // Mock crypto.randomUUID in-place
     mock.method(nodeRequire('crypto'), 'randomUUID', () => 'randomUUID');
@@ -173,22 +156,6 @@ describe('NorthOPCUA', () => {
 
   it('should return correct types', () => {
     assert.deepStrictEqual(north.supportedTypes(), ['opcua']);
-  });
-
-  it('should be properly initialized', async () => {
-    await north.start();
-    assert.strictEqual(initOPCUACertificateFoldersFn.mock.calls.length, 1);
-    assert.deepStrictEqual(initOPCUACertificateFoldersFn.mock.calls[0].arguments[0], 'cache');
-  });
-
-  it('should be properly initialized without initialising opcua certificate', async () => {
-    // Simulate already-initialized certificate manager
-    (north as unknown as { clientCertificateManager: object })['clientCertificateManager'] = {};
-    await north.start();
-    assert.strictEqual(initOPCUACertificateFoldersFn.mock.calls.length, 1);
-    assert.deepStrictEqual(initOPCUACertificateFoldersFn.mock.calls[0].arguments[0], 'cache');
-    // OPCUACertificateManager constructor should NOT be called again
-    assert.strictEqual(OPCUACertificateManagerMock.mock.calls.length, 0);
   });
 
   it('should properly connect', async () => {
@@ -422,11 +389,8 @@ describe('NorthOPCUA', () => {
 
     await north.testConnection();
 
-    assert.strictEqual(initOPCUACertificateFoldersFn.mock.calls.length, 1);
-    assert.ok((initOPCUACertificateFoldersFn.mock.calls[0].arguments[0] as string).includes('opcua-test-'));
     assert.strictEqual(nodeOPCUAMock.OPCUAClient.createSession.mock.calls.length, 1);
     assert.strictEqual(mockSessionClose.mock.calls.length, 1);
-    assert.strictEqual(fsRmMock.mock.calls.length, 1);
   });
 
   it('should discover endpoints and populate security info in test connection', async () => {
@@ -467,7 +431,5 @@ describe('NorthOPCUA', () => {
     });
 
     await assert.rejects(async () => north.testConnection(), /Auth failed/);
-    // cleanup should still be called even on error
-    assert.strictEqual(fsRmMock.mock.calls.length, 1);
   });
 });

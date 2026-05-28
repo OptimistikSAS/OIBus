@@ -2,7 +2,6 @@ import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'no
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import Stream from 'node:stream';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule } from '../../tests/utils/test-utils';
@@ -79,7 +78,6 @@ describe('SouthOPCUA', () => {
     createSessionConfigs: mock.fn(() => ({ options: opcuaOptions, userIdentity: opcuaUserIdentity })),
     getHistoryReadRequest: mock.fn(() => ({ requestHeader: {} }) as unknown as HistoryReadRequest),
     getTimestamp: mock.fn(() => testData.constants.dates.FAKE_NOW),
-    initOPCUACertificateFolders: mock.fn(async () => undefined),
     logMessages: mock.fn(),
     parseOPCUAValue: mock.fn((): string | null => null),
     toOPCUASecurityMode: mock.fn(() => 1),
@@ -299,7 +297,6 @@ describe('SouthOPCUA', () => {
     utilsOpcuaExports.createSessionConfigs.mock.resetCalls();
     utilsOpcuaExports.getHistoryReadRequest.mock.resetCalls();
     utilsOpcuaExports.getTimestamp.mock.resetCalls();
-    utilsOpcuaExports.initOPCUACertificateFolders.mock.resetCalls();
     utilsOpcuaExports.logMessages.mock.resetCalls();
     utilsOpcuaExports.parseOPCUAValue.mock.resetCalls();
     utilsOpcuaExports.toOPCUASecurityMode.mock.resetCalls();
@@ -332,11 +329,9 @@ describe('SouthOPCUA', () => {
     south.createSession = createSessionMock;
     await south.start();
     await south.start();
-    assert.strictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls.length, 2);
-    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['cacheFolder']);
-    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[1].arguments, ['cacheFolder']);
     // createSession should not be called right after starting, because
-    // it will be eventually called when the first session is needed
+    // it will be eventually called when the first session is needed.
+    // The cert is loaded inside createSession (not in start) so we don't assert here.
     assert.strictEqual(createSessionMock.mock.calls.length, 0);
     assert.strictEqual(connectMock.mock.calls.length, 2);
   });
@@ -416,16 +411,12 @@ describe('SouthOPCUA', () => {
     };
     const createSessionMock = mock.fn(async () => mockedClient as unknown as ClientSession);
     south.createSession = createSessionMock;
-    const fsMock = mock.method(fs, 'rm', async () => undefined);
     const testResult = await south.testConnection();
-    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
     assert.strictEqual(mockedClient.read.mock.calls.length, 1);
     assert.strictEqual(mockedClient.close.mock.calls.length, 1);
-    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
     assert.strictEqual(testResult.items.length, 5);
     assert.deepStrictEqual(testResult.items[0], { key: 'State', value: 'Running' });
-    fsMock.mock.restore();
   });
 
   it('should properly test connection with graceful degradation when session.read throws', async () => {
@@ -537,12 +528,8 @@ describe('SouthOPCUA', () => {
       throw new Error('get session error');
     });
     south.createSession = createSessionMock;
-    const fsMock = mock.method(fs, 'rm', async () => undefined);
     await assert.rejects(async () => south.testConnection(), /get session error/);
-    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
-    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
-    fsMock.mock.restore();
   });
 
   it('should properly test ha item', async () => {
@@ -553,7 +540,6 @@ describe('SouthOPCUA', () => {
     south.createSession = createSessionMock;
     south.getDAValues = getDAValuesMock;
     south.getHAValues = getHAValuesMock;
-    const fsMock = mock.method(fs, 'rm', async () => undefined);
 
     await south.testItem(configuration.items[0], {
       history: {
@@ -570,11 +556,8 @@ describe('SouthOPCUA', () => {
     ]);
     assert.strictEqual(nodeOPCUAMock.resolveNodeId.mock.calls.length, 0);
     assert.strictEqual(getDAValuesMock.mock.calls.length, 0);
-    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
     assert.strictEqual(mockedClient.close.mock.calls.length, 1);
-    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
-    fsMock.mock.restore();
   });
 
   it('should properly test da item', async () => {
@@ -583,15 +566,11 @@ describe('SouthOPCUA', () => {
     south.createSession = createSessionMock;
     south.getDAValues = mock.fn(async () => []);
     south.getHAValues = mock.fn(async () => ({ value: null, trackedInstant: null }));
-    const fsMock = mock.method(fs, 'rm', async () => undefined);
 
     await south.testItem(configuration.items[3], { history: undefined });
-    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
     assert.deepStrictEqual(nodeOPCUAMock.resolveNodeId.mock.calls[0].arguments, [configuration.items[0].settings.nodeId]);
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
     assert.strictEqual(mockedClient.close.mock.calls.length, 1);
-    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
-    fsMock.mock.restore();
   });
 
   it('should properly throw error if test item fails', async () => {
@@ -603,15 +582,11 @@ describe('SouthOPCUA', () => {
     south.createSession = createSessionMock;
     south.getDAValues = getDAValuesMock;
     south.getHAValues = getHAValuesMock;
-    const fsMock = mock.method(fs, 'rm', async () => undefined);
 
     await assert.rejects(async () => south.testItem(configuration.items[3], { history: undefined }), /get session error/);
-    assert.deepStrictEqual(utilsOpcuaExports.initOPCUACertificateFolders.mock.calls[0].arguments, ['opcua-test-randomUUID']);
-    assert.deepStrictEqual(fsMock.mock.calls[0].arguments, [path.resolve('opcua-test-randomUUID'), { recursive: true, force: true }]);
     assert.strictEqual(createSessionMock.mock.calls.length, 1);
     assert.strictEqual(getDAValuesMock.mock.calls.length, 0);
     assert.strictEqual(getHAValuesMock.mock.calls.length, 0);
-    fsMock.mock.restore();
   });
 
   it('should properly manage history query', async () => {

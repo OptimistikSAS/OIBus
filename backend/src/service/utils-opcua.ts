@@ -17,7 +17,7 @@ import {
   DataType,
   DataValue,
   HistoryReadRequest,
-  OPCUACertificateManager,
+  InMemoryCertificateStore,
   OPCUAClientOptions,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
@@ -26,7 +26,7 @@ import {
   UserTokenType,
   Variant
 } from 'node-opcua';
-import { createFolder } from './utils';
+import { convertPEMtoDER, exploreCertificate } from 'node-opcua-crypto';
 import { Instant } from '../../shared/model/types';
 import { DateTime } from 'luxon';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
@@ -77,32 +77,33 @@ export const toOPCUASecurityPolicy = (
   }
 };
 
-export const initOPCUACertificateFolders = async (folder: string): Promise<void> => {
-  const opcuaBaseFolder = path.resolve(folder, 'opcua');
-  await createFolder(path.join(opcuaBaseFolder, 'own'));
-  await createFolder(path.join(opcuaBaseFolder, 'own', 'certs'));
-  await createFolder(path.join(opcuaBaseFolder, 'own', 'private'));
-  await createFolder(path.join(opcuaBaseFolder, 'rejected'));
-  await createFolder(path.join(opcuaBaseFolder, 'trusted'));
-  await createFolder(path.join(opcuaBaseFolder, 'trusted', 'certs'));
-  await createFolder(path.join(opcuaBaseFolder, 'trusted', 'crl'));
-  await createFolder(path.join(opcuaBaseFolder, 'issuers'));
-  await createFolder(path.join(opcuaBaseFolder, 'issuers', 'certs')); // contains Trusted CA certificates
-  await createFolder(path.join(opcuaBaseFolder, 'issuers', 'crl')); // contains CRL of revoked CA certificates
-
-  await fs.copyFile(encryptionService.getPrivateKeyPath(), path.join(opcuaBaseFolder, 'own', 'private', 'private_key.pem'));
-  await fs.copyFile(encryptionService.getCertPath(), path.join(opcuaBaseFolder, 'own', 'certs', 'client_certificate.pem'));
+/**
+ * Read OIBus's certificate from disk and extract its applicationUri (the URN embedded
+ * in subjectAltName when the cert was generated). We pass this explicitly to OPCUAClient
+ * so it matches the cert — otherwise node-opcua auto-builds `urn:<hostname>:OIBus`,
+ * which mismatches the cert on portable / virtualised installs and triggers W06.
+ */
+export const getOPCUAApplicationUri = async (): Promise<string | undefined> => {
+  try {
+    const certPem = await fs.readFile(encryptionService.getCertPath(), 'utf8');
+    const info = exploreCertificate(convertPEMtoDER(certPem));
+    return info.tbsCertificate.extensions?.subjectAltName?.uniformResourceIdentifier?.[0];
+  } catch {
+    // If the cert can't be parsed, fall back to node-opcua's hostname-derived default.
+    return undefined;
+  }
 };
 
 export const createSessionConfigs = async (
   connectorId: string,
   connectorName: string,
   settings: SouthOPCUASettings | NorthOPCUASettings,
-  clientCertificateManager: OPCUACertificateManager,
   readTimeout: number | undefined
 ) => {
   const options: OPCUAClientOptions = {
     applicationName: 'OIBus',
+    // applicationUri must match the cert's subjectAltName URI (W06 warning + handshake rejection).
+    applicationUri: await getOPCUAApplicationUri(),
     connectionStrategy: {
       initialDelay: 1000,
       maxRetry: 1
@@ -114,7 +115,14 @@ export const createSessionConfigs = async (
     requestedSessionTimeout: readTimeout,
     keepPendingSessionsOnDisconnect: false,
     clientName: `${connectorName}-${connectorId}`,
-    clientCertificateManager
+    // Use OIBus's existing cert/key files directly — no PKI folder tree on disk, no copies.
+    // We do NOT use `certificateKeyPairProvider` because node-opcua-client's findEndpoint
+    // helper (used internally for endpoint discovery) doesn't propagate that option to its
+    // internal TmpClient. Disk paths get correctly forwarded and re-read by TmpClient.
+    certificateFile: encryptionService.getCertPath(),
+    privateKeyFile: encryptionService.getPrivateKeyPath(),
+    // In-memory trust store with auto-accept — no rejected/, trusted/, issuers/ folders on disk.
+    clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true })
   };
 
   let userIdentity: UserIdentityInfo;
