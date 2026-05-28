@@ -50,7 +50,8 @@ export async function up(_knex: Knex): Promise<void> {
     console.error(`Error while reading archive folder: ${(error as Error).message}`);
   }
 
-  await removeSouthErrorAndArchiveFolders(
+  await removeLegacySouthFolders(
+    cacheFolders.filter(name => name.startsWith('south-')),
     errorFolders.filter(name => name.startsWith('south-')),
     archiveFolders.filter(name => name.startsWith('south-'))
   );
@@ -87,10 +88,20 @@ export async function up(_knex: Knex): Promise<void> {
 
 async function refactorNorthContent(folder: string): Promise<void> {
   console.info(`Refactoring folder "${folder}"`);
+  let migrated = 0;
+  let errored = 0;
+  let orphansRemoved = 0;
   try {
     const metadataFiles = await fs.readdir(path.join(folder, METADATA_FOLDER));
-    const newContentFiles: Array<string> = [];
+    const newContentFiles = new Set<string>();
     for (const metadataFile of metadataFiles) {
+      // A metadata file without ".json" extension is the output of a previous
+      // (interrupted) run that already migrated this entry. Preserve it so
+      // the orphan-cleanup pass below does not delete its content file.
+      if (!metadataFile.endsWith('.json')) {
+        newContentFiles.add(metadataFile);
+        continue;
+      }
       const filenameWithoutExtension = path.parse(metadataFile).name;
       try {
         const metadata: CacheMetadata = JSON.parse(
@@ -101,51 +112,60 @@ async function refactorNorthContent(folder: string): Promise<void> {
           path.join(folder, CONTENT_FOLDER, filenameWithoutExtension)
         );
         await fs.rename(path.join(folder, METADATA_FOLDER, metadataFile), path.join(folder, METADATA_FOLDER, filenameWithoutExtension));
-        newContentFiles.push(filenameWithoutExtension);
+        newContentFiles.add(filenameWithoutExtension);
+        migrated++;
       } catch (error: unknown) {
+        errored++;
         console.error(`Error while migrating file "${metadataFile}": ${(error as Error).message}`);
-        if (await filesExists(path.join(folder, CONTENT_FOLDER, metadataFile))) {
-          await fs.rm(path.join(folder, CONTENT_FOLDER, metadataFile), { recursive: true }).catch(e => console.error(e));
-        }
+        // Roll back any partial rename and discard the broken metadata.
+        // The "remove unlinked content files" pass below will catch any content orphan.
         if (await filesExists(path.join(folder, CONTENT_FOLDER, filenameWithoutExtension))) {
-          await fs.rm(path.join(folder, CONTENT_FOLDER, filenameWithoutExtension), { recursive: true }).catch(e => console.error(e));
+          await fs.rm(path.join(folder, CONTENT_FOLDER, filenameWithoutExtension)).catch(e => console.error(e));
         }
         if (await filesExists(path.join(folder, METADATA_FOLDER, metadataFile))) {
-          await fs.rm(path.join(folder, METADATA_FOLDER, metadataFile), { recursive: true }).catch(e => console.error(e));
+          await fs.rm(path.join(folder, METADATA_FOLDER, metadataFile)).catch(e => console.error(e));
         }
         if (await filesExists(path.join(folder, METADATA_FOLDER, filenameWithoutExtension))) {
-          await fs.rm(path.join(folder, METADATA_FOLDER, filenameWithoutExtension), { recursive: true }).catch(e => console.error(e));
+          await fs.rm(path.join(folder, METADATA_FOLDER, filenameWithoutExtension)).catch(e => console.error(e));
         }
       }
     }
     const contentFiles = await fs.readdir(path.join(folder, CONTENT_FOLDER));
-    console.info(`Removing unlinked content files`);
     for (const contentFile of contentFiles) {
-      if (!newContentFiles.includes(contentFile)) {
+      if (!newContentFiles.has(contentFile)) {
         await fs.rm(path.join(folder, CONTENT_FOLDER, contentFile)).catch(e => console.error(e));
+        orphansRemoved++;
       }
     }
+    console.info(
+      `Folder "${folder}" migration done: ${migrated} migrated, ${errored} errored, ${orphansRemoved} orphan content files removed`
+    );
   } catch (error: unknown) {
     console.error(`Error while migrating folder ${folder}: ${(error as Error).message}`);
   }
 }
 
-async function removeSouthErrorAndArchiveFolders(errorFolders: Array<string>, archiveFolders: Array<string>): Promise<void> {
-  console.info(`Removing "south-" folders from  ${ERROR_FOLDER_PATH}`);
-  for (const folder of errorFolders) {
-    try {
-      await fs.rm(path.join(ERROR_FOLDER_PATH, folder), { recursive: true, force: true });
-    } catch (error: unknown) {
-      console.error(`Error while removing error folder ${folder}: ${(error as Error).message}`);
-    }
-  }
-
-  console.info(`Removing "south-" folders from  ${ARCHIVE_FOLDER_PATH}`);
-  for (const folder of archiveFolders) {
-    try {
-      await fs.rm(path.join(ARCHIVE_FOLDER_PATH, folder), { recursive: true, force: true });
-    } catch (error: unknown) {
-      console.error(`Error while removing archive folder ${folder}: ${(error as Error).message}`);
+async function removeLegacySouthFolders(
+  cacheFolders: Array<string>,
+  errorFolders: Array<string>,
+  archiveFolders: Array<string>
+): Promise<void> {
+  // In 3.8 the south no longer keeps its own per-connector cache/error/archive folders.
+  // Drop them outright; any data still inside is unreachable from the new runtime.
+  const groups: ReadonlyArray<readonly [string, string, ReadonlyArray<string>]> = [
+    ['cache', CACHE_FOLDER_PATH, cacheFolders],
+    ['error', ERROR_FOLDER_PATH, errorFolders],
+    ['archive', ARCHIVE_FOLDER_PATH, archiveFolders]
+  ];
+  for (const [label, baseFolder, folders] of groups) {
+    if (folders.length === 0) continue;
+    console.info(`Removing ${folders.length} legacy "south-" folder(s) from ${baseFolder}`);
+    for (const folder of folders) {
+      try {
+        await fs.rm(path.join(baseFolder, folder), { recursive: true, force: true });
+      } catch (error: unknown) {
+        console.error(`Error while removing ${label} folder ${folder}: ${(error as Error).message}`);
+      }
     }
   }
 }

@@ -48,9 +48,14 @@ export async function up(knex: Knex): Promise<void> {
     if (await knex.schema.hasTable(SOUTH_CACHE_TABLE)) {
       const entries = await knex(SOUTH_CACHE_TABLE).where('south_id', connectorId).select('item_id', 'scan_mode_id', 'max_instant');
 
-      for (const entry of entries) {
-        const key = entry.item_id === 'all' ? entry.scan_mode_id : entry.item_id;
-        await knex(tableName).insert({ item_id: key, query_time: null, value: null, tracked_instant: entry.max_instant });
+      const rowsToInsert = entries.map(entry => ({
+        item_id: entry.item_id === 'all' ? entry.scan_mode_id : entry.item_id,
+        query_time: null,
+        value: null,
+        tracked_instant: entry.max_instant
+      }));
+      if (rowsToInsert.length > 0) {
+        await knex.batchInsert(tableName, rowsToInsert, 100);
       }
     }
   }
