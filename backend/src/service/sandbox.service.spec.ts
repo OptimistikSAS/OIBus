@@ -413,7 +413,8 @@ describe('SandboxService', () => {
             }
           }
         `,
-        timeout: 5000
+        // Large timeout so OOM always fires before the timer; 256MB heap exhausts in <5s
+        timeout: 60000
       } as CustomTransformer;
 
       await assert.rejects(
