@@ -2,14 +2,13 @@ import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { DataType, DataValue, OPCUACertificateManager, TimestampsToReturn, UserTokenType, Variant } from 'node-opcua';
+import { DataType, DataValue, InMemoryCertificateStore, TimestampsToReturn, UserTokenType, Variant } from 'node-opcua';
 import { encryptionService } from './encryption.service';
 import {
   createSessionConfigs,
   getHistoryReadRequest,
   getResamplingValue,
   getTimestamp,
-  initOPCUACertificateFolders,
   logMessages,
   MAX_NUMBER_OF_NODE_TO_LOG,
   parseOPCUAValue,
@@ -23,53 +22,6 @@ import { DateTime } from 'luxon';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
 describe('Service utils OPCUA', () => {
-  describe('initOPCUACertificateFolders', () => {
-    let statMock: ReturnType<typeof mock.fn>;
-    let copyFileMock: ReturnType<typeof mock.fn>;
-
-    beforeEach(() => {
-      statMock = mock.method(fs, 'stat', async () => null) as ReturnType<typeof mock.fn>;
-      copyFileMock = mock.method(fs, 'copyFile', async () => undefined) as ReturnType<typeof mock.fn>;
-      mock.method(encryptionService, 'getCertPath', () => path.resolve('cert_path'));
-      mock.method(encryptionService, 'getPrivateKeyPath', () => path.resolve('private_key_path'));
-    });
-
-    afterEach(() => {
-      mock.restoreAll();
-    });
-
-    it('should properly init OPCUA certificate folders', async () => {
-      const folder = 'opcuaFolder';
-      await initOPCUACertificateFolders(folder);
-      assert.strictEqual(statMock.mock.calls.length, 10);
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'certs')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'own', 'private')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'rejected')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'certs')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'trusted', 'crl')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'certs')));
-      assert.ok(statMock.mock.calls.some(c => c.arguments[0] === path.resolve(folder, 'opcua', 'issuers', 'crl')));
-      assert.strictEqual(copyFileMock.mock.calls.length, 2);
-      assert.ok(
-        copyFileMock.mock.calls.some(
-          c =>
-            c.arguments[0] === path.resolve('private_key_path') &&
-            c.arguments[1] === path.resolve(folder, 'opcua', 'own', 'private', 'private_key.pem')
-        )
-      );
-      assert.ok(
-        copyFileMock.mock.calls.some(
-          c =>
-            c.arguments[0] === path.resolve('cert_path') &&
-            c.arguments[1] === path.resolve(folder, 'opcua', 'own', 'certs', 'client_certificate.pem')
-        )
-      );
-    });
-  });
-
   describe('toOPCUASecurityPolicy', () => {
     it('should properly convert into OPCUA SecurityPolicy', () => {
       assert.strictEqual(toOPCUASecurityPolicy('none'), 'none');
@@ -102,6 +54,8 @@ describe('Service utils OPCUA', () => {
     beforeEach(() => {
       decryptTextMock = mock.method(encryptionService, 'decryptText', async (text: unknown) => text) as ReturnType<typeof mock.fn>;
       readFileMock = mock.method(fs, 'readFile', async () => '') as ReturnType<typeof mock.fn>;
+      mock.method(encryptionService, 'getCertPath', () => path.resolve('cert_path'));
+      mock.method(encryptionService, 'getPrivateKeyPath', () => path.resolve('private_key_path'));
     });
 
     afterEach(() => {
@@ -120,24 +74,25 @@ describe('Service utils OPCUA', () => {
         flushMessageTimeout: 1000,
         maxNumberOfMessages: 1000
       };
-      assert.deepStrictEqual(
-        await createSessionConfigs('connectorId', 'connectorName', southSettings, {} as OPCUACertificateManager, 15_000),
-        {
-          options: {
-            applicationName: 'OIBus',
-            clientCertificateManager: {},
-            clientName: 'connectorName-connectorId',
-            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-            endpointMustExist: false,
-            keepPendingSessionsOnDisconnect: false,
-            keepSessionAlive: false,
-            requestedSessionTimeout: 15000,
-            securityMode: 1,
-            securityPolicy: 'none'
-          },
-          userIdentity: { type: UserTokenType.Anonymous }
-        }
-      );
+      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000), {
+        options: {
+          applicationName: 'OIBus',
+          // Cert read returns '' (mocked), so getOPCUAApplicationUri falls back to undefined.
+          applicationUri: undefined,
+          certificateFile: path.resolve('cert_path'),
+          privateKeyFile: path.resolve('private_key_path'),
+          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
+          clientName: 'connectorName-connectorId',
+          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+          endpointMustExist: false,
+          keepPendingSessionsOnDisconnect: false,
+          keepSessionAlive: false,
+          requestedSessionTimeout: 15000,
+          securityMode: 1,
+          securityPolicy: 'none'
+        },
+        userIdentity: { type: UserTokenType.Anonymous }
+      });
     });
 
     it('should properly create session configs with basic auth', async () => {
@@ -152,28 +107,28 @@ describe('Service utils OPCUA', () => {
         flushMessageTimeout: 1000,
         maxNumberOfMessages: 1000
       };
-      assert.deepStrictEqual(
-        await createSessionConfigs('connectorId', 'connectorName', southSettings, {} as OPCUACertificateManager, 15_000),
-        {
-          options: {
-            applicationName: 'OIBus',
-            clientCertificateManager: {},
-            clientName: 'connectorName-connectorId',
-            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-            endpointMustExist: false,
-            keepPendingSessionsOnDisconnect: false,
-            keepSessionAlive: false,
-            requestedSessionTimeout: 15000,
-            securityMode: 1,
-            securityPolicy: 'none'
-          },
-          userIdentity: {
-            type: UserTokenType.UserName,
-            userName: southSettings.authentication.username!,
-            password: southSettings.authentication.password!
-          }
+      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', southSettings, 15_000), {
+        options: {
+          applicationName: 'OIBus',
+          applicationUri: undefined,
+          certificateFile: path.resolve('cert_path'),
+          privateKeyFile: path.resolve('private_key_path'),
+          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
+          clientName: 'connectorName-connectorId',
+          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+          endpointMustExist: false,
+          keepPendingSessionsOnDisconnect: false,
+          keepSessionAlive: false,
+          requestedSessionTimeout: 15000,
+          securityMode: 1,
+          securityPolicy: 'none'
+        },
+        userIdentity: {
+          type: UserTokenType.UserName,
+          userName: southSettings.authentication.username!,
+          password: southSettings.authentication.password!
         }
-      );
+      });
       assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, [southSettings.authentication.password!]);
     });
 
@@ -191,31 +146,33 @@ describe('Service utils OPCUA', () => {
         if (String(filePath).endsWith('key_file.pem')) return 'privateKey';
         return '';
       });
-      assert.deepStrictEqual(
-        await createSessionConfigs('connectorId', 'connectorName', northSettings, {} as OPCUACertificateManager, undefined),
-        {
-          options: {
-            applicationName: 'OIBus',
-            clientCertificateManager: {},
-            clientName: 'connectorName-connectorId',
-            connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
-            endpointMustExist: false,
-            keepPendingSessionsOnDisconnect: false,
-            keepSessionAlive: false,
-            requestedSessionTimeout: undefined,
-            securityMode: 1,
-            securityPolicy: 'none'
-          },
-          userIdentity: {
-            type: UserTokenType.Certificate,
-            certificateData: 'cert',
-            privateKey: 'privateKey'
-          }
+      assert.deepStrictEqual(await createSessionConfigs('connectorId', 'connectorName', northSettings, undefined), {
+        options: {
+          applicationName: 'OIBus',
+          applicationUri: undefined,
+          certificateFile: path.resolve('cert_path'),
+          privateKeyFile: path.resolve('private_key_path'),
+          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
+          clientName: 'connectorName-connectorId',
+          connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
+          endpointMustExist: false,
+          keepPendingSessionsOnDisconnect: false,
+          keepSessionAlive: false,
+          requestedSessionTimeout: undefined,
+          securityMode: 1,
+          securityPolicy: 'none'
+        },
+        userIdentity: {
+          type: UserTokenType.Certificate,
+          certificateData: 'cert',
+          privateKey: 'privateKey'
         }
-      );
-      assert.strictEqual(readFileMock.mock.calls.length, 2);
-      assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], path.resolve(northSettings.authentication.certFilePath!));
-      assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], path.resolve(northSettings.authentication.keyFilePath!));
+      });
+      // getOPCUAApplicationUri reads the OIBus cert (1 call), and cert-auth reads 2 user files.
+      assert.strictEqual(readFileMock.mock.calls.length, 3);
+      assert.deepStrictEqual(readFileMock.mock.calls[0].arguments[0], path.resolve('cert_path'));
+      assert.deepStrictEqual(readFileMock.mock.calls[1].arguments[0], path.resolve(northSettings.authentication.certFilePath!));
+      assert.deepStrictEqual(readFileMock.mock.calls[2].arguments[0], path.resolve(northSettings.authentication.keyFilePath!));
     });
   });
 

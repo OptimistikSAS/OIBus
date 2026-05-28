@@ -2,23 +2,19 @@ import NorthConnector from '../north-connector';
 import { NorthOPCUASettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
-import path from 'node:path';
-import fs from 'node:fs/promises';
 import {
   AttributeIds,
   ClientSession,
   DataType,
   MessageSecurityMode,
-  OPCUACertificateManager,
   OPCUAClient,
   resolveNodeId,
   StatusCodes,
   UserTokenType
 } from 'node-opcua';
-import { randomUUID } from 'crypto';
 import { OIBusOPCUAValue } from '../../transformers/connector-types.model';
 import type { ICacheService } from '../../model/cache.service.model';
-import { createSessionConfigs, initOPCUACertificateFolders } from '../../service/utils-opcua';
+import { createSessionConfigs } from '../../service/utils-opcua';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
@@ -28,7 +24,6 @@ import type { ILogger } from '../../model/logger.model';
  * Class NorthOPCUA - Write values in an OPCUA server
  */
 export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
-  private clientCertificateManager: OPCUACertificateManager | null = null;
   private disconnecting = false;
   client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
@@ -42,15 +37,6 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   }
 
   async testConnection(): Promise<OIBusConnectionTestResult> {
-    const tempCertFolder = `opcua-test-${randomUUID()}`;
-    await initOPCUACertificateFolders(tempCertFolder);
-    const clientCertificateManager = new OPCUACertificateManager({
-      rootFolder: path.resolve(tempCertFolder, 'opcua'),
-      automaticallyAcceptUnknownCertificate: true
-    });
-    clientCertificateManager.state = 2;
-    this.clientCertificateManager = clientCertificateManager;
-
     const items: Array<{ key: string; value: string }> = [];
     let session;
     try {
@@ -150,26 +136,12 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
         // Server may not expose endpoint details
       }
     } finally {
-      await fs.rm(path.resolve(tempCertFolder), { recursive: true, force: true });
       if (session) {
         await session.close();
         session = null;
       }
     }
     return { items };
-  }
-
-  override async start(): Promise<void> {
-    await initOPCUACertificateFolders(this.getCacheFolder());
-    if (!this.clientCertificateManager) {
-      this.clientCertificateManager = new OPCUACertificateManager({
-        rootFolder: path.resolve(this.getCacheFolder(), 'opcua'),
-        automaticallyAcceptUnknownCertificate: true
-      });
-      // Set state to 2 (Initialized) to avoid openssl call
-      this.clientCertificateManager.state = 2;
-    }
-    await super.start();
   }
 
   override async connect(): Promise<void> {
@@ -208,7 +180,6 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
       this.connector.id,
       this.connector.name,
       this.connector.settings,
-      this.clientCertificateManager!,
       undefined
     );
     this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
