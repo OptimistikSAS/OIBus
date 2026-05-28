@@ -472,13 +472,6 @@ export default class SouthConnectorRepository {
     return toScanMode(result);
   }
 
-  private findGroupForItem(itemId: string) {
-    const query = `SELECT group_id FROM ${GROUP_ITEMS_TABLE} WHERE item_id = ?;`;
-    const result = this.database.prepare(query).get(itemId) as { group_id: string } | null;
-    if (!result) return null;
-    return this.groupRepository.findById(result.group_id);
-  }
-
   findGroupBySouthId(southId: string): Array<SouthItemGroupEntityLight> {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, ` +
