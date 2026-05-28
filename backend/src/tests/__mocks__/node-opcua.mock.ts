@@ -28,7 +28,7 @@ export const TimestampsToReturn = {
 };
 
 export default {
-  OPCUAClient: { createSession: mock.fn(async () => ({})) },
+  OPCUAClient: { createSession: mock.fn(async () => ({})), create: mock.fn(() => null as unknown) },
   ClientSubscription: { create: mock.fn() },
   ClientMonitoredItem: { create: mock.fn() },
   DataType: {},
