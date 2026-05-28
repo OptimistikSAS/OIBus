@@ -6,12 +6,15 @@ import type { ILogger } from '../../model/logger.model';
 
 const CLEAN_UP_INTERVAL = 24 * 3600 * 1000; // One day
 
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /**
  * Service used to clean up log files rolled by the pino-roll library
  * This service should be removed if pino-roll implements this feature one day
  */
 export default class FileCleanupService {
   private readonly logFolder: string;
+  private readonly rolledFileRegExp: RegExp;
   private cleanUpInterval: NodeJS.Timeout | null = null;
 
   constructor(
@@ -21,6 +24,11 @@ export default class FileCleanupService {
     private readonly numberOfFiles: number
   ) {
     this.logFolder = path.resolve(logFolder);
+    // pino-roll v4 produces rolled files of the form "<base>.<N><ext>".
+    // For filename "journal.log" → "journal.1.log", "journal.2.log", …
+    // The currently-active file (no number) is intentionally excluded so it is never deleted.
+    const parsed = path.parse(this.filename);
+    this.rolledFileRegExp = new RegExp(`^${escapeRegExp(parsed.name)}\\.[0-9]+${escapeRegExp(parsed.ext)}$`);
   }
 
   /**
@@ -51,11 +59,10 @@ export default class FileCleanupService {
       }
       const filenames = await fs.readdir(this.logFolder);
 
-      const regexp = new RegExp(`^${this.filename}\\.[0-9]*$`);
       const fileList: Array<{ file: string; modifiedTime: number }> = [];
-      const logFiles = filenames.filter(file => file.match(regexp));
+      const logFiles = filenames.filter(file => this.rolledFileRegExp.test(file));
 
-      this.logger.trace(`Found ${logFiles.length} log files with RegExp ${regexp} in folder "${this.logFolder}".`);
+      this.logger.trace(`Found ${logFiles.length} log files with RegExp ${this.rolledFileRegExp} in folder "${this.logFolder}".`);
       if (logFiles.length > this.numberOfFiles) {
         for (const filename of logFiles) {
           try {

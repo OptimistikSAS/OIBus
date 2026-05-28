@@ -57,9 +57,9 @@ describe('FileCleanupService', () => {
       mock.fn(async (filePath: unknown) => {
         const p = String(filePath);
         if (p === LOG_FOLDER) return {}; // filesExists — folder exists
-        if (p.endsWith('journal.log.1')) return { mtimeMs: 2 };
-        if (p.endsWith('journal.log.2')) return { mtimeMs: 1 };
-        if (p.endsWith('journal.log.233')) return { mtimeMs: 5 };
+        if (p.endsWith('journal.1.log')) return { mtimeMs: 2 };
+        if (p.endsWith('journal.2.log')) return { mtimeMs: 1 };
+        if (p.endsWith('journal.233.log')) return { mtimeMs: 5 };
         throw new Error(`Unexpected stat call: ${p}`);
       })
     );
@@ -68,10 +68,11 @@ describe('FileCleanupService', () => {
       fs,
       'readdir',
       mock.fn(async () => [
-        'journal.log.1',
-        'journal.log.2',
-        'journal.log.233',
-        'journal.log.0.backup',
+        'journal.1.log',
+        'journal.2.log',
+        'journal.233.log',
+        'journal.log', // currently-active file: must be ignored
+        'journal.0.log.backup', // unrelated suffix: must be ignored
         'journal.db',
         'migration-journal.log'
       ])
@@ -84,10 +85,10 @@ describe('FileCleanupService', () => {
 
     assert.deepStrictEqual(readdirMock1.mock.calls[0].arguments, [LOG_FOLDER]);
     assert.deepStrictEqual(logger.trace.mock.calls[0].arguments, [
-      `Found 3 log files with RegExp /^journal.log\\.[0-9]*$/ in folder "${LOG_FOLDER}".`
+      `Found 3 log files with RegExp /^journal\\.[0-9]+\\.log$/ in folder "${LOG_FOLDER}".`
     ]);
     assert.deepStrictEqual(logger.trace.mock.calls[1].arguments, ['Removing 1 log files.']);
-    assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [path.join(LOG_FOLDER, 'journal.log.2')]);
+    assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [path.join(LOG_FOLDER, 'journal.2.log')]);
   });
 
   it('should not clean up folder if not enough files', async () => {
@@ -100,7 +101,7 @@ describe('FileCleanupService', () => {
     const readdirMock2 = mock.method(
       fs,
       'readdir',
-      mock.fn(async () => ['journal.log.1', 'journal.log.2'])
+      mock.fn(async () => ['journal.1.log', 'journal.2.log'])
     ) as ReturnType<typeof mock.fn>;
 
     const unlinkMock = mock.fn(async () => undefined);
@@ -110,11 +111,51 @@ describe('FileCleanupService', () => {
 
     assert.deepStrictEqual(readdirMock2.mock.calls[0].arguments, [LOG_FOLDER]);
     assert.deepStrictEqual(logger.trace.mock.calls[0].arguments, [
-      `Found 2 log files with RegExp /^journal.log\\.[0-9]*$/ in folder "${LOG_FOLDER}".`
+      `Found 2 log files with RegExp /^journal\\.[0-9]+\\.log$/ in folder "${LOG_FOLDER}".`
     ]);
     // Only the filesExists stat call — no per-file stat calls, no unlinks
     assert.strictEqual(statMock2.mock.calls.length, 1);
     assert.strictEqual(unlinkMock.mock.calls.length, 0);
+  });
+
+  it('should clean up backlog of pino-roll rolled files (regression for filename pattern)', async () => {
+    // Real-world client scenario: 7 accumulated files with numberOfFiles=5.
+    // numberOfFiles is set to 2 in this suite's beforeEach, so 5 of the 7 must be removed.
+    const mtimes: Record<string, number> = {
+      'journal.345.log': 1,
+      'journal.346.log': 2,
+      'journal.347.log': 3,
+      'journal.348.log': 4,
+      'journal.349.log': 5,
+      'journal.350.log': 6,
+      'journal.351.log': 7
+    };
+    mock.method(
+      fs,
+      'stat',
+      mock.fn(async (filePath: unknown) => {
+        const p = String(filePath);
+        if (p === LOG_FOLDER) return {};
+        const filename = path.basename(p);
+        if (mtimes[filename] !== undefined) return { mtimeMs: mtimes[filename] };
+        throw new Error(`Unexpected stat call: ${p}`);
+      })
+    );
+    mock.method(fs, 'readdir', mock.fn(async () => Object.keys(mtimes)));
+    const unlinkMock = mock.fn(async () => undefined);
+    mock.method(fs, 'unlink', unlinkMock);
+
+    await fileCleanupService.cleanUpLogFiles();
+
+    // numberOfFiles=2 → keep 2 newest (.351, .350), delete the 5 oldest.
+    const deleted = unlinkMock.mock.calls.map(c => path.basename(String(c.arguments[0])));
+    assert.deepStrictEqual(deleted, [
+      'journal.345.log',
+      'journal.346.log',
+      'journal.347.log',
+      'journal.348.log',
+      'journal.349.log'
+    ]);
   });
 
   it('should properly manage file access errors', async () => {
@@ -124,11 +165,11 @@ describe('FileCleanupService', () => {
       mock.fn(async (filePath: unknown) => {
         const p = String(filePath);
         if (p === LOG_FOLDER) return {}; // filesExists — folder exists
-        if (p.endsWith('journal.log.1')) return { mtimeMs: 2 };
-        if (p.endsWith('journal.log.2')) return { mtimeMs: 1 };
-        if (p.endsWith('journal.log.233')) return { mtimeMs: 5 };
-        if (p.endsWith('journal.log.3')) throw new Error('stat error');
-        if (p.endsWith('journal.log.4')) return { mtimeMs: 9 };
+        if (p.endsWith('journal.1.log')) return { mtimeMs: 2 };
+        if (p.endsWith('journal.2.log')) return { mtimeMs: 1 };
+        if (p.endsWith('journal.233.log')) return { mtimeMs: 5 };
+        if (p.endsWith('journal.3.log')) throw new Error('stat error');
+        if (p.endsWith('journal.4.log')) return { mtimeMs: 9 };
         throw new Error(`Unexpected stat call: ${p}`);
       })
     );
@@ -137,12 +178,12 @@ describe('FileCleanupService', () => {
       fs,
       'readdir',
       mock.fn(async () => [
-        'journal.log.1',
-        'journal.log.2',
-        'journal.log.233',
-        'journal.log.3',
-        'journal.log.4',
-        'journal.log.0.backup',
+        'journal.1.log',
+        'journal.2.log',
+        'journal.233.log',
+        'journal.3.log',
+        'journal.4.log',
+        'journal.0.log.backup',
         'journal.db',
         'migration-journal.log'
       ])
@@ -159,15 +200,15 @@ describe('FileCleanupService', () => {
 
     assert.deepStrictEqual(readdirMock3.mock.calls[0].arguments, [LOG_FOLDER]);
     assert.deepStrictEqual(logger.trace.mock.calls[0].arguments, [
-      `Found 5 log files with RegExp /^journal.log\\.[0-9]*$/ in folder "${LOG_FOLDER}".`
+      `Found 5 log files with RegExp /^journal\\.[0-9]+\\.log$/ in folder "${LOG_FOLDER}".`
     ]);
     assert.deepStrictEqual(logger.error.mock.calls[0].arguments, [
-      `Error while reading log file "${path.join(LOG_FOLDER, 'journal.log.3')}": ${new Error('stat error')}`
+      `Error while reading log file "${path.join(LOG_FOLDER, 'journal.3.log')}": ${new Error('stat error')}`
     ]);
     assert.deepStrictEqual(logger.trace.mock.calls[1].arguments, ['Removing 2 log files.']);
-    assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [path.join(LOG_FOLDER, 'journal.log.2')]);
+    assert.deepStrictEqual(unlinkMock.mock.calls[0].arguments, [path.join(LOG_FOLDER, 'journal.2.log')]);
     assert.deepStrictEqual(logger.error.mock.calls[1].arguments, [
-      `Error while removing log file "${path.join(LOG_FOLDER, 'journal.log.1')}": ${new Error('unlink error')}`
+      `Error while removing log file "${path.join(LOG_FOLDER, 'journal.1.log')}": ${new Error('unlink error')}`
     ]);
   });
 
