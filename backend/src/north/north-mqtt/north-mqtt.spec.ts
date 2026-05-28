@@ -235,6 +235,33 @@ describe('NorthMQTT', () => {
     assert.deepStrictEqual(testResult, { items: [{ key: 'SessionPresent', value: 'false' }] });
   });
 
+  it('should populate all properties from connack in test connection', async () => {
+    const connackPacket = {
+      sessionPresent: true,
+      properties: {
+        maximumQoS: 1,
+        retainAvailable: true,
+        wildcardSubscriptionAvailable: true,
+        sharedSubscriptionAvailable: false,
+        maximumPacketSize: 256,
+        serverKeepAlive: 30,
+        topicAliasMaximum: 10
+      }
+    };
+    connectFn.mock.mockImplementation((_url: string) => {
+      setImmediate(() => mockMqttClient.emit('connect', connackPacket));
+      return mockMqttClient;
+    });
+
+    const testResult = await north.testConnection();
+
+    assert.ok(testResult.items.some(item => item.key === 'WildcardSubscriptions'));
+    assert.ok(testResult.items.some(item => item.key === 'SharedSubscriptions'));
+    assert.ok(testResult.items.some(item => item.key === 'MaxPacketSize'));
+    assert.ok(testResult.items.some(item => item.key === 'ServerKeepAlive'));
+    assert.ok(testResult.items.some(item => item.key === 'TopicAliasMaximum'));
+  });
+
   it('should throw error if connector is in reconnecting state', async () => {
     (north as unknown as { reconnectTimeout: NodeJS.Timeout | null })['reconnectTimeout'] = setTimeout(() => null);
     const readStream = {} as ReadStream;
