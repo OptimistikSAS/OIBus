@@ -24,6 +24,7 @@ EXPOSE 2223
 
 # Override default admin credentials and port on first run (applied only when the DB has no user/settings yet).
 # Use ADMIN_USERNAME_FILE / ADMIN_PASSWORD_FILE to point to a Docker Secret file path instead of passing plain values.
+ENV ENGINE_NAME=""
 ENV ADMIN_USERNAME=""
 ENV ADMIN_PASSWORD=""
 ENV ADMIN_USERNAME_FILE=""
