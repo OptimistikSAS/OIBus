@@ -79,8 +79,11 @@ json_escape() {
   printf '%s' "$s"
 }
 
-# If no existing database, prompt for initial admin credentials and port
+# If no existing database, prompt for initial admin credentials, port and engine name
 if [[ ! -f "$conf_path/oibus.db" ]]; then
+  read -rp "Enter the OIBus name (default: OIBus): " engine_name
+  engine_name="${engine_name:=OIBus}"
+
   read -rp "Enter the admin username (default: admin): " admin_username
   admin_username="${admin_username:=admin}"
 
@@ -91,8 +94,8 @@ if [[ ! -f "$conf_path/oibus.db" ]]; then
   read -rp "Enter the port OIBus will listen on (default: 2223): " oibus_port
   oibus_port="${oibus_port:=2223}"
 
-  printf '{"adminUsername":"%s","adminPassword":"%s","port":%s}' \
-    "$(json_escape "$admin_username")" "$(json_escape "$admin_password")" "$oibus_port" \
+  printf '{"engineName":"%s","adminUsername":"%s","adminPassword":"%s","port":%s}' \
+    "$(json_escape "$engine_name")" "$(json_escape "$admin_username")" "$(json_escape "$admin_password")" "$oibus_port" \
     > "$conf_path/oibus.init.json"
   chmod 600 "$conf_path/oibus.init.json"
 fi
