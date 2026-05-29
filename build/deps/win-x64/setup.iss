@@ -104,9 +104,17 @@ var
   ServiceNameEdit: TNewEdit;
   DataDirEdit: TNewEdit;
 
+  AdminPage: TWizardPage;
+  AdminUsernameEdit: TNewEdit;
+  AdminPasswordEdit: TNewEdit;
+  PortEdit: TNewEdit;
+
   // Global variables to store user choices
   FinalServiceName: String;
   FinalDataDir: String;
+  FinalAdminUsername: String;
+  FinalAdminPassword: String;
+  FinalPort: String;
 
 // --- Getter Functions for [Registry] ---
 
@@ -194,6 +202,84 @@ begin
   DataDirEdit.Top := btnBrowse.Top;
   DataDirEdit.Left := 0;
   DataDirEdit.Width := ConfigPage.SurfaceWidth - btnBrowse.Width - ScaleX(10);
+
+  // Create Admin Credentials Page
+  AdminPage := CreateCustomPage(ConfigPage.ID, 'Admin Credentials', 'Set the initial admin username, password and port');
+
+  var lblAdminUser: TNewStaticText;
+  lblAdminUser := TNewStaticText.Create(AdminPage);
+  lblAdminUser.Parent := AdminPage.Surface;
+  lblAdminUser.Caption := 'Admin username (default: admin):';
+  lblAdminUser.Top := 0;
+  lblAdminUser.Left := 0;
+  lblAdminUser.Width := AdminPage.SurfaceWidth;
+
+  AdminUsernameEdit := TNewEdit.Create(AdminPage);
+  AdminUsernameEdit.Parent := AdminPage.Surface;
+  AdminUsernameEdit.Text := 'admin';
+  AdminUsernameEdit.Top := lblAdminUser.Top + lblAdminUser.Height + ScaleY(8);
+  AdminUsernameEdit.Left := 0;
+  AdminUsernameEdit.Width := AdminPage.SurfaceWidth;
+
+  var lblAdminPass: TNewStaticText;
+  lblAdminPass := TNewStaticText.Create(AdminPage);
+  lblAdminPass.Parent := AdminPage.Surface;
+  lblAdminPass.Caption := 'Admin password (default: pass):';
+  lblAdminPass.Top := AdminUsernameEdit.Top + AdminUsernameEdit.Height + ScaleY(20);
+  lblAdminPass.Left := 0;
+  lblAdminPass.Width := AdminPage.SurfaceWidth;
+
+  AdminPasswordEdit := TNewEdit.Create(AdminPage);
+  AdminPasswordEdit.Parent := AdminPage.Surface;
+  AdminPasswordEdit.PasswordChar := '*';
+  AdminPasswordEdit.Text := 'pass';
+  AdminPasswordEdit.Top := lblAdminPass.Top + lblAdminPass.Height + ScaleY(8);
+  AdminPasswordEdit.Left := 0;
+  AdminPasswordEdit.Width := AdminPage.SurfaceWidth;
+
+  var lblPort: TNewStaticText;
+  lblPort := TNewStaticText.Create(AdminPage);
+  lblPort.Parent := AdminPage.Surface;
+  lblPort.Caption := 'Port OIBus will listen on (default: 2223):';
+  lblPort.Top := AdminPasswordEdit.Top + AdminPasswordEdit.Height + ScaleY(20);
+  lblPort.Left := 0;
+  lblPort.Width := AdminPage.SurfaceWidth;
+
+  PortEdit := TNewEdit.Create(AdminPage);
+  PortEdit.Parent := AdminPage.Surface;
+  PortEdit.Text := '2223';
+  PortEdit.Top := lblPort.Top + lblPort.Height + ScaleY(8);
+  PortEdit.Left := 0;
+  PortEdit.Width := AdminPage.SurfaceWidth;
+end;
+
+// Escape a string for safe embedding in a JSON value.
+function EscapeJsonString(const S: String): String;
+var
+  I: Integer;
+  C: Char;
+  Escaped: String;
+begin
+  Escaped := '';
+  for I := 1 to Length(S) do
+  begin
+    C := S[I];
+    if C = '\' then
+      Escaped := Escaped + '\\'
+    else if C = '"' then
+      Escaped := Escaped + '\"'
+    else
+      Escaped := Escaped + C;
+  end;
+  Result := Escaped;
+end;
+
+// Hide the AdminPage when upgrading over an existing database.
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := False;
+  if (PageID = AdminPage.ID) and ConfExists and not OverwriteConfig then
+    Result := True;
 end;
 
 // --- Validation & Overwrite Check ---
@@ -241,6 +327,16 @@ begin
         OverwriteConfig := False;
     end;
   end;
+
+  if (CurPageID = AdminPage.ID) then
+  begin
+    FinalAdminUsername := AdminUsernameEdit.Text;
+    if Length(FinalAdminUsername) = 0 then FinalAdminUsername := 'admin';
+    FinalAdminPassword := AdminPasswordEdit.Text;
+    if Length(FinalAdminPassword) = 0 then FinalAdminPassword := 'pass';
+    FinalPort := PortEdit.Text;
+    if Length(FinalPort) = 0 then FinalPort := '2223';
+  end;
 end;
 
 // --- Installation Logic ---
@@ -259,6 +355,8 @@ begin
   S := S + 'Service Configuration:' + NewLine;
   S := S + Space + 'Service Name: ' + FinalServiceName + NewLine;
   S := S + Space + 'Data Directory: ' + FinalDataDir + NewLine;
+  S := S + Space + 'Admin Username: ' + FinalAdminUsername + NewLine;
+  S := S + Space + 'Port: ' + FinalPort + NewLine;
 
   Result := S;
 end;
@@ -377,6 +475,14 @@ begin
     if not CreateDataDir then
       MsgBox('ERROR : OIBus data directory Setup failed.', mbCriticalError, MB_OK)
     else begin
+      // Write init config file only when no existing database is present
+      if not FileExists(AddBackslash(FinalDataDir) + 'oibus.db') then
+        SaveStringToFile(
+          AddBackslash(FinalDataDir) + 'oibus.init.json',
+          '{"adminUsername":"' + EscapeJsonString(FinalAdminUsername) + '","adminPassword":"' + EscapeJsonString(FinalAdminPassword) + '","port":' + FinalPort + '}',
+          False
+        );
+
       if not CreateLauncherFile() then
         MsgBox('ERROR : Launcher file creation failed', mbCriticalError, MB_OK)
       else if not InstallProgram() then
