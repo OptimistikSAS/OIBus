@@ -2,7 +2,7 @@ import { before, after, beforeEach, afterEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { mock } from 'node:test';
 import { Database } from 'better-sqlite3';
-import { emptyDatabase, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
+import { emptyDatabase, flushPromises, initDatabase, stripAuditFields } from '../../tests/utils/test-utils';
 import testData from '../../tests/utils/test-data';
 import UserRepository from './user.repository';
 import { createPageFromArray } from '../../../shared/model/types';
@@ -88,5 +88,46 @@ describe('UserRepository', () => {
   it('should delete a user', () => {
     repository.delete(testData.users.list[1].id);
     assert.strictEqual(repository.findById(testData.users.list[1].id), null);
+  });
+});
+
+describe('UserRepository with custom default credentials', () => {
+  const CUSTOM_DB_PATH = 'src/tests/test-config-user-custom.db';
+  let db: Database;
+
+  before(async () => {
+    db = await initDatabase('config', false, CUSTOM_DB_PATH);
+  });
+
+  after(async () => {
+    db.close();
+    await emptyDatabase('config', CUSTOM_DB_PATH);
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+  });
+
+  it('should create a default user with custom login and password', async () => {
+    mock.method(argon2, 'hash', async (password: string) => password);
+
+    const repository = new UserRepository(db, 'customuser', 'custompass');
+    await flushPromises();
+
+    const users = repository.list();
+    assert.strictEqual(users.length, 1);
+    assert.strictEqual(users[0].login, 'customuser');
+    assert.strictEqual(repository.getHashedPasswordByLogin('customuser'), 'custompass');
+  });
+
+  it('should not recreate the user when the same login already exists', async () => {
+    mock.method(argon2, 'hash', async (password: string) => password);
+
+    new UserRepository(db, 'customuser', 'anotherpass');
+    await flushPromises();
+
+    // Still only one user; createDefault is a no-op when the same login is already present
+    const row = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
+    assert.strictEqual(row.count, 1);
   });
 });

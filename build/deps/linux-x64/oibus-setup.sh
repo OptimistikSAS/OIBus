@@ -71,6 +71,32 @@ if [[ -f "$my_data_directory/oibus.db" ]]; then
   fi
 fi
 
+# Escape a string for safe embedding in a JSON value (backslash then double-quote).
+json_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  printf '%s' "$s"
+}
+
+# If no existing database, prompt for initial admin credentials and port
+if [[ ! -f "$conf_path/oibus.db" ]]; then
+  read -rp "Enter the admin username (default: admin): " admin_username
+  admin_username="${admin_username:=admin}"
+
+  read -rsp "Enter the admin password (default: pass): " admin_password
+  echo
+  admin_password="${admin_password:=pass}"
+
+  read -rp "Enter the port OIBus will listen on (default: 2223): " oibus_port
+  oibus_port="${oibus_port:=2223}"
+
+  printf '{"adminUsername":"%s","adminPassword":"%s","port":%s}' \
+    "$(json_escape "$admin_username")" "$(json_escape "$admin_password")" "$oibus_port" \
+    > "$conf_path/oibus.init.json"
+  chmod 600 "$conf_path/oibus.init.json"
+fi
+
 # Stop OIBus if already installed and running
 if [[ -f "/etc/systemd/system/oibus.service" ]]; then
   echo 'Stopping OIBus service...'

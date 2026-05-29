@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { createReadStream, createWriteStream } from 'node:fs';
+import { createReadStream, createWriteStream, readFileSync, existsSync } from 'node:fs';
 import zlib from 'node:zlib';
 import path from 'node:path';
 
@@ -8,6 +8,7 @@ import { DateTime } from 'luxon';
 import AdmZip from 'adm-zip';
 
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
+import { OIBusInitConfig } from '../model/oibus-init-config.model';
 import csv from 'papaparse';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import os from 'node:os';
@@ -49,6 +50,48 @@ export const getCommandLineArguments = () => {
     ignoreRemoteUpdate: Boolean(ignoreRemoteUpdate),
     ignoreRemoteConfig: Boolean(ignoreRemoteConfig),
     launcherVersion
+  };
+};
+
+export const INIT_CONFIG_FILENAME = 'oibus.init.json';
+
+const readSecretOrEnv = (fileEnvVar: string, directEnvVar: string): string | undefined => {
+  const filePath = process.env[fileEnvVar];
+  if (filePath) {
+    try {
+      return readFileSync(filePath, 'utf8').trim();
+    } catch (err) {
+      console.warn(`Failed to read secret from ${filePath}: ${(err as Error).message}`);
+    }
+  }
+  return process.env[directEnvVar] || undefined;
+};
+
+/**
+ * Read the one-time init config from file (installer path) or env vars (Docker path).
+ * Priority: oibus.init.json > ADMIN_USERNAME_FILE/ADMIN_PASSWORD_FILE > ADMIN_USERNAME/ADMIN_PASSWORD/DEFAULT_PORT > undefined.
+ */
+export const readInitConfig = (): OIBusInitConfig => {
+  if (existsSync(INIT_CONFIG_FILENAME)) {
+    try {
+      const raw = readFileSync(INIT_CONFIG_FILENAME, 'utf8');
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      return {
+        adminUsername: typeof parsed.adminUsername === 'string' ? parsed.adminUsername : undefined,
+        adminPassword: typeof parsed.adminPassword === 'string' ? parsed.adminPassword : undefined,
+        port: typeof parsed.port === 'number' ? parsed.port : undefined
+      };
+    } catch (err) {
+      console.warn(`Failed to parse ${INIT_CONFIG_FILENAME}: ${(err as Error).message}; falling back to env vars / defaults`);
+    }
+  }
+
+  const portEnv = process.env.DEFAULT_PORT;
+  const parsedPort = portEnv ? parseInt(portEnv, 10) : NaN;
+  return {
+    adminUsername: readSecretOrEnv('ADMIN_USERNAME_FILE', 'ADMIN_USERNAME'),
+    adminPassword: readSecretOrEnv('ADMIN_PASSWORD_FILE', 'ADMIN_PASSWORD'),
+    port: Number.isNaN(parsedPort) ? undefined : parsedPort
   };
 };
 
