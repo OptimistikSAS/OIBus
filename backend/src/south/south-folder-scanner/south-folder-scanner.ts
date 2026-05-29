@@ -92,23 +92,30 @@ export default class SouthFolderScanner
   }
 
   /**
-   * List files recursively if enabled
+   * List files under {@link dirPath}, walking into subdirectories when `item.settings.recursive`
+   * is enabled. Returns paths **relative to the original input folder** — i.e. a bare basename
+   * for files at the top level, `subdir/name` for files nested one level down, and so on.
+   *
+   * The input folder itself is never included in the returned strings: top-level files keep the
+   * exact basename that `fs.readdir` would have produced (matching the pre-recursive behaviour),
+   * and nested files just get their relative subdir path prepended.
+   *
    */
   private async listFilesRecursively(
     dirPath: string,
-    baseDir: string,
+    relativePrefix: string,
     item: SouthConnectorItemEntity<SouthFolderScannerItemSettings>
   ): Promise<Array<string>> {
     const files: Array<string> = [];
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
     for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name);
+      const entryRelative = relativePrefix ? path.join(relativePrefix, entry.name) : entry.name;
       if (entry.isDirectory() && item.settings.recursive) {
-        const subFiles = await this.listFilesRecursively(fullPath, baseDir, item);
+        const subFiles = await this.listFilesRecursively(path.join(dirPath, entry.name), entryRelative, item);
         files.push(...subFiles);
       } else if (entry.isFile()) {
-        files.push(path.relative(baseDir, fullPath));
+        files.push(entryRelative);
       }
     }
     return files;
@@ -137,7 +144,7 @@ export default class SouthFolderScanner
 
     // List files in the inputFolder
     const startRequest = DateTime.now();
-    const files = await this.listFilesRecursively(inputFolder, inputFolder, item);
+    const files = await this.listFilesRecursively(inputFolder, '', item);
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
     this.logger.debug(`Found ${files.length} files in ${inputFolder} read in ${requestDuration} ms`);
 
