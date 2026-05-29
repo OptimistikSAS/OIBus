@@ -11,6 +11,9 @@ if NOT %errorLevel% == 0 (
 
 set DATA_FOLDER_PATH=
 set SERVICE_NAME="OIBus"
+set ADMIN_USERNAME=
+set ADMIN_PASSWORD=
+set OIBUS_PORT=
 
 :PARSE_PARAMETERS
 if "%~1"=="" goto PARSE_PARAMETERS_DONE
@@ -22,6 +25,24 @@ if "%~1"=="-n" (
 )
 if "%~1"=="-c" (
     set "DATA_FOLDER_PATH=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-u" (
+    set "ADMIN_USERNAME=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-p" (
+    set "ADMIN_PASSWORD=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-port" (
+    set "OIBUS_PORT=%~2"
     shift
     shift
     goto PARSE_PARAMETERS
@@ -39,6 +60,16 @@ if "%DATA_FOLDER_PATH%"==""  (
 )
 
 if not exist "%DATA_FOLDER_PATH%" mkdir %DATA_FOLDER_PATH%
+
+if not exist "%DATA_FOLDER_PATH%\oibus.db" (
+    if "%ADMIN_USERNAME%"=="" set /P ADMIN_USERNAME=Enter the admin username (default: admin):
+    if "%ADMIN_USERNAME%"=="" set ADMIN_USERNAME=admin
+    if "%ADMIN_PASSWORD%"=="" set /P ADMIN_PASSWORD=Enter the admin password (default: pass):
+    if "%ADMIN_PASSWORD%"=="" set ADMIN_PASSWORD=pass
+    if "%OIBUS_PORT%"=="" set /P OIBUS_PORT=Enter the port OIBus will listen on (default: 2223):
+    if "%OIBUS_PORT%"=="" set OIBUS_PORT=2223
+    powershell -Command "$json = [pscustomobject]@{adminUsername=$env:ADMIN_USERNAME; adminPassword=$env:ADMIN_PASSWORD; port=[int]$env:OIBUS_PORT} | ConvertTo-Json -Compress; [IO.File]::WriteAllText([IO.Path]::Combine($env:DATA_FOLDER_PATH, 'oibus.init.json'), $json)"
+)
 
 echo Stopping %SERVICE_NAME% service...
 nssm.exe stop %SERVICE_NAME% >nul 2>&1
