@@ -22,10 +22,10 @@ const DEFAULT_PASSWORD = 'pass';
 export default class UserRepository {
   constructor(
     private readonly database: Database,
-    private readonly defaultLogin = DEFAULT_USER.login,
-    private readonly defaultPassword = DEFAULT_PASSWORD
+    defaultLogin = DEFAULT_USER.login,
+    defaultPassword = DEFAULT_PASSWORD
   ) {
-    this.createDefault();
+    this.createDefault(defaultLogin, defaultPassword);
   }
 
   list(): Array<User> {
@@ -137,14 +137,14 @@ export default class UserRepository {
     this.database.prepare(query).run(id);
   }
 
-  protected createDefault(): void {
+  protected createDefault(login: string, password: string): void {
     const query = `SELECT id FROM ${USERS_TABLE} WHERE login = ?;`;
-    const result = this.database.prepare(query).get(this.defaultLogin);
+    const result = this.database.prepare(query).get(login);
     if (result) {
       return;
     }
 
-    this.create({ ...DEFAULT_USER, login: this.defaultLogin }, this.defaultPassword, 'system').catch(err => {
+    this.create({ ...DEFAULT_USER, login }, password, 'system').catch(err => {
       console.error(err.message);
     });
   }
