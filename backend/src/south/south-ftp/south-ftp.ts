@@ -74,19 +74,19 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
     client: FTPClient,
     dirPath: string,
     item: SouthConnectorItemEntity<SouthFTPItemSettings>,
-    filesPreserved: Array<{ filename: string; modifiedTime: number }>
+    filesPreserved: Array<{ filename: string; modifiedTime: number }>,
+    relativePrefix = ''
   ): Promise<Array<FileInfo>> {
     const files: Array<FileInfo> = [];
     const fileList = await client.list(dirPath);
 
     for (const fileInfo of fileList) {
+      const entryRelative = relativePrefix ? `${relativePrefix}/${fileInfo.name}` : fileInfo.name;
       if (fileInfo.isDirectory && item.settings.recursive) {
-        const subPath = `${dirPath}/${fileInfo.name}`;
-        const subFiles = await this.listFilesRecursively(client, subPath, item, filesPreserved);
+        const subFiles = await this.listFilesRecursively(client, `${dirPath}/${fileInfo.name}`, item, filesPreserved, entryRelative);
         files.push(...subFiles);
       } else if (fileInfo.isFile && this.checkCondition(item, fileInfo, filesPreserved)) {
-        // Preserve the relative path for recursive files
-        fileInfo.name = `${dirPath}/${fileInfo.name}`.replace(item.settings.remoteFolder + '/', '');
+        fileInfo.name = entryRelative;
         files.push(fileInfo);
       }
     }
