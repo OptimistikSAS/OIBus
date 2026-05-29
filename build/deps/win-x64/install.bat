@@ -68,7 +68,7 @@ if not exist "%DATA_FOLDER_PATH%\oibus.db" (
     if "%ADMIN_PASSWORD%"=="" set ADMIN_PASSWORD=pass
     if "%OIBUS_PORT%"=="" set /P OIBUS_PORT=Enter the port OIBus will listen on (default: 2223):
     if "%OIBUS_PORT%"=="" set OIBUS_PORT=2223
-    powershell -Command "$json = [pscustomobject]@{adminUsername=$env:ADMIN_USERNAME; adminPassword=$env:ADMIN_PASSWORD; port=[int]$env:OIBUS_PORT} | ConvertTo-Json -Compress; [IO.File]::WriteAllText([IO.Path]::Combine($env:DATA_FOLDER_PATH, 'oibus.init.json'), $json)"
+    powershell -Command "$json = [pscustomobject]@{engineName=$env:SERVICE_NAME; adminUsername=$env:ADMIN_USERNAME; adminPassword=$env:ADMIN_PASSWORD; port=[int]$env:OIBUS_PORT} | ConvertTo-Json -Compress; [IO.File]::WriteAllText([IO.Path]::Combine($env:DATA_FOLDER_PATH, 'oibus.init.json'), $json)"
 )
 
 echo Stopping %SERVICE_NAME% service...
