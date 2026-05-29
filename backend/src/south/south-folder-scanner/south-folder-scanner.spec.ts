@@ -227,7 +227,7 @@ describe('SouthFolderScanner', () => {
 
       const files = await (south as unknown as Record<string, (...args: Array<unknown>) => Promise<Array<string>>>)['listFilesRecursively'](
         '/base',
-        '/base',
+        '',
         configuration.items[0]
       );
       assert.deepStrictEqual(files, ['file1.csv']);
@@ -254,7 +254,7 @@ describe('SouthFolderScanner', () => {
 
       const files = await (south as unknown as Record<string, (...args: Array<unknown>) => Promise<Array<string>>>)['listFilesRecursively'](
         '/base',
-        '/base',
+        '',
         configuration.items[0]
       );
       assert.strictEqual(files.length, 2);
