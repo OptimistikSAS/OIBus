@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 
+import { OIBusInitConfig } from '../model/oibus-init-config.model';
 import EngineRepository from '../repository/config/engine.repository';
 import IpFilterRepository from '../repository/config/ip-filter.repository';
 import ScanModeRepository from '../repository/config/scan-mode.repository';
@@ -55,7 +56,8 @@ export default class RepositoryService {
     metricsDatabasePath: string,
     cryptoDatabasePath: string,
     cacheDatabasePath: string,
-    launcherVersion: string
+    launcherVersion: string,
+    initConfig: OIBusInitConfig = {}
   ) {
     this.oibusDatabase = Database(oibusDatabasePath);
     this.metricsDatabase = Database(metricsDatabasePath);
@@ -77,12 +79,12 @@ export default class RepositoryService {
     this._ipFilterRepository = new IpFilterRepository(this.oibusDatabase);
     this._scanModeRepository = new ScanModeRepository(this.oibusDatabase);
     this._certificateRepository = new CertificateRepository(this.oibusDatabase);
-    this._engineRepository = new EngineRepository(this.oibusDatabase, launcherVersion);
+    this._engineRepository = new EngineRepository(this.oibusDatabase, launcherVersion, initConfig.port);
     this._northConnectorRepository = new NorthConnectorRepository(this.oibusDatabase);
     this._southConnectorRepository = new SouthConnectorRepository(this.oibusDatabase);
     this._southItemGroupRepository = new SouthItemGroupRepository(this.oibusDatabase);
     this._historyQueryRepository = new HistoryQueryRepository(this.oibusDatabase);
-    this._userRepository = new UserRepository(this.oibusDatabase);
+    this._userRepository = new UserRepository(this.oibusDatabase, initConfig.adminUsername, initConfig.adminPassword);
     this._oianalyticsRegistrationRepository = new OIAnalyticsRegistrationRepository(this.oibusDatabase);
     this._oianalyticsCommandRepository = new OIAnalyticsCommandRepository(this.oibusDatabase);
     this._oianalyticsMessageRepository = new OIAnalyticsMessageRepository(this.oibusDatabase);
