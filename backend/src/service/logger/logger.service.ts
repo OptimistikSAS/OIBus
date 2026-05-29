@@ -1,6 +1,8 @@
 import path from 'node:path';
+import util from 'node:util';
 
 import pino from 'pino';
+import { setDebugLogger, setErrorLogger, setTraceLogger, setWarningLogger, LogLevel, setLogLevel } from 'node-opcua-debug';
 
 import FileCleanupService from './file-cleanup.service';
 import { encryptionService } from '../encryption.service';
@@ -146,6 +148,8 @@ class LoggerService {
       transport: { targets }
     }).child({ scopeType: 'internal' });
 
+    this.redirectNodeOpcuaLogs();
+
     this.fileCleanUpService = new FileCleanupService(
       this.folder,
       this.logger,
@@ -160,6 +164,26 @@ class LoggerService {
    */
   createChildLogger(scopeType: ScopeType, scopeId?: string, scopeName?: string): ILogger {
     return this.logger!.child({ scopeType, scopeId, scopeName });
+  }
+
+  /**
+   * Route node-opcua's internal logs (anything that goes through node-opcua-debug —
+   * `make_debugLog`, `make_warningLog`, `make_errorLog`, `make_traceLog`) into our pino
+   * logger. These hooks are global to the process; we reinstall them every time the
+   * OIBus logger is (re)started so they always point at the current pino instance.
+   */
+  private redirectNodeOpcuaLogs(): void {
+    // scopeType stays 'internal' (matches the existing ScopeType union) and the
+    // 'node-opcua' marker lives in scopeName so downstream filters can pick it out.
+    const opcuaLogger = this.logger!.child({ scopeName: 'node-opcua' });
+    // node-opcua passes printf-style arguments — util.format mirrors what console.* does.
+    setDebugLogger((...args: Array<unknown>) => opcuaLogger.debug(util.format(...args)));
+    setTraceLogger((...args: Array<unknown>) => opcuaLogger.trace(util.format(...args)));
+    setWarningLogger((...args: Array<unknown>) => opcuaLogger.warn(util.format(...args)));
+    setErrorLogger((...args: Array<unknown>) => opcuaLogger.error(util.format(...args)));
+    // Let pino do the level filtering. node-opcua's gate is set wide so we don't drop
+    // events before pino sees them.
+    setLogLevel(LogLevel.Debug);
   }
 
   /**
