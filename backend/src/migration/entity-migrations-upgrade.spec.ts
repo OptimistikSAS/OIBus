@@ -16,7 +16,6 @@ import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs/promises';
 import { readdirSync } from 'node:fs';
-import { migrateEntities } from './migration-service';
 
 function getMigrationDirsLocal(base: string): Array<string> {
   const entries = readdirSync(base, { withFileTypes: true });
@@ -383,6 +382,15 @@ describe('Entity migration upgrade scenario (pre-populated DB)', () => {
         authentication: { type: 'none' },
         reconnectPeriod: 5_000,
         connectTimeout: 30_000
+      }),
+      // Folder-scanner (for addTransformersItems coverage in v3.8.0)
+      S('s-folder-scanner', 'Folder Scanner', 'folder-scanner', {
+        inputFolder: '/data/input',
+        compression: false,
+        preserveFiles: true,
+        recursive: false,
+        maxFiles: 10,
+        maxSize: 0
       })
     ]);
 
@@ -450,6 +458,29 @@ describe('Entity migration upgrade scenario (pre-populated DB)', () => {
           ],
           serialization: { type: 'csv', filename: 'out.csv', delimiter: 'COMMA', compression: false, outputTimestampFormat: 'yyyy-MM-dd', outputTimezone: 'UTC' }
         })
+      },
+      // MQTT item (for migrateSouthMQTTItems coverage in v3.8.0)
+      {
+        id: 'item-mqtt-1',
+        connector_id: 's-mqtt',
+        scan_mode_id: SCAN_ID,
+        name: 'MQTT item 1',
+        enabled: 1,
+        settings: JSON.stringify({
+          topic: 'test/topic/A',
+          qos: 1,
+          persistent: false,
+          jsonPayload: { useArray: false, singleOutputMode: false, timestampPath: 'ts', valuePath: 'v', pointIdPath: 'id', qualityPath: null, dataArrayPath: null, arrayPath: null, otherFields: [] }
+        })
+      },
+      // Folder-scanner item (for addTransformersItems / updateFileConnectorItems coverage)
+      {
+        id: 'item-folder-scanner-1',
+        connector_id: 's-folder-scanner',
+        scan_mode_id: SCAN_ID,
+        name: 'Folder item 1',
+        enabled: 1,
+        settings: JSON.stringify({ pattern: '*.csv', recursive: false, maxFiles: 10, maxSize: 0, preserveFiles: true })
       }
     ]);
 
@@ -457,7 +488,9 @@ describe('Entity migration upgrade scenario (pre-populated DB)', () => {
 
     await db('subscription').insert([
       { north_connector_id: NORTH_OIANALYTICS, south_connector_id: 's-opcua-none' },
-      { north_connector_id: NORTH_OIANALYTICS, south_connector_id: 's-modbus-big' }
+      { north_connector_id: NORTH_OIANALYTICS, south_connector_id: 's-modbus-big' },
+      // MQTT subscription — needed so migrateSouthMQTTItems processes s-mqtt items
+      { north_connector_id: NORTH_MQTT, south_connector_id: 's-mqtt' }
     ]);
 
     // ── History queries — one per south_type that v3.5.0 processes ────────────
@@ -562,13 +595,79 @@ describe('Entity migration upgrade scenario (pre-populated DB)', () => {
       }
     ]);
 
-    // 3. Destroy our setup knex, then call migrateEntities which creates its own
-    //    knex instance and skips v3.0 (already recorded in migrations table).
+    // 3. Run v3.1 through v3.7 migrations.
+    //    Pass all pre-v3.8 directories so knex can validate previously-applied migrations
+    //    (knex rejects if a previously-applied migration file is not found in the directory list).
+    const allEntityDirs = getMigrationDirsLocal(ENTITY_MIGRATIONS_BASE);
+    const preV3_8Dirs = allEntityDirs.filter(d => !d.endsWith(`${path.sep}3.8`));
+    await db.migrate.latest({ directory: preV3_8Dirs });
+
+    // 4. After v3.7 (transformers/north_transformers/history_query_transformers tables created),
+    //    insert transformer data so v3.8.0's migration sections covering those tables run.
+    //
+    //    Schema after v3.7 (verified by PRAGMA table_info):
+    //    transformers: id, created_at, updated_at, type, input_type, output_type,
+    //                  function_name, name, description, custom_manifest, custom_code
+    //    north_transformers: north_id, transformer_id, options, input_type
+    //    history_query_transformers: history_id, transformer_id, options, input_type
+
+    const ISO_TRANSFORMER_ID = 'transformer-iso-pre-1';
+    const CUSTOM_TRANSFORMER_ID = 'transformer-custom-pre-1';
+
+    await db('transformers').insert([
+      // 'iso' pre-inserted → createDefaultTransformers filters it out (FALSE branch for 'iso')
+      // while the remaining 13 defaults are still batchInserted (TRUE branch)
+      {
+        id: ISO_TRANSFORMER_ID,
+        type: 'standard',
+        function_name: 'iso',
+        input_type: 'any',
+        output_type: 'any',
+        name: null,
+        description: null,
+        custom_manifest: null,
+        custom_code: null
+      },
+      // custom transformer → v3.8.0 updateTransformersTable adds language col and sets 'javascript'
+      {
+        id: CUSTOM_TRANSFORMER_ID,
+        type: 'custom',
+        function_name: null,
+        input_type: 'any',
+        output_type: 'any',
+        name: 'My Custom Transform',
+        description: null,
+        custom_manifest: '{}',
+        custom_code: 'function transform(input) { return input; }'
+      }
+    ]);
+
+    // north_transformer → migrateSubscriptionsToTransformers uses as existingConfig
+    // (subscription NORTH_OIANALYTICS→s-opcua-none has input_type 'time-values' so this matches)
+    await db('north_transformers').insert({
+      north_id: NORTH_OIANALYTICS,
+      transformer_id: ISO_TRANSFORMER_ID,
+      input_type: 'time-values',
+      options: null
+    });
+
+    // history_query_transformer → migrateSubscriptionsToTransformers processes it
+    await db('history_query_transformers').insert({
+      history_id: 'hq-mssql',
+      transformer_id: ISO_TRANSFORMER_ID,
+      input_type: 'any',
+      options: null
+    });
+
+    // 5. Run v3.8 migrations — finds transformers + subscriptions + MQTT/file-connector items.
+    //    Pass ALL dirs so knex can validate the full migration history.
+    await db.migrate.latest({ directory: allEntityDirs });
+
     await db.destroy();
-    await migrateEntities(TMP_DB);
   });
 
   after(async () => {
+    try { await db?.destroy(); } catch { /* ignore if already destroyed */ }
     mock.restoreAll();
     await fs.rm(TMP_DB, { force: true });
   });

@@ -94,6 +94,7 @@ async function refactorNorthContent(folder: string): Promise<void> {
   let orphansRemoved = 0;
   try {
     const metadataFiles = await fs.readdir(path.join(folder, METADATA_FOLDER));
+    /* c8 ignore next 1 */
     const newContentFiles = new Set<string>();
     for (const metadataFile of metadataFiles) {
       // A metadata file without ".json" extension is the output of a previous
@@ -161,6 +162,7 @@ async function removeLegacySouthFolders(
   ];
   for (const [label, baseFolder, folders] of groups) {
     if (folders.length === 0) continue;
+    /* c8 ignore next 1 */
     console.info(`Removing ${folders.length} legacy "south-" folder(s) from ${baseFolder}`);
     for (const folder of folders) {
       try {

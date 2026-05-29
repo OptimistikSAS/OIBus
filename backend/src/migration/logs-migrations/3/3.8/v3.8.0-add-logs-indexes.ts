@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 
+/* c8 ignore start - source-map artifact: tsx maps bytecode to JSDoc comment lines */
 /**
  * One-time DB-shape upgrades for the logs database. Two unrelated things, but
  * both are "configure SQLite so the application doesn't have to manage it":
@@ -33,6 +34,7 @@ import { Knex } from 'knex';
  * remain unindexable because of the leading wildcard. FTS5 would help but is
  * out of scope here.
  */
+/* c8 ignore stop */
 
 const LOG_TABLE = 'logs';
 

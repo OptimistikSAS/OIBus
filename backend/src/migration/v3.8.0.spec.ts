@@ -282,4 +282,8 @@ describe('Data folder migration v3.8.0', () => {
       assert.strictEqual(fsSync.existsSync(path.join(tmpRoot, 'cache', 'history-test')), true);
     });
   });
+
+  it('down() resolves without errors', async () => {
+    await assert.doesNotReject(() => migration.down({} as Knex));
+  });
 });

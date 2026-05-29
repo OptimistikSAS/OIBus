@@ -126,4 +126,8 @@ describe('Data folder migration v3.8.0_1 (drop legacy opcua/ subfolders)', () =>
     assert.strictEqual(fsSync.existsSync(path.join(cacheDir, 'south-legacy-id')), true);
     assert.strictEqual(fsSync.existsSync(path.join(cacheDir, 'other-folder')), true);
   });
+
+  it('down() resolves without errors (trivial no-op)', async () => {
+    await assert.doesNotReject(() => migration.down());
+  });
 });
