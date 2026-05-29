@@ -1,9 +1,10 @@
 import path from 'node:path';
+import { rmSync } from 'node:fs';
 import WebServer from './web-server/web-server';
 import LoggerService from './service/logger/logger.service';
 import { encryptionService } from './service/encryption.service';
 
-import { createFolder, getCommandLineArguments, getOIBusInfo } from './service/utils';
+import { createFolder, getCommandLineArguments, getOIBusInfo, readInitConfig, INIT_CONFIG_FILENAME } from './service/utils';
 import RepositoryService from './service/repository.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
@@ -64,13 +65,16 @@ const CERT_FOLDER = 'certs';
   await migrateCrypto(path.resolve(CRYPTO_DATABASE));
   await migrateSouthCache(path.resolve(CACHE_FOLDER, CACHE_DATABASE));
 
+  const initConfig = readInitConfig();
+
   const repositoryService = new RepositoryService(
     path.resolve(CONFIG_DATABASE),
     path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
     path.resolve(LOG_FOLDER_NAME, METRICS_DB_NAME),
     path.resolve(CRYPTO_DATABASE),
     path.resolve(CACHE_FOLDER, CACHE_DATABASE),
-    launcherVersion
+    launcherVersion,
+    initConfig
   );
 
   const oibusSettings = repositoryService.engineRepository.get();
@@ -298,6 +302,8 @@ const CERT_FOLDER = 'certs';
     stopping = false;
     process.exit();
   });
+
+  rmSync(INIT_CONFIG_FILENAME, { force: true });
 
   const updatedOIBusSettings = repositoryService.engineRepository.get()!;
   loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
