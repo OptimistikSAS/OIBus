@@ -1914,4 +1914,70 @@ describe('Service utils', () => {
       assert.deepStrictEqual(result, [[grouped1, grouped2], [ungrouped]]);
     });
   });
+
+  describe('readInitConfig', () => {
+    const envVarsToClean = ['ADMIN_USERNAME', 'ADMIN_PASSWORD', 'DEFAULT_PORT', 'ADMIN_USERNAME_FILE', 'ADMIN_PASSWORD_FILE'];
+
+    afterEach(() => {
+      mock.restoreAll();
+      for (const key of envVarsToClean) {
+        delete process.env[key];
+      }
+    });
+
+    it('should read credentials and port from a valid init file', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{"adminUsername":"alice","adminPassword":"s3cr3t","port":3000}');
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { adminUsername: 'alice', adminPassword: 's3cr3t', port: 3000 });
+    });
+
+    it('should fall back to env vars when init file does not exist', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      process.env.ADMIN_USERNAME = 'bob';
+      process.env.ADMIN_PASSWORD = 'secret';
+      process.env.DEFAULT_PORT = '4000';
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { adminUsername: 'bob', adminPassword: 'secret', port: 4000 });
+    });
+
+    it('should fall back to env vars when init file is malformed JSON', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{invalid json}');
+      process.env.ADMIN_USERNAME = 'charlie';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.adminUsername, 'charlie');
+    });
+
+    it('should return undefined port when DEFAULT_PORT is not a valid number', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      process.env.DEFAULT_PORT = 'abc';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.port, undefined);
+    });
+
+    it('should read credentials from Docker secret files when _FILE env vars are set', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      mock.method(fsSync, 'readFileSync', (filePath: string) => {
+        if (filePath === '/run/secrets/admin_pass') return 'dockersecret\n';
+        throw new Error(`unexpected path: ${filePath}`);
+      });
+      process.env.ADMIN_PASSWORD_FILE = '/run/secrets/admin_pass';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.adminPassword, 'dockersecret');
+    });
+
+    it('should ignore fields with wrong types in the init file', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{"adminUsername":123,"adminPassword":null,"port":"not-a-number"}');
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { adminUsername: undefined, adminPassword: undefined, port: undefined });
+    });
+  });
 });

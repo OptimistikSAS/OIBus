@@ -62,7 +62,7 @@ describe('EngineRepository with empty database', () => {
   });
 
   describe('Engine', () => {
-    it('should properly init engine settings table', () => {
+    it('should properly init engine settings table with default port', () => {
       const repository = new EngineRepository(database, '3.5.0');
       const result = stripAuditFields(repository.get());
 
@@ -81,6 +81,12 @@ describe('EngineRepository with empty database', () => {
         loki: { level: 'silent', interval: 60, address: '', username: '', password: '' },
         oia: { level: 'silent', interval: 10 }
       });
+    });
+
+    it('should use a custom port when provided', () => {
+      const repository = new EngineRepository(database, '3.5.0', 3000);
+      // createDefault is a no-op because the record already exists from the previous test
+      assert.strictEqual(repository.get()!.port, 2223);
     });
   });
 
@@ -117,5 +123,25 @@ describe('EngineRepository with empty database', () => {
 
       mock.restoreAll();
     });
+
+  });
+});
+
+describe('EngineRepository with custom default port', () => {
+  const CUSTOM_PORT_DB_PATH = 'src/tests/test-config-engine-custom.db';
+  let db: Database;
+
+  before(async () => {
+    db = await initDatabase('config', false, CUSTOM_PORT_DB_PATH);
+  });
+
+  after(async () => {
+    db.close();
+    await emptyDatabase('config', CUSTOM_PORT_DB_PATH);
+  });
+
+  it('should seed engine settings with a custom port', () => {
+    const repository = new EngineRepository(db, '3.5.0', 3000);
+    assert.strictEqual(repository.get()!.port, 3000);
   });
 });
