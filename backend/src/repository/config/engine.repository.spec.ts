@@ -123,7 +123,6 @@ describe('EngineRepository with empty database', () => {
 
       mock.restoreAll();
     });
-
   });
 });
 

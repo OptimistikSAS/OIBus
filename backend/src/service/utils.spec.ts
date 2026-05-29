@@ -2014,7 +2014,14 @@ describe('Service utils', () => {
   });
 
   describe('readInitConfig', () => {
-    const envVarsToClean = ['ADMIN_USERNAME', 'ADMIN_PASSWORD', 'DEFAULT_PORT', 'ADMIN_USERNAME_FILE', 'ADMIN_PASSWORD_FILE'];
+    const envVarsToClean = [
+      'ENGINE_NAME',
+      'ADMIN_USERNAME',
+      'ADMIN_PASSWORD',
+      'DEFAULT_PORT',
+      'ADMIN_USERNAME_FILE',
+      'ADMIN_PASSWORD_FILE'
+    ];
 
     afterEach(() => {
       mock.restoreAll();
@@ -2025,20 +2032,21 @@ describe('Service utils', () => {
 
     it('should read credentials and port from a valid init file', () => {
       mock.method(fsSync, 'existsSync', () => true);
-      mock.method(fsSync, 'readFileSync', () => '{"adminUsername":"alice","adminPassword":"s3cr3t","port":3000}');
+      mock.method(fsSync, 'readFileSync', () => '{"engineName":"MyOIBus","adminUsername":"alice","adminPassword":"s3cr3t","port":3000}');
 
       const result = utils.readInitConfig();
-      assert.deepStrictEqual(result, { adminUsername: 'alice', adminPassword: 's3cr3t', port: 3000 });
+      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'alice', adminPassword: 's3cr3t', port: 3000 });
     });
 
     it('should fall back to env vars when init file does not exist', () => {
       mock.method(fsSync, 'existsSync', () => false);
+      process.env.ENGINE_NAME = 'MyOIBus';
       process.env.ADMIN_USERNAME = 'bob';
       process.env.ADMIN_PASSWORD = 'secret';
       process.env.DEFAULT_PORT = '4000';
 
       const result = utils.readInitConfig();
-      assert.deepStrictEqual(result, { adminUsername: 'bob', adminPassword: 'secret', port: 4000 });
+      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'bob', adminPassword: 'secret', port: 4000 });
     });
 
     it('should fall back to env vars when init file is malformed JSON', () => {
@@ -2072,10 +2080,10 @@ describe('Service utils', () => {
 
     it('should ignore fields with wrong types in the init file', () => {
       mock.method(fsSync, 'existsSync', () => true);
-      mock.method(fsSync, 'readFileSync', () => '{"adminUsername":123,"adminPassword":null,"port":"not-a-number"}');
+      mock.method(fsSync, 'readFileSync', () => '{"engineName":99,"adminUsername":123,"adminPassword":null,"port":"not-a-number"}');
 
       const result = utils.readInitConfig();
-      assert.deepStrictEqual(result, { adminUsername: undefined, adminPassword: undefined, port: undefined });
+      assert.deepStrictEqual(result, { engineName: undefined, adminUsername: undefined, adminPassword: undefined, port: undefined });
     });
   });
 });
