@@ -78,6 +78,7 @@ export const readInitConfig = (): OIBusInitConfig => {
       const raw = readFileSync(INIT_CONFIG_FILENAME, 'utf8');
       const parsed = JSON.parse(raw) as Record<string, unknown>;
       return {
+        engineName: typeof parsed.engineName === 'string' ? parsed.engineName : undefined,
         adminUsername: typeof parsed.adminUsername === 'string' ? parsed.adminUsername : undefined,
         adminPassword: typeof parsed.adminPassword === 'string' ? parsed.adminPassword : undefined,
         port: typeof parsed.port === 'number' ? parsed.port : undefined
@@ -90,6 +91,7 @@ export const readInitConfig = (): OIBusInitConfig => {
   const portEnv = process.env.DEFAULT_PORT;
   const parsedPort = portEnv ? parseInt(portEnv, 10) : NaN;
   return {
+    engineName: process.env.ENGINE_NAME || undefined,
     adminUsername: readSecretOrEnv('ADMIN_USERNAME_FILE', 'ADMIN_USERNAME'),
     adminPassword: readSecretOrEnv('ADMIN_PASSWORD_FILE', 'ADMIN_PASSWORD'),
     port: Number.isNaN(parsedPort) ? undefined : parsedPort

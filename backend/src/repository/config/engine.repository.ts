@@ -49,9 +49,10 @@ export default class EngineRepository {
   constructor(
     private readonly database: Database,
     launcherVersion: string,
-    defaultPort = DEFAULT_ENGINE_SETTINGS.port
+    defaultPort = DEFAULT_ENGINE_SETTINGS.port,
+    defaultName = DEFAULT_ENGINE_SETTINGS.name
   ) {
-    this.createDefault({ ...DEFAULT_ENGINE_SETTINGS, port: defaultPort }, launcherVersion);
+    this.createDefault({ ...DEFAULT_ENGINE_SETTINGS, port: defaultPort, name: defaultName }, launcherVersion);
   }
 
   get(): EngineSettings | null {
