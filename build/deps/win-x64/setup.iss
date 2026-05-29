@@ -479,7 +479,7 @@ begin
       if not FileExists(AddBackslash(FinalDataDir) + 'oibus.db') then
         SaveStringToFile(
           AddBackslash(FinalDataDir) + 'oibus.init.json',
-          '{"adminUsername":"' + EscapeJsonString(FinalAdminUsername) + '","adminPassword":"' + EscapeJsonString(FinalAdminPassword) + '","port":' + FinalPort + '}',
+          '{"engineName":"' + EscapeJsonString(FinalServiceName) + '","adminUsername":"' + EscapeJsonString(FinalAdminUsername) + '","adminPassword":"' + EscapeJsonString(FinalAdminPassword) + '","port":' + FinalPort + '}',
           False
         );
 
