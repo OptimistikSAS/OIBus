@@ -343,6 +343,7 @@ export default class WebServer {
     if (!this.app) return;
 
     this.webServer = this.app.listen(this.port, (error?: Error) => {
+      /* c8 ignore next 3 - Express listen callback does not receive errors (errors go to the 'error' event) */
       if (error) {
         this.logger.error(`Could not start server on port ${this.port}: ${error.message}`);
       } else {

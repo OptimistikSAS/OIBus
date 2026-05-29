@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import { DataType, DataValue, InMemoryCertificateStore, TimestampsToReturn, UserTokenType, Variant } from 'node-opcua';
+import { DataType, DataValue, OPCUACertificateManager, TimestampsToReturn, UserTokenType, Variant } from 'node-opcua';
 import { encryptionService } from './encryption.service';
 import {
   createSessionConfigs,
@@ -81,7 +81,7 @@ describe('Service utils OPCUA', () => {
           applicationUri: undefined,
           certificateFile: path.resolve('cert_path'),
           privateKeyFile: path.resolve('private_key_path'),
-          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
+          clientCertificateManager: new OPCUACertificateManager({ automaticallyAcceptUnknownCertificate: true }),
           clientName: 'connectorName-connectorId',
           connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
           endpointMustExist: false,
@@ -113,7 +113,7 @@ describe('Service utils OPCUA', () => {
           applicationUri: undefined,
           certificateFile: path.resolve('cert_path'),
           privateKeyFile: path.resolve('private_key_path'),
-          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
+          clientCertificateManager: new OPCUACertificateManager({ automaticallyAcceptUnknownCertificate: true }),
           clientName: 'connectorName-connectorId',
           connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
           endpointMustExist: false,
@@ -152,7 +152,7 @@ describe('Service utils OPCUA', () => {
           applicationUri: undefined,
           certificateFile: path.resolve('cert_path'),
           privateKeyFile: path.resolve('private_key_path'),
-          clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true }),
+          clientCertificateManager: new OPCUACertificateManager({ automaticallyAcceptUnknownCertificate: true }),
           clientName: 'connectorName-connectorId',
           connectionStrategy: { initialDelay: 1000, maxRetry: 1 },
           endpointMustExist: false,

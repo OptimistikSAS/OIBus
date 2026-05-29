@@ -6,11 +6,11 @@ import path from 'node:path';
 import os from 'node:os';
 import { createRequire } from 'node:module';
 import type { Knex } from 'knex';
-import { mockModule, reloadModule } from '../../../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
-type MigrationModule = typeof import('./v3.8.0');
+type MigrationModule = typeof import('./data-folder-migrations/3/3.8/v3.8.0');
 
 describe('Data folder migration v3.8.0', () => {
   let tmpRoot: string;
@@ -24,7 +24,7 @@ describe('Data folder migration v3.8.0', () => {
 
     // Override getCommandLineArguments so the migration's path constants resolve under tmpRoot.
     // Spread the real utils so other exports (filesExists, etc.) remain intact.
-    const utilsPath = '../../../../service/utils';
+    const utilsPath = '../service/utils';
     const utilsActual = nodeRequire(utilsPath) as Record<string, unknown>;
     mockModule(nodeRequire, utilsPath, {
       ...utilsActual,
@@ -37,7 +37,7 @@ describe('Data folder migration v3.8.0', () => {
         launcherVersion: 'test'
       })
     });
-    migration = reloadModule<MigrationModule>(nodeRequire, './v3.8.0');
+    migration = reloadModule<MigrationModule>(nodeRequire, './data-folder-migrations/3/3.8/v3.8.0');
 
     // The migration is chatty — silence it for the test run.
     mock.method(console, 'info', () => undefined);
@@ -146,6 +146,51 @@ describe('Data folder migration v3.8.0', () => {
       assert.deepStrictEqual(await fs.readdir(contentDir), []);
     });
 
+    it('rolls back content rename when second rename (metadata) fails — covers filesExists(contentDest)=true', async () => {
+      // Make the second fs.rename fail by pre-creating a directory at the destination
+      // metadata path (Linux raises EISDIR when renaming a file onto an existing directory).
+      const { contentDir, metadataDir } = await setupNorth();
+      await fs.writeFile(path.join(metadataDir, 'conflict.json'), metadataBody('src-content.csv'));
+      await fs.writeFile(path.join(contentDir, 'src-content.csv'), 'data');
+      // Creating a directory at /metadata/conflict forces the second rename to throw.
+      await fs.mkdir(path.join(metadataDir, 'conflict'), { recursive: true });
+
+      await assert.doesNotReject(() => migration.up({} as Knex));
+    });
+
+    it('rollback covers filesExists(destMetadata)=true when a bare metadata exists', async () => {
+      // Simulates: a bare metadata file 'done' was written by a prior run, but the
+      // corresponding json file 'done.json' is corrupt (empty → parse fails). The
+      // rollback should see 'done' already exists at the destMetadata path.
+      const { contentDir, metadataDir } = await setupNorth();
+      await fs.writeFile(path.join(metadataDir, 'done'), metadataBody('was-content'));
+      await fs.writeFile(path.join(contentDir, 'done'), 'existing-data');
+      // corrupt json for the same stem
+      await fs.writeFile(path.join(metadataDir, 'done.json'), '');
+
+      await assert.doesNotReject(() => migration.up({} as Knex));
+    });
+
+    it('calls .catch when rm(contentDest) fails — contentDest is an existing directory', async () => {
+      // First rename (missingFile → content/conflict) fails with ENOENT,
+      // so content/conflict remains a directory we pre-created.
+      // rm(content/conflict) without {recursive} throws EISDIR → .catch called.
+      const { contentDir, metadataDir } = await setupNorth();
+      await fs.writeFile(path.join(metadataDir, 'conflict.json'), metadataBody('missing-src.csv'));
+      await fs.mkdir(path.join(contentDir, 'conflict'), { recursive: true });
+
+      await assert.doesNotReject(() => migration.up({} as Knex));
+    });
+
+    it('calls .catch when rm(srcMetadata) fails — srcMetadata is a directory', async () => {
+      // metadata/conflict.json is a directory, so readFile throws EISDIR → catch.
+      // filesExists(metadata/conflict.json dir) → true → rm without {recursive} → EISDIR → .catch called.
+      const { contentDir: _c, metadataDir } = await setupNorth();
+      await fs.mkdir(path.join(metadataDir, 'conflict.json'), { recursive: true });
+
+      await assert.doesNotReject(() => migration.up({} as Knex));
+    });
+
     it('handles a mixed batch (fresh + already-migrated + corrupt) idempotently', async () => {
       const { contentDir, metadataDir } = await setupNorth();
       await fs.writeFile(path.join(metadataDir, 'fresh.json'), metadataBody('content-fresh'));
@@ -165,7 +210,50 @@ describe('Data folder migration v3.8.0', () => {
     });
   });
 
+  describe('refactorNorthContent outer catch', () => {
+    it('logs error when north folder has no metadata subdir (outer try/catch)', async () => {
+      // A north folder without content/metadata subdirs causes the outer readdir to fail.
+      await fs.mkdir(path.join(tmpRoot, 'cache', 'north-naked'), { recursive: true });
+      await assert.doesNotReject(() => migration.up({} as Knex));
+    });
+  });
+
+  describe('readdir error handling', () => {
+    it('continues gracefully when cache, error and archive folders are missing', async () => {
+      for (const sub of ['cache', 'error', 'archive']) {
+        await fs.rm(path.join(tmpRoot, sub), { recursive: true, force: true });
+      }
+      await assert.doesNotReject(() => migration.up({} as Knex));
+    });
+  });
+
+  describe('removeOPCUATestFolders', () => {
+    it('removes opcua-* folders from the data folder root', async () => {
+      const opcuaDir = path.join(tmpRoot, 'opcua-test-connector');
+      await fs.mkdir(opcuaDir, { recursive: true });
+      await fs.writeFile(path.join(opcuaDir, 'cert.pem'), 'fake-cert');
+
+      await migration.up({} as Knex);
+
+      assert.strictEqual(fsSync.existsSync(opcuaDir), false);
+    });
+  });
+
   describe('removeLegacySouthFolders', () => {
+    it('skips groups where the south- folder list is empty (folders.length === 0 branch)', async () => {
+      // Only cache has a south folder; error and archive do not.
+      const cacheSouth = path.join(tmpRoot, 'cache', SOUTH_ID);
+      await fs.mkdir(cacheSouth, { recursive: true });
+      // error and archive dirs exist but have no south- entries.
+
+      await migration.up({} as Knex);
+
+      assert.strictEqual(fsSync.existsSync(cacheSouth), false);
+      // error and archive are untouched (no south entries to remove).
+      assert.strictEqual(fsSync.existsSync(path.join(tmpRoot, 'error')), true);
+      assert.strictEqual(fsSync.existsSync(path.join(tmpRoot, 'archive')), true);
+    });
+
     it('removes south-* folders from cache, error and archive', async () => {
       const cacheSouth = path.join(tmpRoot, 'cache', SOUTH_ID, 'tmp');
       const errorSouth = path.join(tmpRoot, 'error', SOUTH_ID);

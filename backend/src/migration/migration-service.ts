@@ -107,4 +107,5 @@ export async function migrateDataFolder(dbPath: string): Promise<void> {
   });
 
   await knexConfig.migrate.latest({ directory: getMigrationDirs(path.resolve(__dirname, 'data-folder-migrations')) });
+  await knexConfig.destroy();
 }

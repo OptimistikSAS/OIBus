@@ -17,7 +17,7 @@ import {
   DataType,
   DataValue,
   HistoryReadRequest,
-  InMemoryCertificateStore,
+  OPCUACertificateManager,
   OPCUAClientOptions,
   ReadProcessedDetails,
   ReadRawModifiedDetails,
@@ -121,8 +121,8 @@ export const createSessionConfigs = async (
     // internal TmpClient. Disk paths get correctly forwarded and re-read by TmpClient.
     certificateFile: encryptionService.getCertPath(),
     privateKeyFile: encryptionService.getPrivateKeyPath(),
-    // In-memory trust store with auto-accept — no rejected/, trusted/, issuers/ folders on disk.
-    clientCertificateManager: new InMemoryCertificateStore({ autoAcceptUnknown: true })
+    // Auto-accept unknown certificates — no PKI folder tree on disk.
+    clientCertificateManager: new OPCUACertificateManager({ automaticallyAcceptUnknownCertificate: true })
   };
 
   let userIdentity: UserIdentityInfo;

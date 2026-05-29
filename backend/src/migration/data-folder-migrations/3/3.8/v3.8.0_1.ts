@@ -48,6 +48,7 @@ export async function up(_knex: Knex): Promise<void> {
       try {
         await fs.rm(target, { recursive: true, force: true });
         removed++;
+        /* c8 ignore next 3 - fs.rm with {recursive,force} never throws in tests */
       } catch (error: unknown) {
         console.error(`Error while removing legacy OPCUA folder "${target}": ${(error as Error).message}`);
       }

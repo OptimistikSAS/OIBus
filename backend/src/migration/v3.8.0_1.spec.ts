@@ -6,11 +6,11 @@ import path from 'node:path';
 import os from 'node:os';
 import { createRequire } from 'node:module';
 import type { Knex } from 'knex';
-import { mockModule, reloadModule } from '../../../../tests/utils/test-utils';
+import { mockModule, reloadModule } from '../tests/utils/test-utils';
 
 const nodeRequire = createRequire(import.meta.url);
 
-type MigrationModule = typeof import('./v3.8.0_1');
+type MigrationModule = typeof import('./data-folder-migrations/3/3.8/v3.8.0_1');
 
 describe('Data folder migration v3.8.0_1 (drop legacy opcua/ subfolders)', () => {
   let tmpRoot: string;
@@ -20,7 +20,7 @@ describe('Data folder migration v3.8.0_1 (drop legacy opcua/ subfolders)', () =>
     tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-mig-v381-'));
 
     // Override getCommandLineArguments so the migration's path constants resolve under tmpRoot.
-    const utilsPath = '../../../../service/utils';
+    const utilsPath = '../service/utils';
     const utilsActual = nodeRequire(utilsPath) as Record<string, unknown>;
     mockModule(nodeRequire, utilsPath, {
       ...utilsActual,
@@ -33,7 +33,7 @@ describe('Data folder migration v3.8.0_1 (drop legacy opcua/ subfolders)', () =>
         launcherVersion: 'test'
       })
     });
-    migration = reloadModule<MigrationModule>(nodeRequire, './v3.8.0_1');
+    migration = reloadModule<MigrationModule>(nodeRequire, './data-folder-migrations/3/3.8/v3.8.0_1');
 
     mock.method(console, 'info', () => undefined);
     mock.method(console, 'error', () => undefined);
@@ -115,5 +115,15 @@ describe('Data folder migration v3.8.0_1 (drop legacy opcua/ subfolders)', () =>
     await fs.rm(path.join(tmpRoot, 'cache'), { recursive: true, force: true });
     await migration.up({} as Knex);
     // No assertion needed — the test passes if no exception was thrown.
+  });
+
+  it('skips folders that are neither north- nor history- (target = null branch)', async () => {
+    const cacheDir = path.join(tmpRoot, 'cache');
+    await fs.mkdir(path.join(cacheDir, 'south-legacy-id'), { recursive: true });
+    await fs.mkdir(path.join(cacheDir, 'other-folder'), { recursive: true });
+    await migration.up({} as Knex);
+    // Folders are untouched — migration only acts on north-/history- prefixed entries.
+    assert.strictEqual(fsSync.existsSync(path.join(cacheDir, 'south-legacy-id')), true);
+    assert.strictEqual(fsSync.existsSync(path.join(cacheDir, 'other-folder')), true);
   });
 });
