@@ -194,7 +194,6 @@ export default class WebServer {
       if (err instanceof NotFoundError) {
         // Not Found Error trigger by OIBus at the service layer if an entity is not found
         return res.status(404).json({ error: err.message });
-        /* c8 ignore next 2 */
       }
       if (err instanceof OIBusValidationError) {
         // Validation Error trigger by OIBus at the service layer
@@ -227,7 +226,6 @@ export default class WebServer {
         return res.sendFile(path.join(__dirname, '../../../frontend/browser', 'index.html'));
       }
       return next();
-      /* c8 ignore next 3 */
     });
 
     // Error handling
@@ -345,7 +343,6 @@ export default class WebServer {
     if (!this.app) return;
 
     this.webServer = this.app.listen(this.port, (error?: Error) => {
-      /* c8 ignore next 3 - Express listen callback does not receive errors (errors go to the 'error' event) */
       if (error) {
         this.logger.error(`Could not start server on port ${this.port}: ${error.message}`);
       } else {

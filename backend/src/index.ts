@@ -306,7 +306,6 @@ export async function bootstrap(): Promise<void> {
 
 // Only auto-run when invoked as the application entry point, not when imported in tests.
 const isMain = process.argv[1] != null && (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('index.js'));
-/* c8 ignore next 3 */
 if (isMain) {
   bootstrap().catch(console.error);
 }

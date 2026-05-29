@@ -18,7 +18,6 @@ type ConnectorType = 'South' | 'North';
 const isMain =
   process.argv[1] != null &&
   (process.argv[1].endsWith('settings-interface.generator.ts') || process.argv[1].endsWith('settings-interface.generator.js'));
-/* c8 ignore next 5 */
 if (isMain) {
   (async () => {
     await generateSettingsInterfaces();
@@ -55,7 +54,6 @@ export async function generateSettingsInterfacesForConnectorType(connectorType: 
     itemSettingsSubInterfaces: []
   };
 
-  /* c8 ignore next 4 - dynamic import of compiled .js manifests; only runs in the build environment */
   for (const manifestPath of manifests) {
     const module = await import(manifestPath);
     generateTypesForManifest(module.default, settingsTypesToGenerate, connectorType);
@@ -83,7 +81,6 @@ export async function generateSettingsInterfacesForTransformers() {
     itemSettingsSubInterfaces: []
   };
 
-  /* c8 ignore next 4 - dynamic import of compiled .js manifests; only runs in the build environment */
   for (const manifestPath of manifests) {
     const module = await import(manifestPath);
     generateTypesForTransformerManifest(module.default, settingsTypesToGenerate);

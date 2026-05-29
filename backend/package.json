@@ -130,7 +130,10 @@
     "test-coverage-exclude": [
       "src/**/*.spec.ts",
       "src/tests/**",
-      "src/web-server/routes.ts"
+      "src/web-server/routes.ts",
+      "src/migration/data-folder-migrations/3/3.8/v3.8.0.ts",
+      "src/migration/data-folder-migrations/3/3.8/v3.8.0_1.ts",
+      "src/migration/logs-migrations/3/3.8/v3.8.0-add-logs-indexes.ts"
     ]
   },
   "pkg": {

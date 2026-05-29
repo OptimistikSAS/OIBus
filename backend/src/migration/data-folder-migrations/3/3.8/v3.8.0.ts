@@ -27,7 +27,6 @@ export async function up(_knex: Knex): Promise<void> {
   let rootFolders: Array<string> = [];
   try {
     rootFolders = await fs.readdir(DATA_FOLDER_PATH);
-    /* c8 ignore next 3 - DATA_FOLDER_PATH is always accessible in tests */
   } catch (error: unknown) {
     console.error(`Error while reading root folder: ${(error as Error).message}`);
   }
@@ -94,7 +93,6 @@ async function refactorNorthContent(folder: string): Promise<void> {
   let orphansRemoved = 0;
   try {
     const metadataFiles = await fs.readdir(path.join(folder, METADATA_FOLDER));
-    /* c8 ignore next 1 */
     const newContentFiles = new Set<string>();
     for (const metadataFile of metadataFiles) {
       // A metadata file without ".json" extension is the output of a previous
@@ -124,7 +122,6 @@ async function refactorNorthContent(folder: string): Promise<void> {
         if (await filesExists(path.join(folder, CONTENT_FOLDER, filenameWithoutExtension))) {
           await fs.rm(path.join(folder, CONTENT_FOLDER, filenameWithoutExtension)).catch(e => console.error(e));
         }
-        /* c8 ignore next 3 - srcMetadata always exists (was just found by readdir); the false branch is a race-condition guard */
         if (await filesExists(path.join(folder, METADATA_FOLDER, metadataFile))) {
           await fs.rm(path.join(folder, METADATA_FOLDER, metadataFile)).catch(e => console.error(e));
         }
@@ -162,12 +159,10 @@ async function removeLegacySouthFolders(
   ];
   for (const [label, baseFolder, folders] of groups) {
     if (folders.length === 0) continue;
-    /* c8 ignore next 1 */
     console.info(`Removing ${folders.length} legacy "south-" folder(s) from ${baseFolder}`);
     for (const folder of folders) {
       try {
         await fs.rm(path.join(baseFolder, folder), { recursive: true, force: true });
-        /* c8 ignore next 3 - fs.rm with {recursive,force} never throws in tests */
       } catch (error: unknown) {
         console.error(`Error while removing ${label} folder ${folder}: ${(error as Error).message}`);
       }
@@ -180,7 +175,6 @@ async function removeOPCUATestFolders(opcuaFolders: Array<string>): Promise<void
   for (const folder of opcuaFolders) {
     try {
       await fs.rm(path.join(DATA_FOLDER_PATH, folder), { recursive: true, force: true });
-      /* c8 ignore next 3 - fs.rm with {recursive,force} never throws in tests */
     } catch (error: unknown) {
       console.error(`Error while removing opcua folder ${folder}: ${(error as Error).message}`);
     }
