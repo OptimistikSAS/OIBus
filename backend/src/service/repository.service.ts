@@ -79,7 +79,7 @@ export default class RepositoryService {
     this._ipFilterRepository = new IpFilterRepository(this.oibusDatabase);
     this._scanModeRepository = new ScanModeRepository(this.oibusDatabase);
     this._certificateRepository = new CertificateRepository(this.oibusDatabase);
-    this._engineRepository = new EngineRepository(this.oibusDatabase, launcherVersion, initConfig.port);
+    this._engineRepository = new EngineRepository(this.oibusDatabase, launcherVersion, initConfig.port, initConfig.engineName);
     this._northConnectorRepository = new NorthConnectorRepository(this.oibusDatabase);
     this._southConnectorRepository = new SouthConnectorRepository(this.oibusDatabase);
     this._southItemGroupRepository = new SouthItemGroupRepository(this.oibusDatabase);
