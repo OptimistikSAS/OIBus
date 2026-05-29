@@ -22,8 +22,9 @@ let service: LoggerServiceType;
 
 before(async () => {
   isoTimeFn = () => '';
-  const mockChild = mock.fn(() => null);
-  const mockPinoInstance = { child: mockChild };
+  // Self-referential `child` so subsequent .child() calls (e.g. for node-opcua scope) work too.
+  // Plain function (not mock.fn) so it survives `mock.restoreAll()` between tests.
+  const mockPinoInstance: { child: (...args: Array<unknown>) => unknown } = { child: () => mockPinoInstance };
   pinoMock = mock.fn(() => mockPinoInstance);
   (pinoMock as unknown as { stdTimeFunctions: { isoTime: () => string } }).stdTimeFunctions = { isoTime: isoTimeFn };
 
