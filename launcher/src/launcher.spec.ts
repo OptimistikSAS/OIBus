@@ -19,13 +19,7 @@ class MockChildProcess extends EventEmitter {
   stdout = new PassThrough();
   stderr = new PassThrough();
   stdio: ChildProcessWithoutNullStreams['stdio'];
-  killed = false;
-  pid: number | undefined = undefined;
   connected = false;
-  exitCode: number | null = null;
-  signalCode: NodeJS.Signals | null = null;
-  spawnargs: Array<string> = [];
-  spawnfile = '';
   readonly killMock: MockFn = mock.fn(() => true);
 
   constructor() {
@@ -665,19 +659,15 @@ describe('Launcher', () => {
       fs.writeFileSync(oibusPath, 'old binary');
 
       const originalRm = fs.promises.rm.bind(fs.promises);
-      mock.method(
-        fs.promises,
-        'rm',
-        async (target: Parameters<typeof fs.promises.rm>[0], options?: Parameters<typeof fs.promises.rm>[1]) => {
-          const targetPath = typeof target === 'string' ? target : String(target);
-          if (targetPath.includes(updateDir) && !targetPath.includes('binaries')) {
-            if (targetPath === problematicFile) {
-              throw new Error('Permission denied');
-            }
+      mock.method(fs.promises, 'rm', (target: Parameters<typeof fs.promises.rm>[0], options?: Parameters<typeof fs.promises.rm>[1]) => {
+        const targetPath = typeof target === 'string' ? target : String(target);
+        if (targetPath.includes(updateDir) && !targetPath.includes('binaries')) {
+          if (targetPath === problematicFile) {
+            throw new Error('Permission denied');
           }
-          return originalRm(target, options!);
         }
-      );
+        return originalRm(target, options!);
+      });
 
       await launcher.update();
 

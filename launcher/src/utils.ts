@@ -56,7 +56,7 @@ export const parseBooleanOption = (value: unknown): boolean => {
 /**
  * Method to return a delayed promise.
  */
-export const delay = async (timeout: number): Promise<void> =>
+export const delay = (timeout: number): Promise<void> =>
   new Promise(resolve => {
     setTimeout(resolve, timeout);
   });

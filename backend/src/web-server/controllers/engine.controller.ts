@@ -16,7 +16,7 @@ export class EngineController extends Controller {
    * @returns {EngineSettingsDTO} The engine settings
    */
   @Get('')
-  async getEngineSettings(@Request() request: CustomExpressRequest): Promise<EngineSettingsDTO> {
+  getEngineSettings(@Request() request: CustomExpressRequest): EngineSettingsDTO {
     const oIBusService = request.services.oIBusService;
     return toEngineSettingsDTO(
       oIBusService.getEngineSettings(),
@@ -68,7 +68,7 @@ export class EngineController extends Controller {
    * @returns {OIBusInfo} OIBus information including version, build, and system details
    */
   @Get('/info')
-  async getInfo(@Request() request: CustomExpressRequest): Promise<OIBusInfo> {
+  getInfo(@Request() request: CustomExpressRequest): OIBusInfo {
     const oIBusService = request.services.oIBusService;
     return oIBusService.getInfo();
   }
@@ -78,7 +78,7 @@ export class EngineController extends Controller {
    * @summary Check OIBus status
    */
   @Get('/status')
-  async getOIBusStatus(@Request() _request: CustomExpressRequest): Promise<void> {
+  getOIBusStatus(@Request() _request: CustomExpressRequest): void {
     return;
   }
 }

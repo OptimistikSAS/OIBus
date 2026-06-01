@@ -8,3 +8,4 @@ yarn-error.log
 /src/tests/legacy-coverage
 /src/tests/*.db
 /src/tests/out-tsc
+/.eslintcache

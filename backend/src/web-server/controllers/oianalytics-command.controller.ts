@@ -22,7 +22,7 @@ export class OIAnalyticsCommandController extends Controller {
    * @returns {Promise<Page<OIBusCommandDTO>>} Paginated list of commands
    */
   @Get('/search')
-  async search(
+  search(
     @Query() types: string | undefined,
     @Query() status: string | undefined,
     @Query() start: Instant | undefined,
@@ -30,7 +30,7 @@ export class OIAnalyticsCommandController extends Controller {
     @Query() ack: boolean | undefined,
     @Query() page = 0,
     @Request() request: CustomExpressRequest
-  ): Promise<Page<OIBusCommandDTO>> {
+  ): Page<OIBusCommandDTO> {
     const normalizedTypes = types ? (types.split(',').filter(type => type.trim() !== '') as Array<OIBusCommandType>) : [];
     const normalizedStatus = status ? (status.split(',').filter(s => s.trim() !== '') as Array<OIBusCommandStatus>) : [];
 
@@ -61,7 +61,7 @@ export class OIAnalyticsCommandController extends Controller {
    */
   @Delete('/{commandId}')
   @SuccessResponse(204, 'Command deleted successfully')
-  async delete(@Path() commandId: string, @Request() request: CustomExpressRequest): Promise<void> {
+  delete(@Path() commandId: string, @Request() request: CustomExpressRequest): void {
     const oIAnalyticsCommandService = request.services.oIAnalyticsCommandService;
     return oIAnalyticsCommandService.delete(commandId);
   }

@@ -193,11 +193,11 @@ export class NorthConnectorController extends Controller {
    */
   @Post('/{northId}/transformers')
   @SuccessResponse(204, 'No Content')
-  async addOrEditTransformer(
+  addOrEditTransformer(
     @Path() northId: string,
     @Body() command: TransformerDTOWithOptions,
     @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  ): void {
     const northService = request.services.northService as NorthService;
     northService.addOrEditTransformer(northId, command as unknown as NorthTransformerWithOptions);
   }
@@ -208,7 +208,7 @@ export class NorthConnectorController extends Controller {
    */
   @Delete('/{northId}/transformers/{transformerId}')
   @SuccessResponse(204, 'No Content')
-  async removeTransformer(@Path() northId: string, @Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<void> {
+  removeTransformer(@Path() northId: string, @Path() transformerId: string, @Request() request: CustomExpressRequest): void {
     const northService = request.services.northService as NorthService;
     northService.removeTransformer(northId, transformerId);
   }

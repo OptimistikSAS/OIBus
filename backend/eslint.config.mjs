@@ -85,5 +85,23 @@ export default [
         tsconfigRootDir: import.meta.dirname
       }
     }
+  },
+  // ── Targeted rule relaxations ──────────────────────────────────────────────
+  {
+    // Test files and shared mocks use async functions extensively to satisfy
+    // Promise-returning interfaces, without ever needing an await expression.
+    // Flagging these as errors would produce hundreds of false positives.
+    files: ['**/*.spec.ts', 'src/tests/**/*.ts'],
+    rules: {
+      'require-await': 'off'
+    }
+  },
+  {
+    // Migration down() functions are intentional no-ops: OIBus migrations are
+    // irreversible, so down() is kept only to satisfy knex's interface.
+    files: ['src/migration/**/*.ts'],
+    rules: {
+      'require-await': 'off'
+    }
   }
 ];

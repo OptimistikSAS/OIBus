@@ -7,7 +7,7 @@ export interface IOdbc {
 
 let odbc: IOdbc | null = null;
 
-export async function importOdbc(): Promise<IOdbc | null> {
+export function importOdbc(): IOdbc | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     return (require('odbc') as IOdbc | null) ?? null;
@@ -16,11 +16,11 @@ export async function importOdbc(): Promise<IOdbc | null> {
   }
 }
 
-export async function loadOdbc(): Promise<IOdbc | null> {
+export function loadOdbc(): IOdbc | null {
   if (odbc) {
     return odbc;
   }
 
-  odbc = await importOdbc();
+  odbc = importOdbc();
   return odbc;
 }

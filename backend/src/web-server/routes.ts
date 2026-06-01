@@ -1,4 +1,3 @@
-/* tslint:disable */
 /* eslint-disable */
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import type { TsoaRoute } from '@tsoa/runtime';
@@ -7359,7 +7358,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
     const upload = opts?.multer ||  multer({"limits":{"fileSize":8388608}});
 
-    
+
         const argsUserController_search: Record<string, TsoaRoute.ParameterSchema> = {
                 login: {"in":"query","name":"login","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 page: {"in":"query","name":"page","required":true,"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},

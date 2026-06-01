@@ -302,10 +302,7 @@ export default class TransformerService {
   }
 }
 
-export const copyTransformerCommandToTransformerEntity = async (
-  transformer: CustomTransformer,
-  command: CustomTransformerCommandDTO
-): Promise<void> => {
+export const copyTransformerCommandToTransformerEntity = (transformer: CustomTransformer, command: CustomTransformerCommandDTO): void => {
   transformer.name = command.name;
   transformer.description = command.description;
   transformer.inputType = command.inputType;

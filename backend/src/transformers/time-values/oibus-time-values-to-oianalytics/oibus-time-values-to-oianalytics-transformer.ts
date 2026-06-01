@@ -31,7 +31,7 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
    * stream → collect-chunks → JSON.parse round-trip the streaming API would
    * otherwise force.
    */
-  override async transformInMemory(
+  override transformInMemory(
     data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
@@ -60,10 +60,10 @@ export default class OIBusTimeValuesToOIAnalyticsTransformer extends OIBusTransf
       numberOfElement: content.length,
       contentType: 'oianalytics'
     };
-    return {
+    return Promise.resolve({
       output: Buffer.from(JSON.stringify(content)),
       metadata
-    };
+    });
   }
 
   get options(): TransformerTimeValuesToOianalyticsSettings {

@@ -67,13 +67,13 @@ export default class ScanModeService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  async delete(scanModeId: string): Promise<void> {
+  delete(scanModeId: string): void {
     const scanMode = this.findById(scanModeId);
     this.scanModeRepository.delete(scanMode.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  async verifyCron(command: { cron: string }): Promise<ValidatedCronExpression> {
+  verifyCron(command: { cron: string }): ValidatedCronExpression {
     return validateCronExpression(command.cron);
   }
 }

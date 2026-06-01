@@ -99,7 +99,7 @@ export class HistoryQueryController extends Controller {
    * @returns {Promise<Array<HistoryQueryLightDTO>>} Array of history query objects
    */
   @Get('/')
-  async list(@Request() request: CustomExpressRequest): Promise<Array<HistoryQueryLightDTO>> {
+  list(@Request() request: CustomExpressRequest): Array<HistoryQueryLightDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQueries = historyQueryService.list();
     return historyQueries.map(historyQuery => toHistoryQueryLightDTO(historyQuery, id => request.services.userService.getUserInfo(id)));
@@ -111,7 +111,7 @@ export class HistoryQueryController extends Controller {
    * @returns {Promise<HistoryQueryDTO>} The history query object
    */
   @Get('/{historyId}')
-  async findById(@Path() historyId: string, @Request() request: CustomExpressRequest): Promise<HistoryQueryDTO> {
+  findById(@Path() historyId: string, @Request() request: CustomExpressRequest): HistoryQueryDTO {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     return toHistoryQueryDTO(historyQueryService.findById(historyId), id =>
       request.services.userService.getUserInfo(id)
@@ -262,7 +262,7 @@ export class HistoryQueryController extends Controller {
    * @returns {Promise<Array<HistoryQueryItemDTO>>} List of items
    */
   @Get('/{historyId}/items/list')
-  async listItems(@Path() historyId: string, @Request() request: CustomExpressRequest): Promise<Array<HistoryQueryItemDTO>> {
+  listItems(@Path() historyId: string, @Request() request: CustomExpressRequest): Array<HistoryQueryItemDTO> {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const items = historyQueryService.listItems(historyId);
@@ -310,11 +310,7 @@ export class HistoryQueryController extends Controller {
    * @returns {Promise<HistoryQueryItemDTO>} The history query item
    */
   @Get('/{historyId}/items/{itemId}')
-  async findItemById(
-    @Path() historyId: string,
-    @Path() itemId: string,
-    @Request() request: CustomExpressRequest
-  ): Promise<HistoryQueryItemDTO> {
+  findItemById(@Path() historyId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): HistoryQueryItemDTO {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const historyQuery = historyQueryService.findById(historyId);
     const historyQueryItem = historyQueryService.findItemById(historyId, itemId);
@@ -488,11 +484,7 @@ export class HistoryQueryController extends Controller {
    * @responseHeader Content-Disposition attachment; filename=items.csv
    */
   @Post('/{historyId}/items/export')
-  async exportItems(
-    @Path() historyId: string,
-    @Body() command: HistoryCsvDelimiterRequest,
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  exportItems(@Path() historyId: string, @Body() command: HistoryCsvDelimiterRequest, @Request() request: CustomExpressRequest): void {
     const historyQueryService = request.services.historyQueryService as HistoryQueryService;
     const southService = request.services.southService as SouthService;
     const historyQuery = historyQueryService.findById(historyId);

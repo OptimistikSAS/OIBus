@@ -92,7 +92,7 @@ export default class CertificateService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  async delete(certificateId: string): Promise<void> {
+  delete(certificateId: string): void {
     const certificate = this.findById(certificateId);
     this.certificateRepository.delete(certificate.id);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();

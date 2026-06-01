@@ -22,11 +22,7 @@ export class UserController extends Controller {
    * @returns {Promise<Page<UserDTO>>} Paginated list of user accounts
    */
   @Get('/')
-  async search(
-    @Query() login: string | undefined,
-    @Query() page: number | undefined,
-    @Request() request: CustomExpressRequest
-  ): Promise<Page<UserDTO>> {
+  search(@Query() login: string | undefined, @Query() page: number | undefined, @Request() request: CustomExpressRequest): Page<UserDTO> {
     const searchParams: UserSearchParam = {
       page: page ? parseInt(page.toString(), 10) : 0,
       login: login
@@ -50,7 +46,7 @@ export class UserController extends Controller {
    * @returns {Promise<UserDTO>} The user account details
    */
   @Get('/{userId}')
-  async findById(@Path() userId: string, @Request() request: CustomExpressRequest): Promise<UserDTO> {
+  findById(@Path() userId: string, @Request() request: CustomExpressRequest): UserDTO {
     const userService = request.services.userService;
     return toUserDTO(userService.findById(userId), id => request.services.userService.getUserInfo(id));
   }
@@ -101,7 +97,7 @@ export class UserController extends Controller {
    */
   @Delete('/{userId}')
   @SuccessResponse(204, 'User deleted successfully')
-  async delete(@Path() userId: string, @Request() request: CustomExpressRequest): Promise<void> {
+  delete(@Path() userId: string, @Request() request: CustomExpressRequest): void {
     const userService = request.services.userService;
     userService.delete(userId);
   }

@@ -197,11 +197,11 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
   /**
    * Apply the SQL query to the target SQLite database
    */
-  async queryData(
+  queryData(
     item: SouthConnectorItemEntity<SouthSQLiteItemSettings>,
     startTime: Instant,
     endTime: Instant
-  ): Promise<Array<Record<string, string | number>>> {
+  ): Array<Record<string, string | number>> {
     this.logger.debug(`Opening ${path.resolve(this.connector.settings.databasePath)} SQLite database`);
     const database = db(path.resolve(this.connector.settings.databasePath));
 

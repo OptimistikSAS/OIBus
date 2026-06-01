@@ -325,7 +325,7 @@ export default class WebServer {
     };
   }
 
-  async start(): Promise<void> {
+  start(): void {
     this.oIBusService.loggerEvent.on('updated', (logger: ILogger) => {
       this._logger = logger;
     });

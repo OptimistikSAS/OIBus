@@ -165,10 +165,10 @@ export default class CleanupService {
     }
   }
 
-  private async scanFolderForDeletion(targetFolder: string, retentionDuration: number): Promise<Array<string>> {
+  private scanFolderForDeletion(targetFolder: string, retentionDuration: number): Promise<Array<string>> {
     // Optimization: Skip disk IO entirely if retention is disabled (0)
     if (retentionDuration <= 0) {
-      return [];
+      return Promise.resolve([]);
     }
 
     return this.retrieveFilesToDelete(targetFolder, retentionDuration);

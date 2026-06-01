@@ -188,7 +188,7 @@ export default class OIBusService {
     this.loggerEvent.emit('updated', this.loggerService.createChildLogger('web-server'));
   }
 
-  async restart(): Promise<void> {
+  restart(): void {
     setTimeout(() => {
       process.exit();
     }, 100); // wait a bit to let the HTTP answer trigger

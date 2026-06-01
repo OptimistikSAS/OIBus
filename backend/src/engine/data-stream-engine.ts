@@ -154,7 +154,7 @@ export default class DataStreamEngine {
     return north;
   }
 
-  async startNorth(northId: string): Promise<void> {
+  startNorth(northId: string): void {
     const north = this.getNorth(northId).north;
     north.connectorConfiguration = this.northConnectorRepository.findNorthById(northId)!;
     north // Do not await here, so it can start all connectors without blocking the thread
@@ -237,7 +237,7 @@ export default class DataStreamEngine {
     return south;
   }
 
-  async startSouth(southId: string): Promise<void> {
+  startSouth(southId: string): void {
     const south = this.getSouth(southId).south;
     south.connectorConfiguration = this.southConnectorRepository.findSouthById(southId)!;
     south.connectedEvent.removeAllListeners();
@@ -351,11 +351,11 @@ export default class DataStreamEngine {
     return historyQuery;
   }
 
-  async startHistoryQuery(historyId: string): Promise<void> {
+  startHistoryQuery(historyId: string): void {
     const historyQuery = this.getHistoryQuery(historyId).historyQuery;
     historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
     historyQuery.finishEvent.removeAllListeners();
-    historyQuery.finishEvent.on('finished', async () => {
+    historyQuery.finishEvent.on('finished', () => {
       this.historyQueryRepository.updateHistoryStatus(historyId, 'FINISHED');
       historyQuery.historyQueryConfiguration = this.historyQueryRepository.findHistoryById(historyId)!;
       this.oianalyticsMessageService.createFullHistoryQueriesMessageIfNotPending();

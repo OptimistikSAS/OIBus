@@ -49,7 +49,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   /**
    * Handle values by printing them to the console.
    */
-  async handleValues(values: Array<OIBusTimeValue>): Promise<void> {
+  handleValues(values: Array<OIBusTimeValue>): void {
     if (this.connector.settings.verbose) {
       console.table(values, ['pointId', 'timestamp', 'data']);
     } else {
@@ -60,7 +60,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   /**
    * Handle values by printing them to the console.
    */
-  async handleSetpoints(values: Array<OIBusSetpoint>): Promise<void> {
+  handleSetpoints(values: Array<OIBusSetpoint>): void {
     if (this.connector.settings.verbose) {
       console.table(values, ['reference', 'value']);
     } else {
@@ -71,7 +71,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
   /**
    * Handle the file by displaying its name in the console
    */
-  async handleFile(metadata: CacheMetadata): Promise<void> {
+  handleFile(metadata: CacheMetadata): void {
     if (this.connector.settings.verbose) {
       const data = [
         {

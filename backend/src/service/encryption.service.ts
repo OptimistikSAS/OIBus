@@ -118,7 +118,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     this.initialized = true;
   }
 
-  async generateSelfSignedCertificate(options: CertificateOptions): Promise<{ private: string; public: string; cert: string }> {
+  generateSelfSignedCertificate(options: CertificateOptions): { private: string; public: string; cert: string } {
     // 1. Generate Key Pair (RSA)
     const keys = forge.pki.rsa.generateKeyPair(options.keySize);
 
@@ -283,7 +283,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
   /**
    * Returns the encrypted text or an empty string when the parameter is falsy
    */
-  async encryptText(plainText?: string | null): Promise<string> {
+  encryptText(plainText?: string | null): string {
     if (!this.isInitialized()) {
       throw Error('EncryptionService not initialized');
     }
@@ -302,7 +302,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
   /**
    * Returns the decrypted text or an empty string when the parameter is falsy
    */
-  async decryptText(encryptedText?: string | null): Promise<string> {
+  decryptText(encryptedText?: string | null): string {
     if (!this.isInitialized()) {
       throw Error('EncryptionService not initialized');
     }
@@ -323,7 +323,7 @@ export default class EncryptionService<TInitialized extends boolean = false> {
     return decryptedData;
   }
 
-  async decryptTextWithPrivateKey(encryptedText: string, privateKey: string): Promise<string> {
+  decryptTextWithPrivateKey(encryptedText: string, privateKey: string): string {
     return crypto
       .privateDecrypt(
         {

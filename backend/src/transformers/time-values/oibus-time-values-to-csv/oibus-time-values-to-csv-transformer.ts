@@ -38,7 +38,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
    * that the caller already has. Skips the JSON.stringify → stream → collect →
    * JSON.parse round-trip the streaming API would otherwise force.
    */
-  override async transformInMemory(
+  override transformInMemory(
     data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
@@ -98,7 +98,7 @@ export default class OIBusTimeValuesToCsvTransformer extends OIBusTransformer {
       default:
         output = Buffer.from(outputCSV);
     }
-    return { output, metadata };
+    return Promise.resolve({ output, metadata });
   }
 
   get options(): TransformerTimeValuesToCsvSettings {

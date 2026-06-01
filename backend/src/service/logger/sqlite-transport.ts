@@ -89,7 +89,7 @@ class SqliteTransport {
   /**
    * Make sure the logs are stored before closing the repository
    */
-  end = async () => {
+  end = () => {
     this.writeLogs(true);
     this.logsDatabase.close();
   };

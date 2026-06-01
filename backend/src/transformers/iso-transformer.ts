@@ -6,12 +6,12 @@ import { CacheMetadata, CacheMetadataSource } from '../../shared/model/engine.mo
 export default class IsoTransformer extends OIBusTransformer {
   public static transformerName = 'iso';
 
-  async transform(
+  transform(
     _data: ReadStream | Readable,
     _source: CacheMetadataSource,
     _filename: string | null
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
-    return {
+    return Promise.resolve({
       output: Buffer.alloc(0),
       metadata: {
         contentFile: '',
@@ -20,6 +20,6 @@ export default class IsoTransformer extends OIBusTransformer {
         numberOfElement: 0,
         contentType: ''
       }
-    };
+    });
   }
 }

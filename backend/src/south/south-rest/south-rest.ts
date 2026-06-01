@@ -49,7 +49,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       const { proxy, acceptUnauthorized } = this.getProxyOptions();
       const fetchOptions: ReqOptions = {
         method: testMethod,
-        auth: await this.getAuthorizationOptions(),
+        auth: this.getAuthorizationOptions(),
         proxy,
         timeout: this.connector.settings.timeout * 1000,
         acceptUnauthorized,
@@ -194,7 +194,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
       query,
       body,
       headers,
-      auth: await this.getAuthorizationOptions(),
+      auth: this.getAuthorizationOptions(),
       proxy,
       timeout: this.connector.settings.timeout * 1000,
       acceptUnauthorized
@@ -318,7 +318,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
   }
 
-  private async getAuthorizationOptions(): Promise<ReqAuthOptions | undefined> {
+  private getAuthorizationOptions(): ReqAuthOptions | undefined {
     const settings = this.connector.settings;
 
     switch (settings.authentication.type) {

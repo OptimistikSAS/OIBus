@@ -54,7 +54,7 @@ export default class HistoryQuery {
     });
     await this.north.start();
 
-    this.south.connectedEvent.on('connected', async () => {
+    this.south.connectedEvent.on('connected', () => {
       this.south!.createDeferredPromise();
 
       this.south!.historyQueryHandler(

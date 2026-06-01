@@ -22,7 +22,7 @@
     "build:linux-arm64": "rimraf ../build/bin/linux-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus-launcher --target node24-linux-arm64",
     "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:launcher",
     "start:launcher": "node ./dist/src/index.js --config ../data-folder",
-    "lint": "eslint src/",
+    "lint": "eslint src/ --cache",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
     "test": "node --import tsx --experimental-config-file=package.json --test 'src/**/*.spec.ts'"

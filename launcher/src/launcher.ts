@@ -35,7 +35,7 @@ export default class Launcher {
       await this.update();
     }
 
-    console.log(`Starting OIBus launcher: ${oibusPath} ${this.args}`);
+    console.info(`Starting OIBus launcher: ${oibusPath} ${this.args}`);
     try {
       this.child = spawn(oibusPath, this.args, { cwd: this.workDir });
 
@@ -96,7 +96,7 @@ export default class Launcher {
   }
 
   stop(): void {
-    console.log('Stopping OIBus');
+    console.info('Stopping OIBus');
     this.stopping = true;
     if (this.child) {
       this.child.kill('SIGINT');
@@ -130,7 +130,7 @@ export default class Launcher {
 
   async checkForUpdate(): Promise<boolean> {
     const oibusUpdatePath = this.getOibusUpdatePath();
-    console.log(`Checking for OIBus update: ${oibusUpdatePath}`);
+    console.info(`Checking for OIBus update: ${oibusUpdatePath}`);
     return await filesExists(oibusUpdatePath);
   }
 
@@ -149,12 +149,12 @@ export default class Launcher {
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
 
     await createFolder(this.backupDir);
-    console.log(`Backup OIBus: ${oibusBinaryPath} -> ${oibusBinaryBackupPath}`);
+    console.info(`Backup OIBus: ${oibusBinaryPath} -> ${oibusBinaryBackupPath}`);
     await fs.rename(oibusBinaryPath, oibusBinaryBackupPath);
 
     await this.backupDataFolder(backupFolders);
 
-    console.log(`Updating OIBus: ${oibusUpdatePath} -> ${oibusBinaryPath}`);
+    console.info(`Updating OIBus: ${oibusUpdatePath} -> ${oibusBinaryPath}`);
     await fs.rename(oibusUpdatePath, oibusBinaryPath);
 
     for (const file of await fs.readdir(this.updateDir)) {
@@ -171,10 +171,10 @@ export default class Launcher {
     const oibusPath = this.getOibusPath();
     const oibusBackupPath = this.getOibusBackupPath();
 
-    console.log(`Rollback OIBus: ${oibusBackupPath} -> ${oibusPath}`);
+    console.info(`Rollback OIBus: ${oibusBackupPath} -> ${oibusPath}`);
     await fs.rename(oibusBackupPath, oibusPath);
 
-    console.log(`Rollback OIBus data folder: ${path.resolve(this.backupDir, 'data-folder')} -> ${this.config}`);
+    console.info(`Rollback OIBus data folder: ${path.resolve(this.backupDir, 'data-folder')} -> ${this.config}`);
     await fs.cp(path.resolve(this.backupDir, 'data-folder'), this.config, { force: true, recursive: true });
 
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
@@ -196,7 +196,7 @@ export default class Launcher {
   async backupDataFolder(backupsFolders: RegExp): Promise<void> {
     await fs.rm(path.resolve(this.backupDir, 'data-folder'), { recursive: true, force: true });
     await createFolder(path.resolve(this.backupDir, 'data-folder'));
-    console.log(`Back up data folder with regex ${backupsFolders}`);
+    console.info(`Back up data folder with regex ${backupsFolders}`);
     await this.copyFilesAndDirectoriesRecursively(this.config, path.resolve(this.backupDir, 'data-folder'), backupsFolders);
   }
 

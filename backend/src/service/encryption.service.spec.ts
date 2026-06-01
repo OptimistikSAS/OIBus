@@ -247,9 +247,9 @@ describe('Encryption Service', () => {
     assert.strictEqual(createCipherivMock.mock.calls.length, 0);
   });
 
-  it('should throw error on encrypt when class is not initialized', async () => {
+  it('should throw error on encrypt when class is not initialized', () => {
     encryptionService['initialized'] = false;
-    await assert.rejects(encryptionService.encryptText('test'), { message: 'EncryptionService not initialized' });
+    assert.throws(() => encryptionService.encryptText('test'), { message: 'EncryptionService not initialized' });
   });
 
   it('should properly decrypt text', async () => {
@@ -276,9 +276,9 @@ describe('Encryption Service', () => {
     assert.strictEqual(createCipherivMock.mock.calls.length, 0);
   });
 
-  it('should throw error on decrypt when class is not initialized', async () => {
+  it('should throw error on decrypt when class is not initialized', () => {
     encryptionService['initialized'] = false;
-    await assert.rejects(encryptionService.decryptText('test'), { message: 'EncryptionService not initialized' });
+    assert.throws(() => encryptionService.decryptText('test'), { message: 'EncryptionService not initialized' });
   });
 
   it('should properly encrypt connector secrets', async () => {

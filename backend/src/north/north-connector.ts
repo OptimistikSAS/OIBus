@@ -670,9 +670,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * overrides should call `super.disconnect()` so the cache shuts down its
    * internal timers cleanly.
    */
-  async disconnect(): Promise<void> {
+  disconnect(): Promise<void> {
     this.cacheService.stop();
     this.logger.info(`"${this.connector.name}" (${this.connector.id}) disconnected`);
+    return Promise.resolve();
   }
 
   /**
@@ -721,7 +722,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    * Propagate a scan-mode cron change from the engine. Only rebuilds the
    * cron if this North actually uses that scan mode (otherwise no-op).
    */
-  async updateScanMode(scanMode: ScanMode): Promise<void> {
+  updateScanMode(scanMode: ScanMode): void {
     if (this.cronByScanModeIds.get(scanMode.id)) {
       this.createCronJob(scanMode);
     }
