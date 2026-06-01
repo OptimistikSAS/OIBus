@@ -37,11 +37,11 @@ Use the **Test settings** button to verify your connection configuration.
 
 A group bundles items that share the same collection schedule. Each group has:
 
-| Setting        | Description                                                                                      | Example Value   |
-| -------------- | ------------------------------------------------------------------------------------------------ | --------------- |
-| **Name**       | Unique label for the group within this connector.                                                | `Group A`       |
-| **Scan mode**  | Schedule used to collect data for all items in the group.                                        | `Every 1 min`   |
-| **Throttling** | _(History-capable connectors only)_ Default throttling settings inherited by items in the group. | `3600, 200, 0`  |
+| Setting        | Description                                                                                      | Example Value  |
+| -------------- | ------------------------------------------------------------------------------------------------ | -------------- |
+| **Name**       | Unique label for the group within this connector.                                                | `Group A`      |
+| **Scan mode**  | Schedule used to collect data for all items in the group.                                        | `Every 1 min`  |
+| **Throttling** | _(History-capable connectors only)_ Default throttling settings inherited by items in the group. | `3600, 200, 0` |
 
 Items assigned to a group inherit its scan mode. For history-capable connectors, items also inherit
 the group's throttling settings by default (Max read interval, Read delay, Overlap), but each item can
@@ -75,7 +75,7 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 | **Sync with group**   | _(History-capable connectors only)_ When enabled, throttling settings are inherited from the group.                            | Enabled/Disabled      |
 | **Max read interval** | _(History-capable connectors)_ Maximum sub-query duration in seconds.                                                          | `3600`                |
 | **Read delay**        | _(History-capable connectors)_ Pause in milliseconds between consecutive sub-queries.                                          | `200`                 |
-| **Overlap**           | _(History-capable connectors)_ Milliseconds subtracted from `@StartTime` to capture late-arriving data.                       | `0`                   |
+| **Overlap**           | _(History-capable connectors)_ Milliseconds subtracted from `@StartTime` to capture late-arriving data.                        | `0`                   |
 | **Specific settings** | Varies by connector type — see each connector's documentation.                                                                 | —                     |
 
 ### Item Actions
@@ -99,7 +99,7 @@ Items retrieve data as files or JSON payloads. Each item has the following field
 
 ## Max Instant Tracking
 
-History-capable South connectors track the last successfully retrieved timestamp (the *max instant*) so
+History-capable South connectors track the last successfully retrieved timestamp (the _max instant_) so
 that each run only fetches new data. The max instant is tracked at the **item** level — each item
 maintains its own independent tracking, whether it belongs to a group or not.
 
@@ -123,15 +123,16 @@ or duplicates at the boundary.
 
 Click the **🔍** icon on any item row to open the **Last retrieved value** panel. It shows:
 
-| Setting             | Description                                                                                                                           | Example Value                       |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| **Item name**       | Name of the item.                                                                                                                     | `Temperature_Sensor1`               |
-| **Group**           | Group this item belongs to, if any.                                                                                                   | `Group A`                           |
-| **Query time**      | Timestamp of the last query execution for this item.                                                                                  | `2024-01-15T10:30:00.000Z`          |
-| **Tracked instant** | The *max instant* stored for this item — used as `@StartTime` in the next query. Empty if no query has run yet.                       | `2024-01-15T10:29:55.000Z`          |
+| Setting             | Description                                                                                                                                                                                                 | Example Value                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| **Item name**       | Name of the item.                                                                                                                                                                                           | `Temperature_Sensor1`         |
+| **Group**           | Group this item belongs to, if any.                                                                                                                                                                         | `Group A`                     |
+| **Query time**      | Timestamp of the last query execution for this item.                                                                                                                                                        | `2024-01-15T10:30:00.000Z`    |
+| **Tracked instant** | The _max instant_ stored for this item — used as `@StartTime` in the next query. Empty if no query has run yet.                                                                                             | `2024-01-15T10:29:55.000Z`    |
 | **Value**           | The last cached result. For file-based connectors: a list of filenames and modification times. For history connectors: the raw JSON payload of the last sub-query. Empty if no data has been retrieved yet. | `[{"file": "data.csv", ...}]` |
 
 This panel is useful for:
+
 - Verifying that a new item has started collecting data (check that **Tracked instant** is populated).
 - Diagnosing data gaps — compare the tracked instant against the current time to see how far behind an item is.
 - Confirming the exact file or record that was last seen by file-based connectors.

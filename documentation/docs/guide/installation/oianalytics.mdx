@@ -42,26 +42,26 @@ inbound access to the OIBus machine.
 
 ### Network Configuration
 
-| Setting                              | Description                                                              | Example Value                              |
-| ------------------------------------ | ------------------------------------------------------------------------ | ------------------------------------------ |
-| **Host**                             | URL of the OIAnalytics instance.                                         | `https://instance_name.oianalytics.com`    |
-| **Accept unauthorized certificate**  | Accept self-signed or otherwise untrusted TLS certificates.              | Enabled/Disabled                           |
-| **Use proxy**                        | Route OIAnalytics requests through a proxy server.                       | Enabled/Disabled                           |
-| **Proxy URL**                        | URL of the proxy server. Required when **Use proxy** is enabled.         | `http://proxy.example.com:8080`            |
-| **Proxy username**                   | Username for proxy authentication (if required).                         | `proxy_user`                               |
-| **Proxy password**                   | Password for proxy authentication (if required).                         | `••••••••`                                 |
-| **Use API gateway**                  | Route requests through an API gateway instead of calling OIAnalytics directly. | Enabled/Disabled                    |
-| **API gateway header key**           | HTTP header name sent to authenticate against the gateway. Required when **Use API gateway** is enabled. | `X-Api-Key` |
-| **API gateway header value**         | Secret value for the gateway header (stored encrypted). Required when **Use API gateway** is enabled.   | `••••••••`  |
-| **API gateway base endpoint**        | Path prefix prepended to every OIAnalytics API path when routing through the gateway. Required when **Use API gateway** is enabled. | `/oianalytics` |
+| Setting                             | Description                                                                                                                         | Example Value                           |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| **Host**                            | URL of the OIAnalytics instance.                                                                                                    | `https://instance_name.oianalytics.com` |
+| **Accept unauthorized certificate** | Accept self-signed or otherwise untrusted TLS certificates.                                                                         | Enabled/Disabled                        |
+| **Use proxy**                       | Route OIAnalytics requests through a proxy server.                                                                                  | Enabled/Disabled                        |
+| **Proxy URL**                       | URL of the proxy server. Required when **Use proxy** is enabled.                                                                    | `http://proxy.example.com:8080`         |
+| **Proxy username**                  | Username for proxy authentication (if required).                                                                                    | `proxy_user`                            |
+| **Proxy password**                  | Password for proxy authentication (if required).                                                                                    | `••••••••`                              |
+| **Use API gateway**                 | Route requests through an API gateway instead of calling OIAnalytics directly.                                                      | Enabled/Disabled                        |
+| **API gateway header key**          | HTTP header name sent to authenticate against the gateway. Required when **Use API gateway** is enabled.                            | `X-Api-Key`                             |
+| **API gateway header value**        | Secret value for the gateway header (stored encrypted). Required when **Use API gateway** is enabled.                               | `••••••••`                              |
+| **API gateway base endpoint**       | Path prefix prepended to every OIAnalytics API path when routing through the gateway. Required when **Use API gateway** is enabled. | `/oianalytics`                          |
 
 ### Timing Configuration
 
-| Setting                       | Description                                             | Default    |
-| ----------------------------- | ------------------------------------------------------- | ---------- |
-| **Command check interval**    | How often OIBus polls OIAnalytics for new commands.     | `60 s`     |
-| **Command retry interval**    | Delay before retrying a failed command request.         | `5 s`      |
-| **Message retry interval**    | Delay before retrying a failed message delivery.        | `5 s`      |
+| Setting                    | Description                                         | Default |
+| -------------------------- | --------------------------------------------------- | ------- |
+| **Command check interval** | How often OIBus polls OIAnalytics for new commands. | `60 s`  |
+| **Command retry interval** | Delay before retrying a failed command request.     | `5 s`   |
+| **Message retry interval** | Delay before retrying a failed message delivery.    | `5 s`   |
 
 ## Using the Registration in Connectors
 
@@ -97,20 +97,20 @@ Only **outbound HTTPS (TCP 443)** to the OIAnalytics domain needs to be allowed.
 
 ### Supported Commands
 
-| Command                      | Description                                                              |
-| ---------------------------- | ------------------------------------------------------------------------ |
-| **Upgrade version**          | Download and install a new OIBus version.                                |
-| **Restart**                  | Restart the OIBus service.                                               |
-| **Update engine settings**   | Apply new engine configuration (logging, proxy…).                        |
-| **Regenerate cipher keys**   | Generate a new RSA key pair for secret encryption.                       |
-| **Scan mode management**     | Create, update, or delete scan modes.                                    |
-| **North connector**          | Create, update, delete, or test North connectors.                        |
-| **North connector cache**    | Search, retrieve, or delete cached content in a North connector's cache. |
-| **South connector**          | Create, update, delete, or test South connectors and their items.        |
-| **History query**            | Create, update, delete, or test history queries and their items.         |
-| **History query cache**      | Search, retrieve, or delete cached content in a history query's cache.   |
-| **Custom transformer**       | Create, update, delete, or test custom transformers.                     |
-| **Setpoint**                 | Receive setpoint values from OIAnalytics and dispatch them to North connectors. |
+| Command                    | Description                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| **Upgrade version**        | Download and install a new OIBus version.                                       |
+| **Restart**                | Restart the OIBus service.                                                      |
+| **Update engine settings** | Apply new engine configuration (logging, proxy…).                               |
+| **Regenerate cipher keys** | Generate a new RSA key pair for secret encryption.                              |
+| **Scan mode management**   | Create, update, or delete scan modes.                                           |
+| **North connector**        | Create, update, delete, or test North connectors.                               |
+| **North connector cache**  | Search, retrieve, or delete cached content in a North connector's cache.        |
+| **South connector**        | Create, update, delete, or test South connectors and their items.               |
+| **History query**          | Create, update, delete, or test history queries and their items.                |
+| **History query cache**    | Search, retrieve, or delete cached content in a history query's cache.          |
+| **Custom transformer**     | Create, update, delete, or test custom transformers.                            |
+| **Setpoint**               | Receive setpoint values from OIAnalytics and dispatch them to North connectors. |
 
 ### Version Upgrade Process
 
@@ -158,10 +158,10 @@ Once on the OIBus machine, secrets are stored using the [OIBus security model](.
 
 ## Troubleshooting
 
-| Issue                   | What to check                                              |
-| ----------------------- | ---------------------------------------------------------- |
-| Registration fails      | Network connectivity and firewall rules to OIAnalytics.    |
-| Code not accepted       | Ensure the 6-character code matches and has not expired.   |
-| Commands not executing  | Command permissions granted in OIAnalytics.                |
-| Upgrade fails           | Available disk space and write permissions on data folder. |
-| Connection errors       | Proxy settings, certificate trust, and firewall rules.     |
+| Issue                  | What to check                                              |
+| ---------------------- | ---------------------------------------------------------- |
+| Registration fails     | Network connectivity and firewall rules to OIAnalytics.    |
+| Code not accepted      | Ensure the 6-character code matches and has not expired.   |
+| Commands not executing | Command permissions granted in OIAnalytics.                |
+| Upgrade fails          | Available disk space and write permissions on data folder. |
+| Connection errors      | Proxy settings, certificate trust, and firewall rules.     |

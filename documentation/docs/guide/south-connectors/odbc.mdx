@@ -18,15 +18,15 @@ Connect to ODBC data sources either locally or through a remote [OIBus Agent](..
 
 ## Specific Settings
 
-| Setting            | Description                                                                                            | Example Value                                          |
-| ------------------ | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
-| Use remote agent   | Enable to route queries through an OIBus Agent on a remote machine.                                   | Enabled/Disabled                                       |
-| Remote agent URL   | Agent endpoint URL. Required when using remote agent.                                                  | `http://host:2224`                                     |
-| Connection timeout | Maximum time in milliseconds to establish connection. Default: `15000`.                                | `15000`                                                |
-| Retry interval     | Time in milliseconds to wait before retrying the connection. Default: `10000`.                         | `10000`                                                |
-| Request timeout    | Maximum execution time in milliseconds for individual queries. Leave empty to use the driver default.  | `30000`                                                |
-| Connection string  | ODBC connection string in driver-specific format.                                                      | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014`      |
-| Password           | Authentication password (stored securely). Added as `PWD=<password>` if not in connection string.     | `••••••••`                                             |
+| Setting            | Description                                                                                           | Example Value                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| Use remote agent   | Enable to route queries through an OIBus Agent on a remote machine.                                   | Enabled/Disabled                                  |
+| Remote agent URL   | Agent endpoint URL. Required when using remote agent.                                                 | `http://host:2224`                                |
+| Connection timeout | Maximum time in milliseconds to establish connection. Default: `15000`.                               | `15000`                                           |
+| Retry interval     | Time in milliseconds to wait before retrying the connection. Default: `10000`.                        | `10000`                                           |
+| Request timeout    | Maximum execution time in milliseconds for individual queries. Leave empty to use the driver default. | `30000`                                           |
+| Connection string  | ODBC connection string in driver-specific format.                                                     | `Driver={AspenTech SQLplus};HOST=ip21;PORT=10014` |
+| Password           | Authentication password (stored securely). Added as `PWD=<password>` if not in connection string.     | `••••••••`                                        |
 
 ### Connection String Examples
 
@@ -76,10 +76,11 @@ For optimal IP21 performance:
 :::note ODBC datetime field types
 The following **Type** values are available for datetime field configuration:
 
-| Type            | Description                                        |
-| --------------- | -------------------------------------------------- |
-| String          | String representation parsed with a custom format  |
+| Type            | Description                                       |
+| --------------- | ------------------------------------------------- |
+| String          | String representation parsed with a custom format |
 | ISO String      | ISO 8601 string (e.g. `2024-01-15T10:30:00.000Z`) |
-| UNIX epoch (s)  | Unix timestamp in seconds                          |
-| UNIX epoch (ms) | Unix timestamp in milliseconds                     |
+| UNIX epoch (s)  | Unix timestamp in seconds                         |
+| UNIX epoch (ms) | Unix timestamp in milliseconds                    |
+
 :::

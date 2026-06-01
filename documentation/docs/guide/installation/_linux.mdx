@@ -31,16 +31,19 @@ curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo
 unzip oibus-linux_x64-v${packageInfo.version}.zip -d OIBus/
 
 # ARM64
+
 curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip
 unzip oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
+
 </CodeBlock>
 
 :::info Archive contents
+
 - `oibus-launcher` — launcher that manages the OIBus process and handles upgrades
 - `binaries/oibus` — main OIBus executable
 - `oibus-setup.sh` — interactive installation script
 - `oibus-uninstall.sh` — uninstallation script (updated during installation)
-:::
+  :::
 
 :::note
 The setup script has been tested on **Ubuntu** and **Debian**. For other distributions you may need to adapt the systemd service configuration.

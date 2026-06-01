@@ -1,4 +1,3 @@
-import React from 'react';
 import Redoc from '@theme/Redoc';
 import PropTypes from 'prop-types';
 

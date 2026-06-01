@@ -10,21 +10,21 @@ Securely transfer and read files from remote SFTP servers.
 
 ## Specific Settings
 
-| Setting           | Description                                               | Example Value    |
-| ----------------- | --------------------------------------------------------- | ---------------- |
-| **Host**          | IP address or hostname of the SFTP server.                | `192.168.1.100`  |
-| **Port**          | Port for the connection. Default: `22`.                   | `22`             |
-| **Compress file** | Enable gzip compression before North processing.          | Enabled/Disabled |
+| Setting           | Description                                      | Example Value    |
+| ----------------- | ------------------------------------------------ | ---------------- |
+| **Host**          | IP address or hostname of the SFTP server.       | `192.168.1.100`  |
+| **Port**          | Port for the connection. Default: `22`.          | `22`             |
+| **Compress file** | Enable gzip compression before North processing. | Enabled/Disabled |
 
 ### Authentication
 
-| Setting          | Description                                                              | Example Value                    |
-| ---------------- | ------------------------------------------------------------------------ | -------------------------------- |
-| Authentication   | Authentication method.                                                   | `Username/Password`, `Private Key` |
-| Username         | Username for SFTP authentication.                                        | `sftp_user`                      |
-| Password         | Password (for Username/Password authentication).                         | `••••••••`                       |
-| Private key path | Path to the private key file in PEM format (for Private Key authentication). | `/home/user/.ssh/id_rsa`     |
-| Passphrase       | Passphrase for the private key, if protected (optional).                 | `••••••••`                       |
+| Setting          | Description                                                                  | Example Value                      |
+| ---------------- | ---------------------------------------------------------------------------- | ---------------------------------- |
+| Authentication   | Authentication method.                                                       | `Username/Password`, `Private Key` |
+| Username         | Username for SFTP authentication.                                            | `sftp_user`                        |
+| Password         | Password (for Username/Password authentication).                             | `••••••••`                         |
+| Private key path | Path to the private key file in PEM format (for Private Key authentication). | `/home/user/.ssh/id_rsa`           |
+| Passphrase       | Passphrase for the private key, if protected (optional).                     | `••••••••`                         |
 
 :::info Private Key Notes
 

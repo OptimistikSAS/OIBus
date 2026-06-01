@@ -1,12 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const LOCALHOST_ADDRESSES = ['127.0.0.1', '::1', '::ffff:127.0.0.1', '::ffff:7f00:1', '0:0:0:0:0:0:0:1'];
 
-const formatRegex = filter =>
-  filter
-    .replace(/\\/g, '\\\\')
-    .replace(/\./g, '\\.')
-    .replace(/\*/g, '.*');
+const formatRegex = filter => filter.replace(/\\/g, '\\\\').replace(/\./g, '\\.').replace(/\*/g, '.*');
 
 /**
  * Returns { allowed: boolean, matchedRule: string | null }
@@ -56,7 +52,7 @@ const card = {
   padding: '1.25rem 1.5rem',
   border: '1px solid var(--ifm-color-emphasis-300)',
   borderRadius: 'var(--ifm-global-radius)',
-  backgroundColor: 'var(--ifm-background-surface-color)',
+  backgroundColor: 'var(--ifm-background-surface-color)'
 };
 
 const fieldLabel = {
@@ -64,13 +60,13 @@ const fieldLabel = {
   marginBottom: '0.35rem',
   fontWeight: 600,
   fontSize: '0.875rem',
-  color: 'var(--ifm-font-color-base)',
+  color: 'var(--ifm-font-color-base)'
 };
 
 const fieldHint = {
   fontWeight: 400,
   fontSize: '0.8rem',
-  color: 'var(--ifm-color-emphasis-600)',
+  color: 'var(--ifm-color-emphasis-600)'
 };
 
 const inputBase = {
@@ -83,20 +79,18 @@ const inputBase = {
   backgroundColor: 'var(--ifm-background-color)',
   color: 'var(--ifm-font-color-base)',
   boxSizing: 'border-box',
-  outline: 'none',
+  outline: 'none'
 };
 
 const resultStyles = allowed => ({
   padding: '0.75rem 1rem',
   borderRadius: 'var(--ifm-global-radius)',
   border: `1px solid ${allowed ? 'var(--ifm-color-success-dark)' : 'var(--ifm-color-danger-dark)'}`,
-  backgroundColor: allowed
-    ? 'var(--ifm-color-success-contrast-background)'
-    : 'var(--ifm-color-danger-contrast-background)',
+  backgroundColor: allowed ? 'var(--ifm-color-success-contrast-background)' : 'var(--ifm-color-danger-contrast-background)',
   display: 'flex',
   alignItems: 'center',
   gap: '0.6rem',
-  marginTop: '1rem',
+  marginTop: '1rem'
 });
 
 // ---------------------------------------------------------------------------
@@ -123,8 +117,7 @@ const IPFilterTester = () => {
       {/* ── Filter Rules ── */}
       <div style={{ marginBottom: '1rem' }}>
         <label style={fieldLabel}>
-          Filter Rules{' '}
-          <span style={fieldHint}>(one per line)</span>
+          Filter Rules <span style={fieldHint}>(one per line)</span>
         </label>
         <textarea
           value={filterText}
@@ -161,7 +154,7 @@ const IPFilterTester = () => {
             cursor: 'pointer',
             whiteSpace: 'nowrap',
             // Align with input bottom
-            height: '2.25rem',
+            height: '2.25rem'
           }}
         >
           Test
@@ -171,15 +164,11 @@ const IPFilterTester = () => {
       {/* ── Result ── */}
       {result !== null && (
         <div style={resultStyles(result.allowed)}>
-          <span style={{ fontSize: '1.15rem', lineHeight: 1 }}>
-            {result.allowed ? '✅' : '❌'}
-          </span>
+          <span style={{ fontSize: '1.15rem', lineHeight: 1 }}>{result.allowed ? '✅' : '❌'}</span>
           <div style={{ fontSize: '0.9rem' }}>
             <strong
               style={{
-                color: result.allowed
-                  ? 'var(--ifm-color-success-darkest)'
-                  : 'var(--ifm-color-danger-darkest)',
+                color: result.allowed ? 'var(--ifm-color-success-darkest)' : 'var(--ifm-color-danger-darkest)'
               }}
             >
               {result.allowed ? 'Allowed' : 'Blocked'}
@@ -192,16 +181,14 @@ const IPFilterTester = () => {
                     fontSize: '0.85rem',
                     padding: '0.1rem 0.35rem',
                     borderRadius: '3px',
-                    backgroundColor: 'var(--ifm-color-emphasis-200)',
+                    backgroundColor: 'var(--ifm-color-emphasis-200)'
                   }}
                 >
                   {result.matchedRule}
                 </code>
               </span>
             ) : (
-              <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>
-                — no rule matched this address
-              </span>
+              <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>— no rule matched this address</span>
             )}
           </div>
         </div>
