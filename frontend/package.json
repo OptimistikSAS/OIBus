@@ -56,7 +56,7 @@
     "@types/papaparse": "5.5.2",
     "@vitest/browser-playwright": "4.1.7",
     "angular-eslint": "21.4.0",
-    "eslint": "9.39.4",
+    "eslint": "10.4.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.5",
     "playwright": "1.60.0",
