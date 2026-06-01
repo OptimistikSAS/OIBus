@@ -1,11 +1,20 @@
-singleQuote: true
-printWidth: 140
-trailingComma: none
-arrowParens: avoid
-overrides:
-  - files: "*.component.html"
-    options:
-      parser: angular
-  - files: "src/index.html"
-    options:
-      parser: html
+{
+  "singleQuote": true,
+  "printWidth": 140,
+  "trailingComma": "none",
+  "arrowParens": "avoid",
+  "overrides": [
+    {
+      "files": "*.component.html",
+      "options": {
+        "parser": "angular"
+      }
+    },
+    {
+      "files": "src/index.html",
+      "options": {
+        "parser": "html"
+      }
+    }
+  ]
+}

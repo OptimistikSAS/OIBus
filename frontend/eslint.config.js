@@ -80,14 +80,27 @@ export default [
           'error',
           {
             selector: "CallExpression[callee.name='fdescribe']",
-            message: "'Do not use focused test suites (fdescribe)"
+            message: 'Do not use focused test suites (fdescribe)'
           },
           {
             selector: "CallExpression[callee.name='fit']",
-            message: "'Do not use focused tests (fit)"
+            message: 'Do not use focused tests (fit)'
+          },
+          {
+            selector: "MemberExpression[object.name='describe'][property.name='only']",
+            message: 'Do not use focused test suites (describe.only)'
+          },
+          {
+            selector: "MemberExpression[object.name='it'][property.name='only']",
+            message: 'Do not use focused tests (it.only)'
           }
         ],
-        'no-console': 'error'
+        'no-console': [
+          'error',
+          {
+            allow: ['info', 'warn', 'error']
+          }
+        ]
       }
     },
     {
@@ -109,7 +122,10 @@ export default [
           {
             allowNullOrUndefined: true
           }
-        ]
+        ],
+        '@angular-eslint/template/accessibility-alt-text': 'warn',
+        '@angular-eslint/template/accessibility-interactive-supports-focus': 'warn',
+        '@angular-eslint/template/click-events-have-key-events': 'warn'
       }
     }
   ),

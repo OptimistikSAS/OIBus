@@ -2,7 +2,6 @@ import js from '@eslint/js';
 import globals from 'globals';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
-import reactRefreshPlugin from 'eslint-plugin-react-refresh';
 import prettierConfig from 'eslint-config-prettier';
 import * as mdx from 'eslint-plugin-mdx';
 import prettierPlugin from 'eslint-plugin-prettier';
@@ -15,8 +14,7 @@ export default [
     files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
     plugins: {
       react: reactPlugin,
-      'react-hooks': reactHooksPlugin,
-      'react-refresh': reactRefreshPlugin
+      'react-hooks': reactHooksPlugin
     },
     languageOptions: {
       globals: {
@@ -34,7 +32,6 @@ export default [
     rules: {
       ...reactPlugin.configs.recommended.rules,
       ...reactPlugin.configs['jsx-runtime'].rules,
-      'react-refresh/only-export-components': 'warn',
       'react/no-unknown-property': ['error', { ignore: ['tw'] }],
       'no-unused-vars': [
         'error',
@@ -43,7 +40,7 @@ export default [
           args: 'after-used',
           ignoreRestSiblings: false,
           argsIgnorePattern: '^_',
-          varsIgnorePattern: '^React$' // Ignore unused 'React' variables
+          varsIgnorePattern: '^_'
         }
       ]
     },
@@ -53,28 +50,25 @@ export default [
       }
     }
   },
-  // MDX support
+  // MDX / Markdown support — prettier options are read from .prettierrc automatically
   {
     files: ['**/*.{md,mdx}'],
     ...mdx.flat,
     processor: mdx.processors.remark,
     plugins: {
-      prettier: prettierPlugin // Add Prettier plugin for MDX files
+      react: reactPlugin
     },
     rules: {
+      // Mark variables used as JSX tags (e.g. <RedocWrapper />) as "used" so that
+      // no-unused-vars doesn't flag imported components that appear only in MDX JSX.
+      'react/jsx-uses-vars': 'error',
       'no-unused-vars': [
         'error',
         {
-          varsIgnorePattern: '^[A-Z]'
+          varsIgnorePattern: '^_'
         }
       ],
-      'prettier/prettier': [
-        'error',
-        {
-          proseWrap: 'preserve',
-          printWidth: 140
-        }
-      ]
+      'prettier/prettier': 'error'
     }
   },
   // Prettier integration

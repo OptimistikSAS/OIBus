@@ -14,6 +14,7 @@ import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended'
 
 // Export our config array, which is composed together thanks to the defineConfig utility function from eslint
 export default [
+  { ignores: ['**/node_modules/', 'dist/'] },
   ...defineConfig({
     // Everything in this config object targets our TypeScript files (Components, Directives, Pipes etc)
     files: ['**/*.ts'],
@@ -38,22 +39,41 @@ export default [
       '@typescript-eslint/no-unused-vars': [
         'error',
         {
-          argsIgnorePattern: '^_'
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          ignoreRestSiblings: true
         }
       ],
       'no-case-declarations': 'off',
+      'no-console': [
+        'error',
+        {
+          allow: ['info', 'warn', 'error']
+        }
+      ],
       'no-restricted-imports': ['error'],
       'no-restricted-syntax': [
         'error',
         {
           selector: "CallExpression[callee.name='fdescribe']",
-          message: "'Do not use focused test suites (fdescribe)"
+          message: 'Do not use focused test suites (fdescribe)'
         },
         {
           selector: "CallExpression[callee.name='fit']",
-          message: "'Do not use focused tests (fit)"
+          message: 'Do not use focused tests (fit)'
+        },
+        {
+          selector: "MemberExpression[object.name='describe'][property.name='only']",
+          message: 'Do not use focused test suites (describe.only)'
+        },
+        {
+          selector: "MemberExpression[object.name='it'][property.name='only']",
+          message: 'Do not use focused tests (it.only)'
         }
-      ]
+      ],
+      'require-await': 'error'
     }
   }),
   eslintPluginPrettierRecommended,
