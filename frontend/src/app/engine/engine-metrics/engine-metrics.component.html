@@ -12,8 +12,10 @@
           <a
             class="btn btn-link display-engine px-1 py-0"
             id="display-link"
+            tabindex="0"
             [ngbTooltip]="'engine.monitoring.tooltips.view-metrics' | translate"
             (click)="navigateToDisplay()"
+            (keyup.enter)="navigateToDisplay()"
           >
             <span class="fa fa-search"></span>
           </a>

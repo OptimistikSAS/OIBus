@@ -18,6 +18,4 @@ bootstrapApplication(AppComponent, {
     provideDatepicker(),
     provideHttpClient(withInterceptors([authenticationInterceptor, errorInterceptor]))
   ]
-})
-  /* eslint-disable-next-line no-console */
-  .catch(err => console.error(err));
+}).catch(err => console.error(err));

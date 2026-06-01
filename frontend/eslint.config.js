@@ -123,8 +123,8 @@ export default [
             allowNullOrUndefined: true
           }
         ],
-        '@angular-eslint/template/accessibility-alt-text': 'warn',
-        '@angular-eslint/template/accessibility-interactive-supports-focus': 'warn',
+        '@angular-eslint/template/alt-text': 'warn',
+        '@angular-eslint/template/interactive-supports-focus': 'warn',
         '@angular-eslint/template/click-events-have-key-events': 'warn'
       }
     }
