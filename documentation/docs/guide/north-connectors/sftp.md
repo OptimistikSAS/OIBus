@@ -21,8 +21,8 @@ The **SFTP North Connector** securely uploads files and data to an **SFTP (SSH F
 
 ### File Configuration
 
-| Setting            | Description                                                                                             | Example Value     |
-| ------------------ | ------------------------------------------------------------------------------------------------------- | ----------------- |
+| Setting           | Description                                                                                             | Example Value     |
+| ----------------- | ------------------------------------------------------------------------------------------------------- | ----------------- |
 | **Remote folder** | Directory on the SFTP server where files will be stored.                                                | `/data/oibus`     |
 | **Prefix**        | Text to prepend to the filename. Supports internal variables like `@ConnectorName`.                     | `@ConnectorName-` |
 | **Suffix**        | Text to append to the filename (before the extension). Supports internal variables like `@CurrentDate`. | `-@CurrentDate`   |

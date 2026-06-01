@@ -8,7 +8,7 @@ import packageInfo from '../../../package.json';
 ## Run the Container
 
 <CodeBlock language="bash">
-{`docker run -d \\
+  {`docker run -d \\
   --name oibus-container \\
   -p 2223:2223 \\
   -v ./OIBusData:/app/OIBus/OIBusData \\
@@ -31,7 +31,7 @@ Open `http://localhost:2223` in a browser and follow the [first access guide](./
 ## Docker Compose
 
 <CodeBlock language="yaml">
-{`services:
+  {`services:
   oibus:
     image: ghcr.io/optimistiksas/oibus:v${packageInfo.version}
     container_name: oibus-container
@@ -53,15 +53,15 @@ Open `http://localhost:2223` in a browser and follow the [first access guide](./
 
 ## Port Configuration
 
-| Port       | Purpose                  | How to expose                                     |
-| ---------- | ------------------------ | ------------------------------------------------- |
-| `2223`     | OIBus web interface      | `-p 2223:2223` (included by default above)        |
-| *(custom)* | OIBus proxy server       | Add `-p <HOST_PORT>:<CONTAINER_PORT>` as needed   |
+| Port       | Purpose             | How to expose                                   |
+| ---------- | ------------------- | ----------------------------------------------- |
+| `2223`     | OIBus web interface | `-p 2223:2223` (included by default above)      |
+| _(custom)_ | OIBus proxy server  | Add `-p <HOST_PORT>:<CONTAINER_PORT>` as needed |
 
 To expose the proxy server port (e.g. `9000`) alongside the web interface:
 
 <CodeBlock language="bash">
-{`docker run -d \\
+  {`docker run -d \\
   --name oibus-container \\
   -p 2223:2223 \\
   -p 9000:9000 \\
@@ -75,7 +75,7 @@ To expose the proxy server port (e.g. `9000`) alongside the web interface:
 Pull the new image, then recreate the container. The data volume is preserved:
 
 <CodeBlock language="bash">
-{`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}
+  {`docker pull ghcr.io/optimistiksas/oibus:v${packageInfo.version}
 docker stop oibus-container
 docker rm oibus-container
 docker run -d \\

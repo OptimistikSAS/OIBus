@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
@@ -129,6 +130,18 @@ function TreeNode({ segment, node, depth, filter }) {
     </div>
   );
 }
+
+const nodeShape = PropTypes.shape({
+  fullTopic: PropTypes.string,
+  children: PropTypes.objectOf(PropTypes.object)
+});
+
+TreeNode.propTypes = {
+  segment: PropTypes.string.isRequired,
+  node: nodeShape.isRequired,
+  depth: PropTypes.number.isRequired,
+  filter: PropTypes.string.isRequired
+};
 
 // ── Main component ────────────────────────────────────────────────────────────
 

@@ -12,20 +12,20 @@ setup was active, or for re-exporting a specific period.
 
 Only South connectors with historian capabilities support history queries:
 
-| Connector          |
-| ------------------ |
-| [MSSQL](./south-connectors/mssql.mdx) |
-| [MySQL® / MariaDB™](./south-connectors/mysql.mdx) |
-| [ODBC](./south-connectors/odbc.mdx) |
-| [OIAnalytics®](./south-connectors/oianalytics.mdx) |
-| [OLEDB](./south-connectors/oledb.mdx) |
-| [OPC Classic™ (HDA mode)](./south-connectors/opc.mdx) |
-| [OPC UA™ (HA mode)](./south-connectors/opcua.mdx) |
-| [Oracle Database™](./south-connectors/oracle.mdx) |
+| Connector                                               |
+| ------------------------------------------------------- |
+| [MSSQL](./south-connectors/mssql.mdx)                   |
+| [MySQL® / MariaDB™](./south-connectors/mysql.mdx)       |
+| [ODBC](./south-connectors/odbc.mdx)                     |
+| [OIAnalytics®](./south-connectors/oianalytics.mdx)      |
+| [OLEDB](./south-connectors/oledb.mdx)                   |
+| [OPC Classic™ (HDA mode)](./south-connectors/opc.mdx)   |
+| [OPC UA™ (HA mode)](./south-connectors/opcua.mdx)       |
+| [Oracle Database™](./south-connectors/oracle.mdx)       |
 | [OSIsoft PI System™](./south-connectors/osisoft-pi.mdx) |
-| [PostgreSQL](./south-connectors/postgresql.mdx) |
-| [REST](./south-connectors/rest.mdx) |
-| [SQLite™](./south-connectors/sqlite.mdx) |
+| [PostgreSQL](./south-connectors/postgresql.mdx)         |
+| [REST](./south-connectors/rest.mdx)                     |
+| [SQLite™](./south-connectors/sqlite.mdx)                |
 
 ## Create a History Query
 
@@ -38,19 +38,19 @@ From the **History** page, click **+** and choose:
 
 ### General
 
-| Setting         | Description                                      | Example Value |
-| --------------- | ------------------------------------------------ | ------------- |
-| **Name**        | Unique label for the history query.              | `Backfill Jan 2024` |
-| **Description** | Optional context for the query.                  | `Re-export after outage` |
+| Setting         | Description                         | Example Value            |
+| --------------- | ----------------------------------- | ------------------------ |
+| **Name**        | Unique label for the history query. | `Backfill Jan 2024`      |
+| **Description** | Optional context for the query.     | `Re-export after outage` |
 
 ### Time Range
 
-| Setting               | Description                                                                                    | Example Value |
-| --------------------- | ---------------------------------------------------------------------------------------------- | ------------- |
+| Setting               | Description                                                                                    | Example Value              |
+| --------------------- | ---------------------------------------------------------------------------------------------- | -------------------------- |
 | **Start time**        | Beginning of the historical period to retrieve.                                                | `2024-01-01T00:00:00.000Z` |
 | **End time**          | End of the historical period to retrieve.                                                      | `2024-02-01T00:00:00.000Z` |
-| **Max read interval** | Maximum sub-query duration in seconds. The full range is split into chunks of this size.       | `3600`        |
-| **Read delay**        | Pause in milliseconds between consecutive sub-queries, to avoid overloading the source system. | `200`         |
+| **Max read interval** | Maximum sub-query duration in seconds. The full range is split into chunks of this size.       | `3600`                     |
+| **Read delay**        | Pause in milliseconds between consecutive sub-queries, to avoid overloading the source system. | `200`                      |
 
 :::caution SQL connectors
 For SQL-based connectors, your query **must** include both time variables:
@@ -70,13 +70,13 @@ A history query embeds a full South connector (type, settings, items) and a full
 
 ## Execution Controls
 
-| Control          | Description                                                              |
-| ---------------- | ------------------------------------------------------------------------ |
-| **Start**        | Begin the query from the current tracked position (or from Start time if never run). |
-| **Pause**        | Suspend execution. Progress is preserved — the query resumes from where it stopped. |
-| **Resume**       | Continue a paused query from its last tracked position.                  |
-| **Restart**      | Re-run a finished or errored query from the beginning.                   |
-| **Reset cache**  | Clear all cached progress and force the next run to restart from Start time. |
+| Control         | Description                                                                          |
+| --------------- | ------------------------------------------------------------------------------------ |
+| **Start**       | Begin the query from the current tracked position (or from Start time if never run). |
+| **Pause**       | Suspend execution. Progress is preserved — the query resumes from where it stopped.  |
+| **Resume**      | Continue a paused query from its last tracked position.                              |
+| **Restart**     | Re-run a finished or errored query from the beginning.                               |
+| **Reset cache** | Clear all cached progress and force the next run to restart from Start time.         |
 
 Controls are available from the display page, the editing page, and the history query list.
 
@@ -85,6 +85,7 @@ Controls are available from the display page, the editing page, and the history 
 The display page shows real-time metrics for both the South and North sides of the query:
 
 **South (retrieval) metrics:**
+
 - Interval progress — current interval number out of total intervals
 - Number of values and files retrieved
 - Last value retrieved (point ID, timestamp, data)
@@ -92,6 +93,7 @@ The display page shows real-time metrics for both the South and North sides of t
 - Last run start time and duration
 
 **North (transmission) metrics:**
+
 - Cache size — current, total cached, total sent
 - Error size — current, total errored
 - Archive size — current, total archived

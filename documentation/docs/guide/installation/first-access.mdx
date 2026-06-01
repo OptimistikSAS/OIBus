@@ -54,16 +54,16 @@ See [IP Filters](../engine/ip-filters.mdx) for details.
 
 The engine display page shows real-time resource usage for the OIBus process:
 
-| Metric              | Description                                                                             |
-| ------------------- | --------------------------------------------------------------------------------------- |
-| **CPU usage**       | Instantaneous CPU usage and rolling average over recent intervals.                      |
-| **Uptime**          | Time elapsed since the OIBus process last started.                                      |
-| **Free memory**     | Percentage of system memory currently available.                                        |
-| **RAM usage**       | Process memory resident in RAM — minimum, current, and maximum since startup.           |
-| **Heap total**      | Total memory allocated for the JavaScript heap.                                         |
-| **Heap used**       | Memory actively used within the heap.                                                   |
-| **External memory** | Memory used by native extensions (e.g., C++ bindings).                                  |
-| **Array buffer**    | Memory allocated for binary data buffers.                                               |
+| Metric              | Description                                                                   |
+| ------------------- | ----------------------------------------------------------------------------- |
+| **CPU usage**       | Instantaneous CPU usage and rolling average over recent intervals.            |
+| **Uptime**          | Time elapsed since the OIBus process last started.                            |
+| **Free memory**     | Percentage of system memory currently available.                              |
+| **RAM usage**       | Process memory resident in RAM — minimum, current, and maximum since startup. |
+| **Heap total**      | Total memory allocated for the JavaScript heap.                               |
+| **Heap used**       | Memory actively used within the heap.                                         |
+| **External memory** | Memory used by native extensions (e.g., C++ bindings).                        |
+| **Array buffer**    | Memory allocated for binary data buffers.                                     |
 
 ## North Connectors
 
@@ -133,12 +133,12 @@ The log page displays OIBus runtime logs and refreshes automatically every 10 se
 
 Use the filters to narrow down what you see:
 
-| Filter        | Description                                                                        |
-| ------------- | ---------------------------------------------------------------------------------- |
-| **Date range**    | Show only logs within a specific time window.                                  |
-| **Level**         | Filter by severity: `trace`, `debug`, `info`, `warn`, `error`.                 |
-| **Scope**         | Restrict logs to the engine, a South connector, a North connector, or a history query. |
-| **Message**       | Search by free text within log message content.                                |
+| Filter         | Description                                                                            |
+| -------------- | -------------------------------------------------------------------------------------- |
+| **Date range** | Show only logs within a specific time window.                                          |
+| **Level**      | Filter by severity: `trace`, `debug`, `info`, `warn`, `error`.                         |
+| **Scope**      | Restrict logs to the engine, a South connector, a North connector, or a history query. |
+| **Message**    | Search by free text within log message content.                                        |
 
 Log verbosity is configured per destination (console, file, database, OIAnalytics) in
 [Engine Settings → Logging Parameters](../engine/engine-settings.mdx#logging-parameters).
@@ -159,7 +159,7 @@ displays throughout the interface.
 
 <div style={{ textAlign: 'center' }}>![User settings](../../../static/img/guide/installation/first_access/user-settings.png)</div>
 
-| Setting          | Description                                                              |
-| ---------------- | ------------------------------------------------------------------------ |
-| **Password**     | Change the current user's login password.                                |
-| **Timezone**     | Select the timezone for all date/time values shown in the interface.     |
+| Setting      | Description                                                          |
+| ------------ | -------------------------------------------------------------------- |
+| **Password** | Change the current user's login password.                            |
+| **Timezone** | Select the timezone for all date/time values shown in the interface. |

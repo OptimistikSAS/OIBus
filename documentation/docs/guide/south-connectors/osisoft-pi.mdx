@@ -27,10 +27,10 @@ Connect to OSIsoft PI System™ for industrial data collection and visualization
 Items are organised into **groups**. Each group defines a shared schedule and the default throttling
 parameters for historical data retrieval.
 
-| Setting       | Description                                                             | Example Value |
-| ------------- | ----------------------------------------------------------------------- | ------------- |
-| **Name**      | Unique label for the group within this connector.                       | `Group A`     |
-| **Scan mode** | Collection schedule applied to every item in the group.                 | `Every 1 min` |
+| Setting       | Description                                             | Example Value |
+| ------------- | ------------------------------------------------------- | ------------- |
+| **Name**      | Unique label for the group within this connector.       | `Group A`     |
+| **Scan mode** | Collection schedule applied to every item in the group. | `Every 1 min` |
 
 <ThrottlingSettings />
 
@@ -43,11 +43,11 @@ edit form.
 
 ### Point Access Methods
 
-| Setting     | Description                                                                                                                                        | Example Value               |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
-| Type        | Access method: `PI point` (single point by ID) or `PI query` (multiple points by query expression)                                                 | `PI point` or `PI query`    |
-| Point ID    | Fully qualified point ID (without server name). Used when Type is `PI point`.                                                                      | `\\CDT158\SINUSOID`         |
-| Point Query | Query selector for multiple points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Used when Type is `PI query`. | `Name:='SINUSOID'` |
+| Setting     | Description                                                                                                                                                                       | Example Value            |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| Type        | Access method: `PI point` (single point by ID) or `PI query` (multiple points by query expression)                                                                                | `PI point` or `PI query` |
+| Point ID    | Fully qualified point ID (without server name). Used when Type is `PI point`.                                                                                                     | `\\CDT158\SINUSOID`      |
+| Point Query | Query selector for multiple points (see [PI Point Query Syntax](https://docs.aveva.com/bundle/af-sdk/page/html/pipoint-query-syntax-overview.htm)). Used when Type is `PI query`. | `Name:='SINUSOID'`       |
 
 :::info Reference Names
 

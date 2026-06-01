@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import PropTypes from 'prop-types';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -144,6 +145,11 @@ const ByteChip = ({ value, color }) => (
   </span>
 );
 
+ByteChip.propTypes = {
+  value: PropTypes.number.isRequired,
+  color: PropTypes.string.isRequired
+};
+
 const Toggle = ({ label, checked, onChange, disabled }) => (
   <label
     style={{
@@ -166,6 +172,17 @@ const Toggle = ({ label, checked, onChange, disabled }) => (
     {label}
   </label>
 );
+
+Toggle.propTypes = {
+  label: PropTypes.string.isRequired,
+  checked: PropTypes.bool.isRequired,
+  onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool
+};
+
+Toggle.defaultProps = {
+  disabled: false
+};
 
 const RegInput = ({ label, value, onChange }) => {
   const valid = /^[0-9a-fA-F]{0,4}$/.test(value);
@@ -205,6 +222,12 @@ const RegInput = ({ label, value, onChange }) => {
       </div>
     </div>
   );
+};
+
+RegInput.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired
 };
 
 // ── Main component ────────────────────────────────────────────────────────────

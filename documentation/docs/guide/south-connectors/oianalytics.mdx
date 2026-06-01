@@ -12,30 +12,30 @@ Query time series data from [OIAnalytics®](https://optimistik.com/oianalytics/)
 
 ### Main Configuration
 
-| Setting                      | Description                                                                                                           | Example Value    |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| Setting                      | Description                                                                                                                | Example Value    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | Use OIAnalytics registration | Use pre-configured connection settings from [OIAnalytics registration](../installation/oianalytics.mdx). Default: enabled. | Enabled/Disabled |
-| Timeout                      | Duration in seconds before connection failure is reported. Default: `30`.                                             | `30`             |
+| Timeout                      | Duration in seconds before connection failure is reported. Default: `30`.                                                  | `30`             |
 
 ### Manual Configuration (when registration not used)
 
-| Setting                             | Description                                                                      | Example Value                        |
-| ----------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------ |
-| **Host**                            | Hostname of the OIAnalytics® SaaS application.                                   | `https://optimistik.oianalytics.com` |
-| **Accept unauthorized certificate** | Enable if HTTP queries pass through a firewall that strips certificates.         | Enabled/Disabled                     |
+| Setting                             | Description                                                              | Example Value                        |
+| ----------------------------------- | ------------------------------------------------------------------------ | ------------------------------------ |
+| **Host**                            | Hostname of the OIAnalytics® SaaS application.                           | `https://optimistik.oianalytics.com` |
+| **Accept unauthorized certificate** | Enable if HTTP queries pass through a firewall that strips certificates. | Enabled/Disabled                     |
 
 #### Authentication Settings
 
-| Setting               | Description                                                          | Example Value                                                   |
-| --------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Authentication method | Authentication type for the connection.                              | `Access key/Secret`, `Azure AD (Client Secret)`, `Azure AD (Certificate)` |
-| Access key            | Access key for Access key/Secret authentication.                     | `my_access_key`                                                 |
-| Secret                | Secret for Access key/Secret authentication.                         | `••••••••`                                                      |
-| Tenant ID             | Azure AD tenant identifier (for Azure AD methods).                   | `tenant-id-uuid`                                                |
-| Client ID             | Azure AD client identifier (for Azure AD methods).                   | `client-id-uuid`                                                |
-| Client Secret         | Azure AD client secret (for Azure AD Client Secret method).          | `••••••••`                                                      |
-| Certificate           | Certificate file path (for Azure AD Certificate method).             | `/path/to/cert.pem`                                             |
-| Scope                 | OAuth scope (for Azure AD Certificate method).                       | `https://resource/.default`                                     |
+| Setting               | Description                                                 | Example Value                                                             |
+| --------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Authentication method | Authentication type for the connection.                     | `Access key/Secret`, `Azure AD (Client Secret)`, `Azure AD (Certificate)` |
+| Access key            | Access key for Access key/Secret authentication.            | `my_access_key`                                                           |
+| Secret                | Secret for Access key/Secret authentication.                | `••••••••`                                                                |
+| Tenant ID             | Azure AD tenant identifier (for Azure AD methods).          | `tenant-id-uuid`                                                          |
+| Client ID             | Azure AD client identifier (for Azure AD methods).          | `client-id-uuid`                                                          |
+| Client Secret         | Azure AD client secret (for Azure AD Client Secret method). | `••••••••`                                                                |
+| Certificate           | Certificate file path (for Azure AD Certificate method).    | `/path/to/cert.pem`                                                       |
+| Scope                 | OAuth scope (for Azure AD Certificate method).              | `https://resource/.default`                                               |
 
 #### Proxy Configuration
 
@@ -52,10 +52,10 @@ Items can be organised into groups. Each group defines a shared collection sched
 settings. Items in the same group are still fetched **one at a time** in sequence — the group simply
 provides common defaults that individual items can override.
 
-| Setting        | Description                                                                                        | Example Value   |
-| -------------- | -------------------------------------------------------------------------------------------------- | --------------- |
-| **Name**       | Unique label for the group within this connector.                                                  | `Group A`       |
-| **Scan mode**  | Schedule used to collect all items in the group.                                                   | `Every 1 min`   |
+| Setting        | Description                                                                                         | Example Value  |
+| -------------- | --------------------------------------------------------------------------------------------------- | -------------- |
+| **Name**       | Unique label for the group within this connector.                                                   | `Group A`      |
+| **Scan mode**  | Schedule used to collect all items in the group.                                                    | `Every 1 min`  |
 | **Throttling** | Default throttling values (Max read interval, Read delay, Overlap) inherited by items in the group. | `3600, 200, 0` |
 
 ## Item Settings
@@ -88,13 +88,13 @@ Large time intervals are automatically divided into smaller chunks using:
 
 ## CSV Serialization Options
 
-| Setting                | Description                                                              | Example Value             |
-| ---------------------- | ------------------------------------------------------------------------ | ------------------------- |
-| Filename               | Output filename pattern with variables: `@ConnectorName`, `@CurrentDate` | `data_@ConnectorName.csv` |
+| Setting                | Description                                                              | Example Value                                                                                                     |
+| ---------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| Filename               | Output filename pattern with variables: `@ConnectorName`, `@CurrentDate` | `data_@ConnectorName.csv`                                                                                         |
 | Delimiter              | Field separator character                                                | `COMMA` (,), `SEMI_COLON` (;), `DOT` (.), `COLON` (:), `PIPE` (\|), `SLASH` (/), `TAB` (\t), `NON_BREAKING_SPACE` |
-| Compression            | Enable gzip compression                                                  | Enabled/Disabled          |
-| Output datetime format | Format for datetime fields in CSV                                        | `yyyy-MM-dd HH:mm:ss`     |
-| Output timezone        | Timezone for datetime values                                             | `UTC` or `Europe/Paris`   |
+| Compression            | Enable gzip compression                                                  | Enabled/Disabled                                                                                                  |
+| Output datetime format | Format for datetime fields in CSV                                        | `yyyy-MM-dd HH:mm:ss`                                                                                             |
+| Output timezone        | Timezone for datetime values                                             | `UTC` or `Europe/Paris`                                                                                           |
 
 :::info Filename Variables
 

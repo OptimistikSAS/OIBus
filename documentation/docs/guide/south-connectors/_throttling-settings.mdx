@@ -8,7 +8,7 @@ the group defaults by disabling the **Sync with group** toggle.
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | **Max read interval** | Maximum duration of each sub-query in seconds. Larger time ranges are automatically split into chunks not exceeding this value. | `3600`        |
 | **Read delay**        | Pause in milliseconds between consecutive sub-queries. Helps prevent server overload and manages rate limits.                   | `1000`        |
-| **Overlap**           | Time in milliseconds subtracted from `@StartTime` of each query to capture late-arriving data from the previous interval.      | `60000`       |
+| **Overlap**           | Time in milliseconds subtracted from `@StartTime` of each query to capture late-arriving data from the previous interval.       | `60000`       |
 
 #### How Throttling Works
 

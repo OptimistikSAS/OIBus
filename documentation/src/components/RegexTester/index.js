@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Styles (inline, using Infima CSS vars for dark-mode compatibility)
@@ -9,7 +9,7 @@ const card = {
   padding: '1.25rem 1.5rem',
   border: '1px solid var(--ifm-color-emphasis-300)',
   borderRadius: 'var(--ifm-global-radius)',
-  backgroundColor: 'var(--ifm-background-surface-color)',
+  backgroundColor: 'var(--ifm-background-surface-color)'
 };
 
 const fieldLabel = {
@@ -17,13 +17,13 @@ const fieldLabel = {
   marginBottom: '0.35rem',
   fontWeight: 600,
   fontSize: '0.875rem',
-  color: 'var(--ifm-font-color-base)',
+  color: 'var(--ifm-font-color-base)'
 };
 
 const fieldHint = {
   fontWeight: 400,
   fontSize: '0.8rem',
-  color: 'var(--ifm-color-emphasis-600)',
+  color: 'var(--ifm-color-emphasis-600)'
 };
 
 const inputBase = {
@@ -36,25 +36,25 @@ const inputBase = {
   backgroundColor: 'var(--ifm-background-color)',
   color: 'var(--ifm-font-color-base)',
   boxSizing: 'border-box',
-  outline: 'none',
+  outline: 'none'
 };
 
 const RESULT_COLORS = {
   match: {
     border: 'var(--ifm-color-success-dark)',
     bg: 'var(--ifm-color-success-contrast-background)',
-    label: 'var(--ifm-color-success-darkest)',
+    label: 'var(--ifm-color-success-darkest)'
   },
   nomatch: {
     border: 'var(--ifm-color-danger-dark)',
     bg: 'var(--ifm-color-danger-contrast-background)',
-    label: 'var(--ifm-color-danger-darkest)',
+    label: 'var(--ifm-color-danger-darkest)'
   },
   error: {
     border: 'var(--ifm-color-warning-dark)',
     bg: 'var(--ifm-color-warning-contrast-background)',
-    label: 'var(--ifm-color-warning-darkest)',
-  },
+    label: 'var(--ifm-color-warning-darkest)'
+  }
 };
 
 const resultBanner = type => {
@@ -67,7 +67,7 @@ const resultBanner = type => {
     display: 'flex',
     alignItems: 'center',
     gap: '0.6rem',
-    marginTop: '1rem',
+    marginTop: '1rem'
   };
 };
 
@@ -76,7 +76,7 @@ const EXAMPLES = [
   { pattern: '.*\\.txt', label: 'Text files' },
   { pattern: '.*\\.csv', label: 'CSV files' },
   { pattern: '.*\\.csv|.*\\.xlsx', label: 'CSV or Excel files' },
-  { pattern: 'data_.*\\.json', label: 'JSON files starting with "data_"' },
+  { pattern: 'data_.*\\.json', label: 'JSON files starting with "data_"' }
 ];
 
 // ---------------------------------------------------------------------------
@@ -114,13 +114,15 @@ const RegexTester = () => {
       {/* ── Regex Pattern ── */}
       <div style={{ marginBottom: '1rem' }}>
         <label style={fieldLabel}>
-          Regex Pattern{' '}
-          <span style={fieldHint}>(JavaScript RegExp)</span>
+          Regex Pattern <span style={fieldHint}>(JavaScript RegExp)</span>
         </label>
         <input
           type="text"
           value={pattern}
-          onChange={e => { setPattern(e.target.value); setResult(null); }}
+          onChange={e => {
+            setPattern(e.target.value);
+            setResult(null);
+          }}
           onKeyDown={handleKeyDown}
           placeholder="e.g. .*\.csv"
           style={inputBase}
@@ -134,7 +136,10 @@ const RegexTester = () => {
           <input
             type="text"
             value={filename}
-            onChange={e => { setFilename(e.target.value); setResult(null); }}
+            onChange={e => {
+              setFilename(e.target.value);
+              setResult(null);
+            }}
             onKeyDown={handleKeyDown}
             placeholder="e.g. data.csv"
             style={inputBase}
@@ -152,7 +157,7 @@ const RegexTester = () => {
             borderRadius: 'var(--ifm-global-radius)',
             cursor: 'pointer',
             whiteSpace: 'nowrap',
-            height: '2.25rem',
+            height: '2.25rem'
           }}
         >
           Test
@@ -167,16 +172,10 @@ const RegexTester = () => {
           </span>
           <div style={{ fontSize: '0.9rem' }}>
             <strong style={{ color: RESULT_COLORS[result.type]?.label }}>
-              {result.type === 'match'
-                ? 'Matches'
-                : result.type === 'error'
-                ? 'Invalid pattern'
-                : 'No match'}
+              {result.type === 'match' ? 'Matches' : result.type === 'error' ? 'Invalid pattern' : 'No match'}
             </strong>
             {result.type === 'match' && (
-              <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>
-                — the filename matches the pattern
-              </span>
+              <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>— the filename matches the pattern</span>
             )}
             {result.type === 'nomatch' && (
               <span style={{ color: 'var(--ifm-color-emphasis-700)', marginLeft: '0.4rem' }}>
@@ -191,7 +190,7 @@ const RegexTester = () => {
                     fontSize: '0.85rem',
                     padding: '0.1rem 0.35rem',
                     borderRadius: '3px',
-                    backgroundColor: 'var(--ifm-color-emphasis-200)',
+                    backgroundColor: 'var(--ifm-color-emphasis-200)'
                   }}
                 >
                   {result.detail}
@@ -207,7 +206,7 @@ const RegexTester = () => {
         style={{
           marginTop: '1.25rem',
           paddingTop: '1rem',
-          borderTop: '1px solid var(--ifm-color-emphasis-200)',
+          borderTop: '1px solid var(--ifm-color-emphasis-200)'
         }}
       >
         <p
@@ -217,7 +216,7 @@ const RegexTester = () => {
             fontWeight: 600,
             color: 'var(--ifm-color-emphasis-700)',
             textTransform: 'uppercase',
-            letterSpacing: '0.05em',
+            letterSpacing: '0.05em'
           }}
         >
           Common Examples
@@ -236,7 +235,7 @@ const RegexTester = () => {
                 color: 'var(--ifm-font-color-base)',
                 fontFamily: 'var(--ifm-font-family-monospace)',
                 fontSize: '0.8rem',
-                cursor: 'pointer',
+                cursor: 'pointer'
               }}
             >
               {ex.pattern}
