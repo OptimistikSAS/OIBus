@@ -18,7 +18,7 @@ export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
     return this.transformInMemory(JSON.parse(text) as Array<OIBusSetpoint>, source, filename);
   }
 
-  override async transformInMemory(
+  override transformInMemory(
     data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
@@ -50,10 +50,10 @@ export default class OIBusSetpointToModbusTransformer extends OIBusTransformer {
       numberOfElement: content.length,
       contentType: 'modbus'
     };
-    return {
+    return Promise.resolve({
       output: Buffer.from(JSON.stringify(content)),
       metadata
-    };
+    });
   }
 
   get options(): TransformerSetpointToModbusSettings {

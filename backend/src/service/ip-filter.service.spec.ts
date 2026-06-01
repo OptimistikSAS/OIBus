@@ -108,10 +108,10 @@ describe('IP Filter Service', () => {
     assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
 
-  it('should not delete if the IP filter is not found', async () => {
+  it('should not delete if the IP filter is not found', () => {
     ipFilterRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(() => service.delete(testData.ipFilters.list[0].id), {
+    assert.throws(() => service.delete(testData.ipFilters.list[0].id), {
       message: `IP filter "${testData.ipFilters.list[0].id}" not found`
     });
 

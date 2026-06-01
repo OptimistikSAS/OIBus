@@ -18,7 +18,7 @@ export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
     return this.transformInMemory(JSON.parse(text) as Array<OIBusSetpoint>, source, filename);
   }
 
-  override async transformInMemory(
+  override transformInMemory(
     data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
@@ -47,10 +47,10 @@ export default class OIBusSetpointToMQTTTransformer extends OIBusTransformer {
       numberOfElement: content.length,
       contentType: 'mqtt'
     };
-    return {
+    return Promise.resolve({
       output: Buffer.from(JSON.stringify(content)),
       metadata
-    };
+    });
   }
 
   get options(): TransformerSetpointToMqttSettings {

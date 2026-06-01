@@ -16,7 +16,7 @@ export class IPFilterController extends Controller {
    * @returns {Array<IPFilterDTO>} Array of IP filter objects
    */
   @Get('/')
-  async list(@Request() request: CustomExpressRequest): Promise<Array<IPFilterDTO>> {
+  list(@Request() request: CustomExpressRequest): Array<IPFilterDTO> {
     const ipFilterService = request.services.ipFilterService;
     const ipFilters = ipFilterService.list();
     return ipFilters.map(ipFilter => toIPFilterDTO(ipFilter, id => request.services.userService.getUserInfo(id)));
@@ -28,7 +28,7 @@ export class IPFilterController extends Controller {
    * @returns {IPFilterDTO} The IP filter object
    */
   @Get('/{ipFilterId}')
-  async findById(@Path() ipFilterId: string, @Request() request: CustomExpressRequest): Promise<IPFilterDTO> {
+  findById(@Path() ipFilterId: string, @Request() request: CustomExpressRequest): IPFilterDTO {
     const ipFilterService = request.services.ipFilterService;
     return toIPFilterDTO(ipFilterService.findById(ipFilterId), id => request.services.userService.getUserInfo(id));
   }
@@ -63,8 +63,8 @@ export class IPFilterController extends Controller {
    */
   @Delete('/{ipFilterId}')
   @SuccessResponse(204, 'IP filter deleted successfully')
-  async delete(@Path() ipFilterId: string, @Request() request: CustomExpressRequest): Promise<void> {
+  delete(@Path() ipFilterId: string, @Request() request: CustomExpressRequest): void {
     const ipFilterService = request.services.ipFilterService;
-    await ipFilterService.delete(ipFilterId);
+    ipFilterService.delete(ipFilterId);
   }
 }

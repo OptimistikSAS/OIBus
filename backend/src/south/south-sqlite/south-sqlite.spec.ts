@@ -278,7 +278,7 @@ describe('SouthSQLite', () => {
     assert.deepStrictEqual(result, [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });
 
-  it('should manage query error', async () => {
+  it('should manage query error', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
     mockDatabase.all = mock.fn(() => {
@@ -286,7 +286,7 @@ describe('SouthSQLite', () => {
     });
     mockDatabase.prepare = mock.fn(() => ({ all: mockDatabase.all }));
 
-    await assert.rejects(south.queryData(configuration.items[1], startTime, endTime), { message: 'query error' });
+    assert.throws(() => south.queryData(configuration.items[1], startTime, endTime), { message: 'query error' });
   });
 
   it('should test item', async () => {

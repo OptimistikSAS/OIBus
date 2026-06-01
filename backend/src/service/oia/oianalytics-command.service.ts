@@ -100,19 +100,19 @@ import { delay, getOIBusInfo, unzip, getErrorMessage } from '../utils';
 interface ICertificateService {
   create(command: CertificateCommandDTO, createdBy: string): Promise<unknown>;
   update(certificateId: string, command: CertificateCommandDTO, updatedBy: string): Promise<void>;
-  delete(certificateId: string): Promise<void>;
+  delete(certificateId: string): void;
 }
 
 interface IIPFilterService {
   create(command: IPFilterCommandDTO, createdBy: string): Promise<IPFilter>;
   update(ipFilterId: string, command: IPFilterCommandDTO, updatedBy: string): Promise<void>;
-  delete(ipFilterId: string): Promise<void>;
+  delete(ipFilterId: string): void;
 }
 
 interface IScanModeService {
   create(command: ScanModeCommandDTO, createdBy: string): Promise<ScanMode>;
   update(scanModeId: string, command: ScanModeCommandDTO, updatedBy: string): Promise<void>;
-  delete(scanModeId: string): Promise<void>;
+  delete(scanModeId: string): void;
 }
 
 interface IOIBusService {
@@ -643,7 +643,7 @@ export default class OIAnalyticsCommandService {
   /**
    * Stop services and timer
    */
-  async stop(): Promise<void> {
+  stop(): void {
     this.logger.debug(`Stopping OIAnalytics command service...`);
     this.stopped = true;
     this.commandEvent.removeAllListeners();

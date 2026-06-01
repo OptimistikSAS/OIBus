@@ -16,7 +16,7 @@ export class OIAnalyticsRegistrationController extends Controller {
    * @returns {Promise<RegistrationSettingsDTO>} The registration settings
    */
   @Get('/registration')
-  async getRegistrationSettings(@Request() request: CustomExpressRequest): Promise<RegistrationSettingsDTO> {
+  getRegistrationSettings(@Request() request: CustomExpressRequest): RegistrationSettingsDTO {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
     return toOIAnalyticsRegistrationDTO(oIAnalyticsRegistrationService.getRegistrationSettings(), id =>
       request.services.userService.getUserInfo(id)
@@ -69,7 +69,7 @@ export class OIAnalyticsRegistrationController extends Controller {
 
   @Post('/unregister')
   @SuccessResponse(204, 'Unregistration completed successfully')
-  async unregister(@Request() request: CustomExpressRequest): Promise<void> {
+  unregister(@Request() request: CustomExpressRequest): void {
     const oIAnalyticsRegistrationService = request.services.oIAnalyticsRegistrationService;
     oIAnalyticsRegistrationService.unregister();
   }

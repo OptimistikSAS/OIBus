@@ -56,7 +56,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     return { items: [] };
   }
 
-  async handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
+  handleContent(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
     switch (cacheMetadata.contentType) {
       case 'any':
         return this.handleFile(fileStream, cacheMetadata);
@@ -64,6 +64,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       case 'time-values':
       case 'oianalytics':
         return this.handleValues(fileStream);
+
+      default:
+        return Promise.resolve();
     }
   }
 

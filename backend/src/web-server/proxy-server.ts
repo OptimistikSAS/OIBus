@@ -34,7 +34,7 @@ export default class ProxyServer {
     this.ipFilters = ipFilters;
   }
 
-  async start(port: number): Promise<void> {
+  start(port: number): void {
     this.initHttpProxy();
     this.initWebServer(port);
   }
@@ -42,7 +42,7 @@ export default class ProxyServer {
   /**
    * Stop the web server
    */
-  async stop(): Promise<void> {
+  stop(): void {
     this.webServer?.close();
   }
 

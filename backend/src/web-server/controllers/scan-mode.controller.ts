@@ -16,7 +16,7 @@ export class ScanModeController extends Controller {
    * @returns {Promise<Array<ScanModeDTO>>} Array of scan mode objects
    */
   @Get('/')
-  async list(@Request() request: CustomExpressRequest): Promise<Array<ScanModeDTO>> {
+  list(@Request() request: CustomExpressRequest): Array<ScanModeDTO> {
     const scanModeService: ScanModeService = request.services.scanModeService;
     return scanModeService.list().map(scanMode => toScanModeDTO(scanMode, id => request.services.userService.getUserInfo(id)));
   }
@@ -27,7 +27,7 @@ export class ScanModeController extends Controller {
    * @returns {Promise<ScanModeDTO>} The scan mode object
    */
   @Get('/{scanModeId}')
-  async findById(@Path() scanModeId: string, @Request() request: CustomExpressRequest): Promise<ScanModeDTO> {
+  findById(@Path() scanModeId: string, @Request() request: CustomExpressRequest): ScanModeDTO {
     const scanModeService: ScanModeService = request.services.scanModeService;
     return toScanModeDTO(scanModeService.findById(scanModeId), id => request.services.userService.getUserInfo(id));
   }
@@ -61,9 +61,9 @@ export class ScanModeController extends Controller {
    */
   @Delete('/{scanModeId}')
   @SuccessResponse(204, 'Scan mode deleted successfully')
-  async delete(@Path() scanModeId: string, @Request() request: CustomExpressRequest): Promise<void> {
+  delete(@Path() scanModeId: string, @Request() request: CustomExpressRequest): void {
     const scanModeService: ScanModeService = request.services.scanModeService;
-    await scanModeService.delete(scanModeId);
+    scanModeService.delete(scanModeId);
   }
 
   /**
@@ -72,7 +72,7 @@ export class ScanModeController extends Controller {
    * @returns {Promise<ValidatedCronExpression>} The cron validation with next execution times
    */
   @Post('/verify')
-  async verifyCron(@Body() command: { cron: string }, @Request() request: CustomExpressRequest): Promise<ValidatedCronExpression> {
+  verifyCron(@Body() command: { cron: string }, @Request() request: CustomExpressRequest): ValidatedCronExpression {
     const scanModeService: ScanModeService = request.services.scanModeService;
     return scanModeService.verifyCron(command);
   }

@@ -127,7 +127,7 @@ export const getNumberOfWords = (dataType: string): number => {
   return 1;
 };
 
-export const connectSocket = async (socket: net.Socket, connectionSettings: SouthModbusSettings | NorthModbusSettings): Promise<void> => {
+export const connectSocket = (socket: net.Socket, connectionSettings: SouthModbusSettings | NorthModbusSettings): Promise<void> => {
   return new Promise<void>((resolve, reject) => {
     // Set up a timeout to reject if connection takes too long
     const timeout = setTimeout(() => {

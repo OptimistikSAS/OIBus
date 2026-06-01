@@ -69,7 +69,7 @@ export class LogController extends Controller {
    * @returns {Promise<Array<Scope>>} Array of matching scope objects
    */
   @Get('/scopes/suggest')
-  async suggestScopes(@Query() name = '', @Request() request: CustomExpressRequest): Promise<Array<Scope>> {
+  suggestScopes(@Query() name = '', @Request() request: CustomExpressRequest): Array<Scope> {
     const logService = request.services.logService;
     return logService.suggestScopes(name);
   }
@@ -81,7 +81,7 @@ export class LogController extends Controller {
    * @returns {Promise<Scope|null>} Scope object or null if not found
    */
   @Get('/scopes/{scopeId}')
-  async getScopeById(@Path() scopeId: string, @Request() request: CustomExpressRequest): Promise<Scope> {
+  getScopeById(@Path() scopeId: string, @Request() request: CustomExpressRequest): Scope {
     const logService = request.services.logService;
     return logService.getScopeById(scopeId);
   }

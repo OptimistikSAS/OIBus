@@ -132,7 +132,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * cron jobs, subscription bookkeeping, and the `'connected'` event are kept
    * in sync.
    */
-  async connect(): Promise<void> {
+  connect(): Promise<void> {
     this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
 
     for (const cronJob of this.cronByScanModeIds.values()) {
@@ -145,6 +145,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     });
 
     this.connectedEvent.emit('connected');
+    return Promise.resolve();
   }
 
   /**
@@ -608,7 +609,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    *   - `'any-content'`  → opaque serialised payload (MQTT messages, etc.)
    *   - `'any'`          → a file on disk (folder-scanner, FTP, etc.)
    */
-  async addContent(data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) {
+  addContent(data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void> {
     switch (data.type) {
       case 'time-values':
         return this.addValues(data, queryTime, items);
@@ -616,6 +617,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         return this.addAnyContent(data, queryTime, items);
       case 'any':
         return this.addFile(data, queryTime, items);
+      default:
+        return Promise.resolve();
     }
   }
 
@@ -666,7 +669,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    *
    * Idempotent — safe to call when already disconnected.
    */
-  async disconnect(): Promise<void> {
+  disconnect(): Promise<void> {
     for (const cronJob of this.cronByScanModeIds.values()) {
       cronJob.stop();
     }
@@ -674,6 +677,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.taskJobQueue = [];
 
     this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
+    return Promise.resolve();
   }
 
   /**
@@ -705,8 +709,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * "reset cache" — subsequent history queries will re-fetch from the
    * connector's configured start window.
    */
-  async resetCache(): Promise<void> {
+  resetCache(): Promise<void> {
     this.cacheService!.dropItemValueTable(this.connector.id);
+    return Promise.resolve();
   }
 
   /**

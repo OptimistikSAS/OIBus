@@ -89,7 +89,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<Array<SouthType>>} Array of south connector type objects
    */
   @Get('/types')
-  async listManifest(@Request() request: CustomExpressRequest): Promise<Array<SouthType>> {
+  listManifest(@Request() request: CustomExpressRequest): Array<SouthType> {
     const southService = request.services.southService as SouthService;
     return southService.listManifest().map(manifest => ({
       id: manifest.id,
@@ -104,7 +104,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<SouthConnectorManifest>} The south connector manifest
    */
   @Get('/manifests/{type}')
-  async getManifest(@Path() type: OIBusSouthType, @Request() request: CustomExpressRequest): Promise<SouthConnectorManifest> {
+  getManifest(@Path() type: OIBusSouthType, @Request() request: CustomExpressRequest): SouthConnectorManifest {
     const southService = request.services.southService as SouthService;
     return southService.getManifest(type);
   }
@@ -115,7 +115,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<Array<SouthConnectorLightDTO>>} Array of south connector objects
    */
   @Get('/')
-  async list(@Request() request: CustomExpressRequest): Promise<Array<SouthConnectorLightDTO>> {
+  list(@Request() request: CustomExpressRequest): Array<SouthConnectorLightDTO> {
     const southService = request.services.southService as SouthService;
     const southConnectors = southService.list();
     return southConnectors.map(connector => toSouthConnectorLightDTO(connector, id => request.services.userService.getUserInfo(id)));
@@ -127,7 +127,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<SouthConnectorDTO>} The south connector object
    */
   @Get('/{southId}')
-  async findById(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<SouthConnectorDTO> {
+  findById(@Path() southId: string, @Request() request: CustomExpressRequest): SouthConnectorDTO {
     const southService = request.services.southService as SouthService;
     return toSouthConnectorDTO(southService.findById(southId), id => request.services.userService.getUserInfo(id)) as SouthConnectorDTO;
   }
@@ -262,7 +262,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<Array<SouthConnectorItemDTO>>} Array of south connector item objects
    */
   @Get('/{southId}/items/list')
-  async listItems(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<Array<SouthConnectorItemDTO>> {
+  listItems(@Path() southId: string, @Request() request: CustomExpressRequest): Array<SouthConnectorItemDTO> {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const southItems = southService.listItems(southId);
@@ -313,11 +313,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<SouthConnectorItemDTO>} The south connector item
    */
   @Get('/{southId}/items/{itemId}')
-  async findItemById(
-    @Path() southId: string,
-    @Path() itemId: string,
-    @Request() request: CustomExpressRequest
-  ): Promise<SouthConnectorItemDTO> {
+  findItemById(@Path() southId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): SouthConnectorItemDTO {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const item = southService.findItemById(southId, itemId);
@@ -330,11 +326,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<SouthItemLastValue>} The item's last cached value
    */
   @Get('/{southId}/items/{itemId}/last-value')
-  async getItemLastValue(
-    @Path() southId: string,
-    @Path() itemId: string,
-    @Request() request: CustomExpressRequest
-  ): Promise<SouthItemLastValue> {
+  getItemLastValue(@Path() southId: string, @Path() itemId: string, @Request() request: CustomExpressRequest): SouthItemLastValue {
     const southService = request.services.southService as SouthService;
     return southService.getItemLastValue(southId, itemId);
   }
@@ -507,11 +499,7 @@ export class SouthConnectorController extends Controller {
    * @responseHeader Content-Disposition attachment; filename=items.csv
    */
   @Post('/{southId}/items/export')
-  async exportItems(
-    @Path() southId: string,
-    @Body() command: SouthCsvDelimiterRequest,
-    @Request() request: CustomExpressRequest
-  ): Promise<void> {
+  exportItems(@Path() southId: string, @Body() command: SouthCsvDelimiterRequest, @Request() request: CustomExpressRequest): void {
     const southService = request.services.southService as SouthService;
     const southConnector = southService.findById(southId);
     const itemSettingsSchema = southService.getManifest(southConnector.type).items.rootAttribute;
@@ -604,7 +592,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<Array<SouthItemGroupDTO>>} Array of group objects
    */
   @Get('/{southId}/groups')
-  async listGroups(@Path() southId: string, @Request() request: CustomExpressRequest): Promise<Array<SouthItemGroupDTO>> {
+  listGroups(@Path() southId: string, @Request() request: CustomExpressRequest): Array<SouthItemGroupDTO> {
     const southService = request.services.southService as SouthService;
     return southService.getGroups(southId).map(group => toSouthItemGroupDTO(group, id => request.services.userService.getUserInfo(id)));
   }
@@ -615,7 +603,7 @@ export class SouthConnectorController extends Controller {
    * @returns {Promise<SouthItemGroupDTO>} The group object
    */
   @Get('/{southId}/groups/{groupId}')
-  async getGroup(@Path() southId: string, @Path() groupId: string, @Request() request: CustomExpressRequest): Promise<SouthItemGroupDTO> {
+  getGroup(@Path() southId: string, @Path() groupId: string, @Request() request: CustomExpressRequest): SouthItemGroupDTO {
     const southService = request.services.southService as SouthService;
     return toSouthItemGroupDTO(southService.getGroup(southId, groupId), id => request.services.userService.getUserInfo(id));
   }
@@ -627,11 +615,11 @@ export class SouthConnectorController extends Controller {
    */
   @Post('/{southId}/groups')
   @SuccessResponse(201, 'Created')
-  async createGroup(
+  createGroup(
     @Path() southId: string,
     @Body() command: SouthItemGroupCommandDTO,
     @Request() request: CustomExpressRequest
-  ): Promise<SouthItemGroupDTO> {
+  ): SouthItemGroupDTO {
     const southService = request.services.southService as SouthService;
     return toSouthItemGroupDTO(southService.createGroup(southId, command, request.user.id), id =>
       request.services.userService.getUserInfo(id)

@@ -26,7 +26,7 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
    * implementation triple-handled the input (concat → toString → parse →
    * stringify); this version stringifies once.
    */
-  override async transformInMemory(
+  override transformInMemory(
     data: unknown,
     _source: CacheMetadataSource,
     _filename: string | null
@@ -40,9 +40,9 @@ export default class OIBusTimeValuesToJSONTransformer extends OIBusTransformer {
       numberOfElement: content.length,
       contentType: 'any'
     };
-    return {
+    return Promise.resolve({
       output: Buffer.from(JSON.stringify(content)),
       metadata
-    };
+    });
   }
 }

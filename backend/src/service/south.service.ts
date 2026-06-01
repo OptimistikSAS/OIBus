@@ -235,7 +235,7 @@ export default class SouthService {
     };
 
     /* istanbul ignore next */
-    const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
+    const mockedAddContent = (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
     const south = buildSouth(
       testToRun,
       mockedAddContent,
@@ -315,7 +315,7 @@ export default class SouthService {
     };
 
     /* istanbul ignore next */
-    const mockedAddContent = async (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
+    const mockedAddContent = (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
     const south = buildSouth(
       testConnectorToRun,
       mockedAddContent,

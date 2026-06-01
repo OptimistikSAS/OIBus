@@ -51,7 +51,7 @@ export default class IPFilterService {
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
-  async delete(ipFilterId: string): Promise<void> {
+  delete(ipFilterId: string): void {
     const ipFilter = this.findById(ipFilterId);
     this.ipFilterRepository.delete(ipFilter.id);
     this.whiteListEvent.emit(

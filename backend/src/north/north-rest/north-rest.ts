@@ -55,7 +55,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       const { proxy, acceptUnauthorized } = this.getProxyOptions();
       const fetchOptions: ReqOptions = {
         method: testMethod,
-        auth: await this.getAuthorizationOptions(),
+        auth: this.getAuthorizationOptions(),
         proxy,
         timeout: this.connector.settings.timeout * 1000,
         acceptUnauthorized,
@@ -129,7 +129,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
       query,
       body,
       headers: headers,
-      auth: await this.getAuthorizationOptions(),
+      auth: this.getAuthorizationOptions(),
       proxy,
       timeout: this.connector.settings.timeout * 1000,
       acceptUnauthorized
@@ -178,7 +178,7 @@ export default class NorthREST extends NorthConnector<NorthRESTSettings> {
     return { proxy: options, acceptUnauthorized: settings.acceptUnauthorized };
   }
 
-  private async getAuthorizationOptions(): Promise<ReqAuthOptions | undefined> {
+  private getAuthorizationOptions(): ReqAuthOptions | undefined {
     const settings = this.connector.settings;
 
     switch (settings.authentication.type) {

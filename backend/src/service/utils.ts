@@ -55,7 +55,7 @@ export const getCommandLineArguments = () => {
 /**
  * Method to return a delayed promise.
  */
-export const delay = async (timeout: number): Promise<void> =>
+export const delay = (timeout: number): Promise<void> =>
   new Promise(resolve => {
     setTimeout(resolve, timeout);
   });
@@ -144,7 +144,7 @@ export const getFilenameWithoutRandomId = (filename: string): string => {
 /**
  * Compress the specified file
  */
-export const compress = async (input: string, output: string): Promise<void> =>
+export const compress = (input: string, output: string): Promise<void> =>
   new Promise((resolve, reject) => {
     const readStream = createReadStream(input);
     const writeStream = createWriteStream(output);

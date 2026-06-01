@@ -27,7 +27,7 @@
     "generate:settings-interface": "tsc -p tsconfig.generator.json && node dist/interface-generator/src/settings-interface.generator.js && npm run generate:openapi",
     "migrate": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
     "test": "node --import tsx --experimental-config-file=package.json --test 'src/**/*.spec.ts'",
-    "lint": "eslint src/ shared/model/",
+    "lint": "eslint src/ shared/model/ --cache",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
     "internal:build:lib-win-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=x64 --target_platform=win && npm run --prefix node_modules/argon2 install -- --target_platform=win --target_arch=x64",

@@ -141,7 +141,11 @@ describe('FileCleanupService', () => {
         throw new Error(`Unexpected stat call: ${p}`);
       })
     );
-    mock.method(fs, 'readdir', mock.fn(async () => Object.keys(mtimes)));
+    mock.method(
+      fs,
+      'readdir',
+      mock.fn(async () => Object.keys(mtimes))
+    );
     const unlinkMock = mock.fn(async () => undefined);
     mock.method(fs, 'unlink', unlinkMock);
 
@@ -149,13 +153,7 @@ describe('FileCleanupService', () => {
 
     // numberOfFiles=2 → keep 2 newest (.351, .350), delete the 5 oldest.
     const deleted = unlinkMock.mock.calls.map(c => path.basename(String(c.arguments[0])));
-    assert.deepStrictEqual(deleted, [
-      'journal.345.log',
-      'journal.346.log',
-      'journal.347.log',
-      'journal.348.log',
-      'journal.349.log'
-    ]);
+    assert.deepStrictEqual(deleted, ['journal.345.log', 'journal.346.log', 'journal.347.log', 'journal.348.log', 'journal.349.log']);
   });
 
   it('should properly manage file access errors', async () => {

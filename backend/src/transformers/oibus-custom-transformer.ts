@@ -36,7 +36,7 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
    * paying the JSON.stringify → stream → collect → string round-trip the base
    * class would otherwise force.
    */
-  override async transformInMemory(
+  override transformInMemory(
     data: unknown,
     source: CacheMetadataSource,
     filename: string | null

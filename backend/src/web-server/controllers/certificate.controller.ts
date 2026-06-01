@@ -16,7 +16,7 @@ export class CertificateController extends Controller {
    * @returns {Array<CertificateDTO>} Array of certificate objects
    */
   @Get('/')
-  async list(@Request() request: CustomExpressRequest): Promise<Array<CertificateDTO>> {
+  list(@Request() request: CustomExpressRequest): Array<CertificateDTO> {
     const certificateService: CertificateService = request.services.certificateService;
     return certificateService.list().map(certificate => toCertificateDTO(certificate, id => request.services.userService.getUserInfo(id)));
   }
@@ -27,7 +27,7 @@ export class CertificateController extends Controller {
    * @returns {CertificateDTO} The certificate object
    */
   @Get('/{certificateId}')
-  async findById(@Path() certificateId: string, @Request() request: CustomExpressRequest): Promise<CertificateDTO> {
+  findById(@Path() certificateId: string, @Request() request: CustomExpressRequest): CertificateDTO {
     const certificateService: CertificateService = request.services.certificateService;
     return toCertificateDTO(certificateService.findById(certificateId), id => request.services.userService.getUserInfo(id));
   }
@@ -67,8 +67,8 @@ export class CertificateController extends Controller {
    */
   @Delete('/{certificateId}')
   @SuccessResponse(204, 'Certificate deleted successfully')
-  async delete(@Path() certificateId: string, @Request() request: CustomExpressRequest): Promise<void> {
+  delete(@Path() certificateId: string, @Request() request: CustomExpressRequest): void {
     const certificateService: CertificateService = request.services.certificateService;
-    await certificateService.delete(certificateId);
+    certificateService.delete(certificateId);
   }
 }

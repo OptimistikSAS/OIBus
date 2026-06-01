@@ -49,7 +49,8 @@ describe('authMiddleware', () => {
   });
 
   type LooseMiddleware = (req: unknown, res: unknown, next: unknown) => Promise<void>;
-  const buildMiddleware = () => authMiddleware(userService as unknown as UserService, encryptionService as unknown as EncryptionService) as LooseMiddleware;
+  const buildMiddleware = () =>
+    authMiddleware(userService as unknown as UserService, encryptionService as unknown as EncryptionService) as LooseMiddleware;
 
   describe('Basic Auth', () => {
     it('should call next() and set req.user on valid credentials', async () => {

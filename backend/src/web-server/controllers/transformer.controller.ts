@@ -30,7 +30,7 @@ export class TransformerController extends Controller {
    * @returns {Promise<Array<{ id: string; inputType: string; outputType: string }>>} Array of transformer type objects
    */
   @Get('/types')
-  async listManifest(@Request() request: CustomExpressRequest): Promise<Array<{ id: string; inputType: string; outputType: string }>> {
+  listManifest(@Request() request: CustomExpressRequest): Array<{ id: string; inputType: string; outputType: string }> {
     const transformerService = request.services.transformerService as TransformerService;
     return transformerService.listManifest().map(manifest => ({
       id: manifest.id,
@@ -45,7 +45,7 @@ export class TransformerController extends Controller {
    * @returns {Promise<TransformerManifest>} The transformer manifest
    */
   @Get('/manifests/{type}')
-  async getManifest(@Path() type: string, @Request() request: CustomExpressRequest): Promise<TransformerManifest> {
+  getManifest(@Path() type: string, @Request() request: CustomExpressRequest): TransformerManifest {
     const transformerService = request.services.transformerService as TransformerService;
     return transformerService.getManifest(type);
   }
@@ -56,13 +56,13 @@ export class TransformerController extends Controller {
    * @returns {Promise<Page<TransformerDTO>>} Paginated list of transformers
    */
   @Get('/search')
-  async search(
+  search(
     @Query() type: 'standard' | 'custom' | undefined,
     @Query() inputType: OIBusDataType | undefined,
     @Query() outputType: OIBusDataType | undefined,
     @Query() page = 0,
     @Request() request: CustomExpressRequest
-  ): Promise<Page<TransformerDTO>> {
+  ): Page<TransformerDTO> {
     const searchParams: TransformerSearchParam = {
       type,
       inputType,
@@ -88,7 +88,7 @@ export class TransformerController extends Controller {
    * @returns {Promise<Array<TransformerDTO>>} Array of all transformer objects
    */
   @Get('/list')
-  async list(@Request() request: CustomExpressRequest): Promise<Array<TransformerDTO>> {
+  list(@Request() request: CustomExpressRequest): Array<TransformerDTO> {
     const transformerService = request.services.transformerService;
     const result = transformerService.findAll();
     return result.map(element => toTransformerDTO(element, id => request.services.userService.getUserInfo(id)));
@@ -100,7 +100,7 @@ export class TransformerController extends Controller {
    * @returns {Promise<TransformerDTO>} The transformer object
    */
   @Get('/{transformerId}')
-  async findById(@Path() transformerId: string, @Request() request: CustomExpressRequest): Promise<TransformerDTO> {
+  findById(@Path() transformerId: string, @Request() request: CustomExpressRequest): TransformerDTO {
     const transformerService = request.services.transformerService;
     return toTransformerDTO(transformerService.findById(transformerId), id => request.services.userService.getUserInfo(id));
   }
@@ -172,7 +172,7 @@ export class TransformerController extends Controller {
    * @returns {Promise<InputTemplate>} A template object with sample data for the requested input type
    */
   @Get('/template/{inputType}')
-  async getInputTemplate(@Path() inputType: InputType, @Request() request: CustomExpressRequest): Promise<InputTemplate> {
+  getInputTemplate(@Path() inputType: InputType, @Request() request: CustomExpressRequest): InputTemplate {
     const transformerService = request.services.transformerService;
     return transformerService.generateTemplate(inputType);
   }

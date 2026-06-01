@@ -208,10 +208,10 @@ describe('Scan Mode Service', () => {
     assert.ok(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length > 0);
   });
 
-  it('delete() should not delete if the scan mode is not found', async () => {
+  it('delete() should not delete if the scan mode is not found', () => {
     scanModeRepository.findById.mock.mockImplementationOnce(() => null);
 
-    await assert.rejects(() => service.delete(testData.scanMode.list[0].id), {
+    assert.throws(() => service.delete(testData.scanMode.list[0].id), {
       message: `Scan mode "${testData.scanMode.list[0].id}" not found`
     });
 

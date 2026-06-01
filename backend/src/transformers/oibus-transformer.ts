@@ -27,7 +27,7 @@ export default abstract class OIBusTransformer {
    * Subclasses on hot paths (e.g. time-values-to-oianalytics) should override
    * this to operate directly on the in-memory value.
    */
-  async transformInMemory(
+  transformInMemory(
     data: unknown,
     source: CacheMetadataSource,
     filename: string | null
