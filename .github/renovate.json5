@@ -1,34 +1,126 @@
 {
   "extends": [
     "config:base",
-    "security:minimumReleaseAgeNpm",
     ":semanticCommitTypeAll(chore)"
   ],
   "baseBranches": ["main"],
   "labels": ["dependencies"],
-  "lockFileMaintenance": { "enabled": true },
+
+  // Wait 5 days after a release before opening a PR.
+  // This lets the ecosystem catch regressions before we pull in a version.
+  "minimumReleaseAge": "5 days",
+
+  // Rebuild lock files weekly to catch indirect dependency drift,
+  // even when no pinned version changed.
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 3am on Monday"]
+  },
+
   "packageRules": [
-    // allow patch updates for TypeScript
-    // but we'll handle minor and major updates ourselves
-    // as it is related to Angular
-    {
-      "packageNames": ["typescript"],
-      "major": {
-        "enabled": false
-      },
-      "minor": {
-        "enabled": false
-      }
-    },
+    // ── Engine constraints ────────────────────────────────────────────────
+    // Node and npm versions are pinned in package.json `engines`; let Renovate
+    // open dedicated PRs for those so they are reviewed intentionally.
     {
       "matchPackageNames": ["node", "npm"],
       "enabled": false
     },
+
+    // ── Angular ecosystem ────────────────────────────────────────────────
+    // All Angular packages (core, cli, build, CDK, ESLint plugin, zone.js …)
+    // must be updated together in a single PR because they are tightly versioned.
+    {
+      "matchPackageNames": [
+        "@angular{/,}**",
+        "angular-eslint",
+        "zone.js"
+      ],
+      "groupName": "Angular",
+      "groupSlug": "angular",
+      "schedule": ["before 3am on Monday"]
+    },
+
+    // ── TypeScript ────────────────────────────────────────────────────────
+    // Angular and the backend share TypeScript; major/minor bumps carry
+    // breaking language changes and must be evaluated manually.
+    // Patch updates (bug-fixes) are still automated.
+    {
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
+    },
+
+    // ── OPC-UA ecosystem ──────────────────────────────────────────────────
+    // node-opcua packages share a release train; update them together.
+    {
+      "matchPackageNames": ["node-opcua{-,}**", "node-opcua"],
+      "groupName": "node-opcua",
+      "groupSlug": "node-opcua",
+      "schedule": ["before 3am on Monday"]
+    },
+
+    // ── AWS / Azure SDKs ──────────────────────────────────────────────────
+    // @aws-sdk/* and @smithy/* form a monorepo; group them together.
+    {
+      "matchPackageNames": ["@aws-sdk/**", "@smithy/**"],
+      "groupName": "AWS SDK",
+      "groupSlug": "aws-sdk",
+      "schedule": ["before 3am on Monday"]
+    },
+    {
+      "matchPackageNames": ["@azure/**"],
+      "groupName": "Azure SDK",
+      "groupSlug": "azure-sdk",
+      "schedule": ["before 3am on Monday"]
+    },
+
+    // ── CodemMirror ───────────────────────────────────────────────────────
+    {
+      "matchPackageNames": ["@codemirror/**", "codemirror"],
+      "groupName": "CodeMirror",
+      "groupSlug": "codemirror",
+      "schedule": ["before 3am on Monday"]
+    },
+
+    // ── ESLint ecosystem ──────────────────────────────────────────────────
+    // eslint + its plugins/configs should move together to avoid peer-dep
+    // conflicts between the core and plugins.
+    {
+      "matchPackageNames": [
+        "eslint",
+        "eslint-{config,plugin}-**",
+        "typescript-eslint"
+      ],
+      "groupName": "ESLint",
+      "groupSlug": "eslint",
+      "schedule": ["before 3am on Monday"]
+    },
+
+    // ── Documentation (Docusaurus) ────────────────────────────────────────
+    {
+      "matchPackageNames": ["@docusaurus/**", "redocusaurus", "prism-react-renderer"],
+      "groupName": "Docusaurus",
+      "groupSlug": "docusaurus",
+      "schedule": ["before 3am on Monday"],
+      "matchFileNames": ["documentation/package.json"]
+    },
+
+    // ── All other minor + patch updates ──────────────────────────────────
+    // Batch everything else into one weekly PR to keep noise down.
     {
       "matchUpdateTypes": ["minor", "patch"],
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "schedule": ["before 3am on Monday"]
+    },
+
+    // ── Major updates ──────────────────────────────────────────────────────
+    // Open individual PRs for majors so each breaking change gets its own
+    // review. No automatic schedule — they arrive whenever published.
+    {
+      "matchUpdateTypes": ["major"],
+      "groupName": null,
+      "schedule": ["at any time"]
     }
   ]
 }
