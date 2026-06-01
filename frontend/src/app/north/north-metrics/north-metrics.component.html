@@ -13,8 +13,10 @@
             <a
               class="btn btn-link display-north px-1 py-0"
               id="display-link"
+              tabindex="0"
               [ngbTooltip]="'north.tooltips.view-metrics' | translate"
               (click)="navigateToDisplay()"
+              (keyup.enter)="navigateToDisplay()"
             >
               <span class="fa fa-search"></span>
             </a>

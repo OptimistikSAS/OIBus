@@ -85,7 +85,7 @@
         @if (chunkedValueProgress() && chunkedValueProgress() !== 1) {
           <oib-progressbar [value]="chunkedValueProgress()" [animated]="false" />
         }
-        <div #editor class="editor-container" (keydown)="$event.stopPropagation()" (keyup)="$event.stopPropagation()"></div>
+        <div #editor class="editor-container" tabindex="0" (keydown)="$event.stopPropagation()" (keyup)="$event.stopPropagation()"></div>
       }
     }
   }

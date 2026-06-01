@@ -30,7 +30,14 @@
           ></a>
           <div ngbDropdownMenu aria-labelledby="accountDropDown">
             <a class="dropdown-item" routerLink="/user-settings" translate="nav.account.settings"></a>
-            <a class="dropdown-item" role="button" (click)="logout(); $event.preventDefault()" translate="nav.account.logout"></a>
+            <a
+              class="dropdown-item"
+              role="button"
+              tabindex="0"
+              (click)="logout(); $event.preventDefault()"
+              (keyup.enter)="logout()"
+              translate="nav.account.logout"
+            ></a>
           </div>
         </li>
         <li class="nav-item">
@@ -73,7 +80,14 @@
           ></a>
           <div ngbDropdownMenu aria-labelledby="accountMobileDropDown" class="dropdown-menu-right">
             <a class="dropdown-item" routerLink="/user-settings" translate="nav.account.settings"></a>
-            <a class="dropdown-item" role="button" (click)="logout(); $event.preventDefault()" translate="nav.account.logout"></a>
+            <a
+              class="dropdown-item"
+              role="button"
+              tabindex="0"
+              (click)="logout(); $event.preventDefault()"
+              (keyup.enter)="logout()"
+              translate="nav.account.logout"
+            ></a>
           </div>
         </li>
         <li class="nav-item">
