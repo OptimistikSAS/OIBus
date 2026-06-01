@@ -83,8 +83,12 @@
     },
 
     // ── ESLint ecosystem ──────────────────────────────────────────────────
-    // eslint + its plugins/configs should move together to avoid peer-dep
-    // conflicts between the core and plugins.
+    // eslint + ALL its plugins/configs must move together — peer dependency
+    // version ranges are strict and a solo eslint major bump (e.g. v9 → v10)
+    // will break plugins that haven't declared support for the new major yet.
+    // Grouping ensures Renovate only creates the PR when every package in the
+    // group has a compatible release; if e.g. eslint-plugin-react hasn't
+    // shipped an eslint-v10-compatible version the whole group waits.
     {
       "matchPackageNames": [
         "eslint",
@@ -93,6 +97,9 @@
       ],
       "groupName": "ESLint",
       "groupSlug": "eslint",
+      // Apply to ALL update types, including major — a major eslint bump must
+      // be coordinated with its plugins, not landed on its own.
+      "matchUpdateTypes": ["major", "minor", "patch"],
       "schedule": ["before 3am on Monday"]
     },
 
@@ -117,9 +124,11 @@
     // ── Major updates ──────────────────────────────────────────────────────
     // Open individual PRs for majors so each breaking change gets its own
     // review. No automatic schedule — they arrive whenever published.
+    // Note: do NOT set groupName: null here. Packages that already belong to
+    // a named group (ESLint, Angular, …) keep their group assignment even for
+    // major bumps. Only ungrouped packages get individual PRs from this rule.
     {
       "matchUpdateTypes": ["major"],
-      "groupName": null,
       "schedule": ["at any time"]
     }
   ]
