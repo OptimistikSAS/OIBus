@@ -430,6 +430,12 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
       oia: {
         level: engineSettings.logParameters.oia.level,
         interval: engineSettings.logParameters.oia.interval
+      },
+      syslog: {
+        level: engineSettings.logParameters.syslog.level,
+        host: engineSettings.logParameters.syslog.host,
+        port: engineSettings.logParameters.syslog.port,
+        protocol: engineSettings.logParameters.syslog.protocol
       }
     }
   };
