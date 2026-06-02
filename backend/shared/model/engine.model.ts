@@ -1600,6 +1600,15 @@ export interface OIBusFileContent extends BaseOIBusContent {
   filePath: string;
 
   /**
+   * The logical filename to store in cache metadata (used as the output filename by north connectors).
+   * When omitted, north connectors fall back to path.basename(filePath).
+   *
+   * South connectors that preserve directory structure (e.g. folder-scanner with recursive=true)
+   * set this to the path relative to the source folder, e.g. "subdir/file.json".
+   */
+  filename?: string;
+
+  /**
    * The content itself, if available.
    */
   content?: string;

@@ -367,7 +367,8 @@ describe('SouthFolderScanner', () => {
       assert.strictEqual(addContentMock.mock.calls.length, 1);
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
         type: 'any',
-        filePath: path.resolve('inputFolder', 'file1.csv')
+        filePath: path.resolve('inputFolder', 'file1.csv'),
+        filename: 'file1.csv'
       });
       assert.strictEqual(addContentMock.mock.calls[0].arguments[1], mockQueryTime);
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[2], [configuration.items[0]]);
@@ -392,7 +393,11 @@ describe('SouthFolderScanner', () => {
         expectedGzipPath
       ]);
       assert.strictEqual(addContentMock.mock.calls.length, 1);
-      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], { type: 'any', filePath: expectedGzipPath });
+      assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+        type: 'any',
+        filePath: expectedGzipPath,
+        filename: path.join('sub', 'file1.csv') + '.gz'
+      });
       const unlinkMock = fs.unlink as unknown as { mock: { calls: Array<{ arguments: Array<unknown> }> } };
       assert.ok(unlinkMock.mock.calls.some(c => c.arguments[0] === expectedGzipPath));
     });
@@ -408,7 +413,8 @@ describe('SouthFolderScanner', () => {
       assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error compressing file')));
       assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
         type: 'any',
-        filePath: path.resolve('inputFolder', 'file1.csv')
+        filePath: path.resolve('inputFolder', 'file1.csv'),
+        filename: 'file1.csv'
       });
     });
 
