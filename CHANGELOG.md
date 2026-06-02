@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.2](https://github.com/OptimistikSAS/OIBus/compare/v3.8.1...v3.8.2) (2026-06-02)
+
+
+### Bug Fixes
+
+* **south-cache:** fix south cache migration with null constraint ([41e4868](https://github.com/OptimistikSAS/OIBus/commit/41e4868eb5e9256ecc0939f2e1a8de75d4cb82d2))
+
 ## [3.8.1](https://github.com/OptimistikSAS/OIBus/compare/v3.8.0...v3.8.1) (2026-06-02)
 
 
