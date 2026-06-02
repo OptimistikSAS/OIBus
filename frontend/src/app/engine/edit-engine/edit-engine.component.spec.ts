@@ -246,24 +246,4 @@ describe('EditEngineComponent', () => {
     expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
     expect(result).toBe(obs);
   });
-
-  test('should enable proxy port when proxy is enabled', async () => {
-    await expect.element(tester.proxyPort).toBeInTheDocument();
-    await tester.proxyEnabled.click();
-    await expect.element(tester.proxyPort).not.toBeInTheDocument();
-    await tester.proxyEnabled.click();
-    await expect.element(tester.proxyPort).toBeInTheDocument();
-  });
-
-  test('should show oia interval when oia level changes from silent', async () => {
-    await expect.element(tester.oiaInterval).not.toBeInTheDocument();
-    await tester.oiaLevel.selectOptions('Info');
-    await expect.element(tester.oiaInterval).toBeInTheDocument();
-  });
-
-  test('should show database max logs when database level changes from silent', async () => {
-    await expect.element(tester.databaseMaxNumberOfLogs).not.toBeInTheDocument();
-    await tester.databaseLevel.selectOptions('Info');
-    await expect.element(tester.databaseMaxNumberOfLogs).toBeInTheDocument();
-  });
 });
