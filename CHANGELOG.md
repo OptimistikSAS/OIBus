@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.8.1](https://github.com/OptimistikSAS/OIBus/compare/v3.8.0...v3.8.1) (2026-06-02)
+
+
+### Bug Fixes
+
+* **folder-scanner:** remove input folder when retrieving files from sub folders ([193bdb7](https://github.com/OptimistikSAS/OIBus/commit/193bdb71069325fc45f29aa315bdcfc05d227a88))
+* **folder-scanner:** send filename beside file path ([79f5169](https://github.com/OptimistikSAS/OIBus/commit/79f5169941d5569ffe53be829cd991619cf09c47))
+* **ftp:** remove input folder when retrieving files from sub folders in fp / sftp ([9ee728a](https://github.com/OptimistikSAS/OIBus/commit/9ee728a4b664c49910c1ae52e381e0377350917b))
+* **opcua:** fix certificate manager workaround on opcua connectors ([4ec04aa](https://github.com/OptimistikSAS/OIBus/commit/4ec04aaeea7dbf3f70cabd9fe3e124ba92c62ac6))
+* **opcua:** use pino logger in node opcua too ([b4be699](https://github.com/OptimistikSAS/OIBus/commit/b4be699bcb82c1e8559e8a2f001d7af82f10aac4))
+
 ## [3.8.0](https://github.com/OptimistikSAS/OIBus/compare/v3.7.14...v3.8.0) (2026-05-29)
 
 
