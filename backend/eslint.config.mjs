@@ -90,10 +90,12 @@ export default [
   {
     // Test files and shared mocks use async functions extensively to satisfy
     // Promise-returning interfaces, without ever needing an await expression.
+    // Generator mocks that throw before yielding are also legitimate in tests.
     // Flagging these as errors would produce hundreds of false positives.
     files: ['**/*.spec.ts', 'src/tests/**/*.ts'],
     rules: {
-      'require-await': 'off'
+      'require-await': 'off',
+      'require-yield': 'off'
     }
   },
   {
