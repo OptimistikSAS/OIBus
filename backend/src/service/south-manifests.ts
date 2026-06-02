@@ -16,6 +16,7 @@ import oledbManifest from '../south/south-oledb/manifest';
 import piManifest from '../south/south-pi/manifest';
 import sftpManifest from '../south/south-sftp/manifest';
 import ftpManifest from '../south/south-ftp/manifest';
+import influxdbManifest from '../south/south-influxdb/manifest';
 import restManifest from '../south/south-rest/manifest';
 
 export const southManifestList: Array<SouthConnectorManifest> = [
@@ -36,5 +37,6 @@ export const southManifestList: Array<SouthConnectorManifest> = [
   piManifest,
   restManifest,
   sftpManifest,
-  ftpManifest
+  ftpManifest,
+  influxdbManifest
 ];
