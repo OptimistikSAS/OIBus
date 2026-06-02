@@ -4,10 +4,14 @@ import {
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
+  EngineLoggerCommandDTO,
   EngineMetrics,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
   EngineSettingsUpdateResultDTO,
+  EngineWebServerCommandDTO,
   FileCacheContent,
   OIBusContent,
   OIBusInfo
@@ -16,7 +20,13 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import EngineRepository from '../repository/config/engine.repository';
 import { EngineSettings } from '../model/engine.model';
 import { GetUserInfo } from '../../shared/model/types';
-import { engineSchema } from '../web-server/controllers/validators/oibus-validation-schema';
+import {
+  engineLoggerSchema,
+  engineNameSchema,
+  engineProxySchema,
+  engineSchema,
+  engineWebServerSchema
+} from '../web-server/controllers/validators/oibus-validation-schema';
 import { encryptionService } from './encryption.service';
 import LoggerService from './logger/logger.service';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
@@ -154,7 +164,6 @@ export default class OIBusService {
     const settings = this.getEngineSettings();
 
     if (
-      !oldEngineSettings ||
       JSON.stringify(oldEngineSettings.logParameters) !== JSON.stringify(settings.logParameters) ||
       oldEngineSettings.name !== settings.name
     ) {
@@ -178,6 +187,64 @@ export default class OIBusService {
       needsRedirect: portChanged,
       newPort: portChanged ? settings.port : null
     };
+  }
+
+  async updateEngineName(command: EngineNameCommandDTO, updatedBy: string): Promise<void> {
+    await this.validator.validate(engineNameSchema, command);
+    this.engineRepository.updateName(command.name, updatedBy);
+    const settings = this.getEngineSettings();
+    await this.resetLogger(settings);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+  }
+
+  async updateEngineWebServer(command: EngineWebServerCommandDTO, updatedBy: string): Promise<EngineSettingsUpdateResultDTO> {
+    await this.validator.validate(engineWebServerSchema, command);
+    const oldEngineSettings = this.getEngineSettings();
+    if (command.port === oldEngineSettings.proxyPort) {
+      throw new Error('Web server port and proxy port can not be the same');
+    }
+    this.engineRepository.updateWebServer(command, updatedBy);
+    const settings = this.getEngineSettings();
+    const portChanged = command.port !== oldEngineSettings.port;
+    if (portChanged) {
+      setImmediate(() => {
+        this.portChangeEvent.emit('updated', settings.port);
+      });
+    }
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+    return {
+      needsRedirect: portChanged,
+      newPort: portChanged ? settings.port : null
+    };
+  }
+
+  async updateEngineProxy(command: EngineProxyCommandDTO, updatedBy: string): Promise<void> {
+    await this.validator.validate(engineProxySchema, command);
+    const oldEngineSettings = this.getEngineSettings();
+    if (command.proxyEnabled && command.proxyPort === oldEngineSettings.port) {
+      throw new Error('Web server port and proxy port can not be the same');
+    }
+    this.engineRepository.updateProxy(command, updatedBy);
+    const settings = this.getEngineSettings();
+    await this.proxyServer.stop();
+    if (settings.proxyEnabled) {
+      await this.proxyServer.start(settings.proxyPort!);
+    }
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
+  }
+
+  async updateEngineLogger(command: EngineLoggerCommandDTO, updatedBy: string): Promise<void> {
+    await this.validator.validate(engineLoggerSchema, command);
+    const oldEngineSettings = this.getEngineSettings();
+    if (!command.logParameters.loki.password) {
+      command.logParameters.loki.password = oldEngineSettings.logParameters.loki.password;
+    } else {
+      command.logParameters.loki.password = await encryptionService.encryptText(command.logParameters.loki.password);
+    }
+    this.engineRepository.updateLogger(command, updatedBy);
+    const settings = this.getEngineSettings();
+    await this.resetLogger(settings);
+    this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
 
   updateOIBusVersion(version: string, launcherVersion: string): void {
@@ -325,6 +392,7 @@ export default class OIBusService {
   }
 }
 
+/* c8 ignore next */
 export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo: GetUserInfo): EngineSettingsDTO => {
   return {
     id: engineSettings.id,

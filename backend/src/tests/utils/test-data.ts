@@ -11,8 +11,12 @@ import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { IPFilter } from '../../model/ip-filter.model';
 import { EngineSettings } from '../../model/engine.model';
 import {
+  EngineLoggerCommandDTO,
   EngineMetrics,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
+  EngineWebServerCommandDTO,
   HistoryQueryMetrics,
   NorthConnectorMetrics,
   OIBusContent,
@@ -1417,6 +1421,19 @@ const engineSettingsCommand: EngineSettingsCommandDTO = {
     }
   }
 };
+const engineNameCommand: EngineNameCommandDTO = {
+  name: 'updated OIBus'
+};
+const engineWebServerCommand: EngineWebServerCommandDTO = {
+  port: 3333
+};
+const engineProxyCommand: EngineProxyCommandDTO = {
+  proxyEnabled: true,
+  proxyPort: 9000
+};
+const engineLoggerCommand: EngineLoggerCommandDTO = {
+  logParameters: engineSettingsCommand.logParameters
+};
 const engineMetrics: EngineMetrics = {
   metricsStart: '2020-01-01T00:00:00.000',
   processCpuUsageInstant: 0,
@@ -2230,6 +2247,10 @@ export default Object.freeze({
       securityKey: 'security-key'
     },
     command: engineSettingsCommand,
+    nameCommand: engineNameCommand,
+    webServerCommand: engineWebServerCommand,
+    proxyCommand: engineProxyCommand,
+    loggerCommand: engineLoggerCommand,
     metrics: engineMetrics,
     oIBusInfo
   },

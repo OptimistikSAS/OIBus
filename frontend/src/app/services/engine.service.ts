@@ -2,9 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
 import { Service, inject } from '@angular/core';
 import {
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
   EngineSettingsUpdateResultDTO,
+  EngineWebServerCommandDTO,
   OIBusInfo,
   RegistrationSettingsCommandDTO,
   RegistrationSettingsDTO
@@ -31,6 +35,22 @@ export class EngineService {
    */
   updateEngineSettings(command: EngineSettingsCommandDTO): Observable<EngineSettingsUpdateResultDTO> {
     return this.http.put<EngineSettingsUpdateResultDTO>(`/api/engine`, command);
+  }
+
+  updateEngineName(command: EngineNameCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/engine/name`, command);
+  }
+
+  updateEngineWebServer(command: EngineWebServerCommandDTO): Observable<EngineSettingsUpdateResultDTO> {
+    return this.http.put<EngineSettingsUpdateResultDTO>(`/api/engine/web-server`, command);
+  }
+
+  updateEngineProxy(command: EngineProxyCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/engine/proxy`, command);
+  }
+
+  updateEngineLogger(command: EngineLoggerCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/engine/logger`, command);
   }
 
   /**

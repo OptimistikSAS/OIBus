@@ -26,36 +26,55 @@ const certificateSchema: Joi.ObjectSchema = Joi.object({
   })
 });
 
+const logParametersSchema = Joi.object({
+  console: Joi.object({
+    level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
+  }),
+  file: Joi.object({
+    level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
+    maxFileSize: Joi.number().integer().required().min(1),
+    numberOfFiles: Joi.number().integer().required().min(1)
+  }),
+  database: Joi.object({
+    level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
+    maxNumberOfLogs: Joi.number().integer().required().min(100_000)
+  }),
+  loki: Joi.object({
+    level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
+    interval: Joi.number().integer().required().min(10),
+    address: Joi.string().allow('', null),
+    username: Joi.string().allow('', null),
+    password: Joi.string().allow('', null)
+  }),
+  oia: Joi.object({
+    level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
+    interval: Joi.number().integer().required().min(10)
+  })
+});
+
 const engineSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   port: Joi.number().required().port(),
   proxyEnabled: Joi.boolean().required(),
   proxyPort: Joi.number().port().optional().allow(null),
-  logParameters: Joi.object({
-    console: Joi.object({
-      level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace')
-    }),
-    file: Joi.object({
-      level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
-      maxFileSize: Joi.number().integer().required().min(1),
-      numberOfFiles: Joi.number().integer().required().min(1)
-    }),
-    database: Joi.object({
-      level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
-      maxNumberOfLogs: Joi.number().integer().required().min(100_000)
-    }),
-    loki: Joi.object({
-      level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
-      interval: Joi.number().integer().required().min(10),
-      address: Joi.string().allow('', null),
-      username: Joi.string().allow('', null),
-      password: Joi.string().allow('', null)
-    }),
-    oia: Joi.object({
-      level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
-      interval: Joi.number().integer().required().min(10)
-    })
-  })
+  logParameters: logParametersSchema
+});
+
+const engineNameSchema: Joi.ObjectSchema = Joi.object({
+  name: Joi.string().required()
+});
+
+const engineWebServerSchema: Joi.ObjectSchema = Joi.object({
+  port: Joi.number().required().port()
+});
+
+const engineProxySchema: Joi.ObjectSchema = Joi.object({
+  proxyEnabled: Joi.boolean().required(),
+  proxyPort: Joi.number().port().optional().allow(null)
+});
+
+const engineLoggerSchema: Joi.ObjectSchema = Joi.object({
+  logParameters: logParametersSchema
 });
 
 const registrationSchema: Joi.ObjectSchema = Joi.object({
@@ -149,4 +168,16 @@ function cronValidator(value: string, helper: Joi.CustomHelpers) {
   return cronValidation.isValid ? true : helper.message({ custom: cronValidation.errorMessage });
 }
 
-export { scanModeSchema, certificateSchema, engineSchema, registrationSchema, ipFilterSchema, userSchema, transformerSchema };
+export {
+  scanModeSchema,
+  certificateSchema,
+  engineSchema,
+  engineNameSchema,
+  engineWebServerSchema,
+  engineProxySchema,
+  engineLoggerSchema,
+  registrationSchema,
+  ipFilterSchema,
+  userSchema,
+  transformerSchema
+};
