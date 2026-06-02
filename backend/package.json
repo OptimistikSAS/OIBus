@@ -48,6 +48,8 @@
   ],
   "dependencies": {
     "@aws-sdk/client-s3": "3.1065.0",
+    "@influxdata/influxdb-client": "1.35.0",
+    "@influxdata/influxdb3-client": "2.2.0",
     "@azure/storage-blob": "12.32.0",
     "@azure/storage-file-datalake": "12.30.0",
     "@smithy/node-http-handler": "4.7.7",
@@ -66,6 +68,7 @@
     "helmet": "8.2.0",
     "http-proxy": "1.18.1",
     "https-proxy-agent": "7.0.6",
+    "influx": "5.12.0",
     "isolated-vm": "7.0.0",
     "joi": "18.2.1",
     "jsmodbus": "4.0.10",

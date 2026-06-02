@@ -370,6 +370,8 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
       return `SouthFolderScanner${prefix}Settings`;
     case 'ftp':
       return `SouthFTP${prefix}Settings`;
+    case 'influxdb':
+      return `SouthInfluxDB${prefix}Settings`;
     case 'modbus':
       return `SouthModbus${prefix}Settings`;
     case 'mqtt':

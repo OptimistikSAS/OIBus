@@ -7,6 +7,8 @@ import {
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
   SouthFTPSettings,
+  SouthInfluxDBItemSettings,
+  SouthInfluxDBSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
   SouthMQTTItemSettings,
@@ -67,6 +69,7 @@ export const OIBUS_SOUTH_TYPES = [
   'ads', // Beckhoff ADS protocol
   'folder-scanner', // File system folder scanning
   'ftp', // FTP file transfer protocol
+  'influxdb', // InfluxDB time series database
   'modbus', // Modbus industrial protocol
   'mqtt', // MQTT messaging protocol
   'mssql', // Microsoft SQL Server database
@@ -430,6 +433,10 @@ export interface SouthConnectorFolderScannerDTO extends SouthConnectorTypedDTO<
 export interface SouthConnectorFTPDTO extends SouthConnectorTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings> {
   items: Array<SouthConnectorFTPItemDTO>;
 }
+/** South connector configuration for InfluxDB time series database. */
+export interface SouthConnectorInfluxDBDTO extends SouthConnectorTypedDTO<'influxdb', SouthInfluxDBSettings, SouthInfluxDBItemSettings> {
+  items: Array<SouthConnectorInfluxDBItemDTO>;
+}
 /** South connector configuration for Modbus. */
 export interface SouthConnectorModbusDTO extends SouthConnectorTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings> {
   items: Array<SouthConnectorModbusItemDTO>;
@@ -507,6 +514,7 @@ export type SouthConnectorDTO =
   | SouthConnectorADSDTO
   | SouthConnectorFolderScannerDTO
   | SouthConnectorFTPDTO
+  | SouthConnectorInfluxDBDTO
   | SouthConnectorModbusDTO
   | SouthConnectorMQTTDTO
   | SouthConnectorMSSQLDTO
@@ -681,6 +689,14 @@ export interface SouthConnectorFolderScannerCommandDTO extends SouthConnectorCom
 export interface SouthConnectorFTPCommandDTO extends SouthConnectorCommandTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings> {
   items: Array<SouthConnectorFTPItemCommandDTO>;
 }
+/** South connector command for InfluxDB time series database. */
+export interface SouthConnectorInfluxDBCommandDTO extends SouthConnectorCommandTypedDTO<
+  'influxdb',
+  SouthInfluxDBSettings,
+  SouthInfluxDBItemSettings
+> {
+  items: Array<SouthConnectorInfluxDBItemCommandDTO>;
+}
 /** South connector command for Modbus. */
 export interface SouthConnectorModbusCommandDTO extends SouthConnectorCommandTypedDTO<
   'modbus',
@@ -774,6 +790,7 @@ export type SouthConnectorCommandDTO =
   | SouthConnectorADSCommandDTO
   | SouthConnectorFolderScannerCommandDTO
   | SouthConnectorFTPCommandDTO
+  | SouthConnectorInfluxDBCommandDTO
   | SouthConnectorModbusCommandDTO
   | SouthConnectorMQTTCommandDTO
   | SouthConnectorMSSQLCommandDTO
@@ -797,6 +814,8 @@ export interface SouthConnectorADSItemDTO extends SouthConnectorItemTypedDTO<Sou
 export interface SouthConnectorFolderScannerItemDTO extends SouthConnectorItemTypedDTO<SouthFolderScannerItemSettings> {}
 /** South connector item DTO for FTP file transfer. */
 export interface SouthConnectorFTPItemDTO extends SouthConnectorItemTypedDTO<SouthFTPItemSettings> {}
+/** South connector item DTO for InfluxDB time series database. */
+export interface SouthConnectorInfluxDBItemDTO extends SouthConnectorItemTypedDTO<SouthInfluxDBItemSettings> {}
 /** South connector item DTO for Modbus. */
 export interface SouthConnectorModbusItemDTO extends SouthConnectorItemTypedDTO<SouthModbusItemSettings> {}
 /** South connector item DTO for MQTT. */
@@ -836,6 +855,7 @@ export type SouthConnectorItemDTO =
   | SouthConnectorADSItemDTO
   | SouthConnectorFolderScannerItemDTO
   | SouthConnectorFTPItemDTO
+  | SouthConnectorInfluxDBItemDTO
   | SouthConnectorModbusItemDTO
   | SouthConnectorMQTTItemDTO
   | SouthConnectorMSSQLItemDTO
@@ -859,6 +879,8 @@ export interface SouthConnectorADSItemCommandDTO extends SouthConnectorItemComma
 export interface SouthConnectorFolderScannerItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthFolderScannerItemSettings> {}
 /** South connector item command for FTP file transfer. */
 export interface SouthConnectorFTPItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthFTPItemSettings> {}
+/** South connector item command for InfluxDB time series database. */
+export interface SouthConnectorInfluxDBItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthInfluxDBItemSettings> {}
 /** South connector item command for Modbus. */
 export interface SouthConnectorModbusItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthModbusItemSettings> {}
 /** South connector item command for MQTT. */
@@ -898,6 +920,7 @@ export type SouthConnectorItemCommandDTO =
   | SouthConnectorADSItemCommandDTO
   | SouthConnectorFolderScannerItemCommandDTO
   | SouthConnectorFTPItemCommandDTO
+  | SouthConnectorInfluxDBItemCommandDTO
   | SouthConnectorModbusItemCommandDTO
   | SouthConnectorMQTTItemCommandDTO
   | SouthConnectorMSSQLItemCommandDTO
@@ -1104,6 +1127,7 @@ export interface SouthConnectorItemSearchParam {
 export const SOUTH_SINGLE_ITEMS: Array<OIBusSouthType> = [
   'folder-scanner',
   'ftp',
+  'influxdb',
   'mssql',
   'mysql',
   'odbc',

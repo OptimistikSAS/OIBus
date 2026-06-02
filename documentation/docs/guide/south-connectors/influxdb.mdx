@@ -1,0 +1,168 @@
+---
+sidebar_position: 19
+---
+
+import ThrottlingSettings from './_throttling-settings.mdx';
+
+# InfluxDB
+
+Connect to and query [InfluxDB](https://www.influxdata.com/) time-series databases with OIBus. All
+three major InfluxDB API versions are supported: InfluxDB v1 (InfluxQL), InfluxDB v2 (Flux), and
+InfluxDB v3 (SQL / Flight SQL).
+
+:::info Technology Overview
+
+- Purpose-built time-series database by [InfluxData](https://www.influxdata.com/)
+- History-only connector: queries a time range on each scan cycle
+- Three distinct API versions, each with a different query language and authentication scheme
+
+:::
+
+## API Versions
+
+InfluxDB has gone through three major API revisions that are **not backwards-compatible**. Select the
+version that matches your server before configuring the other settings.
+
+| Version | Query language                | Authentication                    | Typical deployment                      |
+| ------- | ----------------------------- | --------------------------------- | --------------------------------------- |
+| **v1**  | InfluxQL (SQL-like)           | Username / Password               | Self-hosted InfluxDB 1.x                |
+| **v2**  | Flux (functional pipeline)    | API Token + Organisation + Bucket | InfluxDB 2.x, InfluxDB Cloud (TSM)      |
+| **v3**  | SQL (Apache Arrow Flight SQL) | API Token                         | InfluxDB 3.x, InfluxDB Cloud Serverless |
+
+## Specific Settings
+
+### Common
+
+| Setting     | Description                                 |
+| ----------- | ------------------------------------------- |
+| **Version** | InfluxDB API version to use: `1`, `2`, `3`. |
+
+### InfluxDB v1
+
+| Setting      | Description                                    | Example Value |
+| ------------ | ---------------------------------------------- | ------------- |
+| **Host**     | Hostname or IP address of the InfluxDB server. | `localhost`   |
+| **Port**     | Server port. Default: `8086`.                  | `8086`        |
+| **Protocol** | Transport protocol: `http` or `https`.         | `http`        |
+| **Database** | Name of the InfluxDB database to query.        | `telegraf`    |
+| **Username** | Optional. Username for authentication.         | `reader`      |
+| **Password** | Optional. Password for authentication.         | `••••••••`    |
+
+### InfluxDB v2
+
+| Setting          | Description                                             | Example Value           |
+| ---------------- | ------------------------------------------------------- | ----------------------- |
+| **URL**          | Full URL of the InfluxDB v2 instance.                   | `http://localhost:8086` |
+| **Token**        | API token with read access to the target bucket.        | `••••••••`              |
+| **Organisation** | Name of the InfluxDB organisation that owns the bucket. | `my-org`                |
+| **Bucket**       | Name of the bucket to query.                            | `sensors`               |
+
+### InfluxDB v3
+
+| Setting      | Description                                                      | Example Value                                   |
+| ------------ | ---------------------------------------------------------------- | ----------------------------------------------- |
+| **URL**      | Full URL of the InfluxDB v3 / Cloud Serverless endpoint.         | `https://us-east-1-1.aws.cloud2.influxdata.com` |
+| **Token**    | API token with read access to the target database.               | `••••••••`                                      |
+| **Database** | Name of the database (equivalent to a v1 database or v2 bucket). | `sensors`                                       |
+
+:::tip Use a read-only token
+Create a dedicated read-only token or user for OIBus. On InfluxDB v1, grant only `READ` privilege on
+the target database; on v2/v3, scope the token to the specific bucket or database.
+:::
+
+## Item Settings
+
+Each item represents one query executed against the InfluxDB server on each scan cycle. Items have
+their own scan mode and throttling settings (there are no groups in the InfluxDB connector).
+
+| Setting       | Description                         | Example Value |
+| ------------- | ----------------------------------- | ------------- |
+| **Scan mode** | Schedule used to trigger the query. | `Every 1 min` |
+
+<ThrottlingSettings />
+
+### Query
+
+| Setting             | Description                                                                   | Example Value |
+| ------------------- | ----------------------------------------------------------------------------- | ------------- |
+| **Query**           | The query to run. Supports `@StartTime` and `@EndTime` placeholders.          | See below     |
+| **Request timeout** | Maximum execution time in milliseconds before the query is aborted. (v1 only) | `15000`       |
+
+#### Query examples by version
+
+**v1 — InfluxQL**
+
+```sql
+SELECT mean("temperature"), mean("pressure")
+FROM "sensors"
+WHERE time > '@StartTime' AND time <= '@EndTime'
+GROUP BY time(1m), "device_id"
+```
+
+**v2 — Flux**
+
+```flux
+from(bucket: "sensors")
+  |> range(start: @StartTime, stop: @EndTime)
+  |> filter(fn: (r) => r["_measurement"] == "temperature")
+  |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
+```
+
+**v3 — SQL**
+
+```sql
+SELECT time, device_id, temperature, pressure
+FROM sensors
+WHERE time > '@StartTime' AND time <= '@EndTime'
+ORDER BY time
+```
+
+## Time Variables
+
+The following placeholders can be used anywhere in the query string and are replaced by OIBus before
+sending the request to the server:
+
+| Variable     | Value injected                                                                                                    | Example                    |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `@StartTime` | Start of the current query interval. Initialised to the first scan time, then advanced by the tracking mechanism. | `2024-01-15T10:00:00.000Z` |
+| `@EndTime`   | End of the current query interval, capped to the current time or the sub-interval end.                            | `2024-01-15T11:00:00.000Z` |
+
+The substitution is a **plain text replacement** — wrap the placeholders in quotes if the query
+language requires string literals (InfluxQL, SQL). In Flux, `range(start:, stop:)` accepts RFC 3339
+strings directly without surrounding quotes.
+
+:::info Query splitting
+When a large time range is requested, OIBus splits it into smaller sub-intervals based on the **Max
+read interval** throttling setting. Each sub-interval gets its own `@StartTime` / `@EndTime` pair.
+:::
+
+## Timestamp Tracking
+
+After each successful query, OIBus automatically extracts the maximum timestamp from the result set
+and uses it as `@StartTime` of the next scan cycle. No configuration is required.
+
+The timestamp column name is determined by the API version:
+
+| Version | Timestamp column | Format                                                                         |
+| ------- | ---------------- | ------------------------------------------------------------------------------ |
+| v1      | `time`           | ISO 8601 string — OIBus normalizes the raw `INanoDate` returned by the client  |
+| v2      | `_time`          | RFC 3339 string returned directly by the Flux query API                        |
+| v3      | `time`           | ISO 8601 string returned by the Arrow Flight client                            |
+
+If no results are returned, `@StartTime` is not advanced and the next scan retries the same interval.
+
+## Data Flow
+
+1. OIBus substitutes `@StartTime` and `@EndTime` into the query string.
+2. The query is sent to the InfluxDB server via the appropriate client library for the configured version.
+3. Results are collected as a JSON array of row objects.
+4. OIBus extracts the maximum value of the timestamp column (`time` for v1/v3, `_time` for v2) and
+   stores it as the `@StartTime` for the next scan cycle.
+5. The JSON array is written to a file and forwarded to configured North connectors as a raw JSON
+   payload.
+
+:::note Output format
+Unlike SQL connectors (which produce CSV files), the InfluxDB connector always outputs a **JSON
+file**. Use a North connector that accepts raw file payloads — OIAnalytics, Azure Blob, S3, File
+Writer — or add a JSON-to-CSV transformer if your downstream system requires CSV.
+:::
