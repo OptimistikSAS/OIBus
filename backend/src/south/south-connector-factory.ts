@@ -10,6 +10,8 @@ import {
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
   SouthFTPSettings,
+  SouthInfluxDBItemSettings,
+  SouthInfluxDBSettings,
   SouthItemSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
@@ -60,6 +62,7 @@ import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
 import SouthRest from '../south/south-rest/south-rest';
 import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthFTP from '../south/south-ftp/south-ftp';
+import SouthInfluxDB from '../south/south-influxdb/south-influxdb';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthConnector from './south-connector';
 import { Instant } from '../model/types';
@@ -217,6 +220,14 @@ export const buildSouth = (
     case 'ftp':
       return new SouthFTP(
         settings as SouthConnectorEntity<SouthFTPSettings, SouthFTPItemSettings>,
+        addContent,
+        southCacheRepository,
+        logger,
+        southCacheFolder
+      );
+    case 'influxdb':
+      return new SouthInfluxDB(
+        settings as SouthConnectorEntity<SouthInfluxDBSettings, SouthInfluxDBItemSettings>,
         addContent,
         southCacheRepository,
         logger,

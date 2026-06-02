@@ -299,6 +299,7 @@
       "ads": "ADS - TwinCAT®",
       "folder-scanner": "Folder scanner",
       "ftp": "FTP",
+      "influxdb": "InfluxDB",
       "modbus": "Modbus",
       "mqtt": "MQTT",
       "mssql": "Microsoft SQL Server™",
@@ -319,6 +320,7 @@
       "ads": "The ADS protocol used in TwinCAT® systems",
       "folder-scanner": "Read files from a local or remote folder",
       "ftp": "Read files from a remote FTP server",
+      "influxdb": "Query InfluxDB time series databases (v1, v2, v3)",
       "modbus": "Access Modbus registers on a PLC",
       "mqtt": "Subscribe to MQTT broker topics",
       "mssql": "Query Microsoft SQL Server™ databases",
@@ -1547,6 +1549,28 @@
             "username": "Username",
             "password": "Password"
           },
+          "influxdb": {
+            "version": {
+              "title": "Version",
+              "1": "v1 (InfluxDB 1.x – InfluxQL)",
+              "2": "v2 (InfluxDB 2.x – Flux)",
+              "3": "v3 (InfluxDB 3.x – SQL)"
+            },
+            "host": "Host",
+            "port": "Port",
+            "protocol": {
+              "title": "Protocol",
+              "http": "HTTP",
+              "https": "HTTPS"
+            },
+            "database": "Database",
+            "username": "Username",
+            "password": "Password",
+            "url": "URL",
+            "token": "API token",
+            "organisation": "Organisation",
+            "bucket": "Bucket"
+          },
           "odbc": {
             "remote-agent": "Use remote agent",
             "agent-url": "Remote agent URL",
@@ -1874,6 +1898,26 @@
                 "output-timestamp-format": "Output date time format",
                 "output-timezone": "Output timezone"
               }
+            },
+            "influxdb": {
+              "query": "Query",
+              "request-timeout": "Request timeout",
+              "track-max-instant": "Track max instant",
+              "date-time": {
+                "track-instant": "Track instant",
+                "json-path": "JSON path",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "ISO String",
+                  "unix-epoch": "UNIX epoch (s)",
+                  "unix-epoch-ms": "UNIX epoch (ms)",
+                  "string": "String"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              },
+              "date-time-input": "Date time input"
             },
             "odbc": {
               "query": "Query",
