@@ -1,5 +1,14 @@
 import { Body, Controller, Get, Post, Put, Request, Route, SuccessResponse, Tags } from 'tsoa';
-import { EngineSettingsCommandDTO, EngineSettingsDTO, EngineSettingsUpdateResultDTO, OIBusInfo } from '../../../shared/model/engine.model';
+import {
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
+  EngineSettingsCommandDTO,
+  EngineSettingsDTO,
+  EngineSettingsUpdateResultDTO,
+  EngineWebServerCommandDTO,
+  OIBusInfo
+} from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import { toEngineSettingsDTO } from '../../service/oibus.service';
 
@@ -41,6 +50,54 @@ export class EngineController extends Controller {
   }
 
   /**
+   * Updates only the engine name
+   * @summary Update engine name
+   * @param {EngineNameCommandDTO} command.body.required - Engine name to update
+   */
+  @Put('/name')
+  @SuccessResponse(200, 'Engine name updated successfully')
+  async updateEngineName(@Body() command: EngineNameCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    return await request.services.oIBusService.updateEngineName(command, request.user.id);
+  }
+
+  /**
+   * Updates only the web server port
+   * @summary Update web server settings
+   * @param {EngineWebServerCommandDTO} command.body.required - Web server settings to update
+   * @returns {EngineSettingsUpdateResultDTO} Information about whether a redirect is needed
+   */
+  @Put('/web-server')
+  @SuccessResponse(200, 'Engine web server settings updated successfully')
+  async updateEngineWebServer(
+    @Body() command: EngineWebServerCommandDTO,
+    @Request() request: CustomExpressRequest
+  ): Promise<EngineSettingsUpdateResultDTO> {
+    return await request.services.oIBusService.updateEngineWebServer(command, request.user.id);
+  }
+
+  /**
+   * Updates only the proxy settings
+   * @summary Update proxy settings
+   * @param {EngineProxyCommandDTO} command.body.required - Proxy settings to update
+   */
+  @Put('/proxy')
+  @SuccessResponse(200, 'Engine proxy settings updated successfully')
+  async updateEngineProxy(@Body() command: EngineProxyCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    return await request.services.oIBusService.updateEngineProxy(command, request.user.id);
+  }
+
+  /**
+   * Updates only the logging parameters
+   * @summary Update logger settings
+   * @param {EngineLoggerCommandDTO} command.body.required - Logger settings to update
+   */
+  @Put('/logger')
+  @SuccessResponse(200, 'Engine logger settings updated successfully')
+  async updateEngineLogger(@Body() command: EngineLoggerCommandDTO, @Request() request: CustomExpressRequest): Promise<void> {
+    return await request.services.oIBusService.updateEngineLogger(command, request.user.id);
+  }
+
+  /**
    * Resets all metrics collected by the OIBus engine
    * @summary Reset metrics
    */
@@ -79,8 +136,9 @@ export class EngineController extends Controller {
    * @summary Check OIBus status
    */
   @Get('/engine/status')
+  /* c8 ignore next */
   getOIBusStatus(@Request() _request: CustomExpressRequest): void {
-    return;
+    // intentionally empty — endpoint only checks that the server is reachable
   }
 
   /**

@@ -44,6 +44,35 @@ describe('EngineRepository with populated database', () => {
       });
     });
 
+    it('should update name only', () => {
+      repository.updateName('my new name', testData.users.list[0].id);
+      assert.strictEqual(repository.get()!.name, 'my new name');
+    });
+
+    it('should update web server port only', () => {
+      repository.updateWebServer(testData.engine.webServerCommand, testData.users.list[0].id);
+      assert.strictEqual(repository.get()!.port, testData.engine.webServerCommand.port);
+    });
+
+    it('should update proxy settings with proxy disabled', () => {
+      repository.updateProxy({ proxyEnabled: false, proxyPort: null }, testData.users.list[0].id);
+      const result = repository.get()!;
+      assert.strictEqual(result.proxyEnabled, false);
+      assert.strictEqual(result.proxyPort, null);
+    });
+
+    it('should update proxy settings with proxy enabled', () => {
+      repository.updateProxy({ proxyEnabled: true, proxyPort: 8080 }, testData.users.list[0].id);
+      const result = repository.get()!;
+      assert.strictEqual(result.proxyEnabled, true);
+      assert.strictEqual(result.proxyPort, 8080);
+    });
+
+    it('should update logger settings only', () => {
+      repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
+      assert.deepStrictEqual(repository.get()!.logParameters, testData.engine.loggerCommand);
+    });
+
     it('should update version', () => {
       repository.updateVersion('9.9.99', '9.9.99');
       assert.strictEqual(repository.get()!.version, '9.9.99');
