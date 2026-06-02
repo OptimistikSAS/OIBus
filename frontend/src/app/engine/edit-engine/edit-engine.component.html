@@ -5,235 +5,250 @@
         <h1 translate="engine.edit-title"></h1>
       </div>
 
-      <form [formGroup]="engineForm" (ngSubmit)="save()" id="engine-form" class="my-3">
-        <div class="save-zone">
-          <!-- General settings -->
-          <oib-box boxTitle="engine.general-settings.title" helpUrl="https://oibus.optimistik.com/docs/guide/engine/engine-settings">
-            <div class="row">
-              <!-- Name -->
-              <div class="col-4">
-                <div class="form-group">
-                  <label class="form-label" for="name" translate="engine.general-settings.name"></label>
-                  <input formControlName="name" id="name" class="form-control" />
-                  <val-errors controlName="name" />
-                </div>
+      <!-- Name -->
+      <form [formGroup]="nameForm" (ngSubmit)="saveName()" id="engine-name-form" class="my-3">
+        <oib-box boxTitle="engine.general-settings.title" helpUrl="https://oibus.optimistik.com/docs/guide/engine/engine-settings">
+          <div class="row">
+            <div class="col-4">
+              <div class="form-group">
+                <label class="form-label" for="name" translate="engine.general-settings.name"></label>
+                <input formControlName="name" id="name" class="form-control" />
+                <val-errors controlName="name" />
               </div>
-              <!-- Port -->
-              <div class="col-4">
-                <div class="form-group">
-                  <label class="form-label" for="port" translate="engine.general-settings.port"></label>
-                  <input formControlName="port" type="number" id="port" class="form-control" />
-                  <val-errors controlName="port" />
+            </div>
+          </div>
+        </oib-box>
+        <div class="d-flex justify-content-end mb-3">
+          <div class="btn-group">
+            <button [oib-save-button]="nameState" id="save-name-button" form="engine-name-form"></button>
+            <button class="btn btn-cancel" translate="common.cancel" id="cancel-name-button" routerLink="/engine"></button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Web server -->
+      <form [formGroup]="webServerForm" (ngSubmit)="saveWebServer()" id="engine-web-server-form" class="my-3">
+        <oib-box boxTitle="engine.web-server-settings.title">
+          <div class="row">
+            <div class="col-4">
+              <div class="form-group">
+                <label class="form-label" for="port" translate="engine.general-settings.port"></label>
+                <input formControlName="port" type="number" id="port" class="form-control" />
+                <val-errors controlName="port" />
+              </div>
+            </div>
+          </div>
+        </oib-box>
+        <div class="d-flex justify-content-end mb-3">
+          <div class="btn-group">
+            <button [oib-save-button]="webServerState" id="save-web-server-button" form="engine-web-server-form"></button>
+            <button class="btn btn-cancel" translate="common.cancel" id="cancel-web-server-button" routerLink="/engine"></button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Proxy -->
+      <form [formGroup]="proxyForm" (ngSubmit)="saveProxy()" id="engine-proxy-form" class="my-3">
+        <oib-box boxTitle="engine.proxy-settings.title">
+          <div class="row">
+            <div class="col-3">
+              <div class="form-group">
+                <div class="form-check form-switch padded">
+                  <input formControlName="proxyEnabled" id="proxy-enabled" type="checkbox" class="form-check-input" />
+                  <label class="form-check-label" for="proxy-enabled" translate="engine.proxy-settings.proxy-enabled"></label>
                 </div>
               </div>
             </div>
-          </oib-box>
-
-          <oib-box boxTitle="engine.proxy-settings.title">
-            <div class="row">
-              <!-- Enabled -->
-              <div class="col-3">
+            @if (proxyForm.controls.proxyEnabled.value) {
+              <div class="col-4">
                 <div class="form-group">
-                  <div class="form-check form-switch padded">
-                    <input formControlName="proxyEnabled" id="proxy-enabled" type="checkbox" class="form-check-input" />
-                    <label class="form-check-label" for="proxy-enabled" translate="engine.proxy-settings.proxy-enabled"></label>
-                  </div>
+                  <label class="form-label" for="proxy-port" translate="engine.proxy-settings.proxy-port"></label>
+                  <input formControlName="proxyPort" type="number" id="proxy-port" class="form-control" />
+                  <val-errors controlName="proxyPort" />
                 </div>
               </div>
-              <!-- Proxy port -->
-              @if (engineForm.controls.proxyEnabled.value) {
+            }
+          </div>
+        </oib-box>
+        <div class="d-flex justify-content-end mb-3">
+          <div class="btn-group">
+            <button [oib-save-button]="proxyState" id="save-proxy-button" form="engine-proxy-form"></button>
+            <button class="btn btn-cancel" translate="common.cancel" id="cancel-proxy-button" routerLink="/engine"></button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Logger -->
+      <form [formGroup]="loggerForm" (ngSubmit)="saveLogger()" id="engine-logger-form" class="my-3">
+        <oib-box boxTitle="engine.logger.title">
+          <div formGroupName="logParameters">
+            <!-- OIAnalytics settings -->
+            <ng-container formGroupName="oia">
+              <div class="row">
                 <div class="col-4">
                   <div class="form-group">
-                    <label class="form-label" for="proxy-port" translate="engine.proxy-settings.proxy-port"></label>
-                    <input formControlName="proxyPort" type="number" id="proxy-port" class="form-control" />
-                    <val-errors controlName="proxyPort" />
+                    <label class="form-label" for="oia-level" translate="engine.logger.oia.level"></label>
+                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="oia-level">
+                      @for (level of logLevels; track level) {
+                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
+                      }
+                    </select>
+                  </div>
+                </div>
+
+                @if (!isLevelSilent('oia')) {
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="oia-interval" translate="engine.logger.oia.interval"></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="interval" id="oia-interval" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.s"></span>
+                      </div>
+                      <val-errors controlName="interval" />
+                    </div>
+                  </div>
+                }
+              </div>
+            </ng-container>
+
+            <!-- Database settings -->
+            <div class="row" formGroupName="database">
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="database-level" translate="engine.logger.database.level"></label>
+                  <select formControlName="level" class="form-select mb-2 mr-sm-2" id="database-level">
+                    @for (level of logLevels; track level) {
+                      <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              @if (!isLevelSilent('database')) {
+                <div class="col-4">
+                  <div class="form-group">
+                    <label
+                      class="form-label"
+                      for="database-max-number-of-logs"
+                      translate="engine.logger.database.max-number-of-logs"
+                    ></label>
+                    <input type="number" formControlName="maxNumberOfLogs" id="database-max-number-of-logs" class="form-control" />
+                    <val-errors controlName="maxNumberOfLogs" />
                   </div>
                 </div>
               }
             </div>
-          </oib-box>
 
-          <!-- Logger settings -->
-          <oib-box boxTitle="engine.logger.title">
-            <div formGroupName="logParameters">
-              <!-- OIAnalytics settings -->
-              <ng-container formGroupName="oia">
-                <div class="row">
-                  <!-- Level -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="oia-level" translate="engine.logger.oia.level"></label>
-                      <select formControlName="level" class="form-select mb-2 mr-sm-2" id="oia-level">
-                        @for (level of logLevels; track level) {
-                          <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
-                        }
-                      </select>
-                    </div>
-                  </div>
-
-                  <!-- Interval -->
-                  @if (!isLevelSilent('oia')) {
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="oia-interval" translate="engine.logger.oia.interval"></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="interval" id="oia-interval" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.s"></span>
-                        </div>
-                        <val-errors controlName="interval" />
-                      </div>
-                    </div>
-                  }
+            <!-- File settings -->
+            <div class="row" formGroupName="file">
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="file-level" translate="engine.logger.file.level"></label>
+                  <select formControlName="level" class="form-select mb-2 mr-sm-2" id="file-level">
+                    @for (level of logLevels; track level) {
+                      <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
+                    }
+                  </select>
                 </div>
-              </ng-container>
-
-              <!-- Database settings -->
-              <div class="row" formGroupName="database">
-                <!-- Level -->
+              </div>
+              @if (!isLevelSilent('file')) {
                 <div class="col-4">
                   <div class="form-group">
-                    <label class="form-label" for="database-level" translate="engine.logger.database.level"></label>
-                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="database-level">
+                    <label class="form-label" for="file-max-file-size" translate="engine.logger.file.max-file-size"></label>
+                    <div class="input-group">
+                      <input type="number" formControlName="maxFileSize" id="file-max-file-size" class="form-control" />
+                      <span class="input-group-text" translate="common.unit.MB"></span>
+                    </div>
+                    <val-errors controlName="maxFileSize" />
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="form-group">
+                    <label class="form-label" for="file-number-of-files" translate="engine.logger.file.number-of-files"></label>
+                    <input type="number" formControlName="numberOfFiles" id="file-number-of-files" class="form-control" />
+                    <val-errors controlName="numberOfFiles" />
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Loki settings -->
+            <ng-container formGroupName="loki">
+              <div class="row">
+                <div class="col-4">
+                  <div class="form-group">
+                    <label class="form-label" for="loki-level" translate="engine.logger.loki.level"></label>
+                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="loki-level">
                       @for (level of logLevels; track level) {
                         <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
                       }
                     </select>
                   </div>
-                </div>
-
-                <!-- Max number of logs -->
-                @if (!isLevelSilent('database')) {
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label
-                        class="form-label"
-                        for="database-max-number-of-logs"
-                        translate="engine.logger.database.max-number-of-logs"
-                      ></label>
-                      <input type="number" formControlName="maxNumberOfLogs" id="database-max-number-of-logs" class="form-control" />
-                      <val-errors controlName="maxNumberOfLogs" />
-                    </div>
-                  </div>
-                }
-              </div>
-
-              <!-- File settings -->
-              <div class="row" formGroupName="file">
-                <!-- Level -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="file-level" translate="engine.logger.file.level"></label>
-                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="file-level">
-                      @for (level of logLevels; track level) {
-                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
-                      }
-                    </select>
-                  </div>
-                </div>
-                <!-- Max file size -->
-                @if (!isLevelSilent('file')) {
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="file-max-file-size" translate="engine.logger.file.max-file-size"></label>
-                      <div class="input-group">
-                        <input type="number" formControlName="maxFileSize" id="file-max-file-size" class="form-control" />
-                        <span class="input-group-text" translate="common.unit.MB"></span>
-                      </div>
-                      <val-errors controlName="maxFileSize" />
-                    </div>
-                  </div>
-                  <!-- Number of files -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="file-number-of-files" translate="engine.logger.file.number-of-files"></label>
-                      <input type="number" formControlName="numberOfFiles" id="file-number-of-files" class="form-control" />
-                      <val-errors controlName="numberOfFiles" />
-                    </div>
-                  </div>
-                }
-              </div>
-
-              <!-- Loki settings -->
-              <ng-container formGroupName="loki">
-                <div class="row">
-                  <!-- Level -->
-                  <div class="col-4">
-                    <div class="form-group">
-                      <label class="form-label" for="loki-level" translate="engine.logger.loki.level"></label>
-                      <select formControlName="level" class="form-select mb-2 mr-sm-2" id="loki-level">
-                        @for (level of logLevels; track level) {
-                          <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
-                        }
-                      </select>
-                    </div>
-                  </div>
-
-                  <!-- Interval -->
-                  @if (!isLevelSilent('loki')) {
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="loki-interval" translate="engine.logger.loki.interval"></label>
-                        <div class="input-group">
-                          <input type="number" formControlName="interval" id="loki-interval" class="form-control" />
-                          <span class="input-group-text" translate="common.unit.s"></span>
-                        </div>
-                        <val-errors controlName="interval" />
-                      </div>
-                    </div>
-                  }
                 </div>
 
                 @if (!isLevelSilent('loki')) {
-                  <div class="row">
-                    <!-- Address -->
-                    <div class="col-6">
-                      <div class="form-group">
-                        <label class="form-label" for="loki-address" translate="engine.logger.loki.address"></label>
-                        <input formControlName="address" id="loki-address" class="form-control" />
-                        <val-errors controlName="address" />
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="loki-interval" translate="engine.logger.loki.interval"></label>
+                      <div class="input-group">
+                        <input type="number" formControlName="interval" id="loki-interval" class="form-control" />
+                        <span class="input-group-text" translate="common.unit.s"></span>
                       </div>
-                    </div>
-                  </div>
-
-                  <div class="row">
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="loki-username" translate="engine.logger.loki.username"></label>
-                        <input formControlName="username" id="loki-username" class="form-control" />
-                        <val-errors controlName="username" />
-                      </div>
-                    </div>
-                    <div class="col-4">
-                      <div class="form-group">
-                        <label class="form-label" for="loki-password" translate="engine.logger.loki.password"></label>
-                        <input type="password" formControlName="password" id="loki-password" class="form-control" />
-                        <val-errors controlName="password" />
-                      </div>
+                      <val-errors controlName="interval" />
                     </div>
                   </div>
                 }
-              </ng-container>
+              </div>
 
-              <!-- Console settings -->
-              <div class="row" formGroupName="console">
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="console-level" translate="engine.logger.console.level"></label>
-                    <select formControlName="level" class="form-select mb-2 mr-sm-2" id="console-level">
-                      @for (level of logLevels; track level) {
-                        <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
-                      }
-                    </select>
+              @if (!isLevelSilent('loki')) {
+                <div class="row">
+                  <div class="col-6">
+                    <div class="form-group">
+                      <label class="form-label" for="loki-address" translate="engine.logger.loki.address"></label>
+                      <input formControlName="address" id="loki-address" class="form-control" />
+                      <val-errors controlName="address" />
+                    </div>
                   </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="loki-username" translate="engine.logger.loki.username"></label>
+                      <input formControlName="username" id="loki-username" class="form-control" />
+                      <val-errors controlName="username" />
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="form-group">
+                      <label class="form-label" for="loki-password" translate="engine.logger.loki.password"></label>
+                      <input type="password" formControlName="password" id="loki-password" class="form-control" />
+                      <val-errors controlName="password" />
+                    </div>
+                  </div>
+                </div>
+              }
+            </ng-container>
+
+            <!-- Console settings -->
+            <div class="row" formGroupName="console">
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="console-level" translate="engine.logger.console.level"></label>
+                  <select formControlName="level" class="form-select mb-2 mr-sm-2" id="console-level">
+                    @for (level of logLevels; track level) {
+                      <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
+                    }
+                  </select>
                 </div>
               </div>
             </div>
-          </oib-box>
-        </div>
-        <div id="actions" class="d-flex justify-content-end">
+          </div>
+        </oib-box>
+        <div class="d-flex justify-content-end mb-3">
           <div class="btn-group">
-            <button [oib-save-button]="state" form="engine-form"></button>
-            <button class="btn btn-cancel" translate="common.cancel" id="cancel-button" routerLink="/engine"></button>
+            <button [oib-save-button]="loggerState" id="save-logger-button" form="engine-logger-form"></button>
+            <button class="btn btn-cancel" translate="common.cancel" id="cancel-logger-button" routerLink="/engine"></button>
           </div>
         </div>
       </form>

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import JoiValidator from './joi.validator';
-import { engineSchema } from './oibus-validation-schema';
+import { engineLoggerSchema, engineNameSchema, engineProxySchema, engineSchema, engineWebServerSchema } from './oibus-validation-schema';
 
 interface DataProvider {
   dto: object;
@@ -163,4 +163,123 @@ describe('Engine validator', () => {
       }
     });
   }
+});
+
+describe('Engine name validator', () => {
+  const validator: JoiValidator = new JoiValidator();
+
+  it('should accept valid name', async () => {
+    await assert.doesNotReject(validator.validate(engineNameSchema, { name: 'OIBus' }));
+  });
+
+  it('should reject null name', async () => {
+    await assert.rejects(validator.validate(engineNameSchema, { name: null }), {
+      message: '"name" must be a string'
+    });
+  });
+
+  it('should reject empty name', async () => {
+    await assert.rejects(validator.validate(engineNameSchema, { name: '' }), {
+      message: '"name" is not allowed to be empty'
+    });
+  });
+});
+
+describe('Engine web server validator', () => {
+  const validator: JoiValidator = new JoiValidator();
+
+  it('should accept valid port', async () => {
+    await assert.doesNotReject(validator.validate(engineWebServerSchema, { port: 2223 }));
+  });
+
+  it('should reject null port', async () => {
+    await assert.rejects(validator.validate(engineWebServerSchema, { port: null }), {
+      message: '"port" must be a number'
+    });
+  });
+
+  it('should reject invalid port number', async () => {
+    await assert.rejects(validator.validate(engineWebServerSchema, { port: 99999 }), {
+      message: '"port" must be a valid port'
+    });
+  });
+});
+
+describe('Engine proxy validator', () => {
+  const validator: JoiValidator = new JoiValidator();
+
+  it('should accept proxyEnabled false with null proxyPort', async () => {
+    await assert.doesNotReject(validator.validate(engineProxySchema, { proxyEnabled: false, proxyPort: null }));
+  });
+
+  it('should accept proxyEnabled true with valid proxyPort', async () => {
+    await assert.doesNotReject(validator.validate(engineProxySchema, { proxyEnabled: true, proxyPort: 9000 }));
+  });
+
+  it('should reject null proxyEnabled', async () => {
+    await assert.rejects(validator.validate(engineProxySchema, { proxyEnabled: null, proxyPort: null }), {
+      message: '"proxyEnabled" must be a boolean'
+    });
+  });
+
+  it('should reject invalid proxyPort', async () => {
+    await assert.rejects(validator.validate(engineProxySchema, { proxyEnabled: true, proxyPort: 99999 }), {
+      message: '"proxyPort" must be a valid port'
+    });
+  });
+});
+
+describe('Engine logger validator', () => {
+  const validator: JoiValidator = new JoiValidator();
+
+  const validLogParameters = {
+    console: { level: 'silent' },
+    file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
+    database: { level: 'info', maxNumberOfLogs: 100_000 },
+    loki: { level: 'silent', interval: 60, address: '', username: '', password: '' },
+    oia: { level: 'silent', interval: 10 }
+  };
+
+  it('should accept valid log parameters', async () => {
+    await assert.doesNotReject(validator.validate(engineLoggerSchema, { logParameters: validLogParameters }));
+  });
+
+  it('should reject null logParameters', async () => {
+    await assert.rejects(validator.validate(engineLoggerSchema, { logParameters: null }), {
+      message: '"logParameters" must be of type object'
+    });
+  });
+
+  it('should reject empty log level', async () => {
+    await assert.rejects(validator.validate(engineLoggerSchema, { logParameters: { ...validLogParameters, console: { level: '' } } }), {
+      message: '"logParameters.console.level" is not allowed to be empty'
+    });
+  });
+
+  it('should reject loki interval below minimum', async () => {
+    await assert.rejects(
+      validator.validate(engineLoggerSchema, {
+        logParameters: { ...validLogParameters, loki: { ...validLogParameters.loki, interval: 5 } }
+      }),
+      { message: '"logParameters.loki.interval" must be greater than or equal to 10' }
+    );
+  });
+
+  it('should reject file maxFileSize below minimum', async () => {
+    await assert.rejects(
+      validator.validate(engineLoggerSchema, {
+        logParameters: { ...validLogParameters, file: { ...validLogParameters.file, maxFileSize: 0 } }
+      }),
+      { message: '"logParameters.file.maxFileSize" must be greater than or equal to 1' }
+    );
+  });
+
+  it('should reject database maxNumberOfLogs below minimum', async () => {
+    await assert.rejects(
+      validator.validate(engineLoggerSchema, {
+        logParameters: { ...validLogParameters, database: { level: 'info', maxNumberOfLogs: 1000 } }
+      }),
+      { message: '"logParameters.database.maxNumberOfLogs" must be greater than or equal to 100000' }
+    );
+  });
 });

@@ -3,7 +3,14 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EngineService } from './engine.service';
-import { EngineSettingsDTO, OIBusInfo } from '../../../../backend/shared/model/engine.model';
+import {
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
+  EngineSettingsDTO,
+  EngineWebServerCommandDTO,
+  OIBusInfo
+} from '../../../../backend/shared/model/engine.model';
 import testData from '../../../../backend/src/tests/utils/test-data';
 
 describe('EngineService', () => {
@@ -36,6 +43,60 @@ describe('EngineService', () => {
 
     service.updateEngineSettings(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine' });
+    expect(testRequest.request.body).toEqual(command);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  test('should update engine name', () => {
+    let done = false;
+    const command: EngineNameCommandDTO = testData.engine.nameCommand;
+
+    service.updateEngineName(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/name' });
+    expect(testRequest.request.body).toEqual(command);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  test('should update engine web server settings', () => {
+    let done = false;
+    const command: EngineWebServerCommandDTO = testData.engine.webServerCommand;
+
+    service.updateEngineWebServer(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/web-server' });
+    expect(testRequest.request.body).toEqual(command);
+    testRequest.flush({ needsRedirect: false, newPort: null });
+    expect(done).toBe(true);
+  });
+
+  test('should return redirect info when port changes', () => {
+    let result: { needsRedirect: boolean; newPort: number | null } | null = null;
+    const command: EngineWebServerCommandDTO = testData.engine.webServerCommand;
+
+    service.updateEngineWebServer(command).subscribe(r => (result = r));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/web-server' });
+    testRequest.flush({ needsRedirect: true, newPort: 3333 });
+    expect(result).toEqual({ needsRedirect: true, newPort: 3333 });
+  });
+
+  test('should update engine proxy settings', () => {
+    let done = false;
+    const command: EngineProxyCommandDTO = testData.engine.proxyCommand;
+
+    service.updateEngineProxy(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/proxy' });
+    expect(testRequest.request.body).toEqual(command);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  test('should update engine logger settings', () => {
+    let done = false;
+    const command: EngineLoggerCommandDTO = testData.engine.loggerCommand;
+
+    service.updateEngineLogger(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/logger' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);

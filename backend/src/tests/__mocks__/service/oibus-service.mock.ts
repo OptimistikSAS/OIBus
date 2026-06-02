@@ -5,8 +5,12 @@ import {
   CacheSearchParam,
   CacheSearchResult,
   DataFolderType,
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
   EngineSettingsUpdateResultDTO,
+  EngineWebServerCommandDTO,
   FileCacheContent,
   OIBusContent,
   OIBusInfo
@@ -24,6 +28,13 @@ export default class OIBusServiceMock {
     async (_command: EngineSettingsCommandDTO, _updatedBy: string): Promise<EngineSettingsUpdateResultDTO> =>
       ({}) as EngineSettingsUpdateResultDTO
   );
+  updateEngineName = mock.fn(async (_command: EngineNameCommandDTO, _updatedBy: string): Promise<void> => undefined);
+  updateEngineWebServer = mock.fn(
+    async (_command: EngineWebServerCommandDTO, _updatedBy: string): Promise<EngineSettingsUpdateResultDTO> =>
+      ({}) as EngineSettingsUpdateResultDTO
+  );
+  updateEngineProxy = mock.fn(async (_command: EngineProxyCommandDTO, _updatedBy: string): Promise<void> => undefined);
+  updateEngineLogger = mock.fn(async (_command: EngineLoggerCommandDTO, _updatedBy: string): Promise<void> => undefined);
   updateOIBusVersion = mock.fn((_version: string, _launcherVersion: string): void => undefined);
   restart = mock.fn(async (): Promise<void> => undefined);
   stop = mock.fn(async (): Promise<void> => undefined);
