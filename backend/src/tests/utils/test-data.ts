@@ -1383,6 +1383,12 @@ const engineSettings: EngineSettings = {
     oia: {
       level: 'info',
       interval: 10
+    },
+    syslog: {
+      level: 'info',
+      host: 'syslog.example.com',
+      port: 514,
+      protocol: 'udp4'
     }
   },
   createdBy: '',
@@ -1418,6 +1424,12 @@ const engineSettingsCommand: EngineSettingsCommandDTO = {
     oia: {
       level: 'silent',
       interval: 10
+    },
+    syslog: {
+      level: 'silent',
+      host: '',
+      port: 514,
+      protocol: 'udp4'
     }
   }
 };
