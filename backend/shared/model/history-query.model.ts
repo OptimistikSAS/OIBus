@@ -9,6 +9,8 @@ import {
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
   SouthFTPSettings,
+  SouthInfluxDBItemSettings,
+  SouthInfluxDBSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
   SouthMQTTItemSettings,
@@ -321,6 +323,14 @@ export interface HistoryQueryFolderScannerSouthDTO extends HistoryQuerySouthType
 export interface HistoryQueryFTPSouthDTO extends HistoryQuerySouthTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings> {
   items: Array<HistoryQueryFTPItemDTO>;
 }
+/** History query south DTO for InfluxDB time series database. */
+export interface HistoryQueryInfluxDBSouthDTO extends HistoryQuerySouthTypedDTO<
+  'influxdb',
+  SouthInfluxDBSettings,
+  SouthInfluxDBItemSettings
+> {
+  items: Array<HistoryQueryInfluxDBItemDTO>;
+}
 /** History query south DTO for Modbus. */
 export interface HistoryQueryModbusSouthDTO extends HistoryQuerySouthTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings> {
   items: Array<HistoryQueryModbusItemDTO>;
@@ -418,6 +428,7 @@ export type HistoryQueryDTO = BaseEntity &
     | HistoryQueryADSSouthDTO
     | HistoryQueryFolderScannerSouthDTO
     | HistoryQueryFTPSouthDTO
+    | HistoryQueryInfluxDBSouthDTO
     | HistoryQueryModbusSouthDTO
     | HistoryQueryMQTTSouthDTO
     | HistoryQueryMSSQLSouthDTO
@@ -515,6 +526,14 @@ export interface HistoryQueryFolderScannerSouthCommandDTO extends HistoryQuerySo
 /** History query south command for FTP file transfer. */
 export interface HistoryQueryFTPSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings> {
   items: Array<HistoryQueryFTPItemCommandDTO>;
+}
+/** History query south command for InfluxDB time series database. */
+export interface HistoryQueryInfluxDBSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
+  'influxdb',
+  SouthInfluxDBSettings,
+  SouthInfluxDBItemSettings
+> {
+  items: Array<HistoryQueryInfluxDBItemCommandDTO>;
 }
 /** History query south command for Modbus. */
 export interface HistoryQueryModbusSouthCommandDTO extends HistoryQuerySouthCommandTypedDTO<
@@ -664,6 +683,7 @@ export type HistoryQueryCommandDTO = HistoryQueryCommandCommonDTO &
     | HistoryQueryADSSouthCommandDTO
     | HistoryQueryFolderScannerSouthCommandDTO
     | HistoryQueryFTPSouthCommandDTO
+    | HistoryQueryInfluxDBSouthCommandDTO
     | HistoryQueryModbusSouthCommandDTO
     | HistoryQueryMQTTSouthCommandDTO
     | HistoryQueryMSSQLSouthCommandDTO
@@ -700,6 +720,8 @@ export interface HistoryQueryADSItemDTO extends HistoryQueryItemTypedDTO<SouthAD
 export interface HistoryQueryFolderScannerItemDTO extends HistoryQueryItemTypedDTO<SouthFolderScannerItemSettings> {}
 /** History query item DTO for FTP file transfer. */
 export interface HistoryQueryFTPItemDTO extends HistoryQueryItemTypedDTO<SouthFTPItemSettings> {}
+/** History query item DTO for InfluxDB time series database. */
+export interface HistoryQueryInfluxDBItemDTO extends HistoryQueryItemTypedDTO<SouthInfluxDBItemSettings> {}
 /** History query item DTO for Modbus. */
 export interface HistoryQueryModbusItemDTO extends HistoryQueryItemTypedDTO<SouthModbusItemSettings> {}
 /** History query item DTO for MQTT. */
@@ -739,6 +761,7 @@ export type HistoryQueryItemDTO =
   | HistoryQueryADSItemDTO
   | HistoryQueryFolderScannerItemDTO
   | HistoryQueryFTPItemDTO
+  | HistoryQueryInfluxDBItemDTO
   | HistoryQueryModbusItemDTO
   | HistoryQueryMQTTItemDTO
   | HistoryQueryMSSQLItemDTO
@@ -762,6 +785,8 @@ export interface HistoryQueryADSItemCommandDTO extends HistoryQueryItemCommandTy
 export interface HistoryQueryFolderScannerItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthFolderScannerItemSettings> {}
 /** History query item command for FTP file transfer. */
 export interface HistoryQueryFTPItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthFTPItemSettings> {}
+/** History query item command for InfluxDB time series database. */
+export interface HistoryQueryInfluxDBItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthInfluxDBItemSettings> {}
 /** History query item command for Modbus. */
 export interface HistoryQueryModbusItemCommandDTO extends HistoryQueryItemCommandTypedDTO<SouthModbusItemSettings> {}
 /** History query item command for MQTT. */
@@ -801,6 +826,7 @@ export type HistoryQueryItemCommandDTO =
   | HistoryQueryADSItemCommandDTO
   | HistoryQueryFolderScannerItemCommandDTO
   | HistoryQueryFTPItemCommandDTO
+  | HistoryQueryInfluxDBItemCommandDTO
   | HistoryQueryModbusItemCommandDTO
   | HistoryQueryMQTTItemCommandDTO
   | HistoryQueryMSSQLItemCommandDTO

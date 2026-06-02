@@ -1510,6 +1510,7 @@
 					"ads",
 					"folder-scanner",
 					"ftp",
+					"influxdb",
 					"mssql",
 					"mysql",
 					"odbc",
@@ -2949,6 +2950,377 @@
 					"items": {
 						"items": {
 							"$ref": "#/components/schemas/SouthConnectorFTPItemDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) configured for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupDTO"
+						},
+						"type": "array",
+						"description": "List of groups attached to this connector"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthInfluxDBItemSettings": {
+				"properties": {
+					"query": {
+						"type": "string"
+					},
+					"requestTimeout": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"query",
+					"requestTimeout"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorInfluxDBItemDTO": {
+				"description": "South connector item DTO for InfluxDB time series database.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthInfluxDBSettingsVersion": {
+				"type": "string",
+				"enum": [
+					"1",
+					"2",
+					"3"
+				]
+			},
+			"SouthInfluxDBSettingsProtocol": {
+				"type": "string",
+				"enum": [
+					"http",
+					"https"
+				]
+			},
+			"SouthInfluxDBSettings": {
+				"properties": {
+					"version": {
+						"$ref": "#/components/schemas/SouthInfluxDBSettingsVersion"
+					},
+					"host": {
+						"type": "string"
+					},
+					"port": {
+						"type": "number",
+						"format": "double"
+					},
+					"protocol": {
+						"$ref": "#/components/schemas/SouthInfluxDBSettingsProtocol"
+					},
+					"database": {
+						"type": "string"
+					},
+					"username": {
+						"type": "string",
+						"nullable": true
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"url": {
+						"type": "string"
+					},
+					"token": {
+						"type": "string",
+						"nullable": true
+					},
+					"organisation": {
+						"type": "string"
+					},
+					"bucket": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"version"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemTypedDTO_SouthInfluxDBItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item is enabled and should be collected.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanMode": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ScanModeDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The scan mode configuration for this item."
+					},
+					"group": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthItemGroupDTO"
+							}
+						],
+						"nullable": true,
+						"description": "The group this item belongs to, if any."
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings",
+					"scanMode",
+					"group",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorInfluxDBDTO": {
+				"description": "South connector configuration for InfluxDB time series database.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"influxdb"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector is enabled and active.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBSettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorInfluxDBItemDTO"
 						},
 						"type": "array",
 						"description": "List of items (data points) configured for this connector."
@@ -9740,6 +10112,9 @@
 						"$ref": "#/components/schemas/SouthConnectorFTPDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorInfluxDBDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorModbusDTO"
 					},
 					{
@@ -10548,6 +10923,245 @@
 					"items": {
 						"items": {
 							"$ref": "#/components/schemas/SouthConnectorFTPItemCommandDTO"
+						},
+						"type": "array",
+						"description": "List of items (data points) to configure for this connector."
+					},
+					"groups": {
+						"items": {
+							"$ref": "#/components/schemas/SouthItemGroupCommandDTO"
+						},
+						"type": "array",
+						"description": "List of groups used to gather items"
+					}
+				},
+				"required": [
+					"name",
+					"type",
+					"description",
+					"enabled",
+					"settings",
+					"items",
+					"groups"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorInfluxDBItemCommandDTO": {
+				"description": "South connector item command for InfluxDB time series database.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorItemCommandTypedDTO_SouthInfluxDBItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the item (null when creating a new item).",
+						"example": null
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether this item should be enabled.",
+						"example": true
+					},
+					"name": {
+						"type": "string",
+						"description": "The name of the item.",
+						"example": "Temperature Logs"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings",
+						"description": "Item-specific settings for data collection."
+					},
+					"scanModeId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the scan mode to use for this item.\nNull when the scan mode should be determined by the system.",
+						"example": "periodic-5min"
+					},
+					"scanModeName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the scan mode to use when ID is not available.\nNull when not specifying by name.",
+						"example": null
+					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The ID of the group this item belongs to.\nNull when the item is not in any group.",
+						"example": "group-123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The name of the group this item belongs to.\nUsed when importing from CSV where group IDs are not available.\nNull when the item is not in any group.",
+						"example": "Production Line A"
+					},
+					"syncWithGroup": {
+						"type": "boolean",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields are inherited from the group.",
+						"example": true
+					},
+					"maxReadInterval": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 3600
+					},
+					"readDelay": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 200
+					},
+					"overlap": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
+						"example": 1000
+					}
+				},
+				"required": [
+					"id",
+					"enabled",
+					"name",
+					"settings",
+					"scanModeId",
+					"scanModeName",
+					"groupId",
+					"groupName",
+					"syncWithGroup",
+					"maxReadInterval",
+					"readDelay",
+					"overlap"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorInfluxDBCommandDTO": {
+				"description": "South connector command for InfluxDB time series database.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the South connector.",
+						"example": "Production Data Files"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"influxdb"
+						],
+						"nullable": false,
+						"description": "The type of the South connector.",
+						"example": "folder-scanner"
+					},
+					"description": {
+						"type": "string",
+						"description": "Description of the South connector's purpose.",
+						"example": "Scans production data CSV files"
+					},
+					"enabled": {
+						"type": "boolean",
+						"description": "Whether the South connector should be enabled.",
+						"example": true
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBSettings",
+						"description": "Configuration settings specific to this South connector type."
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorInfluxDBItemCommandDTO"
 						},
 						"type": "array",
 						"description": "List of items (data points) to configure for this connector."
@@ -14169,6 +14783,9 @@
 						"$ref": "#/components/schemas/SouthConnectorFTPCommandDTO"
 					},
 					{
+						"$ref": "#/components/schemas/SouthConnectorInfluxDBCommandDTO"
+					},
+					{
 						"$ref": "#/components/schemas/SouthConnectorModbusCommandDTO"
 					},
 					{
@@ -14253,6 +14870,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthFTPSettings"
+					},
+					{
+						"$ref": "#/components/schemas/SouthInfluxDBSettings"
 					},
 					{
 						"$ref": "#/components/schemas/SouthModbusSettings"
@@ -14527,6 +15147,9 @@
 						"$ref": "#/components/schemas/SouthFTPItemSettings"
 					},
 					{
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings"
+					},
+					{
 						"$ref": "#/components/schemas/SouthModbusItemSettings"
 					},
 					{
@@ -14631,6 +15254,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorFTPItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorInfluxDBItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorModbusItemDTO"
@@ -14795,6 +15421,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorFTPItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/SouthConnectorInfluxDBItemCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/SouthConnectorModbusItemCommandDTO"
@@ -21101,6 +21730,85 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryInfluxDBItemCommandDTO": {
+				"description": "History query item command for InfluxDB time series database.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryItemCommandTypedDTO_SouthInfluxDBItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"nullable": true
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryInfluxDBSouthCommandDTO": {
+				"description": "History query south command for InfluxDB time series database.",
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"influxdb"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthInfluxDBSettings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryInfluxDBItemCommandDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryModbusItemCommandDTO": {
 				"description": "History query item command for Modbus.",
 				"properties": {
@@ -22513,6 +23221,9 @@
 								"$ref": "#/components/schemas/HistoryQueryFTPSouthCommandDTO"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQueryInfluxDBSouthCommandDTO"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQueryModbusSouthCommandDTO"
 							},
 							{
@@ -23025,6 +23736,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryFTPItemCommandDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryInfluxDBItemCommandDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryModbusItemCommandDTO"
@@ -28034,6 +28748,131 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"HistoryQueryInfluxDBItemDTO": {
+				"description": "History query item DTO for InfluxDB time series database.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryItemTypedDTO_SouthInfluxDBItemSettings_": {
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "The unique identifier of the entity.",
+						"example": "entity123"
+					},
+					"createdBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who created the entity."
+					},
+					"updatedBy": {
+						"$ref": "#/components/schemas/UserInfo",
+						"description": "The user who last updated the entity."
+					},
+					"createdAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was created.",
+						"example": "2023-10-31T12:34:56.789Z"
+					},
+					"updatedAt": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The date and time when the entity was last updated.",
+						"example": "2023-10-31T13:45:00.123Z"
+					},
+					"name": {
+						"type": "string"
+					},
+					"enabled": {
+						"type": "boolean"
+					},
+					"settings": {
+						"$ref": "#/components/schemas/SouthInfluxDBItemSettings"
+					}
+				},
+				"required": [
+					"id",
+					"createdBy",
+					"updatedBy",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"enabled",
+					"settings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"HistoryQueryInfluxDBSouthDTO": {
+				"description": "History query south DTO for InfluxDB time series database.",
+				"properties": {
+					"southType": {
+						"type": "string",
+						"enum": [
+							"influxdb"
+						],
+						"nullable": false
+					},
+					"southSettings": {
+						"$ref": "#/components/schemas/SouthInfluxDBSettings"
+					},
+					"items": {
+						"items": {
+							"$ref": "#/components/schemas/HistoryQueryInfluxDBItemDTO"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"southType",
+					"southSettings",
+					"items"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"HistoryQueryModbusItemDTO": {
 				"description": "History query item DTO for Modbus.",
 				"properties": {
@@ -30139,6 +30978,9 @@
 								"$ref": "#/components/schemas/HistoryQueryFTPSouthDTO"
 							},
 							{
+								"$ref": "#/components/schemas/HistoryQueryInfluxDBSouthDTO"
+							},
+							{
 								"$ref": "#/components/schemas/HistoryQueryModbusSouthDTO"
 							},
 							{
@@ -30276,6 +31118,9 @@
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryFTPItemDTO"
+					},
+					{
+						"$ref": "#/components/schemas/HistoryQueryInfluxDBItemDTO"
 					},
 					{
 						"$ref": "#/components/schemas/HistoryQueryModbusItemDTO"
