@@ -1,7 +1,7 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { provideRouter } from '@angular/router';
+import { of, Subject } from 'rxjs';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
@@ -37,7 +37,10 @@ class EditEngineComponentTester {
   readonly lokiPassword = this.root.getByCss('#loki-password');
   readonly oiaLevel = this.root.getByCss('#oia-level');
   readonly oiaInterval = this.root.getByCss('#oia-interval');
-  readonly submitButton = this.root.getByCss('#save-button');
+  readonly saveNameButton = this.root.getByCss('#save-name-button');
+  readonly saveWebServerButton = this.root.getByCss('#save-web-server-button');
+  readonly saveProxyButton = this.root.getByCss('#save-proxy-button');
+  readonly saveLoggerButton = this.root.getByCss('#save-logger-button');
 
   constructor() {
     this.fixture.detectChanges();
@@ -50,7 +53,6 @@ describe('EditEngineComponent', () => {
   let notificationService: MockObject<NotificationService>;
   let modalService: MockModalService<PortRedirectModalComponent>;
   let unsavedChangesConfirmationService: MockObject<UnsavedChangesConfirmationService>;
-  let router: Router;
 
   const engineSettings: EngineSettingsDTO = {
     id: 'id',
@@ -109,15 +111,11 @@ describe('EditEngineComponent', () => {
     });
 
     engineService.getEngineSettings.mockReturnValue(of(engineSettings));
-    engineService.updateEngineSettings.mockReturnValue(
-      of({
-        needsRedirect: false,
-        newPort: null
-      })
-    );
+    engineService.updateEngineName.mockReturnValue(of(undefined));
+    engineService.updateEngineWebServer.mockReturnValue(of({ needsRedirect: false, newPort: null }));
+    engineService.updateEngineProxy.mockReturnValue(of(undefined));
+    engineService.updateEngineLogger.mockReturnValue(of(undefined));
 
-    router = TestBed.inject(Router);
-    vi.spyOn(router, 'navigate').mockResolvedValue(true);
     modalService = TestBed.inject(MockModalService);
 
     tester = new EditEngineComponentTester();
@@ -144,69 +142,128 @@ describe('EditEngineComponent', () => {
     await expect.element(tester.oiaInterval).not.toBeInTheDocument();
   });
 
-  test('should update engine settings', async () => {
+  test('should update engine name', async () => {
     await tester.name.fill('OIBus Dev');
-    await tester.proxyPort.fill('8000');
-    await tester.proxyEnabled.click();
-    await tester.consoleLevel.selectOptions('Error');
-    await tester.fileNumberOfFiles.fill('10');
-    await tester.lokiLevel.selectOptions('Silent');
-    await tester.oiaLevel.selectOptions('Error');
-    await tester.submitButton.click();
+    await tester.saveNameButton.click();
 
-    expect(engineService.updateEngineSettings).toHaveBeenCalledWith({
-      name: 'OIBus Dev',
-      port: 2223,
-      proxyEnabled: false,
-      proxyPort: null,
-      logParameters: {
-        console: {
-          level: 'error'
-        },
-        file: {
-          level: 'trace',
-          numberOfFiles: 10,
-          maxFileSize: 10
-        },
-        database: {
-          level: 'silent',
-          maxNumberOfLogs: 100_000
-        },
-        loki: {
-          level: 'silent',
-          interval: 60,
-          address: 'http://loki.oibus.com',
-          username: 'oibus',
-          password: 'pass'
-        },
-        oia: {
-          level: 'error',
-          interval: 60
-        }
-      }
-    });
+    expect(engineService.updateEngineName).toHaveBeenCalledWith({ name: 'OIBus Dev' });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
-    expect(router.navigate).toHaveBeenCalledWith(['/engine']);
+  });
+
+  test('should update web server port without redirect', async () => {
+    await tester.port.fill('3000');
+    await tester.saveWebServerButton.click();
+
+    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({ port: 3000 });
+    expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
   });
 
   test('should show redirect modal when port changes', async () => {
     const redirectModalComponent = createMock(PortRedirectModalComponent);
     modalService.mockClosedModal(redirectModalComponent);
     const openSpy = vi.spyOn(modalService, 'open');
-    engineService.updateEngineSettings.mockReturnValue(
-      of({
-        needsRedirect: true,
-        newPort: 3333
-      })
-    );
+    engineService.updateEngineWebServer.mockReturnValue(of({ needsRedirect: true, newPort: 3333 }));
 
     await tester.port.fill('3333');
-    await tester.submitButton.click();
+    await tester.saveWebServerButton.click();
 
-    expect(engineService.updateEngineSettings).toHaveBeenCalled();
+    expect(engineService.updateEngineWebServer).toHaveBeenCalled();
     expect(openSpy).toHaveBeenCalledWith(PortRedirectModalComponent, { backdrop: 'static', keyboard: false });
     expect(redirectModalComponent.initialize).toHaveBeenCalledWith(3333);
     expect(notificationService.success).not.toHaveBeenCalled();
-    expect(router.navigate).not.toHaveBeenCalled();
+  });
+
+  test('should update proxy settings', async () => {
+    await tester.proxyEnabled.click();
+    await tester.saveProxyButton.click();
+
+    expect(engineService.updateEngineProxy).toHaveBeenCalledWith({ proxyEnabled: false, proxyPort: null });
+    expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
+  });
+
+  test('should update logger settings', async () => {
+    await tester.consoleLevel.selectOptions('Error');
+    await tester.fileNumberOfFiles.fill('10');
+    await tester.saveLoggerButton.click();
+
+    expect(engineService.updateEngineLogger).toHaveBeenCalledWith({
+      logParameters: {
+        console: { level: 'error' },
+        file: { level: 'trace', numberOfFiles: 10, maxFileSize: 10 },
+        database: { level: 'silent', maxNumberOfLogs: 100_000 },
+        loki: { level: 'error', interval: 60, address: 'http://loki.oibus.com', username: 'oibus', password: 'pass' },
+        oia: { level: 'silent', interval: 60 }
+      }
+    });
+    expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
+  });
+
+  test('should not save name when form is invalid', () => {
+    tester.componentInstance.nameForm.controls.name.setValue('');
+    tester.componentInstance.saveName();
+
+    expect(engineService.updateEngineName).not.toHaveBeenCalled();
+  });
+
+  test('should not save web server when form is invalid', () => {
+    tester.componentInstance.webServerForm.controls.port.setValue(null);
+    tester.componentInstance.saveWebServer();
+
+    expect(engineService.updateEngineWebServer).not.toHaveBeenCalled();
+  });
+
+  test('should not save proxy when form is invalid', () => {
+    tester.componentInstance.proxyForm.controls.proxyEnabled.setValue(true);
+    tester.componentInstance.proxyForm.controls.proxyPort.setValue(null);
+    tester.componentInstance.proxyForm.controls.proxyPort.enable();
+    tester.componentInstance.saveProxy();
+
+    expect(engineService.updateEngineProxy).not.toHaveBeenCalled();
+  });
+
+  test('should not save logger when form is invalid', () => {
+    tester.componentInstance.loggerForm.controls.logParameters.controls.oia.controls.level.setValue('info');
+    tester.componentInstance.loggerForm.controls.logParameters.controls.oia.controls.interval.setValue(null);
+    tester.componentInstance.loggerForm.controls.logParameters.controls.oia.controls.interval.enable();
+    tester.componentInstance.saveLogger();
+
+    expect(engineService.updateEngineLogger).not.toHaveBeenCalled();
+  });
+
+  test('should return true from canDeactivate when no form is dirty', () => {
+    const result = tester.componentInstance.canDeactivate();
+    expect(result).toBe(true);
+    expect(unsavedChangesConfirmationService.confirmUnsavedChanges).not.toHaveBeenCalled();
+  });
+
+  test('should call confirmUnsavedChanges from canDeactivate when a form is dirty', () => {
+    const obs = new Subject<boolean>().asObservable();
+    unsavedChangesConfirmationService.confirmUnsavedChanges.mockReturnValue(obs);
+    tester.componentInstance.nameForm.markAsDirty();
+
+    const result = tester.componentInstance.canDeactivate();
+
+    expect(unsavedChangesConfirmationService.confirmUnsavedChanges).toHaveBeenCalled();
+    expect(result).toBe(obs);
+  });
+
+  test('should enable proxy port when proxy is enabled', async () => {
+    await expect.element(tester.proxyPort).toBeInTheDocument();
+    await tester.proxyEnabled.click();
+    await expect.element(tester.proxyPort).not.toBeInTheDocument();
+    await tester.proxyEnabled.click();
+    await expect.element(tester.proxyPort).toBeInTheDocument();
+  });
+
+  test('should show oia interval when oia level changes from silent', async () => {
+    await expect.element(tester.oiaInterval).not.toBeInTheDocument();
+    await tester.oiaLevel.selectOptions('Info');
+    await expect.element(tester.oiaInterval).toBeInTheDocument();
+  });
+
+  test('should show database max logs when database level changes from silent', async () => {
+    await expect.element(tester.databaseMaxNumberOfLogs).not.toBeInTheDocument();
+    await tester.databaseLevel.selectOptions('Info');
+    await expect.element(tester.databaseMaxNumberOfLogs).toBeInTheDocument();
   });
 });
