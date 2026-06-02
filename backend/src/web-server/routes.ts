@@ -7529,6 +7529,36 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineNameCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "name": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineWebServerCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "port": {"dataType":"double","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineProxyCommandDTO": {
+        "dataType": "refObject",
+        "properties": {
+            "proxyEnabled": {"dataType":"boolean","required":true},
+            "proxyPort": {"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "EngineLoggerCommandDTO": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusInfo": {
         "dataType": "refObject",
         "properties": {
@@ -11470,6 +11500,130 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'updateEngineSettings',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsEngineController_updateEngineName: Record<string, TsoaRoute.ParameterSchema> = {
+                command: {"in":"body","name":"command","required":true,"ref":"EngineNameCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.put('/api/engine/name',
+            ...(fetchMiddlewares<RequestHandler>(EngineController)),
+            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineName)),
+
+            async function EngineController_updateEngineName(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_updateEngineName, request, response });
+
+                const controller = new EngineController();
+
+              await templateService.apiHandler({
+                methodName: 'updateEngineName',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsEngineController_updateEngineWebServer: Record<string, TsoaRoute.ParameterSchema> = {
+                command: {"in":"body","name":"command","required":true,"ref":"EngineWebServerCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.put('/api/engine/web-server',
+            ...(fetchMiddlewares<RequestHandler>(EngineController)),
+            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineWebServer)),
+
+            async function EngineController_updateEngineWebServer(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_updateEngineWebServer, request, response });
+
+                const controller = new EngineController();
+
+              await templateService.apiHandler({
+                methodName: 'updateEngineWebServer',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsEngineController_updateEngineProxy: Record<string, TsoaRoute.ParameterSchema> = {
+                command: {"in":"body","name":"command","required":true,"ref":"EngineProxyCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.put('/api/engine/proxy',
+            ...(fetchMiddlewares<RequestHandler>(EngineController)),
+            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineProxy)),
+
+            async function EngineController_updateEngineProxy(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_updateEngineProxy, request, response });
+
+                const controller = new EngineController();
+
+              await templateService.apiHandler({
+                methodName: 'updateEngineProxy',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: 200,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsEngineController_updateEngineLogger: Record<string, TsoaRoute.ParameterSchema> = {
+                command: {"in":"body","name":"command","required":true,"ref":"EngineLoggerCommandDTO"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.put('/api/engine/logger',
+            ...(fetchMiddlewares<RequestHandler>(EngineController)),
+            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineLogger)),
+
+            async function EngineController_updateEngineLogger(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_updateEngineLogger, request, response });
+
+                const controller = new EngineController();
+
+              await templateService.apiHandler({
+                methodName: 'updateEngineLogger',
                 controller,
                 response,
                 next,

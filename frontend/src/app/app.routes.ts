@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { LogsComponent } from './logs/logs.component';
 import { AboutComponent } from './about/about.component';
-import { EditEngineComponent } from './engine/edit-engine/edit-engine.component';
 import { SouthListComponent } from './south/south-list.component';
 import { NorthListComponent } from './north/north-list.component';
 import { EngineDetailComponent } from './engine/engine-detail.component';
@@ -38,11 +37,6 @@ export const ROUTES: Routes = [
       {
         path: 'engine/oianalytics',
         component: OIARegistrationComponent
-      },
-      {
-        path: 'engine/edit',
-        component: EditEngineComponent,
-        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'north',
@@ -83,11 +77,6 @@ export const ROUTES: Routes = [
       {
         path: 'south/:southId',
         component: SouthDetailComponent
-      },
-      {
-        path: 'engine/edit',
-        component: EditEngineComponent,
-        canDeactivate: [UnsavedChangesGuard]
       },
       {
         path: 'history-queries',
