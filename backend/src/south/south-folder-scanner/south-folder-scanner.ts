@@ -205,11 +205,14 @@ export default class SouthFolderScanner
 
     if (this.connector.settings.compression) {
       try {
-        // Compress and send the compressed file
+        // Compress and send the compressed file.
+        // Use a flattened name for the temp .gz file (replace separators with _),
+        // but preserve the original relative `filename` as the logical name so
+        // north connectors see "subdir/file.json.gz" not the temp absolute path.
         const safeFilename = filename.split(path.sep).join('_');
         const gzipPath = path.resolve(this.tmpFolder, `${safeFilename}.gz`);
         await compress(filePath, gzipPath);
-        await this.addContent({ type: 'any', filePath: gzipPath }, queryTime, [item]);
+        await this.addContent({ type: 'any', filePath: gzipPath, filename: `${filename}.gz` }, queryTime, [item]);
         try {
           await fs.unlink(gzipPath);
         } catch (unlinkError) {
@@ -217,10 +220,10 @@ export default class SouthFolderScanner
         }
       } catch (error: unknown) {
         this.logger.error(`Error compressing file "${filePath}": ${(error as Error).message}. Sending it raw instead.`);
-        await this.addContent({ type: 'any', filePath }, queryTime, [item]);
+        await this.addContent({ type: 'any', filePath, filename }, queryTime, [item]);
       }
     } else {
-      await this.addContent({ type: 'any', filePath }, queryTime, [item]);
+      await this.addContent({ type: 'any', filePath, filename }, queryTime, [item]);
     }
   }
 }

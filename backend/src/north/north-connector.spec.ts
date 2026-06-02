@@ -798,7 +798,7 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[0], readStream);
     assert.deepStrictEqual(cacheService.addCacheContent.mock.calls[0].arguments[1], {
       contentType: 'any',
-      contentFilename: 'path/file.csv'
+      contentFilename: 'file.csv' // basename — full path is never leaked into cache metadata
     });
   });
 

@@ -606,7 +606,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           // True file-on-disk path stays on the stream API — we don't want to
           // slurp the whole file into memory.
           const randomId = generateRandomId(10);
-          const { name, ext } = path.parse(data.filePath);
+          // Use the logical filename when provided (e.g. "subdir/file.json" from folder-scanner),
+          // otherwise fall back to the basename of the disk path.
+          const logicalName = data.filename ?? path.basename(data.filePath);
+          const { name, ext } = path.parse(logicalName);
           const cacheFilename = `${name}-${randomId}${ext}`;
 
           const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, cacheFilename);
@@ -624,7 +627,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     if (data.type === 'any') {
       await this.cacheService.addCacheContent(createReadStream(data.filePath), {
         contentType: data.type,
-        contentFilename: data.filePath
+        // Use the logical filename when provided (preserves relative sub-paths like "subdir/file.json").
+        // Fall back to the basename so that absolute paths are never leaked into cache metadata.
+        contentFilename: data.filename ?? path.basename(data.filePath)
       });
     } else if (data.type === 'any-content') {
       await this.cacheService.addCacheContent(Readable.from(data.content), {
