@@ -120,7 +120,15 @@ export function mockModule(req: NodeJS.Require, modulePath: string, exports: unk
   } catch {
     // ensure the module has a cache entry before we replace its exports
   }
-  const resolved = req.resolve(modulePath);
+  let resolved: string;
+  try {
+    resolved = req.resolve(modulePath);
+  } catch {
+    // Module is not resolvable (e.g. optional native addon not installed in this environment).
+    // Skip cache injection — when the SUT calls require(modulePath) it will also fail to
+    // resolve and run its own error-handling path (e.g. return null).
+    return exports as Record<string, unknown>;
+  }
   if (req.cache[resolved]) {
     req.cache[resolved]!.exports = exports;
   } else {
