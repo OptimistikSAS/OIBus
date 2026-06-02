@@ -389,6 +389,12 @@ export default class OIAnalyticsMessageService {
           oia: {
             level: engine.logParameters.oia.level,
             interval: engine.logParameters.oia.interval
+          },
+          syslog: {
+            level: engine.logParameters.syslog.level,
+            host: engine.logParameters.syslog.host,
+            port: engine.logParameters.syslog.port,
+            protocol: engine.logParameters.syslog.protocol
           }
         }
       }

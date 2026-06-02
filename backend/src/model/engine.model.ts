@@ -32,6 +32,12 @@ export interface EngineSettings extends BaseEntity {
       level: LogLevel;
       interval: number;
     };
+    syslog: {
+      level: LogLevel;
+      host: string;
+      port: number;
+      protocol: 'udp4' | 'tcp';
+    };
   };
 }
 

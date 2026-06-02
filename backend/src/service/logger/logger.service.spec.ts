@@ -89,22 +89,6 @@ describe('Logger', () => {
         level: engineSettings.logParameters.database.level
       },
       {
-        target: 'pino-loki',
-        options: {
-          batching: {
-            interval: engineSettings.logParameters.loki.interval,
-            maxBufferSize: 50000
-          },
-          host: engineSettings.logParameters.loki.address,
-          basicAuth: {
-            username: engineSettings.logParameters.loki.username,
-            password: engineSettings.logParameters.loki.password
-          },
-          labels: { name: engineSettings.name }
-        },
-        level: engineSettings.logParameters.loki.level
-      },
-      {
         target: path.join(__dirname, 'oianalytics-transport.js'),
         options: {
           interval: engineSettings.logParameters.oia.interval,
@@ -113,6 +97,26 @@ describe('Logger', () => {
           cryptoSettings: {}
         },
         level: engineSettings.logParameters.oia.level
+      },
+      {
+        target: path.join(__dirname, 'syslog-transport.js'),
+        options: {
+          host: engineSettings.logParameters.syslog.host,
+          port: engineSettings.logParameters.syslog.port,
+          protocol: engineSettings.logParameters.syslog.protocol,
+          appName: engineSettings.name
+        },
+        level: engineSettings.logParameters.syslog.level
+      },
+      {
+        target: 'pino-loki',
+        options: {
+          batching: { interval: engineSettings.logParameters.loki.interval, maxBufferSize: 50000 },
+          host: engineSettings.logParameters.loki.address,
+          basicAuth: { username: engineSettings.logParameters.loki.username, password: engineSettings.logParameters.loki.password },
+          labels: { name: engineSettings.name }
+        },
+        level: engineSettings.logParameters.loki.level
       }
     ];
 
@@ -163,6 +167,26 @@ describe('Logger', () => {
         level: specificSettings.logParameters.file.level
       },
       {
+        target: path.join(__dirname, 'oianalytics-transport.js'),
+        options: {
+          interval: specificSettings.logParameters.oia.interval,
+          registrationSettings: specificRegistration,
+          certsFolder: '',
+          cryptoSettings: {}
+        },
+        level: specificSettings.logParameters.oia.level
+      },
+      {
+        target: path.join(__dirname, 'syslog-transport.js'),
+        options: {
+          host: specificSettings.logParameters.syslog.host,
+          port: specificSettings.logParameters.syslog.port,
+          protocol: specificSettings.logParameters.syslog.protocol,
+          appName: specificSettings.name
+        },
+        level: specificSettings.logParameters.syslog.level
+      },
+      {
         target: 'pino-loki',
         options: {
           batching: {
@@ -177,16 +201,6 @@ describe('Logger', () => {
           labels: { name: specificSettings.name }
         },
         level: specificSettings.logParameters.loki.level
-      },
-      {
-        target: path.join(__dirname, 'oianalytics-transport.js'),
-        options: {
-          interval: specificSettings.logParameters.oia.interval,
-          registrationSettings: specificRegistration,
-          certsFolder: '',
-          cryptoSettings: {}
-        },
-        level: specificSettings.logParameters.oia.level
       }
     ];
 
@@ -211,6 +225,7 @@ describe('Logger', () => {
     const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     specificSettings.logParameters.database.maxNumberOfLogs = 0;
     specificSettings.logParameters.loki.address = '';
+    specificSettings.logParameters.syslog.host = '';
 
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificSettings.logParameters.console.level },
@@ -252,5 +267,46 @@ describe('Logger', () => {
     service.fileCleanUpService = { stop: stopMock } as unknown as FileCleanupServiceType;
     service.stop();
     assert.strictEqual(stopMock.mock.calls.length, 1);
+  });
+
+  it('should add syslog transport when host is set and level is not silent', async () => {
+    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
+    specificSettings.logParameters.database.maxNumberOfLogs = 0;
+    specificSettings.logParameters.loki.address = '';
+    specificSettings.logParameters.syslog.host = 'syslog.example.com';
+    specificSettings.logParameters.syslog.level = 'info';
+
+    await service.start(specificSettings, null);
+
+    const targets: Array<{ target: string }> = pinoMock.mock.calls[0].arguments[0].transport.targets;
+    const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
+    assert.ok(syslogTarget !== undefined, 'syslog-transport.js target should be present');
+  });
+
+  it('should not add syslog transport when host is empty', async () => {
+    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
+    specificSettings.logParameters.database.maxNumberOfLogs = 0;
+    specificSettings.logParameters.loki.address = '';
+    specificSettings.logParameters.syslog.host = '';
+
+    await service.start(specificSettings, null);
+
+    const targets: Array<{ target: string }> = pinoMock.mock.calls[0].arguments[0].transport.targets;
+    const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
+    assert.strictEqual(syslogTarget, undefined, 'syslog-transport.js target should not be present');
+  });
+
+  it('should not add syslog transport when level is silent', async () => {
+    const specificSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
+    specificSettings.logParameters.database.maxNumberOfLogs = 0;
+    specificSettings.logParameters.loki.address = '';
+    specificSettings.logParameters.syslog.host = 'syslog.example.com';
+    specificSettings.logParameters.syslog.level = 'silent';
+
+    await service.start(specificSettings, null);
+
+    const targets: Array<{ target: string }> = pinoMock.mock.calls[0].arguments[0].transport.targets;
+    const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
+    assert.strictEqual(syslogTarget, undefined, 'syslog-transport.js target should not be present');
   });
 });
