@@ -1,7 +1,12 @@
 import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { EngineSettings } from '../../model/engine.model';
-import { EngineSettingsCommandDTO } from '../../../shared/model/engine.model';
+import {
+  EngineLoggerCommandDTO,
+  EngineProxyCommandDTO,
+  EngineSettingsCommandDTO,
+  EngineWebServerCommandDTO
+} from '../../../shared/model/engine.model';
 import { version } from '../../../package.json';
 import { LogLevel } from '../../../shared/model/logs.model';
 
@@ -97,6 +102,65 @@ export default class EngineRepository {
         command.port,
         +command.proxyEnabled,
         command.proxyPort,
+        command.logParameters.console.level,
+        command.logParameters.file.level,
+        command.logParameters.file.maxFileSize,
+        command.logParameters.file.numberOfFiles,
+        command.logParameters.database.level,
+        command.logParameters.database.maxNumberOfLogs,
+        command.logParameters.loki.level,
+        command.logParameters.loki.interval,
+        command.logParameters.loki.address,
+        command.logParameters.loki.username,
+        command.logParameters.loki.password,
+        command.logParameters.oia.level,
+        command.logParameters.oia.interval,
+        updatedBy
+      );
+  }
+
+  updateName(name: string, updatedBy: string): void {
+    const query =
+      `UPDATE ${ENGINES_TABLE} SET name = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
+    this.database.prepare(query).run(name, updatedBy);
+  }
+
+  updateWebServer(command: EngineWebServerCommandDTO, updatedBy: string): void {
+    const query =
+      `UPDATE ${ENGINES_TABLE} SET port = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
+    this.database.prepare(query).run(command.port, updatedBy);
+  }
+
+  updateProxy(command: EngineProxyCommandDTO, updatedBy: string): void {
+    const query =
+      `UPDATE ${ENGINES_TABLE} SET proxy_enabled = ?, proxy_port = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
+    this.database.prepare(query).run(+command.proxyEnabled, command.proxyPort, updatedBy);
+  }
+
+  updateLogger(command: EngineLoggerCommandDTO, updatedBy: string): void {
+    const query =
+      `UPDATE ${ENGINES_TABLE} SET ` +
+      'log_console_level = ?, ' +
+      'log_file_level = ?, ' +
+      'log_file_max_file_size = ?, ' +
+      'log_file_number_of_files = ?, ' +
+      'log_database_level = ?, ' +
+      'log_database_max_number_of_logs = ?, ' +
+      'log_loki_level = ?, ' +
+      'log_loki_interval = ?, ' +
+      'log_loki_address = ?, ' +
+      'log_loki_username = ?, ' +
+      'log_loki_password = ?, ' +
+      'log_oia_level = ?, ' +
+      'log_oia_interval = ?, ' +
+      `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
+    this.database
+      .prepare(query)
+      .run(
         command.logParameters.console.level,
         command.logParameters.file.level,
         command.logParameters.file.maxFileSize,

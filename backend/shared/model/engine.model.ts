@@ -971,6 +971,59 @@ export interface EngineSettingsCommandDTO {
 }
 
 /**
+ * Engine name command Data Transfer Object.
+ * Used as the request body for updating only the engine name.
+ */
+export interface EngineNameCommandDTO {
+  /**
+   * The name of the engine.
+   * @example "OIBus OT"
+   */
+  name: string;
+}
+
+/**
+ * Engine web server command Data Transfer Object.
+ * Used as the request body for updating only the web server port.
+ */
+export interface EngineWebServerCommandDTO {
+  /**
+   * The port on which the engine listens.
+   * @example 8080
+   */
+  port: number;
+}
+
+/**
+ * Engine proxy command Data Transfer Object.
+ * Used as the request body for updating only the proxy settings.
+ */
+export interface EngineProxyCommandDTO {
+  /**
+   * Whether the proxy is enabled.
+   * @example false
+   */
+  proxyEnabled: boolean;
+
+  /**
+   * The port for the proxy, if enabled.
+   * @example null
+   */
+  proxyPort: number | null;
+}
+
+/**
+ * Engine logger command Data Transfer Object.
+ * Used as the request body for updating only the logging parameters.
+ */
+export interface EngineLoggerCommandDTO {
+  /**
+   * Logging parameters for different outputs.
+   */
+  logParameters: EngineSettingsCommandDTO['logParameters'];
+}
+
+/**
  * Engine settings update result Data Transfer Object.
  * Returned after updating engine settings to indicate if a redirect is needed.
  */

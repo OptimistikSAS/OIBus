@@ -32,6 +32,8 @@ let mockEncryptionService: Record<string, unknown>;
 
 // Captured mock proxy instance — set by MockProxyServer constructor in before()
 let lastProxyRefreshIpFilters: ReturnType<typeof mock.fn>;
+let lastProxyStart: ReturnType<typeof mock.fn>;
+let lastProxyStop: ReturnType<typeof mock.fn>;
 
 let OIBusService: new (...args: Array<unknown>) => InstanceType<typeof OIBusServiceType>;
 let toEngineSettingsDTO: typeof toEngineSettingsDTOType;
@@ -50,6 +52,8 @@ before(() => {
     setLogger = mock.fn();
     constructor() {
       lastProxyRefreshIpFilters = this.refreshIpFilters;
+      lastProxyStart = this.start;
+      lastProxyStop = this.stop;
     }
   }
   mockProxyServer = { __esModule: true, default: MockProxyServer };
@@ -351,6 +355,121 @@ describe('OIBus Service', () => {
     assert.strictEqual(loggerService.stop.mock.calls.length, 0);
     assert.strictEqual(loggerService.start.mock.calls.length, 0);
     assert.strictEqual(loggerService.createChildLogger.mock.calls.length, 1); // in constructor only
+  });
+
+  it('should update engine name', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await service.updateEngineName(testData.engine.nameCommand, testData.users.list[0].id);
+
+    assert.strictEqual(engineRepository.updateName.mock.calls.length, 1);
+    assert.deepStrictEqual(engineRepository.updateName.mock.calls[0].arguments, [
+      testData.engine.nameCommand.name,
+      testData.users.list[0].id
+    ]);
+    assert.strictEqual(loggerService.stop.mock.calls.length, 1);
+    assert.strictEqual(loggerService.start.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should update engine web server port without redirect when port unchanged', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    const result = await service.updateEngineWebServer({ port: testData.engine.settings.port }, testData.users.list[0].id);
+
+    assert.deepStrictEqual(result, { needsRedirect: false, newPort: null });
+    assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should update engine web server port with redirect when port changed', async () => {
+    const newSettings = { ...testData.engine.settings, port: 3333 };
+    let getCallCount = 0;
+    engineRepository.get.mock.mockImplementation(() => {
+      getCallCount++;
+      if (getCallCount === 1) return testData.engine.settings;
+      return newSettings;
+    });
+
+    mock.timers.reset();
+    const result = await service.updateEngineWebServer(testData.engine.webServerCommand, testData.users.list[0].id);
+    await new Promise(resolve => setImmediate(resolve));
+    mock.timers.enable({
+      apis: ['Date', 'setInterval', 'setImmediate', 'setTimeout'],
+      now: new Date(testData.constants.dates.FAKE_NOW).getTime()
+    });
+
+    assert.deepStrictEqual(result, { needsRedirect: true, newPort: 3333 });
+  });
+
+  it('should throw error when web server port equals proxy port', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await assert.rejects(
+      () => service.updateEngineWebServer({ port: testData.engine.settings.proxyPort! }, testData.users.list[0].id),
+      new Error('Web server port and proxy port can not be the same')
+    );
+    assert.strictEqual(engineRepository.updateWebServer.mock.calls.length, 0);
+  });
+
+  it('should update engine proxy settings', async () => {
+    engineRepository.get.mock.mockImplementation(() => ({ ...testData.engine.settings, proxyEnabled: false }));
+
+    await service.updateEngineProxy({ proxyEnabled: false, proxyPort: null }, testData.users.list[0].id);
+
+    assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should throw error when proxy port equals web server port', async () => {
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await assert.rejects(
+      () => service.updateEngineProxy({ proxyEnabled: true, proxyPort: testData.engine.settings.port }, testData.users.list[0].id),
+      new Error('Web server port and proxy port can not be the same')
+    );
+    assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 0);
+  });
+
+  it('should start proxy server when proxy is enabled', async () => {
+    const settingsWithProxy = { ...testData.engine.settings, proxyEnabled: true, proxyPort: 9000 };
+    engineRepository.get.mock.mockImplementation(() => settingsWithProxy);
+
+    await service.updateEngineProxy({ proxyEnabled: true, proxyPort: 9000 }, testData.users.list[0].id);
+
+    assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 1);
+    assert.strictEqual(lastProxyStop.mock.calls.length, 1);
+    assert.strictEqual(lastProxyStart.mock.calls.length, 1);
+    assert.deepStrictEqual(lastProxyStart.mock.calls[0].arguments, [9000]);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should update engine logger settings and encrypt loki password', async () => {
+    const command = JSON.parse(JSON.stringify(testData.engine.loggerCommand));
+    command.logParameters.loki.password = 'new password';
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await service.updateEngineLogger(command, testData.users.list[0].id);
+
+    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
+    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 1);
+    assert.strictEqual(engineRepository.updateLogger.mock.calls.length, 1);
+    assert.strictEqual(loggerService.stop.mock.calls.length, 1);
+    assert.strictEqual(loggerService.start.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
+  });
+
+  it('should update engine logger settings and preserve loki password when empty', async () => {
+    const command = JSON.parse(JSON.stringify(testData.engine.loggerCommand));
+    command.logParameters.loki.password = '';
+    engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
+
+    await service.updateEngineLogger(command, testData.users.list[0].id);
+
+    const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
+    assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 0);
+    assert.strictEqual(command.logParameters.loki.password, testData.engine.settings.logParameters.loki.password);
+    assert.strictEqual(engineRepository.updateLogger.mock.calls.length, 1);
   });
 
   it('should correctly restart OIBus', async () => {

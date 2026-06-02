@@ -1,7 +1,14 @@
 import { describe, it, before, beforeEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { EngineSettingsCommandDTO, EngineSettingsUpdateResultDTO } from '../../../shared/model/engine.model';
+import {
+  EngineLoggerCommandDTO,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
+  EngineSettingsCommandDTO,
+  EngineSettingsUpdateResultDTO,
+  EngineWebServerCommandDTO
+} from '../../../shared/model/engine.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
@@ -87,5 +94,45 @@ describe('EngineController', () => {
 
   it('should check OIBus status', async () => {
     await controller.getOIBusStatus(mockRequest as CustomExpressRequest);
+  });
+
+  it('should update engine name', async () => {
+    const command: EngineNameCommandDTO = testData.engine.nameCommand;
+    oIBusService.updateEngineName = mock.fn(async () => undefined);
+
+    await controller.updateEngineName(command, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(oIBusService.updateEngineName.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateEngineName.mock.calls[0].arguments, [command, testData.users.list[0].id]);
+  });
+
+  it('should update engine web server settings', async () => {
+    const command: EngineWebServerCommandDTO = testData.engine.webServerCommand;
+    oIBusService.updateEngineWebServer = mock.fn(async () => ({}) as EngineSettingsUpdateResultDTO);
+
+    await controller.updateEngineWebServer(command, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(oIBusService.updateEngineWebServer.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateEngineWebServer.mock.calls[0].arguments, [command, testData.users.list[0].id]);
+  });
+
+  it('should update engine proxy settings', async () => {
+    const command: EngineProxyCommandDTO = testData.engine.proxyCommand;
+    oIBusService.updateEngineProxy = mock.fn(async () => undefined);
+
+    await controller.updateEngineProxy(command, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(oIBusService.updateEngineProxy.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateEngineProxy.mock.calls[0].arguments, [command, testData.users.list[0].id]);
+  });
+
+  it('should update engine logger settings', async () => {
+    const command: EngineLoggerCommandDTO = testData.engine.loggerCommand;
+    oIBusService.updateEngineLogger = mock.fn(async () => undefined);
+
+    await controller.updateEngineLogger(command, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(oIBusService.updateEngineLogger.mock.calls.length, 1);
+    assert.deepStrictEqual(oIBusService.updateEngineLogger.mock.calls[0].arguments, [command, testData.users.list[0].id]);
   });
 });
