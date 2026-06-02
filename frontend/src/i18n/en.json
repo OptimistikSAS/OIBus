@@ -567,6 +567,12 @@
       "oia": {
         "level": "OIAnalytics level",
         "interval": "OIAnalytics interval"
+      },
+      "syslog": {
+        "level": "Syslog level",
+        "host": "Syslog host",
+        "port": "Syslog port",
+        "protocol": "Syslog protocol"
       }
     },
     "monitoring": {

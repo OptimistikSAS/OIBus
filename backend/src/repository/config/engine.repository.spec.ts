@@ -108,7 +108,8 @@ describe('EngineRepository with empty database', () => {
         file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
         database: { level: 'info', maxNumberOfLogs: 100_000 },
         loki: { level: 'silent', interval: 60, address: '', username: '', password: '' },
-        oia: { level: 'silent', interval: 10 }
+        oia: { level: 'silent', interval: 10 },
+        syslog: { level: 'silent', host: '', port: 514, protocol: 'udp4' }
       });
     });
 
