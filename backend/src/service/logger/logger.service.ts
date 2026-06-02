@@ -55,11 +55,12 @@ const computeParentLevel = (targets: ReadonlyArray<{ level: string }>): pino.Lev
 
 /**
  * Manage pino loggers
- * Four loggers are supported:
+ * Five transports are supported:
  *  - Console
  *  - File
  *  - SQLite
  *  - Loki
+ *  - Syslog (RFC 5424 over UDP/TCP via pino-syslog + pino-socket)
  * @class LoggerService
  */
 class LoggerService {
@@ -99,33 +100,6 @@ class LoggerService {
       });
     }
 
-    if (engineSettings.logParameters.loki.address && engineSettings.logParameters.loki.level !== 'silent') {
-      try {
-        targets.push({
-          target: 'pino-loki',
-          options: {
-            batching: {
-              interval: engineSettings.logParameters.loki.interval,
-              maxBufferSize: 50000
-            },
-            host: engineSettings.logParameters.loki.address,
-            basicAuth: {
-              username: engineSettings.logParameters.loki.username,
-              password: engineSettings.logParameters.loki.password
-                ? await encryptionService.decryptText(engineSettings.logParameters.loki.password)
-                : ''
-            },
-            labels: { name: engineSettings.name }
-          },
-          level: engineSettings.logParameters.loki.level
-        });
-      } catch (error) {
-        // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
-        // logged in the console and loki won't be activated
-        console.error(error);
-      }
-    }
-
     if (registration && registration.status === 'REGISTERED' && engineSettings.logParameters.oia.level !== 'silent') {
       targets.push({
         target: path.join(__dirname, './oianalytics-transport.js'),
@@ -137,6 +111,41 @@ class LoggerService {
         },
         level: engineSettings.logParameters.oia.level
       });
+    }
+
+    if (engineSettings.logParameters.syslog.host && engineSettings.logParameters.syslog.level !== 'silent') {
+      targets.push({
+        target: path.join(__dirname, 'syslog-transport.js'),
+        options: {
+          host: engineSettings.logParameters.syslog.host,
+          port: engineSettings.logParameters.syslog.port,
+          protocol: engineSettings.logParameters.syslog.protocol,
+          appName: engineSettings.name
+        },
+        level: engineSettings.logParameters.syslog.level
+      });
+    }
+
+    if (engineSettings.logParameters.loki.address && engineSettings.logParameters.loki.level !== 'silent') {
+      try {
+        const lokiPassword = engineSettings.logParameters.loki.password
+          ? await encryptionService.decryptText(engineSettings.logParameters.loki.password)
+          : '';
+        targets.push({
+          target: 'pino-loki',
+          options: {
+            batching: { interval: engineSettings.logParameters.loki.interval, maxBufferSize: 50000 },
+            host: engineSettings.logParameters.loki.address,
+            basicAuth: { username: engineSettings.logParameters.loki.username, password: lokiPassword },
+            labels: { name: engineSettings.name }
+          },
+          level: engineSettings.logParameters.loki.level
+        });
+      } catch (error) {
+        // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
+        // logged in the console and loki won't be activated
+        console.error(error);
+      }
     }
 
     this.logger = pino({

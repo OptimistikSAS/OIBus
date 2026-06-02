@@ -49,6 +49,12 @@ const logParametersSchema = Joi.object({
   oia: Joi.object({
     level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
     interval: Joi.number().integer().required().min(10)
+  }),
+  syslog: Joi.object({
+    level: Joi.string().required().allow('silent', 'error', 'warning', 'info', 'debug', 'trace'),
+    host: Joi.string().allow('', null),
+    port: Joi.number().integer().required().min(1).max(65535),
+    protocol: Joi.string().valid('udp4', 'tcp').required()
   })
 });
 
