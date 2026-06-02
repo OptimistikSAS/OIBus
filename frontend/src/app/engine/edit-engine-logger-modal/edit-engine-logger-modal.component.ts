@@ -47,6 +47,12 @@ export class EditEngineLoggerModalComponent {
       oia: this.fb.group({
         level: ['silent' as LogLevel, Validators.required],
         interval: [null as number | null, [Validators.required, Validators.min(10)]]
+      }),
+      syslog: this.fb.group({
+        level: ['silent' as LogLevel, Validators.required],
+        host: ['' as string],
+        port: [514 as number | null, [Validators.required, Validators.min(1), Validators.max(65535)]],
+        protocol: ['udp4' as 'udp4' | 'tcp', Validators.required]
       })
     })
   });
@@ -115,7 +121,7 @@ export class EditEngineLoggerModalComponent {
     });
   }
 
-  isLevelSilent(category: 'console' | 'file' | 'database' | 'loki' | 'oia'): boolean {
+  isLevelSilent(category: 'console' | 'file' | 'database' | 'loki' | 'oia' | 'syslog'): boolean {
     return this.form.controls.logParameters.controls[category].controls.level.value === 'silent';
   }
 
@@ -205,6 +211,12 @@ export class EditEngineLoggerModalComponent {
         oia: {
           level: formValue.logParameters.oia.level,
           interval: formValue.logParameters.oia.interval!
+        },
+        syslog: {
+          level: formValue.logParameters.syslog.level,
+          host: formValue.logParameters.syslog.host,
+          port: formValue.logParameters.syslog.port!,
+          protocol: formValue.logParameters.syslog.protocol
         }
       })
       .subscribe(() => {
