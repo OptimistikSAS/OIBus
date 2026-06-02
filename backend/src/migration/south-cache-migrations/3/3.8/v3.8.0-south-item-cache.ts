@@ -33,27 +33,39 @@ export async function up(knex: Knex): Promise<void> {
     );
   }
 
-  // 3. Create per-connector item cache tables and migrate tracked_instant from cache_history
+  // 3. Create per-connector item cache tables and migrate tracked_instant from cache_history.
+  //
+  // IMPORTANT: item_id must be the PRIMARY KEY, matching SouthCacheRepository.createItemValueTable
+  // (the runtime schema). The repository upserts with `INSERT OR REPLACE ... WHERE item_id = ?`, which
+  // only replaces an existing row when a UNIQUE/PRIMARY KEY constraint is hit. A composite
+  // `UNIQUE(item_id, group_id)` does NOT work for non-grouped connectors because group_id is NULL and
+  // SQLite treats NULLs as distinct in a unique constraint — so every save would append a new row
+  // instead of replacing, and the connector would keep reading a stale tracked_instant (i.e. its
+  // history window would never advance). Keying on item_id alone matches the repository exactly.
   for (const connectorId of connectorIds) {
     const tableName = `south_item_cache_${connectorId}`;
     await knex.schema.createTable(tableName, table => {
-      table.string('item_id');
+      table.string('item_id').primary();
       table.string('group_id');
       table.datetime('query_time');
       table.text('value');
       table.datetime('tracked_instant');
-      table.unique(['item_id', 'group_id']);
     });
 
     if (await knex.schema.hasTable(SOUTH_CACHE_TABLE)) {
       const entries = await knex(SOUTH_CACHE_TABLE).where('south_id', connectorId).select('item_id', 'scan_mode_id', 'max_instant');
 
-      const rowsToInsert = entries.map(entry => ({
-        item_id: entry.item_id === 'all' ? entry.scan_mode_id : entry.item_id,
-        query_time: null,
-        value: null,
-        tracked_instant: entry.max_instant
-      }));
+      // Collapse to one row per item_id (item_id is now the PK). If several cache_history rows map to
+      // the same item_id, keep the latest tracked_instant.
+      const byItemId = new Map<string, { item_id: string; query_time: null; value: null; tracked_instant: string | null }>();
+      for (const entry of entries) {
+        const itemId = entry.item_id === 'all' ? entry.scan_mode_id : entry.item_id;
+        const existing = byItemId.get(itemId);
+        if (!existing || (entry.max_instant && (!existing.tracked_instant || entry.max_instant > existing.tracked_instant))) {
+          byItemId.set(itemId, { item_id: itemId, query_time: null, value: null, tracked_instant: entry.max_instant });
+        }
+      }
+      const rowsToInsert = [...byItemId.values()];
       if (rowsToInsert.length > 0) {
         await knex.batchInsert(tableName, rowsToInsert, 100);
       }
