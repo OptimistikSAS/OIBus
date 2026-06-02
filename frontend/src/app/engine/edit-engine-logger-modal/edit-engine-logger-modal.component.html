@@ -143,6 +143,48 @@
         }
       </ng-container>
 
+      <!-- Syslog settings -->
+      <ng-container formGroupName="syslog">
+        <div class="row">
+          <div class="col-4">
+            <div class="form-group">
+              <label class="form-label" for="syslog-level" translate="engine.logger.syslog.level"></label>
+              <select formControlName="level" class="form-select mb-2 mr-sm-2" id="syslog-level">
+                @for (level of logLevels; track level) {
+                  <option [ngValue]="level" [translate]="'enums.log-levels.' + level"></option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+        @if (!isLevelSilent('syslog')) {
+          <div class="row">
+            <div class="col-6">
+              <div class="form-group">
+                <label class="form-label" for="syslog-host" translate="engine.logger.syslog.host"></label>
+                <input formControlName="host" id="syslog-host" class="form-control" />
+              </div>
+            </div>
+            <div class="col-3">
+              <div class="form-group">
+                <label class="form-label" for="syslog-port" translate="engine.logger.syslog.port"></label>
+                <input type="number" formControlName="port" id="syslog-port" class="form-control" />
+                <val-errors controlName="port" />
+              </div>
+            </div>
+            <div class="col-3">
+              <div class="form-group">
+                <label class="form-label" for="syslog-protocol" translate="engine.logger.syslog.protocol"></label>
+                <select formControlName="protocol" class="form-select" id="syslog-protocol">
+                  <option value="udp4">UDP</option>
+                  <option value="tcp">TCP</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        }
+      </ng-container>
+
       <!-- Console settings -->
       <div class="row" formGroupName="console">
         <div class="col-4">

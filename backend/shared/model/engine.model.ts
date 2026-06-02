@@ -156,6 +156,34 @@ export interface EngineSettingsDTO extends BaseEntity {
        */
       interval: number;
     };
+
+    /**
+     * Syslog logging configuration.
+     */
+    syslog: {
+      /**
+       * The log level for syslog output.
+       */
+      level: LogLevel;
+
+      /**
+       * The hostname or IP of the syslog server. Empty string disables the transport.
+       * @example "syslog.example.com"
+       */
+      host: string;
+
+      /**
+       * The port of the syslog server.
+       * @example 514
+       */
+      port: number;
+
+      /**
+       * The transport protocol.
+       * @example "udp4"
+       */
+      protocol: 'udp4' | 'tcp';
+    };
   };
 }
 
@@ -966,6 +994,35 @@ export interface EngineSettingsCommandDTO {
        * @example 60
        */
       interval: number;
+    };
+
+    /**
+     * Syslog logging configuration.
+     */
+    syslog: {
+      /**
+       * The log level for syslog output.
+       * @example "info"
+       */
+      level: LogLevel;
+
+      /**
+       * The hostname or IP of the syslog server. Empty string disables the transport.
+       * @example "syslog.example.com"
+       */
+      host: string;
+
+      /**
+       * The port of the syslog server.
+       * @example 514
+       */
+      port: number;
+
+      /**
+       * The transport protocol.
+       * @example "udp4"
+       */
+      protocol: 'udp4' | 'tcp';
     };
   };
 }
