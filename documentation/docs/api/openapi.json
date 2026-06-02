@@ -31495,6 +31495,206 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"EngineNameCommandDTO": {
+				"description": "Engine name command Data Transfer Object.\nUsed as the request body for updating only the engine name.",
+				"properties": {
+					"name": {
+						"type": "string",
+						"description": "The name of the engine.",
+						"example": "OIBus OT"
+					}
+				},
+				"required": [
+					"name"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"EngineWebServerCommandDTO": {
+				"description": "Engine web server command Data Transfer Object.\nUsed as the request body for updating only the web server port.",
+				"properties": {
+					"port": {
+						"type": "number",
+						"format": "double",
+						"description": "The port on which the engine listens.",
+						"example": 8080
+					}
+				},
+				"required": [
+					"port"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"EngineProxyCommandDTO": {
+				"description": "Engine proxy command Data Transfer Object.\nUsed as the request body for updating only the proxy settings.",
+				"properties": {
+					"proxyEnabled": {
+						"type": "boolean",
+						"description": "Whether the proxy is enabled.",
+						"example": false
+					},
+					"proxyPort": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "The port for the proxy, if enabled.",
+						"example": null
+					}
+				},
+				"required": [
+					"proxyEnabled",
+					"proxyPort"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"EngineLoggerCommandDTO": {
+				"description": "Engine logger command Data Transfer Object.\nUsed as the request body for updating only the logging parameters.",
+				"properties": {
+					"logParameters": {
+						"properties": {
+							"oia": {
+								"properties": {
+									"interval": {
+										"type": "number",
+										"format": "double",
+										"description": "The interval in seconds for sending logs to OIA.",
+										"example": 60
+									},
+									"level": {
+										"$ref": "#/components/schemas/LogLevel",
+										"description": "The log level for OIA output.",
+										"example": "info"
+									}
+								},
+								"required": [
+									"interval",
+									"level"
+								],
+								"type": "object",
+								"description": "OIA logging configuration."
+							},
+							"loki": {
+								"properties": {
+									"password": {
+										"type": "string",
+										"description": "The password for Loki authentication.",
+										"example": "pass"
+									},
+									"username": {
+										"type": "string",
+										"description": "The username for Loki authentication.",
+										"example": "user"
+									},
+									"address": {
+										"type": "string",
+										"description": "The address of the Loki server.",
+										"example": "http://loki:3100"
+									},
+									"interval": {
+										"type": "number",
+										"format": "double",
+										"description": "The interval in seconds for sending logs to Loki.",
+										"example": 60
+									},
+									"level": {
+										"$ref": "#/components/schemas/LogLevel",
+										"description": "The log level for Loki output.",
+										"example": "error"
+									}
+								},
+								"required": [
+									"password",
+									"username",
+									"address",
+									"interval",
+									"level"
+								],
+								"type": "object",
+								"description": "Loki logging configuration."
+							},
+							"database": {
+								"properties": {
+									"maxNumberOfLogs": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum number of logs to keep in the database.",
+										"example": 10000
+									},
+									"level": {
+										"$ref": "#/components/schemas/LogLevel",
+										"description": "The log level for database output.",
+										"example": "warn"
+									}
+								},
+								"required": [
+									"maxNumberOfLogs",
+									"level"
+								],
+								"type": "object",
+								"description": "Database logging configuration."
+							},
+							"file": {
+								"properties": {
+									"numberOfFiles": {
+										"type": "number",
+										"format": "double",
+										"description": "The number of log files to keep.",
+										"example": 5
+									},
+									"maxFileSize": {
+										"type": "number",
+										"format": "double",
+										"description": "The maximum size of a log file in bytes.",
+										"example": 10485760
+									},
+									"level": {
+										"$ref": "#/components/schemas/LogLevel",
+										"description": "The log level for file output.",
+										"example": "debug"
+									}
+								},
+								"required": [
+									"numberOfFiles",
+									"maxFileSize",
+									"level"
+								],
+								"type": "object",
+								"description": "File logging configuration."
+							},
+							"console": {
+								"properties": {
+									"level": {
+										"$ref": "#/components/schemas/LogLevel",
+										"description": "The log level for console output.",
+										"example": "info"
+									}
+								},
+								"required": [
+									"level"
+								],
+								"type": "object",
+								"description": "Console logging configuration."
+							}
+						},
+						"required": [
+							"oia",
+							"loki",
+							"database",
+							"file",
+							"console"
+						],
+						"type": "object",
+						"description": "Logging parameters for different outputs."
+					}
+				},
+				"required": [
+					"logParameters"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"OIBusInfo": {
 				"description": "Information about the OIBus instance.",
 				"properties": {
@@ -36282,6 +36482,121 @@
 						"application/json": {
 							"schema": {
 								"$ref": "#/components/schemas/EngineSettingsCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/engine/name": {
+			"put": {
+				"operationId": "UpdateEngineName",
+				"responses": {
+					"200": {
+						"description": "Engine name updated successfully"
+					}
+				},
+				"description": "Updates only the engine name",
+				"summary": "Update engine name",
+				"tags": [
+					"Engine"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/EngineNameCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/engine/web-server": {
+			"put": {
+				"operationId": "UpdateEngineWebServer",
+				"responses": {
+					"200": {
+						"description": "Engine web server settings updated successfully",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/EngineSettingsUpdateResultDTO"
+								}
+							}
+						}
+					}
+				},
+				"description": "Updates only the web server port",
+				"summary": "Update web server settings",
+				"tags": [
+					"Engine"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/EngineWebServerCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/engine/proxy": {
+			"put": {
+				"operationId": "UpdateEngineProxy",
+				"responses": {
+					"200": {
+						"description": "Engine proxy settings updated successfully"
+					}
+				},
+				"description": "Updates only the proxy settings",
+				"summary": "Update proxy settings",
+				"tags": [
+					"Engine"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/EngineProxyCommandDTO"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/engine/logger": {
+			"put": {
+				"operationId": "UpdateEngineLogger",
+				"responses": {
+					"200": {
+						"description": "Engine logger settings updated successfully"
+					}
+				},
+				"description": "Updates only the logging parameters",
+				"summary": "Update logger settings",
+				"tags": [
+					"Engine"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/EngineLoggerCommandDTO"
 							}
 						}
 					}

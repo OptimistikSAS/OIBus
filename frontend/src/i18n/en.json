@@ -538,6 +538,9 @@
       "loki": "Loki: {{ level }}",
       "oia": "OIAnalytics: {{ level }}"
     },
+    "web-server-settings": {
+      "title": "Web server"
+    },
     "proxy-settings": {
       "title": "Proxy server",
       "proxy-enabled": "Enabled",
