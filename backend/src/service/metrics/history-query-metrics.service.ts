@@ -4,6 +4,7 @@ import HistoryQuery from '../../engine/history-query';
 import HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
 import { DateTime } from 'luxon';
 import { Instant } from '../../model/types';
+import { applyNorthCacheContentSize, applyNorthConnect, applyNorthRunEnd, applyNorthRunStart } from './north-metrics-accumulator';
 
 /**
  * Coalesce DB + SSE writes. Same rationale as south/north metrics services:
@@ -71,27 +72,17 @@ export default class HistoryQueryMetricsService {
   }
 
   private onNorthConnect = (data: { lastConnection: Instant }) => {
-    this._metrics.north.lastConnection = data.lastConnection;
+    applyNorthConnect(this._metrics.north, data);
     this.updateMetrics();
   };
 
   private onNorthRunStart = (data: { lastRunStart: Instant }) => {
-    this._metrics.north.lastRunStart = data.lastRunStart;
+    applyNorthRunStart(this._metrics.north, data);
     this.updateMetrics();
   };
 
   private onNorthRunEnd = (data: { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' }) => {
-    this._metrics.north.lastRunDuration = data.lastRunDuration;
-    if (data.action === 'sent') {
-      this._metrics.north.lastContentSent = data.metadata.contentFile;
-      this._metrics.north.contentSentSize += data.metadata.contentSize;
-    } else if (data.action === 'archived') {
-      this._metrics.north.lastContentSent = data.metadata.contentFile;
-      this._metrics.north.contentArchivedSize += data.metadata.contentSize;
-      this._metrics.north.contentSentSize += data.metadata.contentSize;
-    } else {
-      this._metrics.north.contentErroredSize += data.metadata.contentSize;
-    }
+    applyNorthRunEnd(this._metrics.north, data);
     this.updateMetrics();
   };
 
@@ -103,7 +94,7 @@ export default class HistoryQueryMetricsService {
   };
 
   private onNorthCacheContentSize = (cachedSize: number) => {
-    this._metrics.north.contentCachedSize += cachedSize;
+    applyNorthCacheContentSize(this._metrics.north, cachedSize);
     this.updateMetrics();
   };
 

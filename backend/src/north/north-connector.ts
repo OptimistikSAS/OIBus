@@ -39,7 +39,6 @@ export interface NorthMetricsEvents {
   connect: { lastConnection: Instant };
   'run-start': { lastRunStart: Instant };
   'run-end': { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' };
-  'content-errored': { filename: string; size: number };
 }
 
 /**
@@ -448,10 +447,6 @@ export default abstract class NorthConnector<T extends NorthSettings> {
         remove: [],
         move: []
       }
-    });
-    this.metricsEvent.emit('content-errored', {
-      filename: content.metadata.contentFile,
-      size: content.metadata.contentSize
     });
   }
 
