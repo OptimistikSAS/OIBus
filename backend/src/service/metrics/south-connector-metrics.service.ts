@@ -56,7 +56,7 @@ export default class SouthConnectorMetricsService {
     this.updateMetrics();
   };
 
-  private onAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue }) => {
+  private onAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null }) => {
     this._metrics.numberOfValuesRetrieved += data.numberOfValuesRetrieved;
     this._metrics.lastValueRetrieved = data.lastValueRetrieved;
     this.updateMetrics();
