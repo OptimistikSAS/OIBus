@@ -117,6 +117,7 @@ describe('OIBus Service', () => {
     // Reset encryptionService mock in-place
     const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
     encryptionMock.encryptText.mock.resetCalls();
+    encryptionMock.decryptText.mock.resetCalls();
 
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
     engineMetricsRepository.getMetrics.mock.mockImplementation(() => testData.engine.metrics);
@@ -672,6 +673,9 @@ describe('OIBus Service', () => {
         launcherVersion: engineSettings.launcherVersion,
         proxyEnabled: engineSettings.proxyEnabled,
         proxyPort: engineSettings.proxyPort,
+        forwardProxyUrl: engineSettings.forwardProxyUrl,
+        forwardProxyUsername: engineSettings.forwardProxyUsername,
+        forwardProxyPassword: '',
         logParameters: {
           console: {
             level: engineSettings.logParameters.console.level

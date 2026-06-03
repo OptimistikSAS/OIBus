@@ -5,6 +5,12 @@ import httpProxy from 'http-proxy';
 import { testIPOnFilter } from '../service/utils';
 import type { ILogger } from '../model/logger.model';
 
+interface ForwardProxy {
+  url: string | null;
+  username: string | null;
+  password: string | null;
+}
+
 /**
  * Class Server - Provides the web client and establish socket connections.
  */
@@ -13,6 +19,9 @@ export default class ProxyServer {
   private webServer: http.Server | null = null;
   private httpProxy: httpProxy | null = null;
   private ipFilters: Array<string> = [];
+  private forwardProxyUrl: string | null = null;
+  private forwardProxyUsername: string | null = null;
+  private forwardProxyPassword: string | null = null;
 
   constructor(
     logger: ILogger,
@@ -34,7 +43,10 @@ export default class ProxyServer {
     this.ipFilters = ipFilters;
   }
 
-  start(port: number): void {
+  start(port: number, forwardProxy?: ForwardProxy): void {
+    this.forwardProxyUrl = forwardProxy?.url ?? null;
+    this.forwardProxyUsername = forwardProxy?.username ?? null;
+    this.forwardProxyPassword = forwardProxy?.password ?? null;
     this.initHttpProxy();
     this.initWebServer(port);
   }
@@ -80,9 +92,46 @@ export default class ProxyServer {
 
     this._logger.trace(`Forward ${req.method} request to ${req.url} from IP ${req.socket.remoteAddress}`);
 
+    if (this.forwardProxyUrl) {
+      this.handleHttpRequestViaUpstreamProxy(req, res);
+      return;
+    }
+
     this.httpProxy?.web(req, res, { target: req.url }, err => {
       this._logger.error(`Proxy server error ${err}`);
     });
+  }
+
+  private handleHttpRequestViaUpstreamProxy(req: http.IncomingMessage, res: http.ServerResponse) {
+    try {
+      const proxyUrl = new URL(this.forwardProxyUrl!);
+      const headers: http.OutgoingHttpHeaders = { ...req.headers };
+      if (this.forwardProxyUsername) {
+        const cred = Buffer.from(`${this.forwardProxyUsername}:${this.forwardProxyPassword ?? ''}`).toString('base64');
+        headers['Proxy-Authorization'] = `Basic ${cred}`;
+      }
+      const options: http.RequestOptions = {
+        host: proxyUrl.hostname,
+        port: Number(proxyUrl.port || 80),
+        method: req.method,
+        path: req.url,
+        headers
+      };
+      const upstreamReq = http.request(options, upstreamRes => {
+        res.writeHead(upstreamRes.statusCode!, upstreamRes.headers);
+        upstreamRes.pipe(res);
+      });
+      upstreamReq.on('error', error => {
+        this._logger.error(`Upstream proxy error: ${error.message}`);
+        res.writeHead(502);
+        res.end();
+      });
+      req.pipe(upstreamReq);
+    } catch (error: unknown) {
+      this._logger.error(`Proxy server error: ${(error as Error).message}`);
+      res.writeHead(500);
+      res.end();
+    }
   }
 
   private handleHttpsRequest(req: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) {
@@ -90,6 +139,11 @@ export default class ProxyServer {
     if (!ipAllowed) {
       clientSocket.write(`HTTP/${req.httpVersion} 403 Forbidden\r\n\r\n`);
       clientSocket.end();
+      return;
+    }
+
+    if (this.forwardProxyUrl) {
+      this.handleHttpsRequestViaUpstreamProxy(req, clientSocket, head);
       return;
     }
 
@@ -115,6 +169,54 @@ export default class ProxyServer {
       clientSocket.on('error', error => {
         this._logger.error(`Proxy server error on client socket: ${error.message}`);
         targetSocket.end();
+      });
+    } catch (error: unknown) {
+      this._logger.error(`Proxy server error: ${(error as Error).message}`);
+    }
+  }
+
+  private handleHttpsRequestViaUpstreamProxy(req: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) {
+    try {
+      const proxyUrl = new URL(this.forwardProxyUrl!);
+      this._logger.trace(`Forward ${req.method} request to ${req.url} via upstream proxy ${this.forwardProxyUrl}`);
+
+      const upstreamSocket = net.createConnection({ host: proxyUrl.hostname, port: Number(proxyUrl.port || 80) }, () => {
+        let authHeader = '';
+        if (this.forwardProxyUsername) {
+          const cred = Buffer.from(`${this.forwardProxyUsername}:${this.forwardProxyPassword ?? ''}`).toString('base64');
+          authHeader = `Proxy-Authorization: Basic ${cred}\r\n`;
+        }
+        upstreamSocket.write(`CONNECT ${req.url} HTTP/1.1\r\nHost: ${req.url}\r\n${authHeader}\r\n`);
+      });
+
+      let headerBuffer = '';
+      const onData = (chunk: Buffer) => {
+        headerBuffer += chunk.toString('binary');
+        const headerEnd = headerBuffer.indexOf('\r\n\r\n');
+        if (headerEnd === -1) return;
+        upstreamSocket.removeListener('data', onData);
+        if (headerBuffer.startsWith('HTTP/') && headerBuffer.includes(' 200 ')) {
+          clientSocket.write(`HTTP/${req.httpVersion} 200 Connection established\r\n\r\n`);
+          upstreamSocket.write(head);
+          clientSocket.pipe(upstreamSocket).pipe(clientSocket);
+        } else {
+          this._logger.error(`Upstream proxy rejected CONNECT to ${req.url}`);
+          clientSocket.write(`HTTP/${req.httpVersion} 502 Bad Gateway\r\n\r\n`);
+          clientSocket.end();
+          upstreamSocket.end();
+        }
+      };
+      upstreamSocket.on('data', onData);
+
+      upstreamSocket.on('error', error => {
+        upstreamSocket.removeListener('data', onData);
+        this._logger.error(`Upstream proxy socket error: ${error.message}`);
+        clientSocket.write(`HTTP/${req.httpVersion} 502 Bad Gateway\r\n\r\n`);
+        clientSocket.end();
+      });
+      clientSocket.on('error', error => {
+        this._logger.error(`Proxy server error on client socket: ${error.message}`);
+        upstreamSocket.end();
       });
     } catch (error: unknown) {
       this._logger.error(`Proxy server error: ${(error as Error).message}`);

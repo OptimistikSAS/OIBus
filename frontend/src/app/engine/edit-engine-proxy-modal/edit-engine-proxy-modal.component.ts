@@ -22,24 +22,45 @@ export class EditEngineProxyModalComponent {
 
   form = this.fb.group({
     proxyEnabled: [false as boolean, Validators.required],
-    proxyPort: [null as number | null, Validators.required]
+    proxyPort: [null as number | null, Validators.required],
+    forwardProxyUrl: [null as string | null],
+    forwardProxyUsername: [null as string | null],
+    forwardProxyPassword: [null as string | null]
   });
 
   constructor() {
     this.form.controls.proxyEnabled.valueChanges.subscribe(enabled => {
       if (enabled) {
         this.form.controls.proxyPort.enable();
+        this.form.controls.forwardProxyUrl.enable();
+        this.form.controls.forwardProxyUsername.enable();
+        this.form.controls.forwardProxyPassword.enable();
       } else {
         this.form.controls.proxyPort.disable();
         this.form.controls.proxyPort.setValue(null);
+        this.form.controls.forwardProxyUrl.disable();
+        this.form.controls.forwardProxyUrl.setValue(null);
+        this.form.controls.forwardProxyUsername.disable();
+        this.form.controls.forwardProxyUsername.setValue(null);
+        this.form.controls.forwardProxyPassword.disable();
+        this.form.controls.forwardProxyPassword.setValue(null);
       }
     });
   }
 
   initialize(settings: EngineSettingsDTO) {
-    this.form.patchValue({ proxyEnabled: settings.proxyEnabled, proxyPort: settings.proxyPort });
+    this.form.patchValue({
+      proxyEnabled: settings.proxyEnabled,
+      proxyPort: settings.proxyPort,
+      forwardProxyUrl: settings.forwardProxyUrl ?? null,
+      forwardProxyUsername: settings.forwardProxyUsername ?? null,
+      forwardProxyPassword: settings.forwardProxyPassword ?? null
+    });
     if (!settings.proxyEnabled) {
       this.form.controls.proxyPort.disable();
+      this.form.controls.forwardProxyUrl.disable();
+      this.form.controls.forwardProxyUsername.disable();
+      this.form.controls.forwardProxyPassword.disable();
     }
   }
 
@@ -51,7 +72,10 @@ export class EditEngineProxyModalComponent {
     this.engineService
       .updateEngineProxy({
         proxyEnabled: formValue.proxyEnabled,
-        proxyPort: formValue.proxyEnabled ? formValue.proxyPort : null
+        proxyPort: formValue.proxyEnabled ? formValue.proxyPort : null,
+        forwardProxyUrl: formValue.proxyEnabled ? formValue.forwardProxyUrl || null : null,
+        forwardProxyUsername: formValue.proxyEnabled ? formValue.forwardProxyUsername || null : null,
+        forwardProxyPassword: formValue.proxyEnabled ? formValue.forwardProxyPassword || null : null
       })
       .subscribe(() => {
         this.notificationService.success('engine.updated');
