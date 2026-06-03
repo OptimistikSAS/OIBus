@@ -10,7 +10,11 @@ export async function up(knex: Knex): Promise<void> {
 
 async function updateNorthMetricsTable(knex: Knex): Promise<void> {
   await knex.schema.alterTable(NORTH_METRICS_TABLE, table => {
-    table.dropColumns('nb_values_sent', 'nb_files_sent', 'last_value_sent', 'last_file_sent', 'cache_size', 'error_size', 'archive_size');
+    // The north_metrics table (created by v3.0-initial-setup) used plain names
+    // without the '_sent' suffix. The history_query_metrics table (v3.5) was
+    // created with the '_sent' suffix — but north_metrics was not.
+    // 'error_size' and 'archive_size' were added to north_metrics by v3.5.0.
+    table.dropColumns('nb_values', 'nb_files', 'last_value', 'last_file', 'cache_size', 'error_size', 'archive_size');
   });
   await knex.schema.alterTable(NORTH_METRICS_TABLE, table => {
     table.integer('content_sent_size');
