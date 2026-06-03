@@ -8,6 +8,9 @@ export interface EngineSettings extends BaseEntity {
   launcherVersion: string;
   proxyEnabled: boolean;
   proxyPort: number | null;
+  forwardProxyUrl: string | null;
+  forwardProxyUsername: string | null;
+  forwardProxyPassword: string | null;
   logParameters: {
     console: {
       level: LogLevel;
