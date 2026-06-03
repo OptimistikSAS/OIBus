@@ -1360,6 +1360,9 @@ const engineSettings: EngineSettings = {
   launcherVersion: '3.4.9',
   proxyEnabled: true,
   proxyPort: 9000,
+  forwardProxyUrl: 'http://forward-proxy:3128',
+  forwardProxyUsername: 'proxy-user',
+  forwardProxyPassword: 'encrypted-proxy-password',
   logParameters: {
     console: {
       level: 'info'
@@ -1401,6 +1404,9 @@ const engineSettingsCommand: EngineSettingsCommandDTO = {
   port: 2223,
   proxyEnabled: true,
   proxyPort: 9000,
+  forwardProxyUrl: null,
+  forwardProxyUsername: null,
+  forwardProxyPassword: null,
   logParameters: {
     console: {
       level: 'silent'
