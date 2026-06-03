@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import knex, { Knex } from 'knex';
-import { up } from './v3.8.3-fix-north-metrics';
+import { up } from './v3.8.3_1-fix-north-metrics';
 
 /**
  * Build the broken north_metrics schema that results from the v3.6.0 migration running

@@ -325,10 +325,7 @@ const createNorthMetrics = async (database: knex.Knex, northId: string, northMet
       content_cached_size: northMetrics.contentCachedSize,
       content_errored_size: northMetrics.contentErroredSize,
       content_archived_size: northMetrics.contentArchivedSize,
-      last_content_sent: northMetrics.lastContentSent,
-      current_cache_size: northMetrics.currentCacheSize,
-      current_error_size: northMetrics.currentErrorSize,
-      current_archive_size: northMetrics.currentArchiveSize
+      last_content_sent: northMetrics.lastContentSent
     })
     .into('north_metrics');
 };
@@ -368,10 +365,7 @@ const createHistoryQueryMetrics = async (database: knex.Knex, historyQueryId: st
       last_content_sent: historyQueryMetrics.north.lastContentSent,
       last_north_connection: historyQueryMetrics.north.lastConnection,
       last_north_run_start: historyQueryMetrics.north.lastRunStart,
-      last_north_run_duration: historyQueryMetrics.north.lastRunDuration,
-      north_current_cache_size: historyQueryMetrics.north.currentCacheSize,
-      north_current_error_size: historyQueryMetrics.north.currentErrorSize,
-      north_current_archive_size: historyQueryMetrics.north.currentArchiveSize
+      last_north_run_duration: historyQueryMetrics.north.lastRunDuration
     })
     .into('history_query_metrics');
 };

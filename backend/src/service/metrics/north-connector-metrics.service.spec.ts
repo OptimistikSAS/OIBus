@@ -17,7 +17,9 @@ describe('NorthConnectorMetricsService', () => {
     northConnectorMetricsRepository = new NorthMetricsRepositoryMock();
     northMock = new NorthConnectorMock(testData.north.list[0]);
     mock.timers.enable({ apis: ['Date', 'setInterval', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    northConnectorMetricsRepository.getMetrics.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.north.metrics)));
+    // The repository returns the persisted subset (no current* sizes) — mirror that in the mock.
+    const { currentCacheSize: _c, currentErrorSize: _e, currentArchiveSize: _a, ...persisted } = testData.north.metrics;
+    northConnectorMetricsRepository.getMetrics.mock.mockImplementation(() => JSON.parse(JSON.stringify(persisted)));
     service = new NorthConnectorMetricsService(
       northMock as unknown as NorthConnector<NorthSettings>,
       northConnectorMetricsRepository as unknown as NorthConnectorMetricsRepository
@@ -77,13 +79,12 @@ describe('NorthConnectorMetricsService', () => {
     // final cumulative state.
     mock.timers.tick(1000);
     assert.strictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls.length, 1);
+    // updateMetrics persists only the persisted subset — current* sizes are not written (read live).
+    const { currentCacheSize: _c, currentErrorSize: _e, currentArchiveSize: _a, ...persistedBase } = testData.north.metrics;
     assert.deepStrictEqual(northConnectorMetricsRepository.updateMetrics.mock.calls[0].arguments, [
       testData.north.list[0].id,
       {
-        ...testData.north.metrics,
-        currentCacheSize: 999,
-        currentErrorSize: 888,
-        currentArchiveSize: 777,
+        ...persistedBase,
         lastConnection: testData.constants.dates.DATE_1,
         lastRunStart: testData.constants.dates.DATE_2,
         lastRunDuration: 888,

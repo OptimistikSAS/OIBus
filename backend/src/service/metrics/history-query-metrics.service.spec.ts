@@ -16,7 +16,11 @@ describe('HistoryMetricsService', () => {
     historyQueryMetricsRepository = new HistoryQueryMetricsRepositoryMock();
     historyQueryMock = new HistoryQueryMock(testData.historyQueries.list[0]);
     mock.timers.enable({ apis: ['Date', 'setInterval', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    historyQueryMetricsRepository.getMetrics.mock.mockImplementation(() => JSON.parse(JSON.stringify(testData.historyQueries.metrics)));
+    // The repository returns the persisted subset (no north current* sizes) — mirror that in the mock.
+    const { currentCacheSize: _c, currentErrorSize: _e, currentArchiveSize: _a, ...northPersisted } = testData.historyQueries.metrics.north;
+    historyQueryMetricsRepository.getMetrics.mock.mockImplementation(() =>
+      JSON.parse(JSON.stringify({ ...testData.historyQueries.metrics, north: northPersisted }))
+    );
     service = new HistoryQueryMetricsService(
       historyQueryMock as unknown as HistoryQuery,
       historyQueryMetricsRepository as unknown as HistoryQueryMetricsRepository
@@ -93,15 +97,14 @@ describe('HistoryMetricsService', () => {
     // cumulative state.
     mock.timers.tick(1000);
     assert.strictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls.length, 1);
+    // updateMetrics persists only the persisted subset — north current* sizes are not written (read live).
+    const { currentCacheSize: _c, currentErrorSize: _e, currentArchiveSize: _a, ...northBase } = testData.historyQueries.metrics.north;
     assert.deepStrictEqual(historyQueryMetricsRepository.updateMetrics.mock.calls[0].arguments, [
       testData.historyQueries.list[0].id,
       {
         ...testData.historyQueries.metrics,
         north: {
-          ...testData.historyQueries.metrics.north,
-          currentCacheSize: 999,
-          currentErrorSize: 888,
-          currentArchiveSize: 777,
+          ...northBase,
           lastConnection: testData.constants.dates.DATE_1,
           lastRunStart: testData.constants.dates.DATE_2,
           lastRunDuration: 888,

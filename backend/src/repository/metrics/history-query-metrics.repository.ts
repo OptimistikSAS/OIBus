@@ -6,6 +6,16 @@ import { Instant } from '../../model/types';
 const HISTORY_QUERY_METRICS_TABLE = 'history_query_metrics';
 
 /**
+ * The persisted subset of history query metrics. The north current cache/error/archive size
+ * gauges are NOT persisted — they are read live from the cache service at serialization time —
+ * so the repository neither stores nor returns them. The owning service composes the full
+ * {@link HistoryQueryMetrics}.
+ */
+export type PersistedHistoryQueryMetrics = Omit<HistoryQueryMetrics, 'north'> & {
+  north: Omit<HistoryQueryMetrics['north'], 'currentCacheSize' | 'currentErrorSize' | 'currentArchiveSize'>;
+};
+
+/**
  * Repository used for History Query Metrics
  */
 export default class HistoryQueryMetricsRepository {
@@ -18,51 +28,30 @@ export default class HistoryQueryMetricsRepository {
         `INSERT INTO ${HISTORY_QUERY_METRICS_TABLE} (history_query_id, metrics_start, nb_values_retrieved, nb_files_retrieved, ` +
         `last_value_retrieved, last_file_retrieved, last_south_connection, last_south_run_start, last_south_run_duration, ` +
         `content_sent_size, content_cached_size, content_errored_size, content_archived_size, last_content_sent, last_north_connection, last_north_run_start, ` +
-        `last_north_run_duration, north_current_cache_size, north_current_error_size, north_current_archive_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+        `last_north_run_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
       this._database
         .prepare(insertQuery)
-        .run(
-          historyQueryId,
-          DateTime.now().toUTC().toISO(),
-          0,
-          0,
-          null,
-          null,
-          null,
-          null,
-          null,
-          0,
-          0,
-          0,
-          0,
-          null,
-          null,
-          null,
-          null,
-          0,
-          0,
-          0
-        );
+        .run(historyQueryId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null, 0, 0, 0, 0, null, null, null, null);
     }
   }
 
-  getMetrics(historyQueryId: string): HistoryQueryMetrics | null {
+  getMetrics(historyQueryId: string): PersistedHistoryQueryMetrics | null {
     const query =
       `SELECT metrics_start, nb_values_retrieved, nb_files_retrieved, ` +
       `last_value_retrieved, last_file_retrieved, last_south_connection, last_south_run_start, last_south_run_duration, ` +
       `content_sent_size, content_cached_size, content_errored_size, content_archived_size, last_content_sent, last_north_connection, last_north_run_start, ` +
-      `last_north_run_duration, north_current_cache_size, north_current_error_size, north_current_archive_size FROM ${HISTORY_QUERY_METRICS_TABLE} WHERE history_query_id = ?;`;
+      `last_north_run_duration FROM ${HISTORY_QUERY_METRICS_TABLE} WHERE history_query_id = ?;`;
     const result = this._database.prepare(query).get(historyQueryId);
     if (!result) return null;
     return this.toHistoryQueryMetrics(result as Record<string, string | number>);
   }
 
-  updateMetrics(historyQueryId: string, metrics: HistoryQueryMetrics): void {
+  updateMetrics(historyQueryId: string, metrics: PersistedHistoryQueryMetrics): void {
     const updateQuery =
       `UPDATE ${HISTORY_QUERY_METRICS_TABLE} SET metrics_start = ?, nb_values_retrieved = ?, nb_files_retrieved = ?, ` +
       `last_value_retrieved = ?, last_file_retrieved = ?, last_south_connection = ?, last_south_run_start = ?, last_south_run_duration = ?, ` +
       `content_sent_size = ?, content_cached_size = ?, content_errored_size = ?, content_archived_size = ?, last_content_sent = ?, last_north_connection = ?, last_north_run_start = ?, ` +
-      `last_north_run_duration = ?, north_current_cache_size = ?, north_current_error_size = ?, north_current_archive_size = ? WHERE history_query_id = ?;`;
+      `last_north_run_duration = ? WHERE history_query_id = ?;`;
     this._database
       .prepare(updateQuery)
       .run(
@@ -82,9 +71,6 @@ export default class HistoryQueryMetricsRepository {
         metrics.north.lastConnection,
         metrics.north.lastRunStart,
         metrics.north.lastRunDuration,
-        metrics.north.currentCacheSize,
-        metrics.north.currentErrorSize,
-        metrics.north.currentArchiveSize,
         historyQueryId
       );
   }
@@ -94,7 +80,7 @@ export default class HistoryQueryMetricsRepository {
     this._database.prepare(query).run(historyQueryId);
   }
 
-  private toHistoryQueryMetrics(result: Record<string, string | number>): HistoryQueryMetrics {
+  private toHistoryQueryMetrics(result: Record<string, string | number>): PersistedHistoryQueryMetrics {
     return {
       metricsStart: result.metrics_start as Instant,
       north: {
@@ -105,10 +91,7 @@ export default class HistoryQueryMetricsRepository {
         contentCachedSize: result.content_cached_size as number,
         contentErroredSize: result.content_errored_size as number,
         contentArchivedSize: result.content_archived_size as number,
-        lastContentSent: result.last_content_sent as string | null,
-        currentCacheSize: result.north_current_cache_size as number,
-        currentErrorSize: result.north_current_error_size as number,
-        currentArchiveSize: result.north_current_archive_size as number
+        lastContentSent: result.last_content_sent as string | null
       },
       south: {
         lastConnection: result.last_south_connection as Instant,
