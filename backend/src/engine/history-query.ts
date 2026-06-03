@@ -41,7 +41,7 @@ export interface HistoryMetricsEvents {
     numberOfIntervals: number;
   };
   'south-history-query-stop': { running: boolean };
-  'south-add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue };
+  'south-add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
   'south-add-file': { lastFileRetrieved: string };
 }
 
@@ -157,7 +157,7 @@ export default class HistoryQuery {
     this.south.metricsEvent.on('history-query-stop', (data: { running: boolean }) => {
       this.metricsEvent.emit('south-history-query-stop', data);
     });
-    this.south.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue }) => {
+    this.south.metricsEvent.on('add-values', (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null }) => {
       this.metricsEvent.emit('south-add-values', data);
     });
     this.south.metricsEvent.on('add-file', (data: { lastFileRetrieved: string }) => {

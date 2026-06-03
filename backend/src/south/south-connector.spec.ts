@@ -638,6 +638,9 @@ describe('SouthConnector', () => {
     });
 
     it('should add any content', async () => {
+      const addValuesListener = mock.fn();
+      south.metricsEvent.on('add-values', addValuesListener);
+
       await south.addContent({ type: 'any-content', content: 'file.csv' }, testData.constants.dates.DATE_1, []);
       assert.ok(
         (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
@@ -651,6 +654,9 @@ describe('SouthConnector', () => {
         testData.constants.dates.DATE_1,
         []
       ]);
+      // any-content is opaque: no time value, so lastValueRetrieved must be null (not the raw string)
+      assert.strictEqual(addValuesListener.mock.calls.length, 1);
+      assert.deepStrictEqual(addValuesListener.mock.calls[0].arguments[0], { numberOfValuesRetrieved: 8, lastValueRetrieved: null });
     });
 
     it('should manage history query with several intervals when stopping', async () => {

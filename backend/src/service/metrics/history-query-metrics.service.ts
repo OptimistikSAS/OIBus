@@ -150,7 +150,7 @@ export default class HistoryQueryMetricsService {
     this.updateMetrics();
   };
 
-  private onSouthAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue }) => {
+  private onSouthAddValues = (data: { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null }) => {
     this._metrics.south.numberOfValuesRetrieved += data.numberOfValuesRetrieved;
     this._metrics.south.lastValueRetrieved = data.lastValueRetrieved;
     this.updateMetrics();

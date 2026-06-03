@@ -14,9 +14,31 @@ import {
   OIBusConnectionTestResult,
   OIBusContent,
   OIBusFileContent,
+  OIBusTimeValue,
   OIBusTimeValueContent
 } from '../../shared/model/engine.model';
 import path from 'node:path';
+import TypedEventEmitter from '../service/typed-event-emitter';
+
+/** Events published by a South connector's {@link SouthConnector.metricsEvent}. */
+export interface SouthMetricsEvents {
+  connect: { lastConnection: Instant };
+  'run-start': { lastRunStart: Instant };
+  'run-end': { lastRunDuration: number };
+  'history-query-start': { running: boolean; intervalProgress: number };
+  'history-query-interval': {
+    running: boolean;
+    intervalProgress: number;
+    currentIntervalStart: Instant;
+    currentIntervalEnd: Instant;
+    currentIntervalNumber: number;
+    numberOfIntervals: number;
+  };
+  'history-query-stop': { running: boolean };
+  // `any-content` (opaque payloads) has no time value, hence the `| null`.
+  'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
+  'add-file': { lastFileRetrieved: string };
+}
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-connector.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
@@ -68,7 +90,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   protected readonly tmpFolder: string;
 
   public connectedEvent: EventEmitter = new EventEmitter();
-  public metricsEvent: EventEmitter = new EventEmitter();
+  public metricsEvent: TypedEventEmitter<SouthMetricsEvents> = new TypedEventEmitter<SouthMetricsEvents>();
 
   historyIsRunning = false;
 
@@ -629,9 +651,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   ): Promise<void> {
     this.logger.debug(`Add ${data.content.length} bytes of content to cache from South "${this.connector.name}"`);
     await this.engineAddContentCallback(this.connector.id, data, queryTime, items);
+    // `any-content` is an opaque serialised payload, not a list of time values:
+    // it carries no OIBusTimeValue, so there is no meaningful "last value retrieved".
     this.metricsEvent.emit('add-values', {
       numberOfValuesRetrieved: data.content.length,
-      lastValueRetrieved: data.content
+      lastValueRetrieved: null
     });
   }
 
