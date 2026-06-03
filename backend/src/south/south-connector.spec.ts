@@ -654,9 +654,9 @@ describe('SouthConnector', () => {
         testData.constants.dates.DATE_1,
         []
       ]);
-      // any-content is opaque: no time value, so lastValueRetrieved must be null (not the raw string)
+      // any-content is one opaque payload: counts as 1 value (not its byte length), no time value
       assert.strictEqual(addValuesListener.mock.calls.length, 1);
-      assert.deepStrictEqual(addValuesListener.mock.calls[0].arguments[0], { numberOfValuesRetrieved: 8, lastValueRetrieved: null });
+      assert.deepStrictEqual(addValuesListener.mock.calls[0].arguments[0], { numberOfValuesRetrieved: 1, lastValueRetrieved: null });
     });
 
     it('should manage history query with several intervals when stopping', async () => {

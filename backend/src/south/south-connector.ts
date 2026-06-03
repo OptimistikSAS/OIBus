@@ -651,10 +651,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   ): Promise<void> {
     this.logger.debug(`Add ${data.content.length} bytes of content to cache from South "${this.connector.name}"`);
     await this.engineAddContentCallback(this.connector.id, data, queryTime, items);
-    // `any-content` is an opaque serialised payload, not a list of time values:
-    // it carries no OIBusTimeValue, so there is no meaningful "last value retrieved".
+    // `any-content` is a single opaque serialised payload, not a list of time values: count it
+    // as one retrieved item (not its byte length) and carry no "last value" (no OIBusTimeValue).
     this.metricsEvent.emit('add-values', {
-      numberOfValuesRetrieved: data.content.length,
+      numberOfValuesRetrieved: 1,
       lastValueRetrieved: null
     });
   }
