@@ -45,6 +45,10 @@ export default class OIBusService {
   private healthSignalInterval: NodeJS.Timeout | null = null;
   private updateEngineMetricsInterval: NodeJS.Timeout | null = null;
   private metrics: EngineMetrics;
+  // The persisted metrics row is initialised with all-zero min/max gauges. Math.min(0, x)
+  // would otherwise pin every min* at 0 forever, so the first sample of each run seeds
+  // min/max/current from the live measurement instead of folding in the zero sentinel.
+  private engineMetricsSeeded = false;
   private cpuUsageRefInstant = DateTime.now().toMillis(); // Reference between two dates for cpu usage calculation;
   private cpuUsageRef: NodeJS.CpuUsage = process.cpuUsage();
 
@@ -101,6 +105,7 @@ export default class OIBusService {
     this.cpuUsageRef = process.cpuUsage();
     this.engineMetricsRepository.initMetrics(settings.id);
     this.metrics = this.engineMetricsRepository.getMetrics(settings.id)!;
+    this.engineMetricsSeeded = false;
 
     this.updateEngineMetricsInterval = setInterval(this.updateEngineMetrics.bind(this), UPDATE_ENGINE_METRICS_INTERVAL);
     this.healthSignalInterval = setInterval(this.logHealthSignal.bind(this), HEALTH_SIGNAL_INTERVAL);
@@ -242,6 +247,12 @@ export default class OIBusService {
     this.cpuUsageRefInstant = newRefInstant;
 
     const memoryUsage = process.memoryUsage();
+    // On the first sample of a run, seed min/max with the live value instead of folding
+    // in the persisted zero sentinel (which would pin every min* at 0 via Math.min).
+    const seeding = !this.engineMetricsSeeded;
+    this.engineMetricsSeeded = true;
+    const trackMin = (stored: number, current: number): number => (seeding ? current : Math.min(stored, current));
+    const trackMax = (stored: number, current: number): number => (seeding ? current : Math.max(stored, current));
     this.metrics = {
       metricsStart: this.metrics.metricsStart,
       processCpuUsageInstant: instantCpuUsagePercent,
@@ -249,21 +260,21 @@ export default class OIBusService {
       processUptime: processUptime,
       freeMemory: os.freemem(),
       totalMemory: os.totalmem(),
-      minRss: this.metrics.minRss > memoryUsage.rss ? memoryUsage.rss : this.metrics.minRss,
+      minRss: trackMin(this.metrics.minRss, memoryUsage.rss),
       currentRss: memoryUsage.rss,
-      maxRss: this.metrics.maxRss < memoryUsage.rss ? memoryUsage.rss : this.metrics.maxRss,
-      minHeapTotal: this.metrics.minHeapTotal > memoryUsage.heapTotal ? memoryUsage.heapTotal : this.metrics.minHeapTotal,
+      maxRss: trackMax(this.metrics.maxRss, memoryUsage.rss),
+      minHeapTotal: trackMin(this.metrics.minHeapTotal, memoryUsage.heapTotal),
       currentHeapTotal: memoryUsage.heapTotal,
-      maxHeapTotal: this.metrics.maxHeapTotal < memoryUsage.heapTotal ? memoryUsage.heapTotal : this.metrics.maxHeapTotal,
-      minHeapUsed: this.metrics.minHeapUsed > memoryUsage.heapUsed ? memoryUsage.heapUsed : this.metrics.minHeapUsed,
+      maxHeapTotal: trackMax(this.metrics.maxHeapTotal, memoryUsage.heapTotal),
+      minHeapUsed: trackMin(this.metrics.minHeapUsed, memoryUsage.heapUsed),
       currentHeapUsed: memoryUsage.heapUsed,
-      maxHeapUsed: this.metrics.maxHeapUsed < memoryUsage.heapUsed ? memoryUsage.heapUsed : this.metrics.maxHeapUsed,
-      minExternal: this.metrics.minExternal > memoryUsage.external ? memoryUsage.external : this.metrics.minExternal,
+      maxHeapUsed: trackMax(this.metrics.maxHeapUsed, memoryUsage.heapUsed),
+      minExternal: trackMin(this.metrics.minExternal, memoryUsage.external),
       currentExternal: memoryUsage.external,
-      maxExternal: this.metrics.maxExternal < memoryUsage.external ? memoryUsage.external : this.metrics.maxExternal,
-      minArrayBuffers: this.metrics.minArrayBuffers > memoryUsage.arrayBuffers ? memoryUsage.arrayBuffers : this.metrics.minArrayBuffers,
+      maxExternal: trackMax(this.metrics.maxExternal, memoryUsage.external),
+      minArrayBuffers: trackMin(this.metrics.minArrayBuffers, memoryUsage.arrayBuffers),
       currentArrayBuffers: memoryUsage.arrayBuffers,
-      maxArrayBuffers: this.metrics.maxArrayBuffers < memoryUsage.arrayBuffers ? memoryUsage.arrayBuffers : this.metrics.maxArrayBuffers
+      maxArrayBuffers: trackMax(this.metrics.maxArrayBuffers, memoryUsage.arrayBuffers)
     };
 
     this.engineMetricsRepository.updateMetrics(this.getEngineSettings().id, this.metrics);
@@ -275,6 +286,8 @@ export default class OIBusService {
     this.engineMetricsRepository.removeMetrics(settings.id);
     this.engineMetricsRepository.initMetrics(settings.id);
     this.metrics = this.engineMetricsRepository.getMetrics(settings.id)!;
+    // The row was just reset to zeros — reseed min/max from the next live sample.
+    this.engineMetricsSeeded = false;
     this.updateEngineMetrics();
   }
 
