@@ -178,6 +178,7 @@ describe('CacheService', () => {
   });
 
   it('should be properly initialized with files in cache', async () => {
+    const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
     readdirMock.mock.mockImplementation(
       seq(
         async () => ['file1', 'file2', 'bad'], // Cache folder
@@ -211,6 +212,11 @@ describe('CacheService', () => {
     const expectedQueueLength = 2; // Only valid files in 'cache' folder
     assert.strictEqual((priv()['queue'] as Array<unknown>).length, expectedQueueLength);
     assert.ok(service.getCacheSize() > 0);
+    // The freshly-scanned folder sizes must be published so the metrics services
+    // reflect pre-existing backlog immediately after startup.
+    const startEmit = emitEventMock.mock.calls.find(c => c.arguments[0] === 'cache-size');
+    assert.ok(startEmit, 'cache-size must be emitted after the initial folder scan');
+    assert.deepStrictEqual(startEmit!.arguments[1], priv()['cacheSize']);
 
     assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while reading cache file')));
     assert.ok(logger.error.mock.calls.some(c => String(c.arguments[0]).includes('Error while reading errored file')));
@@ -489,6 +495,7 @@ describe('CacheService', () => {
     writeFileMock.mock.mockImplementation(async () => undefined);
     statMock.mock.mockImplementation(async () => ({ size: 1024, ctimeMs: Date.now() }));
     generateRandomIdMock.mock.mockImplementation(() => 'random');
+    const emitEventMock = mock.method(service.cacheSizeEventEmitter, 'emit', mock.fn());
 
     await service.addCacheContent(output, { contentType: 'any' });
 
@@ -496,6 +503,12 @@ describe('CacheService', () => {
     assert.ok(logger.trace.mock.calls.some(c => String(c.arguments[0]).includes('added to cache')));
     // Verify debounced logging
     assert.ok(logger.debug.mock.calls.some(c => c.arguments.length > 1 && String(c.arguments[1]).includes('Cache updated')));
+    // Both the current-folder size and the cumulative content-size deltas must be emitted,
+    // so currentCacheSize and contentCachedSize stay correct in the metrics services.
+    assert.ok(emitEventMock.mock.calls.some(c => c.arguments[0] === 'cache-size'));
+    const contentSizeCall = emitEventMock.mock.calls.find(c => c.arguments[0] === 'cache-content-size');
+    assert.ok(contentSizeCall, 'cache-content-size must be emitted when content is cached');
+    assert.strictEqual(contentSizeCall!.arguments[1], output.length);
   });
 
   describe('Debounce Logging', () => {

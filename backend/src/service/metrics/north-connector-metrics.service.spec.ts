@@ -38,7 +38,11 @@ describe('NorthConnectorMetricsService', () => {
     // Fire the full sequence of events in a single tick. In-memory metrics
     // update synchronously after each event, while the DB write is debounced —
     // we expect exactly one repository.updateMetrics call after the timer.
-    northMock.metricsEvent.emit('cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
+    // Current sizes are pulled live from the cache service (getCacheSizes), not carried
+    // by the event payload — so we drive them through the mock and the 'cache-size' event
+    // only acts as a flush trigger.
+    northMock.getCacheSizes.mock.mockImplementation(() => ({ cache: 999, error: 888, archive: 777 }));
+    northMock.metricsEvent.emit('cache-size', { cache: 999, error: 888, archive: 777 });
     assert.strictEqual(service.metrics.currentCacheSize, 999);
     assert.strictEqual(service.metrics.currentErrorSize, 888);
     assert.strictEqual(service.metrics.currentArchiveSize, 777);

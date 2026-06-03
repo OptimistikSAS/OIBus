@@ -15,15 +15,41 @@ import {
 import { HistoryQueryEntity } from '../model/histor-query.model';
 import { EventEmitter } from 'node:events';
 import { Instant } from '../model/types';
+import { CacheSize } from '../model/engine.model';
+import TypedEventEmitter from '../service/typed-event-emitter';
 import type { ILogger } from '../model/logger.model';
 
 const FINISH_INTERVAL = 5000;
+
+/** Events published by a History Query's {@link HistoryQuery.metricsEvent} (relayed from its north/south). */
+export interface HistoryMetricsEvents {
+  'north-connect': { lastConnection: Instant };
+  'north-run-start': { lastRunStart: Instant };
+  'north-run-end': { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' };
+  'north-cache-size': CacheSize;
+  'north-cache-content-size': number;
+  'south-connect': { lastConnection: Instant };
+  'south-run-start': { lastRunStart: Instant };
+  'south-run-end': { lastRunDuration: number };
+  'south-history-query-start': { running: boolean; intervalProgress: number };
+  'south-history-query-interval': {
+    running: boolean;
+    intervalProgress: number;
+    currentIntervalStart: Instant;
+    currentIntervalEnd: Instant;
+    currentIntervalNumber: number;
+    numberOfIntervals: number;
+  };
+  'south-history-query-stop': { running: boolean };
+  'south-add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue };
+  'south-add-file': { lastFileRetrieved: string };
+}
 
 export default class HistoryQuery {
   private finishInterval: NodeJS.Timeout | null = null;
   private stopping = false;
 
-  public metricsEvent: EventEmitter = new EventEmitter();
+  public metricsEvent: TypedEventEmitter<HistoryMetricsEvents> = new TypedEventEmitter<HistoryMetricsEvents>();
   public finishEvent: EventEmitter = new EventEmitter();
 
   constructor(
@@ -32,6 +58,11 @@ export default class HistoryQuery {
     private south: SouthConnector<SouthSettings, SouthItemSettings>,
     private logger: ILogger
   ) {}
+
+  /** Live north cache/error/archive folder sizes, read from the cache service (the authoritative source). */
+  getNorthCacheSizes(): CacheSize {
+    return this.north.getCacheSizes();
+  }
 
   async start(): Promise<void> {
     this.north.metricsEvent.on('connect', (data: { lastConnection: Instant }) => {

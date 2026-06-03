@@ -38,7 +38,11 @@ describe('HistoryMetricsService', () => {
     // Fire the full sequence of events in a single tick. In-memory metrics
     // must update synchronously after each emit, but the DB write is debounced
     // — we expect exactly one repository.updateMetrics call after the timer.
-    historyQueryMock.metricsEvent.emit('north-cache-size', { cacheSize: 999, errorSize: 888, archiveSize: 777 });
+    // North current sizes are pulled live from the cache service (getNorthCacheSizes), not
+    // carried by the event payload — so we drive them through the mock; the 'north-cache-size'
+    // event only acts as a flush trigger.
+    historyQueryMock.getNorthCacheSizes.mock.mockImplementation(() => ({ cache: 999, error: 888, archive: 777 }));
+    historyQueryMock.metricsEvent.emit('north-cache-size', { cache: 999, error: 888, archive: 777 });
     assert.strictEqual(service.metrics.north.currentCacheSize, 999);
     assert.strictEqual(service.metrics.north.currentErrorSize, 888);
     assert.strictEqual(service.metrics.north.currentArchiveSize, 777);

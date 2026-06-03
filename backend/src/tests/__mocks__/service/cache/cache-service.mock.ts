@@ -1,4 +1,3 @@
-import { EventEmitter } from 'node:events';
 import { mock } from 'node:test';
 import {
   CacheMetadata,
@@ -8,8 +7,10 @@ import {
   DataFolderType,
   FileCacheContent
 } from '../../../../../shared/model/engine.model';
-import type { ICacheService } from '../../../../model/cache.service.model';
+import type { CacheSizeEvents, ICacheService } from '../../../../model/cache.service.model';
 import type { ILogger } from '../../../../model/logger.model';
+import type { CacheSize } from '../../../../model/engine.model';
+import TypedEventEmitter from '../../../../service/typed-event-emitter';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
@@ -25,6 +26,7 @@ export default class CacheServiceMock implements ICacheService {
   cacheIsEmpty = mock.fn((): boolean => true);
   cacheIsFull = mock.fn((_maxSize: number): boolean => false);
   getCacheSize = mock.fn((): number => 0);
+  getCacheContentSizes = mock.fn((): CacheSize => ({ cache: 0, error: 0, archive: 0 }));
   searchCacheContent = mock.fn(
     async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({
       searchDate: '',
@@ -45,5 +47,5 @@ export default class CacheServiceMock implements ICacheService {
   errorFolder = 'cache';
   archiveFolder = 'error';
   cacheFolder = 'cache';
-  cacheSizeEventEmitter = new EventEmitter();
+  cacheSizeEventEmitter = new TypedEventEmitter<CacheSizeEvents>();
 }

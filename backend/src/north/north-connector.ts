@@ -1,6 +1,8 @@
 import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import DeferredPromise from '../service/deferred-promise';
+import TypedEventEmitter from '../service/typed-event-emitter';
+import { Instant } from '../../shared/model/types';
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -25,8 +27,20 @@ import { createTransformer } from '../service/transformer.service';
 import IgnoreTransformer from '../transformers/ignore-transformer';
 import IsoTransformer from '../transformers/iso-transformer';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
-import { CONTENT_FOLDER } from '../model/engine.model';
+import { CacheSize, CONTENT_FOLDER } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
+
+/** Events published by a North connector's {@link NorthConnector.metricsEvent}. */
+export interface NorthMetricsEvents {
+  /** Current on-disk cache/error/archive sizes (gauge). Relayed from the cache service. */
+  'cache-size': CacheSize;
+  /** Size delta of a file just added to the cache (counter increment). */
+  'cache-content-size': number;
+  connect: { lastConnection: Instant };
+  'run-start': { lastRunStart: Instant };
+  'run-end': { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' };
+  'content-errored': { filename: string; size: number };
+}
 
 /**
  * Base class for every North connector.
@@ -74,7 +88,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
   // through the taskRunnerEvent
   private taskJobQueue: Array<{ id: string; name: string }> = [];
   private taskRunnerEvent: EventEmitter = new EventEmitter();
-  public metricsEvent: EventEmitter = new EventEmitter();
+  public metricsEvent: TypedEventEmitter<NorthMetricsEvents> = new TypedEventEmitter<NorthMetricsEvents>();
 
   private stopping = false;
 
@@ -84,9 +98,18 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     private cacheService: ICacheService
   ) {}
 
-  private onCacheSize = (cacheSize: { cache: number; error: number; archive: number }) => {
+  private onCacheSize = (cacheSize: CacheSize) => {
     this.metricsEvent.emit('cache-size', cacheSize);
   };
+
+  private onCacheContentSize = (contentSize: number) => {
+    this.metricsEvent.emit('cache-content-size', contentSize);
+  };
+
+  /** Live cache/error/archive folder sizes, read from the cache service (the authoritative source). */
+  getCacheSizes(): CacheSize {
+    return this.cacheService.getCacheContentSizes();
+  }
 
   /**
    * Resolver lookup for findTransformer. Built lazily on first use and rebuilt
@@ -190,6 +213,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    */
   async start(): Promise<void> {
     this.cacheService.cacheSizeEventEmitter.on('cache-size', this.onCacheSize);
+    this.cacheService.cacheSizeEventEmitter.on('cache-content-size', this.onCacheContentSize);
     this.taskRunnerEvent.on('run', async (taskDescription: { id: string; name: string }) => {
       await this.run(taskDescription);
     });

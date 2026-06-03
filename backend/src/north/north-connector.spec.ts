@@ -196,6 +196,16 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(mockListener.mock.calls[0].arguments[0], { cache: 1, error: 2, archive: 3 });
   });
 
+  it('should relay cache content size', async () => {
+    const mockListener = mock.fn();
+    await north.start();
+    north.metricsEvent.on('cache-content-size', mockListener);
+
+    cacheService.cacheSizeEventEmitter.emit('cache-content-size', 512);
+    assert.strictEqual(mockListener.mock.calls.length, 1);
+    assert.strictEqual(mockListener.mock.calls[0].arguments[0], 512);
+  });
+
   it('should properly create cron job and add to queue', async () => {
     const addTaskToQueueMock = mock.fn((_taskDescription: { id: string; name: string }) => undefined);
     north.addTaskToQueue = addTaskToQueueMock;
