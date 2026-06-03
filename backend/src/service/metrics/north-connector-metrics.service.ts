@@ -5,6 +5,7 @@ import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/engi
 import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
 import NorthConnector from '../../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { applyNorthCacheContentSize, applyNorthConnect, applyNorthRunEnd, applyNorthRunStart } from './north-metrics-accumulator';
 
 const METRICS_FLUSH_INTERVAL_MS = 1000;
 
@@ -47,32 +48,22 @@ export default class NorthConnectorMetricsService {
   };
 
   private onCacheContentSize = (cachedSize: number) => {
-    this._metrics.contentCachedSize += cachedSize;
+    applyNorthCacheContentSize(this._metrics, cachedSize);
     this.updateMetrics();
   };
 
   private onConnect = (data: { lastConnection: Instant }) => {
-    this._metrics.lastConnection = data.lastConnection;
+    applyNorthConnect(this._metrics, data);
     this.updateMetrics();
   };
 
   private onRunStart = (data: { lastRunStart: Instant }) => {
-    this._metrics.lastRunStart = data.lastRunStart;
+    applyNorthRunStart(this._metrics, data);
     this.updateMetrics();
   };
 
   private onRunEnd = (data: { lastRunDuration: number; metadata: CacheMetadata; action: 'sent' | 'errored' | 'archived' }) => {
-    this._metrics.lastRunDuration = data.lastRunDuration;
-    if (data.action === 'sent') {
-      this._metrics.lastContentSent = data.metadata.contentFile;
-      this._metrics.contentSentSize += data.metadata.contentSize;
-    } else if (data.action === 'archived') {
-      this._metrics.lastContentSent = data.metadata.contentFile;
-      this._metrics.contentArchivedSize += data.metadata.contentSize;
-      this._metrics.contentSentSize += data.metadata.contentSize;
-    } else {
-      this._metrics.contentErroredSize += data.metadata.contentSize;
-    }
+    applyNorthRunEnd(this._metrics, data);
     this.updateMetrics();
   };
 
