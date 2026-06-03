@@ -5,7 +5,8 @@ import { Readable, Transform } from 'node:stream';
 import path from 'node:path';
 
 import { determineContentTypeFromFilename, generateRandomId, processCacheFileContent } from '../utils';
-import { EventEmitter } from 'node:events';
+import TypedEventEmitter from '../typed-event-emitter';
+import type { CacheSizeEvents } from '../../model/cache.service.model';
 import {
   CacheContentUpdateCommand,
   CacheMetadata,
@@ -64,7 +65,7 @@ export default class CacheService {
 
   private _queuedElementsCount = 0;
   private _queuedRawFilesCount = 0;
-  private _cacheSizeEventEmitter: EventEmitter = new EventEmitter();
+  private _cacheSizeEventEmitter: TypedEventEmitter<CacheSizeEvents> = new TypedEventEmitter<CacheSizeEvents>();
   private cacheSize: CacheSize = {
     cache: 0,
     error: 0,
@@ -136,6 +137,10 @@ export default class CacheService {
       error: errorResult.size,
       archive: archiveResult.size
     };
+    // Publish the freshly-scanned folder sizes so the metrics services pick up any
+    // pre-existing backlog. Without this, currentCacheSize/ErrorSize/ArchiveSize stay
+    // at 0 until the next add/move/remove, reporting wrong sizes right after startup.
+    this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
   }
 
   /**
@@ -463,6 +468,8 @@ export default class CacheService {
     this.incrementQueueCounters(metadata);
     this.cacheSize.cache += contentSize;
     this.cacheSizeEventEmitter.emit('cache-size', this.cacheSize);
+    // Cumulative counter of all content ever cached — the delta is this file's size.
+    this.cacheSizeEventEmitter.emit('cache-content-size', contentSize);
     this.logger.trace(`File "${filename}" added to cache`);
     this.logCacheState(metadata);
   }
@@ -554,8 +561,13 @@ export default class CacheService {
     this.updateCache$ = null;
   }
 
-  get cacheSizeEventEmitter(): EventEmitter {
+  get cacheSizeEventEmitter(): TypedEventEmitter<CacheSizeEvents> {
     return this._cacheSizeEventEmitter;
+  }
+
+  /** Snapshot of the current on-disk cache/error/archive sizes — the authoritative gauge source. */
+  getCacheContentSizes(): CacheSize {
+    return { ...this.cacheSize };
   }
 
   private async readCacheMetadataFiles(folder: DataFolderType): Promise<Array<{ filename: string; metadata: CacheMetadata }>> {

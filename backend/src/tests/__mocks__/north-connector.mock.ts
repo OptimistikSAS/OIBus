@@ -15,6 +15,7 @@ import type {
   FileCacheContent,
   CacheContentUpdateCommand
 } from '../../../shared/model/engine.model';
+import type { CacheSize } from '../../model/engine.model';
 import type { ScanMode } from '../../model/scan-mode.model';
 
 /**
@@ -47,6 +48,7 @@ export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   );
   override updateCacheContent = mock.fn(async (_updateCommand: CacheContentUpdateCommand): Promise<void> => undefined);
   override testConnection = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }));
+  override getCacheSizes = mock.fn((): CacheSize => ({ cache: 10, error: 20, archive: 30 }));
   override metricsEvent = new EventEmitter();
 
   override supportedTypes = mock.fn((): Array<string> => []);

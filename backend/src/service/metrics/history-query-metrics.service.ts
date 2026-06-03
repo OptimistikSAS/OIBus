@@ -95,10 +95,10 @@ export default class HistoryQueryMetricsService {
     this.updateMetrics();
   };
 
-  private onNorthCacheSize = (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
-    this._metrics.north.currentCacheSize = data.cacheSize;
-    this._metrics.north.currentErrorSize = data.errorSize;
-    this._metrics.north.currentArchiveSize = data.archiveSize;
+  private onNorthCacheSize = () => {
+    // Current sizes are read live from the cache service at serialization time
+    // (see snapshot()); this listener only triggers a debounced flush so the SSE
+    // stream and the persisted row reflect a cache-size change promptly.
     this.updateMetrics();
   };
 
@@ -162,10 +162,23 @@ export default class HistoryQueryMetricsService {
     this.updateMetrics();
   };
 
+  /**
+   * The metrics as exposed/persisted: cumulative counters from `_metrics`, with the
+   * north's current cache/error/archive sizes pulled live from the cache service (the
+   * authoritative source) so the gauges can never drift or go stale.
+   */
+  private snapshot(): HistoryQueryMetrics {
+    const { cache, error, archive } = this.historyQuery.getNorthCacheSizes();
+    return {
+      ...this._metrics,
+      north: { ...this._metrics.north, currentCacheSize: cache, currentErrorSize: error, currentArchiveSize: archive }
+    };
+  }
+
   initMetrics(): void {
     this.historyQueryMetricsRepository.initMetrics(this.historyQuery.historyQueryConfiguration.id);
     this._metrics = this.historyQueryMetricsRepository.getMetrics(this.historyQuery.historyQueryConfiguration.id)!;
-    this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+    this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
   }
 
   /** Debounced flush. See METRICS_FLUSH_INTERVAL_MS. */
@@ -178,8 +191,9 @@ export default class HistoryQueryMetricsService {
   }
 
   private flushMetrics(): void {
-    this.historyQueryMetricsRepository.updateMetrics(this.historyQuery.historyQueryConfiguration.id, this._metrics);
-    this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+    const metrics = this.snapshot();
+    this.historyQueryMetricsRepository.updateMetrics(this.historyQuery.historyQueryConfiguration.id, metrics);
+    this._stream?.write(`data: ${JSON.stringify(metrics)}\n\n`);
   }
 
   resetMetrics(): void {
@@ -218,7 +232,7 @@ export default class HistoryQueryMetricsService {
   }
 
   get metrics(): HistoryQueryMetrics {
-    return this._metrics;
+    return this.snapshot();
   }
 
   /**
@@ -229,7 +243,7 @@ export default class HistoryQueryMetricsService {
     this._stream?.destroy();
     this._stream = new PassThrough();
     setTimeout(() => {
-      this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+      this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
     }, 100);
     return this._stream;
   }

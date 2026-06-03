@@ -14,6 +14,7 @@ import type {
   FileCacheContent,
   CacheContentUpdateCommand
 } from '../../../shared/model/engine.model';
+import type { CacheSize } from '../../model/engine.model';
 
 /**
  * Create a mock object for History Query
@@ -35,6 +36,7 @@ export default class HistoryQueryMock extends HistoryQuery {
   override resetCache = mock.fn(async (): Promise<void> => undefined);
   override finish = mock.fn(async (): Promise<void> => undefined);
   override setLogger = mock.fn((_logger: ILogger): void => undefined);
+  override getNorthCacheSizes = mock.fn((): CacheSize => ({ cache: 10, error: 20, archive: 30 }));
   override metricsEvent = new EventEmitter();
   override finishEvent = new EventEmitter();
   override searchCacheContent = mock.fn(

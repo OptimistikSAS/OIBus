@@ -39,10 +39,10 @@ export default class NorthConnectorMetricsService {
     this.northConnector.metricsEvent.on('run-end', this.onRunEnd);
   }
 
-  private onCacheSize = (data: { cacheSize: number; errorSize: number; archiveSize: number }) => {
-    this._metrics.currentCacheSize = data.cacheSize;
-    this._metrics.currentErrorSize = data.errorSize;
-    this._metrics.currentArchiveSize = data.archiveSize;
+  private onCacheSize = () => {
+    // Current sizes are read live from the cache service at serialization time
+    // (see snapshot()); this listener only triggers a debounced flush so the SSE
+    // stream and the persisted row reflect a cache-size change promptly.
     this.updateMetrics();
   };
 
@@ -76,10 +76,20 @@ export default class NorthConnectorMetricsService {
     this.updateMetrics();
   };
 
+  /**
+   * The metrics as exposed/persisted: cumulative counters from `_metrics`, with the
+   * current cache/error/archive sizes pulled live from the cache service (the
+   * authoritative source) so the gauges can never drift or go stale.
+   */
+  private snapshot(): NorthConnectorMetrics {
+    const { cache, error, archive } = this.northConnector.getCacheSizes();
+    return { ...this._metrics, currentCacheSize: cache, currentErrorSize: error, currentArchiveSize: archive };
+  }
+
   initMetrics(): void {
     this.northConnectorMetricsRepository.initMetrics(this.northConnector.connectorConfiguration.id);
     this._metrics = this.northConnectorMetricsRepository.getMetrics(this.northConnector.connectorConfiguration.id)!;
-    this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+    this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
   }
 
   /** Both the DB write and the SSE push are debounced through the same timer. */
@@ -92,8 +102,9 @@ export default class NorthConnectorMetricsService {
   }
 
   private flushMetrics(): void {
-    this.northConnectorMetricsRepository.updateMetrics(this.northConnector.connectorConfiguration.id, this._metrics);
-    this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+    const metrics = this.snapshot();
+    this.northConnectorMetricsRepository.updateMetrics(this.northConnector.connectorConfiguration.id, metrics);
+    this._stream?.write(`data: ${JSON.stringify(metrics)}\n\n`);
   }
 
   resetMetrics(): void {
@@ -124,7 +135,7 @@ export default class NorthConnectorMetricsService {
   }
 
   get metrics(): NorthConnectorMetrics {
-    return this._metrics;
+    return this.snapshot();
   }
 
   /**
@@ -135,7 +146,7 @@ export default class NorthConnectorMetricsService {
     this._stream?.destroy();
     this._stream = new PassThrough();
     setTimeout(() => {
-      this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+      this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
     }, 100);
     return this._stream;
   }
