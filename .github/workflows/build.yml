@@ -2,6 +2,11 @@ name: Build OIBus binaries
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Git tag to build (e.g. v3.8.1). Leave empty to build from the current ref.'
+        required: false
+        default: ''
   release:
     types: [ published ]
 
@@ -10,10 +15,71 @@ permissions:
   packages: write
 
 jobs:
+  prepare:
+    name: Get release info and generate SBOM
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      prerelease: ${{ steps.release_info.outputs.prerelease }}
+      tag_name: ${{ steps.release_info.outputs.tag_name }}
+      release_name: ${{ steps.release_info.outputs.release_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Get release info
+        id: release_info
+        uses: actions/github-script@v9
+        with:
+          script: |
+            if (!context.payload.release) {
+              const input = context.payload.inputs?.tag || '';
+              const ref = input || context.ref || '';
+              const tagName = ref.startsWith('refs/tags/') ? ref.slice('refs/tags/'.length) : (ref || 'dev');
+              const version = tagName.startsWith('v') ? tagName.slice(1) : tagName;
+              core.setOutput("prerelease", "false");
+              core.setOutput("tag_name", version);
+              core.setOutput("release_name", tagName);
+              return;
+            }
+            const release = await github.rest.repos.getRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: context.payload.release.id
+            });
+            const tagName = release.data.tag_name.startsWith('v') ? release.data.tag_name.slice(1) : release.data.tag_name;
+            core.setOutput("prerelease", release.data.prerelease);
+            core.setOutput("tag_name", tagName);
+            core.setOutput("release_name", release.data.tag_name);
+
+      - name: Generate SBOM
+        shell: bash
+        run: |
+          npm install -g @cyclonedx/cdxgen
+          cdxgen . -o oibus-sbom.json --recurse
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oibus-sbom
+          path: oibus-sbom.json
+
+      - name: Upload SBOM to release
+        if: ${{ github.event_name == 'release' && steps.release_info.outputs.prerelease == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh release upload ${{ steps.release_info.outputs.release_name }} oibus-sbom.json --clobber
+
   build:
     name: Build for ${{ matrix.config['friendlyName'] }}
+    needs: [ prepare ]
     runs-on: ${{ matrix.config['os'] }}
     strategy:
+      fail-fast: false
       matrix:
         config:
           - { friendlyName: 'MacOS arm64', os: 'macos-15', platform: 'macos-arm64', archiveName: 'oibus-macos_arm64', zip: 'zip -r' }
@@ -27,27 +93,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ inputs.tag || github.ref }}
 
-      - name: Get release info
-        id: release_info
-        uses: actions/github-script@v9
+      - name: Download SBOM
+        uses: actions/download-artifact@v4
         with:
-          script: |
-            const release = await github.rest.repos.getRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: context.payload.release.id
-            });
-            const tagName = release.data.tag_name.startsWith('v') ? release.data.tag_name.slice(1) : release.data.tag_name;
-            core.setOutput("prerelease", release.data.prerelease);
-            core.setOutput("tag_name", tagName);
-            core.setOutput("release_name", release.data.tag_name);
-
-      - name: Print release details
-        run: |
-          echo "Pre-release: ${{ steps.release_info.outputs.prerelease }}"
-          echo "Tag name: ${{ steps.release_info.outputs.tag_name }}"
+          name: oibus-sbom
+          path: .
 
       - name: Install unixODBC development library (Linux)
         if: ${{ runner.os == 'Linux' }}
@@ -63,10 +115,9 @@ jobs:
         uses: ./.github/actions/setup_environment
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-          prerelease: ${{ steps.release_info.outputs.prerelease }}
-          tag_name: ${{ steps.release_info.outputs.tag_name }}
+          prerelease: ${{ needs.prepare.outputs.prerelease }}
+          tag_name: ${{ needs.prepare.outputs.tag_name }}
           platform_arch: ${{ matrix.config['platform'] }}
-
 
       - name: Bundle OIBus frontend for ${{ matrix.config['friendlyName'] }}
         working-directory: ./frontend
@@ -96,7 +147,7 @@ jobs:
           $zipFile = "kmscng.zip"
           $extractPath = "kmscng_extracted"
           $url = "https://github.com/GoogleCloudPlatform/kms-integrations/releases/download/cng-v1.3/kmscng-1.3-windows-amd64.zip"
-          
+
           # Check if we have the file from cache
           if (Test-Path $zipFile) {
               Write-Host "Cache Hit: Using existing installer."
@@ -104,21 +155,21 @@ jobs:
               Write-Host "Cache Miss: Downloading from $url..."
               Invoke-WebRequest $url -OutFile $zipFile
           }
-          
+
           # Extract
           Write-Host "Extracting..."
           Expand-Archive -Path $zipFile -DestinationPath $extractPath -Force
-          
+
           # Find MSI
           $msi = Get-ChildItem -Path $extractPath -Filter "*.msi" -Recurse | Select-Object -First 1 -ExpandProperty FullName
-          
+
           if (-not $msi) { throw "Error: Could not find MSI file in the package." }
-          
+
           # Install
           Write-Host "Installing MSI: $msi"
           Start-Process msiexec.exe -ArgumentList "/i `"$msi`" /quiet /norestart" -Wait
           Write-Host "Installation Complete."
-      
+
       - name: Authenticate to Google Cloud
         if: ${{ matrix.config['platform'] == 'win-x64' }}
         id: auth
@@ -137,24 +188,24 @@ jobs:
               # 1. Decode Certificate
               $encodedBytes = [System.Convert]::FromBase64String("$env:CERT_BASE64_CONTENT")
               Set-Content -Path "$env:CERT_PATH" -AsByteStream -Value $encodedBytes
-              
+
               # 2. Find the System x64 Signtool (Fixes "term not recognized")
               $signtool = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits" -Filter "signtool.exe" -Recurse | Where-Object { $_.FullName -like "*x64*" } | Select-Object -First 1 -ExpandProperty FullName
-              
+
               if (-not $signtool) { throw "Could not find x64 signtool.exe on this runner." }
               Write-Host "Found Signtool at: $signtool"
-        
+
               # 3. Sign OIBus binary
               & $signtool sign /debug /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /f "$env:CERT_PATH" /csp "Google Cloud KMS Provider" /kc projects/oibus-dev/locations/global/keyRings/sectigo/cryptoKeys/202512-code-signing/cryptoKeyVersions/1 ./build/bin/${{ matrix.config['platform'] }}/binaries/oibus.exe
-              
+
               # 4. Sign OIBus launcher
               & $signtool sign /debug /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /f "$env:CERT_PATH" /csp "Google Cloud KMS Provider" /kc projects/oibus-dev/locations/global/keyRings/sectigo/cryptoKeys/202512-code-signing/cryptoKeyVersions/1 ./build/bin/${{ matrix.config['platform'] }}/oibus-launcher.exe
           }
-            catch {
+          catch {
             Write-Error $_
             exit 1
           }
-            finally {
+          finally {
             if (Test-Path "$env:CERT_PATH") { Remove-Item -Path "$env:CERT_PATH" -Force }
           }
 
@@ -162,47 +213,21 @@ jobs:
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
           ./oibus-launcher --config ../../../data-folder --version true
-          
 
       - name: Copy SBOM to build/bin
         shell: bash
-        run: |
-          cp oibus-sbom.json build/bin/${{ matrix.config['platform'] }}/
-
-      - name: Upload SBOM
-        if: ${{ steps.release_info.outputs.prerelease  == 'false' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
-        shell: bash
-        run: |
-          SBOM_FILENAME="sbom-${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.json"
-          cp oibus-sbom.json "$SBOM_FILENAME"
-          gh release upload ${{ github.ref_name }} "$SBOM_FILENAME" --clobber
-
+        run: cp oibus-sbom.json build/bin/${{ matrix.config['platform'] }}/
 
       - name: Package OIBus for ${{ matrix.config['friendlyName'] }}
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
-          ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip .
+          ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip .
 
-      - name: Monitor SBOM with Snyk
-        if: ${{ steps.release_info.outputs.prerelease  == 'false' }}
-        shell: bash
+      - name: Upload Artifact ${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
         env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: |
-          snyk monitor \
-            --all-projects \
-            --detection-depth=2 \
-            --exclude=dist,documentation \
-            --target-reference="OIBus-${{ steps.release_info.outputs.tag_name }}-${{ matrix.config['platform'] }}" \
-            --remote-repo-url="https://github.com/${{ github.repository }}"
-
-      - name: Upload Artifact ${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run:
-          gh release upload ${{ github.ref_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip
+          gh release upload ${{ needs.prepare.outputs.release_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ needs.prepare.outputs.release_name }}.zip
 
       # --- WINDOWS SPECIFIC ---
       - name: Cache Inno Setup
@@ -248,28 +273,109 @@ jobs:
       - name: Rename & Upload Windows installer
         if: ${{ matrix.config['platform'] == 'win-x64' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ github.ref_name }}.exe
-          gh release upload ${{ github.ref_name }} ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ github.ref_name }}.exe
+          mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ needs.prepare.outputs.release_name }}.exe
+          gh release upload ${{ needs.prepare.outputs.release_name }} ./build/bin/win-setup-release/${{ matrix.config['archiveName'] }}-setup-${{ needs.prepare.outputs.release_name }}.exe
 
     outputs:
-      release_name: ${{ steps.release_info.outputs.release_name }}
-      prerelease: ${{ steps.release_info.outputs.prerelease }}
+      release_name: ${{ needs.prepare.outputs.release_name }}
+      prerelease: ${{ needs.prepare.outputs.prerelease }}
+      tag_name: ${{ needs.prepare.outputs.tag_name }}
+
+  snyk:
+    name: Monitor with Snyk
+    needs: [ build ]
+    if: ${{ needs.build.outputs.prerelease == 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Install Snyk
+        shell: bash
+        run: npm install -g snyk
+
+      - name: Monitor with Snyk
+        shell: bash
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          snyk monitor \
+            --all-projects \
+            --detection-depth=2 \
+            --exclude=dist,documentation \
+            --target-reference="OIBus-${{ needs.build.outputs.tag_name }}" \
+            --remote-repo-url="https://github.com/${{ github.repository }}"
 
   docker:
-    name: 'Release OIBus docker container'
+    name: 'Publish Docker image'
     needs: [ build ]
-    uses: ./.github/workflows/docker.yml
-    secrets: inherit
-    with:
-      tag: ${{ needs.build.outputs.release_name }}
-      prerelease: ${{ needs.build.outputs.prerelease }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Docker login to ghcr.io
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: "{{defaultContext}}:build/docker"
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: |
+            VERSION=${{ needs.build.outputs.release_name }}
+          tags: |
+            ghcr.io/optimistiksas/oibus:${{ needs.build.outputs.prerelease == 'true' && 'beta' || 'latest' }}
+            ghcr.io/optimistiksas/oibus:${{ needs.build.outputs.release_name }}
+
+  deploy-documentation:
+    name: 'Deploy documentation'
+    needs: [ build, docker ]
+    if: ${{ needs.build.outputs.prerelease == 'false' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: documentation/package.json
+
+      - name: Build documentation
+        shell: bash
+        run: |
+          cd documentation
+          npm ci
+          npm run build
+
+      - name: Deploy documentation
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./documentation/build
+          user_name: Optimistik SAS
+          user_email: optimistiksas@users.noreply.github.com
 
   slack:
     name: 'Slack notification'
-    needs: [ docker ]
-    runs-on: ubuntu-latest
+    needs: [ snyk, docker, deploy-documentation ]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
     timeout-minutes: 1
     steps:
       - name: Slack notification
