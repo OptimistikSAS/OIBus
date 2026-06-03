@@ -33,7 +33,9 @@ describe('HistoryQueryMetricsRepository with populated database', () => {
   it('should get metrics', () => {
     repository.initMetrics(testData.historyQueries.list[0].id);
     const result = repository.getMetrics(testData.historyQueries.list[0].id);
-    assert.deepStrictEqual(result, testData.historyQueries.metrics);
+    // north current* sizes are no longer persisted (read live by the service) — compare the persisted subset.
+    const { currentCacheSize: _c, currentErrorSize: _e, currentArchiveSize: _a, ...north } = testData.historyQueries.metrics.north;
+    assert.deepStrictEqual(result, { ...testData.historyQueries.metrics, north });
   });
 
   it('should update metrics', () => {
@@ -101,10 +103,7 @@ describe('HistoryQueryMetricsRepository with empty database', () => {
         contentCachedSize: 0,
         contentErroredSize: 0,
         contentArchivedSize: 0,
-        lastContentSent: null,
-        currentCacheSize: 0,
-        currentErrorSize: 0,
-        currentArchiveSize: 0
+        lastContentSent: null
       },
       south: {
         lastConnection: null,

@@ -33,7 +33,9 @@ describe('NorthConnectorMetricsRepository with populated database', () => {
   it('should get metrics', () => {
     repository.initMetrics(testData.north.list[0].id);
     const result = repository.getMetrics(testData.north.list[0].id);
-    assert.deepStrictEqual(result, testData.north.metrics);
+    // current* sizes are no longer persisted (read live by the service) — compare the persisted subset.
+    const { currentCacheSize: _c, currentErrorSize: _e, currentArchiveSize: _a, ...persisted } = testData.north.metrics;
+    assert.deepStrictEqual(result, persisted);
   });
 
   it('should update metrics', () => {
@@ -97,10 +99,7 @@ describe('NorthConnectorMetricsRepository with empty database', () => {
       contentCachedSize: 0,
       contentErroredSize: 0,
       contentArchivedSize: 0,
-      lastContentSent: null,
-      currentCacheSize: 0,
-      currentErrorSize: 0,
-      currentArchiveSize: 0
+      lastContentSent: null
     });
   });
 });

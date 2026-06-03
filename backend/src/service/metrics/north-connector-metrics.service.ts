@@ -2,7 +2,9 @@ import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { CacheMetadata, NorthConnectorMetrics } from '../../../shared/model/engine.model';
-import NorthConnectorMetricsRepository from '../../repository/metrics/north-connector-metrics.repository';
+import NorthConnectorMetricsRepository, {
+  PersistedNorthConnectorMetrics
+} from '../../repository/metrics/north-connector-metrics.repository';
 import NorthConnector from '../../north/north-connector';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { applyNorthCacheContentSize, applyNorthConnect, applyNorthRunEnd, applyNorthRunStart } from './north-metrics-accumulator';
@@ -13,7 +15,8 @@ export default class NorthConnectorMetricsService {
   private _stream: PassThrough | null = null;
   private metricsFlushTimer: NodeJS.Timeout | null = null;
 
-  private _metrics: NorthConnectorMetrics = {
+  // Persisted fields only; the current cache/error/archive sizes are added live in snapshot().
+  private _metrics: PersistedNorthConnectorMetrics = {
     metricsStart: DateTime.now().toUTC().toISO() as Instant,
     contentSentSize: 0,
     contentCachedSize: 0,
@@ -22,10 +25,7 @@ export default class NorthConnectorMetricsService {
     lastConnection: null,
     lastContentSent: null,
     lastRunStart: null,
-    lastRunDuration: null,
-    currentCacheSize: 0,
-    currentErrorSize: 0,
-    currentArchiveSize: 0
+    lastRunDuration: null
   };
 
   constructor(
@@ -93,9 +93,9 @@ export default class NorthConnectorMetricsService {
   }
 
   private flushMetrics(): void {
-    const metrics = this.snapshot();
-    this.northConnectorMetricsRepository.updateMetrics(this.northConnector.connectorConfiguration.id, metrics);
-    this._stream?.write(`data: ${JSON.stringify(metrics)}\n\n`);
+    // Persist only the persisted fields; the SSE push carries the full snapshot (with live sizes).
+    this.northConnectorMetricsRepository.updateMetrics(this.northConnector.connectorConfiguration.id, this._metrics);
+    this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
   }
 
   resetMetrics(): void {

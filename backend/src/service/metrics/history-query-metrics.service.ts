@@ -1,7 +1,7 @@
 import { CacheMetadata, HistoryQueryMetrics, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
 import HistoryQuery from '../../engine/history-query';
-import HistoryQueryMetricsRepository from '../../repository/metrics/history-query-metrics.repository';
+import HistoryQueryMetricsRepository, { PersistedHistoryQueryMetrics } from '../../repository/metrics/history-query-metrics.repository';
 import { DateTime } from 'luxon';
 import { Instant } from '../../model/types';
 import { applyNorthCacheContentSize, applyNorthConnect, applyNorthRunEnd, applyNorthRunStart } from './north-metrics-accumulator';
@@ -16,7 +16,8 @@ const METRICS_FLUSH_INTERVAL_MS = 1000;
 export default class HistoryQueryMetricsService {
   private _stream: PassThrough | null = null;
   private metricsFlushTimer: NodeJS.Timeout | null = null;
-  private _metrics: HistoryQueryMetrics = {
+  // Persisted fields only; the north current cache/error/archive sizes are added live in snapshot().
+  private _metrics: PersistedHistoryQueryMetrics = {
     metricsStart: DateTime.now().toUTC().toISO()!,
     north: {
       contentSentSize: 0,
@@ -26,10 +27,7 @@ export default class HistoryQueryMetricsService {
       lastContentSent: null,
       lastConnection: null,
       lastRunStart: null,
-      lastRunDuration: null,
-      currentCacheSize: 0,
-      currentErrorSize: 0,
-      currentArchiveSize: 0
+      lastRunDuration: null
     },
     south: {
       numberOfValuesRetrieved: 0,
@@ -182,9 +180,9 @@ export default class HistoryQueryMetricsService {
   }
 
   private flushMetrics(): void {
-    const metrics = this.snapshot();
-    this.historyQueryMetricsRepository.updateMetrics(this.historyQuery.historyQueryConfiguration.id, metrics);
-    this._stream?.write(`data: ${JSON.stringify(metrics)}\n\n`);
+    // Persist only the persisted fields; the SSE push carries the full snapshot (with live sizes).
+    this.historyQueryMetricsRepository.updateMetrics(this.historyQuery.historyQueryConfiguration.id, this._metrics);
+    this._stream?.write(`data: ${JSON.stringify(this.snapshot())}\n\n`);
   }
 
   resetMetrics(): void {
