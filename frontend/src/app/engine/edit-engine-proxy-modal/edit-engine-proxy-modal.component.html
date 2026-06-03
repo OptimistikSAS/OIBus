@@ -22,6 +22,33 @@
         </div>
       }
     </div>
+    @if (form.controls.proxyEnabled.value) {
+      <div class="row">
+        <div class="col-6">
+          <div class="form-group">
+            <label class="form-label" for="forward-proxy-url" translate="engine.proxy-settings.forward-proxy-url"></label>
+            <input formControlName="forwardProxyUrl" id="forward-proxy-url" class="form-control" />
+            <val-errors controlName="forwardProxyUrl" />
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          <div class="form-group">
+            <label class="form-label" for="forward-proxy-username" translate="engine.proxy-settings.forward-proxy-username"></label>
+            <input formControlName="forwardProxyUsername" id="forward-proxy-username" class="form-control" />
+            <val-errors controlName="forwardProxyUsername" />
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="form-group">
+            <label class="form-label" for="forward-proxy-password" translate="engine.proxy-settings.forward-proxy-password"></label>
+            <input formControlName="forwardProxyPassword" type="password" id="forward-proxy-password" class="form-control" />
+            <val-errors controlName="forwardProxyPassword" />
+          </div>
+        </div>
+      </div>
+    }
   </form>
 </div>
 <div class="modal-footer">

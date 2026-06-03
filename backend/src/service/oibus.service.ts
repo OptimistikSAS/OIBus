@@ -128,7 +128,11 @@ export default class OIBusService {
         '::ffff:127.0.0.1',
         ...this.ipFilterService.list().map(filter => filter.address)
       ]);
-      await this.proxyServer.start(settings.proxyPort!);
+      await this.proxyServer.start(settings.proxyPort!, {
+        url: settings.forwardProxyUrl,
+        username: settings.forwardProxyUsername,
+        password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
+      });
     }
     const startDuration = DateTime.now().toMillis() - start;
     this.logger.info(`OIBus started in ${startDuration} ms`);
@@ -160,6 +164,11 @@ export default class OIBusService {
     } else {
       command.logParameters.loki.password = await encryptionService.encryptText(command.logParameters.loki.password);
     }
+    if (!command.forwardProxyPassword) {
+      command.forwardProxyPassword = oldEngineSettings.forwardProxyPassword;
+    } else {
+      command.forwardProxyPassword = await encryptionService.encryptText(command.forwardProxyPassword);
+    }
     this.engineRepository.update(command, updatedBy);
     const settings = this.getEngineSettings();
 
@@ -179,7 +188,11 @@ export default class OIBusService {
     }
     await this.proxyServer.stop();
     if (settings.proxyEnabled) {
-      await this.proxyServer.start(settings.proxyPort!);
+      await this.proxyServer.start(settings.proxyPort!, {
+        url: settings.forwardProxyUrl,
+        username: settings.forwardProxyUsername,
+        password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
+      });
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
@@ -406,6 +419,9 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
     launcherVersion: engineSettings.launcherVersion,
     proxyEnabled: engineSettings.proxyEnabled,
     proxyPort: engineSettings.proxyPort,
+    forwardProxyUrl: engineSettings.forwardProxyUrl,
+    forwardProxyUsername: engineSettings.forwardProxyUsername,
+    forwardProxyPassword: '',
     logParameters: {
       console: {
         level: engineSettings.logParameters.console.level

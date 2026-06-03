@@ -20,6 +20,9 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
   port: 2223,
   proxyEnabled: false,
   proxyPort: 9000,
+  forwardProxyUrl: null,
+  forwardProxyUsername: null,
+  forwardProxyPassword: null,
   logParameters: {
     console: {
       level: 'silent'
@@ -69,6 +72,7 @@ export default class EngineRepository {
   get(): EngineSettings | null {
     const query =
       'SELECT id, name, port, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
+      'forward_proxy_url, forward_proxy_username, forward_proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, ' +
       'log_database_level, log_database_max_number_of_logs, ' +
       'log_loki_level, log_loki_interval, log_loki_address, log_loki_username, log_loki_password, ' +
@@ -87,6 +91,7 @@ export default class EngineRepository {
   update(command: EngineSettingsCommandDTO, updatedBy: string): void {
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, proxy_enabled = ?, proxy_port = ?, ` +
+      'forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, ' +
       'log_console_level = ?, ' +
       'log_file_level = ?, ' +
       'log_file_max_file_size = ?, ' +
@@ -114,6 +119,9 @@ export default class EngineRepository {
         command.port,
         +command.proxyEnabled,
         command.proxyPort,
+        command.forwardProxyUrl,
+        command.forwardProxyUsername,
+        command.forwardProxyPassword,
         command.logParameters.console.level,
         command.logParameters.file.level,
         command.logParameters.file.maxFileSize,
@@ -209,6 +217,7 @@ export default class EngineRepository {
 
     const query =
       `INSERT INTO ${ENGINES_TABLE} (id, name, oibus_version, oibus_launcher_version, port, proxy_enabled, proxy_port,` +
+      'forward_proxy_url, forward_proxy_username, forward_proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
       'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, ' +
       'log_loki_username, log_loki_password, log_oia_level, log_oia_interval, ' +
@@ -225,6 +234,9 @@ export default class EngineRepository {
         command.port,
         +command.proxyEnabled,
         command.proxyPort,
+        command.forwardProxyUrl,
+        command.forwardProxyUsername,
+        command.forwardProxyPassword,
         command.logParameters.console.level,
         command.logParameters.file.level,
         command.logParameters.file.maxFileSize,
@@ -256,6 +268,9 @@ export default class EngineRepository {
       launcherVersion: result.oibus_launcher_version as string,
       proxyEnabled: Boolean(result.proxy_enabled),
       proxyPort: result.proxy_port as number,
+      forwardProxyUrl: (result.forward_proxy_url as string) || null,
+      forwardProxyUsername: (result.forward_proxy_username as string) || null,
+      forwardProxyPassword: (result.forward_proxy_password as string) || null,
       createdBy: result.created_by as string,
       updatedBy: result.updated_by as string,
       createdAt: result.created_at as string,

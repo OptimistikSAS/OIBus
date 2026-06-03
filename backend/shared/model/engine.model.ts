@@ -56,6 +56,24 @@ export interface EngineSettingsDTO extends BaseEntity {
   proxyPort: number | null;
 
   /**
+   * The URL of the upstream proxy to forward requests through.
+   * @example null
+   */
+  forwardProxyUrl: string | null;
+
+  /**
+   * The username for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyUsername: string | null;
+
+  /**
+   * The password for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyPassword: string | null;
+
+  /**
    * Logging parameters for different outputs.
    */
   logParameters: {
@@ -888,6 +906,24 @@ export interface EngineSettingsCommandDTO {
    * @example null
    */
   proxyPort: number | null;
+
+  /**
+   * The URL of the upstream proxy to forward requests through.
+   * @example null
+   */
+  forwardProxyUrl: string | null;
+
+  /**
+   * The username for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyUsername: string | null;
+
+  /**
+   * The password for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyPassword: string | null;
 
   /**
    * Logging parameters for different outputs.
