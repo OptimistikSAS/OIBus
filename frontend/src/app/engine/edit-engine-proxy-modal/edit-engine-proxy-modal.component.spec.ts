@@ -11,7 +11,13 @@ import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
-const engineSettings = { proxyEnabled: false, proxyPort: null } as EngineSettingsDTO;
+const engineSettings = {
+  proxyEnabled: false,
+  proxyPort: null,
+  forwardProxyUrl: null,
+  forwardProxyUsername: null,
+  forwardProxyPassword: null
+} as EngineSettingsDTO;
 
 class EditEngineProxyModalTester {
   readonly fixture = TestBed.createComponent(EditEngineProxyModalComponent);
@@ -61,7 +67,13 @@ describe('EditEngineProxyModalComponent', () => {
     tester.fixture.componentInstance.initialize({ ...engineSettings, proxyEnabled: false, proxyPort: null });
     tester.fixture.detectChanges();
     await tester.saveButton.click();
-    expect(engineService.updateEngineProxy).toHaveBeenCalledWith({ proxyEnabled: false, proxyPort: null });
+    expect(engineService.updateEngineProxy).toHaveBeenCalledWith({
+      proxyEnabled: false,
+      proxyPort: null,
+      forwardProxyUrl: null,
+      forwardProxyUsername: null,
+      forwardProxyPassword: null
+    });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
   });

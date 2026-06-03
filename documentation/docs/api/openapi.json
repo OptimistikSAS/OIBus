@@ -16638,6 +16638,24 @@
 						"description": "The port for the proxy, if enabled.",
 						"example": null
 					},
+					"forwardProxyUrl": {
+						"type": "string",
+						"nullable": true,
+						"description": "The URL of the upstream proxy to forward requests through.",
+						"example": null
+					},
+					"forwardProxyUsername": {
+						"type": "string",
+						"nullable": true,
+						"description": "The username for upstream proxy authentication.",
+						"example": null
+					},
+					"forwardProxyPassword": {
+						"type": "string",
+						"nullable": true,
+						"description": "The password for upstream proxy authentication.",
+						"example": null
+					},
 					"logParameters": {
 						"properties": {
 							"syslog": {
@@ -16818,6 +16836,9 @@
 					"port",
 					"proxyEnabled",
 					"proxyPort",
+					"forwardProxyUrl",
+					"forwardProxyUsername",
+					"forwardProxyPassword",
 					"logParameters"
 				],
 				"type": "object",
@@ -31361,6 +31382,24 @@
 						"description": "The port for the proxy, if enabled.",
 						"example": null
 					},
+					"forwardProxyUrl": {
+						"type": "string",
+						"nullable": true,
+						"description": "The URL of the upstream proxy to forward requests through.",
+						"example": null
+					},
+					"forwardProxyUsername": {
+						"type": "string",
+						"nullable": true,
+						"description": "The username for upstream proxy authentication.",
+						"example": null
+					},
+					"forwardProxyPassword": {
+						"type": "string",
+						"nullable": true,
+						"description": "The password for upstream proxy authentication.",
+						"example": null
+					},
 					"logParameters": {
 						"properties": {
 							"syslog": {
@@ -31542,6 +31581,9 @@
 					"launcherVersion",
 					"proxyEnabled",
 					"proxyPort",
+					"forwardProxyUrl",
+					"forwardProxyUsername",
+					"forwardProxyPassword",
 					"logParameters"
 				],
 				"type": "object",
