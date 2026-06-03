@@ -17,24 +17,13 @@ permissions:
 jobs:
   release-please:
     name: 'Tag new version'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
-      - uses: googleapis/release-please-action@v5
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         id: release
         with:
           token: ${{ secrets.REPO_ACCESS_TOKEN }}
           target-branch: stable
           config-file: .github/release-please-config.json
           manifest-file: .github/release-please-manifest.json
-
-      - name: Checkout
-        if: ${{ steps.release.outputs.release_created }}
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Deploy documentation
-        if: ${{ steps.release.outputs.release_created }}
-        uses: ./.github/actions/deploy_documentation
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}

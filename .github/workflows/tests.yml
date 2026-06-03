@@ -3,7 +3,7 @@ name: Run OIBus tests
 on:
   pull_request:
     types: [ opened, synchronize, ready_for_review ]
-    paths-ignore: [ "documentation/**", "build/**", "data-folder/**", "**.md" ]
+    paths-ignore: [ "build/**", "data-folder/**", "docker/**", "documentation/**", "**.md", "docker-compose.yml", "LICENSE" ]
 
 concurrency:
   # New commit on branch cancels running workflows of the same branch
@@ -11,9 +11,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
-    name: Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os  }}
+  changes:
+    name: Detect changed packages
+    runs-on: ubuntu-24.04
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      launcher: ${{ steps.filter.outputs.launcher }}
+    steps:
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+              - 'backend/shared/**'
+            launcher:
+              - 'launcher/**'
+
+  test-backend:
+    name: Test backend on ${{ matrix.os }}
+    needs: [ changes ]
+    if: ${{ needs.changes.outputs.backend == 'true' }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
@@ -25,14 +48,162 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-        with:
-          ref: ${{ github.ref }}
 
-      - name: Setup environment
-        uses: ./.github/actions/setup_environment
+      - name: Use Node.js
+        uses: actions/setup-node@v6
         with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-          platform_arch: ${{ matrix.platform }}
+          node-version-file: backend/package.json
 
-      - name: Run unit tests
-        uses: ./.github/actions/unit_tests
+      - name: Cache backend dependencies
+        id: cache-backend
+        uses: actions/cache@v5
+        with:
+          path: backend/node_modules
+          key: backend-deps-${{ matrix.platform }}-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('backend/package-lock.json') }}
+
+      - name: Install backend dependencies
+        if: steps.cache-backend.outputs.cache-hit != 'true'
+        working-directory: backend
+        shell: bash
+        run: npm ci
+
+      - name: Cache backend ESLint results
+        uses: actions/cache@v5
+        with:
+          path: backend/.eslintcache
+          key: eslint-backend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('backend/eslint.config.mjs', 'backend/package-lock.json') }}
+          restore-keys: eslint-backend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
+
+      - name: Run backend linting
+        shell: bash
+        working-directory: backend
+        run: npm run lint
+
+      - name: Build backend
+        shell: bash
+        working-directory: backend
+        run: npm run build
+
+      - name: Run backend unit tests
+        shell: bash
+        working-directory: backend
+        run: npm test
+
+  test-frontend:
+    name: Test frontend on ubuntu-24.04
+    needs: [ changes ]
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: backend/package.json
+
+      - name: Cache frontend dependencies
+        id: cache-frontend
+        uses: actions/cache@v5
+        with:
+          path: frontend/node_modules
+          key: frontend-deps-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install frontend dependencies
+        if: steps.cache-frontend.outputs.cache-hit != 'true'
+        working-directory: frontend
+        shell: bash
+        run: npm ci
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: playwright-chromium-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
+
+      - name: Cache frontend ESLint results
+        uses: actions/cache@v5
+        with:
+          path: frontend/.eslintcache
+          key: eslint-frontend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/eslint.config.js', 'frontend/package-lock.json') }}
+          restore-keys: eslint-frontend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
+
+      - name: Run frontend linting
+        shell: bash
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build frontend
+        shell: bash
+        working-directory: frontend
+        run: npm run build
+
+      - name: Install Playwright browser
+        shell: bash
+        working-directory: frontend
+        run: npx playwright install chromium
+
+      - name: Run frontend unit tests
+        shell: bash
+        working-directory: frontend
+        run: npm test
+
+  test-launcher:
+    name: Test launcher on ${{ matrix.os }}
+    needs: [ changes ]
+    if: ${{ needs.changes.outputs.launcher == 'true' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            platform: linux-x64
+          - os: windows-2025
+            platform: win-x64
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: backend/package.json
+
+      - name: Cache launcher dependencies
+        id: cache-launcher
+        uses: actions/cache@v5
+        with:
+          path: launcher/node_modules
+          key: launcher-deps-${{ matrix.platform }}-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('launcher/package-lock.json') }}
+
+      - name: Install launcher dependencies
+        if: steps.cache-launcher.outputs.cache-hit != 'true'
+        working-directory: launcher
+        shell: bash
+        run: npm ci
+
+      - name: Cache launcher ESLint results
+        uses: actions/cache@v5
+        with:
+          path: launcher/.eslintcache
+          key: eslint-launcher-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('launcher/eslint.config.mjs', 'launcher/package-lock.json') }}
+          restore-keys: eslint-launcher-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
+
+      - name: Run launcher linting
+        shell: bash
+        working-directory: launcher
+        run: npm run lint
+
+      - name: Build launcher
+        shell: bash
+        working-directory: launcher
+        run: npm run build
+
+      - name: Run launcher unit tests
+        shell: bash
+        working-directory: launcher
+        run: npm test

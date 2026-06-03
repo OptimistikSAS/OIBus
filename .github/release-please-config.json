@@ -55,7 +55,7 @@
     {
       "type": "json",
       "path": "documentation/docs/api/openapi.json",
-      "jsonpath": "info.version"
+      "jsonpath": "$.info.version"
     },
     {
       "type": "json",
