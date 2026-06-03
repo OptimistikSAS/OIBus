@@ -61,7 +61,7 @@ jobs:
           cdxgen . -o oibus-sbom.json --recurse
 
       - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: oibus-sbom
           path: oibus-sbom.json
@@ -96,7 +96,7 @@ jobs:
           ref: ${{ inputs.tag || github.ref }}
 
       - name: Download SBOM
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: oibus-sbom
           path: .
