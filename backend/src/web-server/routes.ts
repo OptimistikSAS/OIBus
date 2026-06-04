@@ -2467,8 +2467,8 @@ const models: TsoaRoute.Models = {
         "properties": {
             "method": {"ref":"SouthRestSettingsTestMethod","required":true},
             "endpoint": {"dataType":"string","required":true},
-            "body": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
             "successCode": {"dataType":"double","required":true},
+            "body": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -3735,6 +3735,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "type": {"dataType":"enum","enums":["any"],"required":true},
             "filePath": {"dataType":"string","required":true},
+            "filename": {"dataType":"string"},
             "content": {"dataType":"string"},
         },
         "additionalProperties": false,
@@ -7358,7 +7359,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
     const upload = opts?.multer ||  multer({"limits":{"fileSize":8388608}});
 
-
+    
         const argsUserController_search: Record<string, TsoaRoute.ParameterSchema> = {
                 login: {"in":"query","name":"login","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 page: {"in":"query","name":"page","required":true,"dataType":"union","subSchemas":[{"dataType":"double"},{"dataType":"undefined"}]},

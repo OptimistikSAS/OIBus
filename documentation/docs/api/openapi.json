@@ -8688,13 +8688,13 @@
 					"endpoint": {
 						"type": "string"
 					},
-					"body": {
-						"type": "string",
-						"nullable": true
-					},
 					"successCode": {
 						"type": "number",
 						"format": "double"
+					},
+					"body": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
@@ -14399,6 +14399,10 @@
 						"type": "string",
 						"description": "The path to the file containing the content.",
 						"example": "/path/to/file.json"
+					},
+					"filename": {
+						"type": "string",
+						"description": "The logical filename to store in cache metadata (used as the output filename by north connectors).\nWhen omitted, north connectors fall back to path.basename(filePath).\n\nSouth connectors that preserve directory structure (e.g. folder-scanner with recursive=true)\nset this to the path relative to the source folder, e.g. \"subdir/file.json\"."
 					},
 					"content": {
 						"type": "string",

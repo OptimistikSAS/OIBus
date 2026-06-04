@@ -383,8 +383,8 @@ export interface SouthRestSettingsProxy {
 export interface SouthRestSettingsTest {
   method: SouthRestSettingsTestMethod;
   endpoint: string;
-  body?: string | null;
   successCode: number;
+  body?: string | null;
 }
 
 export interface SouthADSSettings {

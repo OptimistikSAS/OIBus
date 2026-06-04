@@ -355,7 +355,7 @@ const manifest: SouthConnectorManifest = {
             ],
             displayProperties: {
               row: 0,
-              columns: 4,
+              columns: 3,
               displayInViewMode: true
             }
           },
@@ -372,20 +372,7 @@ const manifest: SouthConnectorManifest = {
             ],
             displayProperties: {
               row: 0,
-              columns: 8,
-              displayInViewMode: true
-            }
-          },
-          {
-            type: 'code',
-            key: 'body',
-            contentType: 'json',
-            translationKey: 'configuration.oibus.manifest.south.rest.test.body',
-            defaultValue: null,
-            validators: [],
-            displayProperties: {
-              row: 1,
-              columns: 12,
+              columns: 6,
               displayInViewMode: true
             }
           },
@@ -406,8 +393,21 @@ const manifest: SouthConnectorManifest = {
               }
             ],
             displayProperties: {
-              row: 2,
-              columns: 4,
+              row: 0,
+              columns: 3,
+              displayInViewMode: true
+            }
+          },
+          {
+            type: 'code',
+            key: 'body',
+            contentType: 'json',
+            translationKey: 'configuration.oibus.manifest.south.rest.test.body',
+            defaultValue: null,
+            validators: [],
+            displayProperties: {
+              row: 1,
+              columns: 12,
               displayInViewMode: true
             }
           }
