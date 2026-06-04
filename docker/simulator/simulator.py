@@ -21,14 +21,25 @@ MQTT:
   MQTT_USER               (default: oibus)
   MQTT_PASSWORD           (default: pass)
   MQTT_UPDATE_INTERVAL    seconds between publishes (default: 2)
+
+  The MQTT worker publishes two families of topics:
+    - scalar topics (e.g. "workshop1/sensor1/temperature") carrying a bare number,
+    - JSON topics under ".../json/..." carrying different payload SHAPES (flat object,
+      nested object, array of readings, mixed types, a JSON string, a bare number).
+  The JSON topics feed OIBus's MQTT south as `any-content` and exercise custom
+  transformers — including payloads whose fields are themselves objects/arrays, which is
+  what surfaces bugs where a non-string value (e.g. a JSON payload used as a filename)
+  reaches the metrics database.
 """
 
+import json
 import math
 import os
 import random
 import struct
 import time
 import threading
+from datetime import datetime, timezone
 
 # ─── Shared ──────────────────────────────────────────────────────────────────
 RETRY_INTERVAL = int(os.getenv("RETRY_INTERVAL", 10))
@@ -98,7 +109,8 @@ MQTT_USER = os.getenv("MQTT_USER", "oibus")
 MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "pass")
 MQTT_UPDATE_INTERVAL = int(os.getenv("MQTT_UPDATE_INTERVAL", 2))
 
-# MQTT sensors: (workshop, sensor, type, base, amplitude, period_s)
+# MQTT scalar sensors: (workshop, sensor, type, base, amplitude, period_s)
+# These publish a bare number, e.g. topic "workshop1/sensor1/temperature" payload "23.5".
 MQTT_SENSORS = [
     ("workshop1", "sensor1", "temperature",   30.0,  10.0,  60),
     ("workshop1", "sensor2", "humidity",      55.0,  25.0, 120),
@@ -108,6 +120,76 @@ MQTT_SENSORS = [
     ("workshop2", "sensor2", "humidity",      50.0,  20.0, 150),
     ("workshop2", "sensor3", "pressure",     990.0,  40.0, 210),
     ("workshop2", "sensor4", "vibration",      4.0,   4.0,  45),
+]
+
+
+# ─── MQTT JSON payload builders ────────────────────────────────────────────────
+# Each builder takes the simulation clock `t` and returns a Python value that is
+# serialised with json.dumps() before publishing. They intentionally cover a range
+# of JSON SHAPES so OIBus custom transformers can be exercised against each one.
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def json_flat(t: float) -> dict:
+    """A flat object — the common "single reading" shape."""
+    return {
+        "value": round(simulate_value(t, 30.0, 10.0, 60), 2),
+        "unit": "celsius",
+        "timestamp": _now_iso(),
+        "quality": "good",
+    }
+
+
+def json_nested(t: float) -> dict:
+    """A nested object — fields that are themselves objects (e.g. `sensor`, `location`).
+    A naive custom transformer doing `filename: payload.sensor` would yield a non-string."""
+    return {
+        "sensor": {"id": "sensor-42", "type": "temperature", "location": {"workshop": "workshop1", "line": 3}},
+        "reading": {"value": round(simulate_value(t, 30.0, 10.0, 60), 2), "timestamp": _now_iso()},
+    }
+
+
+def json_array(t: float) -> list:
+    """An array of readings — a "batch" payload."""
+    return [
+        {"timestamp": _now_iso(), "value": round(simulate_value(t + i, 30.0, 10.0, 60), 2)}
+        for i in range(3)
+    ]
+
+
+def json_mixed_types(t: float) -> dict:
+    """Every JSON scalar type plus a nested object/array — stresses type handling."""
+    return {
+        "int": int(simulate_value(t, 100.0, 50.0, 90)),
+        "float": round(simulate_value(t, 3.14, 1.0, 45), 4),
+        "bool": simulate_coil(t, 30),
+        "string": "ok",
+        "null": None,
+        "tags": ["alpha", "beta"],
+        "nested": {"a": 1, "b": [1, 2, 3]},
+    }
+
+
+def json_string(t: float) -> str:
+    """A JSON string value (publishes a quoted string, e.g. "reading-12")."""
+    return f"reading-{int(t)}"
+
+
+def json_number(t: float) -> float:
+    """A bare JSON number (publishes e.g. 42.7, no object wrapper)."""
+    return round(simulate_value(t, 42.0, 5.0, 60), 2)
+
+
+# MQTT JSON topics: (topic, builder)
+MQTT_JSON_TOPICS = [
+    ("workshop1/json/flat",   json_flat),
+    ("workshop1/json/nested", json_nested),
+    ("workshop1/json/array",  json_array),
+    ("workshop2/json/mixed",  json_mixed_types),
+    ("workshop2/json/string", json_string),
+    ("workshop2/json/number", json_number),
 ]
 
 
@@ -288,11 +370,19 @@ def mqtt_worker() -> None:
 
             print("[mqtt] Connected.")
             while connected.is_set():
+                # Scalar topics: bare number payloads.
                 for workshop, sensor, sensor_type, base, amplitude, period in MQTT_SENSORS:
                     value = round(simulate_value(t, base, amplitude, period), 2)
                     topic = f"{workshop}/{sensor}/{sensor_type}"
                     client.publish(topic, value)
                     print(f"[mqtt]   {topic} = {value}")
+
+                # JSON topics: different payload shapes (object/array/string/number/...).
+                for topic, builder in MQTT_JSON_TOPICS:
+                    payload = json.dumps(builder(t))
+                    client.publish(topic, payload)
+                    preview = payload if len(payload) <= 80 else payload[:77] + "..."
+                    print(f"[mqtt]   {topic} = {preview}")
 
                 t += MQTT_UPDATE_INTERVAL
                 time.sleep(MQTT_UPDATE_INTERVAL)
