@@ -157,6 +157,27 @@ describe('SandboxService', () => {
       assert.strictEqual(result.metadata.numberOfElement, 1);
     });
 
+    it('should coerce a non-string filename to the fallback so contentFile is always a string', async () => {
+      // A custom transformer can return any shape (it runs arbitrary user code). If it returns a
+      // non-string filename (e.g. a JSON payload), contentFile must NOT become that object —
+      // otherwise it would later be bound to the metrics database and crash better-sqlite3.
+      const transformer = {
+        language: 'javascript',
+        customCode: `
+          function transform(content, source, filename, options) {
+            return { data: 'ok', filename: { unexpected: 'json', value: [1, 2, 3] }, numberOfElement: 'not-a-number' };
+          }
+        `,
+        timeout: 5000
+      } as CustomTransformer;
+
+      const result = await sandboxService.execute('payload', defaultSource, 'fallback.json', transformer, {}, logger);
+
+      assert.strictEqual(typeof result.metadata.contentFile, 'string');
+      assert.strictEqual(result.metadata.contentFile, 'fallback.json');
+      assert.strictEqual(result.metadata.numberOfElement, 0);
+    });
+
     it('should transpile and execute Typescript successfully', async () => {
       const transformer = {
         language: 'typescript',
@@ -398,6 +419,78 @@ describe('SandboxService', () => {
       await assert.rejects(
         async () => sandboxService.execute('', defaultSource, 'err.txt', transformer, {}, logger),
         /Transform function returned an invalid or empty result/
+      );
+    });
+
+    it('should JSON-serialize non-string data returned by the transform', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { return { data: [{ a: 1 }, { b: 2 }], filename: 'out.json' }; }`,
+        timeout: 5000
+      } as CustomTransformer;
+
+      const result = await sandboxService.execute('', defaultSource, 'arr.txt', transformer, {}, logger);
+      assert.strictEqual(typeof result.output, 'string');
+      assert.deepStrictEqual(JSON.parse(result.output), [{ a: 1 }, { b: 2 }]);
+    });
+
+    it('should fail with a clear error when data cannot be serialized to a string (function)', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { return { data: function () {}, filename: 'out.json' }; }`,
+        timeout: 5000
+      } as CustomTransformer;
+
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'fn.txt', transformer, {}, logger),
+        /could not be serialized to a string/
+      );
+    });
+
+    it('should write a Uint8Array data as raw bytes (binary output)', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { return { data: new Uint8Array([72, 105, 0, 255]), filename: 'out.bin' }; }`,
+        timeout: 5000
+      } as CustomTransformer;
+
+      const result = await sandboxService.execute('', defaultSource, 'bin.txt', transformer, {}, logger);
+      assert.deepStrictEqual([...Buffer.from(result.output)], [72, 105, 0, 255]);
+    });
+
+    it('should preserve the exact bytes of a non-uint8 typed array', async () => {
+      const transformer = {
+        language: 'javascript',
+        // Int16Array([256, 1]) little-endian bytes: 256 -> [0,1], 1 -> [1,0]
+        customCode: `function transform() { return { data: new Int16Array([256, 1]), filename: 'out.bin' }; }`,
+        timeout: 5000
+      } as CustomTransformer;
+
+      const result = await sandboxService.execute('', defaultSource, 'bin.txt', transformer, {}, logger);
+      assert.deepStrictEqual([...Buffer.from(result.output)], [0, 1, 1, 0]);
+    });
+
+    it('should write an ArrayBuffer data as raw bytes', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { return { data: new Uint8Array([1, 2, 3]).buffer, filename: 'out.bin' }; }`,
+        timeout: 5000
+      } as CustomTransformer;
+
+      const result = await sandboxService.execute('', defaultSource, 'bin.txt', transformer, {}, logger);
+      assert.deepStrictEqual([...Buffer.from(result.output)], [1, 2, 3]);
+    });
+
+    it('should fail with a clear error when data is a circular structure', async () => {
+      const transformer = {
+        language: 'javascript',
+        customCode: `function transform() { const o = {}; o.self = o; return { data: o, filename: 'out.json' }; }`,
+        timeout: 5000
+      } as CustomTransformer;
+
+      await assert.rejects(
+        async () => sandboxService.execute('', defaultSource, 'circular.txt', transformer, {}, logger),
+        /\[RUNTIME_ERROR\]/
       );
     });
 
