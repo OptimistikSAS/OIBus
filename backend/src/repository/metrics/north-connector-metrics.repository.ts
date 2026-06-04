@@ -49,7 +49,9 @@ export default class NorthConnectorMetricsRepository {
         metrics.contentCachedSize,
         metrics.contentErroredSize,
         metrics.contentArchivedSize,
-        metrics.lastContentSent,
+        typeof metrics.lastContentSent === 'string' || metrics.lastContentSent === null
+          ? metrics.lastContentSent
+          : JSON.stringify(metrics.lastContentSent),
         metrics.lastConnection,
         metrics.lastRunStart,
         metrics.lastRunDuration,
