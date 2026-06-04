@@ -67,7 +67,9 @@ export default class HistoryQueryMetricsRepository {
         metrics.north.contentCachedSize,
         metrics.north.contentErroredSize,
         metrics.north.contentArchivedSize,
-        metrics.north.lastContentSent,
+        typeof metrics.north.lastContentSent === 'string' || metrics.north.lastContentSent === null
+          ? metrics.north.lastContentSent
+          : JSON.stringify(metrics.north.lastContentSent),
         metrics.north.lastConnection,
         metrics.north.lastRunStart,
         metrics.north.lastRunDuration,
