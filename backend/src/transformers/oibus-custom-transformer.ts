@@ -54,6 +54,9 @@ export default class OIBusCustomTransformer extends OIBusTransformer {
       this._options,
       this.logger
     );
-    return { ...result, output: Buffer.from(result.output) };
+    // execute() returns a string (text/JSON, UTF-8) or an ArrayBuffer (raw binary); Buffer.from
+    // unifies both into the Buffer the cache write expects.
+    const output = typeof result.output === 'string' ? Buffer.from(result.output, 'utf8') : Buffer.from(result.output);
+    return { ...result, output };
   }
 }

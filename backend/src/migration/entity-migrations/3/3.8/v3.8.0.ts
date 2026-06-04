@@ -1039,7 +1039,7 @@ import { JSONPath } from 'jsonpath-plus';
 
 // --- Entry Point ---------------------------------------------------------- //
 
-export default async (content: string, options: any, source: any, filename: string): Promise<{ data: any; filename?: string; numberOfElements?: number }> => {
+export default async (content: string, source: any, filename: string, options: any): Promise<{ data: unknown; filename?: string; numberOfElement?: number }> => {
   const list = JSON.parse(content);
   let timeValues: any[] = [];
   for (const element of list) {
@@ -1094,7 +1094,7 @@ export default async (content: string, options: any, source: any, filename: stri
       ));
     }
   }
-  return { data: timeValues, numberOfElements: timeValues.length, filename };
+  return { data: timeValues, numberOfElement: timeValues.length, filename };
 };
 
 // --- Utils ---------------------------------------------------------------- //

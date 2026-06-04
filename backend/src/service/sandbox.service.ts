@@ -6,10 +6,16 @@ import * as fs from 'node:fs';
 import { resolveBypassingExports } from './utils';
 import type { ILogger } from '../model/logger.model';
 
+// Shape returned by the in-sandbox wrapper (see `wrappedCode`). The wrapper normalises whatever the
+// custom transform returns into exactly this shape BEFORE it is copied out of the isolate:
+//   - `data` is either a string (text/JSON, written UTF-8) or an ArrayBuffer (raw binary bytes),
+//   - `filename` is always a string (it becomes `CacheMetadata.contentFile` → `lastContentSent`,
+//     persisted to the metrics database),
+//   - `numberOfElement` is always a number.
 interface ResultOutput {
-  data: string;
+  data: string | ArrayBuffer;
   filename: string;
-  numberOfElement?: number;
+  numberOfElement: number;
 }
 
 export default class SandboxService {
@@ -66,7 +72,7 @@ export default class SandboxService {
     transformer: CustomTransformer,
     options: object,
     logger: ILogger
-  ): Promise<{ metadata: CacheMetadata; output: string }> {
+  ): Promise<{ metadata: CacheMetadata; output: string | ArrayBuffer }> {
     if (!this.initLogged) {
       logger[this.initMessage.level](this.initMessage.text);
       this.initLogged = true;
@@ -144,7 +150,46 @@ export default class SandboxService {
 
         var exports = {}; var module = { exports: exports };
         ${codeToExecute}
-        global.__sandbox_transform = module.exports.default || module.exports.transform || transform;
+        var __userTransform = module.exports.default || module.exports.transform || transform;
+
+        // Normalise the custom transform's return value to the exact shape OIBus expects, INSIDE the
+        // isolate (before the result is copied out). This guarantees the host receives a string data,
+        // a string filename (falling back to the cache filename) and a numeric numberOfElement — so a
+        // JSON payload returned as "filename" can never reach the metrics database and crash it.
+        // Only wrap when transform is actually a function; otherwise leave the value as-is so the host
+        // still reports "must export a transform function" / "transform is not defined" as before.
+        global.__sandbox_transform = typeof __userTransform === 'function'
+          ? async function (content, source, filename, options) {
+              var result = await __userTransform(content, source, filename, options);
+              if (!result || typeof result !== 'object' || !result.data) {
+                throw new Error('Transform function returned an invalid or empty result.');
+              }
+              // "data" is written to the cache file as-is. It may be:
+              //   - a string                                   -> written verbatim (UTF-8),
+              //   - binary (ArrayBuffer / TypedArray / DataView) -> written as raw bytes,
+              //   - any other value                            -> JSON-serialized (so typed Norths
+              //     such as time-values/mqtt still receive valid JSON text).
+              // Binary is normalized to the exact bytes it covers; if a non-string value cannot be
+              // serialized (e.g. a function, or a value JSON.stringify drops), fail with a clear
+              // error instead of letting "undefined" crash later when the output is written.
+              var data = result.data;
+              if (data instanceof ArrayBuffer) {
+                // keep the raw bytes as-is
+              } else if (ArrayBuffer.isView(data)) {
+                data = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
+              } else if (typeof data !== 'string') {
+                data = JSON.stringify(data);
+                if (typeof data !== 'string') {
+                  throw new Error('Transform "data" could not be serialized to a string.');
+                }
+              }
+              return {
+                data: data,
+                filename: typeof result.filename === 'string' ? result.filename : filename,
+                numberOfElement: typeof result.numberOfElement === 'number' ? result.numberOfElement : 0
+              };
+            }
+          : __userTransform;
       `;
 
       const script = await isolate.compileScript(wrappedCode);
@@ -169,17 +214,15 @@ export default class SandboxService {
         }
       )) as ResultOutput;
 
-      if (!_resultRef || !_resultRef.data) {
-        throw new Error('Transform function returned an invalid or empty result.');
-      }
-
+      // The in-sandbox wrapper guarantees the normalised shape (string data/filename, numeric
+      // numberOfElement) and throws on an invalid/empty result, so the host can trust it directly.
       return {
-        output: typeof _resultRef.data === 'string' ? _resultRef.data : JSON.stringify(_resultRef.data),
+        output: _resultRef.data,
         metadata: {
           contentFile: _resultRef.filename,
           contentSize: Buffer.byteLength(stringContent, 'utf8'),
           createdAt: new Date().toISOString(),
-          numberOfElement: _resultRef.numberOfElement || 0,
+          numberOfElement: _resultRef.numberOfElement,
           contentType: transformer.outputType
         }
       };
