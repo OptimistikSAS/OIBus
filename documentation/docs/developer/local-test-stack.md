@@ -301,8 +301,17 @@ simulator accounts for this by writing the **low 16-bit word before the high 16-
 
 #### MQTT thread
 
-Publishes to the MQTT broker every `MQTT_UPDATE_INTERVAL` seconds (default 2 s). Topics follow the
-pattern `<workshop>/<sensor>/<type>`. All values are sinusoidal with 5 % random noise.
+Publishes to the MQTT broker every `MQTT_UPDATE_INTERVAL` seconds (default 2 s). Each publish cycle
+sends **two families** of topics:
+
+- **Scalar topics** — a single number, for value-based items.
+- **JSON topics** (under `<workshop>/json/<shape>`) — structured payloads of different shapes. OIBus's
+  MQTT south ingests these as `any-content`, which makes them ideal for exercising custom transformers.
+
+##### Scalar topics
+
+Topics follow the pattern `<workshop>/<sensor>/<type>` and carry a bare number (e.g. `23.5`). All
+values are sinusoidal with 5 % random noise.
 
 | Topic                           |    Base | Amplitude | Period |
 | ------------------------------- | ------: | --------: | -----: |
@@ -314,6 +323,69 @@ pattern `<workshop>/<sensor>/<type>`. All values are sinusoidal with 5 % random 
 | `workshop2/sensor2/humidity`    |    50.0 |      20.0 |  150 s |
 | `workshop2/sensor3/pressure`    |   990.0 |      40.0 |  210 s |
 | `workshop2/sensor4/vibration`   |     4.0 |       4.0 |   45 s |
+
+##### JSON topics
+
+Each topic publishes a different JSON **shape**, so connectors and custom transformers can be tested
+against the full range of payloads OIBus may receive over MQTT. Numeric values vary every cycle
+(sinusoidal with noise).
+
+| Topic                   | Shape                                   |
+| ----------------------- | --------------------------------------- |
+| `workshop1/json/flat`   | Flat object (single reading)            |
+| `workshop1/json/nested` | Nested objects                          |
+| `workshop1/json/array`  | Array of readings (a batch)             |
+| `workshop2/json/mixed`  | Every JSON scalar type + array + object |
+| `workshop2/json/string` | A JSON string                           |
+| `workshop2/json/number` | A bare JSON number                      |
+
+Example payloads:
+
+```json title="workshop1/json/flat"
+{ "value": 35.17, "unit": "celsius", "timestamp": "2026-06-04T08:15:06.673+00:00", "quality": "good" }
+```
+
+```json title="workshop1/json/nested"
+{
+  "sensor": { "id": "sensor-42", "type": "temperature", "location": { "workshop": "workshop1", "line": 3 } },
+  "reading": { "value": 34.9, "timestamp": "2026-06-04T08:15:06.673+00:00" }
+}
+```
+
+```json title="workshop1/json/array"
+[
+  { "timestamp": "2026-06-04T08:15:06.673+00:00", "value": 34.95 },
+  { "timestamp": "2026-06-04T08:15:08.673+00:00", "value": 35.48 },
+  { "timestamp": "2026-06-04T08:15:10.673+00:00", "value": 37.16 }
+]
+```
+
+```json title="workshop2/json/mixed"
+{
+  "int": 116,
+  "float": 3.741,
+  "bool": true,
+  "string": "ok",
+  "null": null,
+  "tags": ["alpha", "beta"],
+  "nested": { "a": 1, "b": [1, 2, 3] }
+}
+```
+
+```json title="workshop2/json/string"
+"reading-12"
+```
+
+```json title="workshop2/json/number"
+42.7
+```
+
+:::tip Testing custom transformers
+The `nested`, `array` and `mixed` payloads contain fields that are themselves objects or arrays. They
+are useful to test a custom transformer that derives the output filename or content from a payload
+field — returning a non-string value there must never reach the metrics database, and these topics
+make that edge case easy to reproduce.
+:::
 
 #### Environment variables
 

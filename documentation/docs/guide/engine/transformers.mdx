@@ -599,16 +599,41 @@ export function transform(
   source: object,
   filename: string,
   options: object
-): { data: string; filename: string; numberOfElement?: number } {
+): { data: unknown; filename: string; numberOfElement?: number } {
   // …
 }
 ```
 
-| Return field      | Description                                                     |
-| ----------------- | --------------------------------------------------------------- |
-| `data`            | The transformed output as a string (JSON, CSV, binary base-64…) |
-| `filename`        | The filename used when the output is stored in the North cache  |
-| `numberOfElement` | Optional count of processed records, shown in logs and metrics  |
+| Return field      | Description                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------- |
+| `data`            | The content written to the cache file (see below): a string, raw binary, or any other value |
+| `filename`        | The filename used when the output is stored in the North cache                              |
+| `numberOfElement` | Optional count of processed records, shown in logs and metrics                              |
+
+The transformer's output is **written to the cache file as it is**, then read back by the North
+according to its content type. `data` is handled by kind:
+
+| `data` returned                              | Stored as                    | Use with                                                |
+| -------------------------------------------- | ---------------------------- | ------------------------------------------------------- |
+| a **string**                                 | the string verbatim (UTF-8)  | any output type — you control the exact text            |
+| a **`Uint8Array` / `ArrayBuffer`** (binary)  | the raw bytes, byte-for-byte | the **`any`** output type only (file Norths)            |
+| any **other value** (object, array, number…) | `JSON.stringify(data)`       | typed outputs (`time-values`, `mqtt`, …) that read JSON |
+
+:::caution Match `data` to the output type; keep `filename` a string
+
+- For **typed** output types (`time-values`, `mqtt`, `oianalytics`, `modbus`, `opcua`) the North reads
+  the cache file as **JSON** — return a string or an object/array (which OIBus serializes to JSON).
+  Returning binary here will not parse.
+- **Binary** output (`Uint8Array`/`ArrayBuffer`) is for the **`any`** output type, where file Norths
+  (File Writer, S3, Azure, OIAnalytics file upload) write/upload the bytes untouched.
+- A non-string, non-binary value that `JSON.stringify` rejects (a circular structure, a `BigInt`) or
+  drops (a function) fails the transform with a clear error rather than being cached.
+
+`filename` **must be a string** — it becomes the cache filename and is recorded in the connector
+metrics, so returning an object or array there can break metrics persistence. When you derive it from
+input data (an MQTT topic, a payload field…), coerce it and strip path separators, e.g.
+`` `mqtt_${String(topic).replace(/[\\/]/g, '_')}.json` ``.
+:::
 
 ### Available Libraries
 
@@ -841,6 +866,102 @@ export function transform(content, _source, _filename, _options) {
   };
 }
 ```
+
+---
+
+#### Example 5 — Normalize MQTT JSON messages to time-values (JavaScript)
+
+An **MQTT South** connector delivers each batch of received messages as a single `any-content` payload:
+a JSON array of `{ message, timestamp, item: { id, name, topic } }`, where `message` is the **raw MQTT
+payload string**. That raw payload can be any shape — a bare number, a JSON string, a flat object, or
+an array of readings (see the [JSON topics](../../developer/local-test-stack.md#json-topics) published
+by the local test stack). This transformer normalizes all of them into a standard time-values array,
+using the topic as the point ID.
+
+**Input (`content`)** — three messages from different topics
+
+```json
+[
+  {
+    "message": "{\"value\":35.17,\"unit\":\"celsius\",\"timestamp\":\"2026-06-04T08:15:06.673+00:00\",\"quality\":\"good\"}",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i1", "name": "flat", "topic": "workshop1/json/flat" }
+  },
+  {
+    "message": "44.53",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i2", "name": "number", "topic": "workshop2/json/number" }
+  },
+  {
+    "message": "[{\"timestamp\":\"2026-06-04T08:15:06.673+00:00\",\"value\":34.95},{\"timestamp\":\"2026-06-04T08:15:08.673+00:00\",\"value\":35.48}]",
+    "timestamp": "2026-06-04T08:15:06.700Z",
+    "item": { "id": "i3", "name": "array", "topic": "workshop1/json/array" }
+  }
+]
+```
+
+**Output** — one time-value per reading; the array message yields two
+
+```json
+[
+  { "pointId": "workshop1/json/flat", "timestamp": "2026-06-04T08:15:06.673+00:00", "data": { "value": "35.17" } },
+  { "pointId": "workshop2/json/number", "timestamp": "2026-06-04T08:15:06.700Z", "data": { "value": "44.53" } },
+  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:06.673+00:00", "data": { "value": "34.95" } },
+  { "pointId": "workshop1/json/array", "timestamp": "2026-06-04T08:15:08.673+00:00", "data": { "value": "35.48" } }
+]
+```
+
+**Code**
+
+```javascript
+export function transform(content, _source, _filename, _options) {
+  const messages = JSON.parse(content); // [{ message, timestamp, item: { topic } }, …]
+  const timeValues = [];
+
+  // Extract a scalar value from one reading, whatever its shape.
+  const toValue = reading => {
+    if (reading !== null && typeof reading === 'object') {
+      // Flat reading ({ value, … }); fall back to the whole object for nested shapes.
+      return reading.value ?? JSON.stringify(reading);
+    }
+    return reading; // number, string or boolean
+  };
+
+  for (const { message, timestamp, item } of messages) {
+    // The raw MQTT payload may be JSON (object/array/number/string) or plain text.
+    let parsed;
+    try {
+      parsed = JSON.parse(message);
+    } catch {
+      parsed = message; // non-JSON payload: keep the raw string
+    }
+
+    const readings = Array.isArray(parsed) ? parsed : [parsed];
+    for (const reading of readings) {
+      timeValues.push({
+        pointId: item.topic,
+        timestamp: (reading && reading.timestamp) || timestamp,
+        data: { value: String(toValue(reading)) }
+      });
+    }
+  }
+
+  return {
+    data: JSON.stringify(timeValues),
+    // Always a plain string filename — never a payload object (see the caution above).
+    filename: `mqtt_${Date.now()}.json`,
+    numberOfElement: timeValues.length
+  };
+}
+```
+
+:::tip Generate these payloads locally
+The [local test stack](../../developer/local-test-stack.md#json-topics) publishes exactly these MQTT
+JSON shapes (`flat`, `nested`, `array`, `mixed`, `string`, `number`), so you can point an MQTT South
+connector at it and exercise a custom transformer against every case.
+:::
+
+---
 
 :::info Testing custom transformers
 Use the **Test** button in the transformer editor to run your code against a sample payload before deploying it.
