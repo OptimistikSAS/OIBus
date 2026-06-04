@@ -39,33 +39,27 @@ other manual step is required — the rest happens via Actions.
   ◇ main fast-forwarded to stable ← release trigger (manual)
             │
             ▼
-  .github/workflows/new_release.yml
+  .github/workflows/new_release.yml         (on: push → stable)
     └── googleapis/release-please-action
-          │
           ├─ Opens a "release PR" against stable
-          │  (bumps every package.json + lockfile + openapi.json,
-          │   regenerates the CHANGELOG)
-          │
-          └─ When that PR is merged → publishes a GitHub Release
-                                    + deploys documentation
+          │  (bumps every package.json + lockfile + openapi.json + Dockerfile
+          │   + docker.mdx, regenerates the CHANGELOG)
+          └─ When that PR is merged → tags + publishes a GitHub Release
             │
             ▼
-  .github/workflows/build.yml  (on: release: types: [published])
-    └── 5-platform matrix builds, signs, packages, uploads artefacts
-            │
-            ▼
-  .github/workflows/docker.yml
-    └── Builds & pushes multi-arch image to ghcr.io
-            │
-            ▼
-  Slack notification → #oibus-ci
+  .github/workflows/build.yml   (on: release published — or manual workflow_dispatch)
+    ├── prepare              → resolve release info + generate the SBOM (once)
+    ├── build (5-platform matrix) → build · sign (Windows) · package · upload to the release
+    ├── snyk                 → monitor the SBOM                         (stable only)
+    ├── docker               → build & push the multi-arch image to ghcr.io
+    ├── deploy-documentation → build & publish the documentation site   (stable only)
+    └── slack                → notification → #oibus-ci
 ```
 
 All files referenced live under `.github/`:
 
-- [`workflows/new_release.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/new_release.yml)
-- [`workflows/build.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/build.yml)
-- [`workflows/docker.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/docker.yml)
+- [`workflows/new_release.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/new_release.yml) — runs release-please on every push to `stable`
+- [`workflows/build.yml`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/workflows/build.yml) — everything that runs once a Release is published (binaries, Docker, docs)
 - [`release-please-config.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-config.json)
 - [`release-please-manifest.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-manifest.json)
 
@@ -93,27 +87,43 @@ version — they're recorded in the changelog under the relevant section without
 
 When a release PR lands, release-please updates the version field in:
 
-| File                                  | Field                              |
-| ------------------------------------- | ---------------------------------- |
-| `backend/package.json`                | `version`                          |
-| `backend/package-lock.json`           | `version` + `packages[""].version` |
-| `frontend/package.json`               | `version`                          |
-| `frontend/package-lock.json`          | `version` + `packages[""].version` |
-| `launcher/package.json`               | `version`                          |
-| `launcher/package-lock.json`          | `version` + `packages[""].version` |
-| `documentation/package.json`          | `version`                          |
-| `documentation/package-lock.json`     | `version` + `packages[""].version` |
-| `documentation/docs/api/openapi.json` | `info.version`                     |
-| `CHANGELOG.md`                        | new entry prepended                |
+| File                                      | Field / how                         |
+| ----------------------------------------- | ----------------------------------- |
+| `backend/package.json`                    | `version`                           |
+| `backend/package-lock.json`               | `version` + `packages[""].version`  |
+| `frontend/package.json`                   | `version`                           |
+| `frontend/package-lock.json`              | `version` + `packages[""].version`  |
+| `launcher/package.json`                   | `version`                           |
+| `launcher/package-lock.json`              | `version` + `packages[""].version`  |
+| `documentation/package.json`              | `version`                           |
+| `documentation/package-lock.json`         | `version` + `packages[""].version`  |
+| `documentation/docs/api/openapi.json`     | `$.info.version`                    |
+| `build/docker/Dockerfile`                 | version string (`generic` replacer) |
+| `documentation/docs/developer/docker.mdx` | version string (`generic` replacer) |
+| `CHANGELOG.md`                            | new entry prepended                 |
 
-The exact rules are in [`release-please-config.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-config.json)
-under `extra-files`. If you add a new package or another file that should track the release version,
-extend that file.
+The JSON files are updated by `jsonpath`; the `Dockerfile` and `docker.mdx` use release-please's
+`generic` replacer (it rewrites the version on lines annotated with an `x-release-please-version`
+marker). The exact rules are in
+[`release-please-config.json`](https://github.com/OptimistikSAS/OIBus/blob/main/.github/release-please-config.json)
+under `extra-files` — if you add a new package or another file that should track the release version,
+extend that list.
 
 ## 🛠 What the release workflow actually produces
 
 `build.yml` runs on `release: types: [published]` — i.e. **only after release-please's release PR has
-been merged and the GitHub Release object is created.** It runs once per row of the matrix:
+been merged and the GitHub Release object is created.** (It can also be triggered manually via
+**workflow_dispatch**, optionally with a `tag` input, to rebuild a specific release.) It is a single
+workflow of cooperating jobs:
+
+### `prepare`
+
+Runs once. Resolves the release info (`tag_name`, `release_name`, whether it's a `prerelease`) and
+**generates the SBOM once** (`cdxgen` → `oibus-sbom.json`), uploading it as a workflow artifact and —
+for non-prereleases only — attaching it to the GitHub Release. The matrix builds download this single
+artifact rather than each regenerating it.
+
+### `build` (5-platform matrix, `needs: prepare`)
 
 | Friendly name | OS runner          | Platform target |
 | ------------- | ------------------ | --------------- |
@@ -123,32 +133,39 @@ been merged and the GitHub Release object is created.** It runs once per row of 
 | Linux x64     | `ubuntu-24.04`     | `linux-x64`     |
 | Linux arm64   | `ubuntu-24.04-arm` | `linux-arm64`   |
 
-Each matrix row:
+Each matrix row (`fail-fast: false`, so one platform failing doesn't cancel the others):
 
 1. **Builds** the frontend, the launcher, and the backend for its platform.
 2. **Signs** the Windows binaries (`oibus.exe`, `oibus-launcher.exe`) via Google Cloud KMS + Sectigo
    timestamping (runs only on the Windows row).
 3. **Sanity-checks** the runtime by invoking `oibus-launcher --version true`.
-4. **Uploads** the per-platform SBOM (`sbom-oibus-<platform>-<tag>.json`) — only for non-prereleases.
-5. **Packages** a zip (`oibus-<platform>-<tag>.zip`) and uploads it to the GitHub release.
-6. **Monitors the SBOM with Snyk** — only for non-prereleases.
-7. **Windows only**: builds the Inno Setup installer (`oibus-win_x64-setup-<tag>.exe`) and uploads it.
+4. **Bundles** the SBOM from `prepare` into the package, then **packages** a zip
+   (`oibus-<platform>-<tag>.zip`) and uploads it to the GitHub Release.
+5. **Windows only**: builds the Inno Setup installer (`oibus-win_x64-setup-<tag>.exe`) and uploads it.
 
-When all five rows are done, `docker.yml` builds a multi-arch Docker image and pushes it to
-`ghcr.io/optimistiksas/oibus`:
+### `snyk`, `docker`, `deploy-documentation`, `slack` (`needs: build`)
 
-- **Stable releases** get the `latest` tag and the version tag.
-- **Pre-releases** get the `beta` tag and the version tag.
+| Job                    | Runs when           | What it does                                                                                       |
+| ---------------------- | ------------------- | -------------------------------------------------------------------------------------------------- |
+| `snyk`                 | **stable only**     | Monitors the SBOM with Snyk (`snyk monitor`, target reference `OIBus-<tag>`).                      |
+| `docker`               | always              | Builds & pushes the multi-arch image (`linux/amd64,linux/arm64`) to `ghcr.io/optimistiksas/oibus`. |
+| `deploy-documentation` | **stable only**     | Builds the Docusaurus site and publishes it to GitHub Pages (`needs: [build, docker]`).            |
+| `slack`                | always (`always()`) | Notifies `#oibus-ci` with the `docker` job result (`needs: [snyk, docker, deploy-documentation]`). |
 
-Finally, a Slack notification fires into `#oibus-ci`.
+The Docker image tags depend on the release kind:
+
+- **Stable releases** get the `latest` tag **and** the version tag.
+- **Pre-releases** get the `beta` tag **and** the version tag.
 
 ## 🆕 Creating a pre-release
 
 Pre-releases are useful when you need to publish artefacts for testing _before_ cutting a stable
 release — typically reserved for the maintainers (operators of `OptimistikSAS/OIBus`).
 
-A pre-release runs the **same** `build.yml` matrix but skips the SBOM upload and the Snyk monitoring,
-and the Docker image gets the `beta` tag instead of `latest`.
+A pre-release runs the **same** `build.yml` matrix but skips the Snyk monitoring, the SBOM
+release-asset upload and the documentation deployment, and the Docker image gets the `beta` tag
+instead of `latest`. (The SBOM is still generated in `prepare` and bundled inside each zip — only the
+separate release-asset upload is skipped.)
 
 ### Steps
 
@@ -179,14 +196,15 @@ up automatically.
 
 ## Troubleshooting
 
-| Symptom                                         | What to check                                                                                                                                                         |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| No release PR appears after pushing to `stable` | release-please only opens a PR when there are bumping commits since the last tag. `chore:` / `docs:` alone don't bump.                                                |
-| Release PR opened but with the wrong version    | Inspect the commit subjects — a `feat!:` anywhere drives a major bump. Edit `release-please-manifest.json` if you need to correct the next version manually.          |
-| `build.yml` doesn't fire                        | Confirm a GitHub **Release** object was actually created (not just a tag). `build.yml` listens on `release: types: [published]`.                                      |
-| Windows binaries unsigned                       | The KMS auth step needs the `GCP_SERVICE_ACCOUNT_JSON` and `CERT` secrets configured for the running repository / fork — these aren't available on contributor forks. |
-| Docker image not tagged `latest`                | The release was marked as pre-release. Stable releases get `latest`; pre-releases get `beta`. See `docker.yml`.                                                       |
-| Documentation site didn't update                | `new_release.yml` only redeploys docs when `steps.release.outputs.release_created == true` — i.e. on an actual release, not on the intermediate release PR.           |
+| Symptom                                         | What to check                                                                                                                                                                                         |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No release PR appears after pushing to `stable` | release-please only opens a PR when there are bumping commits since the last tag. `chore:` / `docs:` alone don't bump.                                                                                |
+| Release PR opened but with the wrong version    | Inspect the commit subjects — a `feat!:` anywhere drives a major bump. Edit `release-please-manifest.json` if you need to correct the next version manually.                                          |
+| `build.yml` doesn't fire                        | Confirm a GitHub **Release** object was actually created (not just a tag). `build.yml` listens on `release: types: [published]` (or run it manually via workflow_dispatch).                           |
+| Windows binaries unsigned                       | The KMS auth step needs the `GCP_SERVICE_ACCOUNT_JSON` and `CERT` secrets configured for the running repository / fork — these aren't available on contributor forks.                                 |
+| Docker image not tagged `latest`                | The release was marked as pre-release. Stable releases get `latest`; pre-releases get `beta`. See the `docker` job in `build.yml`.                                                                    |
+| Documentation site didn't update                | The `deploy-documentation` job (in `build.yml`) runs **only for non-prereleases** and `needs: [build, docker]` — confirm the release wasn't a pre-release and that the build + docker jobs succeeded. |
+| A single platform failed but others shipped     | Expected — the `build` matrix is `fail-fast: false`. Re-run just the failed job, or re-run `build.yml` for the tag via workflow_dispatch.                                                             |
 
 :::info Running on a fork
 The release workflow needs `REPO_ACCESS_TOKEN`, `GCP_SERVICE_ACCOUNT_JSON`, `CERT`, `SNYK_TOKEN`, and
