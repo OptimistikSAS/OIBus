@@ -21,6 +21,47 @@ Connect to OPC Classic™ servers using OIBus with the [OIBus Agent](../oibus-ag
 OIBus Agent **must** be installed on a Windows machine
 :::
 
+## OPC Classic vs OPC UA
+
+|                          | OPC Classic™                                                                                                        | OPC UA                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events)                 | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms |
+| **Historical mode name** | **HDA** — Historical Data Access                                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
+| **Transport**            | COM/DCOM — Windows inter-process communication only                                                                 | TCP/IP or HTTPS — works over any IP network                   |
+| **Platform**             | Windows only                                                                                                        | Cross-platform: Windows, Linux, macOS, embedded               |
+| **Security**             | Relies on Windows domain/DCOM security                                                                              | Built-in: message signing, encryption, certificate-based auth |
+| **Introduced**           | 1996                                                                                                                | 2006                                                          |
+| **OIBus requirement**    | Requires an [OIBus Agent](../oibus-agent/installation.mdx) running on the Windows machine that hosts the OPC server | Connects directly from OIBus — no agent needed                |
+
+:::note HDA vs HA — the naming confusion
+Users coming from an OPC Classic background often look for **HDA** in OPC UA and cannot find it.
+OPC UA renames the equivalent feature **HA** (Historical Access, defined in OPC UA Part 11).
+The concept is identical — querying a server for values recorded in the past — but the acronym
+changed. In OIBus, this connector calls the mode `HDA`, and the OPC UA connector calls it `HA`.
+Do not confuse OPC UA HA with OPC Classic HDA: they are separate protocols and are **not
+interoperable**.
+:::
+
+**Choose OPC Classic** when your infrastructure already runs OPC DA or OPC HDA servers that cannot be
+migrated. The COM/DCOM technology that OPC Classic relies on is Windows-only and does not travel over
+standard IP networks without DCOM tunnelling — hence the requirement for OIBus Agent to run directly on
+the Windows host.
+
+**Choose OPC UA** for any new deployment. OPC UA is the current industry standard, supported on all
+platforms and with security built in. See the [OPC UA connector](./opcua.mdx) for details.
+
+## Common OPC Classic Servers
+
+| Server | Vendor | Modes | Notes |
+| ------ | ------ | ----- | ----- |
+| [KEPServerEX](https://www.ptc.com/en/products/kepware/kepserverex) | PTC (Kepware) | DA, HDA | Most widely deployed OPC gateway; supports hundreds of PLC, DCS and device types. Also exposes an OPC UA endpoint — see the OPC UA page |
+| [FactoryTalk Linx](https://www.rockwellautomation.com/en-us/products/software/factorytalk/operationsuite/linx.html) | Rockwell Automation | DA | Standard OPC DA server for Allen-Bradley / ControlLogix PLCs |
+| [SIMATIC NET PC Software](https://www.siemens.com/global/en/products/automation/industry-software/automation-software/simatic-net-industrial-communication.html) | Siemens | DA | OPC DA access for S7-300 and S7-400 PLCs. S7-1500 and newer expose native OPC UA — use the OPC UA connector instead |
+| [Matrikon OPC](https://www.matrikon.com) | Honeywell | DA, HDA | Large catalogue of device-specific OPC servers, including a widely used free simulation server |
+| [PI Server](https://www.aveva.com/en/products/aveva-pi-system/) | AVEVA (OSIsoft) | DA, HDA | Industry-leading process historian; also exposes an OPC UA interface |
+| [Proficy Historian](https://www.ge.com/digital/applications/proficy-historian) | GE Digital | HDA | Common historian in manufacturing and utilities |
+| [InfoPlus.21](https://www.aspentech.com/en/products/mss/aspen-infoplus-21) | AspenTech | DA, HDA | Widely used in oil & gas and chemical industries |
+
 ## Specific Settings
 
 | Setting          | Description                                | Example Value               |

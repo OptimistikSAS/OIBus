@@ -17,6 +17,41 @@ OPC Unified Architecture (OPC UA) protocol for secure industrial data access in 
 - Natively embedded in many industrial controllers
   :::
 
+## OPC Classic vs OPC UA
+
+|                          | OPC Classic™                                                                                                        | OPC UA                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Standard**             | Three separate specs: **DA** (live values), **HDA** (historical data), **AE** (alarms &amp; events)                 | Single unified standard: **DA** (live values) + **HA** (historical access) + alarms        |
+| **Historical mode name** | **HDA** — Historical Data Access                                                                                    | **HA** — Historical Access (OPC UA Part 11). Same concept, different name — see note below |
+| **Transport**            | COM/DCOM — Windows inter-process communication only                                                                 | TCP/IP or HTTPS — works over any IP network                                                |
+| **Platform**             | Windows only                                                                                                        | Cross-platform: Windows, Linux, macOS, embedded                                            |
+| **Security**             | Relies on Windows domain/DCOM security                                                                              | Built-in: message signing, encryption, certificate-based auth                              |
+| **Introduced**           | 1996                                                                                                                | 2006                                                                                       |
+| **OIBus requirement**    | Requires an [OIBus Agent](../oibus-agent/installation.mdx) running on the Windows machine that hosts the OPC server | Connects directly from OIBus — no agent needed                                             |
+
+:::note HDA vs HA — the naming confusion
+Users coming from an OPC Classic background often look for **HDA** in OPC UA and cannot find it.
+OPC UA renames the equivalent feature **HA** (Historical Access, defined in OPC UA Part 11).
+The concept is identical — querying a server for values recorded in the past — but the acronym
+changed. In OIBus, the OPC Classic connector calls the mode `HDA`, and the OPC UA connector calls
+it `HA`. Do not confuse OPC UA HA with OPC Classic HDA: they are separate protocols and are **not
+interoperable**.
+:::
+
+**Choose OPC Classic** when your infrastructure already runs OPC DA or OPC HDA servers that cannot be migrated. An OIBus Agent must be deployed on the Windows machine that hosts those servers.
+
+**Choose OPC UA** for any new deployment. OPC UA is the current industry standard: platform-independent, network-friendly, and with native security built in.
+
+## Common OPC UA Servers
+
+| Server                                                                                                         | Vendor               | Modes  | Notes                                                                                                                                         |
+| -------------------------------------------------------------------------------------------------------------- | -------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [S7-1500 / S7-1200](https://www.siemens.com/global/en/products/automation/systems/industrial/plc/s7-1500.html) | Siemens              | DA     | Native OPC UA server built into modern Siemens PLCs — no additional software needed. Older S7-300/400 use OPC Classic via SIMATIC NET instead |
+| [KEPServerEX](https://www.ptc.com/en/products/kepware/kepserverex)                                             | PTC (Kepware)        | DA     | Exposes an OPC UA endpoint in addition to its OPC Classic interface — useful transition path                                                  |
+| [Ignition](https://inductiveautomation.com/ignition/)                                                          | Inductive Automation | DA     | Popular SCADA platform with a built-in OPC UA server                                                                                          |
+| [PI Server](https://www.aveva.com/en/products/aveva-pi-system/)                                                | AVEVA (OSIsoft)      | DA, HA | Also exposes an OPC Classic HDA interface — see the OPC Classic connector page                                                                |
+| [OPC UA Simulation Server](https://www.prosysopc.com/products/opc-ua-simulation-server/)                       | Prosys               | DA, HA | Free simulation server; ideal for testing OIBus configuration before connecting to a real server                                              |
+
 ## Specific Settings
 
 ### Connection Configuration
@@ -125,36 +160,57 @@ edit form.
 
 ## Security Configuration
 
-### Communication Security
+### Communication Certificate
 
-- OIBus generates self-signed certificate on startup
-- Certificate location: `<south_cache>/opcua/`
-- Must be trusted by OPC UA server
-- Error if untrusted: `The connection may have been rejected by the server`
+When **Security Mode** is set to `Sign` or `Sign and Encrypt`, OIBus authenticates itself to the OPC UA server
+using a certificate. This certificate is:
+
+- **Auto-generated** by OIBus on first startup (4096-bit RSA, self-signed)
+- **Location**: `<OIBusData>/certs/cert.pem` — private key: `<OIBusData>/certs/private.pem`
+
+Before a secured connection can be established, **the OPC UA server must trust this certificate**. If it is
+not in the server's trusted store, OIBus will log:
+
+```
+The connection may have been rejected by the server
+```
+
+To authorise it, import or copy `<OIBusData>/certs/cert.pem` into the server's trusted certificate store.
 
 ![Prosys Certificate Example](../../../static/img/guide/south/opcua/prosys-opcua-simulation-server-certificates.png)
 
-### Certificate Management
+:::info Prosys simulation server — trusted store paths
 
-1. **Communication Certificate**:
+- **Trusted**: `.prosysopc\prosys-opc-ua-simulation-server\PKI\CA\trusted\certs\`
+- **Rejected** (move from here to trusted): `.prosysopc\prosys-opc-ua-simulation-server\PKI\CA\rejected\`
+  :::
 
-- Auto-generated by OIBus
-- Location: `<south_cache>/opcua/cert.pem`
+### Authentication Certificate
 
-2. **Authentication Certificate**:
+When **Authentication** is set to `Certificate`, you must supply a separate identity certificate and its
+private key in the connector settings (**Client certificate** and **Private key** fields). This certificate
+identifies the _user_, independently of the transport security certificate above.
 
-- Must be added to server's trusted certificates
-- Prosys location: `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`
-- Error if rejected: `BadIdentityTokenRejected (0x80210000)`
+The server must also trust this identity certificate. For Prosys, import it into:
 
-:::info Prosys Specifics
-Move rejected certificates from:
-`.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected`
-to:
-`.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`
+```
+.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs\
+```
+
+If the server rejects it, OIBus logs `BadIdentityTokenRejected (0x80210000)`. In Prosys, rejected identity
+certificates land in `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\rejected\` — move them to
+the `certs\` folder next to it.
+
+:::tip Reuse OIBus's generated certificate for authentication
+You can point the **Client certificate** and **Private key** connector fields to OIBus's own certificate
+(`<OIBusData>/certs/cert.pem` and `<OIBusData>/certs/private.pem`) to use a single certificate for
+both transport-level security and user authentication.
 :::
 
-## Certificate Creation for Prosys
+## Creating a Custom Authentication Certificate for Prosys
+
+If you need a dedicated identity certificate, used to authenticate OIBus, not only signing the communication,
+generate one with OpenSSL:
 
 1. Create `cert.conf`:
 
@@ -186,28 +242,23 @@ organizationName = OI
 commonName = oibus
 ```
 
-2. Generate certificate:
+2. Generate the certificate and strip the passphrase:
 
 ```bash
 # Create key and certificate
 openssl req -new -x509 -keyout oibus.key -out oibus.pem -config cert.conf
 
-# Remove passphrase
+# Remove passphrase from key
 openssl rsa -in oibus.key -out oibus.key
 
-# Convert to DER format
+# Convert to DER format (required by some servers)
 openssl x509 -inform PEM -outform DER -in oibus.pem -out oibus.der
 ```
 
-4. Install in Prosys:
+3. Install in Prosys's user PKI store:
 
 ```bash
-cp oibus.der .prosysopc/prosys-opc-ua-simulation-server/USERS_PKI/CA/certs/
+cp oibus.der ".prosysopc/prosys-opc-ua-simulation-server/USERS_PKI/CA/certs/"
 ```
 
-:::tip Single Certificate Usage
-The same certificate can be used for:
-
-- Secure communication (sign/encrypt)
-- Client authentication: Specify paths to `cert.pem` and `private.pem`
-  :::
+Then, in the OIBus connector settings, set **Client certificate** to `oibus.pem` and **Private key** to `oibus.key`.
