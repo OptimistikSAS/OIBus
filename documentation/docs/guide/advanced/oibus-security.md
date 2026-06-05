@@ -131,3 +131,6 @@ Apply the principle of least privilege for every system OIBus connects to:
   continuously scans dependencies for known vulnerabilities and opens pull requests to update them.
 - **Custom compilation**: The open-source licence and public codebase allow you to compile OIBus from
   source and audit it independently before deploying to sensitive environments.
+- **Software Bill of Materials**: Every stable release ships a CycloneDX SBOM (`oibus-sbom.json`)
+  listing all components and their versions, ready for vulnerability scanning or licence compliance
+  checks. See [Software Bill of Materials](./oibus-sbom.md) for details.
