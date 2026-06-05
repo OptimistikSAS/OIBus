@@ -1,7 +1,21 @@
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
-      <div [translate]="'explore-cache.' + cacheType() + '.title'"></div>
+      <div class="d-flex align-items-center gap-2">
+        @switch (cacheType()) {
+          @case ('cache') {
+            <span class="fa fa-database text-primary"></span>
+          }
+          @case ('error') {
+            <span class="fa fa-exclamation-triangle text-danger"></span>
+          }
+          @case ('archive') {
+            <span class="fa fa-archive text-secondary"></span>
+          }
+        }
+        <span [translate]="'explore-cache.' + cacheType() + '.title'"></span>
+        <span class="badge bg-secondary fw-normal ms-1">{{ size() | fileSize }}</span>
+      </div>
       @if (cacheContentFiles().length !== 0) {
         <div>
           @switch (cacheType()) {
