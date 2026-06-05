@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.8.3](https://github.com/OptimistikSAS/OIBus/compare/v3.8.2...v3.8.3) (2026-06-05)
+
+
+### Bug Fixes
+
+* **metrics:** correct v3.6.0 migration column names, add v3.8.3 repair migration and unit tests ([9d03105](https://github.com/OptimistikSAS/OIBus/commit/9d031058985d1fc861321999e404e4ad7abb056c))
+* **metrics:** fix mqtt number of values metrics ([29ee820](https://github.com/OptimistikSAS/OIBus/commit/29ee8200e1b23c86feaee0dd1bdc21125fa81875))
+* **metrics:** fix oibus process metrics init ([c6fdf7e](https://github.com/OptimistikSAS/OIBus/commit/c6fdf7e4b8c1c826824c597babe8913d229a544d))
+* **metrics:** mutualise north and history metrics update ([bdc2737](https://github.com/OptimistikSAS/OIBus/commit/bdc27371580f1432b52e67f71171b2bde0223f59))
+* **metrics:** separate live vs persistent metrics ([1b65d90](https://github.com/OptimistikSAS/OIBus/commit/1b65d90843a1e31ab70e2d00ebed5db7a31508f5))
+* **metrics:** separate spec files from migrations ([1fcde31](https://github.com/OptimistikSAS/OIBus/commit/1fcde31023c6bd64dad9762fc243b3a5290a6665))
+* **metrics:** type north and history metrics and fix metrics update ([440113a](https://github.com/OptimistikSAS/OIBus/commit/440113ab0ff91aae50d9ca97dd07dcb0687635c4))
+* **metrics:** type south and history metrics and fix metrics update ([77ca9a9](https://github.com/OptimistikSAS/OIBus/commit/77ca9a97573ed57cdd3e374acaf727a6c03d05bc))
+* **migration:** improve unit tests for 3.8 migration ([700f53c](https://github.com/OptimistikSAS/OIBus/commit/700f53ccf3f772514acc08c53ffff4bb9723e8b5))
+* **north:** display cache size when exploring north cache ([197e1a1](https://github.com/OptimistikSAS/OIBus/commit/197e1a1a28d3fb51dad1689a1058b119cba8aac8))
+* **north:** fix arg order for sandbox transform method and consolidate typed results of transform function ([6a9ebdd](https://github.com/OptimistikSAS/OIBus/commit/6a9ebddfc68bfa860c86c5fbd715ba2f538cb528))
+* **north:** properly update metrics with json payloads ([077f476](https://github.com/OptimistikSAS/OIBus/commit/077f4762f99fc7ddad93058cc3988120846c436e))
+* **rest:** improve display for south rest ([f652e3f](https://github.com/OptimistikSAS/OIBus/commit/f652e3f57409ca120a27ab7c8c2e3100d7a54910))
+
 ## [3.8.2](https://github.com/OptimistikSAS/OIBus/compare/v3.8.1...v3.8.2) (2026-06-02)
 
 
