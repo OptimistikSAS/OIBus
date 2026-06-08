@@ -241,45 +241,39 @@ describe('Engine logger validator', () => {
   };
 
   it('should accept valid log parameters', async () => {
-    await assert.doesNotReject(validator.validate(engineLoggerSchema, { logParameters: validLogParameters }));
+    await assert.doesNotReject(validator.validate(engineLoggerSchema, validLogParameters));
   });
 
-  it('should reject null logParameters', async () => {
-    await assert.rejects(validator.validate(engineLoggerSchema, { logParameters: null }), {
-      message: '"logParameters" must be of type object'
+  it('should reject null console', async () => {
+    await assert.rejects(validator.validate(engineLoggerSchema, { ...validLogParameters, console: null }), {
+      message: '"console" must be of type object'
     });
   });
 
   it('should reject empty log level', async () => {
-    await assert.rejects(validator.validate(engineLoggerSchema, { logParameters: { ...validLogParameters, console: { level: '' } } }), {
-      message: '"logParameters.console.level" is not allowed to be empty'
+    await assert.rejects(validator.validate(engineLoggerSchema, { ...validLogParameters, console: { level: '' } }), {
+      message: '"console.level" is not allowed to be empty'
     });
   });
 
   it('should reject loki interval below minimum', async () => {
     await assert.rejects(
-      validator.validate(engineLoggerSchema, {
-        logParameters: { ...validLogParameters, loki: { ...validLogParameters.loki, interval: 5 } }
-      }),
-      { message: '"logParameters.loki.interval" must be greater than or equal to 10' }
+      validator.validate(engineLoggerSchema, { ...validLogParameters, loki: { ...validLogParameters.loki, interval: 5 } }),
+      { message: '"loki.interval" must be greater than or equal to 10' }
     );
   });
 
   it('should reject file maxFileSize below minimum', async () => {
     await assert.rejects(
-      validator.validate(engineLoggerSchema, {
-        logParameters: { ...validLogParameters, file: { ...validLogParameters.file, maxFileSize: 0 } }
-      }),
-      { message: '"logParameters.file.maxFileSize" must be greater than or equal to 1' }
+      validator.validate(engineLoggerSchema, { ...validLogParameters, file: { ...validLogParameters.file, maxFileSize: 0 } }),
+      { message: '"file.maxFileSize" must be greater than or equal to 1' }
     );
   });
 
   it('should reject database maxNumberOfLogs below minimum', async () => {
     await assert.rejects(
-      validator.validate(engineLoggerSchema, {
-        logParameters: { ...validLogParameters, database: { level: 'info', maxNumberOfLogs: 1000 } }
-      }),
-      { message: '"logParameters.database.maxNumberOfLogs" must be greater than or equal to 100000' }
+      validator.validate(engineLoggerSchema, { ...validLogParameters, database: { level: 'info', maxNumberOfLogs: 1000 } }),
+      { message: '"database.maxNumberOfLogs" must be greater than or equal to 100000' }
     );
   });
 });
