@@ -10,6 +10,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation
 @Component({
   selector: 'oib-edit-engine-proxy-modal',
   templateUrl: './edit-engine-proxy-modal.component.html',
+  styleUrl: './edit-engine-proxy-modal.component.scss',
   imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditEngineProxyModalComponent {

@@ -11,6 +11,7 @@ import { LOG_LEVELS, LogLevel } from '../../../../../backend/shared/model/logs.m
 @Component({
   selector: 'oib-edit-engine-logger-modal',
   templateUrl: './edit-engine-logger-modal.component.html',
+  styleUrl: './edit-engine-logger-modal.component.scss',
   imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditEngineLoggerModalComponent {
@@ -184,28 +185,26 @@ export class EditEngineLoggerModalComponent {
     const formValue = this.form.getRawValue();
     this.engineService
       .updateEngineLogger({
-        logParameters: {
-          console: { level: formValue.logParameters.console.level },
-          file: {
-            level: formValue.logParameters.file.level,
-            maxFileSize: formValue.logParameters.file.maxFileSize!,
-            numberOfFiles: formValue.logParameters.file.numberOfFiles!
-          },
-          database: {
-            level: formValue.logParameters.database.level,
-            maxNumberOfLogs: formValue.logParameters.database.maxNumberOfLogs!
-          },
-          loki: {
-            level: formValue.logParameters.loki.level,
-            interval: formValue.logParameters.loki.interval!,
-            address: formValue.logParameters.loki.address,
-            username: formValue.logParameters.loki.username ?? '',
-            password: formValue.logParameters.loki.password ?? ''
-          },
-          oia: {
-            level: formValue.logParameters.oia.level,
-            interval: formValue.logParameters.oia.interval!
-          }
+        console: { level: formValue.logParameters.console.level },
+        file: {
+          level: formValue.logParameters.file.level,
+          maxFileSize: formValue.logParameters.file.maxFileSize!,
+          numberOfFiles: formValue.logParameters.file.numberOfFiles!
+        },
+        database: {
+          level: formValue.logParameters.database.level,
+          maxNumberOfLogs: formValue.logParameters.database.maxNumberOfLogs!
+        },
+        loki: {
+          level: formValue.logParameters.loki.level,
+          interval: formValue.logParameters.loki.interval!,
+          address: formValue.logParameters.loki.address,
+          username: formValue.logParameters.loki.username ?? '',
+          password: formValue.logParameters.loki.password ?? ''
+        },
+        oia: {
+          level: formValue.logParameters.oia.level,
+          interval: formValue.logParameters.oia.interval!
         }
       })
       .subscribe(() => {

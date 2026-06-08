@@ -161,19 +161,19 @@ export default class EngineRepository {
     this.database
       .prepare(query)
       .run(
-        command.logParameters.console.level,
-        command.logParameters.file.level,
-        command.logParameters.file.maxFileSize,
-        command.logParameters.file.numberOfFiles,
-        command.logParameters.database.level,
-        command.logParameters.database.maxNumberOfLogs,
-        command.logParameters.loki.level,
-        command.logParameters.loki.interval,
-        command.logParameters.loki.address,
-        command.logParameters.loki.username,
-        command.logParameters.loki.password,
-        command.logParameters.oia.level,
-        command.logParameters.oia.interval,
+        command.console.level,
+        command.file.level,
+        command.file.maxFileSize,
+        command.file.numberOfFiles,
+        command.database.level,
+        command.database.maxNumberOfLogs,
+        command.loki.level,
+        command.loki.interval,
+        command.loki.address,
+        command.loki.username,
+        command.loki.password,
+        command.oia.level,
+        command.oia.interval,
         updatedBy
       );
   }
