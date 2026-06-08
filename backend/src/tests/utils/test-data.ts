@@ -1431,9 +1431,7 @@ const engineProxyCommand: EngineProxyCommandDTO = {
   proxyEnabled: true,
   proxyPort: 9000
 };
-const engineLoggerCommand: EngineLoggerCommandDTO = {
-  logParameters: engineSettingsCommand.logParameters
-};
+const engineLoggerCommand: EngineLoggerCommandDTO = engineSettingsCommand.logParameters;
 const engineMetrics: EngineMetrics = {
   metricsStart: '2020-01-01T00:00:00.000',
   processCpuUsageInstant: 0,

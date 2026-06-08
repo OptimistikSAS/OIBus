@@ -1,3 +1,4 @@
+/* tslint:disable */
 /* eslint-disable */
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import type { TsoaRoute } from '@tsoa/runtime';
@@ -7555,11 +7556,8 @@ const models: TsoaRoute.Models = {
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "EngineLoggerCommandDTO": {
-        "dataType": "refObject",
-        "properties": {
-            "logParameters": {"dataType":"nestedObjectLiteral","nestedProperties":{"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"required":true},
-        },
-        "additionalProperties": false,
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{"oia":{"dataType":"nestedObjectLiteral","nestedProperties":{"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"loki":{"dataType":"nestedObjectLiteral","nestedProperties":{"password":{"dataType":"string","required":true},"username":{"dataType":"string","required":true},"address":{"dataType":"string","required":true},"interval":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"database":{"dataType":"nestedObjectLiteral","nestedProperties":{"maxNumberOfLogs":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"file":{"dataType":"nestedObjectLiteral","nestedProperties":{"numberOfFiles":{"dataType":"double","required":true},"maxFileSize":{"dataType":"double","required":true},"level":{"ref":"LogLevel","required":true}},"required":true},"console":{"dataType":"nestedObjectLiteral","nestedProperties":{"level":{"ref":"LogLevel","required":true}},"required":true}},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusInfo": {

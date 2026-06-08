@@ -1015,13 +1015,9 @@ export interface EngineProxyCommandDTO {
 /**
  * Engine logger command Data Transfer Object.
  * Used as the request body for updating only the logging parameters.
+ * The log category objects are top-level (no wrapper key).
  */
-export interface EngineLoggerCommandDTO {
-  /**
-   * Logging parameters for different outputs.
-   */
-  logParameters: EngineSettingsCommandDTO['logParameters'];
-}
+export type EngineLoggerCommandDTO = EngineSettingsCommandDTO['logParameters'];
 
 /**
  * Engine settings update result Data Transfer Object.
