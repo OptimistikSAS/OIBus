@@ -11,6 +11,9 @@ import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
 import { ModalService } from '../../shared/modal.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+
+const engineSettings = engineSettings as unknown as EngineSettingsDTO;
 
 class EditEngineWebServerModalTester {
   readonly fixture = TestBed.createComponent(EditEngineWebServerModalComponent);
@@ -48,9 +51,9 @@ describe('EditEngineWebServerModalComponent', () => {
 
   test('should initialize the form with engine port', async () => {
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    await expect.element(tester.portInput).toHaveValue(String(testData.engine.settings.port));
+    await expect.element(tester.portInput).toHaveValue(String(engineSettings.port));
   });
 
   test('should not save when form is invalid', async () => {
@@ -64,10 +67,10 @@ describe('EditEngineWebServerModalComponent', () => {
   test('should save and show success when port did not change', async () => {
     engineService.updateEngineWebServer.mockReturnValue(of({ needsRedirect: false, newPort: null }));
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
     await tester.saveButton.click();
-    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({ port: testData.engine.settings.port });
+    expect(engineService.updateEngineWebServer).toHaveBeenCalledWith({ port: engineSettings.port });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
   });
@@ -77,7 +80,7 @@ describe('EditEngineWebServerModalComponent', () => {
     const redirectModalRef = { componentInstance: { initialize: () => {} } };
     modalService.open.mockReturnValue(redirectModalRef as any);
     const tester = new EditEngineWebServerModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
     await tester.saveButton.click();
     expect(activeModal.close).toHaveBeenCalled();
