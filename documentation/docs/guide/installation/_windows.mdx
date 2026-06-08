@@ -104,8 +104,21 @@ import TabItem from '@theme/TabItem';
     ``` commandline title="Usage"
     install.bat -c "[your-data-folder-path]"
     ```
-    Replace `[your-data-folder-path]` with the actual path where you want to store OIBus data (e.g., C:\OIBusData or
-    D:\OIBusData).
+
+    | Flag | Description | Default |
+    |------|-------------|---------|
+    | `-c` | Path to the OIBus data folder (cache, logs, configuration) | prompted if omitted |
+    | `-n` | Windows service name — use a unique name to run multiple OIBus instances on the same machine | `OIBus` |
+    | `-u` | Admin username written to `oibus.init.json` on first install | omitted (OIBus default applies) |
+    | `-p` | Admin password written to `oibus.init.json` on first install | omitted (OIBus default applies) |
+    | `-port` | Port OIBus listens on, written to `oibus.init.json` on first install | omitted (OIBus default applies) |
+
+    :::info
+    `-u`, `-p`, and `-port` are only used when `oibus.db` does not yet exist (i.e. on the very first install).
+    They are written to an `oibus.init.json` file in the data folder and applied by OIBus on first startup.
+    Omitted flags are not written to the file — OIBus will use its built-in defaults for those values.
+    On subsequent installs or updates the file is not recreated, so these flags have no effect.
+    :::
 
     :::tip
     - If you omit the `-c` argument, the script will prompt you for the data path.
@@ -115,7 +128,7 @@ import TabItem from '@theme/TabItem';
 
     **Example:**
     ``` commandline title="Example with terminal outputs"
-    install.bat -c "D:\OIBusData"
+    install.bat -c "D:\OIBusData" -u "admin" -p "password" -port 2223
     > Administrator permissions required. Detecting permission...
     > Stopping OIBus service...
     > Installing OIBus as Windows service...
@@ -129,13 +142,6 @@ import TabItem from '@theme/TabItem';
     > nssm.exe stop OIBus
     > "C:\Users\Administrator\Downloads\oibus-win_x64\oibus.exe" --config "D:\OIBusData"
     ```
-
-    :::tip
-    Use `-n "Service Name"` to customize the OIBus service name. This method is useful if you need to **run multiple
-    OIBus services on the same machine**.
-
-    By default, the service name is OIBus.
-    :::
 
     Proceed to the [first access guide](./first-access.mdx) to configure OIBus.
 
