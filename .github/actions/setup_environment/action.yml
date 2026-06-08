@@ -32,9 +32,10 @@ runs:
     # • cache_version            — manual escape hatch: bump GH_ACTIONS_CACHE_KEY
     #   in GitHub Secrets to force a clean install (e.g. after cache corruption or
     #   a security advisory) without touching any source file.
-    # • platform_arch (backend + launcher only) — native modules (better-sqlite3,
-    #   argon2) compile to platform-specific binaries; caches must not be shared
-    #   across OSes. Frontend has no native modules → platform-neutral key.
+    # • platform_arch (all three packages) — backend and launcher have native
+    #   modules (better-sqlite3, argon2); frontend has esbuild, which ships a
+    #   platform-specific binary as an optional dependency. All three caches
+    #   must be isolated by platform.
 
     # ── pkg-fetch binary cache ───────────────────────────────────────────────
     # @yao-pkg/pkg downloads a prebuilt Node.js base binary from GitHub Releases
@@ -62,7 +63,7 @@ runs:
       uses: actions/cache@v5
       with:
         path: frontend/node_modules
-        key: frontend-deps-${{ inputs.cache_version }}-${{ hashFiles('frontend/package-lock.json') }}
+        key: frontend-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('frontend/package-lock.json') }}
 
     - name: Cache launcher dependencies
       id: cache-launcher
