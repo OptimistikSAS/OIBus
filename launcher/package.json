@@ -6,7 +6,7 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": "=v24",
+    "node": "=v26",
     "npm": "=11"
   },
   "scripts": {
@@ -15,17 +15,22 @@
     "start:win-x64": "..\\build\\bin\\win-x64\\oibus-launcher.exe --config ..\\data-folder",
     "start:linux-x64": "../build/bin/linux-x64/oibus-launcher --config ../data-folder",
     "start:linux-arm64": "../build/bin/linux-arm64/oibus-launcher --config ../data-folder",
-    "build:win-x64": "rimraf ../build/bin/win-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/oibus-launcher --target node24-win-x64",
-    "build:macos-x64": "rimraf ../build/bin/macos-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/oibus-launcher --target node24-macos-x64",
-    "build:macos-arm64": "rimraf ../build/bin/macos-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/oibus-launcher --target node24-macos-arm64",
-    "build:linux-x64": "rimraf ../build/bin/linux-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/oibus-launcher --target node24-linux-x64",
-    "build:linux-arm64": "rimraf ../build/bin/linux-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus-launcher --target node24-linux-arm64",
+    "build:win-x64": "npm run internal:build:lib-win-x64 && rimraf ../build/bin/win-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/oibus-launcher --target node26-win-x64",
+    "build:macos-x64": "npm run internal:build:lib-macos-x64 && rimraf ../build/bin/macos-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/oibus-launcher --target node26-macos-x64",
+    "build:macos-arm64": "npm run internal:build:lib-macos-arm64 && rimraf ../build/bin/macos-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/oibus-launcher --target node26-macos-arm64",
+    "build:linux-x64": "npm run internal:build:lib-linux-x64 && rimraf ../build/bin/linux-x64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/oibus-launcher --target node26-linux-x64",
+    "build:linux-arm64": "npm run internal:build:lib-linux-arm64 && rimraf ../build/bin/linux-arm64/oibus-launcher && npm run build && pkg ./dist/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus-launcher --target node26-linux-arm64",
     "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:launcher",
     "start:launcher": "node ./dist/src/index.js --config ../data-folder",
     "lint": "eslint src/ --cache",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "test": "node --import tsx --experimental-config-file=package.json --test 'src/**/*.spec.ts'"
+    "internal:build:lib-win-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=win && npm run --prefix node_modules/argon2 install -- --target_platform=win --target_arch=x64",
+    "internal:build:lib-macos-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_platform=darwin --target_arch=x64",
+    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=arm64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
+    "internal:build:lib-linux-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=x64 --target_platform=linux",
+    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=arm64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=linux",
+    "test": "node --experimental-config-file=test.config.json --test 'src/**/*.spec.ts'"
   },
   "keywords": [
     "Optimistik"
@@ -50,17 +55,17 @@
     "typescript": "5.4.5",
     "typescript-eslint": "8.60.1"
   },
-  "testRunner": {
-    "experimental-test-coverage": true,
-    "test-reporter": "spec",
-    "test-coverage-exclude": [
-      "src/**/*.spec.ts"
-    ]
-  },
   "pkg": {
     "assets": [
       "node_modules/argon2/**/*.node",
       "node_modules/better-sqlite3/**/*.node"
     ]
+  },
+  "allowScripts": {
+    "argon2@0.44.0": true,
+    "better-sqlite3@12.10.0": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.0": true,
+    "fsevents@2.3.3": true
   }
 }

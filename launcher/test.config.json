@@ -1,0 +1,13 @@
+{
+  "$schema": "https://nodejs.org/dist/v26.3.0/docs/node-config-schema.json",
+  "nodeOptions": {
+    "import": ["tsx"]
+  },
+  "test": {
+    "experimental-test-coverage": true,
+    "test-reporter": "spec",
+    "test-coverage-exclude": [
+      "src/**/*.spec.ts"
+    ]
+  }
+}

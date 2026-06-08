@@ -6,7 +6,7 @@
   "homepage": "https://oibus.optimistik.com/",
   "license": "EUPL",
   "engines": {
-    "node": "=v24",
+    "node": "=v26",
     "npm": "=11"
   },
   "scripts": {
@@ -15,26 +15,26 @@
     "start:win-x64": "..\\build\\bin\\win-x64\\binaries\\oibus.exe --config ..\\data-folder",
     "start:linux-x64": "../build/bin/linux-x64/binaries/oibus --config ../data-folder",
     "start:linux-arm64": "../build/bin/linux-arm64/binaries/oibus --config ../data-folder",
-    "build:win-x64": "npm run internal:build:lib-win-x64 && rimraf ../build/bin/win-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/binaries/oibus --target node24-win-x64 && ncp ../build/deps/win-x64/nssm.exe ../build/bin/win-x64/nssm.exe && ncp ../LICENSE ../build/bin/win-x64/LICENSE && ncp ../build/deps/win-x64/install.bat ../build/bin/win-x64/install.bat && ncp ../build/deps/win-x64/uninstall.bat ../build/bin/win-x64/uninstall.bat",
+    "build:win-x64": "npm run internal:build:lib-win-x64 && rimraf ../build/bin/win-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/win-x64/binaries/oibus --target node26-win-x64 && ncp ../build/deps/win-x64/nssm.exe ../build/bin/win-x64/nssm.exe && ncp ../LICENSE ../build/bin/win-x64/LICENSE && ncp ../build/deps/win-x64/install.bat ../build/bin/win-x64/install.bat && ncp ../build/deps/win-x64/uninstall.bat ../build/bin/win-x64/uninstall.bat",
     "build:win-setup-x64": "rimraf ../build/bin/win-x64/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"../build/deps/win-x64/setup.iss\" \"/dEnableSigning=true\" \"/DMyAppVersion=\"%npm_package_version% \"/SKMSSign=cmd /c %SIGN_TOOL_PATH% $f\"",
-    "build:macos-x64": "npm run internal:build:lib-macos-x64 && rimraf ../build/bin/macos-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/binaries/oibus --target node24-macos-x64",
-    "build:macos-arm64": "npm run internal:build:lib-macos-arm64 && rimraf ../build/bin/macos-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/binaries/oibus --target node24-macos-arm64",
-    "build:linux-x64": "npm run internal:build:lib-linux-x64 && rimraf ../build/bin/linux-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/binaries/oibus --target node24-linux-x64 && ncp ../build/deps/linux-x64 ../build/bin/linux-x64",
-    "build:linux-arm64": "npm run internal:build:lib-linux-arm64 && rimraf ../build/bin/linux-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/binaries/oibus --target node24-linux-arm64 && ncp ../build/deps/linux-arm64 ../build/bin/linux-arm64",
+    "build:macos-x64": "npm run internal:build:lib-macos-x64 && rimraf ../build/bin/macos-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-x64/binaries/oibus --target node26-macos-x64",
+    "build:macos-arm64": "npm run internal:build:lib-macos-arm64 && rimraf ../build/bin/macos-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/binaries/oibus --target node26-macos-arm64",
+    "build:linux-x64": "npm run internal:build:lib-linux-x64 && rimraf ../build/bin/linux-x64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-x64/binaries/oibus --target node26-linux-x64 && ncp ../build/deps/linux-x64 ../build/bin/linux-x64",
+    "build:linux-arm64": "npm run internal:build:lib-linux-arm64 && rimraf ../build/bin/linux-arm64/binaries && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/binaries/oibus --target node26-linux-arm64 && ncp ../build/deps/linux-arm64 ../build/bin/linux-arm64",
     "start": "rimraf ./dist/backend/src/migration && tsc --sourceMap --project tsconfig.app.json && npm run start:backend",
     "start:backend": "node ./dist/backend/src/index.js --config ../data-folder",
     "generate:openapi": "tsoa spec-and-routes && npm run lint:fix",
     "generate:settings-interface": "tsc -p tsconfig.generator.json && node dist/interface-generator/src/settings-interface.generator.js && npm run generate:openapi",
     "migrate": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
-    "test": "node --import tsx --experimental-config-file=package.json --test 'src/**/*.spec.ts'",
+    "test": "node --experimental-config-file=test.config.json --test 'src/**/*.spec.ts'",
     "lint": "eslint src/ shared/model/ --cache",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "internal:build:lib-win-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=x64 --target_platform=win && npm run --prefix node_modules/argon2 install -- --target_platform=win --target_arch=x64",
-    "internal:build:lib-macos-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=x64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_platform=darwin --target_arch=x64",
-    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=arm64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
-    "internal:build:lib-linux-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=x64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=x64 --target_platform=linux",
-    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v24.9.0 --arch=arm64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=linux",
+    "internal:build:lib-win-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=win && npm run --prefix node_modules/argon2 install -- --target_platform=win --target_arch=x64",
+    "internal:build:lib-macos-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_platform=darwin --target_arch=x64 && npm run --prefix node_modules/isolated-vm install",
+    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=arm64 --target_platform=darwin && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
+    "internal:build:lib-linux-x64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=x64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=x64 --target_platform=linux",
+    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v26.3.0 --arch=arm64 --target_platform=linux && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=linux",
     "docker:iot": "docker compose -f ../docker-compose.yml --profile iot up -d",
     "docker:simulator": "docker compose -f ../docker-compose.yml --profile iot --profile simulator up -d",
     "docker:database": "docker compose -f ../docker-compose.yml --profile database up -d",
@@ -124,22 +124,6 @@
     "typescript": "5.4.5",
     "typescript-eslint": "8.60.1"
   },
-  "testRunner": {
-    "experimental-test-coverage": true,
-    "test-reporter": "spec",
-    "test-coverage-exclude": [
-      "src/**/*.spec.ts",
-      "src/tests/**",
-      "src/index.ts",
-      "src/web-server/routes.ts",
-      "src/web-server/web-server.ts",
-      "src/settings-interface.generator.ts",
-      "src/migration/**",
-      "src/**/manifest.ts",
-      "src/model/**",
-      "shared/**"
-    ]
-  },
   "pkg": {
     "scripts": [
       "node_modules/vm2/lib/setup-sandbox.js",
@@ -164,5 +148,16 @@
       "node_modules/jsonpath-plus/dist/index-browser-umd.min.cjs",
       "node_modules/papaparse/papaparse.min.js"
     ]
+  },
+  "allowScripts": {
+    "argon2@0.44.0": true,
+    "better-sqlite3@12.10.0": true,
+    "esbuild@0.27.7": true,
+    "esbuild@0.28.0": true,
+    "fsevents@2.3.3": true,
+    "isolated-vm@7.0.0": true,
+    "odbc@2.5.0": true,
+    "oracledb@7.0.0": true,
+    "ssh2@1.17.0": true
   }
 }

@@ -36,6 +36,20 @@ runs:
     #   argon2) compile to platform-specific binaries; caches must not be shared
     #   across OSes. Frontend has no native modules → platform-neutral key.
 
+    # ── pkg-fetch binary cache ───────────────────────────────────────────────
+    # @yao-pkg/pkg downloads a prebuilt Node.js base binary from GitHub Releases
+    # into ~/.pkg-cache on first use. On slow or restricted CI runners (esp.
+    # Windows) this download can time out, causing pkg to fall back to building
+    # Node from source (very slow). Caching the directory avoids the download on
+    # every run. Key includes platform and the launcher lock-file hash so it
+    # invalidates automatically when @yao-pkg/pkg-fetch is upgraded.
+
+    - name: Cache pkg-fetch binaries
+      uses: actions/cache@v5
+      with:
+        path: ~/.pkg-cache
+        key: pkg-cache-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('launcher/package-lock.json', 'backend/package-lock.json') }}
+
     - name: Cache backend dependencies
       id: cache-backend
       uses: actions/cache@v5
@@ -58,12 +72,25 @@ runs:
         key: launcher-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('launcher/package-lock.json') }}
 
     # ── Install dependencies (skipped on cache hit) ─────────────────────────
+    #
+    # Native modules (better-sqlite3, argon2) ship prebuilt binaries; we never
+    # want npm to compile them from source. Using --ignore-scripts prevents
+    # prebuild-install / node-gyp from running automatically on any platform.
+    # The explicit rebuild steps below then download the correct prebuilt binary
+    # using the --target / --arch / --target_platform flags that the
+    # internal:build:lib-* scripts already carry for each platform.
 
     - name: Install backend dependencies
       if: ${{ steps.cache-backend.outputs.cache-hit != 'true' }}
       working-directory: backend
       shell: bash
-      run: npm ci
+      run: npm ci --ignore-scripts
+
+    - name: Rebuild native backend modules
+      if: ${{ steps.cache-backend.outputs.cache-hit != 'true' }}
+      working-directory: backend
+      shell: bash
+      run: npm run internal:build:lib-${{ inputs.platform_arch }}
 
     - name: Install frontend dependencies
       if: ${{ steps.cache-frontend.outputs.cache-hit != 'true' }}
@@ -75,7 +102,13 @@ runs:
       if: ${{ steps.cache-launcher.outputs.cache-hit != 'true' }}
       working-directory: launcher
       shell: bash
-      run: npm ci
+      run: npm ci --ignore-scripts
+
+    - name: Rebuild native launcher modules
+      if: ${{ steps.cache-launcher.outputs.cache-hit != 'true' }}
+      working-directory: launcher
+      shell: bash
+      run: npm run internal:build:lib-${{ inputs.platform_arch }}
 
     # ── Version bumping (pre-releases only) ────────────────────────────────
 
