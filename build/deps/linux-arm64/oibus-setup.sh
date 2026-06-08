@@ -1,13 +1,16 @@
 #!/bin/bash
 
-while getopts b:c:k: flag
-do
-    case "${flag}" in
-        b) install_dir=${OPTARG};;
-        c) my_data_directory=${OPTARG};;
-        k) keep_conf=${OPTARG};;
-        *)
-    esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -b) install_dir="$2"; shift 2;;
+    -c) my_data_directory="$2"; shift 2;;
+    -k) keep_conf="$2"; shift 2;;
+    -n) engine_name="$2"; shift 2;;
+    -u) admin_username="$2"; shift 2;;
+    -p) admin_password="$2"; shift 2;;
+    -port) oibus_port="$2"; shift 2;;
+    *) shift;;
+  esac
 done
 
 
@@ -79,24 +82,21 @@ json_escape() {
   printf '%s' "$s"
 }
 
-# If no existing database, prompt for initial admin credentials, port and engine name
+# If no existing database, write provided initial settings to oibus.init.json.
+# Only fields explicitly passed as flags are included; omitted flags are left out
+# so OIBus applies its own built-in defaults for those values.
 if [[ ! -f "$conf_path/oibus.db" ]]; then
-  read -rp "Enter the OIBus name (default: OIBus): " engine_name
-  engine_name="${engine_name:=OIBus}"
-
-  read -rp "Enter the admin username (default: admin): " admin_username
-  admin_username="${admin_username:=admin}"
-
-  read -rsp "Enter the admin password (default: pass): " admin_password
-  echo
-  admin_password="${admin_password:=pass}"
-
-  read -rp "Enter the port OIBus will listen on (default: 2223): " oibus_port
-  oibus_port="${oibus_port:=2223}"
-
-  printf '{"engineName":"%s","adminUsername":"%s","adminPassword":"%s","port":%s}' \
-    "$(json_escape "$engine_name")" "$(json_escape "$admin_username")" "$(json_escape "$admin_password")" "$oibus_port" \
-    > "$conf_path/oibus.init.json"
+  json_fields="\"engineName\":\"$(json_escape "${engine_name:-OIBus}")\""
+  if [[ -n "$admin_username" ]]; then
+    json_fields="$json_fields,\"adminUsername\":\"$(json_escape "$admin_username")\""
+  fi
+  if [[ -n "$admin_password" ]]; then
+    json_fields="$json_fields,\"adminPassword\":\"$(json_escape "$admin_password")\""
+  fi
+  if [[ -n "$oibus_port" ]]; then
+    json_fields="$json_fields,\"port\":$oibus_port"
+  fi
+  printf '{%s}' "$json_fields" > "$conf_path/oibus.init.json"
   chmod 600 "$conf_path/oibus.init.json"
 fi
 
