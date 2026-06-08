@@ -4,10 +4,10 @@ title Remove OIBus from Windows service
 
 echo Administrator permissions required. Detecting permission...
 net session >nul 2>&1
-if NOT %errorLevel% == 0 (
+if ERRORLEVEL 1 (
     echo No Administrator permission. Please run Command Prompt as Administrator
     pause
-    goto EOF
+    exit /b 1
 )
 
 set SERVICE_NAME="OIBus"
