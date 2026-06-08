@@ -9,10 +9,9 @@ import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal.compone
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
-import _testData from '../../../../../backend/src/tests/utils/test-data';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
-const engineSettings = _testData.engine.settings as unknown as EngineSettingsDTO;
+const engineSettings = { proxyEnabled: false, proxyPort: null } as EngineSettingsDTO;
 
 class EditEngineProxyModalTester {
   readonly fixture = TestBed.createComponent(EditEngineProxyModalComponent);
