@@ -52,7 +52,7 @@ describe('EditEngineWebServerModalComponent', () => {
     const tester = new EditEngineWebServerModalTester();
     tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    await expect.element(tester.portInput).toHaveValue(String(engineSettings.port));
+    await expect.element(tester.portInput).toHaveValue(engineSettings.port);
   });
 
   test('should not save when form is invalid', async () => {

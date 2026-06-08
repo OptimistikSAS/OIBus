@@ -58,7 +58,7 @@ describe('EditEngineLoggerModalComponent', () => {
     const tester = new EditEngineLoggerModalTester();
     tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    await expect.element(tester.consoleLevelSelect).toHaveValue(engineSettings.logParameters.console.level);
+    await expect.element(tester.consoleLevelSelect).toHaveValue('0: silent');
   });
 
   test('should save logger settings and close modal', async () => {
