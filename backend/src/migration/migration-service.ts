@@ -157,5 +157,4 @@ export async function migrateDataFolder(dbPath: string): Promise<void> {
   });
 
   await knexConfig.migrate.latest();
-  await knexConfig.destroy();
 }
