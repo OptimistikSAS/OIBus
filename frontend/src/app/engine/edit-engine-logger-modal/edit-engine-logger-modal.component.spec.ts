@@ -9,10 +9,17 @@ import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal.compo
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
-import _testData from '../../../../../backend/src/tests/utils/test-data';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
-const engineSettings = _testData.engine.settings as unknown as EngineSettingsDTO;
+const engineSettings = {
+  logParameters: {
+    console: { level: 'silent' },
+    file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
+    database: { level: 'info', maxNumberOfLogs: 100_000 },
+    loki: { level: 'silent', interval: 60, address: '', username: '', password: '' },
+    oia: { level: 'silent', interval: 10 }
+  }
+} as EngineSettingsDTO;
 
 class EditEngineLoggerModalTester {
   readonly fixture = TestBed.createComponent(EditEngineLoggerModalComponent);
