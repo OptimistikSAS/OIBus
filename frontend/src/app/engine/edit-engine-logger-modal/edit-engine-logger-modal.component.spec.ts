@@ -10,6 +10,9 @@ import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+
+const engineSettings = engineSettings as unknown as EngineSettingsDTO;
 
 class EditEngineLoggerModalTester {
   readonly fixture = TestBed.createComponent(EditEngineLoggerModalComponent);
@@ -46,15 +49,15 @@ describe('EditEngineLoggerModalComponent', () => {
 
   test('should initialize the form with logger settings', async () => {
     const tester = new EditEngineLoggerModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    await expect.element(tester.consoleLevelSelect).toHaveValue(testData.engine.settings.logParameters.console.level);
+    await expect.element(tester.consoleLevelSelect).toHaveValue(engineSettings.logParameters.console.level);
   });
 
   test('should save logger settings and close modal', async () => {
     engineService.updateEngineLogger.mockReturnValue(of(undefined));
     const tester = new EditEngineLoggerModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
     await tester.saveButton.click();
     expect(engineService.updateEngineLogger).toHaveBeenCalled();
