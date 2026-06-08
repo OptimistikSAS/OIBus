@@ -119,7 +119,7 @@ the usernames `oibus` and `admin` respectively (set in `docker-compose.yml`).
 | **Config** | `docker/modbus/server_config.json`                                  |
 
 A lightweight Modbus TCP server. Its register map is declared in `server_config.json`. The server
-accepts writes from any Modbus TCP client, so the [Simulator](#unified-simulator----simulator)
+accepts writes from any Modbus TCP client, so the [Simulator](#unified-simulator--simulator)
 can dynamically update holding registers and coils in real time.
 
 :::note server_config.json key numbering vs OIBus Address offset
