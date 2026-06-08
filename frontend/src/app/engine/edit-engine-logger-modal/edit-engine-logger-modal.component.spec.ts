@@ -9,10 +9,10 @@ import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal.compo
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
-import testData from '../../../../../backend/src/tests/utils/test-data';
+import _testData from '../../../../../backend/src/tests/utils/test-data';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
-const engineSettings = engineSettings as unknown as EngineSettingsDTO;
+const engineSettings = _testData.engine.settings as unknown as EngineSettingsDTO;
 
 class EditEngineLoggerModalTester {
   readonly fixture = TestBed.createComponent(EditEngineLoggerModalComponent);
