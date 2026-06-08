@@ -9,10 +9,9 @@ import { EditEngineNameModalComponent } from './edit-engine-name-modal.component
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
-import _testData from '../../../../../backend/src/tests/utils/test-data';
 import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
 
-const engineSettings = _testData.engine.settings as unknown as EngineSettingsDTO;
+const engineSettings = { name: 'OIBus' } as EngineSettingsDTO;
 
 class EditEngineNameModalTester {
   readonly fixture = TestBed.createComponent(EditEngineNameModalComponent);
