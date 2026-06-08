@@ -158,7 +158,7 @@ end;
 
 procedure InitializeWizard();
 var
-  lblService, lblData: TNewStaticText;
+  lblService, lblData, lblAdminUser, lblAdminPass, lblPort: TNewStaticText;
   btnBrowse: TButton;
 begin
   // Create the Custom Page
@@ -206,7 +206,6 @@ begin
   // Create Admin Credentials Page
   AdminPage := CreateCustomPage(ConfigPage.ID, 'Admin Credentials', 'Set the initial admin username, password and port');
 
-  var lblAdminUser: TNewStaticText;
   lblAdminUser := TNewStaticText.Create(AdminPage);
   lblAdminUser.Parent := AdminPage.Surface;
   lblAdminUser.Caption := 'Admin username (default: admin):';
@@ -221,7 +220,6 @@ begin
   AdminUsernameEdit.Left := 0;
   AdminUsernameEdit.Width := AdminPage.SurfaceWidth;
 
-  var lblAdminPass: TNewStaticText;
   lblAdminPass := TNewStaticText.Create(AdminPage);
   lblAdminPass.Parent := AdminPage.Surface;
   lblAdminPass.Caption := 'Admin password (default: pass):';
@@ -237,7 +235,6 @@ begin
   AdminPasswordEdit.Left := 0;
   AdminPasswordEdit.Width := AdminPage.SurfaceWidth;
 
-  var lblPort: TNewStaticText;
   lblPort := TNewStaticText.Create(AdminPage);
   lblPort.Parent := AdminPage.Surface;
   lblPort.Caption := 'Port OIBus will listen on (default: 2223):';
