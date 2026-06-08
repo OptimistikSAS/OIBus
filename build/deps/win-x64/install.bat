@@ -4,9 +4,9 @@ title Install OIBus as Windows service
 
 echo Administrator permissions required. Detecting permission...
 net session >nul 2>&1
-if NOT %errorLevel% == 0 (
+if ERRORLEVEL 1 (
     echo No Administrator permission. Please run Command Prompt as Administrator
-    goto EOF
+    exit /b 1
 )
 
 set DATA_FOLDER_PATH=
@@ -59,17 +59,15 @@ if "%DATA_FOLDER_PATH%"==""  (
     goto INPUT
 )
 
-if not exist "%DATA_FOLDER_PATH%" mkdir %DATA_FOLDER_PATH%
+if not exist "%DATA_FOLDER_PATH%" mkdir "%DATA_FOLDER_PATH%"
 
-if not exist "%DATA_FOLDER_PATH%\oibus.db" (
-    if "%ADMIN_USERNAME%"=="" set /P ADMIN_USERNAME=Enter the admin username (default: admin):
-    if "%ADMIN_USERNAME%"=="" set ADMIN_USERNAME=admin
-    if "%ADMIN_PASSWORD%"=="" set /P ADMIN_PASSWORD=Enter the admin password (default: pass):
-    if "%ADMIN_PASSWORD%"=="" set ADMIN_PASSWORD=pass
-    if "%OIBUS_PORT%"=="" set /P OIBUS_PORT=Enter the port OIBus will listen on (default: 2223):
-    if "%OIBUS_PORT%"=="" set OIBUS_PORT=2223
-    powershell -Command "$json = [pscustomobject]@{engineName=$env:SERVICE_NAME; adminUsername=$env:ADMIN_USERNAME; adminPassword=$env:ADMIN_PASSWORD; port=[int]$env:OIBUS_PORT} | ConvertTo-Json -Compress; [IO.File]::WriteAllText([IO.Path]::Combine($env:DATA_FOLDER_PATH, 'oibus.init.json'), $json)"
-)
+if exist "%DATA_FOLDER_PATH%\oibus.db" goto SKIP_INIT
+set JSON_FIELDS="engineName":"%SERVICE_NAME%"
+if not "%ADMIN_USERNAME%"=="" set JSON_FIELDS=%JSON_FIELDS%,"adminUsername":"%ADMIN_USERNAME%"
+if not "%ADMIN_PASSWORD%"=="" set JSON_FIELDS=%JSON_FIELDS%,"adminPassword":"%ADMIN_PASSWORD%"
+if not "%OIBUS_PORT%"=="" set JSON_FIELDS=%JSON_FIELDS%,"port":%OIBUS_PORT%
+(echo {%JSON_FIELDS%})> "%DATA_FOLDER_PATH%\oibus.init.json"
+:SKIP_INIT
 
 echo Stopping %SERVICE_NAME% service...
 nssm.exe stop %SERVICE_NAME% >nul 2>&1
@@ -77,14 +75,14 @@ nssm.exe stop %SERVICE_NAME% >nul 2>&1
 @echo Installing %SERVICE_NAME% as Windows service...
 date /T >> install.log
 time /T >> install.log
-nssm.exe install "%SERVICE_NAME%" "%cd%\oibus-launcher.exe --config %DATA_FOLDER_PATH%"
-@echo nssm.exe install "%SERVICE_NAME%" "%cd%\oibus-launcher.exe --config %DATA_FOLDER_PATH%" >> install.log
+nssm.exe install "%SERVICE_NAME%" "%cd%\oibus-launcher.exe"
+@echo nssm.exe install "%SERVICE_NAME%" "%cd%\oibus-launcher.exe" >> install.log
 
 nssm.exe set "%SERVICE_NAME%" Application "%cd%\oibus-launcher.exe"
 @echo nssm.exe set "%SERVICE_NAME%" Application "%cd%\oibus-launcher.exe" >> install.log
 
-nssm.exe set "%SERVICE_NAME%" AppParameters "--config %DATA_FOLDER_PATH%"
-@echo nssm.exe set "%SERVICE_NAME%" AppParameters "--config %DATA_FOLDER_PATH%" >> install.log
+nssm.exe set "%SERVICE_NAME%" AppParameters "--config \"%DATA_FOLDER_PATH%\""
+@echo nssm.exe set "%SERVICE_NAME%" AppParameters "--config \"%DATA_FOLDER_PATH%\"" >> install.log
 
 nssm.exe set "%SERVICE_NAME%" AppDirectory "%cd%"
 @echo nssm.exe set "%SERVICE_NAME%" AppDirectory "%cd%" >> install.log
