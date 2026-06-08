@@ -21,7 +21,7 @@ import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model
 class EngineDetailComponentTester {
   readonly fixture = TestBed.createComponent(EngineDetailComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly generalSettings = this.root.getByCss('tbody.general-settings tr');
+  readonly generalSettings = this.root.getByCss('table tr');
   readonly restartButton = this.root.getByCss('#restart');
 }
 
@@ -100,8 +100,8 @@ describe('EngineDetailComponent', () => {
 
     await expect.element(tester.generalSettings.nth(0)).toHaveTextContent('OIBus Test');
     await expect.element(tester.generalSettings.nth(1)).toHaveTextContent('2223');
-    await expect.element(tester.generalSettings.nth(2)).toHaveTextContent('silent');
-    await expect.element(tester.generalSettings.nth(3)).toHaveTextContent('8888');
+    await expect.element(tester.generalSettings.nth(2)).toHaveTextContent('8888');
+    await expect.element(tester.generalSettings.nth(3)).toHaveTextContent('silent');
   });
 
   test('should restart', () => {
