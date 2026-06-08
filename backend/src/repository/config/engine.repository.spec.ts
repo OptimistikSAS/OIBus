@@ -70,7 +70,7 @@ describe('EngineRepository with populated database', () => {
 
     it('should update logger settings only', () => {
       repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
-      assert.deepStrictEqual(repository.get()!.logParameters, testData.engine.loggerCommand.logParameters);
+      assert.deepStrictEqual(repository.get()!.logParameters, testData.engine.loggerCommand);
     });
 
     it('should update version', () => {

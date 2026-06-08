@@ -73,9 +73,7 @@ const engineProxySchema: Joi.ObjectSchema = Joi.object({
   proxyPort: Joi.number().port().optional().allow(null)
 });
 
-const engineLoggerSchema: Joi.ObjectSchema = Joi.object({
-  logParameters: logParametersSchema
-});
+const engineLoggerSchema = logParametersSchema;
 
 const registrationSchema: Joi.ObjectSchema = Joi.object({
   host: Joi.string().required(),
