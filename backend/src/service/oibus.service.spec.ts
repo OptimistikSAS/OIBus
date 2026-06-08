@@ -446,7 +446,7 @@ describe('OIBus Service', () => {
 
   it('should update engine logger settings and encrypt loki password', async () => {
     const command = JSON.parse(JSON.stringify(testData.engine.loggerCommand));
-    command.logParameters.loki.password = 'new password';
+    command.loki.password = 'new password';
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
 
     await service.updateEngineLogger(command, testData.users.list[0].id);
@@ -461,14 +461,14 @@ describe('OIBus Service', () => {
 
   it('should update engine logger settings and preserve loki password when empty', async () => {
     const command = JSON.parse(JSON.stringify(testData.engine.loggerCommand));
-    command.logParameters.loki.password = '';
+    command.loki.password = '';
     engineRepository.get.mock.mockImplementation(() => testData.engine.settings);
 
     await service.updateEngineLogger(command, testData.users.list[0].id);
 
     const encryptionMock = mockEncryptionService.encryptionService as EncryptionServiceMock;
     assert.strictEqual(encryptionMock.encryptText.mock.calls.length, 0);
-    assert.strictEqual(command.logParameters.loki.password, testData.engine.settings.logParameters.loki.password);
+    assert.strictEqual(command.loki.password, testData.engine.settings.logParameters.loki.password);
     assert.strictEqual(engineRepository.updateLogger.mock.calls.length, 1);
   });
 

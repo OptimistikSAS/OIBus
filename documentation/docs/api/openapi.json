@@ -31550,150 +31550,140 @@
 				"additionalProperties": false
 			},
 			"EngineLoggerCommandDTO": {
-				"description": "Engine logger command Data Transfer Object.\nUsed as the request body for updating only the logging parameters.",
 				"properties": {
-					"logParameters": {
+					"oia": {
 						"properties": {
-							"oia": {
-								"properties": {
-									"interval": {
-										"type": "number",
-										"format": "double",
-										"description": "The interval in seconds for sending logs to OIA.",
-										"example": 60
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for OIA output.",
-										"example": "info"
-									}
-								},
-								"required": [
-									"interval",
-									"level"
-								],
-								"type": "object",
-								"description": "OIA logging configuration."
+							"interval": {
+								"type": "number",
+								"format": "double",
+								"description": "The interval in seconds for sending logs to OIA.",
+								"example": 60
 							},
-							"loki": {
-								"properties": {
-									"password": {
-										"type": "string",
-										"description": "The password for Loki authentication.",
-										"example": "pass"
-									},
-									"username": {
-										"type": "string",
-										"description": "The username for Loki authentication.",
-										"example": "user"
-									},
-									"address": {
-										"type": "string",
-										"description": "The address of the Loki server.",
-										"example": "http://loki:3100"
-									},
-									"interval": {
-										"type": "number",
-										"format": "double",
-										"description": "The interval in seconds for sending logs to Loki.",
-										"example": 60
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for Loki output.",
-										"example": "error"
-									}
-								},
-								"required": [
-									"password",
-									"username",
-									"address",
-									"interval",
-									"level"
-								],
-								"type": "object",
-								"description": "Loki logging configuration."
-							},
-							"database": {
-								"properties": {
-									"maxNumberOfLogs": {
-										"type": "number",
-										"format": "double",
-										"description": "The maximum number of logs to keep in the database.",
-										"example": 10000
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for database output.",
-										"example": "warn"
-									}
-								},
-								"required": [
-									"maxNumberOfLogs",
-									"level"
-								],
-								"type": "object",
-								"description": "Database logging configuration."
-							},
-							"file": {
-								"properties": {
-									"numberOfFiles": {
-										"type": "number",
-										"format": "double",
-										"description": "The number of log files to keep.",
-										"example": 5
-									},
-									"maxFileSize": {
-										"type": "number",
-										"format": "double",
-										"description": "The maximum size of a log file in bytes.",
-										"example": 10485760
-									},
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for file output.",
-										"example": "debug"
-									}
-								},
-								"required": [
-									"numberOfFiles",
-									"maxFileSize",
-									"level"
-								],
-								"type": "object",
-								"description": "File logging configuration."
-							},
-							"console": {
-								"properties": {
-									"level": {
-										"$ref": "#/components/schemas/LogLevel",
-										"description": "The log level for console output.",
-										"example": "info"
-									}
-								},
-								"required": [
-									"level"
-								],
-								"type": "object",
-								"description": "Console logging configuration."
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for OIA output.",
+								"example": "info"
 							}
 						},
 						"required": [
-							"oia",
-							"loki",
-							"database",
-							"file",
-							"console"
+							"interval",
+							"level"
 						],
 						"type": "object",
-						"description": "Logging parameters for different outputs."
+						"description": "OIA logging configuration."
+					},
+					"loki": {
+						"properties": {
+							"password": {
+								"type": "string",
+								"description": "The password for Loki authentication.",
+								"example": "pass"
+							},
+							"username": {
+								"type": "string",
+								"description": "The username for Loki authentication.",
+								"example": "user"
+							},
+							"address": {
+								"type": "string",
+								"description": "The address of the Loki server.",
+								"example": "http://loki:3100"
+							},
+							"interval": {
+								"type": "number",
+								"format": "double",
+								"description": "The interval in seconds for sending logs to Loki.",
+								"example": 60
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for Loki output.",
+								"example": "error"
+							}
+						},
+						"required": [
+							"password",
+							"username",
+							"address",
+							"interval",
+							"level"
+						],
+						"type": "object",
+						"description": "Loki logging configuration."
+					},
+					"database": {
+						"properties": {
+							"maxNumberOfLogs": {
+								"type": "number",
+								"format": "double",
+								"description": "The maximum number of logs to keep in the database.",
+								"example": 10000
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for database output.",
+								"example": "warn"
+							}
+						},
+						"required": [
+							"maxNumberOfLogs",
+							"level"
+						],
+						"type": "object",
+						"description": "Database logging configuration."
+					},
+					"file": {
+						"properties": {
+							"numberOfFiles": {
+								"type": "number",
+								"format": "double",
+								"description": "The number of log files to keep.",
+								"example": 5
+							},
+							"maxFileSize": {
+								"type": "number",
+								"format": "double",
+								"description": "The maximum size of a log file in bytes.",
+								"example": 10485760
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for file output.",
+								"example": "debug"
+							}
+						},
+						"required": [
+							"numberOfFiles",
+							"maxFileSize",
+							"level"
+						],
+						"type": "object",
+						"description": "File logging configuration."
+					},
+					"console": {
+						"properties": {
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for console output.",
+								"example": "info"
+							}
+						},
+						"required": [
+							"level"
+						],
+						"type": "object",
+						"description": "Console logging configuration."
 					}
 				},
 				"required": [
-					"logParameters"
+					"oia",
+					"loki",
+					"database",
+					"file",
+					"console"
 				],
 				"type": "object",
-				"additionalProperties": false
+				"description": "Engine logger command Data Transfer Object.\nUsed as the request body for updating only the logging parameters.\nThe log category objects are top-level (no wrapper key)."
 			},
 			"OIBusInfo": {
 				"description": "Information about the OIBus instance.",
