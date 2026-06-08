@@ -10,6 +10,9 @@ import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+
+const engineSettings = engineSettings as unknown as EngineSettingsDTO;
 
 class EditEngineNameModalTester {
   readonly fixture = TestBed.createComponent(EditEngineNameModalComponent);
@@ -43,14 +46,14 @@ describe('EditEngineNameModalComponent', () => {
 
   test('should initialize the form with engine name', async () => {
     const tester = new EditEngineNameModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    await expect.element(tester.nameInput).toHaveValue(testData.engine.settings.name);
+    await expect.element(tester.nameInput).toHaveValue(engineSettings.name);
   });
 
   test('should not save when name is empty', async () => {
     const tester = new EditEngineNameModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
     await tester.nameInput.fill('');
     await tester.saveButton.click();
@@ -60,7 +63,7 @@ describe('EditEngineNameModalComponent', () => {
   test('should save the name and close modal', async () => {
     engineService.updateEngineName.mockReturnValue(of(undefined));
     const tester = new EditEngineNameModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
     await tester.nameInput.fill('new name');
     await tester.saveButton.click();

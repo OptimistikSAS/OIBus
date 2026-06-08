@@ -10,6 +10,9 @@ import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { EngineService } from '../../services/engine.service';
 import { NotificationService } from '../../shared/notification.service';
 import testData from '../../../../../backend/src/tests/utils/test-data';
+import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.model';
+
+const engineSettings = engineSettings as unknown as EngineSettingsDTO;
 
 class EditEngineProxyModalTester {
   readonly fixture = TestBed.createComponent(EditEngineProxyModalComponent);
@@ -43,9 +46,9 @@ describe('EditEngineProxyModalComponent', () => {
 
   test('should initialize the form with proxy settings', async () => {
     const tester = new EditEngineProxyModalTester();
-    tester.fixture.componentInstance.initialize(testData.engine.settings);
+    tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    const proxyEnabled = testData.engine.settings.proxyEnabled;
+    const proxyEnabled = engineSettings.proxyEnabled;
     if (proxyEnabled) {
       await expect.element(tester.proxyEnabledCheckbox).toBeChecked();
     } else {
@@ -56,7 +59,7 @@ describe('EditEngineProxyModalComponent', () => {
   test('should save proxy settings and close modal', async () => {
     engineService.updateEngineProxy.mockReturnValue(of(undefined));
     const tester = new EditEngineProxyModalTester();
-    tester.fixture.componentInstance.initialize({ ...testData.engine.settings, proxyEnabled: false, proxyPort: null });
+    tester.fixture.componentInstance.initialize({ ...engineSettings, proxyEnabled: false, proxyPort: null });
     tester.fixture.detectChanges();
     await tester.saveButton.click();
     expect(engineService.updateEngineProxy).toHaveBeenCalledWith({ proxyEnabled: false, proxyPort: null });
