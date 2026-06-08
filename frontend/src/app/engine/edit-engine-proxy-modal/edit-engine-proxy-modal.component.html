@@ -1,0 +1,32 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="engine.proxy-settings.title"></h4>
+</div>
+<div class="modal-body">
+  <form id="engine-proxy-form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="row">
+      <div class="col-12">
+        <div class="form-group">
+          <div class="form-check form-switch padded">
+            <input formControlName="proxyEnabled" id="proxy-enabled" type="checkbox" class="form-check-input" />
+            <label class="form-check-label" for="proxy-enabled" translate="engine.proxy-settings.proxy-enabled"></label>
+          </div>
+        </div>
+      </div>
+      @if (form.controls.proxyEnabled.value) {
+        <div class="col-6 mt-2">
+          <div class="form-group">
+            <label class="form-label" for="proxy-port" translate="engine.proxy-settings.proxy-port"></label>
+            <input formControlName="proxyPort" type="number" id="proxy-port" class="form-control" />
+            <val-errors controlName="proxyPort" />
+          </div>
+        </div>
+      }
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="submit" form="engine-proxy-form" class="btn btn-primary" translate="common.save" id="save-proxy-button"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-proxy-button"></button>
+  </div>
+</div>

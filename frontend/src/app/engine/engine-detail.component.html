@@ -7,11 +7,7 @@
             <div class="oib-block-title">
               <img class="oib-title-image pt-2" src="/home/engine.svg" alt="logo" />
             </div>
-            <h1 class="oib-title" translate="engine.title">
-              <a class="btn btn-primary mx-2" id="edit-link" routerLink="edit" [ngbTooltip]="'engine.tooltips.edit' | translate">
-                <i class="fa fa-pencil"></i>
-              </a>
-            </h1>
+            <h1 class="oib-title" translate="engine.title"></h1>
           </div>
           <div>
             <a class="btn btn-primary me-2" id="oianalytics-module" routerLink="oianalytics">
@@ -33,17 +29,111 @@
         @if (metrics()) {
           <oib-engine-metrics [metrics]="metrics()!" />
         }
-        <oib-box boxTitle="engine.general-settings.title">
+
+        <!-- General Settings -->
+        <oib-box>
+          <ng-template oibBoxTitle>
+            <div class="d-flex align-items-center justify-content-between">
+              <span translate="engine.general-settings.title"></span>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                id="edit-name-button"
+                (click)="openNameModal()"
+                [ngbTooltip]="'engine.tooltips.edit' | translate"
+              >
+                <i class="fa fa-pencil"></i>
+              </button>
+            </div>
+          </ng-template>
           <table class="table table-sm table-hover oib-table mb-3">
-            <tbody class="general-settings">
+            <tbody>
               <tr>
                 <td class="first-column-body" translate="engine.general-settings.name"></td>
                 <td class="last-column-body">{{ settings.name }}</td>
               </tr>
+            </tbody>
+          </table>
+        </oib-box>
+
+        <!-- Web Server Settings -->
+        <oib-box class="mt-2 d-block">
+          <ng-template oibBoxTitle>
+            <div class="d-flex align-items-center justify-content-between">
+              <span translate="engine.web-server-settings.title"></span>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                id="edit-web-server-button"
+                (click)="openWebServerModal()"
+                [ngbTooltip]="'engine.tooltips.edit' | translate"
+              >
+                <i class="fa fa-pencil"></i>
+              </button>
+            </div>
+          </ng-template>
+          <table class="table table-sm table-hover oib-table mb-3">
+            <tbody>
               <tr>
                 <td class="first-column-body" translate="engine.general-settings.port"></td>
                 <td class="last-column-body">{{ settings.port }}</td>
               </tr>
+            </tbody>
+          </table>
+        </oib-box>
+
+        <!-- Proxy Settings -->
+        <oib-box class="mt-2 d-block">
+          <ng-template oibBoxTitle>
+            <div class="d-flex align-items-center justify-content-between">
+              <span translate="engine.proxy-settings.title"></span>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                id="edit-proxy-button"
+                (click)="openProxyModal()"
+                [ngbTooltip]="'engine.tooltips.edit' | translate"
+              >
+                <i class="fa fa-pencil"></i>
+              </button>
+            </div>
+          </ng-template>
+          <table class="table table-sm table-hover oib-table mb-3">
+            <tbody>
+              <tr>
+                <td class="first-column-body" translate="engine.proxy-settings.title"></td>
+                @if (settings.proxyEnabled) {
+                  <td
+                    class="last-column-body"
+                    translate="engine.proxy-settings.enabled-details"
+                    [translateParams]="{ port: settings.proxyPort }"
+                  ></td>
+                } @else {
+                  <td class="last-column-body" translate="engine.proxy-settings.disabled-details"></td>
+                }
+              </tr>
+            </tbody>
+          </table>
+        </oib-box>
+
+        <!-- Logger Settings -->
+        <oib-box class="mt-2 d-block">
+          <ng-template oibBoxTitle>
+            <div class="d-flex align-items-center justify-content-between">
+              <span translate="engine.logger.title"></span>
+              <button
+                type="button"
+                class="btn btn-sm btn-primary"
+                id="edit-logger-button"
+                (click)="openLoggerModal()"
+                [ngbTooltip]="'engine.tooltips.edit' | translate"
+              >
+                <i class="fa fa-pencil"></i>
+              </button>
+            </div>
+          </ng-template>
+          <table class="table table-sm table-hover oib-table mb-3">
+            <tbody>
               <tr>
                 <td class="first-column-body" translate="engine.general-settings.log-levels"></td>
                 <td class="last-column-body">
@@ -64,21 +154,10 @@
                   <span translate="engine.general-settings.oia" [translateParams]="{ level: settings.logParameters.oia.level }"></span>
                 </td>
               </tr>
-              <tr>
-                <td class="first-column-body" translate="engine.proxy-settings.title"></td>
-                @if (settings.proxyEnabled) {
-                  <td
-                    class="last-column-body"
-                    translate="engine.proxy-settings.enabled-details"
-                    [translateParams]="{ port: settings.proxyPort }"
-                  ></td>
-                } @else {
-                  <td class="last-column-body" translate="engine.proxy-settings.disabled-details"></td>
-                }
-              </tr>
             </tbody>
           </table>
         </oib-box>
+
         <oib-scan-mode-list />
         <div class="mt-2">
           <oib-ip-filter-list />
