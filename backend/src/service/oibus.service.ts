@@ -236,10 +236,10 @@ export default class OIBusService {
   async updateEngineLogger(command: EngineLoggerCommandDTO, updatedBy: string): Promise<void> {
     await this.validator.validate(engineLoggerSchema, command);
     const oldEngineSettings = this.getEngineSettings();
-    if (!command.logParameters.loki.password) {
-      command.logParameters.loki.password = oldEngineSettings.logParameters.loki.password;
+    if (!command.loki.password) {
+      command.loki.password = oldEngineSettings.logParameters.loki.password;
     } else {
-      command.logParameters.loki.password = await encryptionService.encryptText(command.logParameters.loki.password);
+      command.loki.password = await encryptionService.encryptText(command.loki.password);
     }
     this.engineRepository.updateLogger(command, updatedBy);
     const settings = this.getEngineSettings();

@@ -10,6 +10,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation
 @Component({
   selector: 'oib-edit-engine-name-modal',
   templateUrl: './edit-engine-name-modal.component.html',
+  styleUrl: './edit-engine-name-modal.component.scss',
   imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditEngineNameModalComponent {

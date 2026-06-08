@@ -12,6 +12,7 @@ import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/por
 @Component({
   selector: 'oib-edit-engine-web-server-modal',
   templateUrl: './edit-engine-web-server-modal.component.html',
+  styleUrl: './edit-engine-web-server-modal.component.scss',
   imports: [TranslateDirective, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class EditEngineWebServerModalComponent {
