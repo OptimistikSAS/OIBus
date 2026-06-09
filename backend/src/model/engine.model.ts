@@ -11,6 +11,8 @@ export interface EngineSettings extends BaseEntity {
   forwardProxyUrl: string | null;
   forwardProxyUsername: string | null;
   forwardProxyPassword: string | null;
+  proxyUsername: string | null;
+  proxyPassword: string | null;
   logParameters: {
     console: {
       level: LogLevel;

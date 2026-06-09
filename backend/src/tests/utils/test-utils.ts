@@ -476,6 +476,8 @@ const createEngineSettings = async (database: knex.Knex, engineSettings: EngineS
       forward_proxy_url: engineSettings.forwardProxyUrl,
       forward_proxy_username: engineSettings.forwardProxyUsername,
       forward_proxy_password: engineSettings.forwardProxyPassword,
+      proxy_username: engineSettings.proxyUsername,
+      proxy_password: engineSettings.proxyPassword,
       oibus_version: engineSettings.version,
       oibus_launcher_version: engineSettings.launcherVersion,
       created_by: engineSettings.createdBy,
