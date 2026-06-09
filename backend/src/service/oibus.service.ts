@@ -28,6 +28,7 @@ import {
   engineWebServerSchema
 } from '../web-server/controllers/validators/oibus-validation-schema';
 import { encryptionService } from './encryption.service';
+import argon2 from 'argon2';
 import LoggerService from './logger/logger.service';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import ProxyServer from '../web-server/proxy-server';
@@ -128,11 +129,18 @@ export default class OIBusService {
         '::ffff:127.0.0.1',
         ...this.ipFilterService.list().map(filter => filter.address)
       ]);
-      await this.proxyServer.start(settings.proxyPort!, {
-        url: settings.forwardProxyUrl,
-        username: settings.forwardProxyUsername,
-        password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
-      });
+      await this.proxyServer.start(
+        settings.proxyPort!,
+        {
+          url: settings.forwardProxyUrl,
+          username: settings.forwardProxyUsername,
+          password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
+        },
+        {
+          username: settings.proxyUsername,
+          password: settings.proxyPassword
+        }
+      );
     }
     const startDuration = DateTime.now().toMillis() - start;
     this.logger.info(`OIBus started in ${startDuration} ms`);
@@ -169,6 +177,11 @@ export default class OIBusService {
     } else {
       command.forwardProxyPassword = await encryptionService.encryptText(command.forwardProxyPassword);
     }
+    if (!command.proxyPassword) {
+      command.proxyPassword = oldEngineSettings.proxyPassword;
+    } else {
+      command.proxyPassword = await argon2.hash(command.proxyPassword);
+    }
     this.engineRepository.update(command, updatedBy);
     const settings = this.getEngineSettings();
 
@@ -188,11 +201,18 @@ export default class OIBusService {
     }
     await this.proxyServer.stop();
     if (settings.proxyEnabled) {
-      await this.proxyServer.start(settings.proxyPort!, {
-        url: settings.forwardProxyUrl,
-        username: settings.forwardProxyUsername,
-        password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
-      });
+      await this.proxyServer.start(
+        settings.proxyPort!,
+        {
+          url: settings.forwardProxyUrl,
+          username: settings.forwardProxyUsername,
+          password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
+        },
+        {
+          username: settings.proxyUsername,
+          password: settings.proxyPassword
+        }
+      );
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
 
@@ -237,11 +257,32 @@ export default class OIBusService {
     if (command.proxyEnabled && command.proxyPort === oldEngineSettings.port) {
       throw new Error('Web server port and proxy port can not be the same');
     }
+    if (!command.forwardProxyPassword) {
+      command.forwardProxyPassword = oldEngineSettings.forwardProxyPassword;
+    } else {
+      command.forwardProxyPassword = await encryptionService.encryptText(command.forwardProxyPassword);
+    }
+    if (!command.proxyPassword) {
+      command.proxyPassword = oldEngineSettings.proxyPassword;
+    } else {
+      command.proxyPassword = await argon2.hash(command.proxyPassword);
+    }
     this.engineRepository.updateProxy(command, updatedBy);
     const settings = this.getEngineSettings();
     await this.proxyServer.stop();
     if (settings.proxyEnabled) {
-      await this.proxyServer.start(settings.proxyPort!);
+      await this.proxyServer.start(
+        settings.proxyPort!,
+        {
+          url: settings.forwardProxyUrl,
+          username: settings.forwardProxyUsername,
+          password: settings.forwardProxyPassword ? await encryptionService.decryptText(settings.forwardProxyPassword) : null
+        },
+        {
+          username: settings.proxyUsername,
+          password: settings.proxyPassword
+        }
+      );
     }
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
   }
@@ -422,6 +463,8 @@ export const toEngineSettingsDTO = (engineSettings: EngineSettings, getUserInfo:
     forwardProxyUrl: engineSettings.forwardProxyUrl,
     forwardProxyUsername: engineSettings.forwardProxyUsername,
     forwardProxyPassword: '',
+    proxyUsername: engineSettings.proxyUsername,
+    proxyPassword: '',
     logParameters: {
       console: {
         level: engineSettings.logParameters.console.level

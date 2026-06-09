@@ -98,6 +98,15 @@ describe('Entity migration v3.9.0', () => {
     assert.ok(cols.includes('forward_proxy_url'), 'engines.forward_proxy_url added');
     assert.ok(cols.includes('forward_proxy_username'), 'engines.forward_proxy_username added');
     assert.ok(cols.includes('forward_proxy_password'), 'engines.forward_proxy_password added');
+    assert.ok(cols.includes('proxy_username'), 'engines.proxy_username added');
+    assert.ok(cols.includes('proxy_password'), 'engines.proxy_password added');
+  });
+
+  it('leaves proxy auth columns null by default', async () => {
+    await up(db);
+    const row = await db('engines').first();
+    assert.strictEqual(row.proxy_username, null);
+    assert.strictEqual(row.proxy_password, null);
   });
 
   it('populates syslog defaults on existing rows', async () => {

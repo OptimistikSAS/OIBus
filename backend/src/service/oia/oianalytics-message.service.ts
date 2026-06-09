@@ -369,6 +369,8 @@ export default class OIAnalyticsMessageService {
         forwardProxyUrl: engine.forwardProxyUrl,
         forwardProxyUsername: engine.forwardProxyUsername,
         forwardProxyPassword: null,
+        proxyUsername: engine.proxyUsername,
+        proxyPassword: null,
         logParameters: {
           console: {
             level: engine.logParameters.console.level

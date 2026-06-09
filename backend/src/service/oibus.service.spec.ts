@@ -64,6 +64,10 @@ before(() => {
   mockModule(nodeRequire, './utils', mockUtils);
   mockModule(nodeRequire, '../web-server/proxy-server', mockProxyServer);
   mockModule(nodeRequire, './encryption.service', mockEncryptionService);
+  mockModule(nodeRequire, 'argon2', {
+    __esModule: true,
+    default: { hash: mock.fn(async (pass: string) => `argon2hash:${pass}`) }
+  });
 
   const mod = reloadModule<{
     default: new (...args: Array<unknown>) => InstanceType<typeof OIBusServiceType>;
@@ -441,7 +445,18 @@ describe('OIBus Service', () => {
     assert.strictEqual(engineRepository.updateProxy.mock.calls.length, 1);
     assert.strictEqual(lastProxyStop.mock.calls.length, 1);
     assert.strictEqual(lastProxyStart.mock.calls.length, 1);
-    assert.deepStrictEqual(lastProxyStart.mock.calls[0].arguments, [9000]);
+    assert.deepStrictEqual(lastProxyStart.mock.calls[0].arguments, [
+      9000,
+      {
+        url: settingsWithProxy.forwardProxyUrl,
+        username: settingsWithProxy.forwardProxyUsername,
+        password: settingsWithProxy.forwardProxyPassword
+      },
+      {
+        username: settingsWithProxy.proxyUsername,
+        password: settingsWithProxy.proxyPassword
+      }
+    ]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
   });
 
@@ -676,6 +691,8 @@ describe('OIBus Service', () => {
         forwardProxyUrl: engineSettings.forwardProxyUrl,
         forwardProxyUsername: engineSettings.forwardProxyUsername,
         forwardProxyPassword: '',
+        proxyUsername: engineSettings.proxyUsername,
+        proxyPassword: '',
         logParameters: {
           console: {
             level: engineSettings.logParameters.console.level

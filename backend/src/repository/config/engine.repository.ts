@@ -23,6 +23,8 @@ const DEFAULT_ENGINE_SETTINGS: Omit<
   forwardProxyUrl: null,
   forwardProxyUsername: null,
   forwardProxyPassword: null,
+  proxyUsername: null,
+  proxyPassword: null,
   logParameters: {
     console: {
       level: 'silent'
@@ -72,7 +74,7 @@ export default class EngineRepository {
   get(): EngineSettings | null {
     const query =
       'SELECT id, name, port, oibus_version, oibus_launcher_version, proxy_enabled, proxy_port, ' +
-      'forward_proxy_url, forward_proxy_username, forward_proxy_password, ' +
+      'forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, ' +
       'log_database_level, log_database_max_number_of_logs, ' +
       'log_loki_level, log_loki_interval, log_loki_address, log_loki_username, log_loki_password, ' +
@@ -91,7 +93,7 @@ export default class EngineRepository {
   update(command: EngineSettingsCommandDTO, updatedBy: string): void {
     const query =
       `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, proxy_enabled = ?, proxy_port = ?, ` +
-      'forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, ' +
+      'forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, proxy_username = ?, proxy_password = ?, ' +
       'log_console_level = ?, ' +
       'log_file_level = ?, ' +
       'log_file_max_file_size = ?, ' +
@@ -122,6 +124,8 @@ export default class EngineRepository {
         command.forwardProxyUrl,
         command.forwardProxyUsername,
         command.forwardProxyPassword,
+        command.proxyUsername,
+        command.proxyPassword,
         command.logParameters.console.level,
         command.logParameters.file.level,
         command.logParameters.file.maxFileSize,
@@ -161,6 +165,7 @@ export default class EngineRepository {
     const query =
       `UPDATE ${ENGINES_TABLE} SET proxy_enabled = ?, proxy_port = ?, ` +
       `forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, ` +
+      `proxy_username = ?, proxy_password = ?, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database
@@ -171,6 +176,8 @@ export default class EngineRepository {
         command.forwardProxyUrl,
         command.forwardProxyUsername,
         command.forwardProxyPassword,
+        command.proxyUsername,
+        command.proxyPassword,
         updatedBy
       );
   }
@@ -228,13 +235,13 @@ export default class EngineRepository {
 
     const query =
       `INSERT INTO ${ENGINES_TABLE} (id, name, oibus_version, oibus_launcher_version, port, proxy_enabled, proxy_port,` +
-      'forward_proxy_url, forward_proxy_username, forward_proxy_password, ' +
+      'forward_proxy_url, forward_proxy_username, forward_proxy_password, proxy_username, proxy_password, ' +
       'log_console_level, log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
       'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, ' +
       'log_loki_username, log_loki_password, log_oia_level, log_oia_interval, ' +
       'log_syslog_level, log_syslog_host, log_syslog_port, log_syslog_protocol, ' +
       `created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
@@ -248,6 +255,8 @@ export default class EngineRepository {
         command.forwardProxyUrl,
         command.forwardProxyUsername,
         command.forwardProxyPassword,
+        command.proxyUsername,
+        command.proxyPassword,
         command.logParameters.console.level,
         command.logParameters.file.level,
         command.logParameters.file.maxFileSize,
@@ -282,6 +291,8 @@ export default class EngineRepository {
       forwardProxyUrl: (result.forward_proxy_url as string) || null,
       forwardProxyUsername: (result.forward_proxy_username as string) || null,
       forwardProxyPassword: (result.forward_proxy_password as string) || null,
+      proxyUsername: (result.proxy_username as string) || null,
+      proxyPassword: (result.proxy_password as string) || null,
       createdBy: result.created_by as string,
       updatedBy: result.updated_by as string,
       createdAt: result.created_at as string,

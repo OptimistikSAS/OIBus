@@ -2,11 +2,17 @@ import http from 'node:http';
 import * as stream from 'node:stream';
 import net from 'node:net';
 import httpProxy from 'http-proxy';
+import argon2 from 'argon2';
 import { testIPOnFilter } from '../service/utils';
 import type { ILogger } from '../model/logger.model';
 
 interface ForwardProxy {
   url: string | null;
+  username: string | null;
+  password: string | null;
+}
+
+interface ProxyAuth {
   username: string | null;
   password: string | null;
 }
@@ -22,6 +28,7 @@ export default class ProxyServer {
   private forwardProxyUrl: string | null = null;
   private forwardProxyUsername: string | null = null;
   private forwardProxyPassword: string | null = null;
+  private proxyAuth: ProxyAuth = { username: null, password: null };
 
   constructor(
     logger: ILogger,
@@ -43,10 +50,11 @@ export default class ProxyServer {
     this.ipFilters = ipFilters;
   }
 
-  start(port: number, forwardProxy?: ForwardProxy): void {
+  start(port: number, forwardProxy?: ForwardProxy, proxyAuth?: ProxyAuth): void {
     this.forwardProxyUrl = forwardProxy?.url ?? null;
     this.forwardProxyUsername = forwardProxy?.username ?? null;
     this.forwardProxyPassword = forwardProxy?.password ?? null;
+    this.proxyAuth = proxyAuth ?? { username: null, password: null };
     this.initHttpProxy();
     this.initWebServer(port);
   }
@@ -73,8 +81,15 @@ export default class ProxyServer {
       this._logger.info(`Start proxy server on port ${port}.`);
     });
 
-    this.webServer.on('request', this.handleHttpRequest.bind(this));
-    this.webServer.on('connect', this.handleHttpsRequest.bind(this));
+    this.webServer.on(
+      'request',
+      (req, res) => void this.handleHttpRequest(req, res).catch(err => this._logger.error((err as Error).message))
+    );
+    this.webServer.on(
+      'connect',
+      (req, socket, head) =>
+        void this.handleHttpsRequest(req, socket as stream.Duplex, head as Buffer).catch(err => this._logger.error((err as Error).message))
+    );
 
     // Listen for the `error` event on `webserver`.
     this.webServer.on('error', (err: Error) => {
@@ -82,11 +97,17 @@ export default class ProxyServer {
     });
   }
 
-  private handleHttpRequest(req: http.IncomingMessage, res: http.ServerResponse) {
+  private async handleHttpRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
     const ipAllowed = this.isIpAddressAllowed(req);
     if (!ipAllowed) {
       res.writeHead(403, { 'Content-Type': 'text/plain' });
       res.end('Forbidden');
+      return;
+    }
+
+    if (!(await this.isClientAuthenticated(req))) {
+      res.writeHead(407, { 'Proxy-Authenticate': 'Basic realm="OIBus Proxy"' });
+      res.end('Proxy Authentication Required');
       return;
     }
 
@@ -134,10 +155,18 @@ export default class ProxyServer {
     }
   }
 
-  private handleHttpsRequest(req: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) {
+  private async handleHttpsRequest(req: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer): Promise<void> {
     const ipAllowed = this.isIpAddressAllowed(req);
     if (!ipAllowed) {
       clientSocket.write(`HTTP/${req.httpVersion} 403 Forbidden\r\n\r\n`);
+      clientSocket.end();
+      return;
+    }
+
+    if (!(await this.isClientAuthenticated(req))) {
+      clientSocket.write(
+        `HTTP/${req.httpVersion} 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="OIBus Proxy"\r\n\r\n`
+      );
       clientSocket.end();
       return;
     }
@@ -220,6 +249,31 @@ export default class ProxyServer {
       });
     } catch (error: unknown) {
       this._logger.error(`Proxy server error: ${(error as Error).message}`);
+    }
+  }
+
+  private async isClientAuthenticated(req: http.IncomingMessage): Promise<boolean> {
+    if (!this.proxyAuth.username) {
+      return true;
+    }
+    const authHeader = req.headers['proxy-authorization'];
+    if (!authHeader || !authHeader.startsWith('Basic ')) {
+      return false;
+    }
+    const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+    const colonIndex = decoded.indexOf(':');
+    if (colonIndex === -1) {
+      return false;
+    }
+    const username = decoded.slice(0, colonIndex);
+    const password = decoded.slice(colonIndex + 1);
+    if (username !== this.proxyAuth.username) {
+      return false;
+    }
+    try {
+      return await argon2.verify(this.proxyAuth.password!, password);
+    } catch {
+      return false;
     }
   }
 
