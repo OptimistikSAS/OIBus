@@ -11,6 +11,8 @@ export async function up(knex: Knex): Promise<void> {
     t.string('forward_proxy_url').nullable();
     t.string('forward_proxy_username').nullable();
     t.string('forward_proxy_password').nullable();
+    t.string('proxy_username').nullable();
+    t.string('proxy_password').nullable();
   });
   await knex(ENGINES_TABLE).update({
     log_syslog_level: 'silent',

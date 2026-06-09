@@ -66,6 +66,8 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
   forwardProxyUrl: Joi.string().uri().optional().allow(null, ''),
   forwardProxyUsername: Joi.string().optional().allow(null, ''),
   forwardProxyPassword: Joi.string().optional().allow(null, ''),
+  proxyUsername: Joi.string().optional().allow(null, ''),
+  proxyPassword: Joi.string().optional().allow(null, ''),
   logParameters: logParametersSchema
 });
 
@@ -82,7 +84,9 @@ const engineProxySchema: Joi.ObjectSchema = Joi.object({
   proxyPort: Joi.number().port().optional().allow(null),
   forwardProxyUrl: Joi.string().uri().optional().allow(null, ''),
   forwardProxyUsername: Joi.string().optional().allow(null, ''),
-  forwardProxyPassword: Joi.string().optional().allow(null, '')
+  forwardProxyPassword: Joi.string().optional().allow(null, ''),
+  proxyUsername: Joi.string().optional().allow(null, ''),
+  proxyPassword: Joi.string().optional().allow(null, '')
 });
 
 const engineLoggerSchema = logParametersSchema;
