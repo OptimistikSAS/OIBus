@@ -16,7 +16,9 @@ const engineSettings = {
   proxyPort: null,
   forwardProxyUrl: null,
   forwardProxyUsername: null,
-  forwardProxyPassword: null
+  forwardProxyPassword: null,
+  proxyUsername: null,
+  proxyPassword: null
 } as EngineSettingsDTO;
 
 class EditEngineProxyModalTester {
@@ -72,7 +74,9 @@ describe('EditEngineProxyModalComponent', () => {
       proxyPort: null,
       forwardProxyUrl: null,
       forwardProxyUsername: null,
-      forwardProxyPassword: null
+      forwardProxyPassword: null,
+      proxyUsername: null,
+      proxyPassword: null
     });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();

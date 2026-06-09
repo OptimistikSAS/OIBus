@@ -1363,6 +1363,8 @@ const engineSettings: EngineSettings = {
   forwardProxyUrl: 'http://forward-proxy:3128',
   forwardProxyUsername: 'proxy-user',
   forwardProxyPassword: 'encrypted-proxy-password',
+  proxyUsername: 'proxy-server-user',
+  proxyPassword: 'encrypted-proxy-server-password',
   logParameters: {
     console: {
       level: 'info'
@@ -1407,6 +1409,8 @@ const engineSettingsCommand: EngineSettingsCommandDTO = {
   forwardProxyUrl: null,
   forwardProxyUsername: null,
   forwardProxyPassword: null,
+  proxyUsername: null,
+  proxyPassword: null,
   logParameters: {
     console: {
       level: 'silent'

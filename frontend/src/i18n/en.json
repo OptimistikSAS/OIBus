@@ -549,7 +549,9 @@
       "proxy-port": "Port",
       "forward-proxy-url": "Forward proxy URL",
       "forward-proxy-username": "Forward proxy username",
-      "forward-proxy-password": "Forward proxy password"
+      "forward-proxy-password": "Forward proxy password",
+      "proxy-username": "Proxy server username",
+      "proxy-password": "Proxy server password"
     },
     "logger": {
       "title": "Logger",
