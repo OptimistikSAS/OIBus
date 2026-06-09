@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Component, inject as inject_1 } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject as inject_1 } from '@angular/core';
 import { debounceTime, distinctUntilChanged, Observable, of, switchMap } from 'rxjs';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { provideNgbConfigTesting } from './oi-ngb-testing';
@@ -19,7 +19,8 @@ class UserService {
 @Component({
   selector: 'oib-test-open-typeahead-on-focus-component',
   template: '<input [ngbTypeahead]="search" [formControl]="name"/>',
-  imports: [ReactiveFormsModule, NgbTypeahead, OpenTypeaheadOnFocusDirective]
+  imports: [ReactiveFormsModule, NgbTypeahead, OpenTypeaheadOnFocusDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   private userService = inject_1(UserService);

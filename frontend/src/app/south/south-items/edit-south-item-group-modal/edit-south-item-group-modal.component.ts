@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
@@ -26,6 +26,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validat
   selector: 'oib-edit-south-item-group-modal',
   templateUrl: './edit-south-item-group-modal.component.html',
   styleUrl: './edit-south-item-group-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
 })
 export class EditSouthItemGroupModalComponent {

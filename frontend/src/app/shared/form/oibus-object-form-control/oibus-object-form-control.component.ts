@@ -1,4 +1,4 @@
-import { Component, computed, effect, input } from '@angular/core';
+import { Component, computed, effect, input, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective } from '@ngx-translate/core';
@@ -39,6 +39,7 @@ interface FormColumn {
       useExisting: FormGroupName
     }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,

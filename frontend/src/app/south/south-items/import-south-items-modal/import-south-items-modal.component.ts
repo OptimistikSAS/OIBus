@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ObservableState } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -20,6 +20,7 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-south-items-modal',
   templateUrl: './import-south-items-modal.component.html',
   styleUrl: './import-south-items-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, PaginationComponent, TranslatePipe, NgbTooltip]
 })
 export class ImportSouthItemsModalComponent {

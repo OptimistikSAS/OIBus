@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { OIBusStringSelectFormControlComponent } from './oibus-string-select-form-control.component';
@@ -17,7 +17,8 @@ import { page } from 'vitest/browser';
       </ng-container>
     </form>
   `,
-  imports: [ReactiveFormsModule, TranslateModule, OIBusStringSelectFormControlComponent]
+  imports: [ReactiveFormsModule, TranslateModule, OIBusStringSelectFormControlComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   stringSelectAttribute: OIBusStringSelectAttribute = {

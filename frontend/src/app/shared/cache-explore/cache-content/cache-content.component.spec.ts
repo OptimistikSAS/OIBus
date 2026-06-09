@@ -1,6 +1,6 @@
 import { CacheContentComponent } from './cache-content.component';
 import { TestBed } from '@angular/core/testing';
-import { Component, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal, viewChild } from '@angular/core';
 import { CacheMetadata, CacheOperation, DataFolderType } from '../../../../../../backend/shared/model/engine.model';
 import { ObservableState } from '../../save-button/save-button.component';
 import { BehaviorSubject } from 'rxjs';
@@ -21,7 +21,8 @@ import { page } from 'vitest/browser';
       [state]="state()"
     />
   `,
-  imports: [CacheContentComponent]
+  imports: [CacheContentComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   readonly component = viewChild.required<CacheContentComponent>('component');

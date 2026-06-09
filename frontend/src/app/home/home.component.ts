@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
@@ -26,6 +26,7 @@ function toRows<T>(items: Array<T>): Array<Array<T>> {
   selector: 'oib-home',
   imports: [TranslateDirective, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent],
   templateUrl: './home.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './home.component.scss'
 })
 export class HomeComponent {

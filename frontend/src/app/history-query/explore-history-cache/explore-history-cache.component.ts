@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { of, switchMap, tap } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -22,6 +22,7 @@ import { CacheExploreComponent } from '../../shared/cache-explore/cache-explore.
   selector: 'oib-explore-history-cache',
   templateUrl: './explore-history-cache.component.html',
   styleUrl: './explore-history-cache.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TranslateDirective,
     ReactiveFormsModule,

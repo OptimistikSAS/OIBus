@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { DefaultValidationErrorsComponent } from './default-validation-errors.component';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ValdemortModule } from 'ngx-valdemort';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -23,7 +23,8 @@ import { page } from 'vitest/browser';
       <button id="submit">Submit</button>
     </form>
   `,
-  imports: [ValdemortModule, ReactiveFormsModule, DefaultValidationErrorsComponent, TranslatePipe]
+  imports: [ValdemortModule, ReactiveFormsModule, DefaultValidationErrorsComponent, TranslatePipe],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   form = inject(NonNullableFormBuilder).group({

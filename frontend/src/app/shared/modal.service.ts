@@ -1,4 +1,4 @@
-import { Injectable, Type, inject } from '@angular/core';
+import { Service, Type, inject } from '@angular/core';
 import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, EMPTY, from, throwError } from 'rxjs';
 
@@ -36,9 +36,7 @@ export class Modal<T> {
   }
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class ModalService {
   private ngbModal = inject(NgbModal);
 

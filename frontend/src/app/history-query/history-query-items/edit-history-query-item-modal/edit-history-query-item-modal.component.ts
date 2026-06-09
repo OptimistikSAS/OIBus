@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject } from '@angular/core';
+import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
@@ -36,6 +36,7 @@ import { OIBUS_FORM_MODE } from '../../../shared/form/oibus-form-mode.token';
     SaveButtonComponent,
     SouthItemTestComponent
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,

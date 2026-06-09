@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
@@ -7,7 +7,8 @@ import { PillComponent } from './pill.component';
 
 @Component({
   template: `<oib-pill [type]="type" [removable]="removable" (removed)="removed = true">Pill content</oib-pill>`,
-  imports: [PillComponent]
+  imports: [PillComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestPillWrapper {
   type: 'primary' | 'secondary' | 'info' = 'primary';

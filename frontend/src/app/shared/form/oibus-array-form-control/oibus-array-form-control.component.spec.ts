@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusArrayFormControlComponent } from './oibus-array-form-control.component';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
@@ -29,7 +29,8 @@ import { createMock } from '../../../../test/vitest-create-mock';
       />
     </ng-container>
   </form>`,
-  imports: [OIBusArrayFormControlComponent, ReactiveFormsModule]
+  imports: [OIBusArrayFormControlComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   formControl: FormControl<Array<any>> = new FormControl<Array<any>>([{}, {}]) as FormControl<Array<any>>;

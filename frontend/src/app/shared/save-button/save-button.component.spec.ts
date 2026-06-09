@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { SaveButtonComponent } from './save-button.component';
 import { TestBed } from '@angular/core/testing';
 import { delay, of } from 'rxjs';
@@ -12,10 +12,11 @@ import { page } from 'vitest/browser';
   selector: 'oib-test-save-button-component',
   template: `
     <form [formGroup]="form" id="test-form" (ngSubmit)="save()">
-      <button [oib-save-button]="state" form="test-form" [forceDisabled]="forceDisabled"></button>
+      <button [oib-save-button]="state" form="test-form" [forceDisabled]="forceDisabled()"></button>
     </form>
   `,
-  imports: [ReactiveFormsModule, SaveButtonComponent]
+  imports: [ReactiveFormsModule, SaveButtonComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   private fb = inject(FormBuilder);
@@ -24,7 +25,7 @@ class TestComponent {
   save$ = of(null).pipe(delay(500), this.state.pendingUntilFinalization());
   form = this.fb.group({ name: '' });
 
-  forceDisabled = false;
+  forceDisabled = signal(false);
 
   save() {
     this.save$.subscribe();
@@ -102,12 +103,12 @@ describe('SaveButton', () => {
     });
 
     test('should disable the button when forceDisabled', async () => {
-      tester.fixture.componentInstance.forceDisabled = true;
+      tester.fixture.componentInstance.forceDisabled.set(true);
       tester.fixture.detectChanges();
 
       await expect.element(tester.saveButton).toBeDisabled();
 
-      tester.fixture.componentInstance.forceDisabled = false;
+      tester.fixture.componentInstance.forceDisabled.set(false);
       tester.fixture.detectChanges();
 
       await expect.element(tester.saveButton).not.toBeDisabled();

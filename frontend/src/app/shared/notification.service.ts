@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { InterpolationParameters } from '@ngx-translate/core';
 
@@ -19,7 +19,7 @@ export interface Notification {
  * This service simply emits all the messages from an observable,
  * and the NotificationComponent observes them to display them when they're emitted.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class NotificationService {
   private messages$ = new Subject<Notification>();
 

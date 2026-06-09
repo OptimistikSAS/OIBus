@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import {
   OIBusSouthType,
   SouthConnectorCommandDTO,
@@ -23,9 +23,7 @@ import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/mod
 /**
  * Service used to interact with the backend for CRUD operations on South connectors
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class SouthConnectorService {
   private http = inject(HttpClient);
   private downloadService = inject(DownloadService);

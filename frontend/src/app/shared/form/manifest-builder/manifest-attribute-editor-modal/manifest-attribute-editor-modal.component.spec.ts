@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ManifestAttributeEditorModalComponent } from './manifest-attribute-editor-modal.component';
 import { OIBusAttribute } from '../../../../../../../backend/shared/model/form.model';
@@ -10,7 +10,8 @@ import { page } from 'vitest/browser';
 
 @Component({
   template: ` <oib-manifest-attribute-editor-modal /> `,
-  imports: [ManifestAttributeEditorModalComponent]
+  imports: [ManifestAttributeEditorModalComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {}
 

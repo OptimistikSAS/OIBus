@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusBooleanAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -16,7 +16,8 @@ import { page } from 'vitest/browser';
       </ng-container>
     </form>
   `,
-  imports: [ReactiveFormsModule, OIBusBooleanFormControlComponent]
+  imports: [ReactiveFormsModule, OIBusBooleanFormControlComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   booleanAttribute: OIBusBooleanAttribute = {

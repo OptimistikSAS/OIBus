@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { OIBusTimezoneFormControlComponent } from './oibus-timezone-form-control.component';
@@ -18,7 +18,8 @@ import { TYPEAHEAD_DEBOUNCE_TIME } from '../typeahead';
       </ng-container>
     </form>
   `,
-  imports: [ReactiveFormsModule, OIBusTimezoneFormControlComponent, NgbTypeaheadModule]
+  imports: [ReactiveFormsModule, OIBusTimezoneFormControlComponent, NgbTypeaheadModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   timezoneAttribute: OIBusTimezoneAttribute = {

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { firstValueFrom, switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
@@ -34,6 +34,7 @@ const PAGE_SIZE = 20;
     DatetimePipe
   ],
   templateUrl: './transformer-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './transformer-list.component.scss'
 })
 export class TransformerListComponent {

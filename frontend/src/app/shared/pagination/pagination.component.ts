@@ -1,4 +1,4 @@
-import { Component, inject, output, input } from '@angular/core';
+import { Component, inject, output, input, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Page } from '../../../../../backend/shared/model/types';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
@@ -7,6 +7,7 @@ import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
   selector: 'oib-pagination',
   templateUrl: './pagination.component.html',
   styleUrl: './pagination.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [NgbPaginationModule]
 })
 export class PaginationComponent {

@@ -1,15 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, shareReplay, switchMap } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ScanModeCommandDTO, ScanModeDTO, ValidatedCronExpression } from '../../../../backend/shared/model/scan-mode.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Scan Modes
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class ScanModeService {
   private http = inject(HttpClient);
 

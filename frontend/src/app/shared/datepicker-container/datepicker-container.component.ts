@@ -1,4 +1,4 @@
-import { Component, contentChild, ElementRef, viewChild } from '@angular/core';
+import { Component, contentChild, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NgbInputDatepicker, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 
@@ -19,6 +19,7 @@ import { TranslateModule } from '@ngx-translate/core';
   host: {
     class: 'input-group'
   },
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [NgbTooltip, TranslateModule]
 })
 export class DatepickerContainerComponent {

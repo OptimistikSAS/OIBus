@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, shareReplay, switchMap } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { CertificateCommandDTO, CertificateDTO } from '../../../../backend/shared/model/certificate.model';
 
 const ENDPOINT = '/api/certificates';
@@ -9,9 +9,7 @@ const ENDPOINT = '/api/certificates';
 /**
  * Service used to interact with the backend for CRUD operations on Certificates
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class CertificateService {
   private http = inject(HttpClient);
 

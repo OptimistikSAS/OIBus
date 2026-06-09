@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ALL_CSV_CHARACTERS, CsvCharacter } from '../../../../../backend/shared/model/types';
@@ -10,6 +10,7 @@ import { DateTime } from 'luxon';
   selector: 'oib-export-item-modal',
   templateUrl: './export-item-modal.component.html',
   styleUrl: './export-item-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, ReactiveFormsModule]
 })
 export class ExportItemModalComponent {

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -90,6 +90,7 @@ export interface TableData {
   ],
   templateUrl: './south-detail.component.html',
   styleUrl: './south-detail.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [PageLoader]
 })
 export class SouthDetailComponent {

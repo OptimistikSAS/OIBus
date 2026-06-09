@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { catchError, Observable, of, shareReplay, switchMap } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { Timezone } from '../../../../backend/shared/model/types';
@@ -10,9 +10,7 @@ interface Token {
   access_token: string;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class CurrentUserService {
   private http = inject(HttpClient);
   private windowService = inject(WindowService);

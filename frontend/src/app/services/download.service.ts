@@ -1,12 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 
 /**
  * Service used to trigger the download of a blob contained in an HTTP response.
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class DownloadService {
   /**
    * Triggers the download of the blob contained in the given response, using the file name

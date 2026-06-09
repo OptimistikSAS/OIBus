@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { MultiSelectComponent } from './multi-select.component';
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MultiSelectOptionDirective } from './multi-select-option.directive';
 import { byIdComparisonFn } from '../../test-utils';
@@ -24,7 +24,8 @@ interface User {
       </oib-multi-select>
     </form>
   `,
-  imports: [MultiSelectComponent, MultiSelectOptionDirective, ReactiveFormsModule]
+  imports: [MultiSelectComponent, MultiSelectOptionDirective, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   private fb = inject(FormBuilder);

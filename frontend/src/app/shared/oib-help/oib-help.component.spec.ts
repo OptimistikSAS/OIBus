@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { OibHelpComponent } from './oib-help.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -8,7 +8,8 @@ import { page } from 'vitest/browser';
 @Component({
   selector: 'oib-test-oib-help-component',
   template: `<oib-help [url]="url" />`,
-  imports: [OibHelpComponent, TranslateModule]
+  imports: [OibHelpComponent, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   url = 'https://oibus.optimistik.com' as const;

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import {
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
@@ -23,9 +23,7 @@ import { TransformerDTOWithOptions } from '../../../../backend/shared/model/tran
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class NorthConnectorService {
   private http = inject(HttpClient);
 

@@ -1,4 +1,14 @@
-import { afterRenderEffect, Component, ElementRef, forwardRef, input, OnDestroy, signal, viewChild } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  ElementRef,
+  forwardRef,
+  input,
+  OnDestroy,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { EditorView } from '@codemirror/view';
 import { Compartment, EditorState } from '@codemirror/state';
@@ -11,6 +21,7 @@ import { sql } from '@codemirror/lang-sql';
   selector: 'oib-code-block',
   templateUrl: './oib-code-block.component.html',
   styleUrl: './oib-code-block.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

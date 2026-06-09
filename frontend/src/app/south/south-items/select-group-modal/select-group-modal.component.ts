@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -13,6 +13,7 @@ import { Observable, switchMap } from 'rxjs';
   selector: 'oib-select-group-modal',
   templateUrl: './select-group-modal.component.html',
   styleUrl: './select-group-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateDirective, NgbDropdownModule]
 })
 export class SelectGroupModalComponent {

@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject } from '@angular/core';
+import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import {
@@ -114,6 +114,7 @@ export interface TableData {
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrl: './edit-history-query.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,

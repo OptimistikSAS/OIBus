@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { NgbTimeAdapter, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 
 /**
  * Adapter for the ng-bootstrap time picker that allows an ISO string as the value of the timepicker
  */
-@Injectable()
+@Service()
 export class IsoTimeAdapterService extends NgbTimeAdapter<string> {
   fromModel(value: string | null): NgbTimeStruct | null {
     if (!value) {

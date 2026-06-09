@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { HistoryQueryMetrics } from '../../../../../../backend/shared/model/engine.model';
 import { JsonPipe } from '@angular/common';
@@ -15,6 +15,7 @@ import { FileSizePipe } from '../../../shared/file-size.pipe';
   selector: 'oib-history-metrics',
   templateUrl: './history-metrics.component.html',
   styleUrl: './history-metrics.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, ProgressbarComponent, FileSizePipe]
 })
 export class HistoryMetricsComponent {

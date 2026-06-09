@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import {
   HistoryQueryCommandDTO,
   HistoryQueryDTO,
@@ -29,9 +29,7 @@ import { HistoryTransformerDTOWithOptions } from '../../../../backend/shared/mod
 /**
  * Service used to interact with the backend for CRUD operations on History queries
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class HistoryQueryService {
   private http = inject(HttpClient);
   private downloadService = inject(DownloadService);

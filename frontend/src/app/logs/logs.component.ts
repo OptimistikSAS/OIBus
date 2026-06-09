@@ -1,4 +1,4 @@
-import { Component, inject, input, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, input, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
@@ -64,6 +64,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
   ],
   templateUrl: './logs.component.html',
   styleUrl: './logs.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [PageLoader]
 })
 export class LogsComponent implements OnInit, OnDestroy {

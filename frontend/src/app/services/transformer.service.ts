@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, shareReplay } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import {
   CustomTransformerCommandDTO,
   InputTemplate,
@@ -13,9 +13,7 @@ import {
 /**
  * Service used to interact with the backend for CRUD operations on Transformers
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class TransformerService {
   private http = inject(HttpClient);
 

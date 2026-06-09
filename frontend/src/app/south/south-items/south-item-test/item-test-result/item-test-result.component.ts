@@ -1,4 +1,15 @@
-import { afterRenderEffect, Component, computed, DestroyRef, ElementRef, inject, output, signal, viewChild } from '@angular/core';
+import {
+  afterRenderEffect,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  output,
+  signal,
+  viewChild,
+  ChangeDetectionStrategy
+} from '@angular/core';
 import { OIBusContent, OIBusTimeValue } from '../../../../../../../backend/shared/model/engine.model';
 import { createPageFromArray, Page } from '../../../../../../../backend/shared/model/types';
 import { LoadingSpinnerComponent } from '../../../../shared/loading-spinner/loading-spinner.component';
@@ -23,6 +34,7 @@ function emptyPage<T>(): Page<T> {
   selector: 'oib-item-test-result',
   templateUrl: './item-test-result.component.html',
   styleUrl: './item-test-result.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [LoadingSpinnerComponent, TranslatePipe, PaginationComponent, ProgressbarComponent]
 })
 export class ItemTestResultComponent {

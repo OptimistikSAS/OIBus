@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
@@ -43,6 +43,7 @@ const PAGE_SIZE = 15;
     OI_FORM_VALIDATION_DIRECTIVES
   ],
   templateUrl: './history-query-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './history-query-list.component.scss'
 })
 export class HistoryQueryListComponent {

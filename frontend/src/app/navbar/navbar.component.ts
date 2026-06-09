@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -21,6 +21,7 @@ import { PageTitleDirective } from '../services/page-title.directive';
     TranslateModule
   ],
   templateUrl: './navbar.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {

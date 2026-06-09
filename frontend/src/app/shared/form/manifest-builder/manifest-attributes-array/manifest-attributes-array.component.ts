@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { ControlContainer, FormControl, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { startWith, switchMap } from 'rxjs';
@@ -21,6 +21,7 @@ import type { ManifestAttributeEditorModalComponent } from '../manifest-attribut
       useExisting: FormGroupName
     }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslatePipe, TranslateDirective, BoxComponent, BoxTitleDirective, PaginationComponent, NgbTooltip]
 })
 export class ManifestAttributesArrayComponent {

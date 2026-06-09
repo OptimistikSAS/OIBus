@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { PaginationComponent } from '../../../pagination/pagination.component';
@@ -12,6 +12,7 @@ const PAGE_SIZE = 20;
   selector: 'oib-import-array-validation-modal',
   templateUrl: './import-array-validation-modal.component.html',
   styleUrl: './import-array-validation-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, PaginationComponent, NgbTooltip]
 })
 export class ImportArrayValidationModalComponent {

@@ -1,13 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { languageToUse, storeLanguage, storeTimezone, timezoneToUse } from '../../i18n/i18n';
 import { Language, Timezone } from '../../../../backend/shared/model/types';
 
 /**
  * Service wrapping the window object to ease testing
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class WindowService {
   getStorageItem(key: string): string | null {
     return window.localStorage.getItem(key);

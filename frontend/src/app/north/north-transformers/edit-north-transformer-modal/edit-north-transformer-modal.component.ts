@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject } from '@angular/core';
+import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbDropdown, NgbDropdownAnchor, NgbDropdownItem, NgbDropdownMenu } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
@@ -48,6 +48,7 @@ import { ValidationErrorsComponent } from 'ngx-valdemort';
     ValErrorDelayDirective,
     ValidationErrorsComponent
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,

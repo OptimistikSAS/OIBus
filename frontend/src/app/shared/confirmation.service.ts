@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,9 +24,7 @@ export interface ConfirmationOptions {
   interpolateParams?: Record<string, string>;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class ConfirmationService {
   private modalService = inject(ModalService);
   private translateService = inject(TranslateService);

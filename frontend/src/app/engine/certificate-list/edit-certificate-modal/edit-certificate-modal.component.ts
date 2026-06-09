@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
@@ -13,6 +13,7 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
   selector: 'oib-edit-certificate-modal',
   templateUrl: './edit-certificate-modal.component.html',
   styleUrl: './edit-certificate-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
 })
 export class EditCertificateModalComponent {

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 
@@ -17,6 +17,7 @@ import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation
   selector: 'oib-create-history-query-modal',
   templateUrl: './create-history-query-modal.component.html',
   styleUrl: './create-history-query-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,

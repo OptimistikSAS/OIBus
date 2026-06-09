@@ -1,16 +1,17 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { ValErrorDelayDirective } from './val-error-delay.directive';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-val-error-delay-component',
-  template: '<val-errors>@if (showError) {<div>test</div>}</val-errors>',
-  imports: [ValErrorDelayDirective]
+  template: '<val-errors>@if (showError()) {<div>test</div>}</val-errors>',
+  imports: [ValErrorDelayDirective],
+  changeDetection: ChangeDetectionStrategy.Eager
 })
 class TestComponent {
-  showError = false;
+  showError = signal(false);
 }
 
 class TestComponentTester {
@@ -19,14 +20,14 @@ class TestComponentTester {
   readonly error = this.root.getByCss('div');
 }
 
-describe('ValErrorAnimationDirective', () => {
+describe('ValErrorDelayDirective', () => {
   let tester: TestComponentTester;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({});
 
     tester = new TestComponentTester();
-    tester.fixture.detectChanges();
+    await tester.fixture.whenStable();
   });
 
   // The directive does everything out of the Angular zone so fakeAsync does not work.
@@ -34,7 +35,7 @@ describe('ValErrorAnimationDirective', () => {
   test('should create an instance', async () => {
     await expect.element(tester.error).not.toBeInTheDocument();
 
-    tester.fixture.componentInstance.showError = true;
+    tester.fixture.componentInstance.showError.set(true);
     tester.fixture.detectChanges();
 
     await expect.element(tester.error).toBeInTheDocument();

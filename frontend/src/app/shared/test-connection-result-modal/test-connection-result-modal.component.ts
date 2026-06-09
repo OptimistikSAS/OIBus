@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -14,6 +14,7 @@ import { OIBusConnectionTestResult } from '../../../../../backend/shared/model/e
   selector: 'oib-test-connection-result-modal',
   templateUrl: './test-connection-result-modal.component.html',
   styleUrl: './test-connection-result-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective]
 })
 export class TestConnectionResultModalComponent {

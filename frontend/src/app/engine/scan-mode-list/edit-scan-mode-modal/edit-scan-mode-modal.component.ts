@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
@@ -22,6 +22,7 @@ import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-chang
   selector: 'oib-edit-scan-mode-modal',
   templateUrl: './edit-scan-mode-modal.component.html',
   styleUrl: './edit-scan-mode-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateDirective, DatetimePipe, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
 })
 export class EditScanModeModalComponent {

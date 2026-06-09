@@ -1,4 +1,4 @@
-import { AfterContentInit, Component, effect, inject, input, viewChild } from '@angular/core';
+import { AfterContentInit, Component, effect, inject, input, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
@@ -24,6 +24,7 @@ import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-rang
   selector: 'oib-south-item-test',
   templateUrl: './south-item-test.component.html',
   styleUrl: './south-item-test.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     OI_FORM_VALIDATION_DIRECTIVES,

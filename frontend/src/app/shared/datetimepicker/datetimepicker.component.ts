@@ -1,4 +1,15 @@
-import { AfterViewInit, Component, contentChild, ElementRef, forwardRef, inject, input, OnInit, TemplateRef } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  contentChild,
+  ElementRef,
+  forwardRef,
+  inject,
+  input,
+  OnInit,
+  TemplateRef,
+  ChangeDetectionStrategy
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -62,6 +73,7 @@ import { TranslateDirective } from '@ngx-translate/core';
     { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => DatetimepickerComponent), multi: true },
     { provide: NG_VALIDATORS, useExisting: forwardRef(() => DatetimepickerComponent), multi: true }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [NgTemplateOutlet, DatepickerContainerComponent, NgbInputDatepicker, ReactiveFormsModule, NgbTimepicker, TranslateDirective]
 })
 export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlValueAccessor, Validator {

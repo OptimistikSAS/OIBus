@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../backend/shared/model/north-connector.model';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -21,6 +21,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
   selector: 'oib-north-transformers',
   imports: [TranslateDirective, BoxComponent, ReactiveFormsModule, TranslatePipe, BoxTitleDirective, OibHelpComponent, NgbTooltip],
   templateUrl: './north-transformers.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './north-transformers.component.scss'
 })
 export class NorthTransformersComponent {

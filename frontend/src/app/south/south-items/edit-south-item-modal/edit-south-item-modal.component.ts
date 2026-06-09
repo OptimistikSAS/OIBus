@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject } from '@angular/core';
+import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import {
   AbstractControl,
@@ -46,6 +46,7 @@ import { EditSouthItemGroupModalComponent } from '../edit-south-item-group-modal
     OIBusObjectFormControlComponent,
     NgbDropdownModule
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,

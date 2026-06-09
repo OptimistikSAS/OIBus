@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   templateUrl: './confirmation-modal.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './confirmation-modal.component.scss'
 })
 export class ConfirmationModalComponent {

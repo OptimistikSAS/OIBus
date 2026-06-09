@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusStringFormControlComponent } from './oibus-string-form-control.component';
 import { OIBusStringAttribute } from '../../../../../../backend/shared/model/form.model';
@@ -16,7 +16,8 @@ import { page } from 'vitest/browser';
       </ng-container>
     </form>
   `,
-  imports: [ReactiveFormsModule, OIBusStringFormControlComponent]
+  imports: [ReactiveFormsModule, OIBusStringFormControlComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   stringAttribute: OIBusStringAttribute = {

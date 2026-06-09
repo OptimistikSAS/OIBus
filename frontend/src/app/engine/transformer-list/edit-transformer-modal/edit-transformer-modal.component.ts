@@ -1,4 +1,4 @@
-import { Component, computed, inject, ViewChild } from '@angular/core';
+import { Component, computed, inject, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
@@ -33,6 +33,7 @@ import { TransformerTestComponent } from '../transformer-test/transformer-test.c
   selector: 'oib-edit-transformer-modal',
   templateUrl: './edit-transformer-modal.component.html',
   styleUrl: './edit-transformer-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,

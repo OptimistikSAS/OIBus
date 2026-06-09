@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { NgbDateParserFormatter, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { DateTime } from 'luxon';
 
-@Injectable()
+@Service()
 export class I18nDateParserFormatterService extends NgbDateParserFormatter {
   private parsePattern = 'yyyy-M-d';
   private formatPattern = 'yyyy-MM-dd';

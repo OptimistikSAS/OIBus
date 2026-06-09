@@ -1,6 +1,6 @@
 import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { noAnimation } from '../test-utils';
@@ -15,7 +15,8 @@ import { page } from 'vitest/browser';
       <input class="form-control" [formControl]="dateCtrl" ngbDatepicker />
     </oib-datepicker-container>
   `,
-  imports: [DatepickerContainerComponent, ReactiveFormsModule, NgbInputDatepicker, TranslateModule]
+  imports: [DatepickerContainerComponent, ReactiveFormsModule, NgbInputDatepicker, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   dateCtrl = new UntypedFormControl();

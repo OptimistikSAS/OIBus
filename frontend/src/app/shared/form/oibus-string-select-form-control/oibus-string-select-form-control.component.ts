@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
@@ -14,6 +14,7 @@ import { OIBusStringSelectAttribute } from '../../../../../../backend/shared/mod
       useExisting: FormGroupName
     }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslatePipe, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class OIBusStringSelectFormControlComponent {

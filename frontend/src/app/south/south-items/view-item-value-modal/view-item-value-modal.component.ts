@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { DatePipe, JsonPipe } from '@angular/common';
@@ -18,6 +18,7 @@ interface SouthItemLastValueDTO {
   templateUrl: './view-item-value-modal.component.html',
   styleUrl: './view-item-value-modal.component.scss',
   imports: [TranslateDirective, DatePipe, JsonPipe],
+  changeDetection: ChangeDetectionStrategy.Eager,
   standalone: true
 })
 export class ViewItemValueModalComponent {

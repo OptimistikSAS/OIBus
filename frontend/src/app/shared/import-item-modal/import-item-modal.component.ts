@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { CsvCharacter, ALL_CSV_CHARACTERS } from '../../../../../backend/shared/model/types';
@@ -10,6 +10,7 @@ import { convertCsvDelimiter } from '../utils/csv.utils';
   selector: 'oib-import-item-modal',
   templateUrl: './import-item-modal.component.html',
   styleUrl: './import-item-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, ReactiveFormsModule]
 })
 export class ImportItemModalComponent {

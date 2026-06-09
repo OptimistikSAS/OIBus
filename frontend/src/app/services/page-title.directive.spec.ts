@@ -1,5 +1,5 @@
 import { PageTitleDirective } from './page-title.directive';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, test } from 'vitest';
@@ -7,7 +7,8 @@ import { beforeEach, describe, expect, test } from 'vitest';
 @Component({
   selector: 'oib-test',
   template: '<oib-page-title title="OIBus name" />',
-  imports: [PageTitleDirective]
+  imports: [PageTitleDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {}
 

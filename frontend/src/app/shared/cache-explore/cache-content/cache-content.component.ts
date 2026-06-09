@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, output, signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AsyncPipe } from '@angular/common';
@@ -22,6 +22,7 @@ const enum ColumnSortState {
   selector: 'oib-cache-content',
   templateUrl: './cache-content.component.html',
   styleUrl: './cache-content.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TranslateDirective,
     BoxComponent,

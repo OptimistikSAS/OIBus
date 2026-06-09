@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, OnChanges, signal, SimpleChanges } from '@angular/core';
+import { Component, computed, inject, input, OnChanges, signal, SimpleChanges, ChangeDetectionStrategy } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
@@ -24,6 +24,7 @@ const PAGE_SIZE = 10;
   selector: 'oib-transformer-test',
   templateUrl: './transformer-test.component.html',
   styleUrl: './transformer-test.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,

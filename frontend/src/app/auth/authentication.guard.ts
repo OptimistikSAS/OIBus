@@ -1,11 +1,9 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Service } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivateChildFn, Router, RouterStateSnapshot } from '@angular/router';
 import { of } from 'rxjs';
 import { WindowService } from '../shared/window.service';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class RequestedUrlService {
   private requestedUrl: string | null = null;
 

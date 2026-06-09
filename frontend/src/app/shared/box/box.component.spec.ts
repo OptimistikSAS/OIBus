@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
@@ -7,7 +7,8 @@ import { BoxComponent, BoxTitleDirective } from './box.component';
 
 @Component({
   template: `<oib-box [boxTitle]="title">This is the content</oib-box>`,
-  imports: [BoxComponent]
+  imports: [BoxComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestBoxWrapper {
   title = 'common.yes';

@@ -1,10 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { Router, NavigationEnd } from '@angular/router';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class NavigationService {
   private router = inject(Router);
   private location = inject(Location);

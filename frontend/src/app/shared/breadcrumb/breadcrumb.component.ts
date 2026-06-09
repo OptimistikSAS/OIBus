@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { TranslateDirective } from '@ngx-translate/core';
 import { filter, map, switchMap, catchError, of } from 'rxjs';
@@ -16,6 +16,7 @@ interface BreadcrumbItem {
   selector: 'oib-breadcrumb',
   imports: [RouterLink, TranslateDirective],
   templateUrl: './breadcrumb.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './breadcrumb.component.scss'
 })
 export class BreadcrumbComponent implements OnInit {

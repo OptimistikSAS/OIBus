@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
@@ -18,6 +18,7 @@ import { inMemoryTypeahead } from '../typeahead';
       useExisting: FormGroupName
     }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES, OI_TYPEAHEAD_DIRECTIVES]
 })
 export class OIBusTimezoneFormControlComponent {

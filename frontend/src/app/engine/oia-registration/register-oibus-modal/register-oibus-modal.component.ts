@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators, FormGroup, FormControl } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../../shared/save-button/save-button.component';
@@ -14,6 +14,7 @@ import { NotificationService } from '../../../shared/notification.service';
   selector: 'oib-register-oibus-modal',
   templateUrl: './register-oibus-modal.component.html',
   styleUrl: './register-oibus-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,

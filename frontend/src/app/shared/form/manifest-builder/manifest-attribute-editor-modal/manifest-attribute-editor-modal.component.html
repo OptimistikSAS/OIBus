@@ -294,7 +294,7 @@
     @if (!isDisplayableType() && !isObjectType() && !isArrayType()) {
       <div class="alert alert-info">
         <i class="fas fa-info-circle me-2"></i>
-        <span [translate]="'configuration.oibus.manifest.transformers.attributes.' + form.get('type')?.value + '-info'"></span>
+        <span [translate]="'configuration.oibus.manifest.transformers.attributes.' + form.controls.type.value + '-info'"></span>
       </div>
     }
   </form>

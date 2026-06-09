@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { NgbDateAdapter, NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
 import { DateTime } from 'luxon';
 import { LocalDate } from '../../../../backend/shared/model/types';
@@ -33,7 +33,7 @@ function isoToDate(value: LocalDate | null): NgbDateStruct | null {
 /**
  * Adapter for the ng-bootstrap date picker that allows an ISO string as the value of the datepicker
  */
-@Injectable()
+@Service()
 export class IsoDateAdapterService extends NgbDateAdapter<string> {
   fromModel(value: LocalDate | null): NgbDateStruct | null {
     return isoToDate(value);

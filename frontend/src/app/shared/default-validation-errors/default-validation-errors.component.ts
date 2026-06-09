@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { DisplayMode, ValdemortConfig, ValdemortModule } from 'ngx-valdemort';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DecimalPipe } from '@angular/common';
@@ -7,6 +7,7 @@ import { DecimalPipe } from '@angular/common';
   selector: 'oib-default-validation-errors',
   templateUrl: './default-validation-errors.component.html',
   styleUrl: './default-validation-errors.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, ValdemortModule, DecimalPipe, TranslatePipe]
 })
 export class DefaultValidationErrorsComponent {

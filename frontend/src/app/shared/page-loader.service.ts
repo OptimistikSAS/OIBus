@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, merge, Observable, Subject } from 'rxjs';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Page } from '../../../../backend/shared/model/types';
 
 /**
@@ -9,7 +9,7 @@ import { Page } from '../../../../backend/shared/model/types';
  *
  * This service is designed to be provided at the component level.
  */
-@Injectable()
+@Service()
 export class PageLoader {
   private route = inject(ActivatedRoute);
   private router = inject(Router);

@@ -1,4 +1,4 @@
-import { Component, computed, input, linkedSignal, output } from '@angular/core';
+import { Component, computed, input, linkedSignal, output, ChangeDetectionStrategy } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { CacheContentComponent } from './cache-content/cache-content.component';
@@ -16,6 +16,7 @@ import {
   selector: 'oib-cache-explore',
   templateUrl: './cache-explore.component.html',
   styleUrl: './cache-explore.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, CacheContentComponent, AsyncPipe, DatetimePipe]
 })
 export class CacheExploreComponent {

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
@@ -25,6 +25,7 @@ function samePasswordValidator(newPasswordForm: AbstractControl): ValidationErro
   selector: 'oib-change-password-modal',
   templateUrl: './change-password-modal.component.html',
   styleUrl: './change-password-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, NgbCollapse, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class ChangePasswordModalComponent {

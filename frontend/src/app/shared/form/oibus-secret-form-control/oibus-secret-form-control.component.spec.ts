@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { OIBusSecretAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
@@ -17,7 +17,8 @@ import { page } from 'vitest/browser';
       </ng-container>
     </form>
   `,
-  imports: [ReactiveFormsModule, OIBusSecretFormControlComponent]
+  imports: [ReactiveFormsModule, OIBusSecretFormControlComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   secretAttribute: OIBusSecretAttribute = {

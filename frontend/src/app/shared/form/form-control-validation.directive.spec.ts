@@ -1,5 +1,5 @@
 import { FormControlValidationDirective } from './form-control-validation.directive';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, test } from 'vitest';
@@ -15,7 +15,8 @@ import { page } from 'vitest/browser';
       <button id="save">Save</button>
     </form>
   `,
-  imports: [ReactiveFormsModule, FormControlValidationDirective]
+  imports: [ReactiveFormsModule, FormControlValidationDirective],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class FormComponent {
   personForm = new FormGroup({

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Timezone } from '../../../../../backend/shared/model/types';
 import { Observable, of, switchMap, tap, timer } from 'rxjs';
@@ -30,6 +30,7 @@ declare namespace Intl {
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
   styleUrl: './edit-user-settings.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, NgbTypeahead, SaveButtonComponent, ReactiveFormsModule, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent]
 })
 export class EditUserSettingsComponent implements CanComponentDeactivate {

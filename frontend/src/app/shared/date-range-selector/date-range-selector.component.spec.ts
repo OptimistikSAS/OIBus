@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormControl, Validators, FormBuilder } from '@angular/forms';
 import { TranslatePipe, TranslateDirective, TranslateModule } from '@ngx-translate/core';
-import { Component, Input, Directive, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, Directive, Pipe, PipeTransform, ChangeDetectionStrategy } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { DateTime } from 'luxon';
 import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
@@ -30,7 +30,8 @@ class MockTranslateDirective {
     </form>
   `,
   standalone: true,
-  imports: [ReactiveFormsModule, DateRangeSelectorComponent, TranslateModule]
+  imports: [ReactiveFormsModule, DateRangeSelectorComponent, TranslateModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestHostComponent {
   testForm = TestBed.inject(FormBuilder).group({

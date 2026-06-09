@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject } from '@angular/core';
+import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -15,6 +15,7 @@ import { OIBUS_FORM_MODE } from '../../oibus-form-mode.token';
   styleUrl: './oibus-edit-array-element-modal.component.scss',
   // Remove circular dependencies between OIBusObjectFormControlComponent and OIBusEditArrayElementModalComponent with forwardRef
   imports: [ReactiveFormsModule, TranslateDirective, forwardRef(() => OIBusObjectFormControlComponent)],
+  changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,

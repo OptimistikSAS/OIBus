@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../backend/shared/model/north-connector.model';
 import { of, switchMap, tap } from 'rxjs';
@@ -24,6 +24,7 @@ import { CacheExploreComponent } from '../../shared/cache-explore/cache-explore.
   selector: 'oib-explore-north-cache',
   templateUrl: './explore-north-cache.component.html',
   styleUrl: './explore-north-cache.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     TranslateDirective,
     NgbTooltip,

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { OibCodeBlockComponent } from './oib-code-block.component';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -8,7 +8,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 /** Minimal host that wires the component as a reactive form control. */
 @Component({
   template: `<oib-code-block [formControl]="control" [language]="language" [readOnly]="readOnly" />`,
-  imports: [OibCodeBlockComponent, ReactiveFormsModule]
+  imports: [OibCodeBlockComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestHostComponent {
   control = new FormControl('initial');

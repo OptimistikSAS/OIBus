@@ -4,7 +4,7 @@ import { page } from 'vitest/browser';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { provideRouter, Routes } from '@angular/router';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
 import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -12,7 +12,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
 import { SouthType } from '../../../../../backend/shared/model/south-connector.model';
 
-@Component({ template: '', standalone: true })
+@Component({ template: '', standalone: true, changeDetection: ChangeDetectionStrategy.OnPush })
 class DummyComponent {}
 const routes: Routes = [{ path: 'south/create', component: DummyComponent }];
 

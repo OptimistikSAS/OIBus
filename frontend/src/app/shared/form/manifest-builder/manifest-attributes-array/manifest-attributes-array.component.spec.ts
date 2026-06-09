@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ManifestAttributesArrayComponent } from './manifest-attributes-array.component';
 import { OIBusArrayAttribute } from '../../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
@@ -11,7 +11,8 @@ import { page } from 'vitest/browser';
 
 @Component({
   template: ` <oib-manifest-attributes-array [label]="arrayAttribute.translationKey" [control]="attributesControl" /> `,
-  imports: [ManifestAttributesArrayComponent, ReactiveFormsModule]
+  imports: [ManifestAttributesArrayComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   attributesControl = new FormControl<Array<any>>([]) as FormControl<Array<any>>;

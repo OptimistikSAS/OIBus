@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { WindowService } from '../window.service';
@@ -9,6 +9,7 @@ const REDIRECT_DELAY_SECONDS = 30;
   selector: 'oib-port-redirect-modal',
   imports: [TranslateDirective, NgbProgressbarModule],
   templateUrl: './port-redirect-modal.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './port-redirect-modal.component.scss'
 })
 export class PortRedirectModalComponent implements OnInit, OnDestroy {

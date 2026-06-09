@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { ControlContainer, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from '@ngx-translate/core';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../form-validation-directives';
@@ -15,6 +15,7 @@ import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.mo
       useExisting: FormGroupName
     }
   ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateDirective, OI_FORM_VALIDATION_DIRECTIVES]
 })
 export class OIBusScanModeFormControlComponent {

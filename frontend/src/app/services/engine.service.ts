@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable, shareReplay } from 'rxjs';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import {
   EngineSettingsCommandDTO,
   EngineSettingsDTO,
@@ -13,9 +13,7 @@ import {
 /**
  * Service used to interact with the backend for CRUD operations on the engine settings
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class EngineService {
   private http = inject(HttpClient);
 

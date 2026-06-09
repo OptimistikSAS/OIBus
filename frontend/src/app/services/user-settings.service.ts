@@ -1,11 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ChangePasswordCommand, UserDTO, UserCommandDTO } from '../../../../backend/shared/model/user.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class UserSettingsService {
   private http = inject(HttpClient);
 

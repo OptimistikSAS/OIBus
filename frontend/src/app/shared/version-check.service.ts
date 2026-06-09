@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { interval, Subject, Subscription, switchMap, filter, catchError, EMPTY } from 'rxjs';
 import { EngineService } from '../services/engine.service';
 
@@ -6,9 +6,7 @@ import { EngineService } from '../services/engine.service';
  * Service that monitors the OIBus version and detects when it changes.
  * This is useful for detecting remote updates and notifying the user.
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class VersionCheckService {
   private engineService = inject(EngineService);
   private initialVersion: string | null = null;

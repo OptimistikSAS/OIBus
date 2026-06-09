@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
 import { Router } from '@angular/router';
@@ -14,6 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms';
   selector: 'oib-choose-north-connector-type-modal',
   templateUrl: './choose-north-connector-type-modal.component.html',
   styleUrl: './choose-north-connector-type-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [ReactiveFormsModule, TranslateDirective, OIBusNorthTypeEnumPipe, OIBusNorthTypeDescriptionEnumPipe, OIBusNorthCategoryEnumPipe]
 })
 export class ChooseNorthConnectorTypeModalComponent {

@@ -1,4 +1,4 @@
-import { Component, inject, input, linkedSignal, NgZone, OnInit } from '@angular/core';
+import { Component, inject, input, linkedSignal, NgZone, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { NorthConnectorMetrics } from '../../../../../backend/shared/model/engine.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
@@ -15,6 +15,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrl: './north-metrics.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [TranslateDirective, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, FileSizePipe, NgbTooltip, TranslateModule]
 })
 export class NorthMetricsComponent implements OnInit {

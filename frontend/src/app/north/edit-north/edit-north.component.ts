@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject } from '@angular/core';
+import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { TranslateDirective } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
@@ -56,6 +56,7 @@ import { toSourceCommand } from '../../shared/utils/utils';
   ],
   templateUrl: './edit-north.component.html',
   styleUrl: './edit-north.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,

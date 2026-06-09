@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -93,6 +93,7 @@ export interface TableData {
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrl: './history-query-detail.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [PageLoader]
 })
 export class HistoryQueryDetailComponent {

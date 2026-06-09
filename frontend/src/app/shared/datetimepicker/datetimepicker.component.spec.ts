@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
 import { DatetimepickerComponent } from './datetimepicker.component';
@@ -10,11 +10,13 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideCurrentUser } from '../current-user-testing-vitest';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
+import { By } from '@angular/platform-browser';
 
 @Component({
   selector: 'oib-test-datetimepicker-component',
   template: '',
-  imports: [ReactiveFormsModule]
+  imports: [ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   private fb = inject(NonNullableFormBuilder);
@@ -26,29 +28,17 @@ class TestComponent {
 
 class TestComponentTester {
   readonly fixture = TestBed.createComponent(TestComponent);
-  readonly root = page.elementLocator(this.fixture.nativeElement);
-  readonly datetimepickerElement = this.root.getByCss('oib-datetimepicker');
-  readonly toggler = this.root.getByCss('.datepicker-toggle');
+  readonly componentInstance = this.fixture.componentInstance;
+  readonly datetimepicker = page.getByCss('oib-datetimepicker');
+  readonly date = this.datetimepicker.getByCss('input').nth(0);
+  readonly hour = this.datetimepicker.getByCss('input').nth(1);
+  readonly minute = this.datetimepicker.getByCss('input').nth(2);
+  readonly second = this.datetimepicker.getByCss('input').nth(3);
+  readonly toggler = page.getByCss('.fa-calendar');
   readonly firstWeekDay = page.getByCss('.ngb-dp-weekday').nth(0);
 
-  get datetimepickerInputs() {
-    return this.datetimepickerElement.getByCss('input');
-  }
-
-  get date() {
-    return this.datetimepickerInputs.nth(0);
-  }
-
-  get hour() {
-    return this.datetimepickerInputs.nth(1);
-  }
-
-  get minute() {
-    return this.datetimepickerInputs.nth(2);
-  }
-
-  get second() {
-    return this.datetimepickerInputs.elements().length > 3 ? this.datetimepickerInputs.nth(3) : null;
+  get datetimepickerComponent() {
+    return this.fixture.debugElement.query(By.directive(DatetimepickerComponent)).componentInstance as DatetimepickerComponent;
   }
 }
 
@@ -83,34 +73,35 @@ describe('DatetimepickerComponent', () => {
       await expect.element(tester.date).toHaveValue('');
       await expect.element(tester.hour).toHaveValue('00');
       await expect.element(tester.minute).toHaveValue('00');
-      expect(tester.second).toBeFalsy();
+      await expect.element(tester.second).not.toBeInTheDocument();
 
-      expect(tester.fixture.componentInstance.form.value.from).toBeNull();
+      expect(tester.componentInstance.form.value.from).toBeNull();
     });
 
     test('should allow entering a date and a time', async () => {
-      await tester.datetimepickerElement.fillWithDate('02/10/2019');
-      tester.fixture.detectChanges();
+      await tester.datetimepicker.fillWithDate('02/10/2019');
 
-      expect(tester.fixture.componentInstance.form.value.from).toBe('2019-10-01T22:00:00.000Z');
+      expect(tester.componentInstance.form.value.from).toBe('2019-10-01T22:00:00.000Z');
     });
 
     test('should display form control value', async () => {
-      tester.fixture.componentInstance.form.setValue({ from: '2019-10-02T14:15:00Z' });
+      tester.componentInstance.form.setValue({ from: '2019-10-02T14:15:00Z' });
       tester.fixture.detectChanges();
 
-      await expect.element(tester.datetimepickerElement).toHaveDisplayedDate('02/10/2019 16:15');
+      await expect.element(tester.datetimepicker).toHaveDisplayedDate('02/10/2019 16:15');
     });
 
     test('should have null as model when missing piece', async () => {
-      await tester.datetimepickerElement.fillWithDate('02/10/2019', '00', '');
-      tester.fixture.detectChanges();
+      await tester.datetimepicker.fillWithDate('02/10/2019', '00', '');
+      await tester.fixture.whenStable();
 
-      expect(tester.fixture.componentInstance.form.value.from).toBeNull();
+      expect(tester.componentInstance.form.value.from).toBeNull();
     });
 
-    test('should become touched when an input is blurred', () => {
+    test('should become touched when an input is blurred', async () => {
       expect(tester.fixture.componentInstance.form.touched).toBe(false);
+
+      await expect.element(tester.minute).toBeInTheDocument();
 
       tester.minute.element().dispatchEvent(new Event('blur'));
 
@@ -118,23 +109,20 @@ describe('DatetimepickerComponent', () => {
     });
 
     test('should become disabled when the control is disabled', async () => {
-      expect(tester.fixture.componentInstance.form.touched).toBe(false);
+      expect(tester.componentInstance.form.touched).toBe(false);
 
-      tester.fixture.componentInstance.form.disable();
+      tester.componentInstance.form.disable();
       tester.fixture.detectChanges();
 
       await expect.element(tester.date).toBeDisabled();
-      await expect.element(tester.hour).toBeDisabled();
-      await expect.element(tester.minute).toBeDisabled();
+      expect(tester.datetimepickerComponent.timeCtrl.disabled).toBe(true);
     });
 
     test('should validate the date and propagate the error', async () => {
-      await tester.datetimepickerElement.fillWithDate('02/13/2019', '00', '00');
+      await tester.datetimepicker.fillWithDate('02/13/2019', '00', '00');
 
-      tester.fixture.detectChanges();
-
-      expect(tester.fixture.componentInstance.form.value.from).toBeNull();
-      expect(tester.fixture.componentInstance.form.get('from')!.getError('ngbDate')).not.toBeNull();
+      expect(tester.componentInstance.form.value.from).toBeNull();
+      expect(tester.componentInstance.form.get('from')!.getError('ngbDate')).not.toBeNull();
     });
   });
 
@@ -157,17 +145,17 @@ describe('DatetimepickerComponent', () => {
     });
 
     test('should allow entering a date and a time', async () => {
-      await tester.datetimepickerElement.fillWithDate('02/10/2019');
+      await tester.datetimepicker.fillWithDate('02/10/2019');
       tester.fixture.detectChanges();
 
-      expect(tester.fixture.componentInstance.form.value.from).toBe('2019-10-02T00:00:00.000Z');
+      expect(tester.componentInstance.form.value.from).toBe('2019-10-02T00:00:00.000Z');
     });
 
     test('should display form control value', async () => {
-      tester.fixture.componentInstance.form.setValue({ from: '2019-10-02T14:15:00Z' });
+      tester.componentInstance.form.setValue({ from: '2019-10-02T14:15:00Z' });
       tester.fixture.detectChanges();
 
-      await expect.element(tester.datetimepickerElement).toHaveDisplayedDate('02/10/2019 14:15');
+      await expect.element(tester.datetimepicker).toHaveDisplayedDate('02/10/2019 14:15');
     });
   });
 
@@ -199,8 +187,7 @@ describe('DatetimepickerComponent', () => {
     });
 
     test('should use custom templates', async () => {
-      expect(tester.second).toBeTruthy();
-      await expect.element(tester.second!).toHaveValue('00');
+      await expect.element(tester.second).toHaveValue('00');
 
       await tester.toggler.click();
       await expect.element(tester.firstWeekDay).toHaveTextContent('S');

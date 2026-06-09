@@ -1,10 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ModalService } from './modal.service';
 import { UnsavedChangesConfirmationModalComponent } from './form/unsaved-changes-confirmation-modal.component';
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class UnsavedChangesConfirmationService {
   private modalService = inject(ModalService);
 

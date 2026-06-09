@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective } from '@ngx-translate/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -20,6 +20,7 @@ import { PortRedirectModalComponent } from '../../shared/port-redirect-modal/por
   selector: 'oib-edit-engine',
   imports: [ReactiveFormsModule, TranslateDirective, BoxComponent, OI_FORM_VALIDATION_DIRECTIVES, SaveButtonComponent, RouterLink],
   templateUrl: './edit-engine.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './edit-engine.component.scss'
 })
 export class EditEngineComponent implements OnInit, CanComponentDeactivate {

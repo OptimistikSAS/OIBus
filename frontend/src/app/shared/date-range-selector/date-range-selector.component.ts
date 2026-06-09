@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, forwardRef, inject, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DatetimepickerComponent } from '../datetimepicker/datetimepicker.component';
@@ -23,6 +23,7 @@ export interface PredefinedRange {
   selector: 'oib-date-range-selector',
   templateUrl: './date-range-selector.component.html',
   imports: [TranslateDirective, TranslatePipe, DatetimepickerComponent, ValidationErrorsComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

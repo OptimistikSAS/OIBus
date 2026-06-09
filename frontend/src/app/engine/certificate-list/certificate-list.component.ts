@@ -1,4 +1,4 @@
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 import { firstValueFrom, startWith, Subject, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
@@ -37,6 +37,7 @@ const PAGE_SIZE = 20;
     PaginationComponent
   ],
   templateUrl: './certificate-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './certificate-list.component.scss'
 })
 export class CertificateListComponent {

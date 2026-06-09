@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
@@ -41,6 +41,7 @@ const PAGE_SIZE = 15;
     DatetimePipe
   ],
   templateUrl: './north-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './north-list.component.scss'
 })
 export class NorthListComponent {

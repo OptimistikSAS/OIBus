@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
@@ -34,6 +34,7 @@ import { TransformerListComponent } from './transformer-list/transformer-list.co
     TransformerListComponent
   ],
   templateUrl: './engine-detail.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './engine-detail.component.scss'
 })
 export class EngineDetailComponent {

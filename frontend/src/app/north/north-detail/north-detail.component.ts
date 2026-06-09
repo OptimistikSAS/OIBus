@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
@@ -46,6 +46,7 @@ import { CertificateDTO } from '../../../../../backend/shared/model/certificate.
   ],
   templateUrl: './north-detail.component.html',
   styleUrl: './north-detail.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [PageLoader, BooleanEnumPipe]
 })
 export class NorthDetailComponent {

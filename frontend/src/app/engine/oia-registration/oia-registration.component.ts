@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EngineService } from '../../services/engine.service';
@@ -48,6 +48,7 @@ const REGISTRATION_CHECK_DURATION = 3000;
   ],
   templateUrl: './oia-registration.component.html',
   styleUrl: './oia-registration.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [PageLoader]
 })
 export class OIARegistrationComponent {

@@ -1,4 +1,4 @@
-import { Component, NgZone, inject, input } from '@angular/core';
+import { Component, NgZone, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
 import { EngineMetrics } from '../../../../../backend/shared/model/engine.model';
 import { PercentPipe } from '@angular/common';
@@ -25,6 +25,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     TranslateModule
   ],
   templateUrl: './engine-metrics.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './engine-metrics.component.scss'
 })
 export class EngineMetricsComponent {

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { CacheExploreComponent } from './cache-explore.component';
 import { BehaviorSubject } from 'rxjs';
 import { By } from '@angular/platform-browser';
@@ -17,7 +17,8 @@ import { page } from 'vitest/browser';
     [state]="state()"
     (updateCommand)="lastUpdateCommand.set($event)"
   /> `,
-  imports: [CacheExploreComponent]
+  imports: [CacheExploreComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
   cacheSearchResult: CacheSearchResult = {

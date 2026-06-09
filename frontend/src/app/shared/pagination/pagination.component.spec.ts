@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { page } from 'vitest/browser';
@@ -10,7 +10,8 @@ import { PaginationComponent } from './pagination.component';
 
 @Component({
   template: `<oib-pagination [page]="currentPage" (pageChanged)="newPage = $event" [navigate]="navigate" />`,
-  imports: [PaginationComponent]
+  imports: [PaginationComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestPaginationWrapper {
   currentPage: Page<string> | null = null;

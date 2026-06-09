@@ -52,6 +52,7 @@ export default [
             style: 'camelCase'
           }
         ],
+        '@angular-eslint/prefer-on-push-component-change-detection': 'off',
         '@typescript-eslint/array-type': [
           'error',
           {

@@ -1,12 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CommandSearchParam, OIBusCommandDTO } from '../../../../backend/shared/model/command.model';
 import { Page } from '../../../../backend/shared/model/types';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class OibusCommandService {
   private http = inject(HttpClient);
 

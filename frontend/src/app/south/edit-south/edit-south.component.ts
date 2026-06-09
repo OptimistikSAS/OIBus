@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject } from '@angular/core';
+import { Component, forwardRef, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
@@ -82,6 +82,7 @@ export interface TableData {
   ],
   templateUrl: './edit-south.component.html',
   styleUrl: './edit-south.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
     {
       provide: OIBUS_FORM_MODE,

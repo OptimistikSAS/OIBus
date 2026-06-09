@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -12,6 +12,7 @@ import { ManifestAttributesArrayComponent } from '../manifest-attributes-array/m
   selector: 'oib-manifest-attribute-editor-modal',
   templateUrl: './manifest-attribute-editor-modal.component.html',
   styleUrl: './manifest-attribute-editor-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     ReactiveFormsModule,
     TranslateDirective,

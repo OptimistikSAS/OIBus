@@ -1,4 +1,4 @@
-import { Injectable, Provider } from '@angular/core';
+import { Service, Provider } from '@angular/core';
 import {
   NgbDateAdapter,
   NgbDateParserFormatter,
@@ -11,7 +11,7 @@ import { IsoDateAdapterService } from '../iso-date-adapter.service';
 import { I18nDateParserFormatterService } from '../i18n-date-parser-formatter.service';
 import { IsoTimeAdapterService } from '../iso-time-adapter.service';
 
-@Injectable()
+@Service()
 class OiNgbDatepickerConfig extends NgbDatepickerConfig {
   constructor() {
     super();
@@ -20,7 +20,7 @@ class OiNgbDatepickerConfig extends NgbDatepickerConfig {
   }
 }
 
-@Injectable()
+@Service()
 class OiNgbTimepickerConfig extends NgbTimepickerConfig {
   constructor() {
     super();
@@ -30,7 +30,7 @@ class OiNgbTimepickerConfig extends NgbTimepickerConfig {
   }
 }
 
-@Injectable()
+@Service()
 class OiNgbModalConfig extends NgbModalConfig {
   constructor() {
     super();

@@ -1,4 +1,4 @@
-import { Component, inject, viewChild } from '@angular/core';
+import { Component, inject, viewChild, ChangeDetectionStrategy } from '@angular/core';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { FileSizePipe } from '../../../file-size.pipe';
   selector: 'oib-file-content-modal',
   imports: [TranslateDirective, OibCodeBlockComponent, FileSizePipe],
   templateUrl: './file-content-modal.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './file-content-modal.component.scss'
 })
 export class FileContentModalComponent {

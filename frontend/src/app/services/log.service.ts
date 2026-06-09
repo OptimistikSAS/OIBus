@@ -1,15 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Page } from '../../../../backend/shared/model/types';
 import { LogDTO, LogSearchParam, Scope } from '../../../../backend/shared/model/logs.model';
 
 /**
  * Service used to interact with the backend Log repository
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Service()
 export class LogService {
   private http = inject(HttpClient);
 

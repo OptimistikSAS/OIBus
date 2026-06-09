@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
@@ -29,7 +29,8 @@ import { createMock } from '../../../../test/vitest-create-mock';
       </ng-container>
     </form>
   `,
-  imports: [OIBusObjectFormControlComponent, ReactiveFormsModule]
+  imports: [OIBusObjectFormControlComponent, ReactiveFormsModule],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestHostComponent {
   scanModes: Array<ScanModeDTO> = [
