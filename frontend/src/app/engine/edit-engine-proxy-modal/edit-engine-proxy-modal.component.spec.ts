@@ -14,17 +14,25 @@ import { EngineSettingsDTO } from '../../../../../backend/shared/model/engine.mo
 const engineSettings = {
   proxyEnabled: false,
   proxyPort: null,
-  forwardProxyUrl: null,
-  forwardProxyUsername: null,
-  forwardProxyPassword: null
+  proxyUsername: null,
+  proxyPassword: null,
+  forwardProxyUrl: null
 } as EngineSettingsDTO;
 
 class EditEngineProxyModalTester {
   readonly fixture = TestBed.createComponent(EditEngineProxyModalComponent);
   readonly root = page.elementLocator(this.fixture.nativeElement);
   readonly proxyEnabledCheckbox = this.root.getByCss('#proxy-enabled');
+  readonly proxyUsername = this.root.getByCss('#proxy-username');
+  readonly proxyPassword = this.root.getByCss('#proxy-password');
+  readonly forwardProxyEnabled = this.root.getByCss('#forward-proxy-enabled');
+  readonly forwardProxyUrl = this.root.getByCss('#forward-proxy-url');
   readonly saveButton = this.root.getByCss('#save-proxy-button');
   readonly cancelButton = this.root.getByCss('#cancel-proxy-button');
+
+  get componentInstance() {
+    return this.fixture.componentInstance;
+  }
 }
 
 describe('EditEngineProxyModalComponent', () => {
@@ -53,12 +61,9 @@ describe('EditEngineProxyModalComponent', () => {
     const tester = new EditEngineProxyModalTester();
     tester.fixture.componentInstance.initialize(engineSettings);
     tester.fixture.detectChanges();
-    const proxyEnabled = engineSettings.proxyEnabled;
-    if (proxyEnabled) {
-      await expect.element(tester.proxyEnabledCheckbox).toBeChecked();
-    } else {
-      await expect.element(tester.proxyEnabledCheckbox).not.toBeChecked();
-    }
+    await expect.element(tester.proxyEnabledCheckbox).not.toBeChecked();
+    await expect.element(tester.forwardProxyEnabled).not.toBeInTheDocument();
+    await expect.element(tester.forwardProxyUrl).not.toBeInTheDocument();
   });
 
   test('should save proxy settings and close modal', async () => {
@@ -70,12 +75,40 @@ describe('EditEngineProxyModalComponent', () => {
     expect(engineService.updateEngineProxy).toHaveBeenCalledWith({
       proxyEnabled: false,
       proxyPort: null,
+      proxyUsername: null,
+      proxyPassword: null,
       forwardProxyUrl: null,
       forwardProxyUsername: null,
       forwardProxyPassword: null
     });
     expect(notificationService.success).toHaveBeenCalledWith('engine.updated');
     expect(activeModal.close).toHaveBeenCalled();
+  });
+
+  test('should share proxy server credentials with forward proxy', () => {
+    engineService.updateEngineProxy.mockReturnValue(of(undefined));
+    const tester = new EditEngineProxyModalTester();
+    tester.fixture.componentInstance.initialize({ ...engineSettings, proxyEnabled: true, proxyPort: 3128 });
+    tester.fixture.detectChanges();
+
+    const controls = tester.componentInstance.form.controls;
+    controls.proxyUsername.setValue('proxyuser');
+    controls.proxyPassword.setValue('proxypass');
+    controls.forwardProxyEnabled.setValue(true);
+    controls.forwardProxyUrl.setValue('http://upstream.proxy:3128');
+
+    tester.componentInstance.save();
+
+    expect(engineService.updateEngineProxy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        proxyEnabled: true,
+        proxyUsername: 'proxyuser',
+        proxyPassword: 'proxypass',
+        forwardProxyUrl: 'http://upstream.proxy:3128',
+        forwardProxyUsername: 'proxyuser',
+        forwardProxyPassword: 'proxypass'
+      })
+    );
   });
 
   test('should dismiss modal on cancel', async () => {
