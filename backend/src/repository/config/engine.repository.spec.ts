@@ -103,6 +103,11 @@ describe('EngineRepository with empty database', () => {
       assert.strictEqual(result.port, 2223);
       assert.strictEqual(result.proxyEnabled, false);
       assert.strictEqual(result.proxyPort, 9000);
+      assert.strictEqual(result.proxyUsername, null);
+      assert.strictEqual(result.proxyPassword, null);
+      assert.strictEqual(result.forwardProxyUrl, null);
+      assert.strictEqual(result.forwardProxyUsername, null);
+      assert.strictEqual(result.forwardProxyPassword, null);
       assert.deepStrictEqual(result.logParameters, {
         console: { level: 'silent' },
         file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },

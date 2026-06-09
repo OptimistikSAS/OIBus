@@ -541,11 +541,10 @@
       "enabled-details": "Enabled on port {{ port }}",
       "disabled-details": "Disabled",
       "proxy-port": "Port",
-      "forward-proxy-url": "Forward proxy URL",
-      "forward-proxy-username": "Forward proxy username",
-      "forward-proxy-password": "Forward proxy password",
-      "proxy-username": "Proxy server username",
-      "proxy-password": "Proxy server password"
+      "proxy-username": "Username",
+      "proxy-password": "Password",
+      "forward-proxy-enabled": "Forward to upstream proxy",
+      "forward-proxy-url": "Forward proxy URL"
     },
     "logger": {
       "title": "Logger",
