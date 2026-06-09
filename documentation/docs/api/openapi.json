@@ -16656,6 +16656,18 @@
 						"description": "The password for upstream proxy authentication.",
 						"example": null
 					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true,
+						"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
+						"example": null
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true,
+						"description": "The password clients must use to authenticate with this proxy server.",
+						"example": null
+					},
 					"logParameters": {
 						"properties": {
 							"syslog": {
@@ -16839,6 +16851,8 @@
 					"forwardProxyUrl",
 					"forwardProxyUsername",
 					"forwardProxyPassword",
+					"proxyUsername",
+					"proxyPassword",
 					"logParameters"
 				],
 				"type": "object",
@@ -31400,6 +31414,18 @@
 						"description": "The password for upstream proxy authentication.",
 						"example": null
 					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true,
+						"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
+						"example": null
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true,
+						"description": "The password clients must use to authenticate with this proxy server.",
+						"example": null
+					},
 					"logParameters": {
 						"properties": {
 							"syslog": {
@@ -31584,6 +31610,8 @@
 					"forwardProxyUrl",
 					"forwardProxyUsername",
 					"forwardProxyPassword",
+					"proxyUsername",
+					"proxyPassword",
 					"logParameters"
 				],
 				"type": "object",

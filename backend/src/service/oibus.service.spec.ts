@@ -676,6 +676,8 @@ describe('OIBus Service', () => {
         forwardProxyUrl: engineSettings.forwardProxyUrl,
         forwardProxyUsername: engineSettings.forwardProxyUsername,
         forwardProxyPassword: '',
+        proxyUsername: engineSettings.proxyUsername,
+        proxyPassword: '',
         logParameters: {
           console: {
             level: engineSettings.logParameters.console.level
