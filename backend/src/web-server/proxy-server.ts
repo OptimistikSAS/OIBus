@@ -11,6 +11,11 @@ interface ForwardProxy {
   password: string | null;
 }
 
+interface ProxyAuth {
+  username: string | null;
+  password: string | null;
+}
+
 /**
  * Class Server - Provides the web client and establish socket connections.
  */
@@ -22,6 +27,7 @@ export default class ProxyServer {
   private forwardProxyUrl: string | null = null;
   private forwardProxyUsername: string | null = null;
   private forwardProxyPassword: string | null = null;
+  private proxyAuth: ProxyAuth = { username: null, password: null };
 
   constructor(
     logger: ILogger,
@@ -43,10 +49,11 @@ export default class ProxyServer {
     this.ipFilters = ipFilters;
   }
 
-  start(port: number, forwardProxy?: ForwardProxy): void {
+  start(port: number, forwardProxy?: ForwardProxy, proxyAuth?: ProxyAuth): void {
     this.forwardProxyUrl = forwardProxy?.url ?? null;
     this.forwardProxyUsername = forwardProxy?.username ?? null;
     this.forwardProxyPassword = forwardProxy?.password ?? null;
+    this.proxyAuth = proxyAuth ?? { username: null, password: null };
     this.initHttpProxy();
     this.initWebServer(port);
   }
@@ -87,6 +94,12 @@ export default class ProxyServer {
     if (!ipAllowed) {
       res.writeHead(403, { 'Content-Type': 'text/plain' });
       res.end('Forbidden');
+      return;
+    }
+
+    if (!this.isClientAuthenticated(req)) {
+      res.writeHead(407, { 'Proxy-Authenticate': 'Basic realm="OIBus Proxy"' });
+      res.end('Proxy Authentication Required');
       return;
     }
 
@@ -138,6 +151,14 @@ export default class ProxyServer {
     const ipAllowed = this.isIpAddressAllowed(req);
     if (!ipAllowed) {
       clientSocket.write(`HTTP/${req.httpVersion} 403 Forbidden\r\n\r\n`);
+      clientSocket.end();
+      return;
+    }
+
+    if (!this.isClientAuthenticated(req)) {
+      clientSocket.write(
+        `HTTP/${req.httpVersion} 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="OIBus Proxy"\r\n\r\n`
+      );
       clientSocket.end();
       return;
     }
@@ -221,6 +242,24 @@ export default class ProxyServer {
     } catch (error: unknown) {
       this._logger.error(`Proxy server error: ${(error as Error).message}`);
     }
+  }
+
+  private isClientAuthenticated(req: http.IncomingMessage): boolean {
+    if (!this.proxyAuth.username) {
+      return true;
+    }
+    const authHeader = req.headers['proxy-authorization'];
+    if (!authHeader || !authHeader.startsWith('Basic ')) {
+      return false;
+    }
+    const decoded = Buffer.from(authHeader.slice(6), 'base64').toString('utf8');
+    const colonIndex = decoded.indexOf(':');
+    if (colonIndex === -1) {
+      return false;
+    }
+    const username = decoded.slice(0, colonIndex);
+    const password = decoded.slice(colonIndex + 1);
+    return username === this.proxyAuth.username && password === (this.proxyAuth.password ?? '');
   }
 
   private isIpAddressAllowed(req: http.IncomingMessage) {

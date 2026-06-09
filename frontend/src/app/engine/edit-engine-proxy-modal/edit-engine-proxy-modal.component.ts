@@ -25,7 +25,9 @@ export class EditEngineProxyModalComponent {
     proxyPort: [null as number | null, Validators.required],
     forwardProxyUrl: [null as string | null],
     forwardProxyUsername: [null as string | null],
-    forwardProxyPassword: [null as string | null]
+    forwardProxyPassword: [null as string | null],
+    proxyUsername: [null as string | null],
+    proxyPassword: [null as string | null]
   });
 
   constructor() {
@@ -35,6 +37,8 @@ export class EditEngineProxyModalComponent {
         this.form.controls.forwardProxyUrl.enable();
         this.form.controls.forwardProxyUsername.enable();
         this.form.controls.forwardProxyPassword.enable();
+        this.form.controls.proxyUsername.enable();
+        this.form.controls.proxyPassword.enable();
       } else {
         this.form.controls.proxyPort.disable();
         this.form.controls.proxyPort.setValue(null);
@@ -44,6 +48,10 @@ export class EditEngineProxyModalComponent {
         this.form.controls.forwardProxyUsername.setValue(null);
         this.form.controls.forwardProxyPassword.disable();
         this.form.controls.forwardProxyPassword.setValue(null);
+        this.form.controls.proxyUsername.disable();
+        this.form.controls.proxyUsername.setValue(null);
+        this.form.controls.proxyPassword.disable();
+        this.form.controls.proxyPassword.setValue(null);
       }
     });
   }
@@ -54,13 +62,17 @@ export class EditEngineProxyModalComponent {
       proxyPort: settings.proxyPort,
       forwardProxyUrl: settings.forwardProxyUrl ?? null,
       forwardProxyUsername: settings.forwardProxyUsername ?? null,
-      forwardProxyPassword: settings.forwardProxyPassword ?? null
+      forwardProxyPassword: settings.forwardProxyPassword ?? null,
+      proxyUsername: settings.proxyUsername ?? null,
+      proxyPassword: settings.proxyPassword ?? null
     });
     if (!settings.proxyEnabled) {
       this.form.controls.proxyPort.disable();
       this.form.controls.forwardProxyUrl.disable();
       this.form.controls.forwardProxyUsername.disable();
       this.form.controls.forwardProxyPassword.disable();
+      this.form.controls.proxyUsername.disable();
+      this.form.controls.proxyPassword.disable();
     }
   }
 
@@ -75,7 +87,9 @@ export class EditEngineProxyModalComponent {
         proxyPort: formValue.proxyEnabled ? formValue.proxyPort : null,
         forwardProxyUrl: formValue.proxyEnabled ? formValue.forwardProxyUrl || null : null,
         forwardProxyUsername: formValue.proxyEnabled ? formValue.forwardProxyUsername || null : null,
-        forwardProxyPassword: formValue.proxyEnabled ? formValue.forwardProxyPassword || null : null
+        forwardProxyPassword: formValue.proxyEnabled ? formValue.forwardProxyPassword || null : null,
+        proxyUsername: formValue.proxyEnabled ? formValue.proxyUsername || null : null,
+        proxyPassword: formValue.proxyEnabled ? formValue.proxyPassword || null : null
       })
       .subscribe(() => {
         this.notificationService.success('engine.updated');

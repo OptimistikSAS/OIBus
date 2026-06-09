@@ -48,6 +48,22 @@
           </div>
         </div>
       </div>
+      <div class="row">
+        <div class="col-4">
+          <div class="form-group">
+            <label class="form-label" for="proxy-username" translate="engine.proxy-settings.proxy-username"></label>
+            <input formControlName="proxyUsername" id="proxy-username" class="form-control" />
+            <val-errors controlName="proxyUsername" />
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="form-group">
+            <label class="form-label" for="proxy-password" translate="engine.proxy-settings.proxy-password"></label>
+            <input formControlName="proxyPassword" type="password" id="proxy-password" class="form-control" />
+            <val-errors controlName="proxyPassword" />
+          </div>
+        </div>
+      </div>
     }
   </form>
 </div>

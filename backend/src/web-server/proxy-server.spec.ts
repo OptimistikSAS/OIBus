@@ -683,6 +683,216 @@ describe('ProxyServer', () => {
     assert.strictEqual(mockUpstreamEnd.mock.calls.length, 1);
   });
 
+  it('should allow http request when proxy auth is not configured', () => {
+    // proxyAuth.username is null by default — no auth check
+    const mockWeb = mock.fn();
+    proxyServer['httpProxy'] = { web: mockWeb } as unknown as httpProxy;
+
+    const mockReq = {
+      method: 'GET',
+      url: 'http://example.com',
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' }
+    } as unknown as http.IncomingMessage;
+    const mockRes = { writeHead: mock.fn(), end: mock.fn() } as unknown as http.ServerResponse;
+
+    proxyServer['handleHttpRequest'](mockReq, mockRes);
+
+    assert.strictEqual(mockWeb.mock.calls.length, 1);
+    assert.strictEqual((mockRes.writeHead as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+  });
+
+  it('should allow http request with valid proxy credentials', () => {
+    proxyServer['proxyAuth'] = { username: 'admin', password: 'secret' };
+    const validCred = Buffer.from('admin:secret').toString('base64');
+
+    const mockWeb = mock.fn();
+    proxyServer['httpProxy'] = { web: mockWeb } as unknown as httpProxy;
+
+    const mockReq = {
+      method: 'GET',
+      url: 'http://example.com',
+      headers: { 'proxy-authorization': `Basic ${validCred}` },
+      socket: { remoteAddress: '127.0.0.1' }
+    } as unknown as http.IncomingMessage;
+    const mockRes = { writeHead: mock.fn(), end: mock.fn() } as unknown as http.ServerResponse;
+
+    proxyServer['handleHttpRequest'](mockReq, mockRes);
+
+    assert.strictEqual(mockWeb.mock.calls.length, 1);
+    assert.strictEqual((mockRes.writeHead as ReturnType<typeof mock.fn>).mock.calls.length, 0);
+  });
+
+  it('should block http request with missing Proxy-Authorization header', () => {
+    proxyServer['proxyAuth'] = { username: 'admin', password: 'secret' };
+
+    const mockWriteHead = mock.fn();
+    const mockEnd = mock.fn();
+    const mockReq = {
+      method: 'GET',
+      url: 'http://example.com',
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' }
+    } as unknown as http.IncomingMessage;
+    const mockRes = { writeHead: mockWriteHead, end: mockEnd } as unknown as http.ServerResponse;
+
+    proxyServer['handleHttpRequest'](mockReq, mockRes);
+
+    assert.deepStrictEqual(mockWriteHead.mock.calls[0].arguments, [407, { 'Proxy-Authenticate': 'Basic realm="OIBus Proxy"' }]);
+    assert.deepStrictEqual(mockEnd.mock.calls[0].arguments, ['Proxy Authentication Required']);
+  });
+
+  it('should block http request with wrong proxy credentials', () => {
+    proxyServer['proxyAuth'] = { username: 'admin', password: 'secret' };
+    const wrongCred = Buffer.from('admin:wrong').toString('base64');
+
+    const mockWriteHead = mock.fn();
+    const mockEnd = mock.fn();
+    const mockReq = {
+      method: 'GET',
+      url: 'http://example.com',
+      headers: { 'proxy-authorization': `Basic ${wrongCred}` },
+      socket: { remoteAddress: '127.0.0.1' }
+    } as unknown as http.IncomingMessage;
+    const mockRes = { writeHead: mockWriteHead, end: mockEnd } as unknown as http.ServerResponse;
+
+    proxyServer['handleHttpRequest'](mockReq, mockRes);
+
+    assert.deepStrictEqual(mockWriteHead.mock.calls[0].arguments, [407, { 'Proxy-Authenticate': 'Basic realm="OIBus Proxy"' }]);
+    assert.deepStrictEqual(mockEnd.mock.calls[0].arguments, ['Proxy Authentication Required']);
+  });
+
+  it('should allow https CONNECT when proxy auth is not configured', () => {
+    const mockClientWrite = mock.fn();
+    const mockClientPipe = mock.fn((dest: unknown) => dest);
+    const mockClientOn = mock.fn();
+    const mockReq = {
+      method: 'CONNECT',
+      url: 'example.com:443',
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+      httpVersion: '1.1'
+    } as unknown as http.IncomingMessage;
+    const mockClientSocket = {
+      write: mockClientWrite,
+      pipe: mockClientPipe,
+      on: mockClientOn,
+      end: mock.fn()
+    } as unknown as net.Socket;
+
+    const mockTargetSocket = {
+      write: mock.fn(),
+      pipe: mock.fn((dest: unknown) => dest),
+      on: mock.fn()
+    };
+    let connectionCallback: (() => void) | undefined;
+    mock.method(nodeRequire('node:net'), 'createConnection', (_opts: unknown, cb: () => void) => {
+      connectionCallback = cb;
+      return mockTargetSocket;
+    });
+
+    proxyServer['handleHttpsRequest'](mockReq, mockClientSocket, Buffer.from(''));
+    connectionCallback!();
+
+    assert.deepStrictEqual(mockClientWrite.mock.calls[0].arguments[0], 'HTTP/1.1 200 Connection established\r\n\r\n');
+  });
+
+  it('should allow https CONNECT with valid proxy credentials', () => {
+    proxyServer['proxyAuth'] = { username: 'admin', password: 'secret' };
+    const validCred = Buffer.from('admin:secret').toString('base64');
+
+    const mockClientWrite = mock.fn();
+    const mockClientPipe = mock.fn((dest: unknown) => dest);
+    const mockClientOn = mock.fn();
+    const mockReq = {
+      method: 'CONNECT',
+      url: 'example.com:443',
+      headers: { 'proxy-authorization': `Basic ${validCred}` },
+      socket: { remoteAddress: '127.0.0.1' },
+      httpVersion: '1.1'
+    } as unknown as http.IncomingMessage;
+    const mockClientSocket = {
+      write: mockClientWrite,
+      pipe: mockClientPipe,
+      on: mockClientOn,
+      end: mock.fn()
+    } as unknown as net.Socket;
+
+    const mockTargetSocket = {
+      write: mock.fn(),
+      pipe: mock.fn((dest: unknown) => dest),
+      on: mock.fn()
+    };
+    let connectionCallback: (() => void) | undefined;
+    mock.method(nodeRequire('node:net'), 'createConnection', (_opts: unknown, cb: () => void) => {
+      connectionCallback = cb;
+      return mockTargetSocket;
+    });
+
+    proxyServer['handleHttpsRequest'](mockReq, mockClientSocket, Buffer.from(''));
+    connectionCallback!();
+
+    assert.deepStrictEqual(mockClientWrite.mock.calls[0].arguments[0], 'HTTP/1.1 200 Connection established\r\n\r\n');
+  });
+
+  it('should block https CONNECT with missing Proxy-Authorization header', () => {
+    proxyServer['proxyAuth'] = { username: 'admin', password: 'secret' };
+
+    const mockClientWrite = mock.fn();
+    const mockClientEnd = mock.fn();
+    const mockReq = {
+      method: 'CONNECT',
+      url: 'example.com:443',
+      headers: {},
+      socket: { remoteAddress: '127.0.0.1' },
+      httpVersion: '1.1'
+    } as unknown as http.IncomingMessage;
+    const mockClientSocket = {
+      write: mockClientWrite,
+      end: mockClientEnd
+    } as unknown as net.Socket;
+
+    proxyServer['handleHttpsRequest'](mockReq, mockClientSocket, Buffer.from(''));
+
+    assert.deepStrictEqual(
+      mockClientWrite.mock.calls[0].arguments[0],
+      'HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="OIBus Proxy"\r\n\r\n'
+    );
+    assert.strictEqual(mockClientEnd.mock.calls.length, 1);
+  });
+
+  it('should block https CONNECT with wrong proxy credentials', () => {
+    proxyServer['proxyAuth'] = { username: 'admin', password: 'secret' };
+    const wrongCred = Buffer.from('admin:wrong').toString('base64');
+
+    const mockClientWrite = mock.fn();
+    const mockClientEnd = mock.fn();
+    const mockReq = {
+      method: 'CONNECT',
+      url: 'example.com:443',
+      headers: { 'proxy-authorization': `Basic ${wrongCred}` },
+      socket: { remoteAddress: '127.0.0.1' },
+      httpVersion: '1.1'
+    } as unknown as http.IncomingMessage;
+    const mockClientSocket = {
+      write: mockClientWrite,
+      end: mockClientEnd
+    } as unknown as net.Socket;
+
+    proxyServer['handleHttpsRequest'](mockReq, mockClientSocket, Buffer.from(''));
+
+    assert.deepStrictEqual(
+      mockClientWrite.mock.calls[0].arguments[0],
+      'HTTP/1.1 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="OIBus Proxy"\r\n\r\n'
+    );
+    assert.strictEqual(mockClientEnd.mock.calls.length, 1);
+  });
+
+  it('should store proxyAuth on start', async () => {
+    await proxyServer.start(9000, undefined, { username: 'user', password: 'pass' });
+    assert.deepStrictEqual(proxyServer['proxyAuth'], { username: 'user', password: 'pass' });
+  });
+
   it('should handle upstream proxy socket error on HTTPS CONNECT', () => {
     proxyServer['forwardProxyUrl'] = 'http://upstream-proxy:3128';
 
