@@ -442,6 +442,45 @@ describe('SouthConnector', () => {
         )
       );
     });
+
+    it('should call historyQuery once per item for single-item connectors', async () => {
+      const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval], numberOfIntervalsDone: 0 }));
+
+      const historyQueryMock = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+      south.historyQuery = historyQueryMock;
+
+      const items = testData.south.list[1].items as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
+
+      // Each item must produce its own generateIntervals call
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls.length, 2);
+      // historyQuery called once per item, each with a singleton array
+      assert.strictEqual(historyQueryMock.mock.calls.length, 2);
+      assert.deepStrictEqual(historyQueryMock.mock.calls[0].arguments[0], [items[0]]);
+      assert.deepStrictEqual(historyQueryMock.mock.calls[1].arguments[0], [items[1]]);
+    });
+
+    it('should use independent cache entries per item for single-item connectors', async () => {
+      const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval], numberOfIntervalsDone: 0 }));
+      south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+
+      const items = testData.south.list[1].items as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
+
+      // getItemLastValue must be called with each item's own id
+      const getCalls = (southCacheService.getItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(getCalls.length, 2);
+      assert.strictEqual(getCalls[0].arguments[1], items[0].id);
+      assert.strictEqual(getCalls[1].arguments[1], items[1].id);
+
+      // saveItemLastValue must be called with each item's own id
+      const saveCalls = (southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(saveCalls.length, 2);
+      assert.strictEqual(saveCalls[0].arguments[1].itemId, items[0].id);
+      assert.strictEqual(saveCalls[1].arguments[1].itemId, items[1].id);
+    });
   });
 
   describe('SouthConnector with history and subscription', () => {
