@@ -50,6 +50,10 @@ export class EngineService {
     return this.info$;
   }
 
+  fetchInfo(): Observable<OIBusInfo> {
+    return this.http.get<OIBusInfo>('/api/engine/info');
+  }
+
   getRegistrationSettings(): Observable<RegistrationSettingsDTO> {
     return this.http.get<RegistrationSettingsDTO>(`/api/oianalytics/registration`);
   }

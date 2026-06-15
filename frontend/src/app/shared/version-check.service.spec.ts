@@ -63,7 +63,7 @@ describe('VersionCheckService', () => {
     service.startMonitoring();
     vi.advanceTimersByTime(0);
 
-    engineService.getInfo.mockReturnValue(of({ ...mockOIBusInfo, version: '2.0.0' }));
+    engineService.fetchInfo.mockReturnValue(of({ ...mockOIBusInfo, version: '2.0.0' }));
     vi.advanceTimersByTime(10000);
 
     expect(versionChangeDetected).toBe(true);
@@ -72,6 +72,7 @@ describe('VersionCheckService', () => {
   test('should not emit if version has not changed', () => {
     vi.useFakeTimers();
     engineService.getInfo.mockReturnValue(of(mockOIBusInfo));
+    engineService.fetchInfo.mockReturnValue(of(mockOIBusInfo));
 
     let versionChangeCount = 0;
     service.versionChange$.subscribe(() => versionChangeCount++);
@@ -87,13 +88,14 @@ describe('VersionCheckService', () => {
   test('should stop monitoring when stopMonitoring is called', () => {
     vi.useFakeTimers();
     engineService.getInfo.mockReturnValue(of(mockOIBusInfo));
+    engineService.fetchInfo.mockReturnValue(of(mockOIBusInfo));
     service.startMonitoring();
     vi.advanceTimersByTime(0);
 
-    const callCountBefore = engineService.getInfo.mock.calls.length;
+    const callCountBefore = engineService.fetchInfo.mock.calls.length;
     service.stopMonitoring();
     vi.advanceTimersByTime(10000);
-    const callCountAfter = engineService.getInfo.mock.calls.length;
+    const callCountAfter = engineService.fetchInfo.mock.calls.length;
 
     expect(callCountAfter).toBe(callCountBefore);
   });
@@ -104,12 +106,12 @@ describe('VersionCheckService', () => {
     service.startMonitoring();
     vi.advanceTimersByTime(0);
 
-    engineService.getInfo.mockReturnValue(of({ ...mockOIBusInfo, version: '2.0.0' }));
+    engineService.fetchInfo.mockReturnValue(of({ ...mockOIBusInfo, version: '2.0.0' }));
     vi.advanceTimersByTime(10000);
 
-    const callCountBefore = engineService.getInfo.mock.calls.length;
+    const callCountBefore = engineService.fetchInfo.mock.calls.length;
     vi.advanceTimersByTime(10000);
-    const callCountAfter = engineService.getInfo.mock.calls.length;
+    const callCountAfter = engineService.fetchInfo.mock.calls.length;
 
     expect(callCountAfter).toBe(callCountBefore);
   });

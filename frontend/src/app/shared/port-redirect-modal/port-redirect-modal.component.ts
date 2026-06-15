@@ -1,6 +1,6 @@
 import { Component, inject, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslateService } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { WindowService } from '../window.service';
 
 const REDIRECT_DELAY_SECONDS = 30;
@@ -15,19 +15,20 @@ const REDIRECT_DELAY_SECONDS = 30;
 export class PortRedirectModalComponent implements OnInit, OnDestroy {
   readonly activeModal = inject(NgbActiveModal);
   private windowService = inject(WindowService);
-  private translateService = inject(TranslateService);
 
   readonly newPort = signal(0);
   readonly secondsRemaining = signal(REDIRECT_DELAY_SECONDS);
   readonly progress = signal(1); // Progress bar goes from 1 (full) to 0 (empty)
 
   private countdownInterval: ReturnType<typeof setInterval> | null = null;
+  private startTime = 0;
 
   initialize(newPort: number) {
     this.newPort.set(newPort);
   }
 
   ngOnInit(): void {
+    this.startTime = Date.now();
     this.startCountdown();
   }
 
@@ -37,8 +38,10 @@ export class PortRedirectModalComponent implements OnInit, OnDestroy {
 
   private startCountdown(): void {
     this.countdownInterval = setInterval(() => {
-      const remaining = this.secondsRemaining() - 1;
-      this.secondsRemaining.set(remaining);
+      const elapsedMs = Date.now() - this.startTime;
+      const remaining = Math.max(0, REDIRECT_DELAY_SECONDS - elapsedMs / 1000);
+
+      this.secondsRemaining.set(Math.ceil(remaining));
       this.progress.set(remaining / REDIRECT_DELAY_SECONDS);
 
       if (remaining <= 0) {
@@ -59,12 +62,5 @@ export class PortRedirectModalComponent implements OnInit, OnDestroy {
     const currentUrl = new URL(window.location.href);
     const newUrl = `${currentUrl.protocol}//${currentUrl.hostname}:${this.newPort()}${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
     this.windowService.redirectTo(newUrl);
-  }
-
-  get message(): string {
-    return this.translateService.instant('engine.port-changed.message', {
-      port: this.newPort(),
-      seconds: this.secondsRemaining()
-    });
   }
 }

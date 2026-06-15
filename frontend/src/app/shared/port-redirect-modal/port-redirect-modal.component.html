@@ -2,7 +2,7 @@
   <h4 class="modal-title" translate="engine.port-changed.title"></h4>
 </div>
 <div class="modal-body">
-  <p>{{ message }}</p>
+  <p [translate]="'engine.port-changed.message'" [translateParams]="{ port: newPort(), seconds: secondsRemaining() }"></p>
   <div class="progress-container">
     <span>{{ secondsRemaining() }}s</span>
     <ngb-progressbar [value]="progress()" [max]="1" [striped]="false" [animated]="false" type="secondary" />
