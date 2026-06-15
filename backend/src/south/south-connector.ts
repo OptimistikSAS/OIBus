@@ -502,16 +502,73 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.logger.trace('No history items to read. Ignoring historyQuery');
       return;
     }
-    this.logger.trace(`History querying ${items.length} items`);
+    const skipped = items.length - itemsToRead.length;
+    if (skipped > 0) {
+      this.logger.trace(
+        `${skipped} of ${items.length} item(s) were excluded by the connector's history filter and will not be queried: ` +
+          items
+            .filter(i => !itemsToRead.includes(i))
+            .map(i => i.name)
+            .join(', ')
+      );
+    }
+    this.logger.trace(`History querying ${itemsToRead.length} items`);
     this.historyIsRunning = true;
 
-    const groupId =
-      items[0].group && items[0].syncWithGroup && !SOUTH_SINGLE_ITEMS.includes(this.connector.type) ? items[0].group.id : null;
-    let southCache = this.cacheService!.getItemLastValue(this.connector.id, items[0].id);
+    if (SOUTH_SINGLE_ITEMS.includes(this.connector.type)) {
+      // Each item is queried independently so that each has its own cache entry and trackedInstant.
+      // This mirrors how groupItemsByGroup() sends singleton arrays during normal scan flow.
+      for (const item of itemsToRead) {
+        await this.querySingleItemHistory(item, startTime, endTime);
+        if (this.stopping) break;
+      }
+    } else {
+      const lead = itemsToRead[0];
+      const groupId = lead.group && lead.syncWithGroup ? lead.group.id : null;
+      let southCache = this.cacheService!.getItemLastValue(this.connector.id, lead.id);
+      if (!southCache) {
+        southCache = {
+          itemId: lead.id,
+          groupId,
+          trackedInstant: null,
+          queryTime: null,
+          value: null
+        };
+      }
+      if (!southCache.trackedInstant) {
+        southCache.trackedInstant = startTime;
+      }
+
+      let maxReadInterval: number;
+      let readDelay: number;
+      let overlap: number;
+      if (lead.group && lead.syncWithGroup) {
+        maxReadInterval = lead.group.maxReadInterval!;
+        readDelay = lead.group.readDelay!;
+        overlap = lead.group.overlap!;
+      } else {
+        maxReadInterval = lead.maxReadInterval!;
+        readDelay = lead.readDelay!;
+        overlap = lead.overlap || 0;
+      }
+      const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
+      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, maxReadInterval);
+      this.logIntervals(intervals);
+      await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone);
+    }
+
+    this.metricsEvent.emit('history-query-stop', {
+      running: false
+    });
+    this.historyIsRunning = false;
+  }
+
+  private async querySingleItemHistory(item: SouthConnectorItemEntity<I>, startTime: Instant, endTime: Instant): Promise<void> {
+    let southCache = this.cacheService!.getItemLastValue(this.connector.id, item.id);
     if (!southCache) {
       southCache = {
-        itemId: items[0].id,
-        groupId,
+        itemId: item.id,
+        groupId: null,
         trackedInstant: null,
         queryTime: null,
         value: null
@@ -520,29 +577,11 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (!southCache.trackedInstant) {
       southCache.trackedInstant = startTime;
     }
-
-    let maxReadInterval: number;
-    let readDelay: number;
-    let overlap: number;
-    if (items[0].group && items[0].syncWithGroup) {
-      maxReadInterval = items[0].group.maxReadInterval!;
-      readDelay = items[0].group.readDelay!;
-      overlap = items[0].group.overlap!;
-    } else {
-      // standalone item
-      maxReadInterval = items[0].maxReadInterval!;
-      readDelay = items[0].readDelay!;
-      overlap = items[0].overlap || 0; // stick to 0 in case of history queries
-    }
+    const overlap = item.overlap || 0;
     const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-    const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, maxReadInterval);
+    const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, item.maxReadInterval!);
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone);
-
-    this.metricsEvent.emit('history-query-stop', {
-      running: false
-    });
-    this.historyIsRunning = false;
+    await this.queryIntervals(intervals, [item], southCache, item.readDelay!, numberOfIntervalsDone);
   }
 
   private async queryIntervals(
@@ -560,6 +599,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     for (let index = numberOfIntervalsDone; index < intervals.length; index++) {
       const startTime = DateTime.now().toUTC().toISO()!;
       const interval = intervals[index];
+
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       const lastValue: { trackedInstant: Instant; value: unknown } | null = await this.historyQuery(items, interval.start, interval.end);
