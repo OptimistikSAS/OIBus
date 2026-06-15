@@ -1,4 +1,4 @@
-import { AdsDataType, Client } from 'ads-client';
+import { AdsDataType, AdsSymbol, Client } from 'ads-client';
 import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../shared/model/types';
@@ -25,9 +25,12 @@ interface ADSOptions {
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
 export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements SouthDirectQuery {
+  private static readonly BATCH_SIZE = 500;
+
   private client: Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
+  private symbolCache = new Map<string, { symbol: AdsSymbol; dataType: AdsDataType }>();
 
   constructor(
     connector: SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
@@ -163,24 +166,100 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     return [];
   }
 
+  private async buildSymbolCache(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<void> {
+    const missing = items.filter(item => !this.symbolCache.has(item.settings.address));
+    if (missing.length === 0) return;
+
+    // Bulk lookup covers most items in one request
+    const allSymbols = await this.client!.getSymbols();
+    const foundInBulk: Array<{ item: SouthConnectorItemEntity<SouthADSItemSettings>; symbol: AdsSymbol }> = [];
+    const notInBulk: Array<SouthConnectorItemEntity<SouthADSItemSettings>> = [];
+    for (const item of missing) {
+      const symbol = allSymbols[item.settings.address.toLowerCase()];
+      if (symbol) {
+        foundInBulk.push({ item, symbol });
+      } else {
+        notInBulk.push(item);
+      }
+    }
+
+    // Per-item fallback for addresses the bulk table doesn't list individually
+    // (e.g. array-indexed paths like "BDE.BDEs[1].EC1000.OK")
+    const perItemResolved = (
+      await Promise.all(
+        notInBulk.map(async item => {
+          try {
+            return { item, symbol: await this.client!.getSymbol(item.settings.address) };
+          } catch {
+            this.logger.warn(`Symbol "${item.settings.address}" not found on PLC, item "${item.name}" will be skipped`);
+            return null;
+          }
+        })
+      )
+    ).filter((r): r is { item: SouthConnectorItemEntity<SouthADSItemSettings>; symbol: AdsSymbol } => r !== null);
+
+    const allResolved = [...foundInBulk, ...perItemResolved];
+
+    // Deduplicate types and fetch all at once
+    const uniqueTypes = [...new Set(allResolved.map(r => r.symbol.type))];
+    const resolvedTypes = await Promise.all(uniqueTypes.map(type => this.client!.getDataType(type)));
+    const typeMap = new Map(uniqueTypes.map((type, i) => [type, resolvedTypes[i]]));
+
+    for (const { item, symbol } of allResolved) {
+      this.symbolCache.set(item.settings.address, { symbol, dataType: typeMap.get(symbol.type)! });
+    }
+    this.logger.debug(`Symbol cache: ${this.symbolCache.size}/${items.length} symbols resolved`);
+  }
+
   async directQuery(items: Array<SouthConnectorItemEntity<SouthADSItemSettings>>): Promise<OIBusTimeValue | null> {
     const contentResult: Array<OIBusTimeValue> = [];
     try {
+      await this.buildSymbolCache(items);
+
       const timestamp = DateTime.now().toUTC().toISO()!;
       const startRequest = DateTime.now();
-      const results = await Promise.all(items.map(item => this.readAdsSymbol(item, timestamp)));
+
+      const cachedItems = items.filter(item => this.symbolCache.has(item.settings.address));
+      const uncachedItems = items.filter(item => !this.symbolCache.has(item.settings.address));
+
+      for (let offset = 0; offset < cachedItems.length; offset += SouthADS.BATCH_SIZE) {
+        const chunk = cachedItems.slice(offset, offset + SouthADS.BATCH_SIZE);
+        const commands = chunk.map(item => {
+          const { symbol } = this.symbolCache.get(item.settings.address)!;
+          return { indexGroup: symbol.indexGroup, indexOffset: symbol.indexOffset, size: symbol.size };
+        });
+
+        const results = await this.client!.readRawMulti(commands);
+
+        const converted = await Promise.all(
+          results.map(async (result, i) => {
+            const item = chunk[i];
+            if (!result.success) {
+              this.logger.error(`Failed to read "${item.settings.address}" (${item.name}): ${result.errorStr}`);
+              return [];
+            }
+            const { dataType } = this.symbolCache.get(item.settings.address)!;
+            const value = await this.client!.convertFromRaw(result.value!, dataType);
+            return this.parseValues(
+              `${this.connector.settings.plcName}${item.name}`,
+              dataType.type,
+              value,
+              timestamp,
+              dataType.subItems,
+              dataType.enumInfos
+            );
+          })
+        );
+        contentResult.push(...converted.flat());
+      }
+
+      const uncachedResults = await Promise.all(uncachedItems.map(item => this.readAdsSymbol(item, timestamp)));
+      contentResult.push(...uncachedResults.flat());
+
       const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
       this.logger.debug(`Requested ${items.length} items in ${requestDuration} ms`);
 
-      const contentResult = results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []);
-      await this.addContent(
-        {
-          type: 'time-values',
-          content: contentResult
-        },
-        startRequest.toUTC().toISO(),
-        items
-      );
+      await this.addContent({ type: 'time-values', content: contentResult }, startRequest.toUTC().toISO(), items);
     } catch (error: unknown) {
       if ((error as Error).message.includes('Client is not connected')) {
         this.logger.error('ADS client disconnected. Reconnecting');
@@ -279,8 +358,19 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     const options = this.createConnectionOptions();
     this.client = new Client(options);
     await this.client.connect();
-    await this.disconnect();
-    return { items: [] };
+    try {
+      const [deviceInfo, state] = await Promise.all([this.client.readDeviceInfo(), this.client.readState()]);
+      return {
+        items: [
+          { key: 'Device name', value: deviceInfo.deviceName },
+          { key: 'Firmware version', value: `${deviceInfo.majorVersion}.${deviceInfo.minorVersion}.${deviceInfo.versionBuild}` },
+          { key: 'ADS state', value: state.adsStateStr ?? String(state.adsState) },
+          { key: 'Device state', value: String(state.deviceState) }
+        ]
+      };
+    } finally {
+      await this.disconnect();
+    }
   }
 
   /**
@@ -303,6 +393,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
    * Close the connection
    */
   async disconnect(): Promise<void> {
+    this.symbolCache.clear();
     this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
