@@ -31657,17 +31657,75 @@
 						"nullable": true,
 						"description": "The port for the proxy, if enabled.",
 						"example": null
+					},
+					"forwardProxyUrl": {
+						"type": "string",
+						"nullable": true,
+						"description": "The URL of the upstream proxy to forward requests through.",
+						"example": null
+					},
+					"forwardProxyUsername": {
+						"type": "string",
+						"nullable": true,
+						"description": "The username for upstream proxy authentication.",
+						"example": null
+					},
+					"forwardProxyPassword": {
+						"type": "string",
+						"nullable": true,
+						"description": "The password for upstream proxy authentication.",
+						"example": null
 					}
 				},
 				"required": [
 					"proxyEnabled",
-					"proxyPort"
+					"proxyPort",
+					"forwardProxyUrl",
+					"forwardProxyUsername",
+					"forwardProxyPassword"
 				],
 				"type": "object",
 				"additionalProperties": false
 			},
 			"EngineLoggerCommandDTO": {
 				"properties": {
+					"syslog": {
+						"properties": {
+							"protocol": {
+								"type": "string",
+								"enum": [
+									"udp4",
+									"tcp"
+								],
+								"description": "The transport protocol.",
+								"example": "udp4"
+							},
+							"port": {
+								"type": "number",
+								"format": "double",
+								"description": "The port of the syslog server.",
+								"example": 514
+							},
+							"host": {
+								"type": "string",
+								"description": "The hostname or IP of the syslog server. Empty string disables the transport.",
+								"example": "syslog.example.com"
+							},
+							"level": {
+								"$ref": "#/components/schemas/LogLevel",
+								"description": "The log level for syslog output.",
+								"example": "info"
+							}
+						},
+						"required": [
+							"protocol",
+							"port",
+							"host",
+							"level"
+						],
+						"type": "object",
+						"description": "Syslog logging configuration."
+					},
 					"oia": {
 						"properties": {
 							"interval": {
@@ -31793,6 +31851,7 @@
 					}
 				},
 				"required": [
+					"syslog",
 					"oia",
 					"loki",
 					"database",

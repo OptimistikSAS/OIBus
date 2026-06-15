@@ -159,9 +159,20 @@ export default class EngineRepository {
 
   updateProxy(command: EngineProxyCommandDTO, updatedBy: string): void {
     const query =
-      `UPDATE ${ENGINES_TABLE} SET proxy_enabled = ?, proxy_port = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
+      `UPDATE ${ENGINES_TABLE} SET proxy_enabled = ?, proxy_port = ?, ` +
+      `forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, ` +
+      `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
-    this.database.prepare(query).run(+command.proxyEnabled, command.proxyPort, updatedBy);
+    this.database
+      .prepare(query)
+      .run(
+        +command.proxyEnabled,
+        command.proxyPort,
+        command.forwardProxyUrl,
+        command.forwardProxyUsername,
+        command.forwardProxyPassword,
+        updatedBy
+      );
   }
 
   updateLogger(command: EngineLoggerCommandDTO, updatedBy: string): void {
@@ -223,7 +234,7 @@ export default class EngineRepository {
       'log_loki_username, log_loki_password, log_oia_level, log_oia_interval, ' +
       'log_syslog_level, log_syslog_host, log_syslog_port, log_syslog_protocol, ' +
       `created_by, updated_by, created_at, updated_at) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(query)
       .run(
