@@ -35,7 +35,24 @@ describe('South ADS', () => {
   const connect = mock.fn(async () => ({ targetAmsNetId: 'targetAmsNetId', localAmsNetId: 'localAmsNetId', localAdsPort: 'localAdsPort' }));
   const disconnect = mock.fn(async () => undefined);
   const readValue = mock.fn(async (): Promise<unknown> => undefined);
-  const adsInstance = { connection: { connected: true }, connect, disconnect, readValue };
+  const getSymbols = mock.fn(async () => ({}));
+  const getDataType = mock.fn(async () => ({ type: 'INT', subItems: [], enumInfos: [] }));
+  const readRawMulti = mock.fn(async () => [] as Array<unknown>);
+  const convertFromRaw = mock.fn(async () => 0 as unknown);
+  const readDeviceInfo = mock.fn(async () => ({ deviceName: 'TestDevice', majorVersion: 3, minorVersion: 1, versionBuild: 4000 }));
+  const readState = mock.fn(async () => ({ adsState: 5, adsStateStr: 'Run', deviceState: 0 }));
+  const adsInstance = {
+    connection: { connected: true },
+    connect,
+    disconnect,
+    readValue,
+    getSymbols,
+    getDataType,
+    readRawMulti,
+    convertFromRaw,
+    readDeviceInfo,
+    readState
+  };
 
   const adsExports: Record<string, unknown> = {
     __esModule: true,
@@ -134,6 +151,23 @@ describe('South ADS', () => {
     connect.mock.resetCalls();
     disconnect.mock.resetCalls();
     readValue.mock.resetCalls();
+    getSymbols.mock.resetCalls();
+    getSymbols.mock.mockImplementation(async () => ({}));
+    getDataType.mock.resetCalls();
+    getDataType.mock.mockImplementation(async () => ({ type: 'INT', subItems: [], enumInfos: [] }));
+    readRawMulti.mock.resetCalls();
+    readRawMulti.mock.mockImplementation(async () => []);
+    convertFromRaw.mock.resetCalls();
+    convertFromRaw.mock.mockImplementation(async () => 0 as unknown);
+    readDeviceInfo.mock.resetCalls();
+    readDeviceInfo.mock.mockImplementation(async () => ({
+      deviceName: 'TestDevice',
+      majorVersion: 3,
+      minorVersion: 1,
+      versionBuild: 4000
+    }));
+    readState.mock.resetCalls();
+    readState.mock.mockImplementation(async () => ({ adsState: 5, adsStateStr: 'Run', deviceState: 0 }));
     addContentCallback.mock.resetCalls();
     adsExports.Client = mock.fn(function () {
       return adsInstance;
@@ -471,6 +505,11 @@ describe('South ADS', () => {
       mock.fn(async () => undefined)
     );
     mock.method(
+      south as unknown as Record<string, unknown>,
+      'buildSymbolCache',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
       south,
       'readAdsSymbol',
       mock.fn(async () => [1])
@@ -486,6 +525,11 @@ describe('South ADS', () => {
     mock.method(
       south,
       'addContent',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south as unknown as Record<string, unknown>,
+      'buildSymbolCache',
       mock.fn(async () => undefined)
     );
     mock.method(
@@ -525,6 +569,11 @@ describe('South ADS', () => {
       mock.fn(async () => undefined)
     );
     mock.method(
+      south as unknown as Record<string, unknown>,
+      'buildSymbolCache',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
       south,
       'readAdsSymbol',
       mock.fn(async () => {
@@ -535,13 +584,34 @@ describe('South ADS', () => {
     assert.strictEqual(disconnectMock.mock.calls.length, 0);
   });
 
-  it('should test ADS connection', async () => {
+  it('should test ADS connection and return device info', async () => {
     const disconnectMock = mock.method(
       south,
       'disconnect',
       mock.fn(async () => undefined)
     );
-    await south.testConnection();
+    const result = await south.testConnection();
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.deepStrictEqual(result, {
+      items: [
+        { key: 'Device name', value: 'TestDevice' },
+        { key: 'Firmware version', value: '3.1.4000' },
+        { key: 'ADS state', value: 'Run' },
+        { key: 'Device state', value: '0' }
+      ]
+    });
+  });
+
+  it('should disconnect even when testConnection device info fetch fails', async () => {
+    readDeviceInfo.mock.mockImplementation(() => {
+      throw new Error('readDeviceInfo failed');
+    });
+    const disconnectMock = mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    await assert.rejects(south.testConnection(), new Error('readDeviceInfo failed'));
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
@@ -670,5 +740,250 @@ describe('South ADS', () => {
       south.testItem(configuration.items[0], testData.south.itemTestingSettings),
       new Error('Unable to connect. undefined')
     );
+  });
+
+  it('should use readRawMulti when items are found in the PLC symbol table', async () => {
+    await south.connect();
+    const addContentMock = mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+
+    const intDataType = { type: 'INT', subItems: [], enumInfos: [] };
+    getSymbols.mock.mockImplementationOnce(async () => ({
+      'gvl_test.testint1': { indexGroup: 0x4040, indexOffset: 0x0001, size: 2, type: 'INT' },
+      'gvl_test.testint2': { indexGroup: 0x4040, indexOffset: 0x0002, size: 2, type: 'INT' }
+    }));
+    getDataType.mock.mockImplementation(async () => intDataType);
+    readRawMulti.mock.mockImplementationOnce(async () => [
+      { success: true, value: Buffer.from([0x01, 0x00]), errorCode: 0, errorStr: '' },
+      { success: true, value: Buffer.from([0x02, 0x00]), errorCode: 0, errorStr: '' }
+    ]);
+    convertFromRaw.mock.mockImplementation(async () => 42 as unknown);
+
+    const parseValuesMock = mock.method(
+      south,
+      'parseValues',
+      mock.fn(() => [{ pointId: 'p', timestamp: 'ts', data: { value: '42' } }])
+    );
+
+    await south.directQuery(configuration.items);
+
+    // A single batched ADS request was made instead of one per item
+    assert.strictEqual(readRawMulti.mock.calls.length, 1);
+    assert.deepStrictEqual(readRawMulti.mock.calls[0].arguments[0], [
+      { indexGroup: 0x4040, indexOffset: 0x0001, size: 2 },
+      { indexGroup: 0x4040, indexOffset: 0x0002, size: 2 }
+    ]);
+
+    // convertFromRaw called once per successfully read item
+    assert.strictEqual(convertFromRaw.mock.calls.length, 2);
+    assert.deepStrictEqual(convertFromRaw.mock.calls[0].arguments[1], intDataType);
+
+    // parseValues called with dataType fields from the cached AdsDataType
+    assert.strictEqual(parseValuesMock.mock.calls.length, 2);
+    assert.deepStrictEqual(parseValuesMock.mock.calls[0].arguments[1], 'INT');
+    assert.deepStrictEqual(parseValuesMock.mock.calls[0].arguments[4], []);
+    assert.deepStrictEqual(parseValuesMock.mock.calls[0].arguments[5], []);
+
+    assert.strictEqual(addContentMock.mock.calls.length, 1);
+  });
+
+  it('should log an error and skip items where readRawMulti reports failure', async () => {
+    await south.connect();
+    const addContentMock = mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+
+    getSymbols.mock.mockImplementationOnce(async () => ({
+      'gvl_test.testint1': { indexGroup: 0x4040, indexOffset: 0x0001, size: 2, type: 'INT' },
+      'gvl_test.testint2': { indexGroup: 0x4040, indexOffset: 0x0002, size: 2, type: 'INT' }
+    }));
+    getDataType.mock.mockImplementation(async () => ({ type: 'INT', subItems: [], enumInfos: [] }));
+    readRawMulti.mock.mockImplementationOnce(async () => [
+      { success: false, value: undefined, errorCode: 0x700, errorStr: 'DEVICE_NOTFOUND' },
+      { success: true, value: Buffer.from([0x02, 0x00]), errorCode: 0, errorStr: '' }
+    ]);
+    convertFromRaw.mock.mockImplementation(async () => 2 as unknown);
+    mock.method(
+      south,
+      'parseValues',
+      mock.fn(() => [{ pointId: 'p2', timestamp: 'ts', data: { value: '2' } }])
+    );
+
+    await south.directQuery(configuration.items);
+
+    assert.ok(
+      logger.error.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(configuration.items[0].settings.address) &&
+          (c.arguments[0] as string).includes('DEVICE_NOTFOUND')
+      )
+    );
+    // Only one successful item contributed to content
+    assert.deepStrictEqual(addContentMock.mock.calls[0].arguments[0], {
+      type: 'time-values',
+      content: [{ pointId: 'p2', timestamp: 'ts', data: { value: '2' } }]
+    });
+  });
+
+  it('should warn when a configured item address is not found in the PLC symbol table', async () => {
+    await south.connect();
+    mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'readAdsSymbol',
+      mock.fn(async () => [])
+    );
+
+    // getSymbols returns only one of the two configured items
+    getSymbols.mock.mockImplementationOnce(async () => ({
+      'gvl_test.testint1': { indexGroup: 0x4040, indexOffset: 0x0001, size: 2, type: 'INT' }
+    }));
+    getDataType.mock.mockImplementation(async () => ({ type: 'INT', subItems: [], enumInfos: [] }));
+    readRawMulti.mock.mockImplementationOnce(async () => [{ success: true, value: Buffer.from([0x01, 0x00]), errorCode: 0, errorStr: '' }]);
+    convertFromRaw.mock.mockImplementation(async () => 0 as unknown);
+    mock.method(
+      south,
+      'parseValues',
+      mock.fn(() => [])
+    );
+
+    await south.directQuery(configuration.items);
+
+    assert.ok(
+      logger.warn.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(configuration.items[1].settings.address) &&
+          (c.arguments[0] as string).includes('not found on PLC')
+      )
+    );
+  });
+
+  it('should resolve array-indexed addresses via per-item getSymbol when not in bulk table', async () => {
+    await south.connect();
+    mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'parseValues',
+      mock.fn(() => [])
+    );
+
+    // getSymbols() bulk table is empty — items must fall through to per-item getSymbol
+    getSymbols.mock.mockImplementationOnce(async () => ({}));
+    adsInstance.getSymbol = mock.fn(async (address: string) => ({
+      indexGroup: 0x4040,
+      indexOffset: 0x0001,
+      size: 2,
+      type: 'INT',
+      name: address
+    }));
+    getDataType.mock.mockImplementation(async () => ({ type: 'INT', subItems: [], enumInfos: [] }));
+    readRawMulti.mock.mockImplementationOnce(async () => [
+      { success: true, value: Buffer.from([0x01, 0x00]), errorCode: 0, errorStr: '' },
+      { success: true, value: Buffer.from([0x02, 0x00]), errorCode: 0, errorStr: '' }
+    ]);
+    convertFromRaw.mock.mockImplementation(async () => 0 as unknown);
+
+    await south.directQuery(configuration.items);
+
+    // Both items were resolved via getSymbol (per-item path) and then read via readRawMulti
+    assert.strictEqual((adsInstance.getSymbol as ReturnType<typeof mock.fn>).mock.calls.length, 2);
+    assert.strictEqual(readRawMulti.mock.calls.length, 1);
+  });
+
+  it('should read uncached items concurrently when getSymbol fails', async () => {
+    await south.connect();
+    mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+
+    // All items fail to resolve → both go through concurrent readAdsSymbol fallback
+    getSymbols.mock.mockImplementationOnce(async () => ({}));
+    adsInstance.getSymbol = mock.fn(async () => {
+      throw new Error('not found');
+    });
+
+    const readAdsSymbolMock = mock.method(
+      south,
+      'readAdsSymbol',
+      mock.fn(async () => {
+        return [];
+      })
+    );
+
+    await south.directQuery(configuration.items);
+
+    // Both items were attempted (concurrent, not bailed on first failure)
+    assert.strictEqual(readAdsSymbolMock.mock.calls.length, 2);
+    assert.ok(
+      logger.warn.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes(configuration.items[0].settings.address) &&
+          (c.arguments[0] as string).includes('not found on PLC')
+      )
+    );
+  });
+
+  it('should rebuild the symbol cache after a disconnect', async () => {
+    await south.connect();
+    mock.method(
+      south,
+      'addContent',
+      mock.fn(async () => undefined)
+    );
+    mock.method(
+      south,
+      'parseValues',
+      mock.fn(() => [])
+    );
+
+    const symbolsMap = {
+      'gvl_test.testint1': { indexGroup: 0x4040, indexOffset: 0x0001, size: 2, type: 'INT' },
+      'gvl_test.testint2': { indexGroup: 0x4040, indexOffset: 0x0002, size: 2, type: 'INT' }
+    };
+    getSymbols.mock.mockImplementation(async () => symbolsMap);
+    getDataType.mock.mockImplementation(async () => ({ type: 'INT', subItems: [], enumInfos: [] }));
+    readRawMulti.mock.mockImplementation(async () => [
+      { success: true, value: Buffer.from([0x01, 0x00]), errorCode: 0, errorStr: '' },
+      { success: true, value: Buffer.from([0x02, 0x00]), errorCode: 0, errorStr: '' }
+    ]);
+    convertFromRaw.mock.mockImplementation(async () => 0 as unknown);
+
+    // First query — populates the symbol cache (getSymbols called once)
+    await south.directQuery(configuration.items);
+    assert.strictEqual(getSymbols.mock.calls.length, 1);
+
+    // Second query — cache hit, getSymbols is NOT called again
+    await south.directQuery(configuration.items);
+    assert.strictEqual(getSymbols.mock.calls.length, 1);
+
+    // Disconnect clears the cache (also sets this.client = null)
+    mock.method(
+      south,
+      'disconnectAdsClient',
+      mock.fn(async () => undefined)
+    );
+    await south.disconnect();
+
+    // Reconnect so this.client is no longer null
+    await south.connect();
+
+    // Third query — cache was cleared, getSymbols is called again
+    await south.directQuery(configuration.items);
+    assert.strictEqual(getSymbols.mock.calls.length, 2);
   });
 });
