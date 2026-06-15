@@ -35,7 +35,7 @@
     "@codemirror/lang-json": "6.0.2",
     "@codemirror/lang-sql": "6.10.0",
     "@codemirror/state": "6.6.0",
-    "@codemirror/view": "6.43.0",
+    "@codemirror/view": "6.43.1",
     "@ng-bootstrap/ng-bootstrap": "20.0.0",
     "@ngx-translate/core": "17.0.0",
     "@popperjs/core": "2.11.8",
@@ -61,9 +61,9 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.6",
     "playwright": "1.60.0",
-    "prettier": "3.8.3",
+    "prettier": "3.8.4",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.60.1",
+    "typescript-eslint": "8.61.0",
     "vitest": "4.1.8"
   },
   "allowScripts": {
