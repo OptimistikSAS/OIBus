@@ -16659,13 +16659,13 @@
 					"proxyUsername": {
 						"type": "string",
 						"nullable": true,
-						"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
+						"description": "KEEP_UPSTREAM    * The username clients must use to authenticate with this proxy server. Null means no authentication required.\n=======\nThe username for proxy server authentication.\n>>>>>>> Stashed changes",
 						"example": null
 					},
 					"proxyPassword": {
 						"type": "string",
 						"nullable": true,
-						"description": "The password clients must use to authenticate with this proxy server.",
+						"description": "KEEP_UPSTREAM    * The password clients must use to authenticate with this proxy server.\n=======\nThe password for proxy server authentication.\n>>>>>>> Stashed changes",
 						"example": null
 					},
 					"logParameters": {
@@ -31417,13 +31417,13 @@
 					"proxyUsername": {
 						"type": "string",
 						"nullable": true,
-						"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
+						"description": "KEEP_UPSTREAM    * The username clients must use to authenticate with this proxy server. Null means no authentication required.\n=======\nThe username for proxy server authentication.\n>>>>>>> Stashed changes",
 						"example": null
 					},
 					"proxyPassword": {
 						"type": "string",
 						"nullable": true,
-						"description": "The password clients must use to authenticate with this proxy server.",
+						"description": "KEEP_UPSTREAM    * The password clients must use to authenticate with this proxy server.\n=======\nThe password for proxy server authentication.\n>>>>>>> Stashed changes",
 						"example": null
 					},
 					"logParameters": {
@@ -31703,6 +31703,18 @@
 						"nullable": true,
 						"description": "The password for upstream proxy authentication.",
 						"example": null
+					},
+					"proxyUsername": {
+						"type": "string",
+						"nullable": true,
+						"description": "The username for proxy server authentication.",
+						"example": null
+					},
+					"proxyPassword": {
+						"type": "string",
+						"nullable": true,
+						"description": "The password for proxy server authentication.",
+						"example": null
 					}
 				},
 				"required": [
@@ -31710,7 +31722,9 @@
 					"proxyPort",
 					"forwardProxyUrl",
 					"forwardProxyUsername",
-					"forwardProxyPassword"
+					"forwardProxyPassword",
+					"proxyUsername",
+					"proxyPassword"
 				],
 				"type": "object",
 				"additionalProperties": false
