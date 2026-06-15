@@ -1447,7 +1447,10 @@ const engineWebServerCommand: EngineWebServerCommandDTO = {
 };
 const engineProxyCommand: EngineProxyCommandDTO = {
   proxyEnabled: true,
-  proxyPort: 9000
+  proxyPort: 9000,
+  forwardProxyUrl: null,
+  forwardProxyUsername: null,
+  forwardProxyPassword: null
 };
 const engineLoggerCommand: EngineLoggerCommandDTO = engineSettingsCommand.logParameters;
 const engineMetrics: EngineMetrics = {
