@@ -62,6 +62,26 @@ describe('Entity migration v3.9.0', () => {
     await fs.rm(dbFile, { force: true });
     db = knex({ client: 'better-sqlite3', connection: { filename: dbFile }, useNullAsDefault: true });
     await buildPreV390Schema(db);
+    await db('engines').insert({
+      id: 'test-engine-id',
+      name: 'Test Engine',
+      port: 2223,
+      log_console_level: 'silent',
+      log_file_level: 'silent',
+      log_file_max_file_size: 50,
+      log_file_number_of_files: 5,
+      log_database_level: 'silent',
+      log_database_max_number_of_logs: 100000,
+      log_loki_level: 'silent',
+      log_loki_interval: 60,
+      log_oia_level: 'silent',
+      log_oia_interval: 10,
+      proxy_enabled: 0,
+      proxy_port: 9000,
+      oibus_version: '3.8.0',
+      created_at: '2026-01-01T00:00:00Z',
+      updated_at: '2026-01-01T00:00:00Z'
+    });
   });
 
   it('runs end-to-end on a realistic pre-3.9.0 schema', async () => {
