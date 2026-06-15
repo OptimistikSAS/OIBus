@@ -36,7 +36,7 @@ export class VersionCheckService {
     this.monitoringSubscription = interval(10000)
       .pipe(
         switchMap(() =>
-          this.engineService.getInfo().pipe(
+          this.engineService.fetchInfo().pipe(
             catchError(() => {
               // Return EMPTY so the stream stays alive but emits nothing for this tick
               return EMPTY;
