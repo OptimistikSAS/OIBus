@@ -165,6 +165,7 @@ export default class EngineRepository {
     const query =
       `UPDATE ${ENGINES_TABLE} SET proxy_enabled = ?, proxy_port = ?, ` +
       `forward_proxy_url = ?, forward_proxy_username = ?, forward_proxy_password = ?, ` +
+      `proxy_username = ?, proxy_password = ?, ` +
       `updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') ` +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
     this.database
@@ -175,6 +176,8 @@ export default class EngineRepository {
         command.forwardProxyUrl,
         command.forwardProxyUsername,
         command.forwardProxyPassword,
+        command.proxyUsername,
+        command.proxyPassword,
         updatedBy
       );
   }
