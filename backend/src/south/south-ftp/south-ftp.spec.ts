@@ -225,7 +225,9 @@ describe('SouthFTP', () => {
     });
 
     it('should properly start', () => {
-      assert.ok(southCacheService.createItemValueTable.mock.calls.some(c => c.arguments[0] === 'southId'));
+      assert.ok(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c => (c.arguments[0] as string).includes('enabled'))
+      );
     });
 
     it('should test connection', async () => {
@@ -660,17 +662,16 @@ describe('SouthFTP', () => {
       );
     });
 
-    it('should handle start error when createFolder fails', async () => {
-      mock.method(fs, 'mkdir', async () => {
-        throw new Error('Failed to create folder');
-      });
-
+    it('should start a connector with a different id', async () => {
       const configWithDifferentId = { ...configuration, id: 'southId-not-test' };
       const newSouth = new SouthFtp(configWithDifferentId, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
+      (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       await newSouth.start();
 
-      assert.ok(southCacheService.createItemValueTable.mock.calls.some(c => c.arguments[0] === 'southId-not-test'));
+      assert.ok(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c => (c.arguments[0] as string).includes('enabled'))
+      );
     });
 
     it('should handle listFiles error when FTP access fails', async () => {
@@ -785,10 +786,12 @@ describe('SouthFTP', () => {
       const nonTestConfig = { ...configuration, id: 'southId-not-test' };
       const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
 
-      southCacheService.createItemValueTable.mock.resetCalls();
+      (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       await nonTestSouth.start();
 
-      assert.ok(southCacheService.createItemValueTable.mock.calls.some(c => c.arguments[0] === 'southId-not-test'));
+      assert.ok(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c => (c.arguments[0] as string).includes('enabled'))
+      );
     });
 
     it('should handle start method when connector id is not test and createFolder succeeds', async () => {
@@ -797,11 +800,13 @@ describe('SouthFTP', () => {
       mock.method(fs, 'mkdir', async () => undefined);
 
       const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
-      southCacheService.createItemValueTable.mock.resetCalls();
+      (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
 
       await nonTestSouth.start();
 
-      assert.ok(southCacheService.createItemValueTable.mock.calls.some(c => c.arguments[0] === 'southId-not-test'));
+      assert.ok(
+        (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(c => (c.arguments[0] as string).includes('enabled'))
+      );
     });
 
     it('should handle preserveFiles with ignoreModifiedDate true', () => {

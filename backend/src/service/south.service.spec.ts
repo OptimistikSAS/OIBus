@@ -775,7 +775,7 @@ describe('South Service', () => {
     await service.deleteAllItems(testData.south.list[0].id);
 
     assert.deepStrictEqual(southConnectorRepository.deleteAllItemsBySouth.mock.calls[0].arguments, [testData.south.list[0].id]);
-    assert.deepStrictEqual(southCacheRepository.dropItemValueTable.mock.calls[0].arguments, [testData.south.list[0].id]);
+    assert.deepStrictEqual(southCacheRepository.deleteItemsBySouth.mock.calls[0].arguments, [testData.south.list[0].id]);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
     assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
   });

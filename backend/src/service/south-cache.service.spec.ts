@@ -20,12 +20,6 @@ describe('South cache service', () => {
     mock.restoreAll();
   });
 
-  it('should create item value table', () => {
-    service.createItemValueTable('conn-1');
-    assert.strictEqual(southCacheRepository.createItemValueTable.mock.calls.length, 1);
-    assert.deepStrictEqual(southCacheRepository.createItemValueTable.mock.calls[0].arguments, ['conn-1']);
-  });
-
   it('should get item last value', () => {
     const value = { itemId: 'item-1', groupId: 'group-1', queryTime: null, value: { x: 1 }, trackedInstant: '2024-01-01T00:00:00Z' };
     southCacheRepository.getItemLastValue.mock.mockImplementationOnce(() => value);
@@ -47,9 +41,9 @@ describe('South cache service', () => {
     assert.deepStrictEqual(southCacheRepository.deleteItemValue.mock.calls[0].arguments, ['conn-1', 'item-1']);
   });
 
-  it('should drop item value table', () => {
-    service.dropItemValueTable('conn-1');
-    assert.strictEqual(southCacheRepository.dropItemValueTable.mock.calls.length, 1);
-    assert.deepStrictEqual(southCacheRepository.dropItemValueTable.mock.calls[0].arguments, ['conn-1']);
+  it('should delete all items by south', () => {
+    service.deleteItemsBySouth('conn-1');
+    assert.strictEqual(southCacheRepository.deleteItemsBySouth.mock.calls.length, 1);
+    assert.deepStrictEqual(southCacheRepository.deleteItemsBySouth.mock.calls[0].arguments, ['conn-1']);
   });
 });

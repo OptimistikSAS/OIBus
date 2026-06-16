@@ -217,7 +217,7 @@ describe('Scan Mode Service', () => {
 
     assert.deepStrictEqual(scanModeRepository.findById.mock.calls[0].arguments, [testData.scanMode.list[0].id]);
     assert.strictEqual(scanModeRepository.delete.mock.calls.length, 0);
-    assert.strictEqual(southCacheRepository.dropItemValueTable.mock.calls.length, 0);
+    assert.strictEqual(southCacheRepository.deleteItemsBySouth.mock.calls.length, 0);
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 0);
   });
 
