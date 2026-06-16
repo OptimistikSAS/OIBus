@@ -10,7 +10,8 @@ import {
   parseData,
   OIATimeValues,
   getUrl,
-  testOIAnalyticsConnection
+  testOIAnalyticsConnection,
+  clearOIAnalyticsCredentialCache
 } from './utils-oianalytics';
 import { encryptionService } from './encryption.service';
 import CertificateRepository from '../repository/config/certificate.repository';
@@ -76,6 +77,7 @@ describe('utils-oianalytics', () => {
     mock.restoreAll();
     Object.defineProperty(azureModule, 'ClientSecretCredential', origCSCDescriptor);
     Object.defineProperty(azureModule, 'ClientCertificateCredential', origCCCDescriptor);
+    clearOIAnalyticsCredentialCache();
   });
 
   describe('getAuthorizationOptions', () => {
@@ -133,6 +135,7 @@ describe('utils-oianalytics', () => {
       assert.deepStrictEqual(decryptTextMock.mock.calls[0].arguments, ['pk']);
       assert.strictEqual(mockGetTokenCCC.mock.calls.length, 1);
       assert.deepStrictEqual(mockGetTokenCCC.mock.calls[0].arguments, ['scope']);
+      assert.deepStrictEqual(encryptTextMock.mock.calls[0].arguments, ['Bearer azure-token']);
       assert.deepStrictEqual(result, { type: 'bearer', token: 'encrypted-token' });
     });
 

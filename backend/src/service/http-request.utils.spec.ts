@@ -67,9 +67,10 @@ describe('HTTPRequest Service', () => {
     );
 
     const agentInst = agentInstances;
-    mock.method(undiciModule, 'Agent', function (this: { isMockAgent: boolean; options?: unknown }, options: unknown) {
+    mock.method(undiciModule, 'Agent', function (this: { isMockAgent: boolean; options?: unknown; destroy: () => void }, options: unknown) {
       this.isMockAgent = true;
       this.options = options;
+      this.destroy = () => undefined;
       agentInst.push(this);
     });
   });
@@ -146,6 +147,17 @@ describe('HTTPRequest Service', () => {
     });
     assert.ok(calledWith.dispatcher?.isMockAgent);
     assert.strictEqual(response.ok, true);
+  });
+
+  it('should reuse Agent instance for repeated acceptUnauthorized requests', async () => {
+    const options: ReqOptions = { acceptUnauthorized: true };
+
+    await HTTPRequest(testUrl, options);
+    await HTTPRequest(testUrl, { acceptUnauthorized: true });
+
+    assert.strictEqual(agentInstances.length, 1);
+    assert.strictEqual((undiciModule.Agent as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+    assert.strictEqual(requestMock.mock.calls.length, 2);
   });
 
   it('should handle non 2xx status codes and set ok to false', async () => {

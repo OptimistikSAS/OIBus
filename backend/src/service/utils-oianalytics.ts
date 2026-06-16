@@ -2,7 +2,13 @@ import { SouthOIAnalyticsSettingsSpecificSettings } from 'shared/model/south-set
 import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/north-settings.model';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from './http-request.utils';
-import { ClientCertificateCredential, ClientSecretCredential } from '@azure/identity';
+import { ClientCertificateCredential, ClientSecretCredential, type TokenCredential } from '@azure/identity';
+
+const credentialCache = new Map<string, TokenCredential>();
+
+export function clearOIAnalyticsCredentialCache(): void {
+  credentialCache.clear();
+}
 import { encryptionService } from './encryption.service';
 import { OIBusTimeValue } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
@@ -53,35 +59,37 @@ export const getAuthorizationOptions = async (
     }
 
     case 'aad-client-secret': {
-      const clientSecretCredential = new ClientSecretCredential(
-        specificSettings!.tenantId!,
-        specificSettings!.clientId!,
-        await encryptionService.decryptText(specificSettings!.clientSecret!)
-      );
-      const result = await clientSecretCredential.getToken(specificSettings!.scope!);
-      // Note: token needs to be encrypted when adding it to proxy options
-      const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
-      return {
-        type: 'bearer',
-        token
-      };
+      const cacheKey = `aad-client-secret|${specificSettings!.tenantId}|${specificSettings!.clientId}|${specificSettings!.scope}`;
+      let credential = credentialCache.get(cacheKey);
+      if (!credential) {
+        credential = new ClientSecretCredential(
+          specificSettings!.tenantId!,
+          specificSettings!.clientId!,
+          await encryptionService.decryptText(specificSettings!.clientSecret!)
+        );
+        credentialCache.set(cacheKey, credential);
+      }
+      const result = await credential.getToken(specificSettings!.scope!);
+      const token = await encryptionService.encryptText(`Bearer ${result!.token}`);
+      return { type: 'bearer', token };
     }
 
     case 'aad-certificate': {
       const certificate = certificateRepository.findById(specificSettings!.certificateId!);
       if (certificate === null) return;
 
-      const decryptedPrivateKey = await encryptionService.decryptText(certificate.privateKey);
-      const clientCertificateCredential = new ClientCertificateCredential(specificSettings!.tenantId!, specificSettings!.clientId!, {
-        certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
-      });
-      const result = await clientCertificateCredential.getToken(specificSettings!.scope!);
-      // Note: token needs to be encrypted when adding it to proxy options
-      const token = await encryptionService.encryptText(`Bearer ${Buffer.from(result.token)}`);
-      return {
-        type: 'bearer',
-        token
-      };
+      const cacheKey = `aad-certificate|${specificSettings!.tenantId}|${specificSettings!.clientId}|${specificSettings!.certificateId}|${specificSettings!.scope}`;
+      let credential = credentialCache.get(cacheKey);
+      if (!credential) {
+        const decryptedPrivateKey = await encryptionService.decryptText(certificate.privateKey);
+        credential = new ClientCertificateCredential(specificSettings!.tenantId!, specificSettings!.clientId!, {
+          certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
+        });
+        credentialCache.set(cacheKey, credential);
+      }
+      const result = await credential.getToken(specificSettings!.scope!);
+      const token = await encryptionService.encryptText(`Bearer ${result!.token}`);
+      return { type: 'bearer', token };
     }
   }
 };
