@@ -69,6 +69,11 @@ describe('NorthSFTP', () => {
         return cacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     NorthSftp = reloadModule<{ default: typeof NorthSftpClass }>(nodeRequire, './north-sftp').default;
   });
 
@@ -104,7 +109,7 @@ describe('NorthSFTP', () => {
       suffix: '_suffix'
     });
 
-    north = new NorthSftp(configuration, logger, cacheService);
+    north = new NorthSftp(configuration, cacheService);
     await north.start();
   });
 
@@ -276,7 +281,7 @@ describe('NorthSFTP without suffix or prefix (Private Key Auth)', () => {
       suffix: ''
     });
 
-    north = new NorthSftp(configuration, logger, cacheService);
+    north = new NorthSftp(configuration, cacheService);
   });
 
   afterEach(() => {

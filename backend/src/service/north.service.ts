@@ -248,20 +248,11 @@ export default class NorthService {
       }
     };
 
-    const childLoggerForTest = this.engine.logger.child(
-      {
-        scopeType: 'north',
-        scopeId: 'test',
-        scopeName: `${northType}:test-connection`
-      },
-      { level: 'silent' }
-    );
     const north = buildNorth(
       testToRun,
-      childLoggerForTest,
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository,
-      createNorthOrchestrator(this.engine.baseFolder, 'test', childLoggerForTest)
+      createNorthOrchestrator(this.engine.baseFolder, 'test', testToRun.name)
     );
     return await north.testConnection();
   }

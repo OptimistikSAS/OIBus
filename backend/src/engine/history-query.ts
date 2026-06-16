@@ -18,6 +18,7 @@ import { Instant } from '../model/types';
 import { CacheSize } from '../model/engine.model';
 import TypedEventEmitter from '../service/typed-event-emitter';
 import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
 
 const FINISH_INTERVAL = 5000;
 
@@ -48,6 +49,7 @@ export interface HistoryMetricsEvents {
 export default class HistoryQuery {
   private finishInterval: NodeJS.Timeout | null = null;
   private stopping = false;
+  private logger!: ILogger;
 
   public metricsEvent: TypedEventEmitter<HistoryMetricsEvents> = new TypedEventEmitter<HistoryMetricsEvents>();
   public finishEvent: EventEmitter = new EventEmitter();
@@ -55,9 +57,10 @@ export default class HistoryQuery {
   constructor(
     private historyConfiguration: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
     private north: NorthConnector<NorthSettings>,
-    private south: SouthConnector<SouthSettings, SouthItemSettings>,
-    private logger: ILogger
-  ) {}
+    private south: SouthConnector<SouthSettings, SouthItemSettings>
+  ) {
+    this.logger = loggerService.createChildLogger('history-query', this.historyConfiguration.id, this.historyConfiguration.name);
+  }
 
   /** Live north cache/error/archive folder sizes, read from the cache service (the authoritative source). */
   getNorthCacheSizes(): CacheSize {
@@ -197,8 +200,8 @@ export default class HistoryQuery {
     }
   }
 
-  setLogger(value: ILogger) {
-    this.logger = value;
+  refreshLogger(): void {
+    this.logger = loggerService.createChildLogger('history-query', this.historyConfiguration.id, this.historyConfiguration.name);
   }
 
   get historyQueryConfiguration() {

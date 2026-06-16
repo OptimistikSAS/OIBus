@@ -9,8 +9,8 @@ import type {
   FileCacheContent
 } from '../../shared/model/engine.model';
 import type { CacheSize } from './engine.model';
-import type { ILogger } from './logger.model';
 import type TypedEventEmitter from '../service/typed-event-emitter';
+import type { ScopeType } from '../../shared/model/logs.model';
 
 /** Events published by a cache service's {@link ICacheService.cacheSizeEventEmitter}. */
 export interface CacheSizeEvents {
@@ -25,7 +25,8 @@ export interface ICacheService {
   readonly archiveFolder: string;
   readonly cacheFolder: string;
   readonly cacheSizeEventEmitter: TypedEventEmitter<CacheSizeEvents>;
-  setLogger(value: ILogger): void;
+  /** Re-creates the internal LoggerProxy for the given scope — call after a connector rename. */
+  refreshLogger(scopeType: ScopeType, id: string, name: string): void;
   start(): Promise<void>;
   stop(): void;
   getCacheContentToSend(maxGroupCount: number): Promise<{ filename: string; metadata: CacheMetadata } | null>;

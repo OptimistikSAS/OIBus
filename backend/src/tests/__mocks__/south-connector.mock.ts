@@ -3,7 +3,6 @@ import { mock } from 'node:test';
 import SouthConnector from '../../south/south-connector';
 import { SouthConnectorEntity } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import type { ILogger } from '../../model/logger.model';
 import type SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import type { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
 import type { ScanMode } from '../../model/scan-mode.model';
@@ -16,7 +15,7 @@ import type { SouthConnectorItemTestingSettings } from '../../../shared/model/so
  */
 export default class SouthConnectorMock extends SouthConnector<SouthSettings, SouthItemSettings> {
   constructor(connector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
-    super(connector, async () => undefined, null! as SouthCacheRepository, null! as ILogger, '');
+    super(connector, async () => undefined, null! as SouthCacheRepository, '');
   }
 
   override start = mock.fn(async (): Promise<void> => undefined);
@@ -38,7 +37,7 @@ export default class SouthConnectorMock extends SouthConnector<SouthSettings, So
   );
   override disconnect = mock.fn(async (): Promise<void> => undefined);
   override stop = mock.fn(async (): Promise<void> => undefined);
-  override setLogger = mock.fn((_logger: ILogger): void => undefined);
+  override refreshLogger = mock.fn((): void => undefined);
   override resetCache = mock.fn(async (): Promise<void> => undefined);
   override testConnection = mock.fn(async (): Promise<OIBusConnectionTestResult> => ({ items: [] }));
   override testItem = mock.fn(

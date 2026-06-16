@@ -9,7 +9,6 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ProxySettings } from '@azure/core-rest-pipeline/dist/browser';
 import type { ICacheService } from '../../model/cache.service.model';
 import { ReadStream } from 'node:fs';
-import type { ILogger } from '../../model/logger.model';
 
 const TEST_FILE = 'oibus-azure-test.txt';
 
@@ -17,8 +16,8 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   private blobClient: BlobServiceClient | null = null;
   private dataLakeClient: DataLakeServiceClient | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, logger: ILogger, cacheService: ICacheService) {
-    super(connector, logger, cacheService);
+  constructor(connector: NorthConnectorEntity<NorthAzureBlobSettings>, cacheService: ICacheService) {
+    super(connector, cacheService);
   }
 
   supportedTypes(): Array<string> {

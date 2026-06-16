@@ -49,7 +49,6 @@ before(() => {
     start = mock.fn(async () => undefined);
     stop = mock.fn(async () => undefined);
     refreshIpFilters = mock.fn();
-    setLogger = mock.fn();
     constructor() {
       lastProxyRefreshIpFilters = this.refreshIpFilters;
       lastProxyStart = this.start;
@@ -259,13 +258,6 @@ describe('OIBus Service', () => {
     ]);
   });
 
-  it('should set logger', () => {
-    service.setLogger(logger);
-    // engine.setLogger is also called once in the constructor; verify the last call used our logger
-    assert.ok(engine.setLogger.mock.calls.some(c => c.arguments[0] === logger));
-    assert.ok(oIAnalyticsMessageService.setLogger.mock.calls.some(c => c.arguments[0] === logger));
-  });
-
   it('should correctly update settings and call callback methods', async () => {
     const newEngineSettings: EngineSettings = JSON.parse(JSON.stringify(testData.engine.settings));
     newEngineSettings.name = 'updated oibus';
@@ -300,7 +292,7 @@ describe('OIBus Service', () => {
     assert.strictEqual(engineRepository.update.mock.calls.length, 1);
     assert.strictEqual(loggerService.stop.mock.calls.length, 1);
     assert.strictEqual(loggerService.start.mock.calls.length, 1);
-    assert.strictEqual(loggerService.createChildLogger.mock.calls.length, 3); // in constructor and 2x at update
+    assert.strictEqual(loggerService.createChildLogger.mock.calls.length, 2); // in constructor and 1x at update (resetLogger)
     assert.strictEqual(oIAnalyticsMessageService.createFullConfigMessageIfNotPending.mock.calls.length, 1);
 
     // Wait for setImmediate callback to execute

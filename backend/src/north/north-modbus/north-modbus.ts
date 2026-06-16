@@ -11,7 +11,6 @@ import { connectSocket } from '../../service/utils-modbus';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthModbus - Write values in a Modbus server
@@ -22,8 +21,8 @@ export default class NorthModbus extends NorthConnector<NorthModbusSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, logger: ILogger, cacheService: ICacheService) {
-    super(configuration, logger, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthModbusSettings>, cacheService: ICacheService) {
+    super(configuration, cacheService);
   }
 
   supportedTypes(): Array<string> {
