@@ -207,7 +207,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
                 type: 'any-content',
                 content: JSON.stringify([
                   {
-                    message: message,
+                    message: message.toString(),
                     timestamp: messageTimestamp,
                     item: { id: item.id, name: item.name, topic: item.settings.topic }
                   }
