@@ -1,6 +1,6 @@
 import { Component, contentChild, ElementRef, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { NgbInputDatepicker, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 /**
  * Component used to simplify the markup of a datepicker in a popup. It wraps the input which has the
@@ -20,7 +20,7 @@ import { TranslateModule } from '@ngx-translate/core';
     class: 'input-group'
   },
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [NgbTooltip, TranslateModule]
+  imports: [NgbTooltip, TranslatePipe]
 })
 export class DatepickerContainerComponent {
   readonly datePicker = contentChild.required(NgbInputDatepicker);

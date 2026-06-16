@@ -2,13 +2,13 @@ import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { OibHelpComponent } from './oib-help.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { page } from 'vitest/browser';
 
 @Component({
   selector: 'oib-test-oib-help-component',
   template: `<oib-help [url]="url" />`,
-  imports: [OibHelpComponent, TranslateModule],
+  imports: [OibHelpComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
@@ -27,7 +27,7 @@ describe('OibHelpComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [TranslateModule.forRoot()]
+      providers: [provideI18nTesting()]
     });
     tester = new TestComponentTester();
     tester.fixture.detectChanges();

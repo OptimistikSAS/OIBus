@@ -3,7 +3,7 @@ import { firstValueFrom, startWith, Subject, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { CertificateService } from '../../services/certificate.service';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { EditCertificateModalComponent } from './edit-certificate-modal/edit-certificate-modal.component';
@@ -33,7 +33,7 @@ const PAGE_SIZE = 20;
     ClipboardCopyDirective,
     OibHelpComponent,
     NgbTooltip,
-    TranslateModule,
+    TranslatePipe,
     PaginationComponent
   ],
   templateUrl: './certificate-list.component.html',

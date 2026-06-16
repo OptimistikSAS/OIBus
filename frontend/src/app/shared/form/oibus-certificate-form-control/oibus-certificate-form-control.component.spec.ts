@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
 import { OIBusCertificateAttribute } from '../../../../../../backend/shared/model/form.model';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
@@ -19,7 +18,7 @@ import { page } from 'vitest/browser';
       </ng-container>
     </form>
   `,
-  imports: [ReactiveFormsModule, TranslateModule, OibusCertificateFormControlComponent],
+  imports: [ReactiveFormsModule, OibusCertificateFormControlComponent],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {

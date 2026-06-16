@@ -4,7 +4,7 @@ import { firstValueFrom, switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -29,7 +29,7 @@ const PAGE_SIZE = 20;
     BoxTitleDirective,
     OibHelpComponent,
     NgbTooltip,
-    TranslateModule,
+    TranslatePipe,
     PaginationComponent,
     DatetimePipe
   ],

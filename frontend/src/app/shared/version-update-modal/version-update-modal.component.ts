@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NgbActiveModal, NgbProgressbarModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective } from '@ngx-translate/core';
 import { WindowService } from '../window.service';
 
 const COUNTDOWN_SECONDS = 60;
@@ -8,7 +8,7 @@ const UPDATE_INTERVAL_MS = 100; // Update every 100ms for smooth progress bar
 
 @Component({
   selector: 'oib-version-update-modal',
-  imports: [NgbProgressbarModule, TranslateDirective, TranslateModule],
+  imports: [NgbProgressbarModule, TranslateDirective],
   templateUrl: './version-update-modal.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './version-update-modal.component.scss'
