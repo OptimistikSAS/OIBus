@@ -306,7 +306,7 @@ export default class OIBusService {
   }
 
   async resetLogger(settings: EngineSettings) {
-    this.loggerService.stop();
+    await this.loggerService.stop();
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings();
     await this.loggerService.start(settings, registration);
     this.setLogger(this.loggerService.createChildLogger('internal'));
