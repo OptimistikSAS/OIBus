@@ -15,7 +15,8 @@ export function createMockResponse(
     body: {
       json: mock.fn(async () => body),
       text: mock.fn(async () => (typeof body === 'string' ? body : JSON.stringify(body))),
-      arrayBuffer: mock.fn(() => body)
+      arrayBuffer: mock.fn(() => body),
+      dump: mock.fn(async () => undefined)
     },
     ok: statusCode >= 200 && statusCode <= 299
   } as unknown as ReqResponse;
