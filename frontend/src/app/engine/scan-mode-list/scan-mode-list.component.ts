@@ -4,7 +4,7 @@ import { firstValueFrom, switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { EditScanModeModalComponent } from './edit-scan-mode-modal/edit-scan-mode-modal.component';
@@ -29,7 +29,7 @@ const PAGE_SIZE = 20;
     BoxTitleDirective,
     OibHelpComponent,
     NgbTooltip,
-    TranslateModule,
+    TranslatePipe,
     PaginationComponent,
     DatetimePipe
   ],

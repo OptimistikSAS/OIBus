@@ -2,7 +2,7 @@ import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { noAnimation } from '../test-utils';
 import { DatepickerContainerComponent } from './datepicker-container.component';
 import { beforeEach, describe, expect, test } from 'vitest';
@@ -15,7 +15,7 @@ import { page } from 'vitest/browser';
       <input class="form-control" [formControl]="dateCtrl" ngbDatepicker />
     </oib-datepicker-container>
   `,
-  imports: [DatepickerContainerComponent, ReactiveFormsModule, NgbInputDatepicker, TranslateModule],
+  imports: [DatepickerContainerComponent, ReactiveFormsModule, NgbInputDatepicker],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 class TestComponent {
@@ -36,8 +36,7 @@ describe('DatepickerContainerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [TranslateModule.forRoot()],
-      providers: [noAnimation]
+      providers: [noAnimation, provideI18nTesting()]
     });
 
     tester = new TestComponentTester();

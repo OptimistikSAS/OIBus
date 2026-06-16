@@ -1,5 +1,5 @@
 import { Component, NgZone, inject, input, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { EngineMetrics } from '../../../../../backend/shared/model/engine.model';
 import { PercentPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
@@ -22,7 +22,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     DatetimePipe,
     DurationPipe,
     NgbTooltip,
-    TranslateModule
+    TranslatePipe
   ],
   templateUrl: './engine-metrics.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

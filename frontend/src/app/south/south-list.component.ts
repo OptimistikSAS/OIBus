@@ -1,5 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { SouthConnectorLightDTO } from '../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
@@ -39,7 +39,7 @@ const PAGE_SIZE = 15;
     LegendComponent,
     OIBusSouthTypeEnumPipe,
     NgbTooltip,
-    TranslateModule,
+    TranslatePipe,
     DatetimePipe
   ],
   templateUrl: './south-list.component.html',

@@ -1,6 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { of, switchMap } from 'rxjs';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -10,16 +10,7 @@ import { PageTitleDirective } from '../services/page-title.directive';
 
 @Component({
   selector: 'oib-navbar',
-  imports: [
-    RouterLink,
-    TranslateDirective,
-    NgbDropdown,
-    NgbDropdownToggle,
-    NgbDropdownMenu,
-    PageTitleDirective,
-    NgbTooltip,
-    TranslateModule
-  ],
+  imports: [RouterLink, TranslateDirective, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, PageTitleDirective, NgbTooltip, TranslatePipe],
   templateUrl: './navbar.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './navbar.component.scss'

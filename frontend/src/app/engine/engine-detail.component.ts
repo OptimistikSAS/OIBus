@@ -1,6 +1,6 @@
 import { Component, DestroyRef, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { EngineService } from '../services/engine.service';
 import { EngineMetrics } from '../../../../backend/shared/model/engine.model';
 import { AsyncPipe } from '@angular/common';
@@ -30,7 +30,7 @@ import { TransformerListComponent } from './transformer-list/transformer-list.co
     EngineMetricsComponent,
     RouterLink,
     NgbTooltip,
-    TranslateModule,
+    TranslatePipe,
     TransformerListComponent
   ],
   templateUrl: './engine-detail.component.html',

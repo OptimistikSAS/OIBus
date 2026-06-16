@@ -1,5 +1,5 @@
 import { Component, inject, input, OnDestroy, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -37,7 +37,6 @@ import { LegendComponent } from '../shared/legend/legend.component';
 import { NgOptimizedImage } from '@angular/common';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/form/typeahead';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
-import { TranslateModule } from '@ngx-translate/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -45,7 +44,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
   imports: [
     ReactiveFormsModule,
     TranslateDirective,
-    TranslateModule,
+    TranslatePipe,
     PaginationComponent,
     MultiSelectComponent,
     MultiSelectOptionDirective,

@@ -1,5 +1,5 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
-import { TranslateDirective, TranslateModule } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
@@ -37,7 +37,7 @@ const PAGE_SIZE = 15;
     LegendComponent,
     OIBusNorthTypeEnumPipe,
     NgbTooltip,
-    TranslateModule,
+    TranslatePipe,
     DatetimePipe
   ],
   templateUrl: './north-list.component.html',
