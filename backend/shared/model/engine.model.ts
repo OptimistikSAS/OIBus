@@ -74,19 +74,13 @@ export interface EngineSettingsDTO extends BaseEntity {
   forwardProxyPassword: string | null;
 
   /**
-KEEP_UPSTREAM    * The username clients must use to authenticate with this proxy server. Null means no authentication required.
-=======
-   * The username for proxy server authentication.
->>>>>>> Stashed changes
+   * The username clients must use to authenticate with this proxy server. Null means no authentication required.
    * @example null
    */
   proxyUsername: string | null;
 
   /**
-KEEP_UPSTREAM    * The password clients must use to authenticate with this proxy server.
-=======
-   * The password for proxy server authentication.
->>>>>>> Stashed changes
+   * The password clients must use to authenticate with this proxy server.
    * @example null
    */
   proxyPassword: string | null;
@@ -944,19 +938,13 @@ export interface EngineSettingsCommandDTO {
   forwardProxyPassword: string | null;
 
   /**
-KEEP_UPSTREAM    * The username clients must use to authenticate with this proxy server. Null means no authentication required.
-=======
-   * The username for proxy server authentication.
->>>>>>> Stashed changes
+   * The username clients must use to authenticate with this proxy server. Null means no authentication required.
    * @example null
    */
   proxyUsername: string | null;
 
   /**
-KEEP_UPSTREAM    * The password clients must use to authenticate with this proxy server.
-=======
-   * The password for proxy server authentication.
->>>>>>> Stashed changes
+   * The password clients must use to authenticate with this proxy server.
    * @example null
    */
   proxyPassword: string | null;

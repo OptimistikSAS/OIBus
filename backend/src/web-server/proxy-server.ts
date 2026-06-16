@@ -2,6 +2,7 @@ import http from 'node:http';
 import * as stream from 'node:stream';
 import net from 'node:net';
 import httpProxy from 'http-proxy';
+import argon2 from 'argon2';
 import { testIPOnFilter } from '../service/utils';
 import type { ILogger } from '../model/logger.model';
 
@@ -80,8 +81,15 @@ export default class ProxyServer {
       this._logger.info(`Start proxy server on port ${port}.`);
     });
 
-    this.webServer.on('request', this.handleHttpRequest.bind(this));
-    this.webServer.on('connect', this.handleHttpsRequest.bind(this));
+    this.webServer.on(
+      'request',
+      (req, res) => void this.handleHttpRequest(req, res).catch(err => this._logger.error((err as Error).message))
+    );
+    this.webServer.on(
+      'connect',
+      (req, socket, head) =>
+        void this.handleHttpsRequest(req, socket as stream.Duplex, head as Buffer).catch(err => this._logger.error((err as Error).message))
+    );
 
     // Listen for the `error` event on `webserver`.
     this.webServer.on('error', (err: Error) => {
@@ -89,7 +97,7 @@ export default class ProxyServer {
     });
   }
 
-  private handleHttpRequest(req: http.IncomingMessage, res: http.ServerResponse) {
+  private async handleHttpRequest(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
     const ipAllowed = this.isIpAddressAllowed(req);
     if (!ipAllowed) {
       res.writeHead(403, { 'Content-Type': 'text/plain' });
@@ -97,7 +105,7 @@ export default class ProxyServer {
       return;
     }
 
-    if (!this.isClientAuthenticated(req)) {
+    if (!(await this.isClientAuthenticated(req))) {
       res.writeHead(407, { 'Proxy-Authenticate': 'Basic realm="OIBus Proxy"' });
       res.end('Proxy Authentication Required');
       return;
@@ -147,7 +155,7 @@ export default class ProxyServer {
     }
   }
 
-  private handleHttpsRequest(req: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer) {
+  private async handleHttpsRequest(req: http.IncomingMessage, clientSocket: stream.Duplex, head: Buffer): Promise<void> {
     const ipAllowed = this.isIpAddressAllowed(req);
     if (!ipAllowed) {
       clientSocket.write(`HTTP/${req.httpVersion} 403 Forbidden\r\n\r\n`);
@@ -155,7 +163,7 @@ export default class ProxyServer {
       return;
     }
 
-    if (!this.isClientAuthenticated(req)) {
+    if (!(await this.isClientAuthenticated(req))) {
       clientSocket.write(
         `HTTP/${req.httpVersion} 407 Proxy Authentication Required\r\nProxy-Authenticate: Basic realm="OIBus Proxy"\r\n\r\n`
       );
@@ -244,7 +252,7 @@ export default class ProxyServer {
     }
   }
 
-  private isClientAuthenticated(req: http.IncomingMessage): boolean {
+  private async isClientAuthenticated(req: http.IncomingMessage): Promise<boolean> {
     if (!this.proxyAuth.username) {
       return true;
     }
@@ -259,7 +267,14 @@ export default class ProxyServer {
     }
     const username = decoded.slice(0, colonIndex);
     const password = decoded.slice(colonIndex + 1);
-    return username === this.proxyAuth.username && password === (this.proxyAuth.password ?? '');
+    if (username !== this.proxyAuth.username) {
+      return false;
+    }
+    try {
+      return await argon2.verify(this.proxyAuth.password!, password);
+    } catch {
+      return false;
+    }
   }
 
   private isIpAddressAllowed(req: http.IncomingMessage) {

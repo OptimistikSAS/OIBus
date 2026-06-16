@@ -16659,13 +16659,13 @@
 					"proxyUsername": {
 						"type": "string",
 						"nullable": true,
-						"description": "KEEP_UPSTREAM    * The username clients must use to authenticate with this proxy server. Null means no authentication required.\n=======\nThe username for proxy server authentication.\n>>>>>>> Stashed changes",
+						"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
 						"example": null
 					},
 					"proxyPassword": {
 						"type": "string",
 						"nullable": true,
-						"description": "KEEP_UPSTREAM    * The password clients must use to authenticate with this proxy server.\n=======\nThe password for proxy server authentication.\n>>>>>>> Stashed changes",
+						"description": "The password clients must use to authenticate with this proxy server.",
 						"example": null
 					},
 					"logParameters": {
@@ -31417,13 +31417,13 @@
 					"proxyUsername": {
 						"type": "string",
 						"nullable": true,
-						"description": "KEEP_UPSTREAM    * The username clients must use to authenticate with this proxy server. Null means no authentication required.\n=======\nThe username for proxy server authentication.\n>>>>>>> Stashed changes",
+						"description": "The username clients must use to authenticate with this proxy server. Null means no authentication required.",
 						"example": null
 					},
 					"proxyPassword": {
 						"type": "string",
 						"nullable": true,
-						"description": "KEEP_UPSTREAM    * The password clients must use to authenticate with this proxy server.\n=======\nThe password for proxy server authentication.\n>>>>>>> Stashed changes",
+						"description": "The password clients must use to authenticate with this proxy server.",
 						"example": null
 					},
 					"logParameters": {
