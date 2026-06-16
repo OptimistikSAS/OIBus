@@ -30,6 +30,8 @@ const nodeRequire = createRequire(import.meta.url);
 // Mocked module exports — mutated in-place between tests
 let mockUtils: Record<string, unknown>;
 let mockEncryptionService: { encryptionService: EncryptionServiceMock };
+// Shared logger reference updated by each beforeEach so the loggerService mock returns the active logger
+let activeLogger: LoggerMock | null = null;
 
 let OIAnalyticsMessageService: new (
   ...args: ConstructorParameters<typeof OIAnalyticsMessageServiceType>
@@ -48,6 +50,10 @@ before(() => {
 
   mockModule(nodeRequire, '../utils', mockUtils);
   mockModule(nodeRequire, '../encryption.service', mockEncryptionService);
+  mockModule(nodeRequire, '../logger/logger.service', {
+    loggerService: { createChildLogger: mock.fn(() => activeLogger) },
+    default: class {}
+  });
 
   const mod = reloadModule<{
     default: new (
@@ -95,6 +101,7 @@ describe('OIAnalytics Message Service', () => {
     transformerRepository = new TransformerRepositoryMock();
     oIAnalyticsClient = new OianalyticsClientMock();
     logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
+    activeLogger = logger;
 
     mockUtils.getOIBusInfo = mock.fn(() => testData.engine.oIBusInfo);
 
@@ -126,8 +133,7 @@ describe('OIAnalytics Message Service', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
-      oIAnalyticsClient,
-      logger
+      oIAnalyticsClient
     );
   });
 
@@ -347,7 +353,6 @@ describe('OIAnalytics message service without message', () => {
   let transformerRepository: TransformerRepositoryMock;
   let oIAnalyticsClient: OianalyticsClientMock;
   let logger: LoggerMock;
-  let anotherLogger: LoggerMock;
   let service: InstanceType<typeof OIAnalyticsMessageServiceType>;
 
   beforeEach(() => {
@@ -365,7 +370,7 @@ describe('OIAnalytics message service without message', () => {
     oIAnalyticsClient = new OianalyticsClientMock();
     const LoggerMockCtor = (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default;
     logger = new LoggerMockCtor();
-    anotherLogger = new LoggerMockCtor();
+    activeLogger = logger;
 
     oIAnalyticsMessageRepository.list = mock.fn(() => []);
     oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
@@ -382,8 +387,7 @@ describe('OIAnalytics message service without message', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
-      oIAnalyticsClient,
-      logger
+      oIAnalyticsClient
     );
   });
 
@@ -398,10 +402,6 @@ describe('OIAnalytics message service without message', () => {
     service.run = runMock;
     service.start();
     assert.strictEqual(runMock.mock.calls.length, 0);
-  });
-
-  it('should change logger', () => {
-    service.setLogger(anotherLogger);
   });
 });
 
@@ -435,6 +435,7 @@ describe('OIAnalytics message service without completed registration', () => {
     transformerRepository = new TransformerRepositoryMock();
     oIAnalyticsClient = new OianalyticsClientMock();
     logger = new (nodeRequire('../../tests/__mocks__/service/logger/logger.mock') as { default: new () => LoggerMock }).default();
+    activeLogger = logger;
 
     oIAnalyticsMessageRepository.list = mock.fn(() => testData.oIAnalytics.messages.oIBusList);
     oIAnalyticsRegistrationService.getRegistrationSettings = mock.fn(() => testData.oIAnalytics.registration.completed);
@@ -451,8 +452,7 @@ describe('OIAnalytics message service without completed registration', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
-      oIAnalyticsClient,
-      logger
+      oIAnalyticsClient
     );
   });
 

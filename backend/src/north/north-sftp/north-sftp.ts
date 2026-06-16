@@ -11,14 +11,13 @@ import fs from 'node:fs/promises';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ICacheService } from '../../model/cache.service.model';
 import { ReadStream } from 'node:fs';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthSFTP - Write files in an output folder
  */
 export default class NorthSFTP extends NorthConnector<NorthSFTPSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthSFTPSettings>, logger: ILogger, cacheService: ICacheService) {
-    super(configuration, logger, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthSFTPSettings>, cacheService: ICacheService) {
+    super(configuration, cacheService);
   }
 
   supportedTypes(): Array<string> {

@@ -67,6 +67,11 @@ describe('SouthRestAPI connector', () => {
     mockModule(nodeRequire, '../../service/encryption.service', {
       encryptionService: encryptionServiceInstance
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthRest = reloadModule<{ default: typeof SouthRestClass }>(nodeRequire, './south-rest').default;
   });
 
@@ -149,7 +154,7 @@ describe('SouthRestAPI connector', () => {
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
     const config = createConfiguration();
-    south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthRest(config, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -190,7 +195,7 @@ describe('SouthRestAPI connector', () => {
     config.settings.test.method = 'POST';
     config.settings.test.body = 'body';
 
-    south = new SouthRest(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthRest(config, addContentCallback, southCacheRepository, 'cacheFolder');
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, 'OK'));
 
     await south.testConnection();

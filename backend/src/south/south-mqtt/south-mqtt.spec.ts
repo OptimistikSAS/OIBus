@@ -238,6 +238,11 @@ describe('SouthMQTT', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthMQTT = reloadModule<{ default: typeof SouthMQTTClass }>(nodeRequire, './south-mqtt').default;
   });
 
@@ -253,7 +258,7 @@ describe('SouthMQTT', () => {
     utilsMqttExports.getItem = mock.fn(() => undefined as unknown);
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthMQTT(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {

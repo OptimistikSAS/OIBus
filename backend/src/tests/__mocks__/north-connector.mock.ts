@@ -4,7 +4,6 @@ import type { ReadStream } from 'node:fs';
 import NorthConnector from '../../north/north-connector';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import type { ILogger } from '../../model/logger.model';
 import type { ICacheService } from '../../model/cache.service.model';
 import type {
   OIBusConnectionTestResult,
@@ -23,7 +22,7 @@ import type { ScanMode } from '../../model/scan-mode.model';
  */
 export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   constructor(connector: NorthConnectorEntity<NorthSettings>) {
-    super(connector, null! as ILogger, null! as ICacheService);
+    super(connector, null! as ICacheService);
   }
 
   override start = mock.fn(async (): Promise<void> => undefined);
@@ -38,7 +37,7 @@ export default class NorthConnectorMock extends NorthConnector<NorthSettings> {
   override isCacheEmpty = mock.fn((): boolean => true);
   override disconnect = mock.fn(async (): Promise<void> => undefined);
   override stop = mock.fn(async (): Promise<void> => undefined);
-  override setLogger = mock.fn((_logger: ILogger): void => undefined);
+  override refreshLogger = mock.fn((): void => undefined);
   override updateScanMode = mock.fn(async (): Promise<void> => undefined);
   override searchCacheContent = mock.fn(
     async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({}) as Omit<CacheSearchResult, 'metrics'>

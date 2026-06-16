@@ -39,7 +39,7 @@ import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.mo
 import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
 import { clearProxyAgentCache } from '../service/http-request.utils';
 import { clearOIAnalyticsCredentialCache } from '../service/utils-oianalytics';
-import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
 
 export default class DataStreamEngine {
   private northConnectors = new Map<string, { north: NorthConnector<NorthSettings>; metrics: NorthConnectorMetricsService }>();
@@ -49,6 +49,7 @@ export default class DataStreamEngine {
   >();
   private historyQueries = new Map<string, { historyQuery: HistoryQuery; metrics: HistoryQueryMetricsService }>();
 
+  private readonly _logger = loggerService.createChildLogger('internal', 'engine', 'Engine');
   readonly baseFolder: string;
 
   constructor(
@@ -61,8 +62,7 @@ export default class DataStreamEngine {
     private southCacheRepository: SouthCacheRepository,
     private certificateRepository: CertificateRepository,
     private oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
-    private oianalyticsMessageService: IOIAnalyticsMessageService,
-    private _logger: ILogger
+    private oianalyticsMessageService: IOIAnalyticsMessageService
   ) {
     this.baseFolder = path.resolve('./');
   }
@@ -137,13 +137,11 @@ export default class DataStreamEngine {
 
   async createNorth(northId: string): Promise<NorthConnector<NorthSettings>> {
     const configuration = this.northConnectorRepository.findNorthById(northId)!;
-    const logger = this.logger.child({ scopeType: 'north', scopeId: configuration.id, scopeName: configuration.name });
     const north = buildNorth(
       configuration,
-      logger,
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository,
-      createNorthOrchestrator(this.baseFolder, northId, logger)
+      createNorthOrchestrator(this.baseFolder, northId, configuration.name)
     );
     await initNorthCache(configuration.id, configuration.type, this.baseFolder);
     if (this.northConnectors.has(configuration.id)) {
@@ -199,7 +197,7 @@ export default class DataStreamEngine {
   async reloadNorth(northEntity: NorthConnectorEntity<NorthSettings>) {
     await this.stopNorth(northEntity.id);
     const north = this.getNorth(northEntity.id).north;
-    north.setLogger(this.logger.child({ scopeType: 'north', scopeId: northEntity.id, scopeName: northEntity.name }));
+    north.refreshLogger();
     await this.startNorth(northEntity.id);
   }
 
@@ -222,7 +220,6 @@ export default class DataStreamEngine {
     const south = buildSouth(
       configuration,
       this.addContent.bind(this),
-      this.logger.child({ scopeType: 'south', scopeId: configuration.id, scopeName: configuration.name }),
       path.join(this.baseFolder, 'cache', `south-${configuration.id}`),
       this.southCacheRepository,
       this.certificateRepository,
@@ -286,7 +283,7 @@ export default class DataStreamEngine {
   async reloadSouth(southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings>) {
     await this.stopSouth(southConnector.id);
     const south = this.getSouth(southConnector.id).south;
-    south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southConnector.id, scopeName: southConnector.name }));
+    south.refreshLogger();
     await this.startSouth(southConnector.id);
   }
 
@@ -322,16 +319,14 @@ export default class DataStreamEngine {
 
   async createHistoryQuery(historyId: string): Promise<HistoryQuery> {
     const configuration = this.historyQueryRepository.findHistoryById(historyId)!;
-    const logger = this.logger.child({ scopeType: 'history-query', scopeId: configuration.id, scopeName: configuration.name });
     const historyQuery = buildHistoryQuery(
       configuration,
       this.addContent.bind(this),
-      logger,
       this.baseFolder,
       this.southCacheRepository,
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository,
-      createHistoryQueryOrchestrator(this.baseFolder, configuration.id, logger)
+      createHistoryQueryOrchestrator(this.baseFolder, configuration.id, configuration.name)
     );
     await initHistoryQueryCache(configuration.id, configuration.northType, configuration.southType, this.baseFolder);
 
@@ -381,9 +376,7 @@ export default class DataStreamEngine {
   async reloadHistoryQuery(historyQueryConfig: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>, resetCache: boolean) {
     const historyQuery = this.getHistoryQuery(historyQueryConfig.id).historyQuery;
     await this.stopHistoryQuery(historyQueryConfig.id);
-    historyQuery.setLogger(
-      this.logger.child({ scopeType: 'history-query', scopeId: historyQueryConfig.id, scopeName: historyQueryConfig.name })
-    );
+    historyQuery.refreshLogger();
     if (resetCache) {
       await this.resetHistoryQueryCache(historyQueryConfig.id);
     }
@@ -413,40 +406,6 @@ export default class DataStreamEngine {
 
   get logger() {
     return this._logger;
-  }
-
-  setLogger(value: ILogger) {
-    this._logger = value;
-
-    for (const south of this.southConnectors.values()) {
-      south.south.setLogger(
-        this._logger.child({
-          scopeType: 'south',
-          scopeId: south.south.connectorConfiguration.id,
-          scopeName: south.south.connectorConfiguration.name
-        })
-      );
-    }
-
-    for (const north of this.northConnectors.values()) {
-      north.north.setLogger(
-        this._logger.child({
-          scopeType: 'north',
-          scopeId: north.north.connectorConfiguration.id,
-          scopeName: north.north.connectorConfiguration.name
-        })
-      );
-    }
-
-    for (const historyQuery of this.historyQueries.values()) {
-      historyQuery.historyQuery.setLogger(
-        this._logger.child({
-          scopeType: 'history-query',
-          scopeId: historyQuery.historyQuery.historyQueryConfiguration.id,
-          scopeName: historyQuery.historyQuery.historyQueryConfiguration.name
-        })
-      );
-    }
   }
 
   /**

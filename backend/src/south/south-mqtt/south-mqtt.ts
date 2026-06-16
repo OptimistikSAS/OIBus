@@ -11,7 +11,6 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { createConnectionOptions, getItem } from '../../service/utils-mqtt';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthMQTT - Subscribe to a data topic from a MQTT broker
@@ -38,10 +37,9 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   override async connect(): Promise<void> {

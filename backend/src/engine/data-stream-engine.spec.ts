@@ -134,6 +134,12 @@ before(() => {
   // HistoryQuery class
   mockModule(nodeRequire, './history-query', historyQueryClassExports);
 
+  // Mock loggerService so the engine uses the test logger
+  mockModule(nodeRequire, '../service/logger/logger.service', {
+    loggerService: { createChildLogger: mock.fn(() => logger) },
+    default: class {}
+  });
+
   // Load the SUT
   const mod = reloadModule<{ default: new (...args: Array<unknown>) => DataStreamEngineType }>(nodeRequire, './data-stream-engine');
   DataStreamEngine = mod.default;
@@ -245,8 +251,7 @@ describe('DataStreamEngine', () => {
       southCacheRepository, // structural mock — satisfies SouthCacheRepository interface
       certificateRepository,
       oIAnalyticsRegistrationRepository,
-      oianalyticsMessageService,
-      logger
+      oianalyticsMessageService
     );
   });
 
@@ -446,7 +451,7 @@ describe('DataStreamEngine', () => {
       assert.deepStrictEqual(spyStop.mock.calls[0].arguments, [northEntity.id]);
       assert.strictEqual(spyStart.mock.calls.length, 1);
       assert.deepStrictEqual(spyStart.mock.calls[0].arguments, [northEntity.id]);
-      assert.strictEqual(mockedNorth1.setLogger.mock.calls.length, 1);
+      assert.strictEqual(mockedNorth1.refreshLogger.mock.calls.length, 1);
     });
 
     it('should delete north connector', async () => {
@@ -535,7 +540,7 @@ describe('DataStreamEngine', () => {
 
       assert.strictEqual(spyStop.mock.calls.length, 1);
       assert.strictEqual(spyStart.mock.calls.length, 1);
-      assert.strictEqual(mockedSouth1.setLogger.mock.calls.length, 1);
+      assert.strictEqual(mockedSouth1.refreshLogger.mock.calls.length, 1);
     });
 
     it('should reload south connector and not update cache history', async () => {
@@ -719,7 +724,7 @@ describe('DataStreamEngine', () => {
       assert.strictEqual(spyStop.mock.calls.length, 1);
       assert.strictEqual(spyReset.mock.calls.length, 1);
       assert.strictEqual(spyStart.mock.calls.length, 1);
-      assert.strictEqual(mockedHistoryQuery1.setLogger.mock.calls.length, 1);
+      assert.strictEqual(mockedHistoryQuery1.refreshLogger.mock.calls.length, 1);
     });
 
     it('should reload history query without reset cache', async () => {
@@ -838,17 +843,6 @@ describe('DataStreamEngine', () => {
   describe('Engine Wide Operations', () => {
     beforeEach(async () => {
       await engine.start(northList, southList, historyList);
-    });
-
-    it('should set logger for all components', () => {
-      const newLogger = new PinoLogger();
-      newLogger.child = mock.fn(() => newLogger);
-
-      engine.setLogger(newLogger);
-
-      assert.strictEqual(mockedNorth1.setLogger.mock.calls.length, 1);
-      assert.strictEqual(mockedSouth1.setLogger.mock.calls.length, 1);
-      assert.strictEqual(mockedHistoryQuery1.setLogger.mock.calls.length, 1);
     });
 
     it('should update scan mode for all connectors', async () => {

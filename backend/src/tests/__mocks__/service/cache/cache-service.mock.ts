@@ -8,14 +8,14 @@ import {
   FileCacheContent
 } from '../../../../../shared/model/engine.model';
 import type { CacheSizeEvents, ICacheService } from '../../../../model/cache.service.model';
-import type { ILogger } from '../../../../model/logger.model';
+import type { ScopeType } from '../../../../../shared/model/logs.model';
 import type { CacheSize } from '../../../../model/engine.model';
 import TypedEventEmitter from '../../../../service/typed-event-emitter';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 
 export default class CacheServiceMock implements ICacheService {
-  setLogger = mock.fn((_value: ILogger): void => undefined);
+  refreshLogger = mock.fn((_scopeType: ScopeType, _id: string, _name: string): void => undefined);
   start = mock.fn(async (): Promise<void> => undefined);
   stop = mock.fn((): void => undefined);
   getCacheContentToSend = mock.fn(async (_maxGroupCount: number): Promise<{ filename: string; metadata: CacheMetadata } | null> => null);
