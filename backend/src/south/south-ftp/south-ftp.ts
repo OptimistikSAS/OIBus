@@ -14,7 +14,6 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../model/types';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthFTP - Retrieve files from a remote FTP instance
@@ -29,10 +28,9 @@ export default class SouthFTP extends SouthConnector<SouthFTPSettings, SouthFTPI
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {

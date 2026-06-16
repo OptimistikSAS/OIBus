@@ -19,7 +19,6 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { OIBusTestingError } from '../../model/types';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
@@ -34,10 +33,9 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   async createConnectionOptions(): Promise<config> {

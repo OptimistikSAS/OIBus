@@ -77,6 +77,10 @@ describe('North Connector Factory', () => {
     mockModule(nodeRequire, '../north/north-rest/north-rest', { __esModule: true, default: MockNorthREST });
     mockModule(nodeRequire, '../north/north-opcua/north-opcua', { __esModule: true, default: MockNorthOPCUA });
     mockModule(nodeRequire, '../north/north-sftp/north-sftp', { __esModule: true, default: MockNorthSFTP });
+    mockModule(nodeRequire, '../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => mockLogger) },
+      default: class {}
+    });
 
     const factory = reloadModule<{
       buildNorth: typeof BuildNorthFn;
@@ -133,7 +137,7 @@ describe('North Connector Factory', () => {
   });
 
   const callBuildNorth = (settings: NorthConnectorEntity<NorthSettings>) =>
-    buildNorth(settings, mockLogger, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, {} as never);
+    buildNorth(settings, mockCertificateRepository, mockOIAnalyticsRegistrationRepository, {} as never);
 
   describe('buildNorth', () => {
     it('should create NorthAmazonS3 for type "aws-s3"', () => {
@@ -211,9 +215,9 @@ describe('North Connector Factory', () => {
       const result = callBuildNorth(settings);
       assert.strictEqual(ctorCalls['oianalytics']?.length, 1);
       const args = ctorCalls['oianalytics'][0];
-      assert.deepStrictEqual(args[2], {}); // orchestrator
-      assert.strictEqual(args[3], mockCertificateRepository);
-      assert.strictEqual(args[4], mockOIAnalyticsRegistrationRepository);
+      assert.deepStrictEqual(args[1], {}); // orchestrator
+      assert.strictEqual(args[2], mockCertificateRepository);
+      assert.strictEqual(args[3], mockOIAnalyticsRegistrationRepository);
       assert.ok(result instanceof MockNorthOIAnalytics);
     });
 
@@ -325,11 +329,10 @@ describe('North Connector Factory', () => {
       const baseFolder = '/base';
       const id = 'test-id';
 
-      const result = createNorthOrchestrator(baseFolder, id, mockLogger);
+      const result = createNorthOrchestrator(baseFolder, id, 'test-name');
 
       assert.strictEqual(ctorCalls['cache-service']?.length, 1);
       const args = ctorCalls['cache-service'][0];
-      assert.strictEqual(args[0], mockLogger);
       assert.strictEqual(args[1], path.join(baseFolder, 'cache', `north-${id}`));
       assert.strictEqual(args[2], path.join(baseFolder, 'error', `north-${id}`));
       assert.strictEqual(args[3], path.join(baseFolder, 'archive', `north-${id}`));

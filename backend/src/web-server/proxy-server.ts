@@ -4,7 +4,7 @@ import net from 'node:net';
 import httpProxy from 'http-proxy';
 import argon2 from 'argon2';
 import { testIPOnFilter } from '../service/utils';
-import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
 
 interface ForwardProxy {
   url: string | null;
@@ -21,7 +21,7 @@ interface ProxyAuth {
  * Class Server - Provides the web client and establish socket connections.
  */
 export default class ProxyServer {
-  private _logger: ILogger;
+  private readonly _logger = loggerService.createChildLogger('internal');
   private webServer: http.Server | null = null;
   private httpProxy: httpProxy | null = null;
   private ipFilters: Array<string> = [];
@@ -30,20 +30,8 @@ export default class ProxyServer {
   private forwardProxyPassword: string | null = null;
   private proxyAuth: ProxyAuth = { username: null, password: null };
 
-  constructor(
-    logger: ILogger,
-    private readonly ignoreIpFilters: boolean
-  ) {
-    this._logger = logger;
+  constructor(private readonly ignoreIpFilters: boolean) {
     this.refreshIpFilters([]);
-  }
-
-  get logger(): ILogger {
-    return this._logger;
-  }
-
-  setLogger(value: ILogger) {
-    this._logger = value;
   }
 
   refreshIpFilters(ipFilters: Array<string>) {

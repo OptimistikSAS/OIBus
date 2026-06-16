@@ -35,7 +35,6 @@ describe('SouthConnector', () => {
   let southCacheService: SouthCacheServiceMock;
 
   const logger = new PinoLogger();
-  const anotherLogger = new PinoLogger();
   const addContentCallback = mock.fn(
     async (_southId: string, _data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
       undefined
@@ -104,6 +103,11 @@ describe('SouthConnector', () => {
       ...nodeOpcuaMock
     });
     mockModule(nodeRequire, '../service/utils-opcua', utilsOpcuaExports);
+    mockModule(nodeRequire, '../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthFolderScanner = reloadModule<{ default: typeof SouthFolderScannerClass }>(
       nodeRequire,
       './south-folder-scanner/south-folder-scanner'
@@ -141,7 +145,7 @@ describe('SouthConnector', () => {
         SouthFolderScannerSettings,
         SouthFolderScannerItemSettings
       >;
-      south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, 'cacheFolder');
       await south.start();
     });
 
@@ -318,13 +322,11 @@ describe('SouthConnector', () => {
       assert.ok(!south['cronByScanModeIds'].has(itemScanMode.id!));
     });
 
-    it('should use another logger', async () => {
+    it('should refresh logger on refreshLogger()', async () => {
       (logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      south.setLogger(anotherLogger);
+      south.refreshLogger();
       await south.stop();
-      assert.strictEqual((anotherLogger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
-      assert.strictEqual((logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
-      south.hasSubscription();
+      assert.strictEqual((logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
     });
 
     it('should reset cache', async () => {
@@ -456,7 +458,7 @@ describe('SouthConnector', () => {
         testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
         addContentCallback,
         southCacheRepository,
-        logger,
+
         'cacheFolder'
       );
       await south.start();
@@ -550,7 +552,7 @@ describe('SouthConnector', () => {
         testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
         addContentCallback,
         southCacheRepository,
-        logger,
+
         'cacheFolder'
       );
 

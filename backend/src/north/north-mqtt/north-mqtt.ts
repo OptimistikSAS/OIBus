@@ -10,7 +10,6 @@ import { createConnectionOptions } from '../../service/utils-mqtt';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthOPCUA - Write values in a MQTT broker
@@ -20,8 +19,8 @@ export default class NorthMQTT extends NorthConnector<NorthMQTTSettings> {
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
 
-  constructor(configuration: NorthConnectorEntity<NorthMQTTSettings>, logger: ILogger, cacheService: ICacheService) {
-    super(configuration, logger, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthMQTTSettings>, cacheService: ICacheService) {
+    super(configuration, cacheService);
   }
 
   supportedTypes(): Array<string> {

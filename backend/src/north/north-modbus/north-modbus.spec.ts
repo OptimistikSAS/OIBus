@@ -93,6 +93,11 @@ describe('NorthModbus', () => {
         return cacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     NorthModbus = reloadModule<{ default: typeof NorthModbusClass }>(nodeRequire, './north-modbus').default;
   });
 
@@ -124,7 +129,7 @@ describe('NorthModbus', () => {
       connectTimeout: 30000
     });
 
-    north = new NorthModbus(configuration, logger, cacheService);
+    north = new NorthModbus(configuration, cacheService);
   });
 
   afterEach(() => {

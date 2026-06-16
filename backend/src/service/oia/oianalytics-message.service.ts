@@ -36,8 +36,8 @@ import { getStandardManifest } from '../transformer.service';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import { Language } from '../../../shared/model/types';
-import type { ILogger } from '../../model/logger.model';
 import { getErrorMessage } from '../utils';
+import { loggerService } from '../logger/logger.service';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -49,6 +49,8 @@ export default class OIAnalyticsMessageService {
   protected retryMessageInterval: NodeJS.Timeout | null = null;
   private stopped = false;
   private registrationEventHandler: (() => void) | null = null;
+
+  private readonly logger = loggerService.createChildLogger('internal');
 
   constructor(
     private oIAnalyticsMessageRepository: OIAnalyticsMessageRepository,
@@ -62,8 +64,7 @@ export default class OIAnalyticsMessageService {
     private northRepository: NorthConnectorRepository,
     private historyQueryRepository: HistoryQueryRepository,
     private transformerRepository: TransformerRepository,
-    private oIAnalyticsClient: OIAnalyticsClient,
-    private logger: ILogger
+    private oIAnalyticsClient: OIAnalyticsClient
   ) {}
 
   start(): void {
@@ -169,10 +170,6 @@ export default class OIAnalyticsMessageService {
       this.runProgress$.resolve();
       this.runProgress$ = null;
     }
-  }
-
-  setLogger(logger: ILogger) {
-    this.logger = logger;
   }
 
   /**

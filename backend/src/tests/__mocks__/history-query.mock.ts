@@ -4,7 +4,6 @@ import HistoryQuery from '../../engine/history-query';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { HistoryQueryEntity } from '../../model/histor-query.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
-import type { ILogger } from '../../model/logger.model';
 import type NorthConnector from '../../north/north-connector';
 import type SouthConnector from '../../south/south-connector';
 import type {
@@ -21,7 +20,7 @@ import type { CacheSize } from '../../model/engine.model';
  */
 export default class HistoryQueryMock extends HistoryQuery {
   constructor(connector: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>) {
-    super(connector, null! as NorthConnector<NorthSettings>, null! as SouthConnector<SouthSettings, SouthItemSettings>, null! as ILogger);
+    super(connector, null! as NorthConnector<NorthSettings>, null! as SouthConnector<SouthSettings, SouthItemSettings>);
   }
 
   override get historyQueryConfiguration() {
@@ -35,7 +34,7 @@ export default class HistoryQueryMock extends HistoryQuery {
   override stop = mock.fn(async (): Promise<void> => undefined);
   override resetCache = mock.fn(async (): Promise<void> => undefined);
   override finish = mock.fn(async (): Promise<void> => undefined);
-  override setLogger = mock.fn((_logger: ILogger): void => undefined);
+  override refreshLogger = mock.fn((): void => undefined);
   override getNorthCacheSizes = mock.fn((): CacheSize => ({ cache: 10, error: 20, archive: 30 }));
   override metricsEvent = new EventEmitter();
   override finishEvent = new EventEmitter();

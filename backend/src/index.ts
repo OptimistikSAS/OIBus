@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { rmSync } from 'node:fs';
 import WebServer from './web-server/web-server';
-import LoggerService from './service/logger/logger.service';
+import { loggerService } from './service/logger/logger.service';
 import { encryptionService } from './service/encryption.service';
 
 import { createFolder, getCommandLineArguments, getOIBusInfo, readInitConfig, INIT_CONFIG_FILENAME } from './service/utils';
@@ -101,7 +101,7 @@ const CERT_FOLDER = 'certs';
   }
 
   await createFolder(LOG_FOLDER_NAME);
-  const loggerService = new LoggerService(path.resolve(LOG_FOLDER_NAME));
+  loggerService.init(path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings, repositoryService.oianalyticsRegistrationRepository.get()!);
 
   const oIAnalyticsClient = new OIAnalyticsClient();
@@ -111,7 +111,7 @@ const CERT_FOLDER = 'certs';
     oIAnalyticsClient,
     repositoryService.oianalyticsRegistrationRepository,
     repositoryService.engineRepository,
-    loggerService.logger!
+    loggerService.createChildLogger('internal')
   );
   oIAnalyticsRegistrationService.start();
 
@@ -127,8 +127,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
     repositoryService.transformerRepository,
-    oIAnalyticsClient,
-    loggerService.logger!
+    oIAnalyticsClient
   );
 
   const dataStreamEngine = new DataStreamEngine(
@@ -141,8 +140,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.southCacheRepository,
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
-    oIAnalyticsMessageService,
-    loggerService.logger!
+    oIAnalyticsMessageService
   );
 
   const transformerService = new TransformerService(
@@ -244,7 +242,7 @@ const CERT_FOLDER = 'certs';
     northService,
     historyQueryService,
     transformerService,
-    loggerService.logger!,
+    loggerService.createChildLogger('internal'),
     binaryFolder,
     ignoreRemoteUpdate,
     launcherVersion
@@ -253,7 +251,7 @@ const CERT_FOLDER = 'certs';
   oIAnalyticsMessageService.start(); // Start after command to send the full config with a new version after an update
 
   const cleanupService = new CleanupService(
-    loggerService.logger!,
+    loggerService.createChildLogger('internal'),
     './',
     repositoryService.historyQueryRepository,
     repositoryService.northConnectorRepository,
@@ -297,7 +295,7 @@ const CERT_FOLDER = 'certs';
     await server.stop();
     await cleanupService.stop();
     oIAnalyticsRegistrationService.stop();
-    loggerService.stop();
+    await loggerService.stop();
     console.info('OIBus stopped');
     stopping = false;
     process.exit();
@@ -306,6 +304,6 @@ const CERT_FOLDER = 'certs';
   rmSync(INIT_CONFIG_FILENAME, { force: true });
 
   const updatedOIBusSettings = repositoryService.engineRepository.get()!;
-  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
+  loggerService.logger.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
   console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
 })();

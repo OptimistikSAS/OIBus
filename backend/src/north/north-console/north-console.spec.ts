@@ -73,7 +73,7 @@ describe('NorthConsole', () => {
       verbose: true
     });
 
-    north = new NorthConsole(configuration, logger, cacheService);
+    north = new NorthConsole(configuration, cacheService);
   });
 
   afterEach(() => {

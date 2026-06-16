@@ -239,14 +239,6 @@ export default class SouthService {
     const south = buildSouth(
       testToRun,
       mockedAddContent,
-      this.engine.logger.child(
-        {
-          scopeType: 'south',
-          scopeId: 'test',
-          scopeName: `${southType}:test-connection`
-        },
-        { level: 'silent' }
-      ),
       '',
       this.southCacheRepository,
       this.certificateRepository,
@@ -319,14 +311,6 @@ export default class SouthService {
     const south = buildSouth(
       testConnectorToRun,
       mockedAddContent,
-      this.engine.logger.child(
-        {
-          scopeType: 'south',
-          scopeId: 'test',
-          scopeName: `${southType}:test-connection`
-        },
-        { level: 'silent' }
-      ),
       '',
       this.southCacheRepository,
       this.certificateRepository,

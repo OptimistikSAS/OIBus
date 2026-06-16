@@ -92,6 +92,11 @@ describe('SouthMSSQL', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthMSSQL = reloadModule<{ default: typeof SouthMSSQLClass }>(nodeRequire, './south-mssql').default;
   });
 
@@ -265,7 +270,7 @@ describe('SouthMSSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -552,7 +557,7 @@ describe('SouthMSSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should manage query error', async () => {
@@ -614,7 +619,7 @@ describe('SouthMSSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthMSSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {

@@ -12,7 +12,6 @@ import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/e
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import type { ILogger } from '../../model/logger.model';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
@@ -26,10 +25,9 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   override testConnection(): Promise<OIBusConnectionTestResult> {

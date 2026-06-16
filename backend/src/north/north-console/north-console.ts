@@ -5,14 +5,13 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ICacheService } from '../../model/cache.service.model';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class NorthConsole extends NorthConnector<NorthConsoleSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, logger: ILogger, cacheService: ICacheService) {
-    super(configuration, logger, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthConsoleSettings>, cacheService: ICacheService) {
+    super(configuration, cacheService);
   }
 
   supportedTypes(): Array<string> {

@@ -102,6 +102,10 @@ describe('SouthInfluxDB', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
     SouthInfluxDB = reloadModule<{ default: typeof SouthInfluxDBClass }>(nodeRequire, './south-influxdb').default;
   });
 
@@ -200,7 +204,7 @@ describe('SouthInfluxDB', () => {
     };
 
     beforeEach(() => {
-      south = new SouthInfluxDB(configV1, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthInfluxDB(configV1, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should test connection successfully', async () => {
@@ -221,7 +225,6 @@ describe('SouthInfluxDB', () => {
         { ...configV1, settings: { version: '1', host: 'localhost', port: 8086, database: 'mydb' } },
         addContentCallback,
         southCacheRepository,
-        logger,
         'cacheFolder'
       );
       const result = await southNoAuth.testConnection();
@@ -322,7 +325,6 @@ describe('SouthInfluxDB', () => {
         { ...configV1, settings: { version: '1', host: 'localhost', port: 8086, database: 'mydb' } },
         addContentCallback,
         southCacheRepository,
-        logger,
         'cacheFolder'
       );
       influxV1QueryMock = mock.fn(async () => []);
@@ -335,7 +337,6 @@ describe('SouthInfluxDB', () => {
         { ...configV1, settings: { ...configV1.settings, version: 'invalid' as '1' } },
         addContentCallback,
         southCacheRepository,
-        logger,
         'cacheFolder'
       );
       await assert.rejects(southBadVersion.testConnection(), /Unsupported InfluxDB version/);
@@ -373,7 +374,7 @@ describe('SouthInfluxDB', () => {
     };
 
     beforeEach(() => {
-      south = new SouthInfluxDB(configV2, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthInfluxDB(configV2, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should test connection and return bucket count', async () => {
@@ -442,7 +443,6 @@ describe('SouthInfluxDB', () => {
         { ...configV2, settings: { ...configV2.settings, token: null } },
         addContentCallback,
         southCacheRepository,
-        logger,
         'cacheFolder'
       );
       queryRowsMock = mock.fn(
@@ -514,7 +514,7 @@ describe('SouthInfluxDB', () => {
     };
 
     beforeEach(() => {
-      south = new SouthInfluxDB(configV3, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthInfluxDB(configV3, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should test connection successfully', async () => {
@@ -575,7 +575,6 @@ describe('SouthInfluxDB', () => {
         { ...configV3, settings: { ...configV3.settings, token: null } },
         addContentCallback,
         southCacheRepository,
-        logger,
         'cacheFolder'
       );
       influxV3QueryMock = mock.fn((_query: string, _database?: string) =>

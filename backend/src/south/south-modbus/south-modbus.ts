@@ -22,7 +22,6 @@ import {
   readInputRegister
 } from '../../service/utils-modbus';
 import { Instant } from '../../model/types';
-import type { ILogger } from '../../model/logger.model';
 
 // Modbus Application Protocol limits (spec v1.1b3, §6.1 / §6.2 / §6.3 / §6.4)
 const MAX_COIL_READ_COUNT = 2000; // FC01 / FC02
@@ -46,10 +45,9 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   override async connect(): Promise<void> {

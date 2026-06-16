@@ -8,7 +8,6 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/sout
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthOPC - Run an OPC agent to connect to an OPC server.
@@ -28,10 +27,9 @@ export default class SouthOPC extends SouthConnector<SouthOPCSettings, SouthOPCI
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   async connect(): Promise<void> {

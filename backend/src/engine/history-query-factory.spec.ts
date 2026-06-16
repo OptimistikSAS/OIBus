@@ -79,6 +79,10 @@ describe('HistoryQueryFactory', () => {
     mockModule(nodeRequire, './history-query', { __esModule: true, default: MockHistoryQuery });
     mockModule(nodeRequire, '../north/north-connector-factory', northFactoryExports);
     mockModule(nodeRequire, '../south/south-connector-factory', southFactoryExports);
+    mockModule(nodeRequire, '../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => mockLogger) },
+      default: class {}
+    });
 
     const factory = reloadModule<{
       buildHistoryQuery: typeof BuildHistoryQueryFn;
@@ -160,7 +164,6 @@ describe('HistoryQueryFactory', () => {
       const result = buildHistoryQuery(
         mockSettings,
         mockAddContent,
-        mockLogger,
         baseFolder,
         mockSouthCacheRepository,
         mockCertificateRepository,
@@ -184,10 +187,9 @@ describe('HistoryQueryFactory', () => {
         (northArg.transformers as Array<{ id: string }>).some(t => t.id === 't1'),
         'transformers should contain entry with id "t1"'
       );
-      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[1], mockLogger);
-      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[2], mockCertificateRepository);
-      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[3], mockOIAnalyticsRegistrationRepository);
-      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[4], mockOrchestrator);
+      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[1], mockCertificateRepository);
+      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[2], mockOIAnalyticsRegistrationRepository);
+      assert.strictEqual(buildNorthMock.mock.calls[0].arguments[3], mockOrchestrator);
 
       // Verify buildSouth args
       const buildSouthMock = southFactoryExports.buildSouth as { mock: { calls: Array<{ arguments: Array<unknown> }> } };
@@ -206,18 +208,17 @@ describe('HistoryQueryFactory', () => {
         'function',
         'second arg to buildSouth should be addContent callback'
       );
-      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[2], mockLogger);
       assert.deepStrictEqual(
-        buildSouthMock.mock.calls[0].arguments[3],
+        buildSouthMock.mock.calls[0].arguments[2],
         path.join(baseFolder, 'cache', `history-${mockSettings.id}`, 'south')
       );
-      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[4], mockSouthCacheRepository);
-      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[5], mockCertificateRepository);
-      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[6], mockOIAnalyticsRegistrationRepository);
+      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[3], mockSouthCacheRepository);
+      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[4], mockCertificateRepository);
+      assert.strictEqual(buildSouthMock.mock.calls[0].arguments[5], mockOIAnalyticsRegistrationRepository);
 
       // Verify HistoryQuery constructor call and result type
       assert.strictEqual(historyQueryCtorCalls.length, 1);
-      assert.deepStrictEqual(historyQueryCtorCalls[0], [mockSettings, mockNorthConnector, mockSouthConnector, mockLogger]);
+      assert.deepStrictEqual(historyQueryCtorCalls[0], [mockSettings, mockNorthConnector, mockSouthConnector]);
       assert.ok(result instanceof MockHistoryQuery);
     });
 
@@ -233,7 +234,6 @@ describe('HistoryQueryFactory', () => {
       buildHistoryQuery(
         mockSettings,
         mockAddContent,
-        mockLogger,
         baseFolder,
         mockSouthCacheRepository,
         mockCertificateRepository,
@@ -312,16 +312,14 @@ describe('HistoryQueryFactory', () => {
   describe('createHistoryQueryOrchestrator', () => {
     it('should instantiate CacheService with correct paths', () => {
       const id = 'hq-1';
-      createHistoryQueryOrchestrator(baseFolder, id, mockLogger);
+      createHistoryQueryOrchestrator(baseFolder, id, 'test-name');
 
       const historyPath = `history-${id}`;
       assert.ok(cacheServiceCtorArgs !== null, 'CacheService constructor should have been called');
-      assert.deepStrictEqual(cacheServiceCtorArgs, [
-        mockLogger,
-        path.join(baseFolder, 'cache', historyPath, 'north'),
-        path.join(baseFolder, 'error', historyPath, 'north'),
-        path.join(baseFolder, 'archive', historyPath, 'north')
-      ]);
+      const [, cachePath, errorPath, archivePath] = cacheServiceCtorArgs!;
+      assert.strictEqual(cachePath, path.join(baseFolder, 'cache', historyPath, 'north'));
+      assert.strictEqual(errorPath, path.join(baseFolder, 'error', historyPath, 'north'));
+      assert.strictEqual(archivePath, path.join(baseFolder, 'archive', historyPath, 'north'));
     });
   });
 
