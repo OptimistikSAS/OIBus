@@ -132,16 +132,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Provision the per-connector cache table and call `connect()` if the
-   * connector is enabled. No-op when the connector is disabled — the engine
-   * still constructs it so the UI can read settings, but we don't spin up cron
-   * jobs or open connections.
+   * Connect the south connector if it is enabled. No-op when the connector is
+   * disabled — the engine still constructs it so the UI can read settings, but
+   * we don't spin up cron jobs or open connections.
    */
   async start(): Promise<void> {
     if (this.isEnabled()) {
       this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
-      // Create an item value table for this connector
-      this.cacheService!.createItemValueTable(this.connector.id);
       await this.connect();
     }
   }
@@ -728,13 +725,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   /**
-   * Drop the per-connector cache table (clears every item's `trackedInstant`
-   * and `value`). Triggered by the engine when the operator clicks
-   * "reset cache" — subsequent history queries will re-fetch from the
-   * connector's configured start window.
+   * Clear every item's `trackedInstant` and `value` for this connector.
+   * Triggered by the engine when the operator clicks "reset cache" —
+   * subsequent history queries will re-fetch from the connector's configured
+   * start window.
    */
   resetCache(): Promise<void> {
-    this.cacheService!.dropItemValueTable(this.connector.id);
+    this.cacheService!.deleteItemsBySouth(this.connector.id);
     return Promise.resolve();
   }
 

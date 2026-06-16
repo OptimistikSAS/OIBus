@@ -288,7 +288,7 @@ describe('SouthConnector', () => {
 
     it('should reset cache', async () => {
       await south.resetCache();
-      assert.strictEqual((southCacheService.dropItemValueTable as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.strictEqual((southCacheService.deleteItemsBySouth as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
     });
 
     it('should create a cron job', () => {
@@ -429,7 +429,7 @@ describe('SouthConnector', () => {
     it('should be properly initialized', () => {
       assert.ok((logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length >= 0);
       assert.strictEqual(south.isEnabled(), false);
-      assert.strictEqual((southCacheService.createItemValueTable as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+      assert.ok((logger.trace as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length >= 0);
       south.historyQueryHandler = mock.fn(async (_items: unknown, _startTime: unknown, _endTime: unknown) => undefined);
     });
 

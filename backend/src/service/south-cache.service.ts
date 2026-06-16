@@ -5,10 +5,6 @@ import { SouthItemLastValue } from '../../shared/model/south-connector.model';
 export default class SouthCacheService {
   constructor(private readonly cacheRepository: SouthCacheRepository) {}
 
-  createItemValueTable(connectorId: string): void {
-    this.cacheRepository.createItemValueTable(connectorId);
-  }
-
   getItemLastValue(connectorId: string, itemId: string): Omit<SouthItemLastValue, 'itemName' | 'groupName'> | null {
     return this.cacheRepository.getItemLastValue(connectorId, itemId);
   }
@@ -21,7 +17,7 @@ export default class SouthCacheService {
     this.cacheRepository.deleteItemValue(connectorId, itemId);
   }
 
-  dropItemValueTable(connectorId: string): void {
-    this.cacheRepository.dropItemValueTable(connectorId);
+  deleteItemsBySouth(connectorId: string): void {
+    this.cacheRepository.deleteItemsBySouth(connectorId);
   }
 }
