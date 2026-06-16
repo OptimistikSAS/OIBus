@@ -624,6 +624,25 @@ describe('SouthMQTT', () => {
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
+  it('should decode Buffer message as string when testing item', async () => {
+    mock.method(
+      south,
+      'disconnect',
+      mock.fn(async () => undefined)
+    );
+    mqttStream.unsubscribeAsync = mock.fn(async () => undefined);
+
+    const testItemPromise = south.testItem(configuration.items[0], { history: undefined });
+
+    await flushPromises();
+    mqttStream.emit('message', 'myTopic', Buffer.from('hello from PLC'), { dup: false });
+    await flushPromises();
+
+    const result = await testItemPromise;
+    const parsed = JSON.parse(result.content as string);
+    assert.strictEqual(parsed[0].message, 'hello from PLC');
+  });
+
   it('should properly test item and manage unsubscribe error', async () => {
     const disconnectMock = mock.method(
       south,
