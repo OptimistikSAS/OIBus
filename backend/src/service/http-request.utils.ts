@@ -3,12 +3,17 @@ import { encryptionService } from './encryption.service';
 import { version } from '../../package.json';
 
 const proxyAgentCache = new Map<string, ProxyAgent>();
+let noTlsVerifyAgent: Agent | null = null;
 
 export function clearProxyAgentCache(): void {
   for (const agent of proxyAgentCache.values()) {
     void agent.destroy?.();
   }
   proxyAgentCache.clear();
+  if (noTlsVerifyAgent) {
+    void noTlsVerifyAgent.destroy?.();
+    noTlsVerifyAgent = null;
+  }
 }
 
 export type ReqURL = Parameters<typeof request>['0'];
@@ -102,11 +107,10 @@ export async function HTTPRequest(url: ReqURL, options: ReqOptions = {}): Promis
     delete options.proxy; // remove non-standard option
     delete options.acceptUnauthorized;
   } else if (options.acceptUnauthorized) {
-    options.dispatcher = new Agent({
-      connect: {
-        rejectUnauthorized: false
-      }
-    });
+    if (!noTlsVerifyAgent) {
+      noTlsVerifyAgent = new Agent({ connect: { rejectUnauthorized: false } });
+    }
+    options.dispatcher = noTlsVerifyAgent;
     delete options.acceptUnauthorized;
   }
 

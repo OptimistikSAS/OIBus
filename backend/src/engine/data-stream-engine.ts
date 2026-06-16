@@ -38,6 +38,7 @@ import HistoryQueryMetricsRepository from '../repository/metrics/history-query-m
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import { buildHistoryQuery, createHistoryQueryOrchestrator, deleteHistoryQueryCache, initHistoryQueryCache } from './history-query-factory';
 import { clearProxyAgentCache } from '../service/http-request.utils';
+import { clearOIAnalyticsCredentialCache } from '../service/utils-oianalytics';
 import type { ILogger } from '../model/logger.model';
 
 export default class DataStreamEngine {
@@ -131,6 +132,7 @@ export default class DataStreamEngine {
       }
     }
     clearProxyAgentCache();
+    clearOIAnalyticsCredentialCache();
   }
 
   async createNorth(northId: string): Promise<NorthConnector<NorthSettings>> {
