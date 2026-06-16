@@ -3,7 +3,6 @@ import { ReadStream } from 'node:fs';
 import zlib from 'node:zlib';
 import { Readable } from 'node:stream';
 import { HTTPRequest, ReqResponse, retryableHttpStatusCodes } from '../../service/http-request.utils';
-import { streamToString } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
@@ -89,8 +88,9 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       getHost(this.connector.settings.useOiaModule, registrationSettings, this.connector.settings.specificSettings),
       { useApiGateway: registrationSettings.useApiGateway, apiGatewayBaseEndpoint: registrationSettings.apiGatewayBaseEndpoint }
     );
-    const content = await streamToString(fileStream);
-    httpOptions.body = this.connector.settings.compress ? zlib.gzipSync(content) : content;
+    // Stream the file directly (or through async gzip) instead of buffering the
+    // whole payload in memory and gzipping synchronously on the event loop.
+    httpOptions.body = this.connector.settings.compress ? fileStream.pipe(zlib.createGzip()) : fileStream;
     httpOptions.query = { dataSourceId: this.connector.name };
 
     let response: ReqResponse;
@@ -106,6 +106,8 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         retryableHttpStatusCodes.includes(response.statusCode)
       );
     }
+    // Drain the response body so undici can return the connection to its pool.
+    await response.body.dump();
   }
 
   async handleFile(fileStream: ReadStream, cacheMetadata: CacheMetadata): Promise<void> {
@@ -145,5 +147,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         retryableHttpStatusCodes.includes(response.statusCode)
       );
     }
+    await response.body.dump();
   }
 }

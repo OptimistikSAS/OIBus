@@ -36,7 +36,6 @@ describe('NorthOIAnalytics', () => {
   } as unknown as ReadStream;
 
   const httpRequestMock = mock.fn(async (_url: URL, _options: ReqOptions) => createMockResponse(200));
-  const streamToStringMock = mock.fn(async (_stream: unknown) => 'stream-content-string');
 
   const buildHttpOptionsMock = mock.fn(async () => ({
     headers: { 'custom-header': 'val' },
@@ -56,11 +55,6 @@ describe('NorthOIAnalytics', () => {
     retryableHttpStatusCodes: [429, 500, 502, 503, 504]
   };
 
-  const utilsExports = {
-    __esModule: true,
-    streamToString: streamToStringMock
-  };
-
   const utilsOIAnalyticsExports = {
     __esModule: true,
     buildHttpOptions: buildHttpOptionsMock,
@@ -73,7 +67,6 @@ describe('NorthOIAnalytics', () => {
 
   before(() => {
     mockModule(nodeRequire, '../../service/http-request.utils', httpRequestExports);
-    mockModule(nodeRequire, '../../service/utils', utilsExports);
     mockModule(nodeRequire, '../../service/utils-oianalytics', utilsOIAnalyticsExports);
     mockModule(nodeRequire, 'node:fs', { __esModule: true });
     mockModule(nodeRequire, '../../service/cache/cache.service', {
@@ -92,7 +85,6 @@ describe('NorthOIAnalytics', () => {
     logger.warn.mock.resetCalls();
     logger.error.mock.resetCalls();
     httpRequestMock.mock.resetCalls();
-    streamToStringMock.mock.resetCalls();
     buildHttpOptionsMock.mock.resetCalls();
     getHostMock.mock.resetCalls();
     getUrlMock.mock.resetCalls();
@@ -114,7 +106,6 @@ describe('NorthOIAnalytics', () => {
     getHostMock.mock.mockImplementation(() => 'https://mock-host');
     getUrlMock.mock.mockImplementation((endpoint: string, host: string) => new URL(endpoint, host));
     httpRequestMock.mock.mockImplementation(async (_url: URL, _options: ReqOptions) => createMockResponse(200));
-    streamToStringMock.mock.mockImplementation(async (_stream: unknown) => 'stream-content-string');
     (oIAnalyticsRegistrationRepository as unknown as OIAnalyticsRegistrationRepositoryMock).get.mock.mockImplementation(
       () => testData.oIAnalytics.registration.completed
     );
@@ -171,13 +162,13 @@ describe('NorthOIAnalytics', () => {
     it('should send values as JSON without compression', async () => {
       await north.handleContent(mockReadStream, metadata);
 
-      assert.strictEqual(streamToStringMock.mock.calls.length, 1);
-      assert.deepStrictEqual(streamToStringMock.mock.calls[0].arguments, [mockReadStream]);
+      assert.strictEqual(createGzipMock.mock.calls.length, 0);
+      assert.strictEqual(readStreamPipeMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
       assert.ok(url.href.includes('/api/oianalytics/oibus/time-values'));
-      assertContains(options, { body: 'stream-content-string' });
+      assertContains(options, { body: mockReadStream });
       assertContains(options.headers as Record<string, unknown>, { 'Content-Type': 'application/json' });
       assertContains(options.query as Record<string, unknown>, { dataSourceId: configuration.name });
     });
@@ -187,22 +178,16 @@ describe('NorthOIAnalytics', () => {
 
       await north.handleContent(mockReadStream, metadata);
 
-      // streamToString reads the raw file stream (no pipe through createGzip)
-      assert.strictEqual(streamToStringMock.mock.calls.length, 1);
-      assert.deepStrictEqual(streamToStringMock.mock.calls[0].arguments, [mockReadStream]);
-
-      // gzipSync compresses the string content synchronously, returning a Buffer
-      assert.strictEqual(gzipSyncMock.mock.calls.length, 1);
-      assert.deepStrictEqual(gzipSyncMock.mock.calls[0].arguments, ['stream-content-string']);
-
-      // createGzip is not used for values (only for file uploads)
-      assert.strictEqual(createGzipMock.mock.calls.length, 0);
-      assert.strictEqual(readStreamPipeMock.mock.calls.length, 0);
+      // fileStream is piped through createGzip — no synchronous gzip or streamToString
+      assert.strictEqual(createGzipMock.mock.calls.length, 1);
+      assert.strictEqual(readStreamPipeMock.mock.calls.length, 1);
+      assert.deepStrictEqual(readStreamPipeMock.mock.calls[0].arguments[0], mockGzipStream);
+      assert.strictEqual(gzipSyncMock.mock.calls.length, 0);
 
       assert.strictEqual(httpRequestMock.mock.calls.length, 1);
       const [url, options] = httpRequestMock.mock.calls[0].arguments as [URL, ReqOptions];
       assert.ok(url.href.includes('/api/oianalytics/oibus/time-values/compressed'));
-      assertContains(options, { body: Buffer.from('gzipped-content') });
+      assertContains(options, { body: mockGzipStream });
     });
 
     it('should throw OIBusError on fetch failure', async () => {
