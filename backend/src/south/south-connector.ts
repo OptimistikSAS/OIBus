@@ -43,6 +43,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-c
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
 
 /**
  * Base class for every South connector.
@@ -80,6 +81,7 @@ import type { ILogger } from '../model/logger.model';
  *    deferred so the engine can shut down cleanly mid-scan.
  */
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
+  protected logger!: ILogger;
   private taskJobQueue: Array<ScanMode> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   // Last time a "previous cron still running" warning was emitted per scan mode. Used to throttle
@@ -106,9 +108,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     private readonly southCacheRepository: SouthCacheRepository,
-    protected logger: ILogger,
     protected cacheFolderPath: string
   ) {
+    this.logger = loggerService.createChildLogger('south', this.connector.id, this.connector.name);
     this.cacheService = new SouthCacheService(this.southCacheRepository);
     this.tmpFolder = path.resolve(cacheFolderPath, 'tmp');
     this.taskRunner.on('next', () => {
@@ -795,8 +797,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.logger.info(`South connector "${this.connector.name}" stopped`);
   }
 
-  setLogger(value: ILogger) {
-    this.logger = value;
+  refreshLogger(): void {
+    this.logger = loggerService.createChildLogger('south', this.connector.id, this.connector.name);
   }
 
   /**

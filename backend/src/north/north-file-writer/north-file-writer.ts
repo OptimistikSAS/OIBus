@@ -9,14 +9,13 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ICacheService } from '../../model/cache.service.model';
 import { createWriteStream, ReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
  */
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthFileWriterSettings>, logger: ILogger, cacheService: ICacheService) {
-    super(configuration, logger, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthFileWriterSettings>, cacheService: ICacheService) {
+    super(configuration, cacheService);
   }
 
   supportedTypes(): Array<string> {

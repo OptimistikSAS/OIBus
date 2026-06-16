@@ -200,6 +200,11 @@ describe('SouthOLEDB', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthOLEDB = reloadModule<{ default: typeof SouthOLEDBClass }>(nodeRequire, './south-oledb').default;
   });
 
@@ -216,7 +221,7 @@ describe('SouthOLEDB', () => {
     utilsExports.persistResults = mock.fn(async () => undefined);
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthOLEDB(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthOLEDB(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -254,7 +259,7 @@ describe('SouthOLEDB', () => {
       configurationWithoutPassword,
       addContentCallback,
       southCacheRepository,
-      logger,
+
       'cacheFolder'
     );
 
@@ -281,7 +286,7 @@ describe('SouthOLEDB', () => {
       configurationWithTrailingSemicolon,
       addContentCallback,
       southCacheRepository,
-      logger,
+
       'cacheFolder'
     );
     const expectedConnectionString = `${configurationWithTrailingSemicolon.settings.connectionString}Password=encrypted-password;`;

@@ -30,6 +30,11 @@ mockModule(nodeRequire, 'http-proxy', {
 });
 
 mockModule(nodeRequire, '../service/utils', utilsExports);
+const loggerMock = new PinoLogger();
+mockModule(nodeRequire, '../service/logger/logger.service', {
+  loggerService: { createChildLogger: mock.fn(() => loggerMock) },
+  default: class {}
+});
 
 // argon2 verify mock: treats stored password as plain text for test simplicity
 const argon2VerifyMock = mock.fn(async (hash: string, plain: string) => hash === plain);
@@ -43,8 +48,6 @@ const { default: ProxyServer } = reloadModule<{ default: typeof ProxyServerClass
 
 describe('ProxyServer', () => {
   let proxyServer: ProxyServerClass;
-  const loggerMock = new PinoLogger();
-  const logger = loggerMock;
 
   beforeEach(() => {
     testIPOnFilterMock.mock.resetCalls();
@@ -74,7 +77,7 @@ describe('ProxyServer', () => {
     // Patch built-in node:http createServer via mock.method
     mock.method(nodeRequire('node:http'), 'createServer', httpCreateServerMock);
 
-    proxyServer = new ProxyServer(logger, false);
+    proxyServer = new ProxyServer(false);
   });
 
   afterEach(() => {
@@ -83,12 +86,6 @@ describe('ProxyServer', () => {
 
   it('should initialize with default IP filters', () => {
     assert.deepStrictEqual(proxyServer['ipFilters'], []);
-  });
-
-  it('should update the logger', () => {
-    const newLogger = new PinoLogger();
-    proxyServer.setLogger(newLogger);
-    assert.strictEqual(proxyServer.logger, newLogger);
   });
 
   it('should update IP filters', () => {
@@ -414,7 +411,7 @@ describe('ProxyServer', () => {
   });
 
   it('should allow bad ip if ignoreIpFilter is set to true', async () => {
-    proxyServer = new ProxyServer(logger, true);
+    proxyServer = new ProxyServer(true);
 
     const mockClientWrite = mock.fn();
     const mockClientPipe = mock.fn((destStream: unknown) => destStream);
@@ -461,7 +458,7 @@ describe('ProxyServer', () => {
   });
 
   it('should catch error on connection error', async () => {
-    proxyServer = new ProxyServer(logger, true);
+    proxyServer = new ProxyServer(true);
 
     const mockReq = {
       method: 'CONNECT',

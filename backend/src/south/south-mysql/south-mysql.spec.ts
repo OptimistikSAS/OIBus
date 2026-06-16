@@ -87,6 +87,11 @@ describe('SouthMySQL', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthMySQL = reloadModule<{ default: typeof SouthMySQLClass }>(nodeRequire, './south-mysql').default;
   });
 
@@ -257,7 +262,7 @@ describe('SouthMySQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -626,7 +631,7 @@ describe('SouthMySQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should manage connection error', async () => {
@@ -683,7 +688,7 @@ describe('SouthMySQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthMySQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {

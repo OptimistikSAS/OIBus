@@ -9,7 +9,6 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { AdsEnumInfoEntry } from 'ads-client/dist/types/ads-protocol-types';
 import { SouthDirectQuery } from '../south-interface';
-import type { ILogger } from '../../model/logger.model';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -41,10 +40,9 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   /**
