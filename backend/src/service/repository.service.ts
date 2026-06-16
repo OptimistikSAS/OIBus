@@ -65,6 +65,14 @@ export default class RepositoryService {
     // Enable WAL mode and set busy timeout because this database is used in two separates threads (main thread and logger)
     this.logsDatabase.pragma('journal_mode = WAL');
     this.logsDatabase.pragma('busy_timeout = 5000');
+    // WAL + NORMAL synchronous removes per-upsert fsync from the event loop.
+    // cache.db receives a tracked-instant upsert on every south scan (can be 1 Hz+);
+    this.cacheDatabase.pragma('journal_mode = WAL');
+    this.cacheDatabase.pragma('synchronous = NORMAL');
+    // metrics.db receives a metrics update on every scan and every north send.
+    // WAL checkpoints asynchronously so writers never block readers.
+    this.metricsDatabase.pragma('journal_mode = WAL');
+    this.metricsDatabase.pragma('synchronous = NORMAL');
 
     this._ipFilterRepository = new IpFilterRepository(this.oibusDatabase);
     this._scanModeRepository = new ScanModeRepository(this.oibusDatabase);
