@@ -338,7 +338,7 @@ describe('Logger', () => {
 
     await service.start(specificSettings, null);
 
-    const targets: Array<{ target: string }> = pinoMock.mock.calls[0].arguments[0].transport.targets;
+    const targets: Array<{ target: string }> = pinoTransportMock.mock.calls[0].arguments[0].targets;
     const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
     assert.ok(syslogTarget !== undefined, 'syslog-transport.js target should be present');
   });
@@ -351,7 +351,7 @@ describe('Logger', () => {
 
     await service.start(specificSettings, null);
 
-    const targets: Array<{ target: string }> = pinoMock.mock.calls[0].arguments[0].transport.targets;
+    const targets: Array<{ target: string }> = pinoTransportMock.mock.calls[0].arguments[0].targets;
     const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
     assert.strictEqual(syslogTarget, undefined, 'syslog-transport.js target should not be present');
   });
@@ -365,7 +365,7 @@ describe('Logger', () => {
 
     await service.start(specificSettings, null);
 
-    const targets: Array<{ target: string }> = pinoMock.mock.calls[0].arguments[0].transport.targets;
+    const targets: Array<{ target: string }> = pinoTransportMock.mock.calls[0].arguments[0].targets;
     const syslogTarget = targets.find(t => t.target === path.join(__dirname, 'syslog-transport.js'));
     assert.strictEqual(syslogTarget, undefined, 'syslog-transport.js target should not be present');
   });
