@@ -1,7 +1,7 @@
 import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { LogSearchParam, Scope } from '../../../shared/model/logs.model';
+import { Item, LogSearchParam, Scope } from '../../../shared/model/logs.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
@@ -49,6 +49,7 @@ describe('LogController', () => {
     const levels = 'info,debug';
     const scopeTypes = 'south,north';
     const scopeIds = 'scope1,scope2';
+    const itemIds = 'item1,item2';
     const messageContent = 'message';
 
     const searchParams: LogSearchParam = {
@@ -58,6 +59,7 @@ describe('LogController', () => {
       levels: ['info', 'debug'],
       scopeTypes: ['south', 'north'],
       scopeIds: ['scope1', 'scope2'],
+      itemIds: ['item1', 'item2'],
       messageContent
     };
 
@@ -70,6 +72,7 @@ describe('LogController', () => {
       levels,
       scopeIds,
       scopeTypes,
+      itemIds,
       messageContent,
       page,
       mockRequest as CustomExpressRequest
@@ -91,6 +94,7 @@ describe('LogController', () => {
       levels: [],
       scopeTypes: [],
       scopeIds: [],
+      itemIds: [],
       messageContent: undefined
     };
 
@@ -98,6 +102,7 @@ describe('LogController', () => {
     logService.search = mock.fn(() => expectedResult);
 
     const result = await controller.search(
+      undefined,
       undefined,
       undefined,
       undefined,
@@ -146,5 +151,40 @@ describe('LogController', () => {
     assert.strictEqual(logService.getScopeById.mock.calls.length, 1);
     assert.deepStrictEqual(logService.getScopeById.mock.calls[0].arguments[0], scopeId);
     assert.deepStrictEqual(result, scope);
+  });
+
+  it('should suggest items by name', async () => {
+    const items: Array<Item> = [{ itemId: 'item-id', itemName: 'Item Name' }];
+    const name = 'Item';
+    logService.suggestItems = mock.fn(() => items);
+
+    const result = await controller.suggestItems(name, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(logService.suggestItems.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.suggestItems.mock.calls[0].arguments[0], name);
+    assert.deepStrictEqual(result, items);
+  });
+
+  it('should suggest items by name with default parameter', async () => {
+    const items: Array<Item> = [{ itemId: 'item-id', itemName: 'Item Name' }];
+    logService.suggestItems = mock.fn(() => items);
+
+    const result = await controller.suggestItems(undefined, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(logService.suggestItems.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.suggestItems.mock.calls[0].arguments[0], '');
+    assert.deepStrictEqual(result, items);
+  });
+
+  it('should get item by its ID', async () => {
+    const item: Item = { itemId: 'item-id', itemName: 'Item Name' };
+    const itemId = 'item-id';
+    logService.getItemById = mock.fn(() => item);
+
+    const result = await controller.getItemById(itemId, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(logService.getItemById.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.getItemById.mock.calls[0].arguments[0], itemId);
+    assert.deepStrictEqual(result, item);
   });
 });

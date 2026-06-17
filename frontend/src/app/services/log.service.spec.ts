@@ -30,6 +30,8 @@ describe('LogService', () => {
         scopeType: 'internal',
         scopeName: null,
         scopeId: null,
+        itemId: null,
+        itemName: null,
         message: 'my log 1'
       },
       {
@@ -38,6 +40,8 @@ describe('LogService', () => {
         scopeType: 'internal',
         scopeName: null,
         scopeId: null,
+        itemId: null,
+        itemName: null,
         message: 'my log 2'
       }
     ]);
@@ -46,8 +50,9 @@ describe('LogService', () => {
       .search({
         page: 0,
         messageContent: 'messageContent',
-        scopeTypes: ['web-server', 'south'],
+        scopeTypes: ['internal', 'south'],
         scopeIds: ['id1', 'id2'],
+        itemIds: ['itemId1', 'itemId2'],
         start: '2023-01-01T00:00:00.000Z',
         end: '2023-01-02T00:00:00.000Z',
         levels: ['info', 'debug']
@@ -56,7 +61,7 @@ describe('LogService', () => {
 
     http
       .expectOne({
-        url: '/api/logs?page=0&messageContent=messageContent&start=2023-01-01T00:00:00.000Z&end=2023-01-02T00:00:00.000Z&scopeTypes=web-server,south&scopeIds=id1,id2&levels=info,debug',
+        url: '/api/logs?page=0&messageContent=messageContent&start=2023-01-01T00:00:00.000Z&end=2023-01-02T00:00:00.000Z&scopeTypes=internal,south&scopeIds=id1,id2&itemIds=itemId1,itemId2&levels=info,debug',
         method: 'GET'
       })
       .flush(logs);

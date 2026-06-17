@@ -427,7 +427,7 @@ describe('SouthConnector', () => {
 
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error when querying items with direct access: file query error`
+          (c: { arguments: Array<unknown> }) => c.arguments[1] === `Error when querying items with direct access: file query error`
         )
       );
     });
@@ -638,12 +638,12 @@ describe('SouthConnector', () => {
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] === `Error when querying items with history capabilities: history query error`
+            c.arguments[1] === `Error when querying items with history capabilities: history query error`
         )
       );
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error when querying items with direct access: last point query error`
+          (c: { arguments: Array<unknown> }) => c.arguments[1] === `Error when querying items with direct access: last point query error`
         )
       );
 

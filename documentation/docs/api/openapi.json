@@ -28805,8 +28805,7 @@
 					"south",
 					"north",
 					"history-query",
-					"internal",
-					"web-server"
+					"internal"
 				],
 				"description": "Type representing a scope type."
 			},
@@ -28840,6 +28839,18 @@
 						"description": "The human-readable name of the scope.\nCan be `null` if the log is not associated with a specific scope.",
 						"example": "South Connector 1"
 					},
+					"itemId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The unique identifier of the item the log is associated with (e.g., a south connector item ID).\nCan be `null` if the log is not associated with a specific item.",
+						"example": "item123"
+					},
+					"itemName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The human-readable name of the item the log is associated with.\nCan be `null` if the log is not associated with a specific item.",
+						"example": "Temperature sensor"
+					},
 					"message": {
 						"type": "string",
 						"description": "The log message content, including details about the event or error.",
@@ -28852,6 +28863,8 @@
 					"scopeType",
 					"scopeId",
 					"scopeName",
+					"itemId",
+					"itemName",
 					"message"
 				],
 				"type": "object",
@@ -28919,6 +28932,27 @@
 				"required": [
 					"scopeId",
 					"scopeName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Item": {
+				"description": "Represents an item associated with log entries.\nAn item is a data point or query within a south connector.",
+				"properties": {
+					"itemId": {
+						"type": "string",
+						"description": "The unique identifier of the item (e.g., south connector item ID).",
+						"example": "item123"
+					},
+					"itemName": {
+						"type": "string",
+						"description": "The human-readable name of the item.",
+						"example": "Temperature sensor"
+					}
+				},
+				"required": [
+					"itemId",
+					"itemName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -35930,9 +35964,18 @@
 						}
 					},
 					{
-						"description": "Comma-separated list of scope types to filter by (e.g. `south,north`). Valid values: `south`, `north`, `history-query`, `internal`, `web-server`.",
+						"description": "Comma-separated list of scope types to filter by (e.g. `south,north`). Valid values: `south`, `north`, `history-query`, `internal`.",
 						"in": "query",
 						"name": "scopeTypes",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Comma-separated list of item IDs to filter by (e.g. `item123,item456`).",
+						"in": "query",
+						"name": "itemIds",
 						"required": true,
 						"schema": {
 							"type": "string"
@@ -36022,6 +36065,76 @@
 					{
 						"in": "path",
 						"name": "scopeId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/logs/items/suggest": {
+			"get": {
+				"operationId": "SuggestItems",
+				"responses": {
+					"200": {
+						"description": "Array of matching item objects",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/Item"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Returns a list of item suggestions based on the provided name fragment",
+				"summary": "Get item suggestions",
+				"tags": [
+					"Logs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "name",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/logs/items/{itemId}": {
+			"get": {
+				"operationId": "GetItemById",
+				"responses": {
+					"200": {
+						"description": "Item object or 404 if not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Item"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves details for a specific log item by its ID",
+				"summary": "Get log item details",
+				"tags": [
+					"Logs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "itemId",
 						"required": true,
 						"schema": {
 							"type": "string"

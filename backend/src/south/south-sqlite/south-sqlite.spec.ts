@@ -206,7 +206,7 @@ describe('SouthSQLite', () => {
     });
     assert.strictEqual(
       (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === `Found 2 results for item ${configuration.items[0].name} in 0 ms`
+        (c: { arguments: Array<unknown> }) => c.arguments[1] === `Found 2 results for item ${configuration.items[0].name} in 0 ms`
       ),
       true
     );
@@ -228,7 +228,7 @@ describe('SouthSQLite', () => {
     assert.strictEqual(
       (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          c.arguments[0] === `No result found for item ${configuration.items[0].name}. Request done in 0 ms`
+          c.arguments[1] === `No result found for item ${configuration.items[0].name}. Request done in 0 ms`
       ),
       true
     );
