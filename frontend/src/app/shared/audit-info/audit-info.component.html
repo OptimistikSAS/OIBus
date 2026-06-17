@@ -1,0 +1,11 @@
+<span [ngbTooltip]="auditDetails" placement="top-start">{{ updatedAt() | datetime: 'ff' }}</span>
+<ng-template #auditDetails>
+  <div class="text-start">
+    <div>
+      <span class="fw-bold" translate="common.audit.created-on"></span>{{ 'common.colon-separator' | translate
+      }}{{ createdAt() | datetime: 'ff' }}
+    </div>
+    <div><span class="fw-bold" translate="common.audit.created-by"></span>{{ 'common.colon-separator' | translate }}{{ createdBy() }}</div>
+    <div><span class="fw-bold" translate="common.audit.updated-by"></span>{{ 'common.colon-separator' | translate }}{{ updatedBy() }}</div>
+  </div>
+</ng-template>

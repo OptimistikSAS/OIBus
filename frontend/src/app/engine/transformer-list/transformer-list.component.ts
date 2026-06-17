@@ -14,7 +14,7 @@ import { EditTransformerModalComponent } from './edit-transformer-modal/edit-tra
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { DatetimePipe } from '../../shared/datetime.pipe';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 
 type TransformerSortField = 'name' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -31,7 +31,7 @@ const PAGE_SIZE = 20;
     NgbTooltip,
     TranslatePipe,
     PaginationComponent,
-    DatetimePipe
+    AuditInfoComponent
   ],
   templateUrl: './transformer-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

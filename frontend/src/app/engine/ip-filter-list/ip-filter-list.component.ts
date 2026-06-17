@@ -14,7 +14,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { DatetimePipe } from '../../shared/datetime.pipe';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 
 type IpFilterSortField = 'address' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -31,7 +31,7 @@ const PAGE_SIZE = 20;
     NgbTooltip,
     TranslatePipe,
     PaginationComponent,
-    DatetimePipe
+    AuditInfoComponent
   ],
   templateUrl: './ip-filter-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

@@ -66,7 +66,7 @@ describe('CertificateListComponent', () => {
       await expect.element(tester.certificates).toHaveLength(2);
 
       const secondCertificateCells = tester.certificates.nth(1).getByCss('td');
-      await expect.element(tester.certificates.nth(0).getByCss('td')).toHaveLength(11);
+      await expect.element(tester.certificates.nth(0).getByCss('td')).toHaveLength(9);
       await expect.element(secondCertificateCells.nth(0)).toHaveTextContent('Certificate 2');
       await expect.element(secondCertificateCells.nth(1)).toHaveTextContent('');
       await expect.element(secondCertificateCells.nth(2)).toHaveTextContent('public key');

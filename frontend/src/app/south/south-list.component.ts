@@ -19,7 +19,7 @@ import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusSouthTypeEnumPipe } from '../shared/oibus-south-type-enum.pipe';
 import { FormControlValidationDirective } from '../shared/form/form-control-validation.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DatetimePipe } from '../shared/datetime.pipe';
+import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
 
 type SouthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -40,7 +40,7 @@ const PAGE_SIZE = 15;
     OIBusSouthTypeEnumPipe,
     NgbTooltip,
     TranslatePipe,
-    DatetimePipe
+    AuditInfoComponent
   ],
   templateUrl: './south-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

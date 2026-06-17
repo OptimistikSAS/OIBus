@@ -19,6 +19,7 @@ import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../shared/form/form-validation-directives';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
 
 type HistorySortField = 'name' | 'interval' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -40,7 +41,8 @@ const PAGE_SIZE = 15;
     NgbTooltip,
     TranslatePipe,
     LegendComponent,
-    OI_FORM_VALIDATION_DIRECTIVES
+    OI_FORM_VALIDATION_DIRECTIVES,
+    AuditInfoComponent
   ],
   templateUrl: './history-query-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

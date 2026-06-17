@@ -39,17 +39,6 @@
           <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.description"></th>
           <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.input-type"></th>
           <th translate="configuration.oibus.manifest.transformers.edit-transformer-modal.output-type"></th>
-          <th translate="engine.transformer.created-by"></th>
-          <th>
-            <button
-              type="button"
-              style="background: none; border: none; font-weight: bold; color: inherit"
-              (click)="toggleSort('createdAt')"
-            >
-              <span translate="engine.transformer.created-at" class="me-2"></span>
-              <span class="fa {{ getSortIcon('createdAt') }}"></span>
-            </button>
-          </th>
           <th>
             <button
               type="button"
@@ -70,9 +59,14 @@
             <td>{{ transformer.description }}</td>
             <td>{{ transformer.inputType }}</td>
             <td>{{ transformer.outputType }}</td>
-            <td>{{ transformer.createdBy.friendlyName }}</td>
-            <td>{{ transformer.createdAt | datetime: 'ff' }}</td>
-            <td>{{ transformer.updatedAt | datetime: 'ff' }}</td>
+            <td>
+              <oib-audit-info
+                [createdAt]="transformer.createdAt"
+                [createdBy]="transformer.createdBy.friendlyName"
+                [updatedAt]="transformer.updatedAt"
+                [updatedBy]="transformer.updatedBy.friendlyName"
+              />
+            </td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->

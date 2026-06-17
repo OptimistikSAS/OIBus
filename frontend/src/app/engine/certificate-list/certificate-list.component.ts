@@ -17,6 +17,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { AuditInfoComponent } from '../../shared/audit-info/audit-info.component';
 
 type CertificateSortField = 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -34,7 +35,8 @@ const PAGE_SIZE = 20;
     OibHelpComponent,
     NgbTooltip,
     TranslatePipe,
-    PaginationComponent
+    PaginationComponent,
+    AuditInfoComponent
   ],
   templateUrl: './certificate-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
