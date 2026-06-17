@@ -1,5 +1,5 @@
 import { inject, LOCALE_ID, provideEnvironmentInitializer } from '@angular/core';
-import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateLoader, TranslateService } from '@ngx-translate/core';
 import { ModuleTranslateLoader } from './module-translate-loader';
 
 import { DEFAULT_TZ, Language, Timezone } from '../../../backend/shared/model/types';
@@ -33,7 +33,10 @@ export function storeTimezone(timezone: Timezone) {
 export const provideI18n = () => {
   return [
     provideTranslateService({
-      loader: provideTranslateLoader(ModuleTranslateLoader)
+      // Pass an explicit provider instead of provideTranslateLoader(ModuleTranslateLoader): the helper
+      // detects class-vs-factory via /^class\s/ on the stringified function, which breaks under prod
+      // minification (esbuild emits an anonymous `class{…}` with no space) and wrongly uses useFactory.
+      loader: { provide: TranslateLoader, useClass: ModuleTranslateLoader }
     }),
     { provide: LOCALE_ID, useValue: languageToUse() },
     // provideEnvironmentInitializer allows us to run code when the app starts
