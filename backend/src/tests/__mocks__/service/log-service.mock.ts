@@ -1,6 +1,6 @@
 import { mock } from 'node:test';
 import { OIBusLog } from '../../../model/logs.model';
-import { LogSearchParam, Scope } from '../../../../shared/model/logs.model';
+import { Item, LogSearchParam, Scope } from '../../../../shared/model/logs.model';
 import { Page } from '../../../../shared/model/types';
 
 /**
@@ -18,4 +18,6 @@ export default class LogServiceMock {
   );
   suggestScopes = mock.fn((_name: string): Array<Scope> => []);
   getScopeById = mock.fn((_scopeId: string): Scope => ({}) as Scope);
+  suggestItems = mock.fn((_name: string): Array<Item> => []);
+  getItemById = mock.fn((_itemId: string): Item => ({}) as Item);
 }
