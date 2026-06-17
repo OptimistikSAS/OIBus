@@ -896,6 +896,38 @@ describe('Service utils', () => {
     });
   });
 
+  describe('extractLastCsvRow', () => {
+    it('should return the last data row as an object keyed by the header', () => {
+      const content = 'Name;TS;Value\r\nKBS2T1;16-Jun-26 10:06:01;5\r\nLOURDS1C;16-Jun-26 10:07:00;7';
+      assert.deepStrictEqual(utils.extractLastCsvRow(content, ';'), {
+        Name: 'LOURDS1C',
+        TS: '16-Jun-26 10:07:00',
+        Value: '7'
+      });
+    });
+
+    it('should handle a trailing newline and a single data row', () => {
+      assert.deepStrictEqual(utils.extractLastCsvRow('Name,Value\nA,1\n', ','), { Name: 'A', Value: '1' });
+    });
+
+    it('should handle LF-only line endings', () => {
+      assert.deepStrictEqual(utils.extractLastCsvRow('a;b\n1;2\n3;4', ';'), { a: '3', b: '4' });
+    });
+
+    it('should return null when there is only a header', () => {
+      assert.strictEqual(utils.extractLastCsvRow('Name;TS;Value', ';'), null);
+    });
+
+    it('should return null for empty or non-string content', () => {
+      assert.strictEqual(utils.extractLastCsvRow('', ';'), null);
+      assert.strictEqual(utils.extractLastCsvRow(undefined as unknown as string, ';'), null);
+    });
+
+    it('should pad missing trailing columns with empty strings', () => {
+      assert.deepStrictEqual(utils.extractLastCsvRow('a;b;c\n1;2', ';'), { a: '1', b: '2', c: '' });
+    });
+  });
+
   describe('convertQuoteChar', () => {
     it('should convert all quote char options', () => {
       assert.deepStrictEqual(utils.convertQuoteChar('DOUBLE_QUOTE'), '"');
