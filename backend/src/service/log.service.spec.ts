@@ -37,6 +37,7 @@ describe('Log Service', () => {
       levels: [],
       scopeIds: [],
       scopeTypes: [],
+      itemIds: [],
       messageContent: undefined
     };
     const result = service.search(searchParams);
@@ -70,6 +71,31 @@ describe('Log Service', () => {
     assert.deepStrictEqual(logRepository.getScopeById.mock.calls[0].arguments, ['scopeId']);
   });
 
+  it('should suggest items', () => {
+    logRepository.suggestItems.mock.mockImplementationOnce(() => []);
+
+    const result = service.suggestItems('itemName');
+
+    assert.deepStrictEqual(logRepository.suggestItems.mock.calls[0].arguments, ['itemName']);
+    assert.deepStrictEqual(result, []);
+  });
+
+  it('should get an item', () => {
+    logRepository.getItemById.mock.mockImplementationOnce(() => ({ itemId: 'itemId', itemName: 'itemName' }));
+
+    const result = service.getItemById('itemId');
+
+    assert.deepStrictEqual(logRepository.getItemById.mock.calls[0].arguments, ['itemId']);
+    assert.deepStrictEqual(result, { itemId: 'itemId', itemName: 'itemName' });
+  });
+
+  it('should throw if item not found', () => {
+    logRepository.getItemById.mock.mockImplementationOnce(() => null);
+
+    assert.throws(() => service.getItemById('itemId'), { message: `Item "itemId" not found` });
+    assert.deepStrictEqual(logRepository.getItemById.mock.calls[0].arguments, ['itemId']);
+  });
+
   it('should properly convert to DTO', () => {
     const log = testData.logs.list[0];
     assert.deepStrictEqual(toLogDTO(log), {
@@ -78,6 +104,8 @@ describe('Log Service', () => {
       scopeType: log.scopeType,
       scopeId: log.scopeId,
       scopeName: log.scopeName,
+      itemId: log.itemId,
+      itemName: log.itemName,
       message: log.message
     });
   });

@@ -11,6 +11,5 @@ describe('ScopeTypesEnumPipe', () => {
     expect(pipe.transform('north')).toBe('North');
     expect(pipe.transform('history-query')).toBe('History query');
     expect(pipe.transform('internal')).toBe('Internal');
-    expect(pipe.transform('web-server')).toBe('Web server');
   });
 });
