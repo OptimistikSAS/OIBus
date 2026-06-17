@@ -25,6 +25,11 @@ export async function up(knex: Knex): Promise<void> {
     scope_id: 'web-server',
     scope_name: 'Web Server'
   });
+
+  // Partial index: covers getItemById (item_id = ?), search (item_id IN (...)),
+  // and suggestItems (item_id IS NOT NULL guard). Kept small by indexing only
+  // non-NULL rows.
+  await knex.raw(`CREATE INDEX IF NOT EXISTS idx_logs_item_id ON ${LOG_TABLE} (item_id) WHERE item_id IS NOT NULL;`);
 }
 
 export async function down(knex: Knex): Promise<void> {
@@ -38,11 +43,11 @@ export async function down(knex: Knex): Promise<void> {
   // SQLite does not support DROP COLUMN — use the tmp-table pattern.
   await knex.schema.raw(`CREATE TABLE ${LOG_TABLE}_dg_tmp
     (timestamp  datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
-     level      varchar(255),
+     level      varchar(255) NOT NULL DEFAULT '',
      scope_type varchar(255),
      scope_id   varchar(255),
      scope_name varchar(255),
-     message    varchar);`);
+     message    varchar NOT NULL);`);
 
   await knex.schema.raw(`INSERT INTO ${LOG_TABLE}_dg_tmp (timestamp, level, scope_type, scope_id, scope_name, message)
     SELECT timestamp, level, scope_type, scope_id, scope_name, message FROM ${LOG_TABLE};`);
@@ -50,4 +55,8 @@ export async function down(knex: Knex): Promise<void> {
   await knex.schema.raw(`DROP TABLE ${LOG_TABLE};`);
 
   await knex.schema.raw(`ALTER TABLE ${LOG_TABLE}_dg_tmp RENAME TO ${LOG_TABLE};`);
+
+  // Restore the two indexes that existed before this migration (created by v3.8.0).
+  await knex.raw(`CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON ${LOG_TABLE} (timestamp);`);
+  await knex.raw(`CREATE INDEX IF NOT EXISTS idx_logs_scope ON ${LOG_TABLE} (scope_id, scope_type);`);
 }

@@ -26,6 +26,11 @@ async function columnExists(db: Knex, columnName: string): Promise<boolean> {
   return info.some(col => col.name === columnName);
 }
 
+async function indexExists(db: Knex, indexName: string): Promise<boolean> {
+  const info = (await db.raw(`PRAGMA index_list(logs)`)) as Array<{ name: string }>;
+  return info.some(idx => idx.name === indexName);
+}
+
 describe('Logs migration v3.9.0 (scope-items)', () => {
   let db: Knex;
   let tmpDir: string;
@@ -138,6 +143,14 @@ describe('Logs migration v3.9.0 (scope-items)', () => {
     await up(db); // must not throw
   });
 
+  it('creates idx_logs_item_id index after up', async () => {
+    assert.equal(await indexExists(db, 'idx_logs_item_id'), false, 'index should not exist before migration');
+
+    await up(db);
+
+    assert.equal(await indexExists(db, 'idx_logs_item_id'), true, 'index should exist after migration');
+  });
+
   // ─── down: web-server revert ───────────────────────────────────────────────
 
   it('reverts internal+web-server rows back to scope_type=web-server on down', async () => {
@@ -168,6 +181,16 @@ describe('Logs migration v3.9.0 (scope-items)', () => {
     assert.equal(await columnExists(db, 'item_name'), false, 'item_name should be dropped after down');
   });
 
+  it('down restores idx_logs_timestamp and idx_logs_scope after tmp-table rename', async () => {
+    await up(db);
+
+    await down(db);
+
+    assert.equal(await indexExists(db, 'idx_logs_timestamp'), true, 'idx_logs_timestamp should be restored after down');
+    assert.equal(await indexExists(db, 'idx_logs_scope'), true, 'idx_logs_scope should be restored after down');
+    assert.equal(await indexExists(db, 'idx_logs_item_id'), false, 'idx_logs_item_id should be gone after down');
+  });
+
   // ─── Reversibility ─────────────────────────────────────────────────────────
 
   it('is reversible: up → down → up', async () => {
@@ -177,5 +200,6 @@ describe('Logs migration v3.9.0 (scope-items)', () => {
 
     assert.equal(await columnExists(db, 'item_id'), true, 'item_id should exist after up → down → up');
     assert.equal(await columnExists(db, 'item_name'), true, 'item_name should exist after up → down → up');
+    assert.equal(await indexExists(db, 'idx_logs_item_id'), true, 'idx_logs_item_id should exist after up → down → up');
   });
 });
