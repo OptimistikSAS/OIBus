@@ -156,8 +156,7 @@
       "south": "South",
       "north": "North",
       "history-query": "History query",
-      "internal": "Internal",
-      "web-server": "Web server"
+      "internal": "Internal"
     },
     "categories": {
       "api": "API",
@@ -2663,12 +2662,14 @@
       "message-content": "Log contains",
       "scope-type": "Types",
       "scope": "Scopes",
+      "item": "Items",
       "levels": "Levels"
     },
     "date": "Date",
     "level": "Level",
     "scope-type": "Type",
     "scope": "Scope",
+    "item": "Item",
     "message": "Message",
     "none": "No log found",
     "tooltips": {

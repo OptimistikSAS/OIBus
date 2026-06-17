@@ -66,6 +66,7 @@ describe('Repository with populated database', () => {
           levels: [testData.logs.list[0].level],
           scopeIds: [testData.logs.list[0].scopeId as string],
           scopeTypes: [testData.logs.list[0].scopeType],
+          itemIds: [],
           messageContent: 'message',
           page: 0,
           start: testData.constants.dates.DATE_1,
@@ -81,6 +82,7 @@ describe('Repository with populated database', () => {
           levels: [],
           scopeIds: [],
           scopeTypes: ['internal'],
+          itemIds: [],
           messageContent: '',
           page: 0,
           start: testData.constants.dates.DATE_1,
@@ -94,6 +96,7 @@ describe('Repository with populated database', () => {
           levels: [],
           scopeIds: [],
           scopeTypes: [],
+          itemIds: [],
           messageContent: '',
           page: 0,
           start: testData.constants.dates.DATE_1,
@@ -125,6 +128,72 @@ describe('Repository with populated database', () => {
       assert.deepStrictEqual(scope, { scopeId: testData.logs.list[2].scopeId, scopeName: testData.logs.list[2].scopeName });
 
       assert.strictEqual(repository.getScopeById('bad id'), null);
+    });
+
+    it('should search items and find by id', () => {
+      repository.saveAll([
+        {
+          msg: 'item log',
+          scopeType: 'south',
+          scopeId: 'south-1',
+          scopeName: 'South 1',
+          itemId: 'item-abc',
+          itemName: 'Temperature Sensor',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        },
+        {
+          msg: 'another item log',
+          scopeType: 'south',
+          scopeId: 'south-1',
+          scopeName: 'South 1',
+          itemId: 'item-def',
+          itemName: 'Pressure Gauge',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        }
+      ]);
+
+      const suggestions = repository.suggestItems('Sensor');
+      assert.deepStrictEqual(suggestions, [{ itemId: 'item-abc', itemName: 'Temperature Sensor' }]);
+
+      const allItems = repository.suggestItems('');
+      assert.strictEqual(allItems.length, 2);
+
+      const found = repository.getItemById('item-abc');
+      assert.deepStrictEqual(found, { itemId: 'item-abc', itemName: 'Temperature Sensor' });
+
+      assert.strictEqual(repository.getItemById('bad-id'), null);
+    });
+
+    it('should filter search results by itemIds', () => {
+      repository.saveAll([
+        {
+          msg: 'item log',
+          scopeType: 'south',
+          scopeId: 'south-x',
+          scopeName: 'South X',
+          itemId: 'item-xyz',
+          itemName: 'Flow Meter',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        }
+      ]);
+
+      const result = repository.search({
+        levels: [],
+        scopeIds: [],
+        scopeTypes: [],
+        itemIds: ['item-xyz'],
+        messageContent: '',
+        page: 0,
+        start: testData.constants.dates.DATE_1,
+        end: testData.constants.dates.DATE_2
+      });
+
+      assert.strictEqual(result.totalElements, 1);
+      assert.strictEqual(result.content[0].itemId, 'item-xyz');
+      assert.strictEqual(result.content[0].itemName, 'Flow Meter');
     });
   });
 });

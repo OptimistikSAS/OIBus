@@ -406,7 +406,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           try {
             await this.directQueryHandler(groupedElements);
           } catch (error: unknown) {
-            this.logger.error(`Error when querying items with direct access: ${(error as Error).message}`);
+            const itemCtx = groupedElements.length === 1 ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name } : {};
+            this.logger.error(itemCtx, `Error when querying items with direct access: ${(error as Error).message}`);
           }
         }
         if (this.hasHistoryQuery()) {
@@ -426,7 +427,8 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
             );
           } catch (error: unknown) {
             this.historyIsRunning = false;
-            this.logger.error(`Error when querying items with history capabilities: ${(error as Error).message}`);
+            const itemCtx = groupedElements.length === 1 ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name } : {};
+            this.logger.error(itemCtx, `Error when querying items with history capabilities: ${(error as Error).message}`);
           }
         }
 

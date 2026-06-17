@@ -3,7 +3,16 @@ import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { LOG_LEVELS, LogDTO, LogLevel, LogSearchParam, Scope, SCOPE_TYPES, ScopeType } from '../../../../backend/shared/model/logs.model';
+import {
+  Item,
+  LOG_LEVELS,
+  LogDTO,
+  LogLevel,
+  LogSearchParam,
+  Scope,
+  SCOPE_TYPES,
+  ScopeType
+} from '../../../../backend/shared/model/logs.model';
 import { DateTime } from 'luxon';
 import { Instant, Page } from '../../../../backend/shared/model/types';
 import { ascendingDates } from '../shared/form/validators';
@@ -16,6 +25,7 @@ import {
   exhaustMap,
   map,
   Observable,
+  of,
   startWith,
   Subscription,
   switchMap,
@@ -83,6 +93,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       end: null as Instant | null,
       scopeTypes: [[] as Array<ScopeType>],
       scopeIds: null as string | null,
+      itemIds: null as string | null,
       levels: [[] as Array<LogLevel>],
       page: null as number | null
     },
@@ -100,6 +111,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   readonly levels = LOG_LEVELS.filter(level => level !== 'silent');
   readonly scopeTypes = SCOPE_TYPES;
   selectedScopes = signal<Array<Scope>>([]);
+  selectedItems = signal<Array<Item>>([]);
   loading = signal(false);
   // subscription to reload the page periodically
   subscription = new Subscription();
@@ -118,6 +130,14 @@ export class LogsComponent implements OnInit, OnDestroy {
     );
   scopeFormatter = (scope: Scope) => scope.scopeName;
 
+  itemTypeahead = (text$: Observable<string>) =>
+    text$.pipe(
+      debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
+      distinctUntilChanged(),
+      switchMap(text => this.logService.suggestItems(text))
+    );
+  itemFormatter = (item: Item) => item.itemName;
+
   private autoReloadPaused$ = toObservable(this.autoReloadPaused);
 
   ngOnInit(): void {
@@ -128,6 +148,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       end: searchParams.end || null,
       scopeTypes: searchParams.scopeTypes,
       scopeIds: '',
+      itemIds: '',
       levels: searchParams.levels,
       page: searchParams.page
     });
@@ -137,9 +158,19 @@ export class LogsComponent implements OnInit, OnDestroy {
     }
     const queryScopeIds = this.route.snapshot.queryParamMap.getAll('scopeIds');
     if (queryScopeIds.length > 0) {
-      combineLatest(queryScopeIds.map(scopeId => this.logService.getScopeById(scopeId))).subscribe(selectedScopes => {
-        this.selectedScopes.set(selectedScopes.filter(scope => !!scope));
-      });
+      combineLatest(queryScopeIds.map(scopeId => this.logService.getScopeById(scopeId).pipe(catchError(() => of(null))))).subscribe(
+        selectedScopes => {
+          this.selectedScopes.set(selectedScopes.filter(scope => !!scope) as Array<Scope>);
+        }
+      );
+    }
+    const queryItemIds = this.route.snapshot.queryParamMap.getAll('itemIds');
+    if (queryItemIds.length > 0) {
+      combineLatest(queryItemIds.map(itemId => this.logService.getItemById(itemId).pipe(catchError(() => of(null))))).subscribe(
+        selectedItems => {
+          this.selectedItems.set(selectedItems.filter(item => !!item) as Array<Item>);
+        }
+      );
     }
     this.subscription.add(
       combineLatest([this.pageLoader.pageLoads$, this.autoReloadPaused$.pipe(startWith(this.autoReloadPaused()))])
@@ -182,8 +213,9 @@ export class LogsComponent implements OnInit, OnDestroy {
     const start = queryParamMap.get('start') ?? now.minus({ days: 1 }).toISO();
     const end = queryParamMap.get('end') || undefined;
     const levels = queryParamMap.getAll('levels') as Array<LogLevel>;
+    const itemIds = queryParamMap.getAll('itemIds');
     const page = queryParamMap.get('page') ? parseInt(queryParamMap.get('page')!, 10) : 0;
-    return { messageContent, scopeTypes, scopeIds, start, end, levels, page };
+    return { messageContent, scopeTypes, scopeIds, itemIds, start, end, levels, page };
   }
 
   triggerSearch() {
@@ -200,6 +232,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       levels: formValue.levels!,
       scopeTypes: scopeType ? [scopeType] : formValue.scopeTypes!,
       scopeIds: scopeId ? [scopeId] : this.selectedScopes()!.map(scope => scope.scopeId),
+      itemIds: this.selectedItems().map(item => item.itemId),
       page: 0
     };
     this.router.navigate([], { queryParams: criteria });
@@ -217,6 +250,16 @@ export class LogsComponent implements OnInit, OnDestroy {
 
   removeScope(scopeToRemove: Scope) {
     this.selectedScopes.update(scopes => scopes.filter(scope => scope.scopeId !== scopeToRemove.scopeId));
+  }
+
+  selectItem(event: NgbTypeaheadSelectItemEvent<Item>) {
+    this.selectedItems.update(items => [...items, event.item]);
+    this.searchForm.controls.itemIds.setValue('');
+    event.preventDefault();
+  }
+
+  removeItem(itemToRemove: Item) {
+    this.selectedItems.update(items => items.filter(item => item.itemId !== itemToRemove.itemId));
   }
 
   getLevelClass(logLevel: LogLevel): string {
