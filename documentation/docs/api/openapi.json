@@ -28916,7 +28916,7 @@
 				"additionalProperties": false
 			},
 			"Scope": {
-				"description": "Represents a scope associated with log entries.\nA scope can be a connector, service, or module.\nA scope can be a connector, service, or module.",
+				"description": "Represents a scope associated with log entries.\nA scope can be a connector, service, or module.",
 				"properties": {
 					"scopeId": {
 						"type": "string",
