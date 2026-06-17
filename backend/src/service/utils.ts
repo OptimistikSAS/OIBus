@@ -269,6 +269,34 @@ export const convertDelimiter = (delimiter: CsvCharacter): string => {
   }
 };
 
+/**
+ * Extract the last data row of a CSV string as an object keyed by the header line.
+ *
+ * Used to keep a lightweight "last value" in the South cache for connectors whose remote agent
+ * returns the whole result set as CSV content — storing the full content on every scan bloats the
+ * cache and forces a parse of the entire blob on each read. Returns null when there is no data row.
+ */
+export const extractLastCsvRow = (content: string, delimiter: string): Record<string, string> | null => {
+  if (typeof content !== 'string' || content.length === 0) {
+    return null;
+  }
+  const trimmed = content.replace(/[\r\n]+$/, '');
+  const firstBreak = trimmed.search(/\r?\n/);
+  if (firstBreak === -1) {
+    // Header only (or a single line) — no data row to keep
+    return null;
+  }
+  const headers = trimmed.slice(0, firstBreak).split(delimiter);
+  const values = trimmed.slice(trimmed.lastIndexOf('\n') + 1).split(delimiter);
+  return headers.reduce(
+    (row, header, index) => {
+      row[header] = values[index] ?? '';
+      return row;
+    },
+    {} as Record<string, string>
+  );
+};
+
 export const convertQuoteChar = (quoteChar: 'DOUBLE_QUOTE' | 'SINGLE_QUOTE' | 'NONE'): string => {
   switch (quoteChar) {
     case 'DOUBLE_QUOTE':

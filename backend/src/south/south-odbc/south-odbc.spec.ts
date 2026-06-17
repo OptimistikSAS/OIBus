@@ -34,6 +34,7 @@ describe('SouthODBC', () => {
   const utilsExports = {
     convertDateTimeToInstant: mock.fn((instant: unknown) => instant),
     convertDelimiter: mock.fn((d: unknown) => d),
+    extractLastCsvRow: mock.fn((content: unknown) => (Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null)),
     formatInstant: mock.fn((instant: unknown) => instant),
     generateCsvContent: mock.fn(() => ''),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
@@ -77,6 +78,9 @@ describe('SouthODBC', () => {
     // Reset utils mocks
     utilsExports.convertDateTimeToInstant = mock.fn((instant: unknown) => instant);
     utilsExports.convertDelimiter = mock.fn((d: unknown) => d);
+    utilsExports.extractLastCsvRow = mock.fn((content: unknown) =>
+      Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null
+    );
     utilsExports.formatInstant = mock.fn((instant: unknown) => instant);
     utilsExports.generateCsvContent = mock.fn(() => '');
     utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
@@ -1312,7 +1316,7 @@ describe('SouthODBC', () => {
 
       assert.deepStrictEqual(result, {
         trackedInstant: '2020-03-01T00:00:00.000Z',
-        value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+        value: { timestamp: '2020-03-01T00:00:00.000Z' }
       });
       assert.strictEqual(utilsExports.persistResults.mock.calls.length, 1);
       assert.deepStrictEqual(utilsExports.persistResults.mock.calls[0].arguments[0], [
@@ -1372,7 +1376,7 @@ describe('SouthODBC', () => {
 
       assert.deepStrictEqual(result, {
         trackedInstant: null,
-        value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+        value: { timestamp: '2020-03-01T00:00:00.000Z' }
       });
     });
 

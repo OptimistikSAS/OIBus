@@ -40,6 +40,7 @@ describe('SouthOLEDB', () => {
 
   const utilsExports = {
     convertDelimiter: mock.fn((value: unknown) => value),
+    extractLastCsvRow: mock.fn((content: unknown) => (Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null)),
     formatInstant: mock.fn((value: unknown) => value),
     generateFilenameForSerialization: mock.fn(() => 'filename.csv'),
     logQuery: mock.fn(),
@@ -206,6 +207,9 @@ describe('SouthOLEDB', () => {
     southCacheService = new SouthCacheServiceMock();
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     utilsExports.convertDelimiter = mock.fn((value: unknown) => value);
+    utilsExports.extractLastCsvRow = mock.fn((content: unknown) =>
+      Array.isArray(content) && content.length > 0 ? content[content.length - 1] : null
+    );
     utilsExports.formatInstant = mock.fn((value: unknown) => value);
     utilsExports.generateFilenameForSerialization = mock.fn(() => 'filename.csv');
     utilsExports.logQuery = mock.fn();
@@ -413,7 +417,7 @@ describe('SouthOLEDB', () => {
 
     assert.deepStrictEqual(result, {
       trackedInstant: '2020-03-01T00:00:00.000Z',
-      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      value: { timestamp: '2020-03-01T00:00:00.000Z' }
     });
 
     const persistCall = (utilsExports.persistResults as ReturnType<typeof mock.fn>).mock.calls[0];
@@ -473,7 +477,7 @@ describe('SouthOLEDB', () => {
     });
     assert.deepStrictEqual(result, {
       trackedInstant: null,
-      value: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      value: { timestamp: '2020-03-01T00:00:00.000Z' }
     });
   });
 

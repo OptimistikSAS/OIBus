@@ -2,6 +2,7 @@ import SouthConnector from '../south-connector';
 import {
   convertDateTimeToInstant,
   convertDelimiter,
+  extractLastCsvRow,
   formatInstant,
   generateCsvContent,
   generateFilenameForSerialization,
@@ -299,7 +300,12 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       throw new Error(`Error occurred when querying remote agent with status ${response.statusCode}`);
     }
 
-    return { trackedInstant: updatedStartTime, value: result.content };
+    // For the data stream we only keep the last row as the cached "last value"; the full CSV content
+    // is only needed for the item test, where it is returned to the UI as-is.
+    return {
+      trackedInstant: updatedStartTime,
+      value: test ? result.content : extractLastCsvRow(result.content, convertDelimiter(item.settings.serialization.delimiter))
+    };
   }
 
   async queryOdbcData(
