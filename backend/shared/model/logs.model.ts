@@ -3,7 +3,7 @@ import { Instant } from './types';
 /**
  * List of possible scope types.
  */
-export const SCOPE_TYPES = ['south', 'north', 'history-query', 'internal', 'web-server'] as const;
+export const SCOPE_TYPES = ['south', 'north', 'history-query', 'internal'] as const;
 /**
  * Type representing a scope type.
  * @example 'south'
@@ -58,6 +58,20 @@ export interface LogDTO {
   scopeName: string | null;
 
   /**
+   * The unique identifier of the item the log is associated with (e.g., a south connector item ID).
+   * Can be `null` if the log is not associated with a specific item.
+   * @example "item123"
+   */
+  itemId: string | null;
+
+  /**
+   * The human-readable name of the item the log is associated with.
+   * Can be `null` if the log is not associated with a specific item.
+   * @example "Temperature sensor"
+   */
+  itemName: string | null;
+
+  /**
    * The log message content, including details about the event or error.
    * @example "Connection failed to host: timeout after 5s"
    */
@@ -65,7 +79,26 @@ export interface LogDTO {
 }
 
 /**
+ * Represents an item associated with log entries.
+ * An item is a data point or query within a south connector.
+ */
+export interface Item {
+  /**
+   * The unique identifier of the item (e.g., south connector item ID).
+   * @example "item123"
+   */
+  itemId: string;
+
+  /**
+   * The human-readable name of the item.
+   * @example "Temperature sensor"
+   */
+  itemName: string;
+}
+
+/**
  * Represents a scope associated with log entries.
+ * A scope can be a connector, service, or module.
  * A scope can be a connector, service, or module.
  */
 export interface Scope {
@@ -124,6 +157,12 @@ export interface LogSearchParam {
    * @example ["south", "north"]
    */
   scopeTypes: Array<ScopeType>;
+
+  /**
+   * An array of item IDs to filter logs by specific items.
+   * @example ["item123", "item456"]
+   */
+  itemIds: Array<string>;
 
   /**
    * A substring to search for within log messages.
