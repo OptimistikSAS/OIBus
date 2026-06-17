@@ -11,7 +11,7 @@ import { OIAnalyticsRegistration } from '../../model/oianalytics-registration.mo
 
 interface OIAnalyticsLog {
   message: string;
-  scopeType: 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL' | 'WEB_SERVER';
+  scopeType: 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL';
   scopeId: string | null;
   scopeName: string | null;
   timestamp: Instant;
@@ -29,12 +29,11 @@ const LEVEL_FORMAT: Record<string, 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'
 };
 const LOGS_OIANALYTICS_ENDPOINT = '/api/oianalytics/oibus/logs';
 
-const SCOPE_TYPE_FORMAT: Record<ScopeType, 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL' | 'WEB_SERVER'> = {
+const SCOPE_TYPE_FORMAT: Record<ScopeType, 'SOUTH' | 'NORTH' | 'HISTORY_QUERY' | 'INTERNAL'> = {
   south: 'SOUTH',
   north: 'NORTH',
   'history-query': 'HISTORY_QUERY',
-  internal: 'INTERNAL',
-  'web-server': 'WEB_SERVER'
+  internal: 'INTERNAL'
 };
 
 interface OIAnalyticsOptions {
