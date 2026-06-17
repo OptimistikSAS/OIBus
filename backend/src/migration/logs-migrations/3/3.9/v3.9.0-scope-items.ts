@@ -1,0 +1,53 @@
+import { Knex } from 'knex';
+
+const LOG_TABLE = 'logs';
+
+/**
+ * Two unrelated but co-located changes for v3.9.0:
+ *
+ * 1. Add item_id and item_name columns so logs can be linked to a specific
+ *    south connector item (data point / query). Both columns are nullable;
+ *    logs that are not item-specific leave them NULL.
+ *
+ * 2. Migrate scope_type = 'web-server' rows to scope_type = 'internal' with
+ *    scope_id = 'web-server' and scope_name = 'Web Server'. The 'web-server'
+ *    scope type is removed from the ScopeType union in v3.9.0; web-server logs
+ *    are now a named internal scope, searchable via the scope typeahead.
+ */
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.alterTable(LOG_TABLE, table => {
+    table.text('item_id').nullable();
+    table.text('item_name').nullable();
+  });
+
+  await knex(LOG_TABLE).where('scope_type', 'web-server').update({
+    scope_type: 'internal',
+    scope_id: 'web-server',
+    scope_name: 'Web Server'
+  });
+}
+
+export async function down(knex: Knex): Promise<void> {
+  // Revert web-server rows before dropping the columns.
+  await knex(LOG_TABLE).where({ scope_type: 'internal', scope_id: 'web-server' }).update({
+    scope_type: 'web-server',
+    scope_id: null,
+    scope_name: null
+  });
+
+  // SQLite does not support DROP COLUMN — use the tmp-table pattern.
+  await knex.schema.raw(`CREATE TABLE ${LOG_TABLE}_dg_tmp
+    (timestamp  datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+     level      varchar(255),
+     scope_type varchar(255),
+     scope_id   varchar(255),
+     scope_name varchar(255),
+     message    varchar);`);
+
+  await knex.schema.raw(`INSERT INTO ${LOG_TABLE}_dg_tmp (timestamp, level, scope_type, scope_id, scope_name, message)
+    SELECT timestamp, level, scope_type, scope_id, scope_name, message FROM ${LOG_TABLE};`);
+
+  await knex.schema.raw(`DROP TABLE ${LOG_TABLE};`);
+
+  await knex.schema.raw(`ALTER TABLE ${LOG_TABLE}_dg_tmp RENAME TO ${LOG_TABLE};`);
+}
