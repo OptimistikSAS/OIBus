@@ -16,6 +16,7 @@ import {
   exhaustMap,
   map,
   Observable,
+  of,
   startWith,
   Subscription,
   switchMap,
@@ -107,7 +108,6 @@ export class LogsComponent implements OnInit, OnDestroy {
   subscription = new Subscription();
   logs = signal<Page<LogDTO>>(emptyPage());
   noLogMatchingWarning = signal(false);
-  noItemMatchingWarning = signal(false);
   autoReloadPaused = signal(false);
 
   scopeTypeahead = (text$: Observable<string>) =>
@@ -125,10 +125,7 @@ export class LogsComponent implements OnInit, OnDestroy {
     text$.pipe(
       debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
       distinctUntilChanged(),
-      switchMap(text => this.logService.suggestItems(text)),
-      tap(items => {
-        this.noItemMatchingWarning.set(items.length === 0);
-      })
+      switchMap(text => this.logService.suggestItems(text))
     );
   itemFormatter = (item: Item) => item.itemName;
 
@@ -152,15 +149,19 @@ export class LogsComponent implements OnInit, OnDestroy {
     }
     const queryScopeIds = this.route.snapshot.queryParamMap.getAll('scopeIds');
     if (queryScopeIds.length > 0) {
-      combineLatest(queryScopeIds.map(scopeId => this.logService.getScopeById(scopeId))).subscribe(selectedScopes => {
-        this.selectedScopes.set(selectedScopes.filter(scope => !!scope));
-      });
+      combineLatest(queryScopeIds.map(scopeId => this.logService.getScopeById(scopeId).pipe(catchError(() => of(null))))).subscribe(
+        selectedScopes => {
+          this.selectedScopes.set(selectedScopes.filter(scope => !!scope) as Array<Scope>);
+        }
+      );
     }
     const queryItemIds = this.route.snapshot.queryParamMap.getAll('itemIds');
     if (queryItemIds.length > 0) {
-      combineLatest(queryItemIds.map(itemId => this.logService.getItemById(itemId))).subscribe(selectedItems => {
-        this.selectedItems.set(selectedItems.filter(item => !!item));
-      });
+      combineLatest(queryItemIds.map(itemId => this.logService.getItemById(itemId).pipe(catchError(() => of(null))))).subscribe(
+        selectedItems => {
+          this.selectedItems.set(selectedItems.filter(item => !!item) as Array<Item>);
+        }
+      );
     }
     this.subscription.add(
       combineLatest([this.pageLoader.pageLoads$, this.autoReloadPaused$.pipe(startWith(this.autoReloadPaused()))])
