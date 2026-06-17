@@ -1,3 +1,4 @@
+/* tslint:disable */
 /* eslint-disable */
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import type { TsoaRoute } from '@tsoa/runtime';
@@ -6582,7 +6583,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "ScopeType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["south"]},{"dataType":"enum","enums":["north"]},{"dataType":"enum","enums":["history-query"]},{"dataType":"enum","enums":["internal"]},{"dataType":"enum","enums":["web-server"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["south"]},{"dataType":"enum","enums":["north"]},{"dataType":"enum","enums":["history-query"]},{"dataType":"enum","enums":["internal"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "LogDTO": {
@@ -6593,6 +6594,8 @@ const models: TsoaRoute.Models = {
             "scopeType": {"ref":"ScopeType","required":true},
             "scopeId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "scopeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "itemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "itemName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "message": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
@@ -6615,6 +6618,15 @@ const models: TsoaRoute.Models = {
         "properties": {
             "scopeId": {"dataType":"string","required":true},
             "scopeName": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Item": {
+        "dataType": "refObject",
+        "properties": {
+            "itemId": {"dataType":"string","required":true},
+            "itemName": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -10270,6 +10282,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 levels: {"in":"query","name":"levels","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 scopeIds: {"in":"query","name":"scopeIds","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 scopeTypes: {"in":"query","name":"scopeTypes","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                itemIds: {"in":"query","name":"itemIds","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 messageContent: {"in":"query","name":"messageContent","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 page: {"default":0,"in":"query","name":"page","dataType":"double"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
@@ -10352,6 +10365,68 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'getScopeById',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsLogController_suggestItems: Record<string, TsoaRoute.ParameterSchema> = {
+                name: {"default":"","in":"query","name":"name","dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/logs/items/suggest',
+            ...(fetchMiddlewares<RequestHandler>(LogController)),
+            ...(fetchMiddlewares<RequestHandler>(LogController.prototype.suggestItems)),
+
+            async function LogController_suggestItems(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsLogController_suggestItems, request, response });
+
+                const controller = new LogController();
+
+              await templateService.apiHandler({
+                methodName: 'suggestItems',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsLogController_getItemById: Record<string, TsoaRoute.ParameterSchema> = {
+                itemId: {"in":"path","name":"itemId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/logs/items/:itemId',
+            ...(fetchMiddlewares<RequestHandler>(LogController)),
+            ...(fetchMiddlewares<RequestHandler>(LogController.prototype.getItemById)),
+
+            async function LogController_getItemById(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsLogController_getItemById, request, response });
+
+                const controller = new LogController();
+
+              await templateService.apiHandler({
+                methodName: 'getItemById',
                 controller,
                 response,
                 next,
