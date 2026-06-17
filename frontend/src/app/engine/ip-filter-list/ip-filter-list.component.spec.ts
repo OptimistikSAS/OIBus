@@ -60,7 +60,7 @@ describe('IpFilterListComponent', () => {
 
     test('should display a list of ip filters', async () => {
       await expect.element(tester.ipFilters).toHaveLength(2);
-      await expect.element(tester.ipFilters.nth(0).getByCss('td')).toHaveLength(6);
+      await expect.element(tester.ipFilters.nth(0).getByCss('td')).toHaveLength(4);
     });
 
     test('should delete an ip filter', async () => {

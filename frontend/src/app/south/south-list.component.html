@@ -70,17 +70,6 @@
                 </button>
               </th>
               <th translate="south.description"></th>
-              <th translate="south.created-by"></th>
-              <th>
-                <button
-                  type="button"
-                  style="background: none; border: none; font-weight: bold; color: inherit"
-                  (click)="toggleSort('createdAt')"
-                >
-                  <span translate="south.created-at" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('createdAt') }}"></span>
-                </button>
-              </th>
               <th>
                 <button
                   type="button"
@@ -106,12 +95,19 @@
                     <div class="green-dot"></div>
                   </td>
                 }
-                <td>{{ south.name }}</td>
+                <td>
+                  <span [ngbTooltip]="south.name" placement="top-start">{{ south.name }}</span>
+                </td>
                 <td>{{ south.type | oIBusSouthTypeEnum }}</td>
                 <td>{{ south.description }}</td>
-                <td>{{ south.createdBy.friendlyName }}</td>
-                <td>{{ south.createdAt | datetime: 'ff' }}</td>
-                <td>{{ south.updatedAt | datetime: 'ff' }}</td>
+                <td>
+                  <oib-audit-info
+                    [createdAt]="south.createdAt"
+                    [createdBy]="south.createdBy.friendlyName"
+                    [updatedAt]="south.updatedAt"
+                    [updatedBy]="south.updatedBy.friendlyName"
+                  />
+                </td>
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     <button

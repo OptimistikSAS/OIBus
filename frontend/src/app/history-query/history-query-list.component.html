@@ -72,17 +72,6 @@
                 </button>
               </th>
               <th translate="history-query.description"></th>
-              <th translate="history-query.created-by"></th>
-              <th>
-                <button
-                  type="button"
-                  style="background: none; border: none; font-weight: bold; color: inherit"
-                  (click)="toggleSort('createdAt')"
-                >
-                  <span translate="history-query.created-at" class="me-2"></span>
-                  <span class="fa {{ getSortIcon('createdAt') }}"></span>
-                </button>
-              </th>
               <th>
                 <button
                   type="button"
@@ -102,7 +91,9 @@
                 <td>
                   <div [class]="getStatusClass(query.status)"></div>
                 </td>
-                <td>{{ query.name }}</td>
+                <td>
+                  <span [ngbTooltip]="query.name" placement="top-start">{{ query.name }}</span>
+                </td>
                 <td>
                   <div>
                     {{ query.startTime | datetime: 'ff' }}
@@ -111,9 +102,14 @@
                   </div>
                 </td>
                 <td>{{ query.description }}</td>
-                <td>{{ query.createdBy.friendlyName }}</td>
-                <td>{{ query.createdAt | datetime: 'ff' }}</td>
-                <td>{{ query.updatedAt | datetime: 'ff' }}</td>
+                <td>
+                  <oib-audit-info
+                    [createdAt]="query.createdAt"
+                    [createdBy]="query.createdBy.friendlyName"
+                    [updatedAt]="query.updatedAt"
+                    [updatedBy]="query.updatedBy.friendlyName"
+                  />
+                </td>
                 <td class="text-nowrap action-buttons">
                   <div class="pull-right">
                     @if (query.status === 'PENDING') {

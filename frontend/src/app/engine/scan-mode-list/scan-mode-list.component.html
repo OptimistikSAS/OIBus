@@ -37,17 +37,6 @@
           </th>
           <th translate="engine.scan-mode.description"></th>
           <th translate="engine.scan-mode.cron"></th>
-          <th translate="engine.scan-mode.created-by"></th>
-          <th>
-            <button
-              type="button"
-              style="background: none; border: none; font-weight: bold; color: inherit"
-              (click)="toggleSort('createdAt')"
-            >
-              <span translate="engine.scan-mode.created-at" class="me-2"></span>
-              <span class="fa {{ getSortIcon('createdAt') }}"></span>
-            </button>
-          </th>
           <th>
             <button
               type="button"
@@ -67,9 +56,14 @@
             <td>{{ scanMode.name }}</td>
             <td>{{ scanMode.description }}</td>
             <td>{{ scanMode.cron }}</td>
-            <td>{{ scanMode.createdBy.friendlyName }}</td>
-            <td>{{ scanMode.createdAt | datetime: 'ff' }}</td>
-            <td>{{ scanMode.updatedAt | datetime: 'ff' }}</td>
+            <td>
+              <oib-audit-info
+                [createdAt]="scanMode.createdAt"
+                [createdBy]="scanMode.createdBy.friendlyName"
+                [updatedAt]="scanMode.updatedAt"
+                [updatedBy]="scanMode.updatedBy.friendlyName"
+              />
+            </td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->

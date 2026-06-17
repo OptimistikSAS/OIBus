@@ -18,7 +18,7 @@ import { ObservableState } from '../shared/save-button/save-button.component';
 import { LegendComponent } from '../shared/legend/legend.component';
 import { OIBusNorthTypeEnumPipe } from '../shared/oibus-north-type-enum.pipe';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DatetimePipe } from '../shared/datetime.pipe';
+import { AuditInfoComponent } from '../shared/audit-info/audit-info.component';
 
 type NorthSortField = 'name' | 'type' | 'createdAt' | 'updatedAt' | null;
 type SortDirection = 'asc' | 'desc';
@@ -38,7 +38,7 @@ const PAGE_SIZE = 15;
     OIBusNorthTypeEnumPipe,
     NgbTooltip,
     TranslatePipe,
-    DatetimePipe
+    AuditInfoComponent
   ],
   templateUrl: './north-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,

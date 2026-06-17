@@ -37,17 +37,6 @@
             </button>
           </th>
           <th translate="engine.ip-filter.description"></th>
-          <th translate="engine.ip-filter.created-by"></th>
-          <th>
-            <button
-              type="button"
-              style="background: none; border: none; font-weight: bold; color: inherit"
-              (click)="toggleSort('createdAt')"
-            >
-              <span translate="engine.ip-filter.created-at" class="me-2"></span>
-              <span class="fa {{ getSortIcon('createdAt') }}"></span>
-            </button>
-          </th>
           <th>
             <button
               type="button"
@@ -66,9 +55,14 @@
           <tr>
             <td>{{ ipFilter.address }}</td>
             <td>{{ ipFilter.description }}</td>
-            <td>{{ ipFilter.createdBy.friendlyName }}</td>
-            <td>{{ ipFilter.createdAt | datetime: 'ff' }}</td>
-            <td>{{ ipFilter.updatedAt | datetime: 'ff' }}</td>
+            <td>
+              <oib-audit-info
+                [createdAt]="ipFilter.createdAt"
+                [createdBy]="ipFilter.createdBy.friendlyName"
+                [updatedAt]="ipFilter.updatedAt"
+                [updatedBy]="ipFilter.updatedBy.friendlyName"
+              />
+            </td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->

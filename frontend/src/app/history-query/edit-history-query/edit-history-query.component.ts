@@ -541,7 +541,11 @@ export class EditHistoryQueryComponent implements CanComponentDeactivate {
         id: element.id,
         transformerId: element.transformer.id,
         options: element.options,
-        items: element.items
+        items: element.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          enabled: item.enabled
+        }))
       }))
     } as HistoryQueryCommandDTO;
 
