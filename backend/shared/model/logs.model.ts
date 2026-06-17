@@ -99,7 +99,6 @@ export interface Item {
 /**
  * Represents a scope associated with log entries.
  * A scope can be a connector, service, or module.
- * A scope can be a connector, service, or module.
  */
 export interface Scope {
   /**

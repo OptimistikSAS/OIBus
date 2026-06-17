@@ -104,7 +104,16 @@ export default class LogRepository {
     );
     const insertMany = this.database.transaction((logs: Array<PinoLog>) => {
       for (const log of logs) {
-        stmt.run(log.time, LEVEL_FORMAT[log.level], log.scopeType, log.scopeId, log.scopeName, log.itemId ?? null, log.itemName ?? null, log.msg);
+        stmt.run(
+          log.time,
+          LEVEL_FORMAT[log.level],
+          log.scopeType,
+          log.scopeId,
+          log.scopeName,
+          log.itemId ?? null,
+          log.itemName ?? null,
+          log.msg
+        );
       }
     });
 
