@@ -25,6 +25,27 @@ import { HistoryDataOptions, HistoryReadValueIdOptions } from 'node-opcua-types/
 import { createSessionConfigs, getHistoryReadRequest, getTimestamp, logMessages, parseOPCUAValue } from '../../service/utils-opcua';
 import type { ILogger } from '../../model/logger.model';
 
+// OPC-UA status codes that indicate a device/PLC-level failure. The OPC-UA session
+// itself is still alive — only the device behind the server is unreachable. Do NOT
+// disconnect the session for these; other groups reading from healthy devices can
+// continue without a full reconnect cycle.
+// Contrast with session-breaking codes (BadSessionClosed, BadSecureChannelClosed, …)
+// and raw Node.js network errors (ECONNRESET, socket hang up) which are NOT in this
+// set and therefore still trigger a disconnect + reconnect.
+const DEVICE_ERROR_CODES = [
+  'BadCommunicationError',
+  'BadNoCommunication',
+  'BadNotConnected',
+  'BadDeviceFailure',
+  'BadOutOfService',
+  'BadTimeout'
+];
+
+function isDeviceError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return DEVICE_ERROR_CODES.some(code => error.message.includes(code));
+}
+
 /**
  * Class SouthOPCUA - Connect to an OPCUA server
  */
@@ -294,12 +315,28 @@ export default class SouthOPCUA
     startTime: Instant,
     endTime: Instant
   ): Promise<{ trackedInstant: Instant | null; value: unknown | null }> {
+    // Guard outside the try/catch for the same reason as directQuery: if a previous
+    // group in the same run() iteration already triggered a disconnect, client is
+    // null and a reconnect is already scheduled. Throwing here would call disconnect()
+    // a second time, cancelling and re-delaying the reconnect timer needlessly.
+    if (!this.client) {
+      this.logger.debug('OPCUA client not connected, skipping history query');
+      return { trackedInstant: null, value: null };
+    }
     try {
-      if (!this.client) {
-        throw new Error('OPCUA client not set');
-      }
       return await this.getHAValues(items, startTime, endTime, this.client);
     } catch (error: unknown) {
+      if (isDeviceError(error)) {
+        const preview = items
+          .slice(0, 10)
+          .map(i => i.name)
+          .join(', ');
+        const suffix = items.length > 10 ? ` … and ${items.length - 10} more` : '';
+        this.logger.error(
+          `HA read failed for ${items.length} item(s) [${preview}${suffix}] (device/PLC error, session kept): ${(error as Error).message}`
+        );
+        return { trackedInstant: null, value: null };
+      }
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
@@ -479,7 +516,13 @@ export default class SouthOPCUA
 
             this.logger.debug(`Adding ${batchValues.length} values between ${startTime} and ${endTime}`);
             if (!testingItem) {
-              await this.addContent({ type: 'time-values', content: batchValues }, startRequest.toUTC().toISO(), resampledItemsAsItems);
+              // addContent errors (cache/disk) must not propagate: they are unrelated
+              // to the OPC-UA session and would trigger a needless disconnect+reconnect.
+              try {
+                await this.addContent({ type: 'time-values', content: batchValues }, startRequest.toUTC().toISO(), resampledItemsAsItems);
+              } catch (addError: unknown) {
+                this.logger.error(`Error saving HA values to cache: ${(addError as Error).message}`);
+              }
               this.logger.trace(`Continue read for ${nodesToRead.length}/${totalNodes} nodes with pending data`);
             }
           } else {
@@ -542,21 +585,45 @@ export default class SouthOPCUA
     } else {
       this.logger.debug(`Read node ${nodesToRead[0].nodeId}`);
     }
+    // Guard outside the try/catch: if the session was dropped by a previous group
+    // in the same run() iteration, this.client is already null and a reconnect is
+    // already scheduled. Throwing here would trigger a second disconnect() call
+    // that cancels and re-delays the reconnect timer without any benefit.
+    if (!this.client) {
+      this.logger.debug('OPCUA client not connected, skipping direct query');
+      return null;
+    }
+    // addContent is outside the try so that a cache/disk error never causes a
+    // session reconnect. For the read itself: per-node unavailability
+    // (BadNodeIdUnknown, BadNotConnected, …) is normally returned as individual
+    // DataValue status codes and never reaches this catch. If the server raises a
+    // service-level error (e.g. Kepware reporting a device/PLC offline as
+    // BadCommunicationError), that is a device error — log it and skip this group
+    // without touching the session so other PLC groups keep working. Only genuine
+    // session/transport failures (BadSessionClosed, ECONNRESET, …) trigger a
+    // disconnect + reconnect.
+    const queryTime = DateTime.now().toUTC().toISO();
     try {
-      if (!this.client) {
-        throw new Error('OPCUA client not set');
-      }
-
-      const queryTime = DateTime.now().toUTC().toISO();
       content = await this.getDAValues(nodesToRead, this.client);
-      await this.addContent({ type: 'time-values', content }, queryTime, items);
     } catch (error) {
+      if (isDeviceError(error)) {
+        const preview = nodesToRead
+          .slice(0, 10)
+          .map(n => n.name)
+          .join(', ');
+        const suffix = nodesToRead.length > 10 ? ` … and ${nodesToRead.length - 10} more` : '';
+        this.logger.error(
+          `DA read failed for ${nodesToRead.length} node(s) [${preview}${suffix}] (device/PLC error, session kept): ${(error as Error).message}`
+        );
+        return null;
+      }
       await this.disconnect();
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
       throw error;
     }
+    await this.addContent({ type: 'time-values', content }, queryTime, items);
     return content && content.length > 0 ? content[content.length - 1] : null;
   }
 
@@ -575,7 +642,7 @@ export default class SouthOPCUA
     }
 
     const oibusTimestamp = DateTime.now().toUTC().toISO();
-    const values: Array<OIBusTimeValue> = dataValues
+    return dataValues
       .map((dataValue: DataValue, i) => {
         const selectedTimestamp = getTimestamp(dataValue, nodesToRead[i].settings, oibusTimestamp);
         return {
@@ -588,7 +655,6 @@ export default class SouthOPCUA
         };
       })
       .filter(parsedValue => parsedValue.data.value);
-    return values;
   }
 
   async subscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
