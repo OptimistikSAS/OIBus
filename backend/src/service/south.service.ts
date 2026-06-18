@@ -356,8 +356,13 @@ export default class SouthService {
     this.findById(southId);
     const item = this.findItemById(southId, itemId);
 
-    // Get the last value from the cache
-    const lastValue = this.southCacheRepository.getItemLastValue(southId, itemId);
+    // When the item is synchronised with its group, the cache entry is shared across
+    // all items in the group (saved once with the lead item's ID). Look it up by
+    // group ID so every item in the group returns the same cached value.
+    const lastValue =
+      item.syncWithGroup && item.group
+        ? this.southCacheRepository.getGroupLastValue(southId, item.group.id)
+        : this.southCacheRepository.getItemLastValue(southId, itemId);
 
     return {
       groupId: item.group?.id || null,

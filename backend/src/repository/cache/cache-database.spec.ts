@@ -72,6 +72,25 @@ describe('Repository with populated database', () => {
       assert.strictEqual(repository.getItemLastValue('southB', 'item1')!.value, 'B');
     });
 
+    it('should return null from getGroupLastValue when no row with that group exists', () => {
+      assert.strictEqual(repository.getGroupLastValue('southId', 'nonexistent-group'), null);
+    });
+
+    it('getGroupLastValue should return the cached entry saved with that group_id', () => {
+      repository.saveItemLastValue('southId', { itemId: 'lead-item', groupId: 'grp1', value: 'gv', queryTime: 'qt', trackedInstant: 'ts' });
+      const result = repository.getGroupLastValue('southId', 'grp1');
+      assert.ok(result);
+      assert.strictEqual(result!.groupId, 'grp1');
+      assert.strictEqual(result!.value, 'gv');
+    });
+
+    it('getGroupLastValue should be scoped to the connector', () => {
+      repository.saveItemLastValue('southA', { itemId: 'item1', groupId: 'grp1', value: 'A', queryTime: 'now', trackedInstant: 'ts' });
+      repository.saveItemLastValue('southB', { itemId: 'item1', groupId: 'grp1', value: 'B', queryTime: 'now', trackedInstant: 'ts' });
+      assert.strictEqual(repository.getGroupLastValue('southA', 'grp1')!.value, 'A');
+      assert.strictEqual(repository.getGroupLastValue('southB', 'grp1')!.value, 'B');
+    });
+
     it('should delete item by itemId', () => {
       repository.saveItemLastValue('southId', { itemId: 'item3', groupId: 'group1', value: 'v', queryTime: 'now', trackedInstant: 'now' });
       assert.ok(repository.getItemLastValue('southId', 'item3'));

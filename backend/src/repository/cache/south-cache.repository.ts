@@ -10,6 +10,7 @@ import { SouthItemLastValue } from '../../../shared/model/south-connector.model'
 export default class SouthCacheRepository {
   private readonly _database: Database;
   private readonly getStmt: Statement;
+  private readonly getByGroupStmt: Statement;
   private readonly upsertStmt: Statement;
   private readonly deleteStmt: Statement;
   private readonly deleteAllBySouthStmt: Statement;
@@ -19,6 +20,10 @@ export default class SouthCacheRepository {
     this.getStmt = this._database.prepare(
       'SELECT south_id, group_id, item_id, query_time, value, tracked_instant ' +
         'FROM south_item_cache WHERE south_id = ? AND item_id = ?;'
+    );
+    this.getByGroupStmt = this._database.prepare(
+      'SELECT south_id, group_id, item_id, query_time, value, tracked_instant ' +
+        'FROM south_item_cache WHERE south_id = ? AND group_id = ? LIMIT 1;'
     );
     this.upsertStmt = this._database.prepare(
       'INSERT OR REPLACE INTO south_item_cache (south_id, group_id, item_id, query_time, value, tracked_instant) ' +
@@ -30,6 +35,12 @@ export default class SouthCacheRepository {
 
   getItemLastValue(connectorId: string, itemId: string): Omit<SouthItemLastValue, 'itemName' | 'groupName'> | null {
     const result = this.getStmt.get(connectorId, itemId) as Record<string, string> | undefined;
+    if (!result) return null;
+    return this.toSouthItemLastValue(result);
+  }
+
+  getGroupLastValue(connectorId: string, groupId: string): Omit<SouthItemLastValue, 'itemName' | 'groupName'> | null {
+    const result = this.getByGroupStmt.get(connectorId, groupId) as Record<string, string> | undefined;
     if (!result) return null;
     return this.toSouthItemLastValue(result);
   }

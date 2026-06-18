@@ -538,6 +538,35 @@ describe('South Service', () => {
     });
   });
 
+  it('should get item last value from group cache when item is synced with group', () => {
+    const southId = testData.south.list[0].id;
+    const groupId = 'group-123';
+    const groupedItem = { ...testData.south.list[0].items[0], syncWithGroup: true, group: { id: groupId, name: 'My Group' } };
+    southConnectorRepository.findItemById.mock.mockImplementationOnce(() => groupedItem);
+    const cached = {
+      itemId: 'some-lead-item-id',
+      groupId,
+      queryTime: '2024-03-01T00:00:00.000Z',
+      value: { temperature: 99 },
+      trackedInstant: '2024-03-01T00:01:00.000Z'
+    };
+    southCacheRepository.getGroupLastValue.mock.mockImplementationOnce(() => cached);
+
+    const result = service.getItemLastValue(southId, groupedItem.id);
+
+    assert.strictEqual(southCacheRepository.getItemLastValue.mock.calls.length, 0);
+    assert.deepStrictEqual(southCacheRepository.getGroupLastValue.mock.calls[0].arguments, [southId, groupId]);
+    assert.deepStrictEqual(result, {
+      groupId,
+      groupName: 'My Group',
+      itemId: groupedItem.id,
+      itemName: groupedItem.name,
+      queryTime: cached.queryTime,
+      value: cached.value,
+      trackedInstant: cached.trackedInstant
+    });
+  });
+
   it('should create an item', async () => {
     await service.createItem(testData.south.list[0].id, testData.south.itemCommand, 'userTest');
 
