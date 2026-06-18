@@ -394,6 +394,39 @@ describe('SouthMQTT', () => {
     assert.notStrictEqual(priv['flushTimeout'], null);
   });
 
+  it('should flush one content per item when several items are buffered', async () => {
+    const priv = south as unknown as Record<string, unknown>;
+    priv['flushTimeout'] = setTimeout(() => null, 10000);
+
+    (priv['bufferedMessages'] as Array<unknown>) = [
+      { topic: 'topic1', message: 'a', item: configuration.items[0], timestamp: testData.constants.dates.FAKE_NOW },
+      { topic: 'topic2', message: 'b', item: configuration.items[1], timestamp: testData.constants.dates.FAKE_NOW },
+      { topic: 'topic1', message: 'c', item: configuration.items[0], timestamp: testData.constants.dates.FAKE_NOW }
+    ];
+
+    await south.flushMessages();
+
+    // One addContent per item: item1 gets its two messages, item2 gets its one.
+    assert.strictEqual(addContentCallback.mock.calls.length, 2);
+
+    assert.deepStrictEqual(addContentCallback.mock.calls[0].arguments[3], [configuration.items[0]]);
+    assert.deepStrictEqual(JSON.parse((addContentCallback.mock.calls[0].arguments[1] as { content: string }).content), [
+      { message: 'a', timestamp: testData.constants.dates.FAKE_NOW, item: { id: 'id1', name: 'item1', topic: 'my/first/topic' } },
+      { message: 'c', timestamp: testData.constants.dates.FAKE_NOW, item: { id: 'id1', name: 'item1', topic: 'my/first/topic' } }
+    ]);
+
+    assert.deepStrictEqual(addContentCallback.mock.calls[1].arguments[3], [configuration.items[1]]);
+    assert.deepStrictEqual(JSON.parse((addContentCallback.mock.calls[1].arguments[1] as { content: string }).content), [
+      {
+        message: 'b',
+        timestamp: testData.constants.dates.FAKE_NOW,
+        item: { id: 'id2', name: 'item2', topic: 'my/+/+/topic/with/wildcard/#' }
+      }
+    ]);
+
+    assert.deepStrictEqual(priv['bufferedMessages'], []);
+  });
+
   it('should not trigger callback if there are no messages to flush', async () => {
     const priv = south as unknown as Record<string, unknown>;
     priv['flushTimeout'] = setTimeout(() => null, 10000);

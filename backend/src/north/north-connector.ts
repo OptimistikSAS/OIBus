@@ -12,7 +12,8 @@ import {
   DataFolderType,
   FileCacheContent,
   OIBusConnectionTestResult,
-  OIBusContent
+  OIBusContent,
+  OIBusTimeValue
 } from '../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { createReadStream, ReadStream } from 'node:fs';
@@ -472,7 +473,27 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       return;
     }
 
-    const transformerConfig = this.findTransformer(source);
+    // A single batch coming from a south can carry values from several items, each potentially
+    // routed to a different transformer (per item, per group, or the south-level fallback).
+    // `buildRoutingGroups` splits the batch so every group is transformed by the transformer that
+    // actually targets it, instead of routing the whole batch to a single (earliest) transformer.
+    for (const group of this.buildRoutingGroups(data, source)) {
+      await this.applyTransformer(group.data, group.transformer, group.source);
+    }
+
+    // No delay needed here, we check for trigger right now, once the cache is updated for every group
+    await this.triggerRunIfNecessary(0);
+  }
+
+  /**
+   * Transform and cache a single routing group. Mirrors the standard/ignore/iso handling but does
+   * NOT trigger a run — `cacheContent` triggers once after all groups have been cached.
+   */
+  private async applyTransformer(
+    data: OIBusContent,
+    transformerConfig: NorthTransformerWithOptions | undefined,
+    source: CacheMetadataSource
+  ): Promise<void> {
     if (!transformerConfig) {
       return this.handleNoTransformer(data);
     }
@@ -489,16 +510,81 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       transformerConfig.transformer.type === 'standard' &&
       transformerConfig.transformer.functionName === IsoTransformer.transformerName
     ) {
-      return this.cacheWithoutTransformAndTrigger(data);
+      return this.cacheWithoutTransform(data);
     }
 
     this.logger.trace(
       `Transforming data of type ${data.type} into ${transformerConfig.transformer.outputType} using transformer ${transformerConfig.transformer.id}`
     );
     await this.executeTransformation(data, transformerConfig, source);
+  }
 
-    // No delay needed here, we check for trigger right now, once the cache is updated
-    await this.triggerRunIfNecessary(0);
+  /**
+   * Split an incoming batch into groups that each map to a single transformer.
+   *
+   * Only south-sourced `time-values` batches can both (a) carry several items routed to different
+   * transformers and (b) be split safely (each value references its item via `pointId === item.name`).
+   * Every other case — non-south sources, opaque `any-content`/file payloads, or a batch whose items
+   * all resolve to the same transformer (e.g. a south-level-only transformer) — is returned as a
+   * single group, preserving the previous behaviour with no extra work.
+   */
+  private buildRoutingGroups(
+    data: OIBusContent,
+    source: CacheMetadataSource
+  ): Array<{ transformer: NorthTransformerWithOptions | undefined; data: OIBusContent; source: CacheMetadataSource }> {
+    const singleGroup = () => [{ transformer: this.findTransformer(source), data, source }];
+
+    if (source.source !== 'south' || data.type !== 'time-values') {
+      return singleGroup();
+    }
+
+    const lookup = this.getTransformerLookup();
+    const resolve = (itemId: string): NorthTransformerWithOptions | undefined => {
+      const key = `${source.southId}\0${itemId}`;
+      return lookup.itemLevel.get(key)?.transformer ?? lookup.groupLevel.get(key)?.transformer ?? lookup.southLevel.get(source.southId);
+    };
+
+    // Resolve the transformer of every item in the batch and index it by item name (= pointId).
+    const transformerByItemName = new Map<string, NorthTransformerWithOptions | undefined>();
+    const distinctTransformers = new Set<NorthTransformerWithOptions | undefined>();
+    for (const item of source.items) {
+      const transformer = resolve(item.id);
+      transformerByItemName.set(item.name, transformer);
+      distinctTransformers.add(transformer);
+    }
+
+    // All items share the same transformer (incl. south-level-only) → no split needed.
+    if (distinctTransformers.size <= 1) {
+      return singleGroup();
+    }
+
+    // Partition the values by the transformer their point is routed to. If any value cannot be
+    // attributed to a known item, fall back to a single group to avoid silently dropping data.
+    const contentByTransformer = new Map<NorthTransformerWithOptions | undefined, Array<OIBusTimeValue>>();
+    for (const value of data.content) {
+      if (!transformerByItemName.has(value.pointId)) {
+        this.logger.warn(
+          `Cannot route point "${value.pointId}" to a transformer: it does not match any source item. Routing the whole batch to a single transformer`
+        );
+        return singleGroup();
+      }
+      const transformer = transformerByItemName.get(value.pointId);
+      const values = contentByTransformer.get(transformer);
+      if (values) {
+        values.push(value);
+      } else {
+        contentByTransformer.set(transformer, [value]);
+      }
+    }
+
+    return Array.from(contentByTransformer.entries()).map(([transformer, content]) => {
+      const pointIds = new Set(content.map(value => value.pointId));
+      return {
+        transformer,
+        data: { type: 'time-values', content } as OIBusContent,
+        source: { ...source, items: source.items.filter(item => pointIds.has(item.name)) }
+      };
+    });
   }
 
   private findTransformer(metadataSource: CacheMetadataSource): NorthTransformerWithOptions | undefined {
@@ -551,12 +637,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       this.logger.trace(`Data type "${data.type}" not supported by the connector. Data will be ignored.`);
       return;
     }
-    await this.cacheWithoutTransformAndTrigger(data);
-  }
-
-  private async cacheWithoutTransformAndTrigger(data: OIBusContent): Promise<void> {
     await this.cacheWithoutTransform(data);
-    await this.triggerRunIfNecessary(0);
   }
 
   private async executeTransformation(data: OIBusContent, config: NorthTransformerWithOptions, source: CacheMetadataSource): Promise<void> {

@@ -112,24 +112,32 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     if (messageToParse.length) {
       this.logger.debug(`Flushing ${messageToParse.length} messages`);
       try {
-        const payload = new Array<{ message: string; timestamp: Instant; item: { id: string; name: string; topic: string } }>(
-          messageToParse.length
-        );
-        const uniqueItems = new Set<SouthConnectorItemEntity<SouthMQTTItemSettings>>();
-        for (let i = 0; i < messageToParse.length; i++) {
-          const element = messageToParse[i];
-          payload[i] = {
+        // Group buffered messages by item, then emit one content per item. A single batch mixing
+        // several items would be routed to a single north transformer (the earliest one matching any
+        // item in the batch), so the other items' transformers would never run. Emitting per item
+        // keeps each item's data on its own and lets the north route it to its own transformer.
+        const messagesByItem = new Map<
+          string,
+          {
+            item: SouthConnectorItemEntity<SouthMQTTItemSettings>;
+            payload: Array<{ message: string; timestamp: Instant; item: { id: string; name: string; topic: string } }>;
+          }
+        >();
+        for (const element of messageToParse) {
+          let entry = messagesByItem.get(element.item.id);
+          if (!entry) {
+            entry = { item: element.item, payload: [] };
+            messagesByItem.set(element.item.id, entry);
+          }
+          entry.payload.push({
             message: element.message,
             timestamp: element.timestamp,
             item: { id: element.item.id, name: element.item.name, topic: element.item.settings.topic }
-          };
-          uniqueItems.add(element.item);
+          });
         }
-        await this.addContent(
-          { type: 'any-content', content: JSON.stringify(payload) },
-          DateTime.now().toUTC().toISO(),
-          Array.from(uniqueItems)
-        );
+        for (const { item, payload } of messagesByItem.values()) {
+          await this.addContent({ type: 'any-content', content: JSON.stringify(payload) }, DateTime.now().toUTC().toISO(), [item]);
+        }
       } catch (error: unknown) {
         this.logger.error(`Error when flushing messages: ${(error as Error).message}`);
       }
