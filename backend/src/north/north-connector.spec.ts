@@ -155,6 +155,17 @@ describe('NorthConnector', () => {
     realReadable['from'] = origReadableFrom;
   });
 
+  // Assign transformers without mutating the shared testData connector: clone the entity (incl. a
+  // throttling override of maxNumberOfElements=0 so time-values aren't chunked) and use the setter,
+  // which also invalidates the transformer lookup so it is rebuilt on the next cacheContent call.
+  const setConnectorTransformers = (transformers: Array<unknown>) => {
+    north.connectorConfiguration = {
+      ...north['connector'],
+      caching: { ...north['connector'].caching, throttling: { ...north['connector'].caching.throttling, maxNumberOfElements: 0 } },
+      transformers
+    } as unknown as (typeof north)['connector'];
+  };
+
   it('should be properly initialized', async () => {
     await north.start();
     assert.strictEqual(north.isEnabled(), true);
@@ -693,6 +704,107 @@ describe('NorthConnector', () => {
     assert.strictEqual(cacheService.addCacheContent.mock.calls[1].arguments[0], outputStream2);
   });
 
+  it('should split a multi-item time-values batch across per-item transformers', async () => {
+    setConnectorTransformers([
+      {
+        id: 't1',
+        options: {},
+        transformer: { id: 'tr1', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: { type: 'south', south: { id: 'southX' }, group: undefined, items: [{ id: 'i1', name: 'point-1' }] }
+      },
+      {
+        id: 't2',
+        options: {},
+        transformer: { id: 'tr2', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: { type: 'south', south: { id: 'southX' }, group: undefined, items: [{ id: 'i2', name: 'point-2' }] }
+      }
+    ]);
+
+    const metadata: CacheMetadata = {
+      contentFile: 'f.json',
+      contentSize: 10,
+      numberOfElement: 1,
+      createdAt: '',
+      contentType: 'time-values'
+    };
+    oiBusTransformer.transformInMemory.mock.resetCalls();
+    oiBusTransformer.transformInMemory.mock.mockImplementation(async () => ({ metadata, output: Buffer.from('out') }));
+
+    const v1 = { pointId: 'point-1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1 } };
+    const v2 = { pointId: 'point-2', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 2 } };
+    const v3 = { pointId: 'point-1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 3 } };
+
+    await north.cacheContent({ type: 'time-values', content: [v1, v2, v3] }, {
+      source: 'south',
+      southId: 'southX',
+      items: [
+        { id: 'i1', name: 'point-1' },
+        { id: 'i2', name: 'point-2' }
+      ]
+    } as unknown as CacheMetadataSourceOriginSouth);
+
+    // Two transformers run, each on its own item's values (point-1's two values together, point-2 alone).
+    assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls.length, 2);
+    assert.deepStrictEqual(oiBusTransformer.transformInMemory.mock.calls[0].arguments[0], [v1, v3]);
+    assert.deepStrictEqual(oiBusTransformer.transformInMemory.mock.calls[0].arguments[1], {
+      source: 'south',
+      southId: 'southX',
+      items: [{ id: 'i1', name: 'point-1' }]
+    });
+    assert.deepStrictEqual(oiBusTransformer.transformInMemory.mock.calls[1].arguments[0], [v2]);
+    assert.deepStrictEqual(oiBusTransformer.transformInMemory.mock.calls[1].arguments[1], {
+      source: 'south',
+      southId: 'southX',
+      items: [{ id: 'i2', name: 'point-2' }]
+    });
+  });
+
+  it('should not split a multi-item batch when all items resolve to the same transformer', async () => {
+    setConnectorTransformers([
+      {
+        id: 't1',
+        options: {},
+        transformer: { id: 'tr1', type: 'standard', functionName: 'noop', outputType: 'time-values' },
+        source: {
+          type: 'south',
+          south: { id: 'southX' },
+          group: undefined,
+          items: [
+            { id: 'i1', name: 'point-1' },
+            { id: 'i2', name: 'point-2' }
+          ]
+        }
+      }
+    ]);
+
+    const metadata: CacheMetadata = {
+      contentFile: 'f.json',
+      contentSize: 10,
+      numberOfElement: 2,
+      createdAt: '',
+      contentType: 'time-values'
+    };
+    oiBusTransformer.transformInMemory.mock.resetCalls();
+    oiBusTransformer.transformInMemory.mock.mockImplementation(async () => ({ metadata, output: Buffer.from('out') }));
+
+    const content = [
+      { pointId: 'point-1', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1 } },
+      { pointId: 'point-2', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 2 } }
+    ];
+    await north.cacheContent({ type: 'time-values', content }, {
+      source: 'south',
+      southId: 'southX',
+      items: [
+        { id: 'i1', name: 'point-1' },
+        { id: 'i2', name: 'point-2' }
+      ]
+    } as unknown as CacheMetadataSourceOriginSouth);
+
+    // Single transformer covers both items → one call over the whole batch (no split).
+    assert.strictEqual(oiBusTransformer.transformInMemory.mock.calls.length, 1);
+    assert.deepStrictEqual(oiBusTransformer.transformInMemory.mock.calls[0].arguments[0], content);
+  });
+
   it('should not cache json content if cache is full', async () => {
     cacheService.cacheIsFull.mock.mockImplementation(() => true);
     const findTransformerMock = mock.fn((_metadataSource: CacheMetadataSource) => undefined as NorthTransformerWithOptions | undefined);
@@ -739,13 +851,13 @@ describe('NorthConnector', () => {
     north['findTransformer'] = findTransformerMock;
     const handleNoTransformerMock = mock.fn(async (_data: OIBusContent) => undefined);
     north['handleNoTransformer'] = handleNoTransformerMock;
-    const cacheWithoutTransformAndTriggerMock = mock.fn(async (_data: OIBusContent) => undefined);
-    north['cacheWithoutTransformAndTrigger'] = cacheWithoutTransformAndTriggerMock;
+    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['cacheWithoutTransform'] = cacheWithoutTransformMock;
     await north.cacheContent(testData.oibusContent[0], { source: 'test' });
 
     assert.strictEqual(findTransformerMock.mock.calls.length, 1);
     assert.strictEqual(handleNoTransformerMock.mock.calls.length, 0);
-    assert.strictEqual(cacheWithoutTransformAndTriggerMock.mock.calls.length, 1);
+    assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 1);
   });
 
   it('should cache file content', async () => {
@@ -901,25 +1013,23 @@ describe('NorthConnector', () => {
   });
 
   it('should handle no transformer when not supporting type', async () => {
-    const cacheWithoutTransformAndTriggerMock = mock.fn(async (_data: OIBusContent) => undefined);
-    north['cacheWithoutTransformAndTrigger'] = cacheWithoutTransformAndTriggerMock;
+    const cacheWithoutTransformMock = mock.fn(async (_data: OIBusContent) => undefined);
+    north['cacheWithoutTransform'] = cacheWithoutTransformMock;
     await north['handleNoTransformer']({ type: 'bad' } as unknown as OIBusContent);
     assert.ok(
       logger.trace.mock.calls.some(
         (c: { arguments: Array<unknown> }) => c.arguments[0] === `Data type "bad" not supported by the connector. Data will be ignored.`
       )
     );
-    assert.strictEqual(cacheWithoutTransformAndTriggerMock.mock.calls.length, 0);
+    assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 0);
   });
 
   it('should handle no transformer when supporting type', async () => {
     const cacheWithoutTransformMock = mock.fn(async (_data: OIBusContent) => undefined);
     north['cacheWithoutTransform'] = cacheWithoutTransformMock;
-    const triggerRunIfNecessaryMock = mock.fn(async (_timeToWait: number) => undefined);
-    north['triggerRunIfNecessary'] = triggerRunIfNecessaryMock;
     await north['handleNoTransformer']({ type: 'time-values' } as OIBusContent);
+    // handleNoTransformer only caches; cacheContent is responsible for triggering a run once.
     assert.strictEqual(cacheWithoutTransformMock.mock.calls.length, 1);
-    assert.strictEqual(triggerRunIfNecessaryMock.mock.calls.length, 1);
   });
 
   it('should transform any-content payload', async () => {
