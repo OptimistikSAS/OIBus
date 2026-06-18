@@ -214,6 +214,37 @@ interface ICommandTransformerService {
 
 const UPDATE_SETTINGS_FILE = 'update.json';
 
+// Test commands open real connections whose timeouts are controlled by the remote
+// system, not by OIBus. Without a deadline here, a hung connection keeps
+// `isExecutingCommand` true forever, blocking every subsequent command.
+const TEST_COMMAND_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Races `promise` against a rejection after `ms` milliseconds.
+ * Does NOT cancel the underlying operation — Node has no universal cancellation
+ * primitive — but it does unblock the caller so the command lock is released.
+ *
+ * The silent `.catch()` on `promise` ensures that if the underlying operation
+ * eventually rejects *after* the timeout has already won the race, that
+ * rejection is handled and does not become an UnhandledPromiseRejection (which
+ * would terminate the process in Node v24+).
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timeoutId: NodeJS.Timeout;
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      // Attach a no-op rejection handler only now that the timeout has won the
+      // race. Any rejection that `promise` emits later would otherwise be
+      // unhandled (the settled Promise.race no longer consumes it).
+      promise.catch(() => {
+        /* empty */
+      });
+      reject(new Error(`${label} timed out after ${ms / 1000}s`));
+    }, ms);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
 export default class OIAnalyticsCommandService {
   private isRetrievingCommands = false;
   private isExecutingCommand = false;
@@ -523,25 +554,25 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-south-connection':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeTestSouthConnectionCommand(command, privateKey);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            await withTimeout(this.executeTestSouthConnectionCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
         case 'test-south-item':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeTestSouthItemCommand(command, privateKey);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            await withTimeout(this.executeTestSouthItemCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
         case 'create-north':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeCreateNorthCommand(command, privateKey);
           }
           break;
         case 'update-north':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateNorthCommand(command, privateKey);
           }
           break;
@@ -550,19 +581,19 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-north-connection':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeTestNorthConnectionCommand(command, privateKey);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            await withTimeout(this.executeTestNorthConnectionCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
         case 'create-history-query':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeCreateHistoryQueryCommand(command, privateKey);
           }
           break;
         case 'update-history-query':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
             await this.executeUpdateHistoryQueryCommand(command, privateKey);
           }
           break;
@@ -574,20 +605,28 @@ export default class OIAnalyticsCommandService {
           break;
         case 'test-history-query-north-connection':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeTestHistoryQueryNorthConnectionCommand(command, privateKey);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            await withTimeout(
+              this.executeTestHistoryQueryNorthConnectionCommand(command, privateKey),
+              TEST_COMMAND_TIMEOUT_MS,
+              command.type
+            );
           }
           break;
         case 'test-history-query-south-connection':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeTestHistoryQuerySouthConnectionCommand(command, privateKey);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            await withTimeout(
+              this.executeTestHistoryQuerySouthConnectionCommand(command, privateKey),
+              TEST_COMMAND_TIMEOUT_MS,
+              command.type
+            );
           }
           break;
         case 'test-history-query-south-item':
           {
-            const privateKey = await encryptionService.decryptText(registration.privateCipherKey!);
-            await this.executeTestHistoryQuerySouthItemCommand(command, privateKey);
+            const privateKey = encryptionService.decryptText(registration.privateCipherKey!);
+            await withTimeout(this.executeTestHistoryQuerySouthItemCommand(command, privateKey), TEST_COMMAND_TIMEOUT_MS, command.type);
           }
           break;
         case 'update-history-query-status':
@@ -624,7 +663,7 @@ export default class OIAnalyticsCommandService {
           await this.executeDeleteCustomTransformerCommand(command);
           break;
         case 'test-custom-transformer':
-          await this.executeTestCustomTransformerConnectionCommand(command);
+          await withTimeout(this.executeTestCustomTransformerConnectionCommand(command), TEST_COMMAND_TIMEOUT_MS, command.type);
           break;
       }
     } catch (error: unknown) {
