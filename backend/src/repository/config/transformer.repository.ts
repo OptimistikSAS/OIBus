@@ -16,6 +16,7 @@ import OIBusSetpointToOPCUATransformer from '../../transformers/setpoint/oibus-s
 import OIBusSetpointToMQTTTransformer from '../../transformers/setpoint/oibus-setpoint-to-mqtt/oibus-setpoint-to-mqtt-transformer';
 import OIBusTimeValuesToOIAnalyticsTransformer from '../../transformers/time-values/oibus-time-values-to-oianalytics/oibus-time-values-to-oianalytics-transformer';
 import JSONToCSVTransformer from '../../transformers/any/json-to-csv/json-to-csv-transformer';
+import JSONToOIAnalyticsTransformer from '../../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import CSVToMQTTTransformer from '../../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 
@@ -186,6 +187,16 @@ export default class TransformerRepository {
         functionName: JSONToCSVTransformer.transformerName,
         inputType: 'any',
         outputType: 'any'
+      };
+      this.createStandardTransformer(standardTransformer);
+    }
+    if (!this.findByFunctionName(JSONToOIAnalyticsTransformer.transformerName)) {
+      const standardTransformer: StandardTransformer = {
+        id: generateRandomId(6),
+        type: 'standard',
+        functionName: JSONToOIAnalyticsTransformer.transformerName,
+        inputType: 'any',
+        outputType: 'oianalytics'
       };
       this.createStandardTransformer(standardTransformer);
     }

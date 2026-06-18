@@ -33,6 +33,7 @@ import { Readable } from 'node:stream';
 import { DateTime } from 'luxon';
 import { OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
+import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
 import CSVToTimeValuesTransformer from '../transformers/any/csv-to-time-values/csv-to-time-values-transformer';
 import isoManifest from '../transformers/iso-transformer/manifest';
@@ -40,6 +41,7 @@ import ignoreManifest from '../transformers/ignore-transformer/manifest';
 import csvToMqttManifest from '../transformers/any/csv-to-mqtt/manifest';
 import csvToTimeValuesManifest from '../transformers/any/csv-to-time-values/manifest';
 import jsonToCsvManifest from '../transformers/any/json-to-csv/manifest';
+import jsonToOianalyticsManifest from '../transformers/any/json-to-oianalytics/manifest';
 import timeValuesToCsvManifest from '../transformers/time-values/oibus-time-values-to-csv/manifest';
 import timeValuesToJsonManifest from '../transformers/time-values/oibus-time-values-to-json/manifest';
 import timeValuesToModbusManifest from '../transformers/time-values/oibus-time-values-to-modbus/manifest';
@@ -63,6 +65,7 @@ export const transformerManifestList: Array<TransformerManifest> = [
   csvToMqttManifest,
   csvToTimeValuesManifest,
   jsonToCsvManifest,
+  jsonToOianalyticsManifest,
   timeValuesToCsvManifest,
   timeValuesToJsonManifest,
   timeValuesToModbusManifest,
@@ -360,6 +363,9 @@ export const createTransformer = (
       case JSONToCSVTransformer.transformerName: {
         return new JSONToCSVTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
+      case JSONToOIAnalyticsTransformer.transformerName: {
+        return new JSONToOIAnalyticsTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
+      }
       case OIBusTimeValuesToCsvTransformer.transformerName: {
         return new OIBusTimeValuesToCsvTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
       }
@@ -414,6 +420,9 @@ export const getStandardManifest = (functionName: string): OIBusObjectAttribute 
     }
     case jsonToCsvManifest.id: {
       return jsonToCsvManifest.settings;
+    }
+    case jsonToOianalyticsManifest.id: {
+      return jsonToOianalyticsManifest.settings;
     }
     case timeValuesToCsvManifest.id: {
       return timeValuesToCsvManifest.settings;

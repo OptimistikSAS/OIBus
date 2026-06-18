@@ -124,6 +124,19 @@ export type TransformerJsonToCsvSettingsQuoteChar = (typeof TRANSFORMER_JSON_TO_
 export const TRANSFORMER_JSON_TO_CSV_SETTINGS_ESCAPE_CHARS = ['BACKSLASH', 'DOUBLE_QUOTE'] as const;
 export type TransformerJsonToCsvSettingsEscapeChar = (typeof TRANSFORMER_JSON_TO_CSV_SETTINGS_ESCAPE_CHARS)[number];
 
+export const TRANSFORMER_JSON_TO_OIANALYTICS_SETTINGS_DATETIME_SETTINGS_INPUT_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string'
+] as const;
+export type TransformerJsonToOianalyticsSettingsDatetimeSettingsInputType =
+  (typeof TRANSFORMER_JSON_TO_OIANALYTICS_SETTINGS_DATETIME_SETTINGS_INPUT_TYPES)[number];
+
+export const TRANSFORMER_JSON_TO_OIANALYTICS_SETTINGS_DATETIME_SETTINGS_OUTPUT_PRECISIONS = ['ms', 's', 'min', 'hr'] as const;
+export type TransformerJsonToOianalyticsSettingsDatetimeSettingsOutputPrecision =
+  (typeof TRANSFORMER_JSON_TO_OIANALYTICS_SETTINGS_DATETIME_SETTINGS_OUTPUT_PRECISIONS)[number];
+
 export const TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES = ['coil', 'register'] as const;
 export type TransformerSetpointToModbusSettingsMappingModbusType =
   (typeof TRANSFORMER_SETPOINT_TO_MODBUS_SETTINGS_MAPPING_MODBUS_TYPES)[number];
@@ -218,6 +231,14 @@ export interface TransformerJsonToCsvSettingsFields {
   datetimeSettings?: TransformerJsonToCsvSettingsFieldsDatetimeSettings | null;
 }
 
+export interface TransformerJsonToOianalyticsSettingsDatetimeSettings {
+  inputType: TransformerJsonToOianalyticsSettingsDatetimeSettingsInputType;
+  inputTimezone?: Timezone;
+  inputFormat?: string;
+  inputLocale?: string;
+  outputPrecision: TransformerJsonToOianalyticsSettingsDatetimeSettingsOutputPrecision;
+}
+
 export interface TransformerSetpointToModbusSettingsMapping {
   reference: string;
   address: string;
@@ -282,6 +303,14 @@ export interface TransformerJsonToCsvSettings {
   fields: Array<TransformerJsonToCsvSettingsFields>;
 }
 
+export interface TransformerJsonToOianalyticsSettings {
+  rowIteratorPath: string;
+  pointId: string;
+  value: string;
+  timestamp: string;
+  datetimeSettings: TransformerJsonToOianalyticsSettingsDatetimeSettings | null;
+}
+
 export type TransformerIgnoreSettings = object;
 
 export type TransformerIsoSettings = object;
@@ -337,6 +366,7 @@ export type TransformerSettings =
   | TransformerCsvToMqttSettings
   | TransformerCsvToTimeValuesSettings
   | TransformerJsonToCsvSettings
+  | TransformerJsonToOianalyticsSettings
   | TransformerIgnoreSettings
   | TransformerIsoSettings
   | TransformerSetpointToModbusSettings
