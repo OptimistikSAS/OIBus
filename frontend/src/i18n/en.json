@@ -969,6 +969,7 @@
             "ignore": "Ignore",
             "iso": "No transform",
             "json-to-csv": "CSV (from JSON)",
+            "json-to-oianalytics": "OIAnalytics (from JSON)",
             "time-values-to-csv": "CSV",
             "time-values-to-json": "JSON",
             "time-values-to-modbus": "Modbus values",
@@ -1375,6 +1376,32 @@
               "title": "Mapping table",
               "point-id": "Point ID (Reference)",
               "topic": "MQTT Topic"
+            }
+          },
+          "json-to-oianalytics": {
+            "row-iterator-path": "Row Iterator JSONPath",
+            "point-id": "Point ID JSONPath",
+            "value": "Value JSONPath",
+            "timestamp": "Timestamp JSONPath",
+            "datetime-settings": {
+              "title": "Datetime Settings",
+              "input-type": {
+                "title": "Timestamp input type",
+                "string": "String",
+                "iso-string": "ISO string",
+                "unix-epoch": "Unix epoch (s)",
+                "unix-epoch-ms": "Unix epoch (ms)"
+              },
+              "timezone": "Timezone",
+              "format": "Format",
+              "locale": "Locale",
+              "output-precision": {
+                "title": "Timestamp precision",
+                "ms": "Millisecond",
+                "s": "Second",
+                "min": "Minute",
+                "hr": "Hour"
+              }
             }
           },
           "time-values-to-oianalytics": {

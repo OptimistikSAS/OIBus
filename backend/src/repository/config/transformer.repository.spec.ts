@@ -190,7 +190,7 @@ describe('TransformerRepository', () => {
 
   it('should properly search transformers and page them', () => {
     const result = repository.search({ type: undefined, inputType: undefined, outputType: undefined, page: 0 });
-    assert.strictEqual(result.totalElements, 17);
+    assert.strictEqual(result.totalElements, 18);
     // First page contains standard transformers (10 per page)
     for (const t of result.content.map(stripAuditFields)) {
       assert.strictEqual(t.type, 'standard');
@@ -218,7 +218,7 @@ describe('TransformerRepository', () => {
   it('should skip creating standard transformers that already exist', () => {
     const secondRepo = new TransformerRepository(database);
     const all = secondRepo.list().filter(t => t.type === 'standard');
-    assert.strictEqual(all.length, 14);
+    assert.strictEqual(all.length, 15);
   });
 
   it('should create all standard transformers when none exist', () => {
@@ -226,6 +226,6 @@ describe('TransformerRepository', () => {
     database.prepare("DELETE FROM transformers WHERE type = 'standard'").run();
     const freshRepo = new TransformerRepository(database);
     const standardTransformers = freshRepo.list().filter(t => t.type === 'standard');
-    assert.strictEqual(standardTransformers.length, 14);
+    assert.strictEqual(standardTransformers.length, 15);
   });
 });
