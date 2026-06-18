@@ -3,7 +3,8 @@
     <div class="row justify-content-center">
       <div class="col-md-10 col-lg-8">
         <div class="oib-header-container mb-3">
-          <h1 id="title" translate="history-query.title" [translateParams]="{ name: historyQuery.name }">
+          <h1 id="title">
+            <span>{{ 'history-query.title' | translate: { name: historyQuery.name } }}</span>
             <span class="ms-2">
               <button class="btn btn-primary" id="edit-link" routerLink="edit" [ngbTooltip]="'history-query.tooltips.edit' | translate">
                 <i class="fa fa-pencil"></i>
