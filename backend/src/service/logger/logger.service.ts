@@ -177,10 +177,10 @@ class LoggerService {
     // 'node-opcua' marker lives in scopeName so downstream filters can pick it out.
     const opcuaLogger = this.logger!.child({ scopeName: 'node-opcua' });
     // node-opcua passes printf-style arguments — util.format mirrors what console.* does.
-    setDebugLogger((...args: Array<unknown>) => opcuaLogger.debug(util.format(...args)));
+    setDebugLogger((...args: Array<unknown>) => opcuaLogger.trace(util.format(...args)));
     setTraceLogger((...args: Array<unknown>) => opcuaLogger.trace(util.format(...args)));
-    setWarningLogger((...args: Array<unknown>) => opcuaLogger.warn(util.format(...args)));
-    setErrorLogger((...args: Array<unknown>) => opcuaLogger.error(util.format(...args)));
+    setWarningLogger((...args: Array<unknown>) => opcuaLogger.trace(util.format(...args)));
+    setErrorLogger((...args: Array<unknown>) => opcuaLogger.trace(util.format(...args)));
     // Let pino do the level filtering. node-opcua's gate is set wide so we don't drop
     // events before pino sees them.
     setLogLevel(LogLevel.Debug);

@@ -647,20 +647,35 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
   });
 
-  it('should throw error when querying history with client not set', async () => {
+  it('should skip HA group without reconnect on device/PLC error (e.g. BadNoCommunication)', async () => {
+    const mockedClient = {} as unknown as ClientSession;
+    south['client'] = mockedClient;
+    south.getHAValues = mock.fn(() => {
+      throw new Error('BadNoCommunication: device unreachable');
+    });
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+    const result = await south.historyQuery(
+      [configuration.items[0], configuration.items[1], configuration.items[2]],
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.DATE_2
+    );
+    assert.deepStrictEqual(result, { trackedInstant: null, value: null });
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.strictEqual(south['client'], mockedClient);
+  });
+
+  it('should return early and skip getHAValues when client not set', async () => {
     const getHAValuesMock = mock.fn(async () => ({ value: null, trackedInstant: null }));
     south.getHAValues = getHAValuesMock;
 
-    await assert.rejects(
-      async () =>
-        south.historyQuery(
-          [configuration.items[0], configuration.items[1], configuration.items[2]],
-          testData.constants.dates.DATE_1,
-          testData.constants.dates.DATE_2
-        ),
-      /OPCUA client not set/
+    const result = await south.historyQuery(
+      [configuration.items[0], configuration.items[1], configuration.items[2]],
+      testData.constants.dates.DATE_1,
+      testData.constants.dates.DATE_2
     );
 
+    assert.deepStrictEqual(result, { trackedInstant: null, value: null });
     assert.strictEqual(getHAValuesMock.mock.calls.length, 0);
   });
 
@@ -1252,10 +1267,11 @@ describe('SouthOPCUA', () => {
     });
   });
 
-  it('should properly throw error on query last point if client not set', async () => {
+  it('should return null and skip getDAValues when client not set', async () => {
     const getDAValuesMock = mock.fn(async () => []);
     south.getDAValues = getDAValuesMock;
-    await assert.rejects(async () => south.directQuery(configuration.items), /OPCUA client not set/);
+    const result = await south.directQuery(configuration.items);
+    assert.strictEqual(result, null);
     assert.strictEqual(getDAValuesMock.mock.calls.length, 0);
   });
 
@@ -1330,6 +1346,26 @@ describe('SouthOPCUA', () => {
     assert.strictEqual(addContentMock.mock.calls.length, 0);
     assert.strictEqual(connectMock.mock.calls.length, 0);
     assert.strictEqual(disconnectMock.mock.calls.length, 1);
+  });
+
+  it('should query last point and skip group without reconnect on device/PLC error (e.g. BadCommunicationError)', async () => {
+    const mockedClient = {} as unknown as ClientSession;
+    south['client'] = mockedClient;
+    const getDAValuesMock = mock.fn(() => {
+      throw new Error('BadCommunicationError: PLC channel offline');
+    });
+    const addContentMock = mock.fn(async () => undefined);
+    const disconnectMock = mock.fn(async () => undefined);
+    south.getDAValues = getDAValuesMock;
+    south.addContent = addContentMock;
+    south.disconnect = disconnectMock;
+    // directQuery must return null (skip group) without throwing and without disconnecting
+    const result = await south.directQuery([configuration.items[0], configuration.items[3]]);
+    assert.strictEqual(result, null);
+    assert.strictEqual(addContentMock.mock.calls.length, 0);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    // Session is untouched — client still set
+    assert.strictEqual(south['client'], mockedClient);
   });
 
   it('should not query items if bad node id', async () => {
@@ -1422,6 +1458,27 @@ describe('SouthOPCUA', () => {
         c => c.arguments[0] === `Received 0 node results, requested 1 nodes. Request done in 0 ms`
       ).length,
       1
+    );
+  });
+
+  it('getDAValues() should throw when session.read() fails (propagated to directQuery catch)', async () => {
+    const read = mock.fn(async () => {
+      throw new Error('BadSessionClosed');
+    });
+    const client = { read } as unknown as ClientSession;
+    await assert.rejects(
+      async () =>
+        south.getDAValues(
+          [
+            {
+              nodeId: configuration.items[0].settings.nodeId as unknown as NodeId,
+              name: configuration.items[0].name,
+              settings: configuration.items[0].settings
+            }
+          ],
+          client
+        ),
+      /BadSessionClosed/
     );
   });
 
