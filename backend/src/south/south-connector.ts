@@ -404,13 +404,15 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           // By default, retrieve the last hour. If the scan mode has already run and retrieves data, the max instant will
           // be retrieved from the South cache inside the history query handler
           const maxReadInterval = groupedElements[0].group?.maxReadInterval ?? groupedElements[0].maxReadInterval!;
+          // Capture a single `now` so that endTime - startTime == maxReadInterval exactly.
+          // Two separate DateTime.now() calls can differ by 1 ms, making the interval
+          // fractionally larger than maxReadInterval and causing generateIntervals to
+          // produce a spurious 1 ms second sub-interval.
+          const now = DateTime.now().toUTC();
           await this.historyQueryHandler(
             groupedElements,
-            DateTime.now()
-              .minus((maxReadInterval || 3600) * 1000)
-              .toUTC()
-              .toISO() as Instant,
-            DateTime.now().toUTC().toISO() as Instant
+            now.minus((maxReadInterval || 3600) * 1000).toISO() as Instant,
+            now.toISO() as Instant
           );
         } catch (error: unknown) {
           this.historyIsRunning = false;
