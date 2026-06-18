@@ -16,10 +16,29 @@ const HISTORY_QUERY_TRANSFORMERS_TABLE = 'history_query_transformers';
  * Similarly, `migrateCsvTransformerOptions` in v3.8.0 only processed rows where options
  * was NOT NULL — instances that had never had options set were silently skipped, leaving
  * them with null options and missing required CSV fields.
+ *
+ * Finally, `migrateSubscriptionsToTransformers` in v3.8.0 inserted the `iso` transformer
+ * with `options: null` for every subscription that had no prior transformation rule. The
+ * `iso` (and `ignore`) transformers have no configurable options, but the backend still
+ * rejects `null` options as an invalid object, so creating/duplicating/saving a north
+ * connector or history query carrying such a transformer failed. Any instance still left
+ * with null options after the specific fixes above is given an empty options object.
  */
 export async function up(knex: Knex): Promise<void> {
   await fixOIAnalyticsTransformerOptions(knex);
   await fixCsvTransformerOptions(knex);
+  await fixRemainingNullOptions(knex);
+}
+
+/**
+ * Catch-all: any transformer instance still carrying null options (e.g. the `iso`/`ignore`
+ * transformers, which have no options) gets a valid empty options object. Runs last so the
+ * transformer-specific defaults above take precedence.
+ */
+async function fixRemainingNullOptions(knex: Knex): Promise<void> {
+  for (const table of [NORTH_TRANSFORMERS_TABLE, HISTORY_QUERY_TRANSFORMERS_TABLE]) {
+    await knex(table).whereNull('options').update({ options: '{}' });
+  }
 }
 
 async function fixOIAnalyticsTransformerOptions(knex: Knex): Promise<void> {

@@ -188,6 +188,77 @@ describe('Entity migration v3.8.3_1', () => {
     });
   });
 
+  describe('up — remaining null options (iso / no-option transformers)', () => {
+    it('sets empty options object for the iso transformer left null by v3.8.0', async () => {
+      const transformer = await db('transformers').where('function_name', 'iso').first();
+      assert.ok(transformer, 'iso transformer must exist after prior migrations');
+
+      await db.raw('PRAGMA foreign_keys = OFF');
+      const ntId = 'nt-iso-test';
+      await db('north_transformers').insert({
+        id: ntId,
+        north_id: 'north-dummy',
+        transformer_id: transformer.id,
+        options: null,
+        source_type: 'south',
+        source_south_south_id: null,
+        source_south_group_id: null,
+        source_api_data_source_id: null
+      });
+      await db.raw('PRAGMA foreign_keys = ON');
+
+      await up(db);
+
+      const row = await db('north_transformers').where('id', ntId).first();
+      assert.equal(row.options, '{}');
+      assert.deepEqual(JSON.parse(row.options), {});
+    });
+
+    it('fixes iso null options in history_query_transformers too', async () => {
+      const transformer = await db('transformers').where('function_name', 'iso').first();
+      assert.ok(transformer);
+
+      await db.raw('PRAGMA foreign_keys = OFF');
+      const hqtId = 'hqt-iso-test';
+      await db('history_query_transformers').insert({
+        id: hqtId,
+        history_id: 'hist-dummy',
+        transformer_id: transformer.id,
+        options: null
+      });
+      await db.raw('PRAGMA foreign_keys = ON');
+
+      await up(db);
+
+      const row = await db('history_query_transformers').where('id', hqtId).first();
+      assert.equal(row.options, '{}');
+    });
+
+    it('does not overwrite transformer-specific defaults applied earlier', async () => {
+      const oia = await db('transformers').where('function_name', 'time-values-to-oianalytics').first();
+      assert.ok(oia);
+
+      await db.raw('PRAGMA foreign_keys = OFF');
+      const ntId = 'nt-oia-not-empty';
+      await db('north_transformers').insert({
+        id: ntId,
+        north_id: 'north-dummy',
+        transformer_id: oia.id,
+        options: null,
+        source_type: 'south',
+        source_south_south_id: null,
+        source_south_group_id: null,
+        source_api_data_source_id: null
+      });
+      await db.raw('PRAGMA foreign_keys = ON');
+
+      await up(db);
+
+      const row = await db('north_transformers').where('id', ntId).first();
+      assert.equal(JSON.parse(row.options).precision, 'ms');
+    });
+  });
+
   it('is a no-op when no null-options transformer instances exist', async () => {
     // Should not throw when nothing needs fixing
     await assert.doesNotReject(() => up(db));
