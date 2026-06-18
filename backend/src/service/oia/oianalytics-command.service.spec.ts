@@ -1409,6 +1409,83 @@ describe('OIAnalytics Command Service', () => {
     assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, testItemResult]);
   });
 
+  describe('withTimeout for test commands', () => {
+    const makeTestSouthItemCommand = (): OIBusTestSouthConnectorItemCommand =>
+      ({
+        id: 'testSouthItemId',
+        type: 'test-south-item',
+        targetVersion: testData.engine.settings.version,
+        itemId: 'itemId',
+        southConnectorId: 'southConnectorId',
+        commandContent: {
+          southCommand: testData.south.command,
+          itemCommand: testData.south.itemCommand,
+          testingSettings: {} as SouthConnectorItemTestingSettings
+        }
+      }) as OIBusTestSouthConnectorItemCommand;
+
+    it('should mark command as errored and release the lock when the operation hangs past the timeout', async () => {
+      mock.timers.enable({ apis: ['setTimeout'] });
+
+      const command = makeTestSouthItemCommand();
+      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+      southService.listManifest.mock.mockImplementationOnce(() => [
+        { ...testData.south.manifest, id: command.commandContent.southCommand.type }
+      ]);
+      // Never-resolving promise simulates a hung MQTT / TCP connection
+      southService.testItem.mock.mockImplementationOnce(
+        () =>
+          new Promise(() => {
+            /* empty */
+          })
+      );
+
+      const processPromise = service.processNextCommand();
+      // Let the async preamble (decryptText, listManifest) run before ticking the clock
+      await flushPromises();
+
+      // Advance past the 5-minute deadline
+      mock.timers.tick(5 * 60 * 1000 + 1);
+      await flushPromises();
+      await processPromise;
+
+      assert.ok(
+        oIAnalyticsCommandRepository.markAsErrored.mock.calls.some(
+          c => c.arguments[0] === command.id && (c.arguments[1] as string).includes('timed out')
+        ),
+        'markAsErrored should be called with a timeout message'
+      );
+
+      // isExecutingCommand must be reset so subsequent commands are not blocked
+      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => null);
+      await service.processNextCommand();
+      assert.ok(
+        (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'No command to execute'),
+        'subsequent processNextCommand call should not be blocked'
+      );
+
+      mock.timers.reset();
+    });
+
+    it('should propagate the real error immediately when the operation rejects before the timeout', async () => {
+      const command = makeTestSouthItemCommand();
+      oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
+      southService.listManifest.mock.mockImplementationOnce(() => [
+        { ...testData.south.manifest, id: command.commandContent.southCommand.type }
+      ]);
+      const realError = new Error('connection refused');
+      southService.testItem.mock.mockImplementationOnce(() => Promise.reject(realError));
+
+      await service.processNextCommand();
+
+      // The real error — not a timeout — should be reported
+      const erroredCall = oIAnalyticsCommandRepository.markAsErrored.mock.calls.find(c => c.arguments[0] === command.id);
+      assert.ok(erroredCall, 'markAsErrored should be called');
+      assert.strictEqual(erroredCall!.arguments[1], realError.message);
+      assert.ok(!(erroredCall!.arguments[1] as string).includes('timed out'), 'error message should not mention timeout');
+    });
+  });
+
   it('should execute north-connection-test command', async () => {
     const command: OIBusTestNorthConnectorCommand = {
       id: 'testNorthConnectorId',
