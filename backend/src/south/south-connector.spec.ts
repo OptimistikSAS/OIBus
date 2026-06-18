@@ -164,12 +164,40 @@ describe('SouthConnector', () => {
       assert.strictEqual((logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
       assert.strictEqual(
         (logger.warn as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0],
-        `Task job not added in South connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}). The previous cron was still running`
+        `Task job not added in South connector queue for cron "${testData.scanMode.list[0].name}" (${testData.scanMode.list[0].cron}). The previous cron was still running. The next occurrences will be logged as trace for the next hour`
       );
 
       south.addToQueue(testData.scanMode.list[1]);
       assert.strictEqual(runMock.mock.calls.length, 1);
       assert.deepStrictEqual(south.connectorConfiguration, testData.south.list[0]);
+    });
+
+    it('should warn once per hour and log trace in between when the previous cron is still running', () => {
+      const runMock = mock.fn(async () => undefined);
+      south.run = runMock;
+      const scanMode = testData.scanMode.list[0];
+
+      // First tick enqueues the job and starts running it
+      south.addToQueue(scanMode);
+      // Subsequent ticks while it is still queued: first warns, the rest are traced
+      south.addToQueue(scanMode);
+      south.addToQueue(scanMode);
+      south.addToQueue(scanMode);
+
+      const warnMock = logger.warn as Mock<(...args: Array<unknown>) => unknown>;
+      const traceMock = logger.trace as Mock<(...args: Array<unknown>) => unknown>;
+      const message = `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`;
+      const backpressureWarns = warnMock.mock.calls.filter(call => (call.arguments[0] as string).startsWith(message));
+      const backpressureTraces = traceMock.mock.calls.filter(call => call.arguments[0] === message);
+
+      assert.strictEqual(backpressureWarns.length, 1);
+      assert.strictEqual(backpressureWarns[0].arguments[0], `${message}. The next occurrences will be logged as trace for the next hour`);
+      assert.strictEqual(backpressureTraces.length, 2);
+
+      // After an hour, the warning is emitted again
+      mock.timers.tick(60 * 60 * 1000);
+      south.addToQueue(scanMode);
+      assert.strictEqual(warnMock.mock.calls.filter(call => (call.arguments[0] as string).startsWith(message)).length, 2);
     });
 
     it('should properly add to queue a new task and not trigger next run if no item', () => {
