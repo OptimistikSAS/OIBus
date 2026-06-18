@@ -1,5 +1,32 @@
 # Changelog
 
+## [3.8.4](https://github.com/OptimistikSAS/OIBus/compare/v3.8.3...v3.8.4) (2026-06-18)
+
+
+### Bug Fixes
+
+* **cache:** activate wal mode for cache and metrics database ([28003c9](https://github.com/OptimistikSAS/OIBus/commit/28003c9764fd7d89283318afc50c159767d3ad9c))
+* **cache:** display last row from csv content in odbc and oledb ([e01e8ce](https://github.com/OptimistikSAS/OIBus/commit/e01e8ce6fcbda83ee963d9646762c8d0c5cccd5c))
+* **engine:** add transformer json to oia for mqtt connectors ([5483b69](https://github.com/OptimistikSAS/OIBus/commit/5483b697e9087b257873f88806c3f61e22a23282))
+* **engine:** group batch values by items to transform them by item ([2fde7c7](https://github.com/OptimistikSAS/OIBus/commit/2fde7c7500db80f8a20462aa2531e7045837c9c8))
+* **frontend:** fix edit buttons display ([7e10ded](https://github.com/OptimistikSAS/OIBus/commit/7e10ded9bc5a3f18020df5c451a97674a0b11977))
+* **frontend:** fix translation module injectable service ([eeae6b2](https://github.com/OptimistikSAS/OIBus/commit/eeae6b22f7d09f39172e4c53b02f20f2a3ae1afc))
+* **frontend:** fix version modal never triggering and port redirect countdown drift ([3a45602](https://github.com/OptimistikSAS/OIBus/commit/3a456021050cf6f957a20515ca05b8210c21194e))
+* **frontend:** improve list display ([43b0cb4](https://github.com/OptimistikSAS/OIBus/commit/43b0cb474ef9acff736c1c35b1e6907e55dd4e23))
+* **migration:** empty options instead of null in transformers ([ef08a9b](https://github.com/OptimistikSAS/OIBus/commit/ef08a9be58458996b17d1029fb319250fe76491c))
+* **migration:** fix null options for some transformers ([1e979dd](https://github.com/OptimistikSAS/OIBus/commit/1e979dd174a0fe7aa55a2a633ac122542f142625))
+* **mqtt:** send message as string for item test in south mqtt ([bf73aec](https://github.com/OptimistikSAS/OIBus/commit/bf73aec5a876114b19529f8bd0df404a634664b4))
+* **oianalytics:** improve compression and http perf and fix http connection pool leak ([0b7b52f](https://github.com/OptimistikSAS/OIBus/commit/0b7b52f755eddcd99a5c36b42dd2a4870e5933fe))
+* **oianalytics:** improve http perf with agent and aad ([652d14c](https://github.com/OptimistikSAS/OIBus/commit/652d14cca5515e4d142b7af14779a9893ea407ad))
+* **oianalytics:** timeout test item command ([0b34aad](https://github.com/OptimistikSAS/OIBus/commit/0b34aad26afdc5ea8191011206d46d7ed4a9873e))
+* **opcua:** manage opcua item error ([41813cd](https://github.com/OptimistikSAS/OIBus/commit/41813cdca7fb9378cef786873e4c8d843c076804))
+* **south:** batch ADS address queries ([0f3b9a6](https://github.com/OptimistikSAS/OIBus/commit/0f3b9a619e3622dd91c37c5b1b85bf285de5da6c))
+* **south:** fix history query start and end time ms ([77230bc](https://github.com/OptimistikSAS/OIBus/commit/77230bc97db1fbf1f7cc9685d35ea7d09d404e0f))
+* **south:** fix max instant per item ([cdbbce7](https://github.com/OptimistikSAS/OIBus/commit/cdbbce7a7eb8c9635ee105dd43d071a5434a6660))
+* **south:** log 1 warning max per hour if scan mode still running ([ab9c626](https://github.com/OptimistikSAS/OIBus/commit/ab9c626b1074134a5e3f7fde71dcda31b6c912ed))
+* **south:** properly retrieve last value from cache when item is in group ([6d964a5](https://github.com/OptimistikSAS/OIBus/commit/6d964a58235039a9a8ff24c08bf76903b819bbc8))
+* **south:** simplify south cache with a single table for tracked instant ([03bfa53](https://github.com/OptimistikSAS/OIBus/commit/03bfa53531c0d83688dd92de7516e0b424cad93b))
+
 ## [3.8.3](https://github.com/OptimistikSAS/OIBus/compare/v3.8.2...v3.8.3) (2026-06-05)
 
 
