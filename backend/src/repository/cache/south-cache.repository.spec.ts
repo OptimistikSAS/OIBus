@@ -21,9 +21,9 @@ describe('SouthCacheRepository', () => {
     mock.restoreAll();
   });
 
-  it('prepares all four statements once at construction', () => {
-    // 4 statements: get, upsert, delete, deleteAllBySouth
-    assert.strictEqual(prepareMock.mock.calls.length, 4);
+  it('prepares all five statements once at construction', () => {
+    // 5 statements: get, getByGroup, upsert, delete, deleteAllBySouth
+    assert.strictEqual(prepareMock.mock.calls.length, 5);
   });
 
   describe('getItemLastValue', () => {
@@ -67,10 +67,28 @@ describe('SouthCacheRepository', () => {
     });
   });
 
+  describe('getGroupLastValue', () => {
+    it('should return null if no row matches the group', () => {
+      getMock.mock.mockImplementationOnce(() => undefined);
+      // consume the getStmt call
+      repository.getItemLastValue('south1', 'item1');
+      getMock.mock.mockImplementationOnce(() => undefined);
+      assert.strictEqual(repository.getGroupLastValue('south1', 'grp1'), null);
+    });
+
+    it('should query by south_id and group_id', () => {
+      getMock.mock.mockImplementationOnce(() => undefined);
+      repository.getGroupLastValue('south1', 'grp1');
+      const sql = prepareMock.mock.calls[1].arguments[0] as string;
+      assert.ok(sql.includes('south_id = ?'));
+      assert.ok(sql.includes('group_id = ?'));
+    });
+  });
+
   describe('saveItemLastValue', () => {
     it('should INSERT OR REPLACE into south_item_cache with south_id', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'group1', value: 1, trackedInstant: 'now', queryTime: 'now' });
-      const sql = prepareMock.mock.calls[1].arguments[0] as string;
+      const sql = prepareMock.mock.calls[2].arguments[0] as string;
       assert.ok(sql.includes('INSERT OR REPLACE INTO south_item_cache'));
       assert.ok(sql.includes('south_id'));
       assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['south1', 'group1', 'item1', 'now', '1', 'now']);
@@ -89,8 +107,8 @@ describe('SouthCacheRepository', () => {
     it('should reuse the single prepared statement for any connector', () => {
       repository.saveItemLastValue('south1', { itemId: 'item1', groupId: 'g', value: 1, trackedInstant: 't', queryTime: 't' });
       repository.saveItemLastValue('south2', { itemId: 'item2', groupId: 'g', value: 2, trackedInstant: 't', queryTime: 't' });
-      // prepare() still called only 4 times total (constructor) — no new preparations.
-      assert.strictEqual(prepareMock.mock.calls.length, 4);
+      // prepare() still called only 5 times total (constructor) — no new preparations.
+      assert.strictEqual(prepareMock.mock.calls.length, 5);
       assert.strictEqual(runMock.mock.calls.length, 2);
       assert.strictEqual(runMock.mock.calls[0].arguments[0], 'south1');
       assert.strictEqual(runMock.mock.calls[1].arguments[0], 'south2');
@@ -100,7 +118,7 @@ describe('SouthCacheRepository', () => {
   describe('deleteItemValue', () => {
     it('should delete by south_id and item_id', () => {
       repository.deleteItemValue('south1', 'item1');
-      const sql = prepareMock.mock.calls[2].arguments[0] as string;
+      const sql = prepareMock.mock.calls[3].arguments[0] as string;
       assert.ok(sql.includes('south_id = ?'));
       assert.ok(sql.includes('item_id = ?'));
       assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['south1', 'item1']);
@@ -110,7 +128,7 @@ describe('SouthCacheRepository', () => {
   describe('deleteItemsBySouth', () => {
     it('should delete all rows for the given south_id', () => {
       repository.deleteItemsBySouth('south1');
-      const sql = prepareMock.mock.calls[3].arguments[0] as string;
+      const sql = prepareMock.mock.calls[4].arguments[0] as string;
       assert.ok(sql.includes('south_id = ?'));
       assert.ok(!sql.includes('item_id'));
       assert.deepStrictEqual(runMock.mock.calls[0].arguments, ['south1']);
