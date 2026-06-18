@@ -82,6 +82,9 @@ import type { ILogger } from '../model/logger.model';
 export default abstract class SouthConnector<T extends SouthSettings, I extends SouthItemSettings> {
   private taskJobQueue: Array<ScanMode> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
+  // Last time a "previous cron still running" warning was emitted per scan mode. Used to throttle
+  // that warning to once an hour (logging the in-between occurrences as trace) to avoid flooding.
+  private lastBackpressureWarnByScanModeId: Map<string, DateTime> = new Map<string, DateTime>();
   private taskRunner: EventEmitter = new EventEmitter();
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
@@ -327,10 +330,18 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     }
     const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
     if (foundJob) {
-      // If a job is already scheduled in queue, it will not be added
-      this.logger.warn(
-        `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`
-      );
+      // If a job is already scheduled in queue, it will not be added. This can happen on every tick
+      // when the scan interval is too short, so the warning is throttled to once per hour per scan
+      // mode and the in-between occurrences are logged as trace to avoid flooding the logs.
+      const now = DateTime.now();
+      const lastWarn = this.lastBackpressureWarnByScanModeId.get(scanMode.id);
+      const message = `Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron}). The previous cron was still running`;
+      if (!lastWarn || now.diff(lastWarn).as('hours') >= 1) {
+        this.lastBackpressureWarnByScanModeId.set(scanMode.id, now);
+        this.logger.warn(`${message}. The next occurrences will be logged as trace for the next hour`);
+      } else {
+        this.logger.trace(message);
+      }
       return;
     }
 
