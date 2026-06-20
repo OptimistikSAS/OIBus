@@ -90,7 +90,7 @@
     "ssh2-sftp-client": "12.1.1",
     "thread-stream": "4.2.0",
     "tsoa": "6.6.0",
-    "undici": "8.4.1",
+    "undici": "8.5.0",
     "unzipper": "0.12.5"
   },
   "optionalDependencies": {
