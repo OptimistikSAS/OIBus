@@ -95,6 +95,13 @@ export const OIBUS_SOUTH_TYPES = [
 export type OIBusSouthType = (typeof OIBUS_SOUTH_TYPES)[number];
 
 /**
+ * Recovery strategy used when a south connector reconnects after a long disconnection.
+ * - 'oldest': fill the gap from oldest to newest (default behaviour).
+ * - 'newest': fill the gap from newest to oldest so that recent data arrives first.
+ */
+export type SouthHistoryRecoveryStrategy = 'oldest' | 'newest';
+
+/**
  * Represents the type metadata for a South connector.
  * Describes the basic characteristics and capabilities of a South connector type.
  */
@@ -290,6 +297,15 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
    * @example 1000
    */
   overlap: number | null;
+
+  /**
+   * Recovery strategy when the connector reconnects after a long disconnection.
+   * Only applicable for connectors with historian capabilities.
+   * When null, defaults to 'oldest'.
+   *
+   * @example "oldest"
+   */
+  recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 }
 
 export interface ItemLightDTO extends BaseEntity {
@@ -362,6 +378,15 @@ export interface SouthItemGroupDTO extends BaseEntity {
      * @example 200
      */
     readDelay: number | null;
+
+    /**
+     * Recovery strategy when the connector reconnects after a long disconnection.
+     * Only applicable for connectors with historian capabilities.
+     * When null, defaults to 'oldest'.
+     *
+     * @example "oldest"
+     */
+    recoveryStrategy: SouthHistoryRecoveryStrategy | null;
   };
 }
 
@@ -413,6 +438,14 @@ export interface SouthItemGroupCommandDTO {
      * @example 200
      */
     readDelay: number | null;
+
+    /**
+     * Recovery strategy when the connector reconnects after a long disconnection.
+     * When null, defaults to 'oldest'.
+     *
+     * @example "oldest"
+     */
+    recoveryStrategy: SouthHistoryRecoveryStrategy | null;
   };
 }
 
@@ -670,6 +703,15 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
    * @example 1000
    */
   overlap: number | null;
+
+  /**
+   * Recovery strategy when the connector reconnects after a long disconnection.
+   * Only applicable for connectors with historian capabilities.
+   * When null, defaults to 'oldest'.
+   *
+   * @example "oldest"
+   */
+  recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 }
 
 // ── Named command variants (tsoa uses these as schema names) ──────────────

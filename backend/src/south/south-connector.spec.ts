@@ -525,6 +525,45 @@ describe('SouthConnector', () => {
       assert.strictEqual(saveCalls[0].arguments[1].itemId, items[0].id);
       assert.strictEqual(saveCalls[1].arguments[1].itemId, items[1].id);
     });
+
+    it('should defer cache update to end of run with newest recovery strategy', async () => {
+      const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
+      const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      const endTime = '2021-02-02T02:02:02.222Z';
+      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval1, interval2], numberOfIntervalsDone: 0 }));
+      south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+
+      const items = [{ ...testData.south.list[1].items[0], recoveryStrategy: 'newest' }] as Array<
+        SouthConnectorItemEntity<SouthMSSQLItemSettings>
+      >;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', endTime);
+
+      const saveCalls = (southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      // Must be called exactly once (at end, not per interval)
+      assert.strictEqual(saveCalls.length, 1);
+      assert.strictEqual(saveCalls[0].arguments[1].trackedInstant, endTime);
+    });
+
+    it('should not save trackedInstant when stopped mid newest run', async () => {
+      const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
+      const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval1, interval2], numberOfIntervalsDone: 0 }));
+      south.historyQuery = mock.fn(async () => {
+        // Simulate a stop being requested mid-run
+        (south as unknown as { stopping: boolean }).stopping = true;
+        return { trackedInstant: '2021-02-02T02:02:02.222Z', value: null };
+      });
+
+      const items = [{ ...testData.south.list[1].items[0], recoveryStrategy: 'newest' }] as Array<
+        SouthConnectorItemEntity<SouthMSSQLItemSettings>
+      >;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
+
+      const saveCalls = (southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(saveCalls.length, 0);
+      // Reset stopping flag for subsequent tests
+      (south as unknown as { stopping: boolean }).stopping = false;
+    });
   });
 
   describe('SouthConnector with history and subscription', () => {

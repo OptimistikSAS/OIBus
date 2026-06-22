@@ -197,7 +197,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   syncWithGroup: item.syncWithGroup,
                   maxReadInterval: item.maxReadInterval,
                   readDelay: item.readDelay,
-                  overlap: item.overlap
+                  overlap: item.overlap,
+                  recoveryStrategy: item.recoveryStrategy
                 }) as SouthConnectorItemCommandDTO
             );
             this.inMemoryGroups = southConnector.groups.map(group => ({
@@ -209,7 +210,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
               historySettings: {
                 overlap: group.historySettings.overlap,
                 maxReadInterval: group.historySettings.maxReadInterval,
-                readDelay: group.historySettings.readDelay
+                readDelay: group.historySettings.readDelay,
+                recoveryStrategy: group.historySettings.recoveryStrategy
               }
             }));
           }

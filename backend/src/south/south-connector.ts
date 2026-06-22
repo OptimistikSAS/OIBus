@@ -2,7 +2,12 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals, groupItemsByGroup, validateCronExpression } from '../service/utils';
 
-import { SOUTH_SINGLE_ITEMS, SouthConnectorItemTestingSettings, SouthItemLastValue } from '../../shared/model/south-connector.model';
+import {
+  SOUTH_SINGLE_ITEMS,
+  SouthConnectorItemTestingSettings,
+  SouthHistoryRecoveryStrategy,
+  SouthItemLastValue
+} from '../../shared/model/south-connector.model';
 import { Instant, Interval } from '../../shared/model/types';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
@@ -576,10 +581,17 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         readDelay = lead.readDelay!;
         overlap = lead.overlap || 0;
       }
+      const recoveryStrategy = (lead.group && lead.syncWithGroup ? lead.group.recoveryStrategy : lead.recoveryStrategy) ?? 'oldest';
       const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, maxReadInterval);
+      const { intervals, numberOfIntervalsDone } = generateIntervals(
+        startTime,
+        startTimeFromCache,
+        endTime,
+        maxReadInterval,
+        recoveryStrategy
+      );
       this.logIntervals(intervals);
-      await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone);
+      await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone, recoveryStrategy, endTime);
     }
 
     this.metricsEvent.emit('history-query-stop', {
@@ -603,10 +615,17 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       southCache.trackedInstant = startTime;
     }
     const overlap = item.overlap || 0;
+    const recoveryStrategy = item.recoveryStrategy ?? 'oldest';
     const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-    const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, item.maxReadInterval!);
+    const { intervals, numberOfIntervalsDone } = generateIntervals(
+      startTime,
+      startTimeFromCache,
+      endTime,
+      item.maxReadInterval!,
+      recoveryStrategy
+    );
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, [item], southCache, item.readDelay!, numberOfIntervalsDone);
+    await this.queryIntervals(intervals, [item], southCache, item.readDelay!, numberOfIntervalsDone, recoveryStrategy, endTime);
   }
 
   private async queryIntervals(
@@ -614,40 +633,51 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: Omit<SouthItemLastValue, 'itemName' | 'groupName'>,
     readDelay: number,
-    numberOfIntervalsDone: number
+    numberOfIntervalsDone: number,
+    strategy: SouthHistoryRecoveryStrategy,
+    endInstant: Instant
   ) {
+    // For 'newest' strategy the array is already reversed; done intervals sit at the tail.
+    // We iterate from 0 up to (length - numberOfIntervalsDone) and defer the cache update until
+    // all intervals finish so that trackedInstant does not jump to "now" mid-run and corrupt resumption.
+    const startIndex = strategy === 'newest' ? 0 : numberOfIntervalsDone;
+    const endIndex = strategy === 'newest' ? intervals.length - numberOfIntervalsDone : intervals.length;
+
     this.metricsEvent.emit('history-query-start', {
       running: true,
       intervalProgress: this.calculateIntervalProgress(intervals.length, numberOfIntervalsDone)
     });
 
-    for (let index = numberOfIntervalsDone; index < intervals.length; index++) {
-      const startTime = DateTime.now().toUTC().toISO()!;
+    for (let index = startIndex; index < endIndex; index++) {
+      const queryTime = DateTime.now().toUTC().toISO()!;
       const interval = intervals[index];
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       const lastValue: { trackedInstant: Instant; value: unknown } | null = await this.historyQuery(items, interval.start, interval.end);
 
-      // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
-      // With overlap, it may return a lastInstantRetrieved inferior to the max instant, so we also check this condition
-      if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
-        this.cacheService!.saveItemLastValue(this.connector.id, {
-          groupId: southCache.groupId,
-          itemId: southCache.itemId,
-          queryTime: startTime,
-          value: lastValue.value,
-          trackedInstant: lastValue.trackedInstant
-        });
+      if (strategy === 'oldest') {
+        // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
+        // With overlap, it may return a lastInstantRetrieved inferior to the max instant, so we also check this condition
+        if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
+          this.cacheService!.saveItemLastValue(this.connector.id, {
+            groupId: southCache.groupId,
+            itemId: southCache.itemId,
+            queryTime,
+            value: lastValue.value,
+            trackedInstant: lastValue.trackedInstant
+          });
+        }
       }
 
+      const intervalsProcessed = index - startIndex + 1;
       this.metricsEvent.emit('history-query-interval', {
         running: true,
-        intervalProgress: this.calculateIntervalProgress(intervals.length, index + 1), // this index has been done, so we increment
+        intervalProgress: this.calculateIntervalProgress(endIndex - startIndex, intervalsProcessed),
         currentIntervalStart: interval.start,
         currentIntervalEnd: interval.end,
-        currentIntervalNumber: index + 1,
-        numberOfIntervals: intervals.length
+        currentIntervalNumber: intervalsProcessed,
+        numberOfIntervals: endIndex - startIndex
       });
 
       if (this.stopping) {
@@ -655,9 +685,22 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         return;
       }
 
-      if (index !== intervals.length - 1) {
+      if (index !== endIndex - 1) {
         await delay(readDelay);
       }
+    }
+
+    // For 'newest' strategy: only advance trackedInstant once all intervals have been queried.
+    // This prevents a mid-run restart from skipping the not-yet-queried older intervals.
+    if (strategy === 'newest' && !this.stopping) {
+      this.cacheService!.saveItemLastValue(this.connector.id, {
+        groupId: southCache.groupId,
+        itemId: southCache.itemId,
+        queryTime: DateTime.now().toUTC().toISO()!,
+        // southCache.value is the pre-run cursor value; no per-interval update was made during a 'newest' run.
+        value: southCache.value,
+        trackedInstant: endInstant
+      });
     }
   }
 
