@@ -680,6 +680,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         groupId: southCache.groupId,
         itemId: southCache.itemId,
         queryTime: DateTime.now().toUTC().toISO()!,
+        // southCache.value is the pre-run cursor value; no per-interval update was made during a 'newest' run.
         value: southCache.value,
         trackedInstant: endInstant
       });

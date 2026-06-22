@@ -158,6 +158,33 @@ describe('Service utils', () => {
       assert.deepStrictEqual(intervals, [{ start: startTimeFromCache, end: endTime }]);
       assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
+
+    it('should reverse intervals and preserve numberOfIntervalsDone for newest strategy', () => {
+      const startTime1 = '2020-01-01T00:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T01:30:00.000Z';
+      const endTime1 = '2020-01-01T01:00:00.000Z';
+      const endTime2 = '2020-01-01T02:00:00.000Z';
+      const startTime3 = '2020-01-01T02:00:00.000Z';
+      const endTime3 = '2020-01-01T02:50:00.000Z';
+      // oldest order: [chunk0 (done), chunk1, chunk2] — after reverse: [chunk2, chunk1, chunk0 (done at tail)]
+      const expectedIntervals = [
+        { start: startTime3, end: endTime3 },
+        { start: startTimeFromCache, end: endTime2 },
+        { start: startTime1, end: endTime1 }
+      ];
+      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime1, startTimeFromCache, endTime3, 3600, 'newest');
+      assert.deepStrictEqual(intervals, expectedIntervals);
+      assert.deepStrictEqual(numberOfIntervalsDone, 1);
+    });
+
+    it('should return the single interval unchanged for newest strategy', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
+      const endTime = '2020-01-01T01:00:00.000Z';
+      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 3600, 'newest');
+      assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
+      assert.deepStrictEqual(numberOfIntervalsDone, 0);
+    });
   });
 
   describe('filesExists', () => {

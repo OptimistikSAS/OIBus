@@ -89,7 +89,6 @@ class EditSouthItemModalComponent {
   tableIndex: number | null = null;
 
   readonly recoveryStrategies: Array<{ value: SouthHistoryRecoveryStrategy; labelKey: string }> = [
-    { value: 'oldest', labelKey: 'south.items.recovery-strategy-oldest' },
     { value: 'newest', labelKey: 'south.items.recovery-strategy-newest' }
   ];
 
