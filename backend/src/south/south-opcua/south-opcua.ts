@@ -640,7 +640,26 @@ export default class SouthOPCUA
     session: ClientSession
   ): Promise<Array<OIBusTimeValue>> {
     const startRequest = DateTime.now().toMillis();
-    const dataValues = await session.read(nodesToRead);
+    const timeoutMs = this.connector.settings.readTimeout;
+
+    // Mirror the HA path: cap the read so a hanging PLC/server cannot leave the
+    // connector stuck in run() indefinitely (runProgress$ set but never resolved).
+    // BadTimeout is classified as a device error → session kept, no reconnect.
+    let timeoutId: NodeJS.Timeout | undefined;
+    const readPromise = session.read(nodesToRead) as Promise<Array<DataValue>>;
+    const dataValues = await Promise.race([
+      readPromise.finally(() => clearTimeout(timeoutId)),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          // Silence any late rejection from the still-pending read so it doesn't
+          // become an unhandled rejection after the timeout fires.
+          readPromise.catch(() => {
+            /* empty */
+          });
+          reject(new Error(`BadTimeout: DA read timed out after ${timeoutMs} ms`));
+        }, timeoutMs);
+      })
+    ]);
     const requestDuration = DateTime.now().toMillis() - startRequest;
     this.logger.debug(`Found ${dataValues.length} results for ${nodesToRead.length} items (DA mode) in ${requestDuration} ms`);
     if (dataValues.length !== nodesToRead.length) {

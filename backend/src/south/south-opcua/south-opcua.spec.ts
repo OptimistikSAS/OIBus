@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import Stream from 'node:stream';
 import testData from '../../tests/utils/test-data';
-import { mockModule, reloadModule } from '../../tests/utils/test-utils';
+import { mockModule, reloadModule, flushPromises } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../../tests/__mocks__/service/south-cache-service.mock';
 import PinoLogger from '../../tests/__mocks__/service/logger/logger.mock';
@@ -1482,6 +1482,60 @@ describe('SouthOPCUA', () => {
     );
   });
 
+  it('getDAValues() should throw BadTimeout when session.read() does not respond within readTimeout', async () => {
+    // read() returns a Promise that never resolves (simulates a hanging PLC/server)
+    const read = mock.fn(
+      () =>
+        new Promise<never>(() => {
+          /* empty */
+        })
+    );
+    const client = { read } as unknown as ClientSession;
+
+    const getDAValuesPromise = south.getDAValues(
+      [
+        {
+          nodeId: configuration.items[3].settings.nodeId as unknown as NodeId,
+          name: configuration.items[3].name,
+          settings: configuration.items[3].settings
+        }
+      ],
+      client
+    );
+    // Register the assertion BEFORE ticking so the rejection handler is already attached
+    // when mock.timers.tick fires synchronously — otherwise the promise is briefly unhandled.
+    const assertion = assert.rejects(getDAValuesPromise, /BadTimeout/);
+    mock.timers.tick(configuration.settings.readTimeout);
+    await assertion;
+  });
+
+  it('should return null and not disconnect when DA read times out (treated as device error)', async () => {
+    south['client'] = {} as unknown as ClientSession;
+    // Simulate a hanging read by returning a never-resolving Promise
+    south.getDAValues = mock.fn(
+      () =>
+        new Promise<never>(() => {
+          /* empty */
+        })
+    );
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    // Wrap directQuery and advance the timer to trigger the timeout inside getDAValues.
+    // Since getDAValues is mocked here, we simulate the BadTimeout rejection directly.
+    south.getDAValues = mock.fn(() => Promise.reject(new Error('BadTimeout: DA read timed out after 15000 ms')));
+
+    const result = await south.directQuery([configuration.items[3]]);
+
+    assert.strictEqual(result, null);
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+    assert.ok(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        c => (c.arguments[0] as string).includes('BadTimeout') && (c.arguments[0] as string).includes('device/PLC error, session kept')
+      )
+    );
+  });
+
   it('should not subscribe if session is not set', async () => {
     await assert.rejects(async () => south.subscribe(configuration.items), /OPCUA client not set/);
   });
@@ -1816,8 +1870,10 @@ describe('SouthOPCUA', () => {
     south['connector'].settings.maxNumberOfMessages = 1;
 
     stream.emit('changed', { value: { value: 1, dataType: DataType.Float }, statusCode: StatusCodes.Good });
-    // Let the microtask queue drain so the .catch() fires
-    await new Promise(resolve => setTimeout(resolve, 0));
+    // Two microtask turns are needed: one for the async fn rejection to propagate,
+    // one for the .catch() handler to fire. flushPromises() (setImmediate-based, not faked)
+    // drains the entire queue before the test resumes.
+    await flushPromises();
 
     assert.ok(
       (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
