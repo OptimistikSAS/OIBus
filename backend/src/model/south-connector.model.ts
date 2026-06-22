@@ -1,6 +1,6 @@
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { BaseEntity } from './types';
-import { OIBusSouthType } from '../../shared/model/south-connector.model';
+import { OIBusSouthType, SouthHistoryRecoveryStrategy } from '../../shared/model/south-connector.model';
 import { ScanMode } from './scan-mode.model';
 
 export interface SouthConnectorEntityLight extends BaseEntity {
@@ -21,6 +21,7 @@ export interface SouthItemGroupEntityLight extends BaseEntity {
   overlap: number | null;
   maxReadInterval: number | null;
   readDelay: number | null;
+  recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 }
 
 export interface SouthItemGroupEntity extends BaseEntity {
@@ -30,6 +31,7 @@ export interface SouthItemGroupEntity extends BaseEntity {
   overlap: number | null;
   maxReadInterval: number | null;
   readDelay: number | null;
+  recoveryStrategy: SouthHistoryRecoveryStrategy | null;
   items: Array<SouthConnectorItemEntityLight>;
 }
 
@@ -40,6 +42,7 @@ export interface SouthItemGroupCommand {
   overlap: number | null;
   maxReadInterval: number | null;
   readDelay: number | null;
+  recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 }
 
 export interface SouthConnectorEntity<S extends SouthSettings, I extends SouthItemSettings> extends BaseEntity {
@@ -62,4 +65,5 @@ export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends B
   maxReadInterval: number | null;
   readDelay: number | null;
   overlap: number | null;
+  recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 }

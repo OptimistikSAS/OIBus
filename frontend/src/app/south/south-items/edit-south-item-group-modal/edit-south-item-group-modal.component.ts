@@ -14,6 +14,7 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { TranslateDirective } from '@ngx-translate/core';
 import {
   SouthConnectorManifest,
+  SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '../../../../../../backend/shared/model/south-connector.model';
@@ -43,12 +44,18 @@ export class EditSouthItemGroupModalComponent {
   group: SouthItemGroupDTO | SouthItemGroupCommandDTO | null = null;
   existingGroups: Array<SouthItemGroupDTO | SouthItemGroupCommandDTO> = [];
 
+  readonly recoveryStrategies: Array<{ value: SouthHistoryRecoveryStrategy; labelKey: string }> = [
+    { value: 'oldest', labelKey: 'south.groups.recovery-strategy-oldest' },
+    { value: 'newest', labelKey: 'south.groups.recovery-strategy-newest' }
+  ];
+
   form: FormGroup<{
     name: FormControl<string>;
     scanModeId: FormControl<string | null>;
     overlap: FormControl<number>;
     maxReadInterval: FormControl<number>;
     readDelay: FormControl<number>;
+    recoveryStrategy: FormControl<SouthHistoryRecoveryStrategy>;
   }> | null = null;
 
   get hasHistorianCapabilities(): boolean {
@@ -100,7 +107,8 @@ export class EditSouthItemGroupModalComponent {
       scanModeId: this.fb.control<string | null>(null, [Validators.required]),
       overlap: [0, [Validators.min(0)]],
       maxReadInterval: [3600, [Validators.min(0)]],
-      readDelay: [200, [Validators.required, Validators.min(0)]]
+      readDelay: [200, [Validators.required, Validators.min(0)]],
+      recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest')
     });
 
     if (this.group) {
@@ -111,7 +119,8 @@ export class EditSouthItemGroupModalComponent {
           (this.group as SouthItemGroupDTO).standardSettings.scanMode.id,
         overlap: this.group.historySettings.overlap!,
         maxReadInterval: this.group.historySettings.maxReadInterval!,
-        readDelay: this.group.historySettings.readDelay!
+        readDelay: this.group.historySettings.readDelay!,
+        recoveryStrategy: this.group.historySettings.recoveryStrategy ?? 'oldest'
       });
     }
   }
@@ -142,7 +151,8 @@ export class EditSouthItemGroupModalComponent {
       historySettings: {
         overlap: formValue.overlap! ?? null,
         maxReadInterval: formValue.maxReadInterval! ?? null,
-        readDelay: formValue.readDelay! ?? null
+        readDelay: formValue.readDelay! ?? null,
+        recoveryStrategy: formValue.recoveryStrategy! ?? null
       }
     };
     this.modal.close({ mode: this.mode, group: command });

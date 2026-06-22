@@ -286,6 +286,7 @@ export default class SouthService {
       maxReadInterval: null,
       readDelay: 0,
       overlap: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -528,7 +529,8 @@ export default class SouthService {
         syncWithGroup: stringToBoolean(data.syncWithGroup),
         maxReadInterval: Number(data.maxReadInterval || '0'),
         readDelay: Number(data.readDelay || '0'),
-        overlap: Number(data.overlap || '0')
+        overlap: Number(data.overlap || '0'),
+        recoveryStrategy: null
       } as SouthConnectorItemDTO;
 
       if (existingItems.find(existingItem => existingItem.name === item.name)) {
@@ -618,7 +620,8 @@ export default class SouthService {
           scanMode,
           overlap: itemWithGroup.overlap,
           maxReadInterval: itemWithGroup.maxReadInterval,
-          readDelay: itemWithGroup.readDelay
+          readDelay: itemWithGroup.readDelay,
+          recoveryStrategy: itemWithGroup.recoveryStrategy
         };
         group = this.southItemGroupRepository.create(groupEntity, user);
       }
@@ -687,7 +690,8 @@ export default class SouthService {
       scanMode,
       overlap: command.historySettings.overlap,
       maxReadInterval: command.historySettings.maxReadInterval,
-      readDelay: command.historySettings.readDelay
+      readDelay: command.historySettings.readDelay,
+      recoveryStrategy: command.historySettings.recoveryStrategy ?? null
     };
     return this.southItemGroupRepository.create(groupEntity, user);
   }
@@ -714,12 +718,14 @@ export default class SouthService {
     const overlap = command.historySettings.overlap != null ? command.historySettings.overlap : null;
     const maxReadInterval = command.historySettings.maxReadInterval != null ? command.historySettings.maxReadInterval : null;
     const readDelay = command.historySettings.readDelay != null ? command.historySettings.readDelay : 0;
+    const recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
     const groupEntity: Omit<SouthItemGroupCommand, 'southId'> = {
       name: command.standardSettings.name,
       scanMode,
       overlap,
       maxReadInterval,
-      readDelay
+      readDelay,
+      recoveryStrategy
     };
     this.southItemGroupRepository.update(groupId, groupEntity, user);
     const updated = this.southItemGroupRepository.findById(groupId);
@@ -839,6 +845,7 @@ const copyGroupCommandToGroupEntity = (
   groupEntity.overlap = command.historySettings.overlap;
   groupEntity.maxReadInterval = command.historySettings.maxReadInterval;
   groupEntity.readDelay = command.historySettings.readDelay;
+  groupEntity.recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
   groupEntity.scanMode = checkScanMode(scanModes, command.standardSettings.scanModeId, null)!;
 };
 
@@ -867,6 +874,7 @@ export const copySouthItemCommandToSouthItemEntity = async (
   southItemEntity.maxReadInterval = command.maxReadInterval != null ? command.maxReadInterval : null;
   southItemEntity.readDelay = command.readDelay != null ? command.readDelay : null;
   southItemEntity.overlap = command.overlap != null ? command.overlap : null;
+  southItemEntity.recoveryStrategy = command.recoveryStrategy ?? null;
   southItemEntity.scanMode =
     command.scanModeId || command.scanModeName ? checkScanMode(scanModes, command.scanModeId, command.scanModeName) : null;
   southItemEntity.group = command.groupId || command.groupName ? checkGroups(groups, command.groupId, command.groupName) : null;
@@ -913,7 +921,8 @@ export const toSouthConnectorDTO = (
       historySettings: {
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
-        overlap: group.overlap
+        overlap: group.overlap,
+        recoveryStrategy: group.recoveryStrategy
       }
     })),
     createdBy: getUserInfo(southEntity.createdBy),
