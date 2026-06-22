@@ -1666,4 +1666,165 @@ describe('SouthOPCUA', () => {
       1
     );
   });
+
+  it('should log disconnect error and still schedule reconnect when disconnect() also throws during connect recovery', async () => {
+    south.createSession = mock.fn(() => {
+      throw new Error('connect session error');
+    });
+    south.disconnect = mock.fn(async () => {
+      throw new Error('disconnect error');
+    });
+    south['disconnecting'] = false;
+
+    await south.connect();
+
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
+        c => c.arguments[0] === 'Error while connecting to the OPCUA server: connect session error'
+      ).length,
+      1
+    );
+    assert.strictEqual(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.filter(
+        c => c.arguments[0] === 'Error while disconnecting after failed connect: disconnect error'
+      ).length,
+      1
+    );
+    assert.notStrictEqual(south['reconnectTimeout'], null);
+  });
+
+  it('should skip HA group without reconnect for every device error code', async () => {
+    const deviceErrorCodes = [
+      'BadCommunicationError',
+      'BadNoCommunication',
+      'BadNotConnected',
+      'BadDeviceFailure',
+      'BadOutOfService',
+      'BadTimeout'
+    ];
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    for (const code of deviceErrorCodes) {
+      const mockedClient = {} as unknown as ClientSession;
+      south['client'] = mockedClient;
+      south.getHAValues = mock.fn(() => {
+        throw new Error(`${code}: server reported device offline`);
+      });
+      disconnectMock.mock.resetCalls();
+
+      const result = await south.historyQuery([configuration.items[0]], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+      assert.deepStrictEqual(result, { trackedInstant: null, value: null }, `Expected null for ${code}`);
+      assert.strictEqual(disconnectMock.mock.calls.length, 0, `Expected no disconnect for ${code}`);
+      assert.strictEqual(south['client'], mockedClient, `Expected session preserved for ${code}`);
+    }
+  });
+
+  it('should skip DA group without reconnect for every device error code', async () => {
+    const deviceErrorCodes = [
+      'BadCommunicationError',
+      'BadNoCommunication',
+      'BadNotConnected',
+      'BadDeviceFailure',
+      'BadOutOfService',
+      'BadTimeout'
+    ];
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    for (const code of deviceErrorCodes) {
+      const mockedClient = {} as unknown as ClientSession;
+      south['client'] = mockedClient;
+      south.getDAValues = mock.fn(() => {
+        throw new Error(`${code}: server reported device offline`);
+      });
+      disconnectMock.mock.resetCalls();
+
+      const result = await south.directQuery([configuration.items[3]]);
+
+      assert.strictEqual(result, null, `Expected null for ${code}`);
+      assert.strictEqual(disconnectMock.mock.calls.length, 0, `Expected no disconnect for ${code}`);
+      assert.strictEqual(south['client'], mockedClient, `Expected session preserved for ${code}`);
+    }
+  });
+
+  it('should truncate item names to 10 and append "… and N more" in HA device error log', async () => {
+    const manyItems = Array.from({ length: 13 }, (_, i) => ({
+      ...configuration.items[0],
+      id: `id${i}`,
+      name: `item${i}`
+    }));
+    south['client'] = {} as unknown as ClientSession;
+    south.getHAValues = mock.fn(() => {
+      throw new Error('BadTimeout: device timeout');
+    });
+    south.disconnect = mock.fn(async () => undefined);
+
+    await south.historyQuery(manyItems, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const errorCalls = (logger.error as ReturnType<typeof mock.fn>).mock.calls;
+    const deviceErrorLog = errorCalls.find(c => (c.arguments[0] as string).includes('… and 3 more'));
+    assert.ok(deviceErrorLog, 'Expected "… and 3 more" in device error log');
+    assert.ok(
+      (deviceErrorLog.arguments[0] as string).startsWith('HA read failed for 13 item(s)'),
+      'Expected item count in device error log'
+    );
+  });
+
+  it('should truncate item names to 10 and append "… and N more" in DA device error log', async () => {
+    const manyItems = Array.from({ length: 12 }, (_, i) => ({
+      ...configuration.items[3],
+      id: `id${i}`,
+      name: `daItem${i}`
+    }));
+    south['client'] = {} as unknown as ClientSession;
+    south.getDAValues = mock.fn(() => {
+      throw new Error('BadDeviceFailure: device failure');
+    });
+    south.disconnect = mock.fn(async () => undefined);
+
+    const result = await south.directQuery(manyItems);
+
+    assert.strictEqual(result, null);
+    const errorCalls = (logger.error as ReturnType<typeof mock.fn>).mock.calls;
+    const deviceErrorLog = errorCalls.find(c => (c.arguments[0] as string).includes('… and 2 more'));
+    assert.ok(deviceErrorLog, 'Expected "… and 2 more" in device error log');
+    assert.ok(
+      (deviceErrorLog.arguments[0] as string).startsWith('DA read failed for 12 node(s)'),
+      'Expected node count in device error log'
+    );
+  });
+
+  it('should log error when flushMessages() rejects from the changed handler', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    south['client'] = {
+      createSubscription2: mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }))
+    } as unknown as ClientSession;
+
+    south.addContent = mock.fn(async () => undefined);
+    await south.subscribe([configuration.items[2]]);
+
+    const flushError = new Error('unexpected flush error');
+    south.flushMessages = mock.fn(async () => {
+      throw flushError;
+    });
+
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => 'parsedValue');
+    south['connector'].settings.maxNumberOfMessages = 1;
+
+    stream.emit('changed', { value: { value: 1, dataType: DataType.Float }, statusCode: StatusCodes.Good });
+    // Let the microtask queue drain so the .catch() fires
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    assert.ok(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        c =>
+          (c.arguments[0] as string).includes('Error flushing messages from subscription') &&
+          (c.arguments[0] as string).includes(flushError.message)
+      )
+    );
+  });
 });

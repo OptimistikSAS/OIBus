@@ -111,7 +111,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   ) {
     this.cacheService = new SouthCacheService(this.southCacheRepository);
     this.tmpFolder = path.resolve(cacheFolderPath, 'tmp');
-    this.taskRunner.on('next', async () => {
+    this.taskRunner.on('next', () => {
       if (this.taskJobQueue.length > 0) {
         if (this.runProgress$) {
           this.logger.warn('A South task is already running');
@@ -126,7 +126,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         );
         if (itemsToRun.length > 0) {
           this.logger.trace(`Running South with scan mode ${scanMode.name} for ${this.connector.items.length} items`);
-          await this.run(scanMode.id, itemsToRun);
+          this.run(scanMode.id, itemsToRun).catch((error: unknown) => {
+            this.logger.error(`Unhandled error in South task runner: ${(error as Error).message}`);
+          });
         }
       } else {
         this.logger.trace('No more task to run');
@@ -377,63 +379,74 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   async run(scanModeId: string, items: Array<SouthConnectorItemEntity<I>>): Promise<void> {
     this.createDeferredPromise();
 
-    const runStart = DateTime.now();
-    this.metricsEvent.emit('run-start', {
-      lastRunStart: runStart.toUTC().toISO()!
-    });
+    try {
+      const runStart = DateTime.now();
+      this.metricsEvent.emit('run-start', {
+        lastRunStart: runStart.toUTC().toISO()!
+      });
 
-    const groupedItemsList = groupItemsByGroup<I>(this.connector.type, items);
-    this.logger.debug(`Querying ${items.length} items grouped in ${groupedItemsList.length} groups`);
+      const groupedItemsList = groupItemsByGroup<I>(this.connector.type, items);
+      this.logger.debug(`Querying ${items.length} items grouped in ${groupedItemsList.length} groups`);
 
-    for (const [index, groupedElements] of groupedItemsList.entries()) {
-      if (this.stopping) {
-        this.logger.debug(`Connector is stopping. Exiting run`);
-        this.resolveDeferredPromise();
-        return;
-      }
+      for (const [index, groupedElements] of groupedItemsList.entries()) {
+        if (this.stopping) {
+          this.logger.debug(`Connector is stopping. Exiting run`);
+          this.resolveDeferredPromise();
+          return;
+        }
 
-      if (this.hasDirectQuery()) {
-        try {
-          await this.directQueryHandler(groupedElements);
-        } catch (error: unknown) {
-          this.logger.error(`Error when querying items with direct access: ${(error as Error).message}`);
+        if (this.hasDirectQuery()) {
+          try {
+            await this.directQueryHandler(groupedElements);
+          } catch (error: unknown) {
+            this.logger.error(`Error when querying items with direct access: ${(error as Error).message}`);
+          }
+        }
+        if (this.hasHistoryQuery()) {
+          try {
+            // By default, retrieve the last hour. If the scan mode has already run and retrieves data, the max instant will
+            // be retrieved from the South cache inside the history query handler
+            const maxReadInterval = groupedElements[0].group?.maxReadInterval ?? groupedElements[0].maxReadInterval!;
+            // Capture a single `now` so that endTime - startTime == maxReadInterval exactly.
+            // Two separate DateTime.now() calls can differ by 1 ms, making the interval
+            // fractionally larger than maxReadInterval and causing generateIntervals to
+            // produce a spurious 1 ms second sub-interval.
+            const now = DateTime.now().toUTC();
+            await this.historyQueryHandler(
+              groupedElements,
+              now.minus((maxReadInterval || 3600) * 1000).toISO() as Instant,
+              now.toISO() as Instant
+            );
+          } catch (error: unknown) {
+            this.historyIsRunning = false;
+            this.logger.error(`Error when querying items with history capabilities: ${(error as Error).message}`);
+          }
+        }
+
+        const readDelay = groupedElements[0].group?.readDelay ?? groupedElements[0].readDelay!;
+        if (!this.stopping && index !== groupedItemsList.length - 1 && readDelay) {
+          await delay(readDelay);
         }
       }
-      if (this.hasHistoryQuery()) {
-        try {
-          // By default, retrieve the last hour. If the scan mode has already run and retrieves data, the max instant will
-          // be retrieved from the South cache inside the history query handler
-          const maxReadInterval = groupedElements[0].group?.maxReadInterval ?? groupedElements[0].maxReadInterval!;
-          // Capture a single `now` so that endTime - startTime == maxReadInterval exactly.
-          // Two separate DateTime.now() calls can differ by 1 ms, making the interval
-          // fractionally larger than maxReadInterval and causing generateIntervals to
-          // produce a spurious 1 ms second sub-interval.
-          const now = DateTime.now().toUTC();
-          await this.historyQueryHandler(
-            groupedElements,
-            now.minus((maxReadInterval || 3600) * 1000).toISO() as Instant,
-            now.toISO() as Instant
-          );
-        } catch (error: unknown) {
-          this.historyIsRunning = false;
-          this.logger.error(`Error when querying items with history capabilities: ${(error as Error).message}`);
-        }
+
+      this.metricsEvent.emit('run-end', {
+        lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
+      });
+      this.taskJobQueue.shift();
+      this.resolveDeferredPromise();
+
+      if (!this.stopping) {
+        this.taskRunner.emit('next');
       }
-
-      const readDelay = groupedElements[0].group?.readDelay ?? groupedElements[0].readDelay!;
-      if (!this.stopping && index !== groupedItemsList.length - 1 && readDelay) {
-        await delay(readDelay);
+    } catch (error: unknown) {
+      // Unexpected error outside the per-group handlers (e.g. metrics emit, groupItemsByGroup).
+      // Always clean up so stop() does not hang and the queue keeps draining.
+      this.taskJobQueue.shift();
+      this.resolveDeferredPromise();
+      if (!this.stopping) {
+        this.taskRunner.emit('next');
       }
-    }
-
-    this.metricsEvent.emit('run-end', {
-      lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
-    });
-    this.taskJobQueue.shift();
-    this.resolveDeferredPromise();
-
-    if (!this.stopping) {
-      this.taskRunner.emit('next');
+      throw error;
     }
   }
 
