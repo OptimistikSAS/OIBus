@@ -83,7 +83,7 @@ export default class CleanupService {
       let entries: Array<string> = [];
 
       try {
-        entries = (await fs.readdir(rootPath)).filter(f => !f.endsWith('.db'));
+        entries = (await fs.readdir(rootPath)).filter(f => !f.endsWith('.db') && !f.endsWith('.db-shm') && !f.endsWith('.db-wal'));
       } catch {
         continue; // Folder likely doesn't exist yet
       }

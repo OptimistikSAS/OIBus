@@ -105,7 +105,7 @@ describe('CleanupService', () => {
         'readdir',
         mock.fn(async (p: unknown) => {
           const pathStr = String(p);
-          if (pathStr.includes('cache')) return ['south-1', 'south-2', 'random.db'];
+          if (pathStr.includes('cache')) return ['south-1', 'south-2', 'random.db', 'random.db-shm', 'random.db-wal'];
           if (pathStr.includes('error')) return ['north-1', 'north-2'];
           if (pathStr.includes('archive')) return ['history-1', 'history-2'];
           return [];
