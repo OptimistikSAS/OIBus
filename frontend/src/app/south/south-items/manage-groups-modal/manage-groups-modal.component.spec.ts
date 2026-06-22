@@ -23,7 +23,7 @@ const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemG
   createdBy: { id: '', friendlyName: '' },
   updatedBy: { id: '', friendlyName: '' },
   standardSettings: { name, scanMode },
-  historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200 }
+  historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: null }
 });
 
 describe('ManageGroupsModalComponent', () => {
@@ -112,7 +112,7 @@ describe('ManageGroupsModalComponent', () => {
     const createdGroup: SouthItemGroupCommandDTO = {
       id: 'group3',
       standardSettings: { name: 'Gamma', scanModeId: scanModes[0].id },
-      historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200 }
+      historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: null }
     };
     const fakeModal = {
       componentInstance: { directSave: false, prepareForCreation: vi.fn() },
@@ -132,7 +132,7 @@ describe('ManageGroupsModalComponent', () => {
     const updatedGroup: SouthItemGroupCommandDTO = {
       id: 'group1',
       standardSettings: { name: 'Alpha renamed', scanModeId: scanModes[0].id },
-      historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200 }
+      historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: null }
     };
     const fakeModal = {
       componentInstance: { directSave: false, prepareForEdition: vi.fn() },
