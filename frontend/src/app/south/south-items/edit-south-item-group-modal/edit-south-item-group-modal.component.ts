@@ -108,7 +108,7 @@ export class EditSouthItemGroupModalComponent {
       overlap: [0, [Validators.min(0)]],
       maxReadInterval: [3600, [Validators.min(0)]],
       readDelay: [200, [Validators.required, Validators.min(0)]],
-      recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest', { nonNullable: true })
+      recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest')
     });
 
     if (this.group) {
