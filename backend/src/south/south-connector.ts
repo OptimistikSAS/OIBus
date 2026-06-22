@@ -583,7 +583,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       }
       const recoveryStrategy = (lead.group && lead.syncWithGroup ? lead.group.recoveryStrategy : lead.recoveryStrategy) ?? 'oldest';
       const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-      const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, maxReadInterval, recoveryStrategy);
+      const { intervals, numberOfIntervalsDone } = generateIntervals(
+        startTime,
+        startTimeFromCache,
+        endTime,
+        maxReadInterval,
+        recoveryStrategy
+      );
       this.logIntervals(intervals);
       await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone, recoveryStrategy, endTime);
     }
@@ -611,7 +617,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     const overlap = item.overlap || 0;
     const recoveryStrategy = item.recoveryStrategy ?? 'oldest';
     const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
-    const { intervals, numberOfIntervalsDone } = generateIntervals(startTime, startTimeFromCache, endTime, item.maxReadInterval!, recoveryStrategy);
+    const { intervals, numberOfIntervalsDone } = generateIntervals(
+      startTime,
+      startTimeFromCache,
+      endTime,
+      item.maxReadInterval!,
+      recoveryStrategy
+    );
     this.logIntervals(intervals);
     await this.queryIntervals(intervals, [item], southCache, item.readDelay!, numberOfIntervalsDone, recoveryStrategy, endTime);
   }
