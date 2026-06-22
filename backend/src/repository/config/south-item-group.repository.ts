@@ -2,6 +2,7 @@ import { generateRandomId } from '../../service/utils';
 import { Database } from 'better-sqlite3';
 import { SouthItemGroupCommand, SouthItemGroupEntity } from '../../model/south-connector.model';
 import { ScanMode } from '../../model/scan-mode.model';
+import { SouthHistoryRecoveryStrategy } from '../../../shared/model/south-connector.model';
 
 const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
 const SOUTH_ITEMS_TABLE = 'south_items';
@@ -17,7 +18,7 @@ export default class SouthItemGroupRepository {
   findById(id: string): SouthItemGroupEntity | null {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, s.id as scan_mode_id_full, ` +
+      `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, g.recovery_strategy, s.id as scan_mode_id_full, ` +
       `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
       `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.id = ?;`;
@@ -28,7 +29,7 @@ export default class SouthItemGroupRepository {
   findBySouthId(southId: string): Array<SouthItemGroupEntity> {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, s.id as scan_mode_id_full, ` +
+      `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, g.recovery_strategy, s.id as scan_mode_id_full, ` +
       `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
       `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN scan_modes s ON g.scan_mode_id = s.id WHERE g.south_id = ? ORDER BY g.name;`;
@@ -41,7 +42,7 @@ export default class SouthItemGroupRepository {
   findByNameAndSouthId(name: string, southId: string): SouthItemGroupEntity | null {
     const query =
       `SELECT g.id, g.created_at, g.updated_at, g.created_by, g.updated_by, g.name, g.south_id, ` +
-      `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, s.id as scan_mode_id_full, ` +
+      `g.scan_mode_id, g.overlap, g.max_read_interval, g.read_delay, g.recovery_strategy, s.id as scan_mode_id_full, ` +
       `s.name as scan_mode_name, s.description as scan_mode_description, s.cron as scan_mode_cron, ` +
       `s.created_at as scan_mode_created_at, s.updated_at as scan_mode_updated_at, s.created_by as scan_mode_created_by, s.updated_by as scan_mode_updated_by ` +
       `FROM ${SOUTH_ITEM_GROUPS_TABLE} g JOIN ${SCAN_MODE_TABLE} s ON g.scan_mode_id = s.id WHERE g.name = ? AND g.south_id = ?;`;
@@ -50,7 +51,7 @@ export default class SouthItemGroupRepository {
   }
 
   create(command: SouthItemGroupCommand, createdBy: string, id = generateRandomId(6)): SouthItemGroupEntity {
-    const insertQuery = `INSERT INTO ${SOUTH_ITEM_GROUPS_TABLE} (id, name, south_id, scan_mode_id, overlap, max_read_interval, read_delay, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
+    const insertQuery = `INSERT INTO ${SOUTH_ITEM_GROUPS_TABLE} (id, name, south_id, scan_mode_id, overlap, max_read_interval, read_delay, recovery_strategy, created_by, updated_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'), strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));`;
     this.database
       .prepare(insertQuery)
       .run(
@@ -61,6 +62,7 @@ export default class SouthItemGroupRepository {
         command.overlap ?? null,
         command.maxReadInterval ?? null,
         command.readDelay,
+        command.recoveryStrategy ?? null,
         createdBy,
         createdBy
       );
@@ -73,11 +75,20 @@ export default class SouthItemGroupRepository {
 
   update(id: string, command: Omit<SouthItemGroupCommand, 'southId'>, updatedBy: string): void {
     const query = `UPDATE ${SOUTH_ITEM_GROUPS_TABLE}
-      SET name = ?, scan_mode_id = ?, overlap = ?, max_read_interval = ?, read_delay = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+      SET name = ?, scan_mode_id = ?, overlap = ?, max_read_interval = ?, read_delay = ?, recovery_strategy = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
       WHERE id = ?;`;
     this.database
       .prepare(query)
-      .run(command.name, command.scanMode.id, command.overlap ?? null, command.maxReadInterval ?? null, command.readDelay, updatedBy, id);
+      .run(
+        command.name,
+        command.scanMode.id,
+        command.overlap ?? null,
+        command.maxReadInterval ?? null,
+        command.readDelay,
+        command.recoveryStrategy ?? null,
+        updatedBy,
+        id
+      );
   }
 
   delete(id: string): void {
@@ -114,6 +125,7 @@ export const toSouthItemGroup = (
     maxReadInterval:
       result.max_read_interval !== null && result.max_read_interval !== undefined ? (result.max_read_interval as number) : null,
     readDelay: (result.read_delay as number) || 0,
+    recoveryStrategy: (result.recovery_strategy as SouthHistoryRecoveryStrategy) || null,
     createdBy: result.created_by as string,
     updatedBy: result.updated_by as string,
     createdAt: result.created_at as string,

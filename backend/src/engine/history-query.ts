@@ -110,7 +110,8 @@ export default class HistoryQuery {
             },
             maxReadInterval: this.historyConfiguration.queryTimeRange.maxReadInterval,
             readDelay: this.historyConfiguration.queryTimeRange.readDelay,
-            overlap: null
+            overlap: null,
+            recoveryStrategy: null
           })),
         this.historyConfiguration.queryTimeRange.startTime,
         this.historyConfiguration.queryTimeRange.endTime

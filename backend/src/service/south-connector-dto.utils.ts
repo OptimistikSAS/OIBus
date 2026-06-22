@@ -21,7 +21,8 @@ export const toSouthItemGroupDTO = (entity: SouthItemGroupEntityLight, getUserIn
     historySettings: {
       overlap: entity.overlap,
       maxReadInterval: entity.maxReadInterval,
-      readDelay: entity.readDelay
+      readDelay: entity.readDelay,
+      recoveryStrategy: entity.recoveryStrategy
     }
   };
 };
@@ -49,7 +50,8 @@ export const toSouthConnectorItemDTO = (
     syncWithGroup: entity.syncWithGroup,
     maxReadInterval: entity.maxReadInterval,
     readDelay: entity.readDelay,
-    overlap: entity.overlap
+    overlap: entity.overlap,
+    recoveryStrategy: entity.recoveryStrategy
   };
 };
 

@@ -884,7 +884,8 @@ export class SouthDetailComponent {
         syncWithGroup: item.syncWithGroup,
         maxReadInterval: item.maxReadInterval,
         readDelay: item.readDelay,
-        overlap: item.overlap
+        overlap: item.overlap,
+        recoveryStrategy: item.recoveryStrategy
       })),
       groups: this.southConnector!.groups.map(group => ({
         id: group.id,
@@ -895,7 +896,8 @@ export class SouthDetailComponent {
         historySettings: {
           maxReadInterval: group.historySettings.maxReadInterval,
           readDelay: group.historySettings.readDelay,
-          overlap: group.historySettings.overlap
+          overlap: group.historySettings.overlap,
+          recoveryStrategy: group.historySettings.recoveryStrategy
         }
       }))
     } as SouthConnectorCommandDTO;

@@ -556,6 +556,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         maxReadInterval: null,
         readDelay: null,
         overlap: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -572,6 +573,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         maxReadInterval: null,
         readDelay: null,
         overlap: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -617,7 +619,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0
+        overlap: 0,
+        recoveryStrategy: null
       },
       {
         id: 'southItemId4',
@@ -633,7 +636,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0
+        overlap: 0,
+        recoveryStrategy: null
       }
     ],
     groups: []
@@ -675,6 +679,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         maxReadInterval: 3600,
         readDelay: 200,
         overlap: 10,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -702,6 +707,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         maxReadInterval: 3600,
         readDelay: 200,
         overlap: 10,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -720,6 +726,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         maxReadInterval: 3600,
         readDelay: 200,
         overlap: 10,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -738,6 +745,7 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         maxReadInterval: 3600,
         readDelay: 200,
         overlap: 10,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -777,7 +785,8 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      overlap: null,
+      recoveryStrategy: null
     }
   ],
   groups: []
@@ -802,7 +811,8 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
   syncWithGroup: false,
   maxReadInterval: null,
   readDelay: null,
-  overlap: null
+  overlap: null,
+  recoveryStrategy: null
 };
 const itemTestingSettings: SouthConnectorItemTestingSettings = {
   history: {

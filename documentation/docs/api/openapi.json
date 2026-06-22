@@ -1781,6 +1781,14 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"SouthHistoryRecoveryStrategy": {
+				"type": "string",
+				"enum": [
+					"oldest",
+					"newest"
+				],
+				"description": "Recovery strategy used when a south connector reconnects after a long disconnection.\n- 'oldest': fill the gap from oldest to newest (default behaviour).\n- 'newest': fill the gap from newest to oldest so that recent data arrives first."
+			},
 			"SouthItemGroupDTO": {
 				"description": "Data Transfer Object for a South item group.\nRepresents a group of items that can share common settings.",
 				"properties": {
@@ -1827,6 +1835,16 @@
 					},
 					"historySettings": {
 						"properties": {
+							"recoveryStrategy": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+									}
+								],
+								"nullable": true,
+								"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+								"example": "oldest"
+							},
 							"readDelay": {
 								"type": "number",
 								"format": "double",
@@ -1850,6 +1868,7 @@
 							}
 						},
 						"required": [
+							"recoveryStrategy",
 							"readDelay",
 							"maxReadInterval",
 							"overlap"
@@ -1952,6 +1971,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -1968,7 +1997,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2150,6 +2180,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -2166,7 +2206,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2378,6 +2419,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -2394,7 +2445,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2497,6 +2549,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -2513,7 +2575,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2729,6 +2792,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -2745,7 +2818,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -2872,6 +2946,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -2888,7 +2972,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3079,6 +3164,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -3095,7 +3190,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3243,6 +3339,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -3259,7 +3365,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3501,6 +3608,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -3517,7 +3634,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3679,6 +3797,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -3695,7 +3823,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -3881,6 +4010,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -3897,7 +4036,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4075,6 +4215,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -4091,7 +4241,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4384,6 +4535,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -4400,7 +4561,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4541,6 +4703,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -4557,7 +4729,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4851,6 +5024,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -4867,7 +5050,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -4990,6 +5174,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -5006,7 +5200,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5294,6 +5489,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -5310,7 +5515,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5435,6 +5641,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -5451,7 +5667,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5716,6 +5933,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -5732,7 +5959,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -5909,6 +6137,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -5925,7 +6163,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6213,6 +6452,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -6229,7 +6478,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6352,6 +6602,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -6368,7 +6628,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6603,6 +6864,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -6619,7 +6890,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -6742,6 +7014,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -6758,7 +7040,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7006,6 +7289,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -7022,7 +7315,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7213,6 +7507,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -7229,7 +7533,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7523,6 +7828,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -7539,7 +7854,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7669,6 +7985,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -7685,7 +8011,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -7884,6 +8211,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -7900,7 +8237,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8004,6 +8342,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -8020,7 +8368,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8310,6 +8659,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -8326,7 +8685,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8458,6 +8818,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -8474,7 +8844,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -8951,6 +9322,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -8967,7 +9348,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9192,6 +9574,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -9208,7 +9600,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9424,6 +9817,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -9440,7 +9843,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9574,6 +9978,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -9590,7 +10004,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9878,6 +10293,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -9894,7 +10319,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -9993,6 +10419,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -10009,7 +10445,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10234,6 +10671,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -10248,7 +10695,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10324,6 +10772,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -10338,7 +10796,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10373,6 +10832,16 @@
 					},
 					"historySettings": {
 						"properties": {
+							"recoveryStrategy": {
+								"allOf": [
+									{
+										"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+									}
+								],
+								"nullable": true,
+								"description": "Recovery strategy when the connector reconnects after a long disconnection.\nWhen null, defaults to 'oldest'.",
+								"example": "oldest"
+							},
 							"readDelay": {
 								"type": "number",
 								"format": "double",
@@ -10396,6 +10865,7 @@
 							}
 						},
 						"required": [
+							"recoveryStrategy",
 							"readDelay",
 							"maxReadInterval",
 							"overlap"
@@ -10541,6 +11011,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -10555,7 +11035,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10631,6 +11112,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -10645,7 +11136,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10780,6 +11272,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -10794,7 +11296,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -10870,6 +11373,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -10884,7 +11397,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11019,6 +11533,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11033,7 +11557,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11109,6 +11634,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11123,7 +11658,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11258,6 +11794,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11272,7 +11818,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11348,6 +11895,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11362,7 +11919,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11497,6 +12055,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11511,7 +12079,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11587,6 +12156,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11601,7 +12180,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11736,6 +12316,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11750,7 +12340,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11826,6 +12417,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11840,7 +12441,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -11975,6 +12577,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -11989,7 +12601,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12065,6 +12678,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -12079,7 +12702,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12214,6 +12838,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -12228,7 +12862,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12304,6 +12939,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -12318,7 +12963,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12453,6 +13099,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -12467,7 +13123,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12543,6 +13200,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -12557,7 +13224,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12692,6 +13360,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -12706,7 +13384,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12782,6 +13461,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -12796,7 +13485,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -12931,6 +13621,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -12945,7 +13645,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13021,6 +13722,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13035,7 +13746,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13170,6 +13882,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13184,7 +13906,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13260,6 +13983,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13274,7 +14007,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13409,6 +14143,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13423,7 +14167,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13499,6 +14244,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13513,7 +14268,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13648,6 +14404,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13662,7 +14428,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13738,6 +14505,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13752,7 +14529,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13887,6 +14665,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13901,7 +14689,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -13977,6 +14766,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -13991,7 +14790,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -14126,6 +14926,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -14140,7 +14950,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -14216,6 +15027,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -14230,7 +15051,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -14365,6 +15187,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -14379,7 +15211,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -14455,6 +15288,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -14469,7 +15312,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -14604,6 +15448,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -14618,7 +15472,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -14694,6 +15549,16 @@
 						"nullable": true,
 						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 1000
+					},
+					"recoveryStrategy": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/SouthHistoryRecoveryStrategy"
+							}
+						],
+						"nullable": true,
+						"description": "Recovery strategy when the connector reconnects after a long disconnection.\nOnly applicable for connectors with historian capabilities.\nWhen null, defaults to 'oldest'.",
+						"example": "oldest"
 					}
 				},
 				"required": [
@@ -14708,7 +15573,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap"
+					"overlap",
+					"recoveryStrategy"
 				],
 				"type": "object",
 				"additionalProperties": false
