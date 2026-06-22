@@ -98,7 +98,15 @@ export default class SouthOPCUA
       await super.connect();
     } catch (error: unknown) {
       this.logger.error(`Error while connecting to the OPCUA server: ${(error as Error).message}`);
-      await this.disconnect();
+      // Wrap disconnect() so that errors from client.close() / subscription.terminate()
+      // on an already-dead session do not escape the catch block. If they did, connect()
+      // would itself reject — and since connect() is invoked from setTimeout, that
+      // rejection would be unhandled and kill the Node.js process silently.
+      try {
+        await this.disconnect();
+      } catch (disconnectError: unknown) {
+        this.logger.error(`Error while disconnecting after failed connect: ${(disconnectError as Error).message}`);
+      }
       if (!this.disconnecting && this.connector.enabled) {
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
@@ -700,7 +708,7 @@ export default class SouthOPCUA
         },
         TimestampsToReturn.Neither
       );
-      monitoredItem.on('changed', async (dataValue: DataValue) => {
+      monitoredItem.on('changed', (dataValue: DataValue) => {
         const parsedValue = parseOPCUAValue(item.name, dataValue.value, this.logger);
         if (parsedValue) {
           this.bufferedValues.push({
@@ -710,7 +718,12 @@ export default class SouthOPCUA
             quality: dataValue.statusCode.name
           });
           if (this.bufferedValues.length >= this.connector.settings.maxNumberOfMessages) {
-            await this.flushMessages();
+            // flushMessages() is async; keep the event handler synchronous so any
+            // rejection from flush is handled inside flushMessages itself rather than
+            // becoming an unhandled rejection from an async event handler.
+            this.flushMessages().catch((err: unknown) => {
+              this.logger.error(`Error flushing messages from subscription: ${(err as Error).message}`);
+            });
           }
         }
       });

@@ -249,6 +249,20 @@ describe('SouthConnector', () => {
       );
     });
 
+    it('should log an error and not crash when run() rejects', async () => {
+      const runError = new Error('unexpected run failure');
+      south.run = mock.fn(() => Promise.reject(runError));
+      south.addToQueue(testData.scanMode.list[0]);
+      await flushPromises();
+      assert.ok(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) =>
+            (c.arguments[0] as string).includes('Unhandled error in South task runner') &&
+            (c.arguments[0] as string).includes(runError.message)
+        )
+      );
+    });
+
     it('should update cron jobs', () => {
       south.updateCronJobs();
       south.updateCronJobs();
@@ -620,6 +634,26 @@ describe('SouthConnector', () => {
 
       await south.run('scanModeId', []);
       assert.strictEqual(emitSpy.mock.calls.length, 0);
+    });
+
+    it('should clean up queue and deferred promise when run() throws unexpectedly', async () => {
+      const runError = new Error('unexpected metrics failure');
+      mock.method(south.metricsEvent, 'emit', (event: string) => {
+        if (event === 'run-start') throw runError;
+      });
+
+      south.addToQueue(testData.scanMode.list[0]);
+      await flushPromises();
+
+      assert.strictEqual(south['taskJobQueue'].length, 0);
+      assert.strictEqual(south['runProgress$'], null);
+      assert.ok(
+        (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
+          (c: { arguments: Array<unknown> }) =>
+            (c.arguments[0] as string).includes('Unhandled error in South task runner') &&
+            (c.arguments[0] as string).includes(runError.message)
+        )
+      );
     });
 
     it('should properly stop', async () => {
