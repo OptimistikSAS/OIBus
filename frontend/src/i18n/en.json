@@ -2504,6 +2504,8 @@
       "max-read-interval": "Max read interval",
       "read-delay": "Read delay",
       "recovery-strategy": "Recovery strategy",
+      "recovery-strategy-oldest": "From oldest to newest",
+      "recovery-strategy-newest": "From newest to oldest",
       "confirm-deletion": "Are you sure you want to delete the group \"{{name}}\"? Items in this group will be moved back to \"None\".",
       "created": "Group created",
       "updated": "Group updated",
