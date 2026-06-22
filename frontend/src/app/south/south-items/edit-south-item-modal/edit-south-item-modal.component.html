@@ -131,6 +131,20 @@
             </div>
           </div>
         </div>
+        <!-- Recovery Strategy -->
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="recovery-strategy" translate="south.items.recovery-strategy"></label>
+              <select class="form-select" id="recovery-strategy" formControlName="recoveryStrategy">
+                <option [ngValue]="null" translate="south.items.recovery-strategy-oldest"></option>
+                @for (strategy of recoveryStrategies; track strategy.value) {
+                  <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
       }
 
       <ng-container formGroupName="settings">

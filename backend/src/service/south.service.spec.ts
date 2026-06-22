@@ -901,6 +901,7 @@ describe('South Service', () => {
           maxReadInterval: 0,
           overlap: 0,
           readDelay: 0,
+          recoveryStrategy: null,
           syncWithGroup: true
         }
       ],
@@ -1015,6 +1016,7 @@ describe('South Service', () => {
           maxReadInterval: 0,
           overlap: 0,
           readDelay: 0,
+          recoveryStrategy: null,
           syncWithGroup: true
         }
       ],
@@ -1068,6 +1070,7 @@ describe('South Service', () => {
           maxReadInterval: 0,
           overlap: 0,
           readDelay: 0,
+          recoveryStrategy: null,
           syncWithGroup: true
         }
       ],
@@ -1239,6 +1242,7 @@ describe('South Service', () => {
       overlap: 5,
       maxReadInterval: 3600,
       readDelay: 200,
+      recoveryStrategy: null,
       items: [],
       createdBy: 'user1',
       updatedBy: 'user1',
@@ -1259,7 +1263,8 @@ describe('South Service', () => {
       historySettings: {
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
-        overlap: group.overlap
+        overlap: group.overlap,
+        recoveryStrategy: group.recoveryStrategy
       },
       createdBy: getUserInfo(group.createdBy),
       updatedBy: getUserInfo(group.updatedBy),

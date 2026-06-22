@@ -90,7 +90,8 @@ describe('HistoryQuery enabled', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: null
+        overlap: null,
+        recoveryStrategy: null
       }))
     );
     assert.deepStrictEqual(
@@ -131,7 +132,8 @@ describe('HistoryQuery enabled', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: null
+        overlap: null,
+        recoveryStrategy: null
       }))
     );
 

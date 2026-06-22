@@ -525,7 +525,8 @@ export default class OIAnalyticsMessageService {
             syncWithGroup: item.syncWithGroup,
             maxReadInterval: item.maxReadInterval,
             readDelay: item.readDelay,
-            overlap: item.overlap
+            overlap: item.overlap,
+            recoveryStrategy: item.recoveryStrategy
           })),
           groups: south.groups.map(group => ({
             id: group.id,
@@ -536,7 +537,8 @@ export default class OIAnalyticsMessageService {
             historySettings: {
               overlap: group.overlap,
               maxReadInterval: group.maxReadInterval,
-              readDelay: group.readDelay
+              readDelay: group.readDelay,
+              recoveryStrategy: group.recoveryStrategy
             }
           }))
         }
