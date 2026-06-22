@@ -8,6 +8,7 @@ import { DateTime } from 'luxon';
 import AdmZip from 'adm-zip';
 
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
+import { SouthHistoryRecoveryStrategy } from '../../shared/model/south-connector.model';
 import { OIBusInitConfig } from '../model/oibus-init-config.model';
 import csv from 'papaparse';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
@@ -107,12 +108,15 @@ export const delay = (timeout: number): Promise<void> =>
 
 /**
  * Compute a list of intervals from a start, end, and maxInterval.
+ * When strategy is 'newest', the returned array is reversed so the most recent interval is queried first.
+ * numberOfIntervalsDone reflects how many intervals (counting from the oldest side) are already covered by the cache.
  */
 export const generateIntervals = (
   startInstant: Instant,
   startInstantFromCache: Instant,
   endInstant: Instant,
-  maxNumberOfSecondsInInterval: number
+  maxNumberOfSecondsInInterval: number,
+  strategy: SouthHistoryRecoveryStrategy = 'oldest'
 ): { intervals: Array<Interval>; numberOfIntervalsDone: number } => {
   const startTime = DateTime.fromISO(startInstant);
   const startTimeFromCache = DateTime.fromISO(startInstantFromCache);
@@ -158,6 +162,11 @@ export const generateIntervals = (
     }
     currentStart += intervalDuration;
   }
+
+  if (strategy === 'newest') {
+    intervalLists.reverse();
+  }
+
   return { intervals: intervalLists, numberOfIntervalsDone };
 };
 
