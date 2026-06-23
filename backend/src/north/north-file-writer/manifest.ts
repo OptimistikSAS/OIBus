@@ -55,6 +55,41 @@ const manifest: NorthConnectorManifest = {
           columns: 4,
           displayInViewMode: true
         }
+      },
+      {
+        type: 'string',
+        key: 'username',
+        translationKey: 'configuration.oibus.manifest.north.file-writer.smb-username',
+        defaultValue: '',
+        validators: [],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'secret',
+        key: 'password',
+        translationKey: 'configuration.oibus.manifest.north.file-writer.smb-password',
+        validators: [],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: false
+        }
+      },
+      {
+        type: 'string',
+        key: 'domain',
+        translationKey: 'configuration.oibus.manifest.north.file-writer.smb-domain',
+        defaultValue: '',
+        validators: [],
+        displayProperties: {
+          row: 1,
+          columns: 4,
+          displayInViewMode: false
+        }
       }
     ]
   }
