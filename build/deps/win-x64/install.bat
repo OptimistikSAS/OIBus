@@ -14,6 +14,8 @@ set SERVICE_NAME="OIBus"
 set ADMIN_USERNAME=
 set ADMIN_PASSWORD=
 set OIBUS_PORT=
+set SERVICE_USER=
+set SERVICE_PASS=
 
 :PARSE_PARAMETERS
 if "%~1"=="" goto PARSE_PARAMETERS_DONE
@@ -43,6 +45,18 @@ if "%~1"=="-p" (
 )
 if "%~1"=="-port" (
     set "OIBUS_PORT=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-su" (
+    set "SERVICE_USER=%~2"
+    shift
+    shift
+    goto PARSE_PARAMETERS
+)
+if "%~1"=="-sp" (
+    set "SERVICE_PASS=%~2"
     shift
     shift
     goto PARSE_PARAMETERS
@@ -88,6 +102,10 @@ nssm.exe set "%SERVICE_NAME%" AppDirectory "%cd%"
 @echo nssm.exe set "%SERVICE_NAME%" AppDirectory "%cd%" >> install.log
 nssm.exe set "%SERVICE_NAME%" AppNoConsole 1 >> install.log
 @echo nssm.exe set "%SERVICE_NAME%" AppNoConsole 1
+if not "%SERVICE_USER%"=="" (
+    nssm.exe set "%SERVICE_NAME%" ObjectName "%SERVICE_USER%" "%SERVICE_PASS%"
+    @echo nssm.exe set "%SERVICE_NAME%" ObjectName "%SERVICE_USER%" >> install.log
+)
 @echo Starting "%SERVICE_NAME%" service...
 nssm.exe start "%SERVICE_NAME%"
 @echo Creating go.bat

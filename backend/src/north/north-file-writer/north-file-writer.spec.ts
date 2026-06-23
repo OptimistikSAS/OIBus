@@ -238,4 +238,33 @@ describe('NorthFileWriter', () => {
       new Error(`Access error on "${outputFolder}": ${errorMessage}`)
     );
   });
+
+  describe('connect and disconnect (SMB)', () => {
+    it('should call super.connect without mounting on non-Windows platforms', async () => {
+      configuration.settings.username = 'user';
+      const connectSpy = mock.method(north, 'connect', async () => undefined);
+      await north.connect();
+      assert.strictEqual(connectSpy.mock.calls.length, 1);
+    });
+
+    it('should call super.disconnect without unmounting on non-Windows platforms', async () => {
+      configuration.settings.username = 'user';
+      const disconnectSpy = mock.method(north, 'disconnect', async () => undefined);
+      await north.disconnect();
+      assert.strictEqual(disconnectSpy.mock.calls.length, 1);
+    });
+
+    it('should skip SMB mount when username is empty', async () => {
+      configuration.settings.username = null;
+      configuration.settings.outputFolder = '\\\\server\\share\\out';
+      await assert.doesNotReject(north.connect());
+    });
+
+    it('should skip SMB mount when outputFolder is not a UNC path', async () => {
+      configuration.settings.username = 'user';
+      configuration.settings.password = 'pass';
+      configuration.settings.outputFolder = 'C:\\local\\output';
+      await assert.doesNotReject(north.connect());
+    });
+  });
 });

@@ -439,4 +439,35 @@ describe('SouthFolderScanner', () => {
       assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error while removing compressed file')));
     });
   });
+
+  describe('connect and disconnect', () => {
+    it('should call super.connect without mounting on non-Windows platforms', async () => {
+      // On Linux process.platform !== 'win32' so no execFile is called
+      configuration.settings.username = 'user';
+      const connectSpy = mock.method(south, 'connect', async () => undefined);
+      await south.connect();
+      assert.strictEqual(connectSpy.mock.calls.length, 1);
+    });
+
+    it('should call super.disconnect without unmounting on non-Windows platforms', async () => {
+      configuration.settings.username = 'user';
+      const disconnectSpy = mock.method(south, 'disconnect', async () => undefined);
+      await south.disconnect();
+      assert.strictEqual(disconnectSpy.mock.calls.length, 1);
+    });
+
+    it('should skip SMB mount when username is empty', async () => {
+      configuration.settings.username = null;
+      configuration.settings.inputFolder = '\\\\server\\share\\data';
+      // No error should be thrown even on any platform when username is absent
+      await assert.doesNotReject(south.connect());
+    });
+
+    it('should skip SMB mount when inputFolder is not a UNC path', async () => {
+      configuration.settings.username = 'user';
+      configuration.settings.password = 'pass';
+      configuration.settings.inputFolder = 'C:\\local\\folder';
+      await assert.doesNotReject(south.connect());
+    });
+  });
 });

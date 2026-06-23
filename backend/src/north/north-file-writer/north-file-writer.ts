@@ -1,7 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFile as execFileCb } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import NorthConnector from '../north-connector';
+
+const execFile = promisify(execFileCb);
 import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
@@ -22,7 +26,47 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     return ['any', 'setpoint', 'time-values'];
   }
 
+  override async connect(): Promise<void> {
+    await this.mountNetworkShare(this.connector.settings.outputFolder);
+    return super.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    await this.unmountNetworkShare(this.connector.settings.outputFolder);
+    return super.disconnect();
+  }
+
+  private async mountNetworkShare(folderPath: string): Promise<void> {
+    if (process.platform !== 'win32') return;
+    if (!this.connector.settings.username) return;
+    const uncRoot = folderPath.match(/^(\\\\[^\\]+\\[^\\]+)/)?.[1];
+    if (!uncRoot) return;
+    const user = this.connector.settings.domain
+      ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
+      : this.connector.settings.username;
+    try {
+      await execFile('net', ['use', uncRoot, this.connector.settings.password ?? '', `/user:${user}`, '/persistent:no']);
+      this.logger.debug(`Mounted SMB share ${uncRoot} as ${user}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to mount SMB share ${uncRoot}: ${(error as Error).message}`);
+      throw error;
+    }
+  }
+
+  private async unmountNetworkShare(folderPath: string): Promise<void> {
+    if (process.platform !== 'win32') return;
+    if (!this.connector.settings.username) return;
+    const uncRoot = folderPath.match(/^(\\\\[^\\]+\\[^\\]+)/)?.[1];
+    if (!uncRoot) return;
+    try {
+      await execFile('net', ['use', uncRoot, '/delete', '/yes']);
+    } catch {
+      // Ignore — share may have already been disconnected
+    }
+  }
+
   async testConnection(): Promise<OIBusConnectionTestResult> {
+    await this.mountNetworkShare(this.connector.settings.outputFolder);
     const outputFolder = path.resolve(this.connector.settings.outputFolder);
 
     try {
