@@ -710,27 +710,43 @@ export default class OIAnalyticsCommandService {
       `Upgrading OIBus from ${oibusInfo.version} to ${command.commandContent.version} for platform ${oibusInfo.platform} and architecture ${oibusInfo.architecture}...`
     );
     const filename = path.resolve(this.binaryFolder, '..', `oibus-${oibusInfo.platform}_${oibusInfo.architecture}.zip`);
+    const updateDir = path.resolve(this.binaryFolder, '..', 'update');
 
     await this.oIAnalyticsClient.downloadFile(registration, command.commandContent.assetId, filename);
     this.logger.trace(`File ${filename} downloaded`);
-    unzip(filename, path.resolve(this.binaryFolder, '..', 'update'));
-    this.logger.trace(`File ${filename} unzipped`);
-    await fs.unlink(filename);
-    this.logger.trace(`File ${filename} removed`);
-    const duration = DateTime.now().toMillis() - runStart.toMillis();
-    if (command.commandContent.updateLauncher) {
-      this.logger.info(`Updating OIBus launcher`);
-      const extension = os.type() === 'Windows_NT' ? '.exe' : '';
-      await fs.rename(
-        path.resolve(this.binaryFolder, '..', `oibus-launcher${extension}`),
-        path.resolve(this.binaryFolder, '..', `oibus-launcher_backup${extension}`)
-      );
-      await fs.rename(
-        path.resolve(this.binaryFolder, '..', 'update', `oibus-launcher${extension}`),
-        path.resolve(this.binaryFolder, '..', `oibus-launcher${extension}`)
-      );
+    try {
+      await unzip(filename, updateDir);
+      this.logger.trace(`File ${filename} unzipped`);
+    } finally {
+      await fs.unlink(filename).catch(err => this.logger.error(`Could not delete zip file ${filename}: ${(err as Error).message}`));
     }
-    await fs.writeFile(path.resolve(this.binaryFolder, '..', UPDATE_SETTINGS_FILE), JSON.stringify(command.commandContent));
+    this.logger.trace(`File ${filename} removed`);
+
+    const duration = DateTime.now().toMillis() - runStart.toMillis();
+    try {
+      if (command.commandContent.updateLauncher) {
+        this.logger.info(`Updating OIBus launcher`);
+        const extension = os.type() === 'Windows_NT' ? '.exe' : '';
+        const launcherPath = path.resolve(this.binaryFolder, '..', `oibus-launcher${extension}`);
+        const launcherBackupPath = path.resolve(this.binaryFolder, '..', `oibus-launcher_backup${extension}`);
+        await fs.rename(launcherPath, launcherBackupPath);
+        try {
+          await fs.rename(path.resolve(updateDir, `oibus-launcher${extension}`), launcherPath);
+        } catch (err) {
+          await fs
+            .rename(launcherBackupPath, launcherPath)
+            .catch(restoreErr => this.logger.error(`Could not restore launcher backup: ${(restoreErr as Error).message}`));
+          throw err;
+        }
+      }
+      await fs.writeFile(path.resolve(this.binaryFolder, '..', UPDATE_SETTINGS_FILE), JSON.stringify(command.commandContent));
+    } catch (err) {
+      await fs
+        .rm(updateDir, { recursive: true, force: true })
+        .catch(rmErr => this.logger.error(`Could not clean update directory: ${(rmErr as Error).message}`));
+      throw err;
+    }
+
     this.logger.info(
       `OIBus version ${command.commandContent.version} downloaded after ${duration} ms of execution. Restarting OIBus to upgrade...`
     );
