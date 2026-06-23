@@ -92,6 +92,11 @@ describe('NorthConnector', () => {
         return cacheService;
       }
     });
+  mockModule(nodeRequire, '../service/logger/logger.service', {
+    loggerService: { createChildLogger: mock.fn(() => logger) },
+    default: class {}
+  });
+
 
     NorthFileWriter = reloadModule<{ default: typeof NorthFileWriterClass }>(nodeRequire, './north-file-writer/north-file-writer').default;
   });
@@ -143,7 +148,7 @@ describe('NorthConnector', () => {
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    north = new NorthFileWriter(testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>, logger, cacheService);
+    north = new NorthFileWriter(testData.north.list[0] as NorthConnectorEntity<NorthFileWriterSettings>, cacheService);
   });
 
   afterEach(() => {
@@ -452,12 +457,11 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(cacheService.updateCacheContent.mock.calls[0].arguments[0], updateCommand);
   });
 
-  it('should use another logger', async () => {
-    north.setLogger(anotherLogger);
+  it('should refresh logger on refreshLogger()', async () => {
+    north.refreshLogger();
     logger.debug.mock.resetCalls();
     await north.stop();
-    assert.strictEqual(anotherLogger.debug.mock.calls.length, 1);
-    assert.strictEqual(logger.debug.mock.calls.length, 0);
+    assert.strictEqual(logger.debug.mock.calls.length, 1);
   });
 
   it('should trigger run if necessary because of retry', async () => {

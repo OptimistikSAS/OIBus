@@ -29,6 +29,7 @@ import IsoTransformer from '../transformers/iso-transformer';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
 import { CacheSize, CONTENT_FOLDER } from '../model/engine.model';
 import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
 
 /** Events published by a North connector's {@link NorthConnector.metricsEvent}. */
 export interface NorthMetricsEvents {
@@ -77,6 +78,7 @@ export interface NorthMetricsEvents {
  *    the cache can keep flowing.
  */
 export default abstract class NorthConnector<T extends NorthSettings> {
+  protected logger!: ILogger;
   private contentBeingSent: { filename: string; metadata: CacheMetadata } | null = null;
   private errorCount = 0;
 
@@ -93,9 +95,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   protected constructor(
     protected connector: NorthConnectorEntity<T>,
-    protected logger: ILogger,
     private cacheService: ICacheService
-  ) {}
+  ) {
+    this.logger = loggerService.createChildLogger('north', this.connector.id, this.connector.name);
+  }
 
   private onCacheSize = (cacheSize: CacheSize) => {
     this.metricsEvent.emit('cache-size', cacheSize);
@@ -728,9 +731,9 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     this.logger.info(`"${this.connector.name}" stopped`);
   }
 
-  setLogger(value: ILogger) {
-    this.logger = value;
-    this.cacheService.setLogger(value);
+  refreshLogger(): void {
+    this.logger = loggerService.createChildLogger('north', this.connector.id, this.connector.name);
+    this.cacheService.setLogger(this.logger);
   }
 
   /**

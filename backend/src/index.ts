@@ -127,8 +127,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
     repositoryService.transformerRepository,
-    oIAnalyticsClient,
-    loggerService.createChildLogger('internal')
+    oIAnalyticsClient
   );
 
   const dataStreamEngine = new DataStreamEngine(
@@ -141,8 +140,7 @@ const CERT_FOLDER = 'certs';
     repositoryService.southCacheRepository,
     repositoryService.certificateRepository,
     repositoryService.oianalyticsRegistrationRepository,
-    oIAnalyticsMessageService,
-    loggerService.createChildLogger('internal')
+    oIAnalyticsMessageService
   );
 
   const transformerService = new TransformerService(

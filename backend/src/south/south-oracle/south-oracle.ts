@@ -21,7 +21,6 @@ import oracledb, { ConnectionAttributes } from 'oracledb';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
@@ -36,10 +35,9 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
     if (this.connector.settings.thickMode && this.connector.settings.oracleClient) {
       try {
         if (!oracledb.oracleClientVersion) {

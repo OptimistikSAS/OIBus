@@ -88,6 +88,11 @@ describe('NorthOPCUA', () => {
         return cacheService;
       }
     });
+  mockModule(nodeRequire, '../../service/logger/logger.service', {
+    loggerService: { createChildLogger: mock.fn(() => logger) },
+    default: class {}
+  });
+
     NorthOPCUA = reloadModule<{ default: typeof NorthOPCUAClass }>(nodeRequire, './north-opcua').default;
   });
 
@@ -145,7 +150,7 @@ describe('NorthOPCUA', () => {
     // Re-apply createSession to pick up the new mockSession
     nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => mockSession);
 
-    north = new NorthOPCUA(configuration, logger, cacheService);
+    north = new NorthOPCUA(configuration,  cacheService);
   });
 
   afterEach(() => {
