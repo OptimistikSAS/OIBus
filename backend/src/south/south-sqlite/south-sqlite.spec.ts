@@ -149,10 +149,10 @@ describe('SouthSQLite', () => {
         return southCacheService;
       }
     });
-  mockModule(nodeRequire, '../../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
-    default: class {}
-  });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
 
     SouthSQLite = reloadModule<{ default: typeof SouthSQLiteClass }>(nodeRequire, './south-sqlite').default;
   });
@@ -175,7 +175,7 @@ describe('SouthSQLite', () => {
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository,  'cacheFolder');
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -350,7 +350,7 @@ describe('SouthSQLite test connection', () => {
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository,  'cacheFolder');
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {

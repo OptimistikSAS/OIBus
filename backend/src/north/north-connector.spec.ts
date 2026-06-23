@@ -92,11 +92,10 @@ describe('NorthConnector', () => {
         return cacheService;
       }
     });
-  mockModule(nodeRequire, '../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
-    default: class {}
-  });
-
+    mockModule(nodeRequire, '../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
 
     NorthFileWriter = reloadModule<{ default: typeof NorthFileWriterClass }>(nodeRequire, './north-file-writer/north-file-writer').default;
   });

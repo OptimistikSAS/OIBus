@@ -43,10 +43,10 @@ describe('SouthFolderScanner', () => {
         return southCacheService;
       }
     });
-  mockModule(nodeRequire, '../../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
-    default: class {}
-  });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
 
     SouthFolderScanner = reloadModule<{ default: typeof SouthFolderScannerClass }>(nodeRequire, './south-folder-scanner').default;
   });
@@ -102,7 +102,7 @@ describe('SouthFolderScanner', () => {
       updatedAt: ''
     };
 
-    south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository,  'cacheFolder');
+    south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {

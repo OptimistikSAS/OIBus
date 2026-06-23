@@ -226,10 +226,15 @@ describe('CacheService', () => {
     assert.ok(logger.debug.mock.calls.some(c => c.arguments[0] === '3 content archived'));
   });
 
-  it('should set logger', () => {
-    const anotherLogger = new PinoLogger();
-    service.setLogger(anotherLogger);
-    assert.strictEqual(priv()['logger'], anotherLogger);
+  it('should refresh logger', () => {
+    const newLogger = new PinoLogger();
+    const { loggerService: ls } = nodeRequire('../logger/logger.service') as { loggerService: { createChildLogger: (...args: Array<unknown>) => unknown } };
+    const createChildLoggerMock = mock.method(ls, 'createChildLogger', () => newLogger);
+    service.refreshLogger('north', 'id', 'name');
+    assert.strictEqual(createChildLoggerMock.mock.calls[0].arguments[0], 'north');
+    assert.strictEqual(createChildLoggerMock.mock.calls[0].arguments[1], 'id');
+    assert.strictEqual(createChildLoggerMock.mock.calls[0].arguments[2], 'name');
+    assert.strictEqual(priv()['logger'], newLogger);
   });
 
   it('should not clear timeouts, reset flags, and remove listeners when stopping', () => {

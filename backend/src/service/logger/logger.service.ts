@@ -127,6 +127,7 @@ class LoggerService {
   private _folder = '';
   private _rawLogger: pino.Logger | null = null;
   private _transport: ReturnType<typeof pino.transport> | null = null;
+  private _stopInFlight: Promise<void> | null = null;
   fileCleanUpService: FileCleanupService | null = null;
 
   // Stable proxy for the default 'internal' scope. Non-null from construction;
@@ -293,9 +294,18 @@ class LoggerService {
    * Flush pending log entries and end the transport worker threads, then release
    * all references so the old pino instance can be garbage-collected.
    *
-   * Must be awaited before calling start() again to avoid duplicate transport workers.
+   * Safe to call concurrently — a second call while a stop is in flight returns
+   * the same promise rather than ending the transport twice.
    */
-  async stop(): Promise<void> {
+  stop(): Promise<void> {
+    if (this._stopInFlight) return this._stopInFlight;
+    this._stopInFlight = this._doStop().finally(() => {
+      this._stopInFlight = null;
+    });
+    return this._stopInFlight;
+  }
+
+  private async _doStop(): Promise<void> {
     this.fileCleanUpService?.stop();
     this.fileCleanUpService = null;
     if (this._transport) {

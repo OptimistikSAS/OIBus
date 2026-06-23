@@ -35,7 +35,6 @@ describe('SouthConnector', () => {
   let southCacheService: SouthCacheServiceMock;
 
   const logger = new PinoLogger();
-  const anotherLogger = new PinoLogger();
   const addContentCallback = mock.fn(
     async (_southId: string, _data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
       undefined
@@ -104,10 +103,10 @@ describe('SouthConnector', () => {
       ...nodeOpcuaMock
     });
     mockModule(nodeRequire, '../service/utils-opcua', utilsOpcuaExports);
-  mockModule(nodeRequire, '../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
-    default: class {}
-  });
+    mockModule(nodeRequire, '../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
 
     SouthFolderScanner = reloadModule<{ default: typeof SouthFolderScannerClass }>(
       nodeRequire,
@@ -146,7 +145,7 @@ describe('SouthConnector', () => {
         SouthFolderScannerSettings,
         SouthFolderScannerItemSettings
       >;
-      south = new SouthFolderScanner(config, addContentCallback, southCacheRepository,  'cacheFolder');
+      south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, 'cacheFolder');
       await south.start();
     });
 
@@ -446,7 +445,7 @@ describe('SouthConnector', () => {
         testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
         addContentCallback,
         southCacheRepository,
-        
+
         'cacheFolder'
       );
       await south.start();
@@ -540,7 +539,7 @@ describe('SouthConnector', () => {
         testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
         addContentCallback,
         southCacheRepository,
-        
+
         'cacheFolder'
       );
 
