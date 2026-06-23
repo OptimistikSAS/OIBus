@@ -18,7 +18,6 @@ import { createSessionConfigs } from '../../service/utils-opcua';
 import { OIBusError } from '../../model/engine.model';
 import { ReadStream } from 'node:fs';
 import { streamToString } from '../../service/utils';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthOPCUA - Write values in an OPCUA server
@@ -28,8 +27,8 @@ export default class NorthOPCUA extends NorthConnector<NorthOPCUASettings> {
   client: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
-  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, logger: ILogger, cacheService: ICacheService) {
-    super(connector, logger, cacheService);
+  constructor(connector: NorthConnectorEntity<NorthOPCUASettings>, cacheService: ICacheService) {
+    super(connector, cacheService);
   }
 
   supportedTypes(): Array<string> {

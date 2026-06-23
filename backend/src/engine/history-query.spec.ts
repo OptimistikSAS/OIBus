@@ -28,7 +28,6 @@ describe('HistoryQuery enabled', () => {
   let mockedSouth1: SouthConnector<SouthSettings, SouthItemSettings>;
 
   const logger = new PinoLogger();
-  const anotherLogger = new PinoLogger();
 
   before(() => {
     // Mock service/utils to prevent real delays and folder creation
@@ -36,6 +35,11 @@ describe('HistoryQuery enabled', () => {
       delay: mock.fn(async () => undefined),
       createFolder: mock.fn(async () => undefined)
     });
+    mockModule(nodeRequire, '../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     HistoryQuery = reloadModule<{ default: typeof HistoryQueryClass }>(nodeRequire, './history-query').default;
   });
 
@@ -48,7 +52,7 @@ describe('HistoryQuery enabled', () => {
     mockedNorth1 = mockedNorth1Mock as unknown as NorthConnector<NorthSettings>;
     mockedSouth1 = mockedSouth1Mock as unknown as SouthConnector<SouthSettings, SouthItemSettings>;
 
-    historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1, logger);
+    historyQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1);
   });
 
   afterEach(async () => {
@@ -244,7 +248,7 @@ describe('HistoryQuery enabled', () => {
     );
   });
 
-  it('should properly set another logger', async () => {
+  it('should properly refresh logger', async () => {
     mock.method(
       historyQuery,
       'stop',
@@ -252,9 +256,10 @@ describe('HistoryQuery enabled', () => {
     );
     // isCacheEmpty must return true so finish() takes the info branch
     mockedNorth1Mock.isCacheEmpty = mock.fn(() => true);
-    historyQuery.setLogger(anotherLogger);
+    const callsBefore = logger.info.mock.calls.length;
+    historyQuery.refreshLogger();
     await historyQuery.finish();
-    assert.strictEqual(anotherLogger.info.mock.calls.length, 1);
+    assert.strictEqual(logger.info.mock.calls.length, callsBefore + 1);
   });
 
   it('should listen on metrics', async () => {

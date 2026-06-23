@@ -67,6 +67,11 @@ describe('SouthFTP', () => {
         return southCacheService;
       }
     });
+  mockModule(nodeRequire, '../../service/logger/logger.service', {
+    loggerService: { createChildLogger: mock.fn(() => logger) },
+    default: class {}
+  });
+
     SouthFtp = reloadModule<{ default: typeof SouthFtpClass }>(nodeRequire, './south-ftp').default;
   });
 
@@ -211,7 +216,7 @@ describe('SouthFTP', () => {
 
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    south = new SouthFtp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthFtp(configuration, addContentCallback, southCacheRepository,  'cacheFolder');
   });
 
   afterEach(() => {
@@ -368,7 +373,7 @@ describe('SouthFTP', () => {
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -440,7 +445,7 @@ describe('SouthFTP', () => {
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -467,7 +472,7 @@ describe('SouthFTP', () => {
         createdAt: '',
         updatedAt: ''
       };
-      const southRecursive = new SouthFtp(configRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southRecursive = new SouthFtp(configRecursive, addContentCallback, southCacheRepository,  'cacheFolder');
       await southRecursive.start();
 
       const dirEntry = {
@@ -544,7 +549,7 @@ describe('SouthFTP', () => {
         createdAt: '',
         updatedAt: ''
       };
-      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository,  'cacheFolder');
       await southWithLimit.start();
 
       const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
@@ -576,7 +581,7 @@ describe('SouthFTP', () => {
         createdAt: '',
         updatedAt: ''
       };
-      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository,  'cacheFolder');
       await southWithLimit.start();
 
       const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
@@ -608,7 +613,7 @@ describe('SouthFTP', () => {
         createdAt: '',
         updatedAt: ''
       };
-      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository,  'cacheFolder');
       await southWithLimit.start();
 
       const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
@@ -641,7 +646,7 @@ describe('SouthFTP', () => {
         createdAt: '',
         updatedAt: ''
       };
-      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const southWithLimit = new SouthFtp(configWithLimit, addContentCallback, southCacheRepository,  'cacheFolder');
       await southWithLimit.start();
 
       const file1 = createMockFileInfo('file1.csv', new Date(DateTime.now().minus({ minutes: 2 }).toMillis()));
@@ -664,7 +669,7 @@ describe('SouthFTP', () => {
 
     it('should start a connector with a different id', async () => {
       const configWithDifferentId = { ...configuration, id: 'southId-not-test' };
-      const newSouth = new SouthFtp(configWithDifferentId, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const newSouth = new SouthFtp(configWithDifferentId, addContentCallback, southCacheRepository,  'cacheFolder');
 
       (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       await newSouth.start();
@@ -744,7 +749,7 @@ describe('SouthFTP', () => {
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -767,7 +772,7 @@ describe('SouthFTP', () => {
         configWithoutCredentials,
         addContentCallback,
         southCacheRepository,
-        logger,
+        
         'cacheFolder'
       );
 
@@ -784,7 +789,7 @@ describe('SouthFTP', () => {
 
     it('should handle start method when connector id is not test', async () => {
       const nonTestConfig = { ...configuration, id: 'southId-not-test' };
-      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository,  'cacheFolder');
 
       (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
       await nonTestSouth.start();
@@ -799,7 +804,7 @@ describe('SouthFTP', () => {
 
       mock.method(fs, 'mkdir', async () => undefined);
 
-      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      const nonTestSouth = new SouthFtp(nonTestConfig, addContentCallback, southCacheRepository,  'cacheFolder');
       (logger.debug as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
 
       await nonTestSouth.start();
@@ -854,7 +859,7 @@ describe('SouthFTP', () => {
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        
         'cacheFolder'
       );
       await southWithCompression.start();
@@ -879,7 +884,7 @@ describe('SouthFTP', () => {
         configWithEncryptedPassword,
         addContentCallback,
         southCacheRepository,
-        logger,
+        
         'cacheFolder'
       );
 
@@ -973,7 +978,7 @@ describe('SouthFTP', () => {
         configurationWithCompression,
         addContentCallback,
         southCacheRepository,
-        logger,
+        
         'cacheFolder'
       );
       await southWithCompression.start();

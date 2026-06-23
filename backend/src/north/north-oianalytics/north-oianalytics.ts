@@ -11,7 +11,6 @@ import OIAnalyticsRegistrationRepository from '../../repository/config/oianalyti
 import { OIBusError } from '../../model/engine.model';
 import type { ICacheService } from '../../model/cache.service.model';
 import { buildHttpOptions, getHost, getUrl, testOIAnalyticsConnection } from '../../service/utils-oianalytics';
-import type { ILogger } from '../../model/logger.model';
 
 async function* multipartStream(boundary: string, filename: string, dataStream: AsyncIterable<Buffer>) {
   yield Buffer.from(
@@ -30,12 +29,11 @@ async function* multipartStream(boundary: string, filename: string, dataStream: 
 export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> {
   constructor(
     connector: NorthConnectorEntity<NorthOIAnalyticsSettings>,
-    logger: ILogger,
     cacheService: ICacheService,
     private readonly certificateRepository: CertificateRepository,
     private readonly oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository
   ) {
-    super(connector, logger, cacheService);
+    super(connector, cacheService);
   }
 
   supportedTypes(): Array<string> {

@@ -42,6 +42,11 @@ describe('NorthFileWriter', () => {
         return cacheService;
       }
     });
+  mockModule(nodeRequire, '../../service/logger/logger.service', {
+    loggerService: { createChildLogger: mock.fn(() => logger) },
+    default: class {}
+  });
+
     NorthFileWriter = reloadModule<{ default: typeof NorthFileWriterClass }>(nodeRequire, './north-file-writer').default;
   });
 
@@ -63,7 +68,7 @@ describe('NorthFileWriter', () => {
       suffix: '_suffix'
     });
 
-    north = new NorthFileWriter(configuration, logger, cacheService);
+    north = new NorthFileWriter(configuration,  cacheService);
   });
 
   afterEach(() => {
@@ -104,7 +109,7 @@ describe('NorthFileWriter', () => {
   it('should properly handle files with dynamic replacements in prefix/suffix', async () => {
     configuration.settings.prefix = 'pre_@ConnectorName_';
     configuration.settings.suffix = '_@CurrentDate_suf';
-    north = new NorthFileWriter(configuration, logger, cacheService);
+    north = new NorthFileWriter(configuration,  cacheService);
 
     const readStream = {} as ReadStream;
     const metadata = {

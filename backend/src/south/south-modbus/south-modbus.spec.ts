@@ -136,6 +136,11 @@ describe('South Modbus', () => {
         return southCacheService;
       }
     });
+  mockModule(nodeRequire, '../../service/logger/logger.service', {
+    loggerService: { createChildLogger: mock.fn(() => logger) },
+    default: class {}
+  });
+
     SouthModbus = reloadModule<{ default: typeof SouthModbusClass }>(nodeRequire, './south-modbus').default;
   });
 
@@ -322,7 +327,7 @@ describe('South Modbus', () => {
     utilsModbusExports.getValueFromBuffer = mock.fn((): string => '42');
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthModbus(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthModbus(configuration, addContentCallback, southCacheRepository,  'cacheFolder');
   });
 
   afterEach(() => {

@@ -23,7 +23,6 @@ import {
 } from 'node-opcua';
 import { HistoryDataOptions, HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createSessionConfigs, getHistoryReadRequest, getTimestamp, logMessages, parseOPCUAValue } from '../../service/utils-opcua';
-import type { ILogger } from '../../model/logger.model';
 
 // OPC-UA status codes that indicate a device/PLC-level failure. The OPC-UA session
 // itself is still alive — only the device behind the server is unreachable. Do NOT
@@ -76,10 +75,9 @@ export default class SouthOPCUA
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   override async connect(): Promise<void> {

@@ -18,7 +18,7 @@ import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import fs from 'node:fs/promises';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
-import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
 
 export const buildHistoryQuery = (
   settings: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>,
@@ -28,7 +28,6 @@ export const buildHistoryQuery = (
     queryTime: Instant,
     items: Array<HistoryQueryItemEntity<SouthItemSettings>>
   ) => Promise<void>,
-  logger: ILogger,
   baseFolderPath: string,
   southCacheRepository: SouthCacheRepository,
   certificateRepository: CertificateRepository,
@@ -71,7 +70,6 @@ export const buildHistoryQuery = (
       createdAt: settings.createdAt,
       updatedAt: settings.updatedAt
     },
-    logger,
     certificateRepository,
     oIAnalyticsRegistrationRepository,
     orchestrator
@@ -93,14 +91,13 @@ export const buildHistoryQuery = (
     },
     async (historyId: string, data: OIBusContent, queryTime: Instant, items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
       await north.cacheContent(data, { source: 'south', southId: settings.id, queryTime, items }),
-    logger,
     path.join(baseFolderPath, 'cache', `history-${settings.id}`, 'south'),
     southCacheRepository,
     certificateRepository,
     oIAnalyticsRegistrationRepository
   );
 
-  return new HistoryQuery(settings, north, south, logger);
+  return new HistoryQuery(settings, north, south);
 };
 
 export const initHistoryQueryCache = async (id: string, northType: OIBusNorthType, southType: OIBusSouthType, baseFolder: string) => {
@@ -127,7 +124,8 @@ export const initHistoryQueryCache = async (id: string, northType: OIBusNorthTyp
   }
 };
 
-export const createHistoryQueryOrchestrator = (baseFolder: string, historyId: string, logger: ILogger): ICacheService => {
+export const createHistoryQueryOrchestrator = (baseFolder: string, historyId: string, name: string): ICacheService => {
+  const logger = loggerService.createChildLogger('history-query', historyId, name);
   return new CacheService(
     logger,
     path.join(baseFolder, 'cache', `history-${historyId}`, 'north'),
