@@ -228,7 +228,9 @@ describe('CacheService', () => {
 
   it('should refresh logger', () => {
     const newLogger = new PinoLogger();
-    const { loggerService: ls } = nodeRequire('../logger/logger.service') as { loggerService: { createChildLogger: (...args: Array<unknown>) => unknown } };
+    const { loggerService: ls } = nodeRequire('../logger/logger.service') as {
+      loggerService: { createChildLogger: (...args: Array<unknown>) => unknown };
+    };
     const createChildLoggerMock = mock.method(ls, 'createChildLogger', () => newLogger);
     service.refreshLogger('north', 'id', 'name');
     assert.strictEqual(createChildLoggerMock.mock.calls[0].arguments[0], 'north');
