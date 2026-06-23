@@ -54,6 +54,7 @@ export default class Launcher {
           this.updated = false;
           this.stop();
           await this.rollback();
+          this.stopping = false;
           await this.start();
           return;
         }
@@ -88,6 +89,7 @@ export default class Launcher {
       this.updated = false;
       this.stop();
       await this.rollback();
+      this.stopping = false;
       await this.start();
       return;
     }

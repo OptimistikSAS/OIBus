@@ -7,7 +7,7 @@ import fsSync from 'node:fs';
 import type { Dirent, Stats } from 'node:fs';
 import zlib from 'node:zlib';
 import { DateTime } from 'luxon';
-import { Readable } from 'node:stream';
+import { Readable, PassThrough } from 'node:stream';
 import os from 'node:os';
 import { mockModule, reloadModule, seq } from '../tests/utils/test-utils';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
@@ -27,11 +27,10 @@ const minimistExports = mock.fn(() => ({}));
 const csvExports = {
   unparse: mock.fn((_data?: unknown, _config?: unknown): string => 'csv content')
 };
-let admZipInstance: { extractAllTo: ReturnType<typeof mock.fn> };
-function AdmZipMock() {
-  return admZipInstance;
-}
-const admZipExports = AdmZipMock;
+let unzipperExtractMock: ReturnType<typeof mock.fn>;
+const unzipperExports = {
+  Extract: (...args: Array<unknown>) => unzipperExtractMock(...args)
+};
 
 // Type for the utils module exports
 type UtilsModule = typeof import('./utils');
@@ -43,7 +42,7 @@ describe('Service utils', () => {
   before(() => {
     mockModule(nodeRequire, 'minimist', minimistExports);
     mockModule(nodeRequire, 'papaparse', csvExports);
-    mockModule(nodeRequire, 'adm-zip', admZipExports);
+    mockModule(nodeRequire, 'unzipper', unzipperExports);
 
     utils = reloadModule<UtilsModule>(nodeRequire, './utils');
     // OIBusError is a class from model/engine.model - import it directly
@@ -277,30 +276,30 @@ describe('Service utils', () => {
   });
 
   describe('unzip', () => {
-    it('should properly unzip file', () => {
-      const extractAllTo = mock.fn();
-      admZipInstance = { extractAllTo };
+    it('should properly unzip file', async () => {
+      const source = new PassThrough();
+      source.end();
+      const dest = new PassThrough();
+      dest.resume(); // drain so pipeline finishes
+      unzipperExtractMock = mock.fn(() => dest);
+      mock.method(fsSync, 'createReadStream', () => source as unknown as fsSync.ReadStream);
 
-      utils.unzip('myInputFile', 'myOutputFolder');
+      await utils.unzip('myInputFile', 'myOutputFolder');
 
-      assert.strictEqual(extractAllTo.mock.calls.length, 1);
+      assert.strictEqual(unzipperExtractMock.mock.calls.length, 1);
+      assert.deepStrictEqual(unzipperExtractMock.mock.calls[0].arguments, [{ path: 'myOutputFolder' }]);
     });
 
-    it('should properly manage unzip errors', () => {
-      const extractAllTo = mock.fn(() => {
-        throw new Error('unzip error');
-      });
-      admZipInstance = { extractAllTo };
+    it('should properly manage unzip errors', async () => {
+      const source = new PassThrough();
+      const dest = new PassThrough();
+      unzipperExtractMock = mock.fn(() => dest);
+      mock.method(fsSync, 'createReadStream', () => source as unknown as fsSync.ReadStream);
 
-      let expectedError: unknown = null;
-      try {
-        utils.unzip('myInputFile', 'myOutputFolder');
-      } catch (error) {
-        expectedError = error;
-      }
+      // Emit an error on the source after the pipeline has started
+      setImmediate(() => source.destroy(new Error('unzip error')));
 
-      assert.deepStrictEqual(expectedError, new Error('unzip error'));
-      assert.strictEqual(extractAllTo.mock.calls.length, 1);
+      await assert.rejects(() => utils.unzip('myInputFile', 'myOutputFolder'), /unzip error/);
     });
   });
 

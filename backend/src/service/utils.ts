@@ -1,11 +1,12 @@
 import fs from 'node:fs/promises';
 import { createReadStream, createWriteStream } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import zlib from 'node:zlib';
 import path from 'node:path';
 
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
-import AdmZip from 'adm-zip';
+import unzipper from 'unzipper';
 
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
 import csv from 'papaparse';
@@ -160,9 +161,8 @@ export const compress = (input: string, output: string): Promise<void> =>
       });
   });
 
-export const unzip = (input: string, output: string) => {
-  const zip = new AdmZip(input);
-  zip.extractAllTo(output, true, true);
+export const unzip = (input: string, output: string): Promise<void> => {
+  return pipeline(createReadStream(input), unzipper.Extract({ path: output }));
 };
 
 /**

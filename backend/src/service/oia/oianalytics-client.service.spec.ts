@@ -1,7 +1,8 @@
 import { describe, it, beforeEach, afterEach, before, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import fs from 'node:fs/promises';
+import { PassThrough } from 'node:stream';
+import fsSync from 'node:fs';
 import testData from '../../tests/utils/test-data';
 import { createMockResponse } from '../../tests/__mocks__/undici.mock';
 import { mockModule, reloadModule, assertContains } from '../../tests/utils/test-utils';
@@ -47,7 +48,6 @@ before(() => {
 
 describe('OIAnalytics Client', () => {
   let service: InstanceType<typeof OIAnalyticsClientType>;
-  let writeFileMock: ReturnType<typeof mock.method>;
 
   beforeEach(() => {
     // Reset all mock functions in-place so the SUT picks up the fresh fns
@@ -57,8 +57,6 @@ describe('OIAnalytics Client', () => {
     mockUtilsOianalytics.getHeaders = mock.fn(async () => ({}));
     mockUtilsOianalytics.getProxyOptions = mock.fn(() => ({ acceptUnauthorized: false, proxy: undefined }));
     mockUtilsOianalytics.getUrl = mock.fn((endpoint: string, host: string) => new URL(endpoint, host));
-
-    writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
 
     service = new OIAnalyticsClient();
   });
@@ -271,10 +269,21 @@ describe('OIAnalytics Client', () => {
   });
 
   describe('downloadFile', () => {
-    it('should download and write file to disk', async () => {
+    it('should stream the download directly to disk without buffering in memory', async () => {
       const mockBuffer = Buffer.from('file-content');
-      const mockResponse = createMockResponse(200, mockBuffer.buffer as ArrayBuffer);
+      // .buffer is the shared pool — slice to an isolated ArrayBuffer so only the
+      // actual data is streamed, not the full 64 KB pool.
+      const isolatedArrayBuffer = mockBuffer.buffer.slice(
+        mockBuffer.byteOffset,
+        mockBuffer.byteOffset + mockBuffer.byteLength
+      ) as ArrayBuffer;
+      const mockResponse = createMockResponse(200, isolatedArrayBuffer);
       mockHttpRequest.HTTPRequest = mock.fn(async () => mockResponse);
+
+      const writtenChunks: Array<Buffer> = [];
+      const sink = new PassThrough();
+      sink.on('data', (chunk: Buffer) => writtenChunks.push(chunk));
+      mock.method(fsSync, 'createWriteStream', () => sink);
 
       await service.downloadFile(testData.oIAnalytics.registration.completed, 'asset-1', 'target.zip');
 
@@ -293,11 +302,9 @@ describe('OIAnalytics Client', () => {
       assert.ok(calledUrl.href.includes('/api/oianalytics/oibus/upgrade/asset'));
       assert.deepStrictEqual(calledOptions.query, { assetId: 'asset-1' });
 
-      assert.strictEqual(writeFileMock.mock.calls.length, 1);
-      assert.deepStrictEqual(writeFileMock.mock.calls[0].arguments, [
-        'target.zip',
-        Buffer.from((await mockResponse.body.arrayBuffer()) as ArrayBuffer)
-      ]);
+      assert.strictEqual((fsSync.createWriteStream as unknown as ReturnType<typeof mock.fn>).mock.calls.length, 1);
+      assert.strictEqual((fsSync.createWriteStream as unknown as ReturnType<typeof mock.fn>).mock.calls[0].arguments[0], 'target.zip');
+      assert.deepStrictEqual(Buffer.concat(writtenChunks), mockBuffer);
     });
 
     it('should throw on error response', async () => {

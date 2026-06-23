@@ -4,7 +4,8 @@ import { OIBusCommand } from '../../model/oianalytics-command.model';
 import { OIAnalyticsFetchCommandDTO } from './oianalytics.model';
 import { OIBusInfo, RegistrationSettingsCommandDTO } from '../../../shared/model/engine.model';
 import { Instant } from '../../../shared/model/types';
-import fs from 'node:fs/promises';
+import { createWriteStream } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import { HTTPRequest, ReqOptions } from '../http-request.utils';
 import { buildHttpOptions, getHeaders, getProxyOptions, getUrl } from '../utils-oianalytics';
 
@@ -194,7 +195,6 @@ export default class OIAnalyticsClient {
     if (!response.ok) {
       throw new Error(`${response.statusCode} - ${await response.body.text()}`);
     }
-    const buffer = Buffer.from(await response.body.arrayBuffer());
-    await fs.writeFile(filename, buffer);
+    await pipeline(response.body, createWriteStream(filename));
   }
 }

@@ -5,6 +5,7 @@ import type { ChildProcessWithoutNullStreams } from 'child_process';
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
 import fs from 'node:fs';
+import fsp from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -562,6 +563,50 @@ describe('Launcher', () => {
     });
   });
 
+  describe('rollback', () => {
+    beforeEach(() => {
+      mock.method(os, 'type', () => 'Linux');
+    });
+
+    it('restarts the rolled-back binary when it also crashes after a failed update', async () => {
+      const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
+      const oibusPath = path.resolve(workDir, 'oibus');
+      const updatePath = path.resolve(updateDir, 'binaries', 'oibus');
+
+      fs.mkdirSync(workDir, { recursive: true });
+      fs.writeFileSync(oibusPath, 'original binary');
+      fs.mkdirSync(path.dirname(updatePath), { recursive: true });
+      fs.writeFileSync(updatePath, 'new binary');
+
+      const mockChildren: Array<MockChildProcess> = [];
+      let spawnCount = 0;
+      mock.method(cp, 'spawn', () => {
+        spawnCount += 1;
+        const child = new MockChildProcess();
+        mockChildren.push(child);
+        return child;
+      });
+
+      // start() detects the update binary, runs update(), then spawns new binary
+      await launcher.start();
+      assert.strictEqual(spawnCount, 1);
+
+      // Simulate new (updated) binary crashing → triggers rollback + restart of old binary
+      const firstCloseListener = mockChildren[0].rawListeners('close').at(-1) as (code: number | null) => Promise<void>;
+      await firstCloseListener(1);
+      assert.strictEqual(spawnCount, 2);
+
+      // Simulate rolled-back binary also crashing.
+      // Before the fix, stopping=true was left over from stop() called during rollback,
+      // so the close handler would skip restart. After the fix stopping=false, so it restarts.
+      const secondCloseListener = mockChildren[1].rawListeners('close').at(-1) as (code: number | null) => Promise<void>;
+      await secondCloseListener(1);
+      assert.strictEqual(spawnCount, 3);
+
+      launcher.stop();
+    });
+  });
+
   describe('update', () => {
     beforeEach(() => {
       mock.method(os, 'type', () => 'Linux');
@@ -586,34 +631,30 @@ describe('Launcher', () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       const updatePath = path.resolve(updateDir, 'binaries', 'oibus');
-      const updateSettingsPath = path.resolve('./', 'update.json');
       fs.mkdirSync(path.dirname(updatePath), { recursive: true });
       fs.writeFileSync(updatePath, 'new binary');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'old binary');
-      fs.writeFileSync(updateSettingsPath, JSON.stringify({ backupFolders: 'logs/*' }));
+      mock.method(fsp, 'readFile', () => JSON.stringify({ backupFolders: 'logs/*' }));
 
       await launcher.update();
 
       assert.ok(fs.existsSync(path.resolve(backupDir, 'oibus')));
-      fs.unlinkSync(updateSettingsPath);
     });
 
     it('performs update with update.json that has no backupFolders property', async () => {
       const launcher = createAndTrackLauncher(workDir, updateDir, backupDir, configDir, false, []);
       const oibusPath = path.resolve(workDir, 'oibus');
       const updatePath = path.resolve(updateDir, 'binaries', 'oibus');
-      const updateSettingsPath = path.resolve('./', 'update.json');
       fs.mkdirSync(path.dirname(updatePath), { recursive: true });
       fs.writeFileSync(updatePath, 'new binary');
       fs.mkdirSync(workDir, { recursive: true });
       fs.writeFileSync(oibusPath, 'old binary');
-      fs.writeFileSync(updateSettingsPath, JSON.stringify({}));
+      mock.method(fsp, 'readFile', () => JSON.stringify({}));
 
       await launcher.update();
 
       assert.ok(fs.existsSync(path.resolve(backupDir, 'oibus')));
-      fs.unlinkSync(updateSettingsPath);
     });
 
     it('handles missing update.json file', async () => {

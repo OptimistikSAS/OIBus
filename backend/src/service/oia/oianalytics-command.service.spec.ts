@@ -632,13 +632,91 @@ describe('OIAnalytics Command Service', () => {
     );
   });
 
+  it('should delete the zip file even when unzip fails', async () => {
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
+    mockUtils.unzip.mock.mockImplementationOnce(() => {
+      throw new Error('unzip error');
+    });
+
+    await service.processNextCommand();
+
+    assert.strictEqual(unlinkMock.mock.calls.length, 1);
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls.length, 1);
+    assert.ok((oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments[1] as string).includes('unzip error'));
+  });
+
+  it('should clean the update directory and propagate the error when writeFile fails after unzip', async () => {
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
+    mock.method(fs, 'unlink', async () => undefined);
+    const rmMock = mock.method(fs, 'rm', async () => undefined);
+    mock.method(fs, 'writeFile', async () => {
+      throw new Error('disk full');
+    });
+
+    await service.processNextCommand();
+
+    assert.strictEqual(rmMock.mock.calls.length, 1);
+    assert.ok((rmMock.mock.calls[0].arguments[0] as string).endsWith('update'));
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls.length, 1);
+    assert.ok((oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments[1] as string).includes('disk full'));
+  });
+
+  it('should restore the launcher backup and clean the update directory when the launcher swap fails', async () => {
+    const launcherCommand: OIBusUpdateVersionCommand = {
+      ...(testData.oIAnalytics.commands.oIBusList[0] as OIBusUpdateVersionCommand),
+      commandContent: {
+        version: 'v3.5.0-beta',
+        assetId: 'assetId',
+        backupFolders: 'cache/*',
+        updateLauncher: true
+      }
+    };
+    oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => launcherCommand);
+    mock.method(fs, 'unlink', async () => undefined);
+    const rmMock = mock.method(fs, 'rm', async () => undefined);
+    mock.method(os, 'type', () => 'Linux' as NodeJS.Platform);
+
+    let renameCallCount = 0;
+    const renameMock = mock.method(fs, 'rename', async () => {
+      renameCallCount += 1;
+      if (renameCallCount === 2) throw new Error('rename failed');
+    });
+
+    await service.processNextCommand();
+
+    const renameArgs = renameMock.mock.calls as Array<{ arguments: [string, string] }>;
+    // First rename: current launcher → backup
+    assert.ok(renameArgs[0].arguments[1].includes('oibus-launcher_backup'));
+    // Second rename: update/launcher → launcher (throws)
+    assert.ok(renameArgs[1].arguments[0].includes('update'));
+    // Third rename: restores backup → current launcher
+    assert.ok(renameArgs[2].arguments[0].includes('oibus-launcher_backup'));
+    assert.ok(renameArgs[2].arguments[1].endsWith('oibus-launcher'));
+    // Update directory cleaned up
+    assert.strictEqual(rmMock.mock.calls.length, 1);
+    assert.ok((rmMock.mock.calls[0].arguments[0] as string).endsWith('update'));
+    // Error propagated
+    assert.strictEqual(oIAnalyticsCommandRepository.markAsErrored.mock.calls.length, 1);
+    assert.ok((oIAnalyticsCommandRepository.markAsErrored.mock.calls[0].arguments[1] as string).includes('rename failed'));
+  });
+
   it('should not execute update-version command if a command is already being executed', async () => {
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => testData.oIAnalytics.commands.oIBusList[0]);
     mock.method(process, 'exit', () => undefined as never);
+    // Mock fs operations so they resolve as microtasks rather than real I/O,
+    // allowing service1's async chain to reach delay() before we explicitly resolve it.
+    mock.method(fs, 'unlink', async () => undefined);
+    mock.method(fs, 'writeFile', async () => undefined);
+    // Use a manually-resolvable deferred promise: service1 stays blocked at delay()
+    // during the assertion, then we drain the microtask queue to confirm it reached
+    // delay(), resolve it, and let the in-flight call clean up without leaving a
+    // dangling async handle that would stall the test runner.
+    let resolveDelay!: (value: PromiseLike<undefined> | undefined) => void;
     mockUtils.delay.mock.mockImplementationOnce(
       () =>
         new Promise<undefined>(resolve => {
-          setTimeout(() => resolve(undefined), 1000);
+          resolveDelay = resolve;
         })
     );
 
@@ -649,6 +727,10 @@ describe('OIAnalytics Command Service', () => {
       (logger.trace.mock.calls as Array<{ arguments: Array<string> }>).some(c => c.arguments[0] === 'A command is already being executed')
     );
 
+    // Drain all pending microtasks so service1's chain reaches delay() and resolveDelay is set.
+    await flushPromises();
+    // Let the in-flight processNextCommand finish cleanly.
+    resolveDelay(undefined);
     await flushPromises();
   });
 

@@ -51,7 +51,6 @@
     "@azure/storage-blob": "12.32.0",
     "@azure/storage-file-datalake": "12.30.0",
     "@smithy/node-http-handler": "4.7.7",
-    "adm-zip": "0.5.17",
     "ads-client": "2.2.0",
     "argon2": "0.44.0",
     "basic-auth": "2.0.1",
@@ -91,13 +90,13 @@
     "ssh2-sftp-client": "12.1.1",
     "thread-stream": "4.2.0",
     "tsoa": "6.6.0",
-    "undici": "8.4.1"
+    "undici": "8.4.1",
+    "unzipper": "0.12.5"
   },
   "optionalDependencies": {
     "odbc": "2.5.0"
   },
   "devDependencies": {
-    "@types/adm-zip": "0.5.8",
     "@types/basic-auth": "1.1.8",
     "@types/better-sqlite3": "7.6.13",
     "@types/cors": "2.8.19",
@@ -111,6 +110,7 @@
     "@types/papaparse": "5.5.2",
     "@types/pg": "8.20.0",
     "@types/ssh2-sftp-client": "9.0.6",
+    "@types/unzipper": "0.10.11",
     "@types/ws": "8.18.1",
     "@yao-pkg/pkg": "6.20.0",
     "eslint": "9.39.4",
