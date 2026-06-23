@@ -755,7 +755,10 @@
           "file-writer": {
             "output-folder": "Output folder",
             "prefix": "Prefix",
-            "suffix": "Suffix"
+            "suffix": "Suffix",
+            "smb-username": "SMB username",
+            "smb-password": "SMB password",
+            "smb-domain": "SMB domain"
           },
           "modbus": {
             "host": "Host",
@@ -1496,7 +1499,10 @@
           },
           "folder-scanner": {
             "input-folder": "Input folder",
-            "compression": "Enable compression"
+            "compression": "Enable compression",
+            "smb-username": "SMB username",
+            "smb-password": "SMB password",
+            "smb-domain": "SMB domain"
           },
           "modbus": {
             "host": "Host",
