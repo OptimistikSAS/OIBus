@@ -39,7 +39,6 @@ export default class OIBusServiceMock {
   restart = mock.fn(async (): Promise<void> => undefined);
   stop = mock.fn(async (): Promise<void> => undefined);
   addExternalContent = mock.fn(async (_northId: string, _dataSourceId: string, _content: OIBusContent): Promise<void> => undefined);
-  setLogger = mock.fn((): void => undefined);
   logHealthSignal = mock.fn((): void => undefined);
   updateEngineMetrics = mock.fn((): void => undefined);
   resetEngineMetrics = mock.fn((): void => undefined);

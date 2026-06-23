@@ -143,10 +143,10 @@ describe('South ADS', () => {
         return southCacheService;
       }
     });
-  mockModule(nodeRequire, '../../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
-    default: class {}
-  });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
 
     SouthADS = reloadModule<{ default: typeof SouthADSClass }>(nodeRequire, './south-ads').default;
   });
@@ -178,7 +178,7 @@ describe('South ADS', () => {
       return adsInstance;
     });
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthADS(configuration, addContentCallback, southCacheRepository,  'cacheFolder');
+    south = new SouthADS(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     // Reset boolAsText and enumAsText to their original values in case a test mutated them
     configuration.settings.boolAsText = 'integer';
     configuration.settings.enumAsText = 'text';

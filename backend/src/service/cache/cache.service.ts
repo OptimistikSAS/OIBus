@@ -19,6 +19,8 @@ import { DateTime } from 'luxon';
 import DeferredPromise from '../deferred-promise';
 import { CacheSize, CONTENT_FOLDER, METADATA_FOLDER } from '../../model/engine.model';
 import type { ILogger } from '../../model/logger.model';
+import type { ScopeType } from '../../../shared/model/logs.model';
+import { loggerService } from '../logger/logger.service';
 
 const DEBOUNCED_LOG_S = 10_000;
 const DEBOUNCED_SIZE_WARNING_S = 60_000;
@@ -84,8 +86,8 @@ export default class CacheService {
     this._archiveFolder = path.resolve(baseArchiveFolder);
   }
 
-  setLogger(value: ILogger) {
-    this.logger = value;
+  refreshLogger(scopeType: ScopeType, id: string, name: string): void {
+    this.logger = loggerService.createChildLogger(scopeType, id, name);
   }
 
   get errorFolder(): string {

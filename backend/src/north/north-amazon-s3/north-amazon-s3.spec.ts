@@ -84,10 +84,10 @@ describe('NorthAmazonS3', () => {
         return cacheService;
       }
     });
-  mockModule(nodeRequire, '../../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
-    default: class {}
-  });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
 
     NorthAmazonS3 = reloadModule<{ default: typeof NorthAmazonS3Class }>(nodeRequire, './north-amazon-s3').default;
   });
@@ -118,7 +118,7 @@ describe('NorthAmazonS3', () => {
       proxyPassword: 'proxy-password'
     });
 
-    north = new NorthAmazonS3(configuration,  cacheService);
+    north = new NorthAmazonS3(configuration, cacheService);
   });
 
   afterEach(() => {

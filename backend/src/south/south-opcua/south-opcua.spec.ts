@@ -285,10 +285,10 @@ describe('SouthOPCUA', () => {
         return southCacheService;
       }
     });
-  mockModule(nodeRequire, '../../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
-    default: class {}
-  });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
 
     SouthOPCUA = reloadModule<{ default: typeof SouthOPCUAClass }>(nodeRequire, './south-opcua').default;
   });
@@ -319,7 +319,7 @@ describe('SouthOPCUA', () => {
     nodeOPCUAMock.OPCUAClient.create.mock.mockImplementation(() => null as unknown);
 
     mock.timers.enable({ apis: ['Date', 'setTimeout', 'setInterval'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository,  'cacheFolder');
+    south = new SouthOPCUA(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {

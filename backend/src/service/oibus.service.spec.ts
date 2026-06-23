@@ -49,7 +49,6 @@ before(() => {
     start = mock.fn(async () => undefined);
     stop = mock.fn(async () => undefined);
     refreshIpFilters = mock.fn();
-    setLogger = mock.fn();
     constructor() {
       lastProxyRefreshIpFilters = this.refreshIpFilters;
       lastProxyStart = this.start;

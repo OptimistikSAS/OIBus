@@ -75,10 +75,10 @@ describe('NorthOIAnalytics', () => {
         return cacheService;
       }
     });
-  mockModule(nodeRequire, '../../service/logger/logger.service', {
-    loggerService: { createChildLogger: mock.fn(() => logger) },
-    default: class {}
-  });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
 
     NorthOIAnalytics = reloadModule<{ default: typeof NorthOIAnalyticsClass }>(nodeRequire, './north-oianalytics').default;
   });
@@ -129,7 +129,7 @@ describe('NorthOIAnalytics', () => {
       }
     });
 
-    north = new NorthOIAnalytics(configuration,  cacheService, certificateRepository, oIAnalyticsRegistrationRepository);
+    north = new NorthOIAnalytics(configuration, cacheService, certificateRepository, oIAnalyticsRegistrationRepository);
   });
 
   afterEach(() => {

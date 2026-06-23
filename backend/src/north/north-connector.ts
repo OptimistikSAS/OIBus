@@ -814,7 +814,7 @@ export default abstract class NorthConnector<T extends NorthSettings> {
 
   refreshLogger(): void {
     this.logger = loggerService.createChildLogger('north', this.connector.id, this.connector.name);
-    this.cacheService.setLogger(this.logger);
+    this.cacheService.refreshLogger('north', this.connector.id, this.connector.name);
   }
 
   /**
