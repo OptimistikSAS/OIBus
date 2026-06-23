@@ -210,7 +210,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthInfluxDBSettings, SouthInfluxDBItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'sqlite':
