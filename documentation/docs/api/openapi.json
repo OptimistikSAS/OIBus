@@ -2490,11 +2490,26 @@
 					},
 					"compression": {
 						"type": "boolean"
+					},
+					"username": {
+						"type": "string",
+						"nullable": true
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"domain": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
 					"inputFolder",
-					"compression"
+					"compression",
+					"username",
+					"password",
+					"domain"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -20547,12 +20562,27 @@
 					"suffix": {
 						"type": "string",
 						"nullable": true
+					},
+					"username": {
+						"type": "string",
+						"nullable": true
+					},
+					"password": {
+						"type": "string",
+						"nullable": true
+					},
+					"domain": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"required": [
 					"outputFolder",
 					"prefix",
-					"suffix"
+					"suffix",
+					"username",
+					"password",
+					"domain"
 				],
 				"type": "object",
 				"additionalProperties": false
