@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.8.5](https://github.com/OptimistikSAS/OIBus/compare/v3.8.4...v3.8.5) (2026-06-24)
+
+
+### Bug Fixes
+
+* **engine:** do not clean up wal files ([b8b3bb1](https://github.com/OptimistikSAS/OIBus/commit/b8b3bb1b8e4e008f4cb502c5c237bb6038d3bdf7))
+* **engine:** stream unzip operation when updating OIBus ([3d544c3](https://github.com/OptimistikSAS/OIBus/commit/3d544c3947d372eb35e2abdb1e062eb56fc1d8b2))
+* **opcua:** use timeout for DA mode ([4b7206e](https://github.com/OptimistikSAS/OIBus/commit/4b7206e875af1e2f680a070c4c0235c595f91ec4))
+* **south:** catch error in run event ([8ea0c6a](https://github.com/OptimistikSAS/OIBus/commit/8ea0c6a5df9902375924e4df48e6b095a829598b))
+
 ## [3.8.4](https://github.com/OptimistikSAS/OIBus/compare/v3.8.3...v3.8.4) (2026-06-18)
 
 
