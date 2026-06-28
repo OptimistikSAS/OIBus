@@ -46,28 +46,28 @@ runs:
     # invalidates automatically when @yao-pkg/pkg-fetch is upgraded.
 
     - name: Cache pkg-fetch binaries
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: ~/.pkg-cache
         key: pkg-cache-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('launcher/package-lock.json', 'backend/package-lock.json') }}
 
     - name: Cache backend dependencies
       id: cache-backend
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: backend/node_modules
         key: backend-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('backend/package-lock.json') }}
 
     - name: Cache frontend dependencies
       id: cache-frontend
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: frontend/node_modules
         key: frontend-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('frontend/package-lock.json') }}
 
     - name: Cache launcher dependencies
       id: cache-launcher
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: launcher/node_modules
         key: launcher-deps-${{ inputs.platform_arch }}-${{ inputs.cache_version }}-${{ hashFiles('launcher/package-lock.json') }}
