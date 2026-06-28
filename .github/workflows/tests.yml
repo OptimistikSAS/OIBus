@@ -56,7 +56,7 @@ jobs:
 
       - name: Cache backend dependencies
         id: cache-backend
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: backend/node_modules
           key: backend-deps-${{ matrix.platform }}-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('backend/package-lock.json') }}
@@ -68,7 +68,7 @@ jobs:
         run: npm ci
 
       - name: Cache backend ESLint results
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: backend/.eslintcache
           key: eslint-backend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('backend/eslint.config.mjs', 'backend/package-lock.json') }}
@@ -106,7 +106,7 @@ jobs:
 
       - name: Cache frontend dependencies
         id: cache-frontend
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: frontend/node_modules
           key: frontend-deps-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/package-lock.json') }}
@@ -118,14 +118,14 @@ jobs:
         run: npm ci
 
       - name: Cache Playwright browser
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: playwright-chromium-${{ secrets.GH_ACTIONS_CACHE_KEY }}-
 
       - name: Cache frontend ESLint results
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: frontend/.eslintcache
           key: eslint-frontend-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('frontend/eslint.config.js', 'frontend/package-lock.json') }}
@@ -175,7 +175,7 @@ jobs:
 
       - name: Cache launcher dependencies
         id: cache-launcher
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: launcher/node_modules
           key: launcher-deps-${{ matrix.platform }}-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('launcher/package-lock.json') }}
@@ -187,7 +187,7 @@ jobs:
         run: npm ci
 
       - name: Cache launcher ESLint results
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: launcher/.eslintcache
           key: eslint-launcher-${{ secrets.GH_ACTIONS_CACHE_KEY }}-${{ hashFiles('launcher/eslint.config.mjs', 'launcher/package-lock.json') }}
