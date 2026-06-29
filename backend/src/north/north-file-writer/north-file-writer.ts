@@ -81,12 +81,6 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     await this.mountNetworkShare(this.connector.settings.outputFolder);
     const outputFolder = path.resolve(this.connector.settings.outputFolder);
 
-    try {
-      await fs.access(outputFolder, fs.constants.F_OK);
-    } catch (error: unknown) {
-      throw new Error(`Access error on "${outputFolder}": ${(error as Error).message}`);
-    }
-
     const testFile = path.join(outputFolder, `.oibus-write-test`);
     try {
       await fs.writeFile(testFile, '');
