@@ -238,6 +238,10 @@ describe('NorthFileWriter', () => {
   });
 
   describe('connect and disconnect (SMB)', () => {
+    afterEach(async () => {
+      await north.stop().catch(() => {});
+    });
+
     it('should call super.connect without mounting on non-Windows platforms', async () => {
       configuration.settings.username = 'user';
       const connectSpy = mock.method(north, 'connect', async () => undefined);
