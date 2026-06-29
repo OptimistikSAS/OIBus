@@ -542,7 +542,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     updatedAt: '',
     settings: {
       inputFolder: 'input',
-      compression: true
+      compression: true,
+      username: null,
+      password: null,
+      domain: null
     },
     items: [
       {
@@ -770,7 +773,10 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
   enabled: true,
   settings: {
     inputFolder: 'input',
-    compression: true
+    compression: true,
+    username: null,
+    password: null,
+    domain: null
   },
   items: [
     {
@@ -862,7 +868,10 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     settings: {
       outputFolder: 'output-folder',
       prefix: 'prefix-',
-      suffix: '-suffix'
+      suffix: '-suffix',
+      username: null,
+      password: null,
+      domain: null
     },
     caching: {
       trigger: {
@@ -996,7 +1005,10 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
   settings: {
     outputFolder: 'output-folder',
     prefix: 'prefix-',
-    suffix: '-suffix'
+    suffix: '-suffix',
+    username: null,
+    password: null,
+    domain: null
   },
   caching: {
     trigger: {
@@ -1201,7 +1213,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     northSettings: {
       outputFolder: 'output-folder',
       prefix: 'prefix-',
-      suffix: '-suffix'
+      suffix: '-suffix',
+      username: null,
+      password: null,
+      domain: null
     },
     caching: {
       trigger: {
@@ -1290,7 +1305,10 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   northSettings: {
     outputFolder: 'output-folder',
     prefix: 'prefix-',
-    suffix: '-suffix'
+    suffix: '-suffix',
+    username: null,
+    password: null,
+    domain: null
   },
   caching: {
     trigger: {
