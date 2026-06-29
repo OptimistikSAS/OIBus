@@ -77,8 +77,10 @@ export default class LogRepository {
   }
 
   suggestScopes(name: string): Array<Scope> {
-    const query = `SELECT DISTINCT scope_id AS scopeId, scope_name as scopeName FROM ${LOG_TABLE} WHERE scope_name LIKE '%' || ? || '%';`;
-    return this.database.prepare(query).all(name) as Array<Scope>;
+    const query =
+      `SELECT DISTINCT scope_id AS scopeId, scope_name as scopeName FROM ${LOG_TABLE}` +
+      ` WHERE scope_name LIKE '%' || ? || '%' OR (scope_type = 'internal' AND scope_id LIKE '%' || ? || '%');`;
+    return this.database.prepare(query).all(name, name) as Array<Scope>;
   }
 
   getScopeById(id: string): Scope | null {
