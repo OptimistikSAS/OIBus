@@ -185,3 +185,26 @@ export function isDisplayableAttribute(attribute: OIBusAttribute): attribute is 
 export function asFormGroup(abstractControl: AbstractControl): FormGroup {
   return abstractControl as FormGroup;
 }
+
+/**
+ * Post-processes a raw form value by replacing empty objects with undefined.
+ *
+ * When a FormGroup is enabled but ALL of its children are individually disabled
+ * via enabling conditions, Angular reports the group's value as {} (an empty
+ * object) rather than omitting the key entirely. The backend expects undefined /
+ * absent key for such "not applicable" sections, not an empty object.
+ *
+ * This function walks the value tree recursively:
+ *   - plain objects with no keys  → undefined
+ *   - arrays                      → each element is processed recursively
+ *   - everything else             → returned as-is
+ */
+export function extractFormValue<T>(value: T): T | undefined {
+  if (value === null || value === undefined) return value;
+  if (Array.isArray(value)) return value.map(item => extractFormValue(item)) as unknown as T;
+  if (typeof value === 'object') {
+    if (Object.keys(value as object).length === 0) return undefined;
+    return Object.fromEntries(Object.entries(value as object).map(([k, v]) => [k, extractFormValue(v)])) as T;
+  }
+  return value;
+}
