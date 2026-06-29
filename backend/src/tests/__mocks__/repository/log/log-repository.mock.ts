@@ -1,6 +1,6 @@
 import { mock } from 'node:test';
 import { OIBusLog, PinoLog } from '../../../../model/logs.model';
-import { Item, LogSearchParam, Scope, ScopeType } from '../../../../../shared/model/logs.model';
+import { Group, Item, LogSearchParam, Scope, ScopeType } from '../../../../../shared/model/logs.model';
 import { Page } from '../../../../../shared/model/types';
 import LogRepository from '../../../../repository/logs/log.repository';
 
@@ -24,6 +24,8 @@ export default class LogRepositoryMock extends LogRepository {
   override getScopeById = mock.fn((_id: string): Scope | null => null);
   override suggestItems = mock.fn((_name: string): Array<Item> => []);
   override getItemById = mock.fn((_id: string): Item | null => null);
+  override suggestGroups = mock.fn((_name: string): Array<Group> => []);
+  override getGroupById = mock.fn((_id: string): Group | null => null);
   override saveAll = mock.fn((_logsToStore: Array<PinoLog>): void => undefined);
   override count = mock.fn((): number => 0);
   override delete = mock.fn((_numberOfLogsToDelete: number): number => 0);

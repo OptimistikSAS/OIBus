@@ -72,6 +72,20 @@ export interface LogDTO {
   itemName: string | null;
 
   /**
+   * The unique identifier of the group the log is associated with (e.g., a south connector item group ID).
+   * Can be `null` if the log is not associated with a specific group.
+   * @example "group123"
+   */
+  groupId: string | null;
+
+  /**
+   * The human-readable name of the group the log is associated with.
+   * Can be `null` if the log is not associated with a specific group.
+   * @example "Temperature sensors"
+   */
+  groupName: string | null;
+
+  /**
    * The log message content, including details about the event or error.
    * @example "Connection failed to host: timeout after 5s"
    */
@@ -94,6 +108,24 @@ export interface Item {
    * @example "Temperature sensor"
    */
   itemName: string;
+}
+
+/**
+ * Represents a group associated with log entries.
+ * A group is a set of south connector items queried together.
+ */
+export interface Group {
+  /**
+   * The unique identifier of the group (e.g., south connector item group ID).
+   * @example "group123"
+   */
+  groupId: string;
+
+  /**
+   * The human-readable name of the group.
+   * @example "Temperature sensors"
+   */
+  groupName: string;
 }
 
 /**
@@ -162,6 +194,12 @@ export interface LogSearchParam {
    * @example ["item123", "item456"]
    */
   itemIds: Array<string>;
+
+  /**
+   * An array of group IDs to filter logs by specific item groups.
+   * @example ["group123", "group456"]
+   */
+  groupIds: Array<string>;
 
   /**
    * A substring to search for within log messages.
