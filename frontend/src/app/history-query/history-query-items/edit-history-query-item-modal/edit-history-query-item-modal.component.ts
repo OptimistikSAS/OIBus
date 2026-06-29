@@ -14,7 +14,7 @@ import { ObservableState, SaveButtonComponent } from '../../../shared/save-butto
 import { TranslateDirective } from '@ngx-translate/core';
 import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../../backend/shared/model/south-connector.model';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
-import { addAttributeToForm, addEnablingConditions } from '../../../shared/form/dynamic-form.builder';
+import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { Observable } from 'rxjs';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import SouthItemTestComponent from '../../../south/south-items/south-item-test/south-item-test.component';
@@ -157,7 +157,7 @@ export class EditHistoryQueryItemModalComponent {
       id: this.item?.id ?? `temp_${Date.now()}`,
       enabled: formValue.enabled!,
       name: formValue.name!,
-      settings: formValue.settings!
+      settings: extractFormValue(formValue.settings)!
     };
   }
 

@@ -6,7 +6,7 @@ import { OIBusObjectFormControlComponent } from '../../oibus-object-form-control
 import { OIBusObjectAttribute } from '../../../../../../../backend/shared/model/form.model';
 import { ScanModeDTO } from '../../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../../backend/shared/model/certificate.model';
-import { addAttributeToForm } from '../../dynamic-form.builder';
+import { addAttributeToForm, extractFormValue } from '../../dynamic-form.builder';
 import { OIBUS_FORM_MODE } from '../../oibus-form-mode.token';
 
 @Component({
@@ -103,7 +103,7 @@ export class OIBusEditArrayElementModalComponent {
 
   submit() {
     if (this.form.valid) {
-      this.activeModal.close(this.form.value[this.elementManifest!.key]);
+      this.activeModal.close(extractFormValue(this.form.value[this.elementManifest!.key]));
     }
   }
 }

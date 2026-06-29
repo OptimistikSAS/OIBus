@@ -23,7 +23,7 @@ import {
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import SouthItemTestComponent from '../south-item-test/south-item-test.component';
 import { OIBusObjectAttribute, OIBusScanModeAttribute } from '../../../../../../backend/shared/model/form.model';
-import { addAttributeToForm, createMqttValidator } from '../../../shared/form/dynamic-form.builder';
+import { addAttributeToForm, createMqttValidator, extractFormValue } from '../../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { OIBusObjectFormControlComponent } from '../../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
@@ -265,7 +265,7 @@ class EditSouthItemModalComponent {
         !formValue.scanModeId || scanModeAttribute.acceptableType === 'SUBSCRIPTION'
           ? ''
           : this.scanModes.find(scanMode => scanMode.id === formValue.scanModeId!)!.name,
-      settings: formValue.settings!,
+      settings: extractFormValue(formValue.settings)!,
       groupId: formValue.groupId!,
       groupName: formValue.groupId! ? this.groups.find(group => group.id === formValue.groupId!)!.standardSettings.name : null,
       syncWithGroup,
