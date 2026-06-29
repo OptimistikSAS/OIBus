@@ -62,7 +62,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
     await expect.element(tester.title).toHaveTextContent('Create an element');
     await expect.element(tester.settings).toBeInTheDocument();
     await tester.save.click();
-    expect(fakeActiveModal.close).toHaveBeenCalledWith({});
+    expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);
   });
 
   test('should edit an element', async () => {
@@ -71,7 +71,7 @@ describe('OIBusEditArrayElementModalComponent', () => {
     await expect.element(tester.title).toHaveTextContent('Edit an element');
     await expect.element(tester.settings).toBeInTheDocument();
     await tester.save.click();
-    expect(fakeActiveModal.close).toHaveBeenCalledWith({});
+    expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);
   });
 
   test('should copy an element', async () => {
@@ -80,6 +80,6 @@ describe('OIBusEditArrayElementModalComponent', () => {
     await expect.element(tester.title).toHaveTextContent('Create an element');
     await expect.element(tester.settings).toBeInTheDocument();
     await tester.save.click();
-    expect(fakeActiveModal.close).toHaveBeenCalledWith({});
+    expect(fakeActiveModal.close).toHaveBeenCalledWith(undefined);
   });
 });

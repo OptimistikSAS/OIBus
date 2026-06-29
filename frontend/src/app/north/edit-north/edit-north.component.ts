@@ -27,7 +27,7 @@ import { OIBusNorthTypeEnumPipe } from '../../shared/oibus-north-type-enum.pipe'
 import { TransformerDTO, TransformerDTOWithOptions } from '../../../../../backend/shared/model/transformer.model';
 import { TransformerService } from '../../services/transformer.service';
 import { NorthTransformersComponent } from '../north-transformers/north-transformers.component';
-import { addAttributeToForm, addEnablingConditions } from '../../shared/form/dynamic-form.builder';
+import { addAttributeToForm, addEnablingConditions, extractFormValue } from '../../shared/form/dynamic-form.builder';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../shared/form/form-validation-directives';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { OIBusScanModeAttribute } from '../../../../../backend/shared/model/form.model';
@@ -327,7 +327,7 @@ export class EditNorthComponent implements CanComponentDeactivate {
       type: this.northType as OIBusNorthType,
       description: formValue.description!,
       enabled: formValue.enabled!,
-      settings: formValue.settings!,
+      settings: extractFormValue(formValue.settings)!,
       caching: {
         trigger: {
           scanModeId: formValue.caching!.trigger!.scanMode!.id,

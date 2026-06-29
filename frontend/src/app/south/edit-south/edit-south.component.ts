@@ -28,7 +28,7 @@ import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe'
 import { formDirectives } from '../../shared/form/form-directives';
 import { CertificateDTO } from '../../../../../backend/shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
-import { addAttributeToForm, addEnablingConditions, asFormGroup } from '../../shared/form/dynamic-form.builder';
+import { addAttributeToForm, addEnablingConditions, asFormGroup, extractFormValue } from '../../shared/form/dynamic-form.builder';
 import { OIBusObjectFormControlComponent } from '../../shared/form/oibus-object-form-control/oibus-object-form-control.component';
 import { CanComponentDeactivate } from '../../shared/unsaved-changes.guard';
 import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-confirmation.service';
@@ -546,7 +546,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
       type: this.southType!,
       description: formValue.description!,
       enabled: formValue.enabled!,
-      settings: formValue.settings!,
+      settings: extractFormValue(formValue.settings)!,
       items: this.inMemoryItems,
       groups: this.inMemoryGroups
     } as SouthConnectorCommandDTO;
