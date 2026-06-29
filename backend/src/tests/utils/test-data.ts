@@ -1573,6 +1573,8 @@ const logs: Array<OIBusLog> = [
     scopeName: southConnectors[0].name,
     itemId: null,
     itemName: null,
+    groupId: null,
+    groupName: null,
     message: 'debug message log'
   },
   {
@@ -1583,6 +1585,8 @@ const logs: Array<OIBusLog> = [
     scopeName: southConnectors[0].name,
     itemId: null,
     itemName: null,
+    groupId: null,
+    groupName: null,
     message: 'error message log'
   },
   {
@@ -1593,6 +1597,8 @@ const logs: Array<OIBusLog> = [
     scopeName: northConnectors[1].name,
     itemId: null,
     itemName: null,
+    groupId: null,
+    groupName: null,
     message: 'info message log'
   },
   {
@@ -1603,6 +1609,8 @@ const logs: Array<OIBusLog> = [
     scopeName: null,
     itemId: null,
     itemName: null,
+    groupId: null,
+    groupName: null,
     message: 'warn message log'
   }
 ];

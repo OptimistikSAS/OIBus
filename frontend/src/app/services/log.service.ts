@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Service, inject } from '@angular/core';
 import { Page } from '../../../../backend/shared/model/types';
-import { Item, LogDTO, LogSearchParam, Scope } from '../../../../backend/shared/model/logs.model';
+import { Group, Item, LogDTO, LogSearchParam, Scope } from '../../../../backend/shared/model/logs.model';
 
 /**
  * Service used to interact with the backend Log repository
@@ -37,6 +37,9 @@ export class LogService {
     if (searchParams.itemIds) {
       params['itemIds'] = searchParams.itemIds.join(',');
     }
+    if (searchParams.groupIds) {
+      params['groupIds'] = searchParams.groupIds.join(',');
+    }
     if (searchParams.levels) {
       params['levels'] = searchParams.levels.join(',');
     }
@@ -57,5 +60,13 @@ export class LogService {
 
   getItemById(id: string): Observable<Item | null> {
     return this.http.get<Item | null>(`/api/logs/items/${id}`);
+  }
+
+  suggestGroups(name: string): Observable<Array<Group>> {
+    return this.http.get<Array<Group>>('/api/logs/groups/suggest', { params: { name } });
+  }
+
+  getGroupById(id: string): Observable<Group | null> {
+    return this.http.get<Group | null>(`/api/logs/groups/${id}`);
   }
 }

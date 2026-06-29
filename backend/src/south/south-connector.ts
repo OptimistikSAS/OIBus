@@ -415,8 +415,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
           try {
             await this.directQueryHandler(groupedElements);
           } catch (error: unknown) {
-            const itemCtx = groupedElements.length === 1 ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name } : {};
-            this.logger.error(itemCtx, `Error when querying items with direct access: ${(error as Error).message}`);
+            const logCtx =
+              groupedElements.length === 1
+                ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name }
+                : groupedElements[0].group
+                  ? { groupId: groupedElements[0].group.id, groupName: groupedElements[0].group.name }
+                  : {};
+            this.logger.error(logCtx, `Error when querying items with direct access: ${(error as Error).message}`);
           }
         }
         if (this.hasHistoryQuery()) {
@@ -436,8 +441,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
             );
           } catch (error: unknown) {
             this.historyIsRunning = false;
-            const itemCtx = groupedElements.length === 1 ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name } : {};
-            this.logger.error(itemCtx, `Error when querying items with history capabilities: ${(error as Error).message}`);
+            const logCtx =
+              groupedElements.length === 1
+                ? { itemId: groupedElements[0].id, itemName: groupedElements[0].name }
+                : groupedElements[0].group
+                  ? { groupId: groupedElements[0].group.id, groupName: groupedElements[0].group.name }
+                  : {};
+            this.logger.error(logCtx, `Error when querying items with history capabilities: ${(error as Error).message}`);
           }
         }
 
