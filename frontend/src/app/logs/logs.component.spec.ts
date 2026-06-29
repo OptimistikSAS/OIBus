@@ -54,6 +54,8 @@ describe('LogsComponent', () => {
       scopeId: null,
       itemId: null,
       itemName: null,
+      groupId: null,
+      groupName: null,
       message: 'my log 1'
     },
     {
@@ -64,6 +66,8 @@ describe('LogsComponent', () => {
       scopeName: 'My South',
       itemId: null,
       itemName: null,
+      groupId: null,
+      groupName: null,
       message: 'my log 2'
     }
   ]);
@@ -118,6 +122,7 @@ describe('LogsComponent', () => {
       scopeTypes: [],
       scopeIds: [],
       itemIds: [],
+      groupIds: [],
       start: '2022-12-31T23:00:00.000Z',
       end: '2023-02-28T23:00:00.000Z',
       levels: ['info', 'error'],
@@ -125,18 +130,20 @@ describe('LogsComponent', () => {
     });
     await expect.element(tester.logs).toHaveLength(2);
 
-    await expect.element(tester.cells(0)).toHaveLength(6);
+    await expect.element(tester.cells(0)).toHaveLength(7);
     await expect.element(tester.cells(0).nth(1)).toHaveTextContent('1 Jan 2023, 01:00:00');
     await expect.element(tester.cells(0).nth(2)).toHaveTextContent('Internal');
     expect(tester.cells(0).nth(3).element().textContent?.trim()).toBe('');
     expect(tester.cells(0).nth(4).element().textContent?.trim()).toBe('');
-    await expect.element(tester.cells(0).nth(5)).toHaveTextContent('my log 1');
+    expect(tester.cells(0).nth(5).element().textContent?.trim()).toBe('');
+    await expect.element(tester.cells(0).nth(6)).toHaveTextContent('my log 1');
 
     await expect.element(tester.cells(1).nth(1)).toHaveTextContent('2 Jan 2023, 01:00:00');
     await expect.element(tester.cells(1).nth(2)).toHaveTextContent('South');
     await expect.element(tester.cells(1).nth(3)).toHaveTextContent('My South');
     expect(tester.cells(1).nth(4).element().textContent?.trim()).toBe('');
-    await expect.element(tester.cells(1).nth(5)).toHaveTextContent('my log 2');
+    expect(tester.cells(1).nth(5).element().textContent?.trim()).toBe('');
+    await expect.element(tester.cells(1).nth(6)).toHaveTextContent('my log 2');
   });
 
   test('should add selected scope and clear input on typeahead selection', () => {
@@ -349,6 +356,7 @@ describe('LogsComponent', () => {
           scopeTypes: ['south'],
           scopeIds: ['X'],
           itemIds: [],
+          groupIds: [],
           page: 0
         }
       });
