@@ -188,13 +188,15 @@ describe('NorthFileWriter', () => {
   });
 
   it('should have access to output folder (Test Connection)', async () => {
-    const accessMock = mock.method(fs, 'access', async () => undefined);
+    const writeFileMock = mock.method(fs, 'writeFile', async () => undefined);
+    const unlinkMock = mock.method(fs, 'unlink', async () => undefined);
     mock.method(fs, 'readdir', async () => ['file1.txt', 'file2.csv', 'file3.json'] as unknown as Array<string>);
 
     const testResult = await north.testConnection();
 
     const outputFolder = path.resolve(configuration.settings.outputFolder);
-    assert.strictEqual(accessMock.mock.calls.length, 2);
+    assert.strictEqual(writeFileMock.mock.calls.length, 1);
+    assert.strictEqual(unlinkMock.mock.calls.length, 1);
     assert.deepStrictEqual(testResult, {
       items: [
         { key: 'Output Folder', value: outputFolder },
@@ -205,9 +207,9 @@ describe('NorthFileWriter', () => {
 
   it('should handle folder not existing (Test Connection)', async () => {
     const outputFolder = path.resolve(configuration.settings.outputFolder);
-    const errorMessage = 'Folder does not exist';
+    const errorMessage = 'ENOENT: no such file or directory';
 
-    mock.method(fs, 'access', async () => {
+    mock.method(fs, 'writeFile', async () => {
       throw new Error(errorMessage);
     });
 
@@ -215,27 +217,23 @@ describe('NorthFileWriter', () => {
       async () => {
         await north.testConnection();
       },
-      new Error(`Access error on "${outputFolder}": ${errorMessage}`)
+      new Error(`Write access error on "${outputFolder}": ${errorMessage}`)
     );
   });
 
   it('should handle not having write access on folder (Test Connection)', async () => {
     const outputFolder = path.resolve(configuration.settings.outputFolder);
-    const errorMessage = 'No write access';
-    let callCount = 0;
+    const errorMessage = 'EPERM: operation not permitted';
 
-    mock.method(fs, 'access', async () => {
-      callCount++;
-      if (callCount === 2) {
-        throw new Error(errorMessage);
-      }
+    mock.method(fs, 'writeFile', async () => {
+      throw new Error(errorMessage);
     });
 
     await assert.rejects(
       async () => {
         await north.testConnection();
       },
-      new Error(`Access error on "${outputFolder}": ${errorMessage}`)
+      new Error(`Write access error on "${outputFolder}": ${errorMessage}`)
     );
   });
 
