@@ -239,7 +239,7 @@ describe('NorthFileWriter', () => {
 
   describe('connect and disconnect (SMB)', () => {
     afterEach(async () => {
-      await north.stop().catch(() => {});
+      await north.stop().catch(_e => undefined);
     });
 
     it('should call super.connect without mounting on non-Windows platforms', async () => {
