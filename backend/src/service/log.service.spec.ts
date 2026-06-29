@@ -38,6 +38,7 @@ describe('Log Service', () => {
       scopeIds: [],
       scopeTypes: [],
       itemIds: [],
+      groupIds: [],
       messageContent: undefined
     };
     const result = service.search(searchParams);
@@ -96,6 +97,31 @@ describe('Log Service', () => {
     assert.deepStrictEqual(logRepository.getItemById.mock.calls[0].arguments, ['itemId']);
   });
 
+  it('should suggest groups', () => {
+    logRepository.suggestGroups.mock.mockImplementationOnce(() => []);
+
+    const result = service.suggestGroups('groupName');
+
+    assert.deepStrictEqual(logRepository.suggestGroups.mock.calls[0].arguments, ['groupName']);
+    assert.deepStrictEqual(result, []);
+  });
+
+  it('should get a group', () => {
+    logRepository.getGroupById.mock.mockImplementationOnce(() => ({ groupId: 'groupId', groupName: 'groupName' }));
+
+    const result = service.getGroupById('groupId');
+
+    assert.deepStrictEqual(logRepository.getGroupById.mock.calls[0].arguments, ['groupId']);
+    assert.deepStrictEqual(result, { groupId: 'groupId', groupName: 'groupName' });
+  });
+
+  it('should throw if group not found', () => {
+    logRepository.getGroupById.mock.mockImplementationOnce(() => null);
+
+    assert.throws(() => service.getGroupById('groupId'), { message: `Group "groupId" not found` });
+    assert.deepStrictEqual(logRepository.getGroupById.mock.calls[0].arguments, ['groupId']);
+  });
+
   it('should properly convert to DTO', () => {
     const log = testData.logs.list[0];
     assert.deepStrictEqual(toLogDTO(log), {
@@ -106,6 +132,8 @@ describe('Log Service', () => {
       scopeName: log.scopeName,
       itemId: log.itemId,
       itemName: log.itemName,
+      groupId: log.groupId,
+      groupName: log.groupName,
       message: log.message
     });
   });
