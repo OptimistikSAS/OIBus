@@ -32,6 +32,8 @@ describe('LogService', () => {
         scopeId: null,
         itemId: null,
         itemName: null,
+        groupId: null,
+        groupName: null,
         message: 'my log 1'
       },
       {
@@ -42,6 +44,8 @@ describe('LogService', () => {
         scopeId: null,
         itemId: null,
         itemName: null,
+        groupId: null,
+        groupName: null,
         message: 'my log 2'
       }
     ]);
@@ -53,6 +57,7 @@ describe('LogService', () => {
         scopeTypes: ['internal', 'south'],
         scopeIds: ['id1', 'id2'],
         itemIds: ['itemId1', 'itemId2'],
+        groupIds: [],
         start: '2023-01-01T00:00:00.000Z',
         end: '2023-01-02T00:00:00.000Z',
         levels: ['info', 'debug']
