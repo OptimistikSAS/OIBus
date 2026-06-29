@@ -133,6 +133,25 @@ describe('Repository with populated database', () => {
       assert.strictEqual(repository.getScopeById('bad id'), null);
     });
 
+    it('should find internal scopes by scope_id when scope_name is null', () => {
+      repository.saveAll([
+        {
+          msg: 'engine log',
+          scopeType: 'internal',
+          scopeId: 'engine',
+          scopeName: undefined,
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        }
+      ]);
+
+      const result = repository.suggestScopes('engine');
+      assert.ok(
+        result.some(s => s.scopeId === 'engine' && s.scopeName === null),
+        'expected engine internal scope to be suggested by scope_id'
+      );
+    });
+
     it('should search items and find by id', () => {
       repository.saveAll([
         {
