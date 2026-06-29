@@ -37,7 +37,7 @@ export class LogService {
     if (searchParams.itemIds) {
       params['itemIds'] = searchParams.itemIds.join(',');
     }
-    if (searchParams.groupIds) {
+    if (searchParams.groupIds?.length) {
       params['groupIds'] = searchParams.groupIds.join(',');
     }
     if (searchParams.levels) {
