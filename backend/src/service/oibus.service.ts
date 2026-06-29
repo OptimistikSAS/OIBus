@@ -306,7 +306,7 @@ export default class OIBusService {
     await this.loggerService.stop();
     const registration = this.oIAnalyticsRegistrationService.getRegistrationSettings();
     await this.loggerService.start(settings, registration);
-    this.loggerEvent.emit('updated', this.loggerService.createChildLogger('internal', 'web-server', 'Web Server'));
+    this.loggerEvent.emit('updated', this.loggerService.createChildLogger('internal', 'web-server'));
   }
 
   restart(): void {

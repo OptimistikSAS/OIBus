@@ -158,6 +158,11 @@
       "history-query": "History query",
       "internal": "Internal"
     },
+    "internal-scope-ids": {
+      "engine": "Engine",
+      "web-server": "Web Server",
+      "node-opcua": "Node OPC-UA"
+    },
     "categories": {
       "api": "API",
       "database": "Database",
@@ -2684,6 +2689,7 @@
       "scope-type": "Types",
       "scope": "Scopes",
       "item": "Items",
+      "group": "Groups",
       "levels": "Levels"
     },
     "date": "Date",
@@ -2691,6 +2697,7 @@
     "scope-type": "Type",
     "scope": "Scope",
     "item": "Item",
+    "group": "Group",
     "message": "Message",
     "none": "No log found",
     "tooltips": {

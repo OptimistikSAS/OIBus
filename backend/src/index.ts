@@ -279,7 +279,7 @@ const CERT_FOLDER = 'certs';
     historyQueryService,
     homeMetricsService,
     ignoreIpFilters,
-    loggerService.createChildLogger('internal', 'web-server', 'Web Server')
+    loggerService.createChildLogger('internal', 'web-server')
   );
   await server.init();
 
