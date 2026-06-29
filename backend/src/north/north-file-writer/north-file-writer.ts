@@ -87,10 +87,12 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
       throw new Error(`Access error on "${outputFolder}": ${(error as Error).message}`);
     }
 
+    const testFile = path.join(outputFolder, `.oibus-write-test`);
     try {
-      await fs.access(outputFolder, fs.constants.W_OK);
+      await fs.writeFile(testFile, '');
+      await fs.unlink(testFile);
     } catch (error: unknown) {
-      throw new Error(`Access error on "${outputFolder}": ${(error as Error).message}`);
+      throw new Error(`Write access error on "${outputFolder}": ${(error as Error).message}`);
     }
 
     const items: Array<{ key: string; value: string }> = [{ key: 'Output Folder', value: outputFolder }];
