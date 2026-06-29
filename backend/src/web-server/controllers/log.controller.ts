@@ -1,6 +1,6 @@
 import { Controller, Get, Path, Query, Request, Route, Tags } from 'tsoa';
 import { Instant, Page } from '../../../shared/model/types';
-import { Item, LogDTO, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/logs.model';
+import { Group, Item, LogDTO, LogLevel, LogSearchParam, Scope, ScopeType } from '../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
 import { CustomExpressRequest } from '../express';
 import { toLogDTO } from '../../service/log.service';
@@ -21,6 +21,7 @@ export class LogController extends Controller {
    * @param scopeIds Comma-separated list of scope IDs to filter by (e.g. `connector123,connector456`).
    * @param scopeTypes Comma-separated list of scope types to filter by (e.g. `south,north`). Valid values: `south`, `north`, `history-query`, `internal`.
    * @param itemIds Comma-separated list of item IDs to filter by (e.g. `item123,item456`).
+   * @param groupIds Comma-separated list of group IDs to filter by (e.g. `group123,group456`).
    * @param messageContent Substring to search for within log messages.
    * @returns {Promise<Page<LogDTO>>} Paginated list of log entries
    */
@@ -32,6 +33,7 @@ export class LogController extends Controller {
     @Query() scopeIds: string | undefined,
     @Query() scopeTypes: string | undefined,
     @Query() itemIds: string | undefined,
+    @Query() groupIds: string | undefined,
     @Query() messageContent: string | undefined,
     @Query() page = 0,
     @Request() request: CustomExpressRequest
@@ -43,6 +45,7 @@ export class LogController extends Controller {
     const normalizedScopeTypes = scopeTypes ? (scopeTypes.split(',').filter(scopeType => scopeType.trim() !== '') as Array<ScopeType>) : [];
     const normalizedScopeIds = scopeIds ? (scopeIds.split(',').filter(scopeId => scopeId.trim() !== '') as Array<string>) : [];
     const normalizedItemIds = itemIds ? itemIds.split(',').filter(itemId => itemId.trim() !== '') : [];
+    const normalizedGroupIds = groupIds ? groupIds.split(',').filter(groupId => groupId.trim() !== '') : [];
 
     const searchParams: LogSearchParam = {
       page: page ? parseInt(page.toString(), 10) : 0,
@@ -52,6 +55,7 @@ export class LogController extends Controller {
       scopeIds: normalizedScopeIds,
       scopeTypes: normalizedScopeTypes,
       itemIds: normalizedItemIds,
+      groupIds: normalizedGroupIds,
       messageContent: messageContent
     };
 
@@ -111,5 +115,28 @@ export class LogController extends Controller {
   getItemById(@Path() itemId: string, @Request() request: CustomExpressRequest): Item {
     const logService = request.services.logService;
     return logService.getItemById(itemId);
+  }
+
+  /**
+   * Returns a list of group suggestions based on the provided name fragment
+   * @summary Get group suggestions
+   * @returns {Promise<Array<Group>>} Array of matching group objects
+   */
+  @Get('/groups/suggest')
+  suggestGroups(@Query() name = '', @Request() request: CustomExpressRequest): Array<Group> {
+    const logService = request.services.logService;
+    return logService.suggestGroups(name);
+  }
+
+  /**
+   * Retrieves details for a specific log group by its ID
+   * @summary Get log group details
+   * @param {string} groupId.path.required - Group ID
+   * @returns {Promise<Group>} Group object or 404 if not found
+   */
+  @Get('/groups/{groupId}')
+  getGroupById(@Path() groupId: string, @Request() request: CustomExpressRequest): Group {
+    const logService = request.services.logService;
+    return logService.getGroupById(groupId);
   }
 }

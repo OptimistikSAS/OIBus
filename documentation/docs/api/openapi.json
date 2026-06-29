@@ -28851,6 +28851,18 @@
 						"description": "The human-readable name of the item the log is associated with.\nCan be `null` if the log is not associated with a specific item.",
 						"example": "Temperature sensor"
 					},
+					"groupId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The unique identifier of the group the log is associated with (e.g., a south connector item group ID).\nCan be `null` if the log is not associated with a specific group.",
+						"example": "group123"
+					},
+					"groupName": {
+						"type": "string",
+						"nullable": true,
+						"description": "The human-readable name of the group the log is associated with.\nCan be `null` if the log is not associated with a specific group.",
+						"example": "Temperature sensors"
+					},
 					"message": {
 						"type": "string",
 						"description": "The log message content, including details about the event or error.",
@@ -28865,6 +28877,8 @@
 					"scopeName",
 					"itemId",
 					"itemName",
+					"groupId",
+					"groupName",
 					"message"
 				],
 				"type": "object",
@@ -28953,6 +28967,27 @@
 				"required": [
 					"itemId",
 					"itemName"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Group": {
+				"description": "Represents a group associated with log entries.\nA group is a set of south connector items queried together.",
+				"properties": {
+					"groupId": {
+						"type": "string",
+						"description": "The unique identifier of the group (e.g., south connector item group ID).",
+						"example": "group123"
+					},
+					"groupName": {
+						"type": "string",
+						"description": "The human-readable name of the group.",
+						"example": "Temperature sensors"
+					}
+				},
+				"required": [
+					"groupId",
+					"groupName"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -35982,6 +36017,15 @@
 						}
 					},
 					{
+						"description": "Comma-separated list of group IDs to filter by (e.g. `group123,group456`).",
+						"in": "query",
+						"name": "groupIds",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"description": "Substring to search for within log messages.",
 						"in": "query",
 						"name": "messageContent",
@@ -36135,6 +36179,76 @@
 					{
 						"in": "path",
 						"name": "itemId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/logs/groups/suggest": {
+			"get": {
+				"operationId": "SuggestGroups",
+				"responses": {
+					"200": {
+						"description": "Array of matching group objects",
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/Group"
+									},
+									"type": "array"
+								}
+							}
+						}
+					}
+				},
+				"description": "Returns a list of group suggestions based on the provided name fragment",
+				"summary": "Get group suggestions",
+				"tags": [
+					"Logs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "name",
+						"required": false,
+						"schema": {
+							"default": "",
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/logs/groups/{groupId}": {
+			"get": {
+				"operationId": "GetGroupById",
+				"responses": {
+					"200": {
+						"description": "Group object or 404 if not found",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Group"
+								}
+							}
+						}
+					}
+				},
+				"description": "Retrieves details for a specific log group by its ID",
+				"summary": "Get log group details",
+				"tags": [
+					"Logs"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "groupId",
 						"required": true,
 						"schema": {
 							"type": "string"
