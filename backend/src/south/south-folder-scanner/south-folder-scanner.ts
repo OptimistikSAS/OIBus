@@ -4,6 +4,7 @@ import { execFile as execFileCb } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import SouthConnector from '../south-connector';
+import { encryptionService } from '../../service/encryption.service';
 
 const execFile = promisify(execFileCb);
 import { checkAge, compress } from '../../service/utils';
@@ -57,7 +58,18 @@ export default class SouthFolderScanner
       ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
       : this.connector.settings.username;
     try {
-      await execFile('net', ['use', uncRoot, this.connector.settings.password ?? '', `/user:${user}`, '/persistent:no']);
+      const password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
+      try {
+        await execFile('net', ['use', uncRoot, password, `/user:${user}`, '/persistent:no']);
+      } catch (firstError: unknown) {
+        // Error 1219: existing connection with different credentials — disconnect and retry
+        if ((firstError as Error).message?.includes('1219')) {
+          await execFile('net', ['use', uncRoot, '/delete', '/yes']).catch(() => undefined);
+          await execFile('net', ['use', uncRoot, password, `/user:${user}`, '/persistent:no']);
+        } else {
+          throw firstError;
+        }
+      }
       this.logger.debug(`Mounted SMB share ${uncRoot} as ${user}`);
     } catch (error: unknown) {
       this.logger.error(`Failed to mount SMB share ${uncRoot}: ${(error as Error).message}`);
