@@ -49,7 +49,7 @@ export default class DataStreamEngine {
   >();
   private historyQueries = new Map<string, { historyQuery: HistoryQuery; metrics: HistoryQueryMetricsService }>();
 
-  private readonly _logger = loggerService.createChildLogger('internal', 'engine', 'Engine');
+  private readonly _logger = loggerService.createChildLogger('internal', 'engine');
   readonly baseFolder: string;
 
   constructor(

@@ -1,3 +1,4 @@
+/* tslint:disable */
 /* eslint-disable */
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import type { TsoaRoute } from '@tsoa/runtime';
@@ -6595,6 +6596,8 @@ const models: TsoaRoute.Models = {
             "scopeName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "itemId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "itemName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupId": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "groupName": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "message": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
@@ -6626,6 +6629,15 @@ const models: TsoaRoute.Models = {
         "properties": {
             "itemId": {"dataType":"string","required":true},
             "itemName": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Group": {
+        "dataType": "refObject",
+        "properties": {
+            "groupId": {"dataType":"string","required":true},
+            "groupName": {"dataType":"string","required":true},
         },
         "additionalProperties": false,
     },
@@ -10282,6 +10294,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 scopeIds: {"in":"query","name":"scopeIds","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 scopeTypes: {"in":"query","name":"scopeTypes","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 itemIds: {"in":"query","name":"itemIds","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
+                groupIds: {"in":"query","name":"groupIds","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 messageContent: {"in":"query","name":"messageContent","required":true,"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"undefined"}]},
                 page: {"default":0,"in":"query","name":"page","dataType":"double"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
@@ -10426,6 +10439,68 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'getItemById',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsLogController_suggestGroups: Record<string, TsoaRoute.ParameterSchema> = {
+                name: {"default":"","in":"query","name":"name","dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/logs/groups/suggest',
+            ...(fetchMiddlewares<RequestHandler>(LogController)),
+            ...(fetchMiddlewares<RequestHandler>(LogController.prototype.suggestGroups)),
+
+            async function LogController_suggestGroups(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsLogController_suggestGroups, request, response });
+
+                const controller = new LogController();
+
+              await templateService.apiHandler({
+                methodName: 'suggestGroups',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsLogController_getGroupById: Record<string, TsoaRoute.ParameterSchema> = {
+                groupId: {"in":"path","name":"groupId","required":true,"dataType":"string"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/logs/groups/:groupId',
+            ...(fetchMiddlewares<RequestHandler>(LogController)),
+            ...(fetchMiddlewares<RequestHandler>(LogController.prototype.getGroupById)),
+
+            async function LogController_getGroupById(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsLogController_getGroupById, request, response });
+
+                const controller = new LogController();
+
+              await templateService.apiHandler({
+                methodName: 'getGroupById',
                 controller,
                 response,
                 next,

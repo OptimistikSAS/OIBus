@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import {
+  Group,
   Item,
   LOG_LEVELS,
   LogDTO,
@@ -94,6 +95,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       scopeTypes: [[] as Array<ScopeType>],
       scopeIds: null as string | null,
       itemIds: null as string | null,
+      groupIds: null as string | null,
       levels: [[] as Array<LogLevel>],
       page: null as number | null
     },
@@ -112,6 +114,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   readonly scopeTypes = SCOPE_TYPES;
   selectedScopes = signal<Array<Scope>>([]);
   selectedItems = signal<Array<Item>>([]);
+  selectedGroups = signal<Array<Group>>([]);
   loading = signal(false);
   // subscription to reload the page periodically
   subscription = new Subscription();
@@ -138,6 +141,14 @@ export class LogsComponent implements OnInit, OnDestroy {
     );
   itemFormatter = (item: Item) => item.itemName;
 
+  groupTypeahead = (text$: Observable<string>) =>
+    text$.pipe(
+      debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
+      distinctUntilChanged(),
+      switchMap(text => this.logService.suggestGroups(text))
+    );
+  groupFormatter = (group: Group) => group.groupName;
+
   private autoReloadPaused$ = toObservable(this.autoReloadPaused);
 
   ngOnInit(): void {
@@ -149,6 +160,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       scopeTypes: searchParams.scopeTypes,
       scopeIds: '',
       itemIds: '',
+      groupIds: '',
       levels: searchParams.levels,
       page: searchParams.page
     });
@@ -169,6 +181,14 @@ export class LogsComponent implements OnInit, OnDestroy {
       combineLatest(queryItemIds.map(itemId => this.logService.getItemById(itemId).pipe(catchError(() => of(null))))).subscribe(
         selectedItems => {
           this.selectedItems.set(selectedItems.filter(item => !!item) as Array<Item>);
+        }
+      );
+    }
+    const queryGroupIds = this.route.snapshot.queryParamMap.getAll('groupIds');
+    if (queryGroupIds.length > 0) {
+      combineLatest(queryGroupIds.map(groupId => this.logService.getGroupById(groupId).pipe(catchError(() => of(null))))).subscribe(
+        selectedGroups => {
+          this.selectedGroups.set(selectedGroups.filter(group => !!group) as Array<Group>);
         }
       );
     }
@@ -214,8 +234,9 @@ export class LogsComponent implements OnInit, OnDestroy {
     const end = queryParamMap.get('end') || undefined;
     const levels = queryParamMap.getAll('levels') as Array<LogLevel>;
     const itemIds = queryParamMap.getAll('itemIds');
+    const groupIds = queryParamMap.getAll('groupIds');
     const page = queryParamMap.get('page') ? parseInt(queryParamMap.get('page')!, 10) : 0;
-    return { messageContent, scopeTypes, scopeIds, itemIds, start, end, levels, page };
+    return { messageContent, scopeTypes, scopeIds, itemIds, groupIds, start, end, levels, page };
   }
 
   triggerSearch() {
@@ -233,6 +254,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       scopeTypes: scopeType ? [scopeType] : formValue.scopeTypes!,
       scopeIds: scopeId ? [scopeId] : this.selectedScopes()!.map(scope => scope.scopeId),
       itemIds: this.selectedItems().map(item => item.itemId),
+      groupIds: this.selectedGroups().map(group => group.groupId),
       page: 0
     };
     this.router.navigate([], { queryParams: criteria });
@@ -260,6 +282,16 @@ export class LogsComponent implements OnInit, OnDestroy {
 
   removeItem(itemToRemove: Item) {
     this.selectedItems.update(items => items.filter(item => item.itemId !== itemToRemove.itemId));
+  }
+
+  selectGroup(event: NgbTypeaheadSelectItemEvent<Group>) {
+    this.selectedGroups.update(groups => [...groups, event.item]);
+    this.searchForm.controls.groupIds.setValue('');
+    event.preventDefault();
+  }
+
+  removeGroup(groupToRemove: Group) {
+    this.selectedGroups.update(groups => groups.filter(group => group.groupId !== groupToRemove.groupId));
   }
 
   getLevelClass(logLevel: LogLevel): string {

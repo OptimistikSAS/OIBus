@@ -1,7 +1,7 @@
 import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import { Page } from '../../shared/model/types';
 import { OIBusLog } from '../model/logs.model';
-import { Item, LogDTO, LogSearchParam, Scope } from '../../shared/model/logs.model';
+import { Group, Item, LogDTO, LogSearchParam, Scope } from '../../shared/model/logs.model';
 import LogRepository from '../repository/logs/log.repository';
 import { NotFoundError } from '../model/types';
 
@@ -38,6 +38,18 @@ export default class LogService {
     }
     return item;
   }
+
+  suggestGroups(name: string): Array<Group> {
+    return this.logRepository.suggestGroups(name);
+  }
+
+  getGroupById(groupId: string): Group {
+    const group = this.logRepository.getGroupById(groupId);
+    if (!group) {
+      throw new NotFoundError(`Group "${groupId}" not found`);
+    }
+    return group;
+  }
 }
 
 export const toLogDTO = (log: OIBusLog): LogDTO => {
@@ -49,6 +61,8 @@ export const toLogDTO = (log: OIBusLog): LogDTO => {
     scopeName: log.scopeName,
     itemId: log.itemId,
     itemName: log.itemName,
+    groupId: log.groupId,
+    groupName: log.groupName,
     message: log.message
   };
 };

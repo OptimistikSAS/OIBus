@@ -1,7 +1,7 @@
 import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { Item, LogSearchParam, Scope } from '../../../shared/model/logs.model';
+import { Group, Item, LogSearchParam, Scope } from '../../../shared/model/logs.model';
 import { CustomExpressRequest } from '../express';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, fixTsoaModuleResolution, createMockServices } from '../../tests/utils/test-utils';
@@ -60,6 +60,7 @@ describe('LogController', () => {
       scopeTypes: ['south', 'north'],
       scopeIds: ['scope1', 'scope2'],
       itemIds: ['item1', 'item2'],
+      groupIds: [],
       messageContent
     };
 
@@ -73,6 +74,7 @@ describe('LogController', () => {
       scopeIds,
       scopeTypes,
       itemIds,
+      undefined,
       messageContent,
       page,
       mockRequest as CustomExpressRequest
@@ -95,6 +97,7 @@ describe('LogController', () => {
       scopeTypes: [],
       scopeIds: [],
       itemIds: [],
+      groupIds: [],
       messageContent: undefined
     };
 
@@ -102,6 +105,7 @@ describe('LogController', () => {
     logService.search = mock.fn(() => expectedResult);
 
     const result = await controller.search(
+      undefined,
       undefined,
       undefined,
       undefined,
@@ -186,5 +190,40 @@ describe('LogController', () => {
     assert.strictEqual(logService.getItemById.mock.calls.length, 1);
     assert.deepStrictEqual(logService.getItemById.mock.calls[0].arguments[0], itemId);
     assert.deepStrictEqual(result, item);
+  });
+
+  it('should suggest groups by name', async () => {
+    const groups: Array<Group> = [{ groupId: 'group-id', groupName: 'Group Name' }];
+    const name = 'Group';
+    logService.suggestGroups = mock.fn(() => groups);
+
+    const result = await controller.suggestGroups(name, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(logService.suggestGroups.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.suggestGroups.mock.calls[0].arguments[0], name);
+    assert.deepStrictEqual(result, groups);
+  });
+
+  it('should suggest groups by name with default parameter', async () => {
+    const groups: Array<Group> = [{ groupId: 'group-id', groupName: 'Group Name' }];
+    logService.suggestGroups = mock.fn(() => groups);
+
+    const result = await controller.suggestGroups(undefined, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(logService.suggestGroups.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.suggestGroups.mock.calls[0].arguments[0], '');
+    assert.deepStrictEqual(result, groups);
+  });
+
+  it('should get group by its ID', async () => {
+    const group: Group = { groupId: 'group-id', groupName: 'Group Name' };
+    const groupId = 'group-id';
+    logService.getGroupById = mock.fn(() => group);
+
+    const result = await controller.getGroupById(groupId, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(logService.getGroupById.mock.calls.length, 1);
+    assert.deepStrictEqual(logService.getGroupById.mock.calls[0].arguments[0], groupId);
+    assert.deepStrictEqual(result, group);
   });
 });
