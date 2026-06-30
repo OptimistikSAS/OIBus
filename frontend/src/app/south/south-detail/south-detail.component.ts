@@ -255,7 +255,8 @@ export class SouthDetailComponent {
             maxReadInterval: command.maxReadInterval,
             readDelay: command.readDelay,
             startTimeOffset: command.startTimeOffset,
-            endTimeOffset: command.endTimeOffset
+            endTimeOffset: command.endTimeOffset,
+            recoveryStrategy: command.recoveryStrategy
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -301,7 +302,8 @@ export class SouthDetailComponent {
             maxReadInterval: command.maxReadInterval,
             readDelay: command.readDelay,
             startTimeOffset: command.startTimeOffset,
-            endTimeOffset: command.endTimeOffset
+            endTimeOffset: command.endTimeOffset,
+            recoveryStrategy: command.recoveryStrategy
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -357,7 +359,8 @@ export class SouthDetailComponent {
             maxReadInterval: command.maxReadInterval,
             readDelay: command.readDelay,
             startTimeOffset: command.startTimeOffset,
-            endTimeOffset: command.endTimeOffset
+            endTimeOffset: command.endTimeOffset,
+            recoveryStrategy: command.recoveryStrategy
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -480,7 +483,8 @@ export class SouthDetailComponent {
               maxReadInterval: item.maxReadInterval,
               readDelay: item.readDelay,
               startTimeOffset: item.startTimeOffset,
-              endTimeOffset: item.endTimeOffset
+              endTimeOffset: item.endTimeOffset,
+              recoveryStrategy: item.recoveryStrategy
             }) as SouthConnectorItemCommandDTO
         );
         component.prepare(this.manifest!, this.southConnector!.items, commandItems, result.errors, this.scanModes);

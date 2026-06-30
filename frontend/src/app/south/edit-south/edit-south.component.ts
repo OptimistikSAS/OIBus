@@ -466,7 +466,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
             maxReadInterval: item.maxReadInterval,
             readDelay: item.readDelay,
             startTimeOffset: item.startTimeOffset,
-            endTimeOffset: item.endTimeOffset
+            endTimeOffset: item.endTimeOffset,
+            recoveryStrategy: item.recoveryStrategy
           }) as SouthConnectorItemCommandDTO
       );
       component.prepare(this.manifest!, this.inMemoryItems, commandItems, result.errors, this.scanModes);
