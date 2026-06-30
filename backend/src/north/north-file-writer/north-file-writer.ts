@@ -38,42 +38,38 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   private async mountNetworkShare(folderPath: string): Promise<void> {
-    if (process.platform !== 'win32') return;
+    if (process.platform !== 'win32') {
+      if (this.connector.settings.username) this.logger.trace('Skipping SMB credential store: not running on Windows');
+      return;
+    }
     if (!this.connector.settings.username) return;
-    const uncRoot = folderPath.match(/^(\\\\[^\\]+\\[^\\]+)/)?.[1];
-    if (!uncRoot) return;
+    const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
+    if (!serverRoot) return;
     const user = this.connector.settings.domain
       ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
       : this.connector.settings.username;
     try {
       const password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
-      try {
-        await execFile('net', ['use', uncRoot, password, `/user:${user}`, '/persistent:no']);
-      } catch (firstError: unknown) {
-        // Error 1219: existing connection with different credentials — disconnect and retry
-        if ((firstError as Error).message?.includes('1219')) {
-          await execFile('net', ['use', uncRoot, '/delete', '/yes']).catch(() => undefined);
-          await execFile('net', ['use', uncRoot, password, `/user:${user}`, '/persistent:no']);
-        } else {
-          throw firstError;
-        }
-      }
-      this.logger.debug(`Mounted SMB share ${uncRoot} as ${user}`);
+      await execFile('cmdkey', [`/add:${serverRoot}`, `/user:${user}`, `/pass:${password}`]);
+      this.logger.debug(`Stored SMB credentials for ${serverRoot} as ${user}`);
     } catch (error: unknown) {
-      this.logger.error(`Failed to mount SMB share ${uncRoot}: ${(error as Error).message}`);
+      this.logger.error(`Failed to store SMB credentials for ${serverRoot}: ${(error as Error).message}`);
       throw error;
     }
   }
 
   private async unmountNetworkShare(folderPath: string): Promise<void> {
-    if (process.platform !== 'win32') return;
+    if (process.platform !== 'win32') {
+      if (this.connector.settings.username) this.logger.trace('Skipping SMB credential removal: not running on Windows');
+      return;
+    }
     if (!this.connector.settings.username) return;
-    const uncRoot = folderPath.match(/^(\\\\[^\\]+\\[^\\]+)/)?.[1];
-    if (!uncRoot) return;
+    const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
+    if (!serverRoot) return;
     try {
-      await execFile('net', ['use', uncRoot, '/delete', '/yes']);
+      await execFile('cmdkey', [`/delete:${serverRoot}`]);
     } catch {
-      // Ignore — share may have already been disconnected
+      // Ignore — credentials may have already been removed
     }
   }
 

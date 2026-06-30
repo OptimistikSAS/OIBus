@@ -240,20 +240,27 @@ describe('NorthFileWriter', () => {
   describe('connect and disconnect (SMB)', () => {
     afterEach(async () => {
       await north.stop().catch(_e => undefined);
+      logger.trace.mock.resetCalls();
     });
 
-    it('should call super.connect without mounting on non-Windows platforms', async () => {
+    it('should log trace and skip SMB credential store on non-Windows platforms', async () => {
       configuration.settings.username = 'user';
-      const connectSpy = mock.method(north, 'connect', async () => undefined);
-      await north.connect();
-      assert.strictEqual(connectSpy.mock.calls.length, 1);
+      configuration.settings.outputFolder = '\\\\server\\share\\out';
+      north = new NorthFileWriter(configuration, cacheService);
+      logger.trace.mock.resetCalls();
+      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+      await (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out');
+      assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential store')));
     });
 
-    it('should call super.disconnect without unmounting on non-Windows platforms', async () => {
+    it('should log trace and skip SMB credential removal on non-Windows platforms', async () => {
       configuration.settings.username = 'user';
-      const disconnectSpy = mock.method(north, 'disconnect', async () => undefined);
-      await north.disconnect();
-      assert.strictEqual(disconnectSpy.mock.calls.length, 1);
+      configuration.settings.outputFolder = '\\\\server\\share\\out';
+      north = new NorthFileWriter(configuration, cacheService);
+      logger.trace.mock.resetCalls();
+      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+      await (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out');
+      assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential removal')));
     });
 
     it('should skip SMB mount when username is empty', async () => {

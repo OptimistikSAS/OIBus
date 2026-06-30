@@ -441,25 +441,33 @@ describe('SouthFolderScanner', () => {
   });
 
   describe('connect and disconnect', () => {
-    it('should call super.connect without mounting on non-Windows platforms', async () => {
-      // On Linux process.platform !== 'win32' so no execFile is called
-      configuration.settings.username = 'user';
-      const connectSpy = mock.method(south, 'connect', async () => undefined);
-      await south.connect();
-      assert.strictEqual(connectSpy.mock.calls.length, 1);
+    afterEach(() => {
+      logger.trace.mock.resetCalls();
     });
 
-    it('should call super.disconnect without unmounting on non-Windows platforms', async () => {
+    it('should log trace and skip SMB credential store on non-Windows platforms', async () => {
       configuration.settings.username = 'user';
-      const disconnectSpy = mock.method(south, 'disconnect', async () => undefined);
-      await south.disconnect();
-      assert.strictEqual(disconnectSpy.mock.calls.length, 1);
+      configuration.settings.inputFolder = '\\\\server\\share\\data';
+      south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      logger.trace.mock.resetCalls();
+      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+      await (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data');
+      assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential store')));
+    });
+
+    it('should log trace and skip SMB credential removal on non-Windows platforms', async () => {
+      configuration.settings.username = 'user';
+      configuration.settings.inputFolder = '\\\\server\\share\\data';
+      south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      logger.trace.mock.resetCalls();
+      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+      await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
+      assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential removal')));
     });
 
     it('should skip SMB mount when username is empty', async () => {
       configuration.settings.username = null;
       configuration.settings.inputFolder = '\\\\server\\share\\data';
-      // No error should be thrown even on any platform when username is absent
       await assert.doesNotReject(south.connect());
     });
 

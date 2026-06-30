@@ -109,18 +109,12 @@ var
   AdminPasswordEdit: TNewEdit;
   PortEdit: TNewEdit;
 
-  ServiceAccountPage: TWizardPage;
-  ServiceAccountEdit: TNewEdit;
-  ServicePasswordEdit: TNewEdit;
-
   // Global variables to store user choices
   FinalServiceName: String;
   FinalDataDir: String;
   FinalAdminUsername: String;
   FinalAdminPassword: String;
   FinalPort: String;
-  FinalServiceAccount: String;
-  FinalServicePassword: String;
 
 // --- Getter Functions for [Registry] ---
 
@@ -165,7 +159,6 @@ end;
 procedure InitializeWizard();
 var
   lblService, lblData, lblAdminUser, lblAdminPass, lblPort: TNewStaticText;
-  lblServiceAccount, lblServicePassword, lblServiceAccountNote: TNewStaticText;
   btnBrowse: TButton;
 begin
   // Create the Custom Page
@@ -255,47 +248,6 @@ begin
   PortEdit.Top := lblPort.Top + lblPort.Height + ScaleY(8);
   PortEdit.Left := 0;
   PortEdit.Width := AdminPage.SurfaceWidth;
-
-  // Create Service Account Page
-  ServiceAccountPage := CreateCustomPage(AdminPage.ID, 'Windows Service Account', 'Configure the Windows account used to run the OIBus service');
-
-  lblServiceAccountNote := TNewStaticText.Create(ServiceAccountPage);
-  lblServiceAccountNote.Parent := ServiceAccountPage.Surface;
-  lblServiceAccountNote.Caption := 'By default OIBus runs under the LocalSystem account, which cannot access network shares.' + #13#10
-    + 'To allow access to UNC paths (e.g. \\server\share), enter a Windows account with the required network permissions.';
-  lblServiceAccountNote.Top := 0;
-  lblServiceAccountNote.Left := 0;
-  lblServiceAccountNote.Width := ServiceAccountPage.SurfaceWidth;
-  lblServiceAccountNote.AutoSize := True;
-
-  lblServiceAccount := TNewStaticText.Create(ServiceAccountPage);
-  lblServiceAccount.Parent := ServiceAccountPage.Surface;
-  lblServiceAccount.Caption := 'Service account username (leave empty to use LocalSystem):';
-  lblServiceAccount.Top := lblServiceAccountNote.Top + lblServiceAccountNote.Height + ScaleY(20);
-  lblServiceAccount.Left := 0;
-  lblServiceAccount.Width := ServiceAccountPage.SurfaceWidth;
-
-  ServiceAccountEdit := TNewEdit.Create(ServiceAccountPage);
-  ServiceAccountEdit.Parent := ServiceAccountPage.Surface;
-  ServiceAccountEdit.Text := '';
-  ServiceAccountEdit.Top := lblServiceAccount.Top + lblServiceAccount.Height + ScaleY(8);
-  ServiceAccountEdit.Left := 0;
-  ServiceAccountEdit.Width := ServiceAccountPage.SurfaceWidth;
-
-  lblServicePassword := TNewStaticText.Create(ServiceAccountPage);
-  lblServicePassword.Parent := ServiceAccountPage.Surface;
-  lblServicePassword.Caption := 'Service account password:';
-  lblServicePassword.Top := ServiceAccountEdit.Top + ServiceAccountEdit.Height + ScaleY(20);
-  lblServicePassword.Left := 0;
-  lblServicePassword.Width := ServiceAccountPage.SurfaceWidth;
-
-  ServicePasswordEdit := TNewEdit.Create(ServiceAccountPage);
-  ServicePasswordEdit.Parent := ServiceAccountPage.Surface;
-  ServicePasswordEdit.PasswordChar := '*';
-  ServicePasswordEdit.Text := '';
-  ServicePasswordEdit.Top := lblServicePassword.Top + lblServicePassword.Height + ScaleY(8);
-  ServicePasswordEdit.Left := 0;
-  ServicePasswordEdit.Width := ServiceAccountPage.SurfaceWidth;
 end;
 
 // Escape a string for safe embedding in a JSON value.
@@ -382,12 +334,6 @@ begin
     FinalPort := PortEdit.Text;
     if Length(FinalPort) = 0 then FinalPort := '2223';
   end;
-
-  if (CurPageID = ServiceAccountPage.ID) then
-  begin
-    FinalServiceAccount := ServiceAccountEdit.Text;
-    FinalServicePassword := ServicePasswordEdit.Text;
-  end;
 end;
 
 // --- Installation Logic ---
@@ -408,10 +354,6 @@ begin
   S := S + Space + 'Data Directory: ' + FinalDataDir + NewLine;
   S := S + Space + 'Admin Username: ' + FinalAdminUsername + NewLine;
   S := S + Space + 'Port: ' + FinalPort + NewLine;
-  if FinalServiceAccount <> '' then
-    S := S + Space + 'Service Account: ' + FinalServiceAccount + NewLine
-  else
-    S := S + Space + 'Service Account: LocalSystem (default)' + NewLine;
 
   Result := S;
 end;
@@ -442,11 +384,7 @@ begin
 
   ExecCmd(NssmPath, 'set "' + FinalServiceName + '" AppNoConsole 1', AppDir);
 
-  // 4. Configure service account (leave as LocalSystem when no account is specified)
-  if FinalServiceAccount <> '' then
-    ExecCmd(NssmPath, 'set "' + FinalServiceName + '" ObjectName "' + FinalServiceAccount + '" "' + FinalServicePassword + '"', AppDir);
-
-  // 5. Start Service
+  // 4. Start Service
   if not ExecCmd(NssmPath, 'start "' + FinalServiceName + '"', AppDir) then
   begin
      MsgBox('Warning: The OIBus service failed to start automatically. Please try starting it from Windows Services.', mbError, MB_OK);

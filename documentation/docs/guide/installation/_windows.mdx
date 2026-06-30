@@ -48,25 +48,13 @@ import TabItem from '@theme/TabItem';
     disk space issues on the system drive and improves reliability.
     :::
 
-    5. **Configure Windows Service Account (optional)**
-    By default OIBus runs under the **LocalSystem** account, which has no network credentials and cannot
-    access UNC paths such as `\\server\share`. To allow OIBus to read from or write to a network share,
-    enter a Windows account (local or domain) with the required network permissions on this page.
-    Leave the field blank to keep the default LocalSystem account.
-
-    :::tip
-    Use a dedicated service account with the minimum permissions required — read access to source shares and
-    write access to destination shares. A domain account is recommended when the shares are on a domain-joined
-    file server.
-    :::
-
-    6. **Confirm and Install**
+    5. **Confirm and Install**
     Review your settings and confirm to begin the installation:
     <div style={{ textAlign: 'center' }}>
       ![Installer validation step](../../../static/img/guide/installation/win_installer/4.png)
     </div>
 
-    7. **Complete Installation**
+    6. **Complete Installation**
     Once the installation is complete, you'll see a confirmation screen.
     Proceed to the [first access guide](./first-access.mdx) to configure OIBus.
 
@@ -124,8 +112,6 @@ import TabItem from '@theme/TabItem';
     | `-u` | Admin username written to `oibus.init.json` on first install | omitted (OIBus default applies) |
     | `-p` | Admin password written to `oibus.init.json` on first install | omitted (OIBus default applies) |
     | `-port` | Port OIBus listens on, written to `oibus.init.json` on first install | omitted (OIBus default applies) |
-    | `-su` | Windows account the OIBus service runs as (e.g. `DOMAIN\oibus-svc`) — required for network share access | omitted (LocalSystem) |
-    | `-sp` | Password for the service account specified with `-su` | omitted |
 
     :::info
     `-u`, `-p`, and `-port` are only used when `oibus.db` does not yet exist (i.e. on the very first install).
@@ -183,49 +169,3 @@ import TabItem from '@theme/TabItem';
 
   </TabItem>
 </Tabs>
-
-## Network share access (UNC paths)
-
-By default, the OIBus Windows service runs under the **LocalSystem** account. LocalSystem has no domain or
-network credentials, which means it **cannot access UNC paths** such as `\\server\share\data`. Attempting to
-use a network path in a connector (e.g. the Folder Scanner input folder or the File Writer output folder)
-will fail with an access-denied or path-not-found error.
-
-There are two ways to fix this:
-
-### Option 1 — Configure a service account (recommended)
-
-Change the Windows service logon account to a domain or local user that already has the required network
-permissions. This is the cleanest solution and works for all connectors and all UNC paths automatically.
-
-- **GUI installer**: enter the account on the *Windows Service Account* page during installation.
-- **Script install**: pass the account with `-su` and `-sp`:
-
-```commandline
-install.bat -c "D:\OIBusData" -su "DOMAIN\oibus-svc" -sp "SecretPassword"
-```
-
-- **After install (manual)**: use the Windows Service Manager or NSSM to change the service logon account:
-
-```commandline
-nssm.exe set OIBus ObjectName "DOMAIN\oibus-svc" "SecretPassword"
-```
-
-### Option 2 — SMB credentials in the connector settings
-
-If changing the service account is not possible, you can provide SMB credentials directly in the
-**Folder Scanner** (south connector) or **File Writer** (north connector) settings. OIBus will call
-`net use` to authenticate against the UNC path before each operation.
-
-Fill in these optional fields in the connector settings:
-
-| Field | Description |
-|-------|-------------|
-| SMB username | Windows account with access to the share |
-| SMB password | Password for the account |
-| SMB domain | Active Directory domain (leave empty for local accounts) |
-
-:::caution Windows only
-The SMB credential fields have no effect on Linux or macOS. On those platforms, mount the network share
-through the OS (e.g. `/etc/fstab` with `cifs`) and point the connector at the resulting mount point.
-:::
