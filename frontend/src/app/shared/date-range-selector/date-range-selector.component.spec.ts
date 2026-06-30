@@ -166,7 +166,7 @@ describe('DateRangeSelectorComponent', () => {
 
   describe('Predefined Range Calculations', () => {
     beforeEach(() => {
-      vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.fromISO('2024-01-01T12:00:00.000Z') as DateTime);
+      vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.utc(2024, 1, 1, 12, 0, 0) as DateTime<true>);
     });
 
     test('should calculate last minute range correctly', () => {
@@ -204,7 +204,7 @@ describe('DateRangeSelectorComponent', () => {
 
   describe('getCurrentRangeDescription', () => {
     beforeEach(() => {
-      vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.fromISO('2024-01-01T12:00:00.000Z') as DateTime);
+      vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.utc(2024, 1, 1, 12, 0, 0) as DateTime<true>);
     });
 
     test('should return formatted range for predefined ranges', () => {
@@ -298,7 +298,7 @@ describe('DateRangeSelectorComponent', () => {
 
     describe('Form Changes', () => {
       beforeEach(() => {
-        vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.fromISO('2024-01-01T12:00:00.000Z') as DateTime);
+        vi.spyOn(DateTime, 'now').mockReturnValue(DateTime.utc(2024, 1, 1, 12, 0, 0) as DateTime<true>);
       });
 
       test('should emit value when predefined range is selected', () => {
