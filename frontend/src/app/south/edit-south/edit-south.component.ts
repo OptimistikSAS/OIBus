@@ -197,7 +197,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
                   syncWithGroup: item.syncWithGroup,
                   maxReadInterval: item.maxReadInterval,
                   readDelay: item.readDelay,
-                  overlap: item.overlap,
+                  startTimeOffset: item.startTimeOffset,
+                  endTimeOffset: item.endTimeOffset,
                   recoveryStrategy: item.recoveryStrategy
                 }) as SouthConnectorItemCommandDTO
             );
@@ -208,7 +209,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 scanModeId: group.standardSettings.scanMode.id
               },
               historySettings: {
-                overlap: group.historySettings.overlap,
+                startTimeOffset: group.historySettings.startTimeOffset,
+                endTimeOffset: group.historySettings.endTimeOffset,
                 maxReadInterval: group.historySettings.maxReadInterval,
                 readDelay: group.historySettings.readDelay,
                 recoveryStrategy: group.historySettings.recoveryStrategy
@@ -415,7 +417,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   importItems() {
     const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
-    const optionalHeaders: Array<string> = ['group', 'maxReadInterval', 'readDelay', 'overlap', 'syncWithGroup'];
+    const optionalHeaders: Array<string> = ['group', 'maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'syncWithGroup'];
     const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
@@ -444,9 +446,10 @@ export class EditSouthComponent implements CanComponentDeactivate {
                 syncWithGroup: item.syncWithGroup,
                 maxReadInterval: item.maxReadInterval,
                 readDelay: item.readDelay,
-                overlap: item.overlap
-              }) as SouthConnectorItemCommandDTO
-          ),
+                startTimeOffset: item.startTimeOffset,
+            endTimeOffset: item.endTimeOffset,
+            recoveryStrategy: item.recoveryStrategy
+          }) as SouthConnectorItemCommandDTO),
           errors: result.errors
         }))
       );
@@ -491,7 +494,8 @@ export class EditSouthComponent implements CanComponentDeactivate {
       foundGroup.standardSettings.scanModeId = command.group.standardSettings.scanModeId;
       foundGroup.historySettings.maxReadInterval = command.group.historySettings.maxReadInterval;
       foundGroup.historySettings.readDelay = command.group.historySettings.readDelay;
-      foundGroup.historySettings.overlap = command.group.historySettings.overlap;
+      foundGroup.historySettings.startTimeOffset = command.group.historySettings.startTimeOffset;
+      foundGroup.historySettings.endTimeOffset = command.group.historySettings.endTimeOffset;
       return of(foundGroup);
     }
   }

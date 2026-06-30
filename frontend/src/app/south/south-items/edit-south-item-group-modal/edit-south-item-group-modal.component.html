@@ -23,15 +23,41 @@
         <val-errors controlName="scanModeId" />
       </div>
 
-      <!-- Overlap (only for historian connectors) -->
+      <!-- Start Time Offset (only for historian connectors) -->
       @if (hasHistorianCapabilities) {
         <div class="form-group">
-          <label class="form-label" for="group-overlap" translate="south.groups.overlap"></label>
+          <label class="form-label" for="group-start-time-offset" translate="south.groups.start-time-offset"></label>
           <div class="input-group">
-            <input formControlName="overlap" id="group-overlap" type="number" class="form-control" min="0" />
+            <input
+              formControlName="startTimeOffset"
+              id="group-start-time-offset"
+              type="number"
+              class="form-control"
+              min="-2147483648"
+              max="2147483647"
+            />
             <span class="input-group-text" translate="common.unit.ms"></span>
           </div>
-          <val-errors controlName="overlap" />
+          <val-errors controlName="startTimeOffset" />
+        </div>
+      }
+
+      <!-- End Time Offset (only for historian connectors) -->
+      @if (hasHistorianCapabilities) {
+        <div class="form-group">
+          <label class="form-label" for="group-end-time-offset" translate="south.groups.end-time-offset"></label>
+          <div class="input-group">
+            <input
+              formControlName="endTimeOffset"
+              id="group-end-time-offset"
+              type="number"
+              class="form-control"
+              min="-2147483648"
+              max="2147483647"
+            />
+            <span class="input-group-text" translate="common.unit.ms"></span>
+          </div>
+          <val-errors controlName="endTimeOffset" />
         </div>
       }
 

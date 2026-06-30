@@ -215,7 +215,8 @@ describe('South Service', () => {
       southId: 'newSouthId',
       scanMode: testData.scanMode.list[0],
       items: [],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',
@@ -259,7 +260,8 @@ describe('South Service', () => {
       southId: 'newSouthId',
       scanMode: testData.scanMode.list[0],
       items: [],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',
@@ -595,7 +597,8 @@ describe('South Service', () => {
       name: 'Test Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       items: [],
       readDelay: 0,
@@ -663,7 +666,8 @@ describe('South Service', () => {
       name: 'Update Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       items: [],
       readDelay: 0,
@@ -899,7 +903,8 @@ describe('South Service', () => {
           },
           group: null,
           maxReadInterval: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           readDelay: 0,
           recoveryStrategy: null,
           syncWithGroup: true
@@ -1014,7 +1019,8 @@ describe('South Service', () => {
           },
           group: null,
           maxReadInterval: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           readDelay: 0,
           recoveryStrategy: null,
           syncWithGroup: true
@@ -1068,7 +1074,8 @@ describe('South Service', () => {
           },
           group: { id: '', standardSettings: { name: 'Test Group' } },
           maxReadInterval: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           readDelay: 0,
           recoveryStrategy: null,
           syncWithGroup: true
@@ -1195,7 +1202,8 @@ describe('South Service', () => {
       name: 'New Import Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       items: [],
       readDelay: 0,
@@ -1234,7 +1242,8 @@ describe('South Service', () => {
       name: 'Existing Import Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       items: [],
       readDelay: 0,
@@ -1328,7 +1337,8 @@ describe('South Service', () => {
       name: 'Group 1',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: 5,
+      startTimeOffset: 5,
+      endTimeOffset: null,
       maxReadInterval: 3600,
       readDelay: 200,
       recoveryStrategy: null,
@@ -1350,9 +1360,10 @@ describe('South Service', () => {
         scanMode: toScanModeDTO(group.scanMode, getUserInfo)
       },
       historySettings: {
+        startTimeOffset: group.startTimeOffset,
+        endTimeOffset: group.endTimeOffset,
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
-        overlap: group.overlap,
         recoveryStrategy: group.recoveryStrategy
       },
       createdBy: getUserInfo(group.createdBy),
@@ -1370,7 +1381,8 @@ describe('South Service', () => {
           name: 'Group 1',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[0],
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0,
           items: [],
@@ -1384,7 +1396,8 @@ describe('South Service', () => {
           name: 'Group 2',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[1],
-          overlap: 10,
+          startTimeOffset: 10,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0,
           items: [],
@@ -1410,7 +1423,8 @@ describe('South Service', () => {
         name: 'Group 1',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1444,7 +1458,8 @@ describe('South Service', () => {
         name: 'Group 1',
         southId: 'differentSouthId',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1470,7 +1485,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: 5,
+          startTimeOffset: 5,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0
         }
@@ -1481,7 +1497,8 @@ describe('South Service', () => {
         name: 'New Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 5,
+        startTimeOffset: 5,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1508,7 +1525,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0
         }
@@ -1519,7 +1537,8 @@ describe('South Service', () => {
         name: 'Group With Null Overlap',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1533,9 +1552,9 @@ describe('South Service', () => {
       southItemGroupRepository.create.mock.mockImplementation(() => createdGroup);
 
       const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
-      assert.strictEqual(result.overlap, null);
+      assert.strictEqual(result.startTimeOffset, null);
       const createCall = southItemGroupRepository.create.mock.calls[0];
-      assert.strictEqual((createCall.arguments[0] as { overlap: unknown }).overlap, null);
+      assert.strictEqual((createCall.arguments[0] as { overlap: unknown }).startTimeOffset, null);
       assert.strictEqual(createCall.arguments[1], 'testUser');
     });
 
@@ -1547,7 +1566,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: 5,
+          startTimeOffset: 5,
+          endTimeOffset: null,
           maxReadInterval: 3600,
           readDelay: 200
         }
@@ -1558,7 +1578,8 @@ describe('South Service', () => {
         name: 'Group With Throttling',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 5,
+        startTimeOffset: 5,
+        endTimeOffset: null,
         maxReadInterval: 3600,
         readDelay: 200,
         items: [],
@@ -1590,7 +1611,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0
         }
@@ -1601,7 +1623,8 @@ describe('South Service', () => {
         name: 'Existing Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1627,7 +1650,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[1].id
         },
         historySettings: {
-          overlap: 15,
+          startTimeOffset: 15,
+          endTimeOffset: null,
           maxReadInterval: 3600,
           readDelay: 200
         }
@@ -1638,7 +1662,8 @@ describe('South Service', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1652,7 +1677,8 @@ describe('South Service', () => {
         ...existingGroup,
         name: 'Updated Group',
         scanMode: testData.scanMode.list[1],
-        overlap: 15,
+        startTimeOffset: 15,
+        endTimeOffset: null,
         maxReadInterval: 3600,
         readDelay: 200
       };
@@ -1683,7 +1709,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0
         }
@@ -1694,7 +1721,8 @@ describe('South Service', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1708,7 +1736,8 @@ describe('South Service', () => {
         ...existingGroup,
         name: 'Updated Name Only',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -1744,7 +1773,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0
         }
@@ -1766,7 +1796,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0
         }
@@ -1777,7 +1808,8 @@ describe('South Service', () => {
         name: 'Group From Other South',
         southId: 'differentSouthId',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1803,7 +1835,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0
         }
@@ -1814,7 +1847,8 @@ describe('South Service', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1846,7 +1880,8 @@ describe('South Service', () => {
           scanModeId: testData.scanMode.list[0].id
         },
         historySettings: {
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0
         }
@@ -1857,7 +1892,8 @@ describe('South Service', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1872,7 +1908,8 @@ describe('South Service', () => {
         name: 'Existing Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1897,7 +1934,8 @@ describe('South Service', () => {
         name: 'Group To Delete',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1930,7 +1968,8 @@ describe('South Service', () => {
         name: 'Group From Other South',
         southId: 'differentSouthId',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1954,7 +1993,8 @@ describe('South Service', () => {
         name: 'Target Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -1983,7 +2023,8 @@ describe('South Service', () => {
         name: 'Group From Other South',
         southId: 'differentSouthId',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: [],
@@ -2040,7 +2081,8 @@ describe('South Service', () => {
           name: 'Test Group',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[0],
-          overlap: 10,
+          startTimeOffset: 10,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0,
           items: [],
@@ -2054,7 +2096,7 @@ describe('South Service', () => {
         assert.strictEqual(dto.id, 'group1');
         assert.strictEqual(dto.standardSettings.name, 'Test Group');
         assert.strictEqual(dto.standardSettings.scanMode.id, testData.scanMode.list[0].id);
-        assert.strictEqual(dto.historySettings.overlap, 10);
+        assert.strictEqual(dto.historySettings.startTimeOffset, 10);
       });
 
       it('should convert SouthItemGroupEntity with null overlap to DTO', () => {
@@ -2063,7 +2105,8 @@ describe('South Service', () => {
           name: 'Test Group 2',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[0],
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0,
           items: [],
@@ -2074,7 +2117,7 @@ describe('South Service', () => {
         };
 
         const dto = toSouthItemGroupDTO(entity, id => ({ id, friendlyName: id }));
-        assert.strictEqual(dto.historySettings.overlap, null);
+        assert.strictEqual(dto.historySettings.startTimeOffset, null);
       });
 
       it('should convert item with group to DTO using toSouthConnectorItemCommandDTO', () => {
@@ -2083,7 +2126,8 @@ describe('South Service', () => {
           name: 'Test Group',
           southId: testData.south.list[0].id,
           scanMode: testData.scanMode.list[0],
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           maxReadInterval: null,
           readDelay: 0,
           items: [],
@@ -2105,7 +2149,8 @@ describe('South Service', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -2129,7 +2174,8 @@ describe('South Service', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -2171,7 +2217,8 @@ describe('South Service', () => {
             syncWithGroup: true,
             maxReadInterval: 3600,
             readDelay: 200,
-            overlap: 100
+            startTimeOffset: 100,
+            endTimeOffset: null
           };
 
           await copySouthItemCommandToSouthItemEntity(
@@ -2187,7 +2234,7 @@ describe('South Service', () => {
           assert.strictEqual(southItemEntity.syncWithGroup, true);
           assert.strictEqual(southItemEntity.maxReadInterval, 3600);
           assert.strictEqual(southItemEntity.readDelay, 200);
-          assert.strictEqual(southItemEntity.overlap, 100);
+          assert.strictEqual(southItemEntity.startTimeOffset, 100);
         });
 
         it('should set syncWithGroup to false when command.syncWithGroup is explicitly false', async () => {

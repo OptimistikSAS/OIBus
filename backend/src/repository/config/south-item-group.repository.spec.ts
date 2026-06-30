@@ -32,7 +32,8 @@ describe('South Item Group Repository', () => {
         name: 'Test Group 1',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -44,7 +45,7 @@ describe('South Item Group Repository', () => {
       assert.strictEqual(found.name, 'Test Group 1');
       assert.strictEqual(found.southId, testData.south.list[0].id);
       assert.strictEqual(found.scanMode.id, testData.scanMode.list[0].id);
-      assert.strictEqual(found.overlap, null);
+      assert.strictEqual(found.startTimeOffset, null);
     });
 
     it('should return null when finding non-existing group', () => {
@@ -57,7 +58,8 @@ describe('South Item Group Repository', () => {
         name: 'Group A',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -65,7 +67,8 @@ describe('South Item Group Repository', () => {
         name: 'Group B',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[1],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -90,7 +93,8 @@ describe('South Item Group Repository', () => {
         name: 'Find By Name Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -113,7 +117,8 @@ describe('South Item Group Repository', () => {
         name: 'Group For Different South',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -128,7 +133,8 @@ describe('South Item Group Repository', () => {
         name: 'New Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 5,
+        startTimeOffset: 5,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -138,7 +144,7 @@ describe('South Item Group Repository', () => {
       assert.strictEqual(created.name, 'New Group');
       assert.strictEqual(created.southId, testData.south.list[0].id);
       assert.strictEqual(created.scanMode.id, testData.scanMode.list[0].id);
-      assert.strictEqual(created.overlap, 5);
+      assert.strictEqual(created.startTimeOffset, 5);
     });
 
     it('should create a group with custom id', () => {
@@ -147,7 +153,8 @@ describe('South Item Group Repository', () => {
         name: 'Custom Group',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -168,7 +175,8 @@ describe('South Item Group Repository', () => {
         name: 'Group That Will Fail',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -186,7 +194,8 @@ describe('South Item Group Repository', () => {
         name: 'Original Name',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -196,7 +205,8 @@ describe('South Item Group Repository', () => {
       const updateCommand: Omit<SouthItemGroupCommand, 'southId'> = {
         name: 'Updated Name',
         scanMode: testData.scanMode.list[1],
-        overlap: 15,
+        startTimeOffset: 15,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -207,16 +217,17 @@ describe('South Item Group Repository', () => {
       assert.ok(updated);
       assert.strictEqual(updated.name, 'Updated Name');
       assert.strictEqual(updated.scanMode.id, testData.scanMode.list[1].id);
-      assert.strictEqual(updated.overlap, 15);
+      assert.strictEqual(updated.startTimeOffset, 15);
       assert.strictEqual(updated.southId, testData.south.list[0].id);
     });
 
-    it('should update a group with null overlap', () => {
+    it('should update a group with null startTimeOffset', () => {
       const groupToCreate: SouthItemGroupCommand = {
-        name: 'Group With Overlap',
+        name: 'Group With StartTimeOffset',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -226,7 +237,8 @@ describe('South Item Group Repository', () => {
       const updateCommand: Omit<SouthItemGroupCommand, 'southId'> = {
         name: 'Updated Name Null',
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -235,7 +247,7 @@ describe('South Item Group Repository', () => {
 
       const updated = repository.findById(created.id);
       assert.ok(updated);
-      assert.strictEqual(updated.overlap, null);
+      assert.strictEqual(updated.startTimeOffset, null);
     });
 
     it('should delete a group', () => {
@@ -243,7 +255,8 @@ describe('South Item Group Repository', () => {
         name: 'Group To Delete',
         southId: testData.south.list[0].id,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       };
@@ -263,7 +276,8 @@ describe('South Item Group Repository', () => {
         name: 'Test Group',
         south_id: 'southId1',
         scan_mode_id: testData.scanMode.list[0].id,
-        overlap: 20,
+        start_time_offset: 20,
+        end_time_offset: 0,
         max_read_interval: 3600,
         read_delay: 200,
         scan_mode_id_full: testData.scanMode.list[0].id,
@@ -287,7 +301,7 @@ describe('South Item Group Repository', () => {
       assert.strictEqual(converted.southId, 'southId1');
       assert.strictEqual(converted.scanMode.id, testData.scanMode.list[0].id);
       assert.strictEqual(converted.scanMode.name, testData.scanMode.list[0].name);
-      assert.strictEqual(converted.overlap, 20);
+      assert.strictEqual(converted.startTimeOffset, 20);
       assert.strictEqual(converted.maxReadInterval, 3600);
       assert.strictEqual(converted.readDelay, 200);
       assert.deepStrictEqual(converted.items, [
@@ -303,7 +317,7 @@ describe('South Item Group Repository', () => {
       ]);
     });
 
-    it('should convert database result with null overlap', () => {
+    it('should convert database result with null start_time_offset', () => {
       const dbResult: Record<string, string | number | null> = {
         id: 'testId2',
         created_at: '2024-01-01 00:00:00',
@@ -311,7 +325,8 @@ describe('South Item Group Repository', () => {
         name: 'Test Group 2',
         south_id: 'southId1',
         scan_mode_id: testData.scanMode.list[0].id,
-        overlap: null,
+        start_time_offset: null,
+        end_time_offset: null,
         scan_mode_id_full: testData.scanMode.list[0].id,
         scan_mode_name: testData.scanMode.list[0].name,
         scan_mode_description: testData.scanMode.list[0].description,
@@ -319,10 +334,10 @@ describe('South Item Group Repository', () => {
       };
 
       const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
-      assert.strictEqual(converted.overlap, null);
+      assert.strictEqual(converted.startTimeOffset, null);
     });
 
-    it('should convert database result with undefined overlap', () => {
+    it('should convert database result with undefined start_time_offset', () => {
       const dbResult: Record<string, string | number | null | undefined> = {
         id: 'testId3',
         created_at: '2024-01-01 00:00:00',
@@ -330,7 +345,8 @@ describe('South Item Group Repository', () => {
         name: 'Test Group 3',
         south_id: 'southId1',
         scan_mode_id: testData.scanMode.list[0].id,
-        overlap: undefined,
+        start_time_offset: undefined,
+        end_time_offset: undefined,
         scan_mode_id_full: testData.scanMode.list[0].id,
         scan_mode_name: testData.scanMode.list[0].name,
         scan_mode_description: testData.scanMode.list[0].description,
@@ -338,7 +354,7 @@ describe('South Item Group Repository', () => {
       };
 
       const converted = toSouthItemGroup(dbResult as Record<string, string | number>, []);
-      assert.strictEqual(converted.overlap, null);
+      assert.strictEqual(converted.startTimeOffset, null);
     });
 
     it('should convert database result with null max_read_interval', () => {
@@ -349,7 +365,8 @@ describe('South Item Group Repository', () => {
         name: 'Test Group 4',
         south_id: 'southId1',
         scan_mode_id: testData.scanMode.list[0].id,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         max_read_interval: null,
         read_delay: 0,
         scan_mode_id_full: testData.scanMode.list[0].id,

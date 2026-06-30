@@ -526,9 +526,10 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * timestamp seen so the next call resumes where this one left off.
    *
    * Window construction:
-   *  - The effective start is `max(startTime, cache.trackedInstant - overlap)`
-   *    so we never re-query data we've already cached (and the `overlap` lets
-   *    operators backfill a small slack window for late-arriving samples).
+   *  - The effective start is `max(startTime, cache.trackedInstant + startTimeOffset)`.
+   *    A negative startTimeOffset extends the window backwards for late-arriving samples.
+   *  - The effective end is `endTime + endTimeOffset`; if it is not after the effective
+   *    start, the query is skipped until time advances enough.
    *  - The window is then split into sub-intervals of at most
    *    `maxReadInterval` seconds (via `generateIntervals`) so very wide
    *    catch-up reads don't try to fetch hours of data in one round-trip.
@@ -583,27 +584,32 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
       let maxReadInterval: number;
       let readDelay: number;
-      let overlap: number;
+      let startTimeOffset: number;
+      let endTimeOffset: number;
       if (lead.group && lead.syncWithGroup) {
         maxReadInterval = lead.group.maxReadInterval!;
         readDelay = lead.group.readDelay!;
-        overlap = lead.group.overlap!;
+        startTimeOffset = lead.group.startTimeOffset ?? 0;
+        endTimeOffset = lead.group.endTimeOffset ?? 0;
       } else {
         maxReadInterval = lead.maxReadInterval!;
         readDelay = lead.readDelay!;
-        overlap = lead.overlap || 0;
+        startTimeOffset = lead.startTimeOffset ?? 0;
+        endTimeOffset = lead.endTimeOffset ?? 0;
       }
       const recoveryStrategy = (lead.group && lead.syncWithGroup ? lead.group.recoveryStrategy : lead.recoveryStrategy) ?? 'oldest';
-      const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
+      const queryWindow = this.computeQueryWindow(southCache.trackedInstant, startTime, endTime, startTimeOffset, endTimeOffset);
+      if (!queryWindow) return;
+      const { startTimeFromCache, effectiveEndTime } = queryWindow;
       const { intervals, numberOfIntervalsDone } = generateIntervals(
         startTime,
         startTimeFromCache,
-        endTime,
+        effectiveEndTime,
         maxReadInterval,
         recoveryStrategy
       );
       this.logIntervals(intervals);
-      await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone, recoveryStrategy, endTime);
+      await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone, recoveryStrategy, effectiveEndTime);
     }
 
     this.metricsEvent.emit('history-query-stop', {
@@ -626,18 +632,21 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (!southCache.trackedInstant) {
       southCache.trackedInstant = startTime;
     }
-    const overlap = item.overlap || 0;
+    const startTimeOffset = item.startTimeOffset ?? 0;
+    const endTimeOffset = item.endTimeOffset ?? 0;
     const recoveryStrategy = item.recoveryStrategy ?? 'oldest';
-    const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).minus({ milliseconds: overlap }).toUTC().toISO()!;
+    const queryWindow = this.computeQueryWindow(southCache.trackedInstant, startTime, endTime, startTimeOffset, endTimeOffset);
+    if (!queryWindow) return;
+    const { startTimeFromCache, effectiveEndTime } = queryWindow;
     const { intervals, numberOfIntervalsDone } = generateIntervals(
       startTime,
       startTimeFromCache,
-      endTime,
+      effectiveEndTime,
       item.maxReadInterval!,
       recoveryStrategy
     );
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, [item], southCache, item.readDelay!, numberOfIntervalsDone, recoveryStrategy, endTime);
+    await this.queryIntervals(intervals, [item], southCache, item.readDelay!, numberOfIntervalsDone, recoveryStrategy, effectiveEndTime);
   }
 
   private async queryIntervals(
@@ -670,7 +679,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
 
       if (strategy === 'oldest') {
         // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
-        // With overlap, it may return a lastInstantRetrieved inferior to the max instant, so we also check this condition
+        // With a negative startTimeOffset the window extends backwards, so lastInstantRetrieved may be below trackedInstant — check both conditions
         if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
           this.cacheService!.saveItemLastValue(this.connector.id, {
             groupId: southCache.groupId,
@@ -714,6 +723,30 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         trackedInstant: endInstant
       });
     }
+  }
+
+  private computeQueryWindow(
+    trackedInstant: Instant,
+    startTime: Instant,
+    endTime: Instant,
+    startTimeOffset: number,
+    endTimeOffset: number
+  ): { startTimeFromCache: Instant; effectiveEndTime: Instant } | null {
+    const startTimeFromCache = DateTime.fromISO(trackedInstant).plus({ milliseconds: startTimeOffset }).toUTC().toISO()!;
+    const effectiveEndTime = DateTime.fromISO(endTime).plus({ milliseconds: endTimeOffset }).toUTC().toISO()!;
+    if (effectiveEndTime <= startTimeFromCache) {
+      this.logger.warn(
+        `Skipping history query: effective end time ${effectiveEndTime} is not after effective start time ${startTimeFromCache}`
+      );
+      return null;
+    }
+    if (effectiveEndTime <= startTime) {
+      this.logger.warn(
+        `Skipping history query: effective end time ${effectiveEndTime} is before query window start ${startTime} — endTimeOffset (${endTimeOffset} ms) exceeds the query window`
+      );
+      return null;
+    }
+    return { startTimeFromCache, effectiveEndTime };
   }
 
   private logIntervals(intervals: Array<Interval>) {
