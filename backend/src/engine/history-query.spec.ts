@@ -90,7 +90,8 @@ describe('HistoryQuery enabled', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         recoveryStrategy: null
       }))
     );
@@ -132,7 +133,8 @@ describe('HistoryQuery enabled', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         recoveryStrategy: null
       }))
     );

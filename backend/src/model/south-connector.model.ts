@@ -18,7 +18,8 @@ export interface SouthConnectorItemEntityLight extends BaseEntity {
 export interface SouthItemGroupEntityLight extends BaseEntity {
   name: string;
   scanMode: ScanMode;
-  overlap: number | null;
+  startTimeOffset: number | null;
+  endTimeOffset: number | null;
   maxReadInterval: number | null;
   readDelay: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
@@ -28,7 +29,8 @@ export interface SouthItemGroupEntity extends BaseEntity {
   name: string;
   southId: string;
   scanMode: ScanMode;
-  overlap: number | null;
+  startTimeOffset: number | null;
+  endTimeOffset: number | null;
   maxReadInterval: number | null;
   readDelay: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
@@ -39,7 +41,8 @@ export interface SouthItemGroupCommand {
   name: string;
   southId: string;
   scanMode: ScanMode;
-  overlap: number | null;
+  startTimeOffset: number | null;
+  endTimeOffset: number | null;
   maxReadInterval: number | null;
   readDelay: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
@@ -64,6 +67,7 @@ export interface SouthConnectorItemEntity<I extends SouthItemSettings> extends B
   syncWithGroup: boolean;
   maxReadInterval: number | null;
   readDelay: number | null;
-  overlap: number | null;
+  startTimeOffset: number | null;
+  endTimeOffset: number | null;
   recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 }
