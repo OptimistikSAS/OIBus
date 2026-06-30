@@ -1,4 +1,4 @@
-import { SouthOIAnalyticsSettingsSpecificSettings } from 'shared/model/south-settings.model';
+import { SouthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/south-settings.model';
 import { OIAnalyticsRegistration } from '../model/oianalytics-registration.model';
 import { NorthOIAnalyticsSettingsSpecificSettings } from '../../shared/model/north-settings.model';
 import { HTTPRequest, ReqAuthOptions, ReqOptions, ReqProxyOptions, ReqResponse } from './http-request.utils';
