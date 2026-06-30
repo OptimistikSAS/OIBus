@@ -151,13 +151,13 @@
   },
   "allowScripts": {
     "argon2@0.44.0": true,
-    "better-sqlite3@12.10.0": true,
     "esbuild@0.27.7": true,
-    "esbuild@0.28.0": true,
     "fsevents@2.3.3": true,
     "isolated-vm@7.0.0": true,
     "odbc@2.5.0": true,
     "oracledb@7.0.0": true,
-    "ssh2@1.17.0": true
+    "ssh2@1.17.0": true,
+    "better-sqlite3@12.11.1": true,
+    "esbuild@0.28.1": true
   }
 }
