@@ -608,7 +608,8 @@ export const toSouthItemGroupLight = (result: Record<string, string | number>): 
     id: result.id as string,
     name: result.name as string,
     scanMode,
-    startTimeOffset: result.start_time_offset !== null && result.start_time_offset !== undefined ? (result.start_time_offset as number) : null,
+    startTimeOffset:
+      result.start_time_offset !== null && result.start_time_offset !== undefined ? (result.start_time_offset as number) : null,
     endTimeOffset: result.end_time_offset !== null && result.end_time_offset !== undefined ? (result.end_time_offset as number) : null,
     maxReadInterval:
       result.max_read_interval !== null && result.max_read_interval !== undefined ? (result.max_read_interval as number) : null,
