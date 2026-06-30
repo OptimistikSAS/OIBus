@@ -119,15 +119,28 @@
               <val-errors controlName="readDelay" />
             </div>
           </div>
-          <!-- Overlap -->
+          <!-- Start Time Offset -->
           <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
             <div class="form-group">
-              <label class="form-label" for="overlap" translate="south.items.overlap"></label>
+              <label class="form-label" for="start-time-offset" translate="south.items.start-time-offset"></label>
               <div class="input-group">
-                <input formControlName="overlap" id="overlap" type="number" class="form-control" min="0" />
+                <input formControlName="startTimeOffset" id="start-time-offset" type="number" class="form-control" />
                 <span class="input-group-text" translate="common.unit.ms"></span>
               </div>
-              <val-errors controlName="overlap" />
+              <val-errors controlName="startTimeOffset" />
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <!-- End Time Offset -->
+          <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
+            <div class="form-group">
+              <label class="form-label" for="end-time-offset" translate="south.items.end-time-offset"></label>
+              <div class="input-group">
+                <input formControlName="endTimeOffset" id="end-time-offset" type="number" class="form-control" />
+                <span class="input-group-text" translate="common.unit.ms"></span>
+              </div>
+              <val-errors controlName="endTimeOffset" />
             </div>
           </div>
         </div>

@@ -22,7 +22,7 @@ const groups: Array<SouthItemGroupDTO> = [
     createdBy: { id: '', friendlyName: '' },
     updatedBy: { id: '', friendlyName: '' },
     standardSettings: { name: 'GroupA', scanMode: scanModes[0] },
-    historySettings: { overlap: null, maxReadInterval: null, readDelay: null, recoveryStrategy: null }
+    historySettings: { startTimeOffset: null, endTimeOffset: null, maxReadInterval: null, readDelay: null, recoveryStrategy: null }
   }
 ];
 
