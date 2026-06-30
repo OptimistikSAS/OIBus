@@ -44,7 +44,7 @@ import {
   NorthConnectorMetrics,
   SouthConnectorMetrics
 } from '../../../shared/model/engine.model';
-import { BaseFolders } from 'src/model/types';
+import { BaseFolders } from '../../model/types';
 import { Transformer, TransformerSource } from '../../model/transformer.model';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import { OIBusSouthType } from '../../../shared/model/south-connector.model';

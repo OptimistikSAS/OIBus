@@ -1,9 +1,9 @@
 import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import CacheService from '../service/cache/cache.service';
 import type { ICacheService } from '../model/cache.service.model';
 import NorthAmazonS3 from './north-amazon-s3/north-amazon-s3';
-import { NorthConnectorEntity } from 'src/model/north-connector.model';
+import { NorthConnectorEntity } from '../model/north-connector.model';
 import NorthAzureBlob from './north-azure-blob/north-azure-blob';
 import NorthConsole from './north-console/north-console';
 import NorthFileWriter from './north-file-writer/north-file-writer';

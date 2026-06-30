@@ -2,7 +2,7 @@ import { SouthConnectorEntity, SouthConnectorItemEntity } from '../model/south-c
 import { OIBusContent } from '../../shared/model/engine.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import {
   SouthADSItemSettings,
   SouthADSSettings,
