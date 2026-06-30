@@ -106,8 +106,8 @@ export class EditSouthItemGroupModalComponent {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       scanModeId: this.fb.control<string | null>(null, [Validators.required]),
-      startTimeOffset: this.fb.control<number | null>(null),
-      endTimeOffset: this.fb.control<number | null>(null),
+      startTimeOffset: this.fb.control<number | null>(null, [Validators.min(-2147483648), Validators.max(2147483647)]),
+      endTimeOffset: this.fb.control<number | null>(null, [Validators.min(-2147483648), Validators.max(2147483647)]),
       maxReadInterval: [3600, [Validators.min(0)]],
       readDelay: [200, [Validators.required, Validators.min(0)]],
       recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest')

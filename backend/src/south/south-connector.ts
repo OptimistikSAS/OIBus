@@ -598,14 +598,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         endTimeOffset = lead.endTimeOffset ?? 0;
       }
       const recoveryStrategy = (lead.group && lead.syncWithGroup ? lead.group.recoveryStrategy : lead.recoveryStrategy) ?? 'oldest';
-      const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).plus({ milliseconds: startTimeOffset }).toUTC().toISO()!;
-      const effectiveEndTime = DateTime.fromISO(endTime).plus({ milliseconds: endTimeOffset }).toUTC().toISO()!;
-      if (effectiveEndTime <= startTimeFromCache) {
-        this.logger.trace(
-          `Skipping history query: effective end time ${effectiveEndTime} is not after effective start time ${startTimeFromCache}`
-        );
-        return;
-      }
+      const queryWindow = this.computeQueryWindow(southCache.trackedInstant, startTime, endTime, startTimeOffset, endTimeOffset);
+      if (!queryWindow) return;
+      const { startTimeFromCache, effectiveEndTime } = queryWindow;
       const { intervals, numberOfIntervalsDone } = generateIntervals(
         startTime,
         startTimeFromCache,
@@ -640,14 +635,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     const startTimeOffset = item.startTimeOffset ?? 0;
     const endTimeOffset = item.endTimeOffset ?? 0;
     const recoveryStrategy = item.recoveryStrategy ?? 'oldest';
-    const startTimeFromCache = DateTime.fromISO(southCache.trackedInstant).plus({ milliseconds: startTimeOffset }).toUTC().toISO()!;
-    const effectiveEndTime = DateTime.fromISO(endTime).plus({ milliseconds: endTimeOffset }).toUTC().toISO()!;
-    if (effectiveEndTime <= startTimeFromCache) {
-      this.logger.trace(
-        `Skipping history query: effective end time ${effectiveEndTime} is not after effective start time ${startTimeFromCache}`
-      );
-      return;
-    }
+    const queryWindow = this.computeQueryWindow(southCache.trackedInstant, startTime, endTime, startTimeOffset, endTimeOffset);
+    if (!queryWindow) return;
+    const { startTimeFromCache, effectiveEndTime } = queryWindow;
     const { intervals, numberOfIntervalsDone } = generateIntervals(
       startTime,
       startTimeFromCache,
@@ -733,6 +723,30 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         trackedInstant: endInstant
       });
     }
+  }
+
+  private computeQueryWindow(
+    trackedInstant: Instant,
+    startTime: Instant,
+    endTime: Instant,
+    startTimeOffset: number,
+    endTimeOffset: number
+  ): { startTimeFromCache: Instant; effectiveEndTime: Instant } | null {
+    const startTimeFromCache = DateTime.fromISO(trackedInstant).plus({ milliseconds: startTimeOffset }).toUTC().toISO()!;
+    const effectiveEndTime = DateTime.fromISO(endTime).plus({ milliseconds: endTimeOffset }).toUTC().toISO()!;
+    if (effectiveEndTime <= startTimeFromCache) {
+      this.logger.warn(
+        `Skipping history query: effective end time ${effectiveEndTime} is not after effective start time ${startTimeFromCache}`
+      );
+      return null;
+    }
+    if (effectiveEndTime <= startTime) {
+      this.logger.warn(
+        `Skipping history query: effective end time ${effectiveEndTime} is before query window start ${startTime} — endTimeOffset (${endTimeOffset} ms) exceeds the query window`
+      );
+      return null;
+    }
+    return { startTimeFromCache, effectiveEndTime };
   }
 
   private logIntervals(intervals: Array<Interval>) {
