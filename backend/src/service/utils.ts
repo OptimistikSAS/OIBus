@@ -810,7 +810,8 @@ export const itemToFlattenedCSV = (
     columns.add('group');
     columns.add('maxReadInterval');
     columns.add('readDelay');
-    columns.add('overlap');
+    columns.add('startTimeOffset');
+    columns.add('endTimeOffset');
     columns.add('syncWithGroup');
   }
 
