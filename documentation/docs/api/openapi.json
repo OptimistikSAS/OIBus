@@ -1859,19 +1859,27 @@
 								"description": "Maximum read interval in seconds for historical queries.\nOnly applicable for connectors with historian capabilities.",
 								"example": 3600
 							},
-							"overlap": {
+							"endTimeOffset": {
 								"type": "number",
 								"format": "double",
 								"nullable": true,
-								"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.",
-								"example": 1000
+								"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+								"example": 0
+							},
+							"startTimeOffset": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+								"example": -1000
 							}
 						},
 						"required": [
 							"recoveryStrategy",
 							"readDelay",
 							"maxReadInterval",
-							"overlap"
+							"endTimeOffset",
+							"startTimeOffset"
 						],
 						"type": "object"
 					}
@@ -1948,7 +1956,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -1965,12 +1973,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -1997,7 +2012,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -2157,7 +2173,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -2174,12 +2190,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -2206,7 +2229,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -2396,7 +2420,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -2413,12 +2437,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -2445,7 +2476,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -2526,7 +2558,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -2543,12 +2575,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -2575,7 +2614,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -2769,7 +2809,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -2786,12 +2826,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -2818,7 +2865,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -2923,7 +2971,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -2940,12 +2988,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -2972,7 +3027,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -3141,7 +3197,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -3158,12 +3214,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -3190,7 +3253,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -3316,7 +3380,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -3333,12 +3397,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -3365,7 +3436,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -3585,7 +3657,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -3602,12 +3674,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -3634,7 +3713,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -3774,7 +3854,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -3791,12 +3871,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -3823,7 +3910,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -3987,7 +4075,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -4004,12 +4092,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -4036,7 +4131,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -4192,7 +4288,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -4209,12 +4305,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -4241,7 +4344,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -4512,7 +4616,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -4529,12 +4633,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -4561,7 +4672,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -4680,7 +4792,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -4697,12 +4809,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -4729,7 +4848,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -5001,7 +5121,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -5018,12 +5138,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -5050,7 +5177,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -5151,7 +5279,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -5168,12 +5296,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -5200,7 +5335,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -5466,7 +5602,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -5483,12 +5619,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -5515,7 +5658,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -5618,7 +5762,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -5635,12 +5779,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -5667,7 +5818,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -5910,7 +6062,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -5927,12 +6079,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -5959,7 +6118,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -6114,7 +6274,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -6131,12 +6291,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -6163,7 +6330,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -6429,7 +6597,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -6446,12 +6614,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -6478,7 +6653,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -6579,7 +6755,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -6596,12 +6772,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -6628,7 +6811,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -6841,7 +7025,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -6858,12 +7042,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -6890,7 +7081,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -6991,7 +7183,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -7008,12 +7200,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -7040,7 +7239,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -7266,7 +7466,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -7283,12 +7483,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -7315,7 +7522,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -7484,7 +7692,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -7501,12 +7709,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -7533,7 +7748,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -7805,7 +8021,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -7822,12 +8038,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -7854,7 +8077,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -7962,7 +8186,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -7979,12 +8203,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -8011,7 +8242,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -8188,7 +8420,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -8205,12 +8437,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -8237,7 +8476,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -8319,7 +8559,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -8336,12 +8576,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -8368,7 +8615,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -8636,7 +8884,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -8653,12 +8901,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -8685,7 +8940,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -8795,7 +9051,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -8812,12 +9068,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -8844,7 +9107,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -9299,7 +9563,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -9316,12 +9580,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -9348,7 +9619,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -9551,7 +9823,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -9568,12 +9840,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -9600,7 +9879,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -9794,7 +10074,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -9811,12 +10091,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -9843,7 +10130,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -9955,7 +10243,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -9972,12 +10260,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -10004,7 +10299,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -10270,7 +10566,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -10287,12 +10583,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -10319,7 +10622,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -10396,7 +10700,7 @@
 					},
 					"syncWithGroup": {
 						"type": "boolean",
-						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.",
+						"description": "Whether this item syncs its historian settings with its group.\nWhen true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.",
 						"example": true
 					},
 					"maxReadInterval": {
@@ -10413,12 +10717,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -10445,7 +10756,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -10665,12 +10977,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -10695,7 +11014,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -10766,12 +11086,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -10796,7 +11123,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -10856,19 +11184,27 @@
 								"description": "Maximum read interval in seconds for historical queries.",
 								"example": 3600
 							},
-							"overlap": {
+							"endTimeOffset": {
 								"type": "number",
 								"format": "double",
 								"nullable": true,
-								"description": "Default overlap in milliseconds for historical queries.",
-								"example": 1000
+								"description": "Offset in milliseconds applied to the end of the history query interval.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+								"example": 0
+							},
+							"startTimeOffset": {
+								"type": "number",
+								"format": "double",
+								"nullable": true,
+								"description": "Offset in milliseconds applied to the start of the history query interval.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+								"example": -1000
 							}
 						},
 						"required": [
 							"recoveryStrategy",
 							"readDelay",
 							"maxReadInterval",
-							"overlap"
+							"endTimeOffset",
+							"startTimeOffset"
 						],
 						"type": "object"
 					}
@@ -11005,12 +11341,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -11035,7 +11378,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -11106,12 +11450,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -11136,7 +11487,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -11266,12 +11618,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -11296,7 +11655,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -11367,12 +11727,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -11397,7 +11764,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -11527,12 +11895,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -11557,7 +11932,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -11628,12 +12004,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -11658,7 +12041,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -11788,12 +12172,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -11818,7 +12209,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -11889,12 +12281,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -11919,7 +12318,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -12049,12 +12449,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -12079,7 +12486,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -12150,12 +12558,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -12180,7 +12595,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -12310,12 +12726,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -12340,7 +12763,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -12411,12 +12835,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -12441,7 +12872,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -12571,12 +13003,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -12601,7 +13040,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -12672,12 +13112,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -12702,7 +13149,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -12832,12 +13280,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -12862,7 +13317,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -12933,12 +13389,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -12963,7 +13426,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -13093,12 +13557,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -13123,7 +13594,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -13194,12 +13666,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -13224,7 +13703,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -13354,12 +13834,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -13384,7 +13871,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -13455,12 +13943,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -13485,7 +13980,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -13615,12 +14111,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -13645,7 +14148,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -13716,12 +14220,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -13746,7 +14257,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -13876,12 +14388,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -13906,7 +14425,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -13977,12 +14497,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -14007,7 +14534,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -14137,12 +14665,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -14167,7 +14702,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -14238,12 +14774,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -14268,7 +14811,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -14398,12 +14942,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -14428,7 +14979,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -14499,12 +15051,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -14529,7 +15088,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -14659,12 +15219,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -14689,7 +15256,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -14760,12 +15328,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -14790,7 +15365,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -14920,12 +15496,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -14950,7 +15533,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -15021,12 +15605,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -15051,7 +15642,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -15181,12 +15773,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -15211,7 +15810,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -15282,12 +15882,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -15312,7 +15919,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -15442,12 +16050,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -15472,7 +16087,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
@@ -15543,12 +16159,19 @@
 						"description": "Read delay in milliseconds before querying historical data.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
 						"example": 200
 					},
-					"overlap": {
+					"startTimeOffset": {
 						"type": "number",
 						"format": "double",
 						"nullable": true,
-						"description": "Default overlap in milliseconds for historical queries.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.",
-						"example": 1000
+						"description": "Offset in milliseconds applied to the start of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nNegative values extend the window backwards (equivalent to the old overlap behaviour).",
+						"example": -1000
+					},
+					"endTimeOffset": {
+						"type": "number",
+						"format": "double",
+						"nullable": true,
+						"description": "Offset in milliseconds applied to the end of the history query interval.\nOnly applicable for connectors with historian capabilities.\nWhen null and item is in a group, inherits from group settings.\nIf the resulting end time is not after the effective start time, the query is skipped.",
+						"example": 0
 					},
 					"recoveryStrategy": {
 						"allOf": [
@@ -15573,7 +16196,8 @@
 					"syncWithGroup",
 					"maxReadInterval",
 					"readDelay",
-					"overlap",
+					"startTimeOffset",
+					"endTimeOffset",
 					"recoveryStrategy"
 				],
 				"type": "object",
