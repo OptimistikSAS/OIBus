@@ -52,7 +52,8 @@ export class EditSouthItemGroupModalComponent {
   form: FormGroup<{
     name: FormControl<string>;
     scanModeId: FormControl<string | null>;
-    overlap: FormControl<number>;
+    startTimeOffset: FormControl<number | null>;
+    endTimeOffset: FormControl<number | null>;
     maxReadInterval: FormControl<number>;
     readDelay: FormControl<number>;
     recoveryStrategy: FormControl<SouthHistoryRecoveryStrategy>;
@@ -105,7 +106,8 @@ export class EditSouthItemGroupModalComponent {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       scanModeId: this.fb.control<string | null>(null, [Validators.required]),
-      overlap: [0, [Validators.min(0)]],
+      startTimeOffset: this.fb.control<number | null>(null),
+      endTimeOffset: this.fb.control<number | null>(null),
       maxReadInterval: [3600, [Validators.min(0)]],
       readDelay: [200, [Validators.required, Validators.min(0)]],
       recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest')
@@ -117,7 +119,8 @@ export class EditSouthItemGroupModalComponent {
         scanModeId:
           (this.group as SouthItemGroupCommandDTO).standardSettings.scanModeId ||
           (this.group as SouthItemGroupDTO).standardSettings.scanMode.id,
-        overlap: this.group.historySettings.overlap!,
+        startTimeOffset: this.group.historySettings.startTimeOffset ?? null,
+        endTimeOffset: this.group.historySettings.endTimeOffset ?? null,
         maxReadInterval: this.group.historySettings.maxReadInterval!,
         readDelay: this.group.historySettings.readDelay!,
         recoveryStrategy: this.group.historySettings.recoveryStrategy ?? 'oldest'
@@ -149,7 +152,8 @@ export class EditSouthItemGroupModalComponent {
         scanModeId: formValue.scanModeId!
       },
       historySettings: {
-        overlap: formValue.overlap! ?? null,
+        startTimeOffset: formValue.startTimeOffset ?? null,
+        endTimeOffset: formValue.endTimeOffset ?? null,
         maxReadInterval: formValue.maxReadInterval! ?? null,
         readDelay: formValue.readDelay! ?? null,
         recoveryStrategy: formValue.recoveryStrategy! ?? null
