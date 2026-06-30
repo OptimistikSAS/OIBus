@@ -1,7 +1,6 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
-    "baseUrl": "./",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
@@ -12,13 +11,14 @@
     "noUnusedLocals": false, // true
     "sourceMap": true,
     "declaration": false,
-    "downlevelIteration": true,
+    "ignoreDeprecations": "6.0",
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "moduleResolution": "Node",
     "importHelpers": true,
     "allowJs": true,
     "target": "es2022",
+    "lib": ["es2022", "esnext.iterator"],
     "module": "ES2022",
     "esModuleInterop": true,
     "useDefineForClassFields": false,

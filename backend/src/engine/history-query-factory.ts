@@ -1,7 +1,7 @@
 import { OIBusContent } from '../../shared/model/engine.model';
 import SouthCacheRepository from '../repository/cache/south-cache.repository';
 import CertificateRepository from '../repository/config/certificate.repository';
-import OIAnalyticsRegistrationRepository from 'src/repository/config/oianalytics-registration.repository';
+import OIAnalyticsRegistrationRepository from '../repository/config/oianalytics-registration.repository';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { Instant } from '../model/types';
 import { NorthSettings } from '../../shared/model/north-settings.model';
