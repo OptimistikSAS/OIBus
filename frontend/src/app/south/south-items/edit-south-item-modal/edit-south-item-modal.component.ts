@@ -318,8 +318,8 @@ class EditSouthItemModalComponent {
       syncWithGroup: [false], // Default to false; will be set to true when group is selected
       maxReadInterval: [null as number | null, [Validators.min(0)]],
       readDelay: [null as number | null, [Validators.min(0)]],
-      startTimeOffset: [null as number | null],
-      endTimeOffset: [null as number | null],
+      startTimeOffset: [null as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
+      endTimeOffset: [null as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
       recoveryStrategy: [null as SouthHistoryRecoveryStrategy | null],
       settings: this.fb.group({})
     });

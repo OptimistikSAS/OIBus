@@ -124,7 +124,14 @@
             <div class="form-group">
               <label class="form-label" for="start-time-offset" translate="south.items.start-time-offset"></label>
               <div class="input-group">
-                <input formControlName="startTimeOffset" id="start-time-offset" type="number" class="form-control" />
+                <input
+                  formControlName="startTimeOffset"
+                  id="start-time-offset"
+                  type="number"
+                  class="form-control"
+                  min="-2147483648"
+                  max="2147483647"
+                />
                 <span class="input-group-text" translate="common.unit.ms"></span>
               </div>
               <val-errors controlName="startTimeOffset" />
@@ -137,7 +144,14 @@
             <div class="form-group">
               <label class="form-label" for="end-time-offset" translate="south.items.end-time-offset"></label>
               <div class="input-group">
-                <input formControlName="endTimeOffset" id="end-time-offset" type="number" class="form-control" />
+                <input
+                  formControlName="endTimeOffset"
+                  id="end-time-offset"
+                  type="number"
+                  class="form-control"
+                  min="-2147483648"
+                  max="2147483647"
+                />
                 <span class="input-group-text" translate="common.unit.ms"></span>
               </div>
               <val-errors controlName="endTimeOffset" />
