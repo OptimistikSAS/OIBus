@@ -1549,7 +1549,8 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
       const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1569,7 +1570,8 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
       const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1601,12 +1603,13 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         settings: { address: '40001' },
         group: {
           id: 'g1',
           standardSettings: { name: 'Group A', scanMode: { id: 'sm2', name: 'Group Scan Mode', cron: '' } },
-          historySettings: { maxReadInterval: 9999, readDelay: 500, overlap: 10 }
+          historySettings: { maxReadInterval: 9999, readDelay: 500, overlap: 10, startTimeOffset: 10, endTimeOffset: null, recoveryStrategy: 'oldest' }
         }
       } as unknown as SouthConnectorItemDTO;
       utils.itemToFlattenedCSV([itemWithNulls], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1985,7 +1988,8 @@ describe('Service utils', () => {
       name: 'Group 1',
       southId: 'south1',
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',

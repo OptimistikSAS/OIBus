@@ -115,7 +115,8 @@ describe('SouthRestAPI connector', () => {
     syncWithGroup: false,
     maxReadInterval: 900,
     readDelay: 5,
-    overlap: 10,
+    startTimeOffset: 10,
+    endTimeOffset: null,
     settings: {
       endpoint: '/data',
       method: 'GET',

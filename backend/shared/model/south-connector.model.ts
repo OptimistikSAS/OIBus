@@ -265,7 +265,7 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
 
   /**
    * Whether this item syncs its historian settings with its group.
-   * When true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.
+   * When true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.
    *
    * @example true
    */
@@ -290,13 +290,24 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
   readDelay: number | null;
 
   /**
-   * Default overlap in milliseconds for historical queries.
+   * Offset in milliseconds applied to the start of the history query interval.
    * Only applicable for connectors with historian capabilities.
    * When null and item is in a group, inherits from group settings.
+   * Negative values extend the window backwards (equivalent to the old overlap behaviour).
    *
-   * @example 1000
+   * @example -1000
    */
-  overlap: number | null;
+  startTimeOffset: number | null;
+
+  /**
+   * Offset in milliseconds applied to the end of the history query interval.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   * If the resulting end time is not after the effective start time, the query is skipped.
+   *
+   * @example 0
+   */
+  endTimeOffset: number | null;
 
   /**
    * Recovery strategy when the connector reconnects after a long disconnection.
@@ -356,12 +367,22 @@ export interface SouthItemGroupDTO extends BaseEntity {
 
   historySettings: {
     /**
-     * Default overlap in milliseconds for historical queries.
+     * Offset in milliseconds applied to the start of the history query interval.
      * Only applicable for connectors with historian capabilities.
+     * Negative values extend the window backwards (equivalent to the old overlap behaviour).
      *
-     * @example 1000
+     * @example -1000
      */
-    overlap: number | null;
+    startTimeOffset: number | null;
+
+    /**
+     * Offset in milliseconds applied to the end of the history query interval.
+     * Only applicable for connectors with historian capabilities.
+     * If the resulting end time is not after the effective start time, the query is skipped.
+     *
+     * @example 0
+     */
+    endTimeOffset: number | null;
 
     /**
      * Maximum read interval in seconds for historical queries.
@@ -419,11 +440,20 @@ export interface SouthItemGroupCommandDTO {
 
   historySettings: {
     /**
-     * Default overlap in milliseconds for historical queries.
+     * Offset in milliseconds applied to the start of the history query interval.
+     * Negative values extend the window backwards (equivalent to the old overlap behaviour).
      *
-     * @example 1000
+     * @example -1000
      */
-    overlap: number | null;
+    startTimeOffset: number | null;
+
+    /**
+     * Offset in milliseconds applied to the end of the history query interval.
+     * If the resulting end time is not after the effective start time, the query is skipped.
+     *
+     * @example 0
+     */
+    endTimeOffset: number | null;
 
     /**
      * Maximum read interval in seconds for historical queries.
@@ -696,13 +726,24 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
   readDelay: number | null;
 
   /**
-   * Default overlap in milliseconds for historical queries.
+   * Offset in milliseconds applied to the start of the history query interval.
    * Only applicable for connectors with historian capabilities.
    * When null and item is in a group, inherits from group settings.
+   * Negative values extend the window backwards (equivalent to the old overlap behaviour).
    *
-   * @example 1000
+   * @example -1000
    */
-  overlap: number | null;
+  startTimeOffset: number | null;
+
+  /**
+   * Offset in milliseconds applied to the end of the history query interval.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   * If the resulting end time is not after the effective start time, the query is skipped.
+   *
+   * @example 0
+   */
+  endTimeOffset: number | null;
 
   /**
    * Recovery strategy when the connector reconnects after a long disconnection.

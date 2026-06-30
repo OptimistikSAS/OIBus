@@ -285,7 +285,8 @@ export default class SouthService {
       settings: await encryptionService.encryptConnectorSecrets(itemSettings, null, itemSettingsManifest),
       maxReadInterval: null,
       readDelay: 0,
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
@@ -529,7 +530,8 @@ export default class SouthService {
         syncWithGroup: stringToBoolean(data.syncWithGroup),
         maxReadInterval: Number(data.maxReadInterval || '0'),
         readDelay: Number(data.readDelay || '0'),
-        overlap: Number(data.overlap || '0'),
+        startTimeOffset: Number(data.startTimeOffset || '0'),
+        endTimeOffset: data.endTimeOffset !== undefined && data.endTimeOffset !== '' ? Number(data.endTimeOffset) : null,
         recoveryStrategy: null
       } as SouthConnectorItemDTO;
 
@@ -618,7 +620,8 @@ export default class SouthService {
           name: groupName,
           southId: southConnector.id,
           scanMode,
-          overlap: itemWithGroup.overlap,
+          startTimeOffset: null,
+          endTimeOffset: itemWithGroup.overlap,
           maxReadInterval: itemWithGroup.maxReadInterval,
           readDelay: itemWithGroup.readDelay,
           recoveryStrategy: itemWithGroup.recoveryStrategy
@@ -688,7 +691,8 @@ export default class SouthService {
       name: command.standardSettings.name,
       southId: southConnector.id,
       scanMode,
-      overlap: command.historySettings.overlap,
+      startTimeOffset: command.historySettings.startTimeOffset,
+      endTimeOffset: command.historySettings.endTimeOffset,
       maxReadInterval: command.historySettings.maxReadInterval,
       readDelay: command.historySettings.readDelay,
       recoveryStrategy: command.historySettings.recoveryStrategy ?? null
@@ -715,14 +719,16 @@ export default class SouthService {
       throw new OIBusValidationError(`A group with name "${command.standardSettings.name}" already exists for this south connector`);
     }
 
-    const overlap = command.historySettings.overlap != null ? command.historySettings.overlap : null;
+    const startTimeOffset = command.historySettings.startTimeOffset != null ? command.historySettings.startTimeOffset : null;
+    const endTimeOffset = command.historySettings.endTimeOffset != null ? command.historySettings.endTimeOffset : null;
     const maxReadInterval = command.historySettings.maxReadInterval != null ? command.historySettings.maxReadInterval : null;
     const readDelay = command.historySettings.readDelay != null ? command.historySettings.readDelay : 0;
     const recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
     const groupEntity: Omit<SouthItemGroupCommand, 'southId'> = {
       name: command.standardSettings.name,
       scanMode,
-      overlap,
+      startTimeOffset,
+      endTimeOffset,
       maxReadInterval,
       readDelay,
       recoveryStrategy
@@ -842,7 +848,8 @@ const copyGroupCommandToGroupEntity = (
 ) => {
   groupEntity.id = command.id!;
   groupEntity.name = command.standardSettings.name;
-  groupEntity.overlap = command.historySettings.overlap;
+  groupEntity.startTimeOffset = command.historySettings.startTimeOffset;
+  groupEntity.endTimeOffset = command.historySettings.endTimeOffset;
   groupEntity.maxReadInterval = command.historySettings.maxReadInterval;
   groupEntity.readDelay = command.historySettings.readDelay;
   groupEntity.recoveryStrategy = command.historySettings.recoveryStrategy ?? null;
@@ -873,7 +880,8 @@ export const copySouthItemCommandToSouthItemEntity = async (
   southItemEntity.syncWithGroup = command.syncWithGroup ?? false;
   southItemEntity.maxReadInterval = command.maxReadInterval != null ? command.maxReadInterval : null;
   southItemEntity.readDelay = command.readDelay != null ? command.readDelay : null;
-  southItemEntity.overlap = command.overlap != null ? command.overlap : null;
+  southItemEntity.startTimeOffset = command.startTimeOffset != null ? command.startTimeOffset : null;
+  southItemEntity.endTimeOffset = command.endTimeOffset != null ? command.endTimeOffset : null;
   southItemEntity.recoveryStrategy = command.recoveryStrategy ?? null;
   southItemEntity.scanMode =
     command.scanModeId || command.scanModeName ? checkScanMode(scanModes, command.scanModeId, command.scanModeName) : null;
@@ -919,9 +927,10 @@ export const toSouthConnectorDTO = (
         scanMode: toScanModeDTO(group.scanMode, getUserInfo)
       },
       historySettings: {
+        startTimeOffset: group.startTimeOffset,
+        endTimeOffset: group.endTimeOffset,
         maxReadInterval: group.maxReadInterval,
         readDelay: group.readDelay,
-        overlap: group.overlap,
         recoveryStrategy: group.recoveryStrategy
       }
     })),
