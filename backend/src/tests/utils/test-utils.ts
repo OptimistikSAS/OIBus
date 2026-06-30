@@ -969,7 +969,8 @@ export const buildSouthEntity = <T extends SouthSettings, I extends SouthItemSet
       syncWithGroup: false,
       maxReadInterval: 3600,
       readDelay: 200,
-      overlap: 0
+      startTimeOffset: 0,
+      endTimeOffset: null
     });
   }
   return {
