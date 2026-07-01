@@ -86,6 +86,28 @@ Large time intervals are automatically divided into smaller chunks using:
 - Improves data stream resilience
   :::
 
+:::tip Repeated keys
+Adding the same key several times sends it as an array of values in the request, instead of overwriting the
+previous one. This is useful for endpoints that accept multiple values for a single parameter, such as
+`data-reference` below.
+:::
+
+#### Example: querying data values
+
+To retrieve raw values for several data references over a time window, configure the item with the
+`/api/oianalytics/data/values` endpoint and the following query parameters:
+
+| Key            | Value                           |
+| -------------- | ------------------------------- |
+| from           | `@StartTime`                    |
+| to             | `@EndTime`                      |
+| aggregation    | `RAW_VALUES`                    |
+| data-reference | `CIP_Line_1_Acid_Tank_Level`    |
+| data-reference | `CIP_Line_1_Caustic_Tank_Level` |
+
+Since `data-reference` is repeated, it is sent as `data-reference=CIP_Line_1_Acid_Tank_Level&data-reference=CIP_Line_1_Caustic_Tank_Level`,
+letting the endpoint return values for both tank levels in a single query.
+
 ## CSV Serialization Options
 
 | Setting                | Description                                                              | Example Value                                                                                                     |
