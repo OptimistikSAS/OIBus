@@ -573,8 +573,8 @@ export const formatQueryParams = (
     key: string;
     value: string;
   }>
-): Record<string, string | number> => {
-  const params: Record<string, string | number> = {};
+): Record<string, string | number | Array<string | number>> => {
+  const params: Record<string, string | number | Array<string | number>> = {};
 
   for (const queryParam of queryParams) {
     let value;
@@ -588,7 +588,15 @@ export const formatQueryParams = (
       default:
         value = queryParam.value;
     }
-    params[queryParam.key] = value;
+
+    const existingValue = params[queryParam.key];
+    if (existingValue === undefined) {
+      params[queryParam.key] = value;
+    } else if (Array.isArray(existingValue)) {
+      existingValue.push(value);
+    } else {
+      params[queryParam.key] = [existingValue, value];
+    }
   }
 
   return params;
