@@ -17,6 +17,7 @@ import {
   NodeId,
   OPCUAClient,
   resolveNodeId,
+  StatusCode,
   StatusCodes,
   TimestampsToReturn,
   UserTokenType
@@ -58,6 +59,7 @@ export default class SouthOPCUA
   private monitoredItems = new Map<string, ClientMonitoredItem>();
   private subscription: ClientSubscription | null = null;
   private flushTimeout: NodeJS.Timeout | null = null;
+  private subscriptionWatchdog: NodeJS.Timeout | null = null;
   private bufferedValues: Array<{
     item: SouthConnectorItemEntity<SouthOPCUAItemSettings>;
     timestamp: Instant;
@@ -126,10 +128,12 @@ export default class SouthOPCUA
       this.reconnectTimeout = null;
     }
 
+    this.clearSubscriptionWatchdog();
     if (this.subscription) {
       await this.subscription.terminate();
       this.subscription = null;
     }
+    this.monitoredItems.clear();
     if (this.client) {
       await this.client.close();
       this.client = null;
@@ -701,7 +705,20 @@ export default class SouthOPCUA
         publishingEnabled: true,
         priority: 10
       });
+      this.subscription.on('terminated', () => {
+        if (!this.disconnecting) {
+          this.logger.error('OPC-UA subscription terminated by server. Triggering reconnect');
+          this.triggerReconnect();
+        }
+      });
+      this.subscription.on('keepalive', () => {
+        this.resetSubscriptionWatchdog();
+      });
+      this.subscription.on('status_changed', (status: StatusCode) => {
+        this.logger.warn(`OPC-UA subscription status changed: ${status}`);
+      });
       this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
+      this.resetSubscriptionWatchdog();
     }
 
     for (const item of items) {
@@ -728,6 +745,7 @@ export default class SouthOPCUA
         TimestampsToReturn.Neither
       );
       monitoredItem.on('changed', (dataValue: DataValue) => {
+        this.resetSubscriptionWatchdog();
         const parsedValue = parseOPCUAValue(item.name, dataValue.value, this.logger);
         if (parsedValue) {
           this.bufferedValues.push({
@@ -779,6 +797,40 @@ export default class SouthOPCUA
       }
     }
     this.flushTimeout = setTimeout(this.flushMessages.bind(this), this.connector.settings.flushMessageTimeout);
+  }
+
+  private resetSubscriptionWatchdog(): void {
+    if (this.subscriptionWatchdog) {
+      clearTimeout(this.subscriptionWatchdog);
+    }
+    this.subscriptionWatchdog = setTimeout(() => {
+      if (!this.disconnecting) {
+        this.logger.error(
+          `OPC-UA subscription watchdog: no keepalive or data received for ${this.connector.settings.readTimeout} ms. Triggering reconnect`
+        );
+        this.triggerReconnect();
+      }
+    }, this.connector.settings.readTimeout);
+  }
+
+  private clearSubscriptionWatchdog(): void {
+    if (this.subscriptionWatchdog) {
+      clearTimeout(this.subscriptionWatchdog);
+      this.subscriptionWatchdog = null;
+    }
+  }
+
+  private triggerReconnect(): void {
+    if (this.disconnecting) return;
+    this.disconnect()
+      .then(() => {
+        if (!this.disconnecting && this.connector.enabled) {
+          this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+        }
+      })
+      .catch((err: unknown) => {
+        this.logger.error(`Error during reconnect after subscription issue: ${(err as Error).message}`);
+      });
   }
 
   async unsubscribe(items: Array<SouthConnectorItemEntity<SouthOPCUAItemSettings>>): Promise<void> {
