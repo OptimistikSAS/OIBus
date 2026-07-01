@@ -1208,6 +1208,32 @@ describe('Service utils', () => {
       const result = utils.formatQueryParams('s', 'e', [{ key: 'k', value: 'literal' }]);
       assert.deepStrictEqual(result, { k: 'literal' });
     });
+
+    it('should turn a repeated key into an array on the second occurrence', () => {
+      const result = utils.formatQueryParams('s', 'e', [
+        { key: 'tag', value: 'a' },
+        { key: 'tag', value: 'b' }
+      ]);
+      assert.deepStrictEqual(result, { tag: ['a', 'b'] });
+    });
+
+    it('should keep appending to the array for further occurrences of the same key', () => {
+      const result = utils.formatQueryParams('s', 'e', [
+        { key: 'tag', value: 'a' },
+        { key: 'tag', value: 'b' },
+        { key: 'tag', value: 'c' }
+      ]);
+      assert.deepStrictEqual(result, { tag: ['a', 'b', 'c'] });
+    });
+
+    it('should not mix up different keys when one is repeated', () => {
+      const result = utils.formatQueryParams('s', 'e', [
+        { key: 'tag', value: 'a' },
+        { key: 'other', value: 'x' },
+        { key: 'tag', value: 'b' }
+      ]);
+      assert.deepStrictEqual(result, { tag: ['a', 'b'], other: 'x' });
+    });
   });
 
   it('should get OIBus info', () => {
