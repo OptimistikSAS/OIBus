@@ -284,7 +284,7 @@
                       </th>
                       <th style="width: 14rem">
                         <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('group')">
-                          <span translate="south.items.group" class="me-2"></span>
+                          <span translate="south.items.group-and-schedule" class="me-2"></span>
                           <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.group] }}"></span>
                         </button>
                       </th>
@@ -314,11 +314,12 @@
                         <td>
                           <span [ngbTooltip]="scheduleTooltip" container="body" tooltipClass="schedule-tooltip">
                             @if (!item.groupId) {
-                              @if (item.scanModeId === 'subscription') {
-                                <span translate="scan-mode.subscription"></span>
-                              } @else {
-                                {{ item.scanModeName || '' }}
-                              }
+                              <span translate="south.items.group-none"></span>
+                              <span class="text-muted ms-1"
+                                >({{
+                                  item.scanModeId === 'subscription' ? ('scan-mode.subscription' | translate) : item.scanModeName || ''
+                                }})</span
+                              >
                             } @else {
                               {{ item.groupName }}
                               <span class="text-muted">({{ getEffectiveScanModeName(item) }})</span>
