@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import Stream from 'node:stream';
+import { EventEmitter } from 'node:events';
 import testData from '../../tests/utils/test-data';
 import { mockModule, reloadModule, flushPromises } from '../../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../../tests/__mocks__/repository/cache/south-cache-repository.mock';
@@ -388,14 +389,18 @@ describe('SouthOPCUA', () => {
 
     south['flushTimeout'] = setTimeout(() => null);
     south['reconnectTimeout'] = setTimeout(() => null);
+    south['subscriptionWatchdog'] = setTimeout(() => null);
     const terminate = mock.fn(async () => undefined);
     const close = mock.fn(async () => undefined);
     south['subscription'] = { terminate } as unknown as ClientSubscription;
     south['client'] = { close } as unknown as ClientSession;
+    south['monitoredItems'].set('someItem', {} as unknown as ClientMonitoredItem);
 
     await south.disconnect();
     assert.strictEqual(terminate.mock.calls.length, 1);
     assert.strictEqual(close.mock.calls.length, 1);
+    assert.strictEqual(south['subscriptionWatchdog'], null);
+    assert.strictEqual(south['monitoredItems'].size, 0);
   });
 
   it('should properly test connection', async () => {
@@ -1563,7 +1568,8 @@ describe('SouthOPCUA', () => {
     const stream = new CustomStream();
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
-    const createSubscription2Mock = mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }));
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    const createSubscription2Mock = mock.fn(async () => subscriptionEmitter);
     south['client'] = {
       createSubscription2: createSubscription2Mock
     } as unknown as ClientSession;
@@ -1627,6 +1633,38 @@ describe('SouthOPCUA', () => {
         quality: 'Good'
       }
     ]);
+  });
+
+  it('should re-register monitored items after reconnect (monitoredItems cleared on disconnect)', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    // First subscribe — registers one monitored item
+    await south.subscribe([configuration.items[2]]);
+    assert.strictEqual(monitorFn.mock.calls.length, 1);
+    assert.strictEqual(south['monitoredItems'].size, 1);
+
+    // Simulate disconnect (as triggered by watchdog or terminated event)
+    const closeMock = mock.fn(async () => undefined);
+    south['client'] = { close: closeMock } as unknown as ClientSession;
+    await south.disconnect();
+    assert.strictEqual(south['monitoredItems'].size, 0);
+
+    // Simulate reconnect: new session + new subscription
+    const subscriptionEmitter2 = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter2)
+    } as unknown as ClientSession;
+
+    // subscribe() must re-register the item, not skip it
+    await south.subscribe([configuration.items[2]]);
+    assert.strictEqual(monitorFn.mock.calls.length, 2);
+    assert.strictEqual(south['monitoredItems'].size, 1);
   });
 
   it('should properly unsubscribe', async () => {
@@ -1854,8 +1892,9 @@ describe('SouthOPCUA', () => {
     const stream = new CustomStream();
     stream.terminate = mock.fn();
     const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
     south['client'] = {
-      createSubscription2: mock.fn(async () => ({ terminate: mock.fn(), monitor: monitorFn }))
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
     } as unknown as ClientSession;
 
     south.addContent = mock.fn(async () => undefined);
@@ -1880,6 +1919,243 @@ describe('SouthOPCUA', () => {
         c =>
           (c.arguments[0] as string).includes('Error flushing messages from subscription') &&
           (c.arguments[0] as string).includes(flushError.message)
+      )
+    );
+  });
+
+  it('should trigger reconnect when subscription emits terminated event', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    await south.subscribe([configuration.items[2]]);
+
+    subscriptionEmitter.emit('terminated');
+    await flushPromises();
+
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.ok(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        c => (c.arguments[0] as string) === 'OPC-UA subscription terminated by server. Triggering reconnect'
+      )
+    );
+  });
+
+  it('should not trigger reconnect on terminated event when already disconnecting', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    await south.subscribe([configuration.items[2]]);
+    south['disconnecting'] = true;
+
+    subscriptionEmitter.emit('terminated');
+    await flushPromises();
+
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+  });
+
+  it('should reset watchdog when subscription emits keepalive event', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    await south.subscribe([configuration.items[2]]);
+
+    const watchdogBefore = south['subscriptionWatchdog'];
+    subscriptionEmitter.emit('keepalive');
+    const watchdogAfter = south['subscriptionWatchdog'];
+
+    assert.ok(watchdogBefore !== null);
+    assert.ok(watchdogAfter !== null);
+    // A new timer was set (the reference changes after resetSubscriptionWatchdog)
+    assert.notStrictEqual(watchdogBefore, watchdogAfter);
+  });
+
+  it('should log warning when subscription emits status_changed event', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    await south.subscribe([configuration.items[2]]);
+
+    subscriptionEmitter.emit('status_changed', StatusCodes.BadTimeout);
+
+    assert.ok(
+      (logger.warn as ReturnType<typeof mock.fn>).mock.calls.some(c =>
+        (c.arguments[0] as string).includes('OPC-UA subscription status changed')
+      )
+    );
+  });
+
+  it('should reset watchdog when a changed event is received on a monitored item', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    south.addContent = mock.fn(async () => undefined);
+    utilsOpcuaExports.parseOPCUAValue.mock.mockImplementation(() => 'parsedValue');
+
+    await south.subscribe([configuration.items[2]]);
+
+    const watchdogBefore = south['subscriptionWatchdog'];
+    stream.emit('changed', { value: { value: 1, dataType: DataType.Float }, statusCode: StatusCodes.Good });
+    const watchdogAfter = south['subscriptionWatchdog'];
+
+    assert.ok(watchdogBefore !== null);
+    assert.ok(watchdogAfter !== null);
+    assert.notStrictEqual(watchdogBefore, watchdogAfter);
+  });
+
+  it('should trigger reconnect when subscription watchdog fires after readTimeout ms', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    await south.subscribe([configuration.items[2]]);
+
+    // Advance right up to (but not past) the configured readTimeout: must not fire yet
+    mock.timers.tick(configuration.settings.readTimeout - 1);
+    await flushPromises();
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+
+    // Advance past the boundary: watchdog fires, using the connector's readTimeout, not a hardcoded value
+    mock.timers.tick(1);
+    await flushPromises();
+
+    assert.strictEqual(disconnectMock.mock.calls.length, 1);
+    assert.ok(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(
+        c =>
+          (c.arguments[0] as string).includes('OPC-UA subscription watchdog') &&
+          (c.arguments[0] as string).includes(String(configuration.settings.readTimeout))
+      )
+    );
+  });
+
+  it('should schedule a reconnect after triggerReconnect() successfully disconnects', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    south.disconnect = mock.fn(async () => undefined);
+    const connectMock = mock.fn(async () => undefined);
+    south.connect = connectMock;
+
+    await south.subscribe([configuration.items[2]]);
+
+    subscriptionEmitter.emit('terminated');
+    await flushPromises();
+
+    assert.ok(south['reconnectTimeout'] !== null, 'reconnectTimeout should be armed after a successful disconnect');
+
+    mock.timers.tick(configuration.settings.retryInterval);
+    await flushPromises();
+    assert.strictEqual(connectMock.mock.calls.length, 1);
+  });
+
+  it('should not schedule a reconnect after triggerReconnect() if the connector was disabled while disconnecting', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    south.disconnect = mock.fn(async () => undefined);
+    const connectMock = mock.fn(async () => undefined);
+    south.connect = connectMock;
+    south['connector'].enabled = false;
+
+    await south.subscribe([configuration.items[2]]);
+
+    subscriptionEmitter.emit('terminated');
+    await flushPromises();
+
+    assert.strictEqual(south['reconnectTimeout'], null);
+    south['connector'].enabled = true;
+  });
+
+  it('should not call disconnect() when triggerReconnect() runs while already disconnecting', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    const disconnectMock = mock.fn(async () => undefined);
+    south.disconnect = disconnectMock;
+
+    await south.subscribe([configuration.items[2]]);
+    south['disconnecting'] = true;
+
+    south['triggerReconnect']();
+    await flushPromises();
+
+    assert.strictEqual(disconnectMock.mock.calls.length, 0);
+  });
+
+  it('should log error when triggerReconnect disconnect() rejects', async () => {
+    const stream = new CustomStream();
+    stream.terminate = mock.fn();
+    const monitorFn = mock.fn(() => stream);
+    const subscriptionEmitter = Object.assign(new EventEmitter(), { terminate: mock.fn(async () => undefined), monitor: monitorFn });
+    south['client'] = {
+      createSubscription2: mock.fn(async () => subscriptionEmitter)
+    } as unknown as ClientSession;
+
+    south.disconnect = mock.fn(async () => {
+      throw new Error('disconnect failed');
+    });
+
+    await south.subscribe([configuration.items[2]]);
+
+    subscriptionEmitter.emit('terminated');
+    await flushPromises();
+
+    assert.ok(
+      (logger.error as ReturnType<typeof mock.fn>).mock.calls.some(c =>
+        (c.arguments[0] as string).includes('Error during reconnect after subscription issue')
       )
     );
   });
