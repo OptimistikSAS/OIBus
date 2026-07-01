@@ -2411,6 +2411,7 @@
       "disable-error": "Error disabling items: {{error}}",
       "delete-error": "Error deleting items: {{error}}",
       "group": "Group",
+      "group-and-schedule": "Group (Schedule)",
       "group-none": "None",
       "all-groups": "All groups",
       "all-scan-modes": "All schedules",
