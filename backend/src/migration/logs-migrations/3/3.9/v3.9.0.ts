@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 const LOG_TABLE = 'logs';
 
 /**
- * Two unrelated but co-located changes for v3.9.0:
+ * Several co-located changes for v3.9.0:
  *
  * 1. Add item_id and item_name columns so logs can be linked to a specific
  *    south connector item (data point / query). Both columns are nullable;
@@ -13,11 +13,21 @@ const LOG_TABLE = 'logs';
  *    scope_id = 'web-server' and scope_name = 'Web Server'. The 'web-server'
  *    scope type is removed from the ScopeType union in v3.9.0; web-server logs
  *    are now a named internal scope, searchable via the scope typeahead.
+ *
+ * 3. Add group_id and group_name columns so logs can be linked to a south item
+ *    group. Both columns are nullable; logs not associated with a group leave
+ *    them NULL.
+ *
+ * 4. Clear scope_name for internal scope rows (including the web-server rows
+ *    migrated above) — the frontend now derives the display name from the
+ *    scope_id via i18n translation keys.
  */
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable(LOG_TABLE, table => {
     table.text('item_id').nullable();
     table.text('item_name').nullable();
+    table.text('group_id').nullable();
+    table.text('group_name').nullable();
   });
 
   await knex(LOG_TABLE).where('scope_type', 'web-server').update({
@@ -26,10 +36,13 @@ export async function up(knex: Knex): Promise<void> {
     scope_name: 'Web Server'
   });
 
+  await knex(LOG_TABLE).where('scope_type', 'internal').update({ scope_name: null });
+
   // Partial index: covers getItemById (item_id = ?), search (item_id IN (...)),
   // and suggestItems (item_id IS NOT NULL guard). Kept small by indexing only
   // non-NULL rows.
   await knex.raw(`CREATE INDEX IF NOT EXISTS idx_logs_item_id ON ${LOG_TABLE} (item_id) WHERE item_id IS NOT NULL;`);
+  await knex.raw(`CREATE INDEX IF NOT EXISTS idx_logs_group_id ON ${LOG_TABLE} (group_id) WHERE group_id IS NOT NULL;`);
 }
 
 export async function down(knex: Knex): Promise<void> {
