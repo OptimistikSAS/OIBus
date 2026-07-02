@@ -29,12 +29,21 @@ describe('HistoryQuery enabled', () => {
 
   const logger = new PinoLogger();
 
+  const utilsExports = {
+    delay: mock.fn(async () => undefined),
+    createFolder: mock.fn(async () => undefined),
+    generateIntervals: mock.fn(
+      (_startTime: unknown, _endTime: unknown, _maxReadInterval?: unknown) =>
+        [] as Array<{
+          start: string;
+          end: string;
+        }>
+    )
+  };
+
   before(() => {
     // Mock service/utils to prevent real delays and folder creation
-    mockModule(nodeRequire, '../service/utils', {
-      delay: mock.fn(async () => undefined),
-      createFolder: mock.fn(async () => undefined)
-    });
+    mockModule(nodeRequire, '../service/utils', utilsExports);
     mockModule(nodeRequire, '../service/logger/logger.service', {
       loggerService: { createChildLogger: mock.fn(() => logger) },
       default: class {}
@@ -45,6 +54,7 @@ describe('HistoryQuery enabled', () => {
 
   beforeEach(async () => {
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
+    utilsExports.generateIntervals = mock.fn(() => []);
 
     mockedNorth1Mock = new NorthConnectorMock(testData.north.list[0]);
     mockedSouth1Mock = new SouthConnectorMock(testData.south.list[0]);
@@ -268,6 +278,7 @@ describe('HistoryQuery enabled', () => {
 
   it('should listen on metrics', async () => {
     const emitMock = mock.method(historyQuery.metricsEvent, 'emit');
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
 
     await historyQuery.start();
 
@@ -295,13 +306,17 @@ describe('HistoryQuery enabled', () => {
     mockedSouth1Mock.metricsEvent.emit('run-end', {});
     assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-run-end'));
 
-    mockedSouth1Mock.metricsEvent.emit('history-query-start', {});
-    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-start'));
-
-    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {});
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {
+      currentIntervalStart: testData.constants.dates.DATE_1,
+      currentIntervalEnd: testData.constants.dates.DATE_2
+    });
     assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-interval'));
 
-    mockedSouth1Mock.metricsEvent.emit('history-query-stop', {});
+    // 'south-history-query-start'/'south-history-query-stop' are emitted directly by HistoryQuery
+    // itself (not forwarded from a south metricsEvent) around the historyQueryHandler run.
+    mockedSouth1Mock.connectedEvent.emit('connected');
+    assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-start'));
+    await flushPromises();
     assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-history-query-stop'));
 
     mockedSouth1Mock.metricsEvent.emit('add-values', {});
@@ -309,6 +324,72 @@ describe('HistoryQuery enabled', () => {
 
     mockedSouth1Mock.metricsEvent.emit('add-file', {});
     assert.ok(emitMock.mock.calls.some(c => c.arguments[0] === 'south-add-file'));
+  });
+
+  it('should compute interval progress against the full, fixed interval list', async () => {
+    // Four fixed hour-long slots spanning the whole configured history range, independent of
+    // whatever sub-intervals the south connector queries in a given run.
+    const fixedIntervals = [
+      { start: '2020-03-15T00:00:00.000Z', end: '2020-03-15T01:00:00.000Z' },
+      { start: '2020-03-15T01:00:00.000Z', end: '2020-03-15T02:00:00.000Z' },
+      { start: '2020-03-15T02:00:00.000Z', end: '2020-03-15T03:00:00.000Z' },
+      { start: '2020-03-15T03:00:00.000Z', end: '2020-03-15T04:00:00.000Z' }
+    ];
+    utilsExports.generateIntervals = mock.fn(() => fixedIntervals);
+    const progressHistoryQuery = new HistoryQuery(testData.historyQueries.list[0], mockedNorth1, mockedSouth1);
+    const emitMock = mock.method(progressHistoryQuery.metricsEvent, 'emit');
+    mockedSouth1Mock.historyQueryHandler = mock.fn(async () => undefined);
+
+    await progressHistoryQuery.start();
+
+    // Reports mid-way through the first slot: not yet fully covered, so 0 of 4 slots done.
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {
+      currentIntervalStart: '2020-03-15T00:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T00:30:00.000Z'
+    });
+    let call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-interval')!;
+    assert.deepStrictEqual(call.arguments[1], {
+      running: true,
+      intervalProgress: 0,
+      currentIntervalStart: '2020-03-15T00:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T00:30:00.000Z',
+      currentIntervalNumber: 0,
+      numberOfIntervals: 4
+    });
+
+    // Exactly covers the first two slots: 2 of 4 done, 50% progress.
+    emitMock.mock.resetCalls();
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {
+      currentIntervalStart: '2020-03-15T00:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T02:00:00.000Z'
+    });
+    call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-interval')!;
+    assert.deepStrictEqual(call.arguments[1], {
+      running: true,
+      intervalProgress: 0.5,
+      currentIntervalStart: '2020-03-15T00:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T02:00:00.000Z',
+      currentIntervalNumber: 2,
+      numberOfIntervals: 4
+    });
+
+    // Covers the whole range: 4 of 4 done, 100% progress.
+    emitMock.mock.resetCalls();
+    mockedSouth1Mock.metricsEvent.emit('history-query-interval', {
+      currentIntervalStart: '2020-03-15T03:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T04:00:00.000Z'
+    });
+    call = emitMock.mock.calls.find(c => c.arguments[0] === 'south-history-query-interval')!;
+    assert.deepStrictEqual(call.arguments[1], {
+      running: true,
+      intervalProgress: 1,
+      currentIntervalStart: '2020-03-15T03:00:00.000Z',
+      currentIntervalEnd: '2020-03-15T04:00:00.000Z',
+      currentIntervalNumber: 4,
+      numberOfIntervals: 4
+    });
+
+    await progressHistoryQuery.stop();
   });
 
   it('should search cache', async () => {

@@ -79,7 +79,7 @@ describe('HistoryMetricsService', () => {
     historyQueryMock.metricsEvent.emit('south-run-end', { lastRunDuration: 999 });
     historyQueryMock.metricsEvent.emit('south-add-values', { numberOfValuesRetrieved: 10, lastValueRetrieved: {} });
     historyQueryMock.metricsEvent.emit('south-add-file', { lastFileRetrieved: 'last file retrieved' });
-    historyQueryMock.metricsEvent.emit('south-history-query-start', { running: true, intervalProgress: 20 });
+    historyQueryMock.metricsEvent.emit('south-history-query-start', { running: true });
     historyQueryMock.metricsEvent.emit('south-history-query-interval', {
       running: true,
       intervalProgress: 25,
