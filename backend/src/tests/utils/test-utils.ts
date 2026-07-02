@@ -685,7 +685,13 @@ const createSouthConnectorItem = async (
       scan_mode_id: item.scanMode?.id || null,
       name: item.name,
       enabled: item.enabled,
-      settings: JSON.stringify(item.settings)
+      settings: JSON.stringify(item.settings),
+      sync_with_group: item.syncWithGroup,
+      max_read_interval: item.maxReadInterval,
+      read_delay: item.readDelay,
+      start_time_offset: item.startTimeOffset,
+      end_time_offset: item.endTimeOffset,
+      recovery_strategy: item.recoveryStrategy
     })
     .into('south_items');
 };

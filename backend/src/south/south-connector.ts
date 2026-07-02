@@ -30,16 +30,10 @@ export interface SouthMetricsEvents {
   connect: { lastConnection: Instant };
   'run-start': { lastRunStart: Instant };
   'run-end': { lastRunDuration: number };
-  'history-query-start': { running: boolean; intervalProgress: number };
   'history-query-interval': {
-    running: boolean;
-    intervalProgress: number;
     currentIntervalStart: Instant;
     currentIntervalEnd: Instant;
-    currentIntervalNumber: number;
-    numberOfIntervals: number;
   };
-  'history-query-stop': { running: boolean };
   // `any-content` (opaque payloads) has no time value, hence the `| null`.
   'add-values': { numberOfValuesRetrieved: number; lastValueRetrieved: OIBusTimeValue | null };
   'add-file': { lastFileRetrieved: string };
@@ -570,10 +564,6 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       const groupId = lead.group && lead.syncWithGroup ? lead.group.id : null;
       await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime);
     }
-
-    this.metricsEvent.emit('history-query-stop', {
-      running: false
-    });
     this.historyIsRunning = false;
   }
 
@@ -616,15 +606,9 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     const queryWindow = this.computeQueryWindow(southCache.trackedInstant, endTime, startTimeOffset, endTimeOffset);
     if (!queryWindow) return;
     const { effectiveStartTime, effectiveEndTime } = queryWindow;
-    const { intervals, numberOfIntervalsDone } = generateIntervals(
-      startTime,
-      effectiveStartTime,
-      effectiveEndTime,
-      maxReadInterval,
-      recoveryStrategy
-    );
+    const intervals = generateIntervals(effectiveStartTime, effectiveEndTime, maxReadInterval, recoveryStrategy);
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, items, southCache, readDelay, numberOfIntervalsDone, recoveryStrategy, effectiveEndTime);
+    await this.queryIntervals(intervals, items, southCache, readDelay, recoveryStrategy);
   }
 
   private async queryIntervals(
@@ -632,25 +616,18 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     items: Array<SouthConnectorItemEntity<I>>,
     southCache: Omit<SouthItemLastValue, 'itemName' | 'groupName'>,
     readDelay: number,
-    numberOfIntervalsDone: number,
-    strategy: SouthHistoryRecoveryStrategy,
-    endInstant: Instant
+    strategy: SouthHistoryRecoveryStrategy
   ) {
-    // For 'newest' strategy the array is already reversed; done intervals sit at the tail.
-    // We iterate from 0 up to (length - numberOfIntervalsDone) and defer the cache update until
-    // all intervals finish so that trackedInstant does not jump to "now" mid-run and corrupt resumption.
-    const startIndex = strategy === 'newest' ? 0 : numberOfIntervalsDone;
-    const endIndex = strategy === 'newest' ? intervals.length - numberOfIntervalsDone : intervals.length;
+    // For 'newest' strategy, track the max trackedInstant seen across all intervals. Intervals are
+    // queried newest-first (see generateIntervals), so this is expected to resolve on the first
+    // interval that has data — the comparison is a safety net, not a substitute for that ordering.
+    let latestValue: { trackedInstant: Instant; value: unknown } | null = null;
 
-    this.metricsEvent.emit('history-query-start', {
-      running: true,
-      intervalProgress: this.calculateIntervalProgress(intervals.length, numberOfIntervalsDone)
-    });
-
-    for (let index = startIndex; index < endIndex; index++) {
+    for (let index = 0; index < intervals.length; index++) {
       const queryTime = DateTime.now().toUTC().toISO()!;
       const interval = intervals[index];
 
+      this.metricsEvent.emit('history-query-interval', { currentIntervalStart: interval.start, currentIntervalEnd: interval.end });
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
       const lastValue: { trackedInstant: Instant; value: unknown } | null = await this.historyQuery(items, interval.start, interval.end);
@@ -659,6 +636,7 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
         // We update the max instant only if the start interval is lower than the lastInstantRetrieved (i.e., we found data)
         // With a negative startTimeOffset the window extends backwards, so lastInstantRetrieved may be below trackedInstant — check both conditions
         if (lastValue && (!southCache.trackedInstant || lastValue.trackedInstant > southCache.trackedInstant)) {
+          this.logger.debug(`Saving last value ${JSON.stringify(lastValue.value)}, trackedInstant ${lastValue.trackedInstant}`);
           this.cacheService!.saveItemLastValue(this.connector.id, {
             groupId: southCache.groupId,
             itemId: southCache.itemId,
@@ -667,38 +645,31 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
             trackedInstant: lastValue.trackedInstant
           });
         }
+      } else if (lastValue && (!latestValue || lastValue.trackedInstant > latestValue.trackedInstant)) {
+        latestValue = lastValue;
       }
-
-      const intervalsProcessed = index - startIndex + 1;
-      this.metricsEvent.emit('history-query-interval', {
-        running: true,
-        intervalProgress: this.calculateIntervalProgress(endIndex - startIndex, intervalsProcessed),
-        currentIntervalStart: interval.start,
-        currentIntervalEnd: interval.end,
-        currentIntervalNumber: intervalsProcessed,
-        numberOfIntervals: endIndex - startIndex
-      });
 
       if (this.stopping) {
         this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
         return;
       }
 
-      if (index !== endIndex - 1) {
+      if (index !== intervals.length - 1) {
         await delay(readDelay);
       }
     }
 
     // For 'newest' strategy: only advance trackedInstant once all intervals have been queried.
     // This prevents a mid-run restart from skipping the not-yet-queried older intervals.
-    if (strategy === 'newest' && !this.stopping) {
+    // Only save if data was actually found — otherwise leave the cache untouched.
+    if (strategy === 'newest' && !this.stopping && latestValue) {
+      this.logger.debug(`Saving last value ${JSON.stringify(latestValue.value)}, trackedInstant ${latestValue.trackedInstant}`);
       this.cacheService!.saveItemLastValue(this.connector.id, {
         groupId: southCache.groupId,
         itemId: southCache.itemId,
         queryTime: DateTime.now().toUTC().toISO()!,
-        // southCache.value is the pre-run cursor value; no per-interval update was made during a 'newest' run.
-        value: southCache.value,
-        trackedInstant: endInstant
+        value: latestValue.value,
+        trackedInstant: latestValue.trackedInstant
       });
     }
   }

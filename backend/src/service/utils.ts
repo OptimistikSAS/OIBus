@@ -113,33 +113,27 @@ export const delay = (timeout: number): Promise<void> =>
  * numberOfIntervalsDone reflects how many intervals (counting from the oldest side) are already covered by the cache.
  */
 export const generateIntervals = (
-  startInstant: Instant,
   trackedInstant: Instant,
   endInstant: Instant,
   maxNumberOfSecondsInInterval: number,
   strategy: SouthHistoryRecoveryStrategy = 'oldest'
-): { intervals: Array<Interval>; numberOfIntervalsDone: number } => {
-  const startTime = DateTime.fromISO(startInstant);
-  const startTimeFromCache = DateTime.fromISO(trackedInstant);
+): Array<Interval> => {
+  const startTime = DateTime.fromISO(trackedInstant);
   const endTime = DateTime.fromISO(endInstant);
   const originalInterval = endTime.toMillis() - startTime.toMillis();
-  let numberOfIntervalsDone = 0;
 
-  if (maxNumberOfSecondsInInterval <= 0) {
-    return {
-      intervals: [{ start: trackedInstant, end: endInstant }],
-      numberOfIntervalsDone: 0
-    };
+  if (maxNumberOfSecondsInInterval <= 0 || originalInterval <= 0) {
+    return [{ start: trackedInstant, end: endInstant }];
   }
 
   const intervalLists: Array<Interval> = [];
   const intervalDuration = maxNumberOfSecondsInInterval * 1000;
   const numberOfIntervals = Math.ceil(originalInterval / intervalDuration);
 
-  let currentStart = startTime.toMillis();
+  const currentStart = startTime.toMillis();
   for (let i = 0; i < numberOfIntervals; i += 1) {
-    const newStartTime = DateTime.fromMillis(currentStart);
-    const newEndTime = DateTime.fromMillis(currentStart + intervalDuration);
+    const newStartTime = DateTime.fromMillis(currentStart + intervalDuration * i);
+    const newEndTime = DateTime.fromMillis(currentStart + intervalDuration * (i + 1));
 
     if (newEndTime > endTime) {
       // Last interval: adjust end to endTime
@@ -148,27 +142,18 @@ export const generateIntervals = (
         end: endTime.toUTC().toISO() as Instant
       });
     } else {
-      // Handle the first unqueried interval It is needed to not query again the part of the interval that has already been queried
-      let adjustedStart = newStartTime;
-      if (newStartTime < startTimeFromCache && startTimeFromCache < newEndTime) {
-        adjustedStart = startTimeFromCache;
-      }
       intervalLists.push({
-        start: adjustedStart.toUTC().toISO() as Instant,
+        start: newStartTime.toUTC().toISO() as Instant,
         end: newEndTime.toUTC().toISO() as Instant
       });
-      if (newEndTime <= startTimeFromCache) {
-        numberOfIntervalsDone += 1;
-      }
     }
-    currentStart += intervalDuration;
   }
 
   if (strategy === 'newest') {
     intervalLists.reverse();
   }
 
-  return { intervals: intervalLists, numberOfIntervalsDone };
+  return intervalLists;
 };
 
 /**

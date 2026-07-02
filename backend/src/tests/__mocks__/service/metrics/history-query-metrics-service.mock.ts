@@ -19,7 +19,9 @@ export default class HistoryQueryMetricsServiceMock extends HistoryQueryMetricsS
 
   constructor() {
     super(
-      new HistoryQueryMock({} as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>),
+      new HistoryQueryMock({
+        queryTimeRange: { startTime: '2020-01-01T00:00:00.000Z', endTime: '2020-01-01T00:00:00.000Z', maxReadInterval: 3600, readDelay: 0 }
+      } as HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>),
       null! as HistoryQueryMetricsRepository
     );
   }

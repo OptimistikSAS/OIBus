@@ -50,10 +50,10 @@ describe('SouthConnector', () => {
 
   const utilsExports = {
     delay: mock.fn(async () => undefined),
-    generateIntervals: mock.fn((_startTime: unknown, _startTimeFromCache: unknown, _endTime: unknown, _maxReadInterval?: unknown) => ({
-      intervals: [] as Array<{ start: string; end: string }>,
-      numberOfIntervalsDone: 0
-    })),
+    generateIntervals: mock.fn(
+      (_startTime: unknown, _endTime: unknown, _maxReadInterval?: unknown, _strategy?: unknown) =>
+        [] as Array<{ start: string; end: string }>
+    ),
     groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     validateCronExpression: mock.fn(() => ({ expression: '' })),
     checkAge: mock.fn(() => true),
@@ -131,7 +131,7 @@ describe('SouthConnector', () => {
       });
       utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
       utilsExports.validateCronExpression = mock.fn(() => ({ expression: '' }));
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => []);
 
       southCacheService.getSouthCache = mock.fn(() => ({
         southId: testData.south.list[0].id,
@@ -491,7 +491,7 @@ describe('SouthConnector', () => {
 
     it('should call historyQuery once per item for single-item connectors', async () => {
       const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => [interval]);
 
       const historyQueryMock = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
       south.historyQuery = historyQueryMock;
@@ -509,7 +509,7 @@ describe('SouthConnector', () => {
 
     it('should use independent cache entries per item for single-item connectors', async () => {
       const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => [interval]);
       south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
 
       const items = testData.south.list[1].items as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
@@ -532,7 +532,7 @@ describe('SouthConnector', () => {
       const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
       const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
       const endTime = '2021-02-02T02:02:02.222Z';
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval1, interval2], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => [interval1, interval2]);
       south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
 
       const items = [{ ...testData.south.list[1].items[0], recoveryStrategy: 'newest' }] as Array<
@@ -549,7 +549,7 @@ describe('SouthConnector', () => {
     it('should not save trackedInstant when stopped mid newest run', async () => {
       const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
       const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval1, interval2], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => [interval1, interval2]);
       south.historyQuery = mock.fn(async () => {
         // Simulate a stop being requested mid-run
         (south as unknown as { stopping: boolean }).stopping = true;
@@ -581,7 +581,7 @@ describe('SouthConnector', () => {
         return cronMockInstance;
       });
       utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => []);
       southCacheService.getSouthCache = mock.fn(() => ({
         scanModeId: testData.scanMode.list[0].id,
         maxInstant: testData.constants.dates.FAKE_NOW,
@@ -809,14 +809,7 @@ describe('SouthConnector', () => {
         { start: '2021-02-02T02:02:02.222Z', end: '2022-02-02T02:02:02.222Z' },
         { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
       ];
-      let generateIntervalsCallCount = 0;
-      utilsExports.generateIntervals = mock.fn(
-        (_startTime: unknown, _startTimeFromCache: unknown, _endTime: unknown, _maxReadInterval?: unknown) => {
-          generateIntervalsCallCount++;
-          if (generateIntervalsCallCount === 1) return { intervals, numberOfIntervalsDone: 0 };
-          return { intervals: [], numberOfIntervalsDone: 0 };
-        }
-      );
+      utilsExports.generateIntervals = mock.fn(() => intervals);
 
       const historyQueryMock = mock.fn(
         () =>
@@ -877,14 +870,16 @@ describe('SouthConnector', () => {
         }
       ];
 
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => []);
 
       await south.historyQueryHandler(itemsWithGroup, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z');
 
       assert.strictEqual(utilsExports.generateIntervals.mock.calls.length, 1);
-      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[0], '2020-02-02T02:02:02.222Z');
-      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[2], '2023-02-02T02:02:02.222Z');
-      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[3], 1800);
+      // startTime (2020-02-02T02:02:02.222Z) + group.startTimeOffset (50ms)
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[0], '2020-02-02T02:02:02.272Z');
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[1], '2023-02-02T02:02:02.222Z');
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[2], 1800);
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[3], 'oldest');
     });
 
     it('should update subscriptions', async () => {
