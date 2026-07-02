@@ -461,9 +461,10 @@ export class SouthDetailComponent {
                   maxReadInterval: item.maxReadInterval,
                   readDelay: item.readDelay,
                   startTimeOffset: item.startTimeOffset,
-              endTimeOffset: item.endTimeOffset,
-              recoveryStrategy: item.recoveryStrategy
-            }) as SouthConnectorItemCommandDTO),
+                  endTimeOffset: item.endTimeOffset,
+                  recoveryStrategy: item.recoveryStrategy
+                }) as SouthConnectorItemCommandDTO
+            ),
             errors: result.errors
           }))
         );

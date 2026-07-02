@@ -558,8 +558,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
+        startTimeOffset: 0,
+        endTimeOffset: 0,
         recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
@@ -576,8 +576,8 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        startTimeOffset: null,
-        endTimeOffset: null,
+        startTimeOffset: 0,
+        endTimeOffset: 0,
         recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
@@ -799,8 +799,8 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      startTimeOffset: null,
-      endTimeOffset: null,
+      startTimeOffset: 0,
+      endTimeOffset: 0,
       recoveryStrategy: null
     }
   ],
@@ -826,8 +826,8 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
   syncWithGroup: false,
   maxReadInterval: null,
   readDelay: null,
-  startTimeOffset: null,
-  endTimeOffset: null,
+  startTimeOffset: 0,
+  endTimeOffset: 0,
   recoveryStrategy: null
 };
 const itemTestingSettings: SouthConnectorItemTestingSettings = {

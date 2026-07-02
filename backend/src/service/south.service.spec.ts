@@ -218,6 +218,7 @@ describe('South Service', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -263,6 +264,7 @@ describe('South Service', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       readDelay: 0,
       createdBy: '',
       updatedBy: '',
@@ -543,7 +545,24 @@ describe('South Service', () => {
   it('should get item last value from group cache when item is synced with group', () => {
     const southId = testData.south.list[0].id;
     const groupId = 'group-123';
-    const groupedItem = { ...testData.south.list[0].items[0], syncWithGroup: true, group: { id: groupId, name: 'My Group' } };
+    const groupedItem = {
+      ...testData.south.list[0].items[0],
+      syncWithGroup: true,
+      group: {
+        id: groupId,
+        name: 'My Group',
+        scanMode: testData.scanMode.list[0],
+        startTimeOffset: null,
+        endTimeOffset: null,
+        maxReadInterval: null,
+        readDelay: null,
+        recoveryStrategy: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    };
     southConnectorRepository.findItemById.mock.mockImplementationOnce(() => groupedItem);
     const cached = {
       itemId: 'some-lead-item-id',
@@ -600,6 +619,7 @@ describe('South Service', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -669,6 +689,7 @@ describe('South Service', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -1127,8 +1148,10 @@ describe('South Service', () => {
           },
           group: { id: '', standardSettings: { name: 'Test Group' } },
           maxReadInterval: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           readDelay: 0,
+          recoveryStrategy: null,
           syncWithGroup: true
         }
       ],
@@ -1205,6 +1228,7 @@ describe('South Service', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -1245,6 +1269,7 @@ describe('South Service', () => {
       startTimeOffset: null,
       endTimeOffset: null,
       maxReadInterval: null,
+      recoveryStrategy: null,
       items: [],
       readDelay: 0,
       createdBy: '',
@@ -1384,6 +1409,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -1399,6 +1425,7 @@ describe('South Service', () => {
           startTimeOffset: 10,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -1426,6 +1453,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1461,6 +1489,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1488,6 +1517,7 @@ describe('South Service', () => {
           startTimeOffset: 5,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1500,6 +1530,7 @@ describe('South Service', () => {
         startTimeOffset: 5,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1528,6 +1559,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1540,6 +1572,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1554,7 +1587,7 @@ describe('South Service', () => {
       const result = service.createGroup(testData.south.list[0].id, command, 'testUser');
       assert.strictEqual(result.startTimeOffset, null);
       const createCall = southItemGroupRepository.create.mock.calls[0];
-      assert.strictEqual((createCall.arguments[0] as { overlap: unknown }).startTimeOffset, null);
+      assert.strictEqual((createCall.arguments[0] as { startTimeOffset: unknown }).startTimeOffset, null);
       assert.strictEqual(createCall.arguments[1], 'testUser');
     });
 
@@ -1569,6 +1602,7 @@ describe('South Service', () => {
           startTimeOffset: 5,
           endTimeOffset: null,
           maxReadInterval: 3600,
+          recoveryStrategy: null,
           readDelay: 200
         }
       };
@@ -1581,6 +1615,7 @@ describe('South Service', () => {
         startTimeOffset: 5,
         endTimeOffset: null,
         maxReadInterval: 3600,
+        recoveryStrategy: null,
         readDelay: 200,
         items: [],
         createdBy: '',
@@ -1614,6 +1649,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1626,6 +1662,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1653,6 +1690,7 @@ describe('South Service', () => {
           startTimeOffset: 15,
           endTimeOffset: null,
           maxReadInterval: 3600,
+          recoveryStrategy: null,
           readDelay: 200
         }
       };
@@ -1665,6 +1703,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1712,6 +1751,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1724,6 +1764,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1776,6 +1817,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1799,6 +1841,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1811,6 +1854,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1838,6 +1882,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1850,6 +1895,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1883,6 +1929,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0
         }
       };
@@ -1895,6 +1942,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1911,6 +1959,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1937,6 +1986,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1971,6 +2021,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -1996,6 +2047,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2026,6 +2078,7 @@ describe('South Service', () => {
         startTimeOffset: null,
         endTimeOffset: null,
         maxReadInterval: null,
+        recoveryStrategy: null,
         readDelay: 0,
         items: [],
         createdBy: '',
@@ -2084,6 +2137,7 @@ describe('South Service', () => {
           startTimeOffset: 10,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2108,6 +2162,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2129,6 +2184,7 @@ describe('South Service', () => {
           startTimeOffset: null,
           endTimeOffset: null,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: 0,
           items: [],
           createdBy: '',
@@ -2148,6 +2204,7 @@ describe('South Service', () => {
           group,
           syncWithGroup: false,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: null,
           startTimeOffset: null,
           endTimeOffset: null,
@@ -2173,6 +2230,7 @@ describe('South Service', () => {
           group: null,
           syncWithGroup: false,
           maxReadInterval: null,
+          recoveryStrategy: null,
           readDelay: null,
           startTimeOffset: null,
           endTimeOffset: null,
