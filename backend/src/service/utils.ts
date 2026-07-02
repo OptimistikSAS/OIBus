@@ -114,20 +114,20 @@ export const delay = (timeout: number): Promise<void> =>
  */
 export const generateIntervals = (
   startInstant: Instant,
-  startInstantFromCache: Instant,
+  trackedInstant: Instant,
   endInstant: Instant,
   maxNumberOfSecondsInInterval: number,
   strategy: SouthHistoryRecoveryStrategy = 'oldest'
 ): { intervals: Array<Interval>; numberOfIntervalsDone: number } => {
   const startTime = DateTime.fromISO(startInstant);
-  const startTimeFromCache = DateTime.fromISO(startInstantFromCache);
+  const startTimeFromCache = DateTime.fromISO(trackedInstant);
   const endTime = DateTime.fromISO(endInstant);
   const originalInterval = endTime.toMillis() - startTime.toMillis();
   let numberOfIntervalsDone = 0;
 
   if (maxNumberOfSecondsInInterval <= 0) {
     return {
-      intervals: [{ start: startInstantFromCache, end: endInstant }],
+      intervals: [{ start: trackedInstant, end: endInstant }],
       numberOfIntervalsDone: 0
     };
   }
