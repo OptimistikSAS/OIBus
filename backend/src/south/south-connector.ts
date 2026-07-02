@@ -571,54 +571,13 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       // Each item is queried independently so that each has its own cache entry and trackedInstant.
       // This mirrors how groupItemsByGroup() sends singleton arrays during normal scan flow.
       for (const item of itemsToRead) {
-        await this.querySingleItemHistory(item, startTime, endTime);
+        await this.runHistoryQueryForLead(item, [item], null, startTime, endTime);
         if (this.stopping) break;
       }
     } else {
       const lead = itemsToRead[0];
       const groupId = lead.group && lead.syncWithGroup ? lead.group.id : null;
-      let southCache = this.cacheService!.getItemLastValue(this.connector.id, lead.id);
-      if (!southCache) {
-        southCache = {
-          itemId: lead.id,
-          groupId,
-          trackedInstant: null,
-          queryTime: null,
-          value: null
-        };
-      }
-      if (!southCache.trackedInstant) {
-        southCache.trackedInstant = startTime;
-      }
-
-      let maxReadInterval: number;
-      let readDelay: number;
-      let startTimeOffset: number;
-      let endTimeOffset: number;
-      if (lead.group && lead.syncWithGroup) {
-        maxReadInterval = lead.group.maxReadInterval!;
-        readDelay = lead.group.readDelay!;
-        startTimeOffset = lead.group.startTimeOffset ?? 0;
-        endTimeOffset = lead.group.endTimeOffset ?? 0;
-      } else {
-        maxReadInterval = lead.maxReadInterval!;
-        readDelay = lead.readDelay!;
-        startTimeOffset = lead.startTimeOffset ?? 0;
-        endTimeOffset = lead.endTimeOffset ?? 0;
-      }
-      const recoveryStrategy = (lead.group && lead.syncWithGroup ? lead.group.recoveryStrategy : lead.recoveryStrategy) ?? 'oldest';
-      const queryWindow = this.computeQueryWindow(southCache.trackedInstant, startTime, endTime, startTimeOffset, endTimeOffset);
-      if (!queryWindow) return;
-      const { startTimeFromCache, effectiveEndTime } = queryWindow;
-      const { intervals, numberOfIntervalsDone } = generateIntervals(
-        startTime,
-        startTimeFromCache,
-        effectiveEndTime,
-        maxReadInterval,
-        recoveryStrategy
-      );
-      this.logIntervals(intervals);
-      await this.queryIntervals(intervals, itemsToRead, southCache!, readDelay, numberOfIntervalsDone, recoveryStrategy, effectiveEndTime);
+      await this.runHistoryQueryForLead(lead, itemsToRead, groupId, startTime, endTime);
     }
 
     this.metricsEvent.emit('history-query-stop', {
@@ -627,12 +586,24 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     this.historyIsRunning = false;
   }
 
-  private async querySingleItemHistory(item: SouthConnectorItemEntity<I>, startTime: Instant, endTime: Instant): Promise<void> {
-    let southCache = this.cacheService!.getItemLastValue(this.connector.id, item.id);
+  /**
+   * Query one interval-bounded window of history for `items`, using `lead`'s (item- or
+   * group-level, whichever applies) throttling/offset/recovery settings and `lead`'s cache entry.
+   * Shared by the single-item and grouped code paths of `historyQueryHandler`, which only differ
+   * in which item leads the cache lookup and whether other items ride along in the same query.
+   */
+  private async runHistoryQueryForLead(
+    lead: SouthConnectorItemEntity<I>,
+    items: Array<SouthConnectorItemEntity<I>>,
+    groupId: string | null,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<void> {
+    let southCache = this.cacheService!.getItemLastValue(this.connector.id, lead.id);
     if (!southCache) {
       southCache = {
-        itemId: item.id,
-        groupId: null,
+        itemId: lead.id,
+        groupId,
         trackedInstant: null,
         queryTime: null,
         value: null
@@ -641,21 +612,28 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
     if (!southCache.trackedInstant) {
       southCache.trackedInstant = startTime;
     }
-    const startTimeOffset = item.startTimeOffset ?? 0;
-    const endTimeOffset = item.endTimeOffset ?? 0;
-    const recoveryStrategy = item.recoveryStrategy ?? 'oldest';
-    const queryWindow = this.computeQueryWindow(southCache.trackedInstant, startTime, endTime, startTimeOffset, endTimeOffset);
+
+    // Group settings apply only when the lead item is synced with its group; otherwise the lead's
+    // own settings apply. Groups and items share the same field names/types for all of these.
+    const settingsSource = lead.group && lead.syncWithGroup ? lead.group : lead;
+    const maxReadInterval = settingsSource.maxReadInterval ?? 0;
+    const readDelay = settingsSource.readDelay ?? 0;
+    const startTimeOffset = settingsSource.startTimeOffset ?? 0;
+    const endTimeOffset = settingsSource.endTimeOffset ?? 0;
+    const recoveryStrategy = settingsSource.recoveryStrategy ?? 'oldest';
+
+    const queryWindow = this.computeQueryWindow(southCache.trackedInstant, endTime, startTimeOffset, endTimeOffset);
     if (!queryWindow) return;
-    const { startTimeFromCache, effectiveEndTime } = queryWindow;
+    const { effectiveStartTime, effectiveEndTime } = queryWindow;
     const { intervals, numberOfIntervalsDone } = generateIntervals(
       startTime,
-      startTimeFromCache,
+      effectiveStartTime,
       effectiveEndTime,
-      item.maxReadInterval!,
+      maxReadInterval,
       recoveryStrategy
     );
     this.logIntervals(intervals);
-    await this.queryIntervals(intervals, [item], southCache, item.readDelay!, numberOfIntervalsDone, recoveryStrategy, effectiveEndTime);
+    await this.queryIntervals(intervals, items, southCache, readDelay, numberOfIntervalsDone, recoveryStrategy, effectiveEndTime);
   }
 
   private async queryIntervals(
@@ -735,27 +713,22 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
   }
 
   private computeQueryWindow(
-    trackedInstant: Instant,
     startTime: Instant,
     endTime: Instant,
     startTimeOffset: number,
     endTimeOffset: number
-  ): { startTimeFromCache: Instant; effectiveEndTime: Instant } | null {
-    const startTimeFromCache = DateTime.fromISO(trackedInstant).plus({ milliseconds: startTimeOffset }).toUTC().toISO()!;
+  ): { effectiveStartTime: Instant; effectiveEndTime: Instant } | null {
+    const effectiveStartTime = DateTime.fromISO(startTime).plus({ milliseconds: startTimeOffset }).toUTC().toISO()!;
     const effectiveEndTime = DateTime.fromISO(endTime).plus({ milliseconds: endTimeOffset }).toUTC().toISO()!;
-    if (effectiveEndTime <= startTimeFromCache) {
+
+    if (effectiveEndTime <= effectiveStartTime) {
       this.logger.warn(
-        `Skipping history query: effective end time ${effectiveEndTime} is not after effective start time ${startTimeFromCache}`
+        `Skipping history query: effective window [${effectiveStartTime}, ${effectiveEndTime}] does not extend past ` +
+          `the tracked instant or the query start ${startTime} (startTimeOffset: ${startTimeOffset} ms, endTimeOffset: ${endTimeOffset} ms)`
       );
       return null;
     }
-    if (effectiveEndTime <= startTime) {
-      this.logger.warn(
-        `Skipping history query: effective end time ${effectiveEndTime} is before query window start ${startTime} — endTimeOffset (${endTimeOffset} ms) exceeds the query window`
-      );
-      return null;
-    }
-    return { startTimeFromCache, effectiveEndTime };
+    return { effectiveStartTime, effectiveEndTime };
   }
 
   private logIntervals(intervals: Array<Interval>) {
