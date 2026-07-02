@@ -45,7 +45,6 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { EditHistoryQueryItemModalComponent } from '../history-query-items/edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { ImportHistoryQueryItemsModalComponent } from '../history-query-items/import-history-query-items-modal/import-history-query-items-modal.component';
 import { OIBusAttribute, OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
@@ -471,7 +470,7 @@ export class HistoryQueryDetailComponent {
   }
 
   importItems() {
-    const modalRef = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
+    const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled'];
     const optionalHeaders: Array<string> = ['scanMode'];
 
@@ -485,31 +484,18 @@ export class HistoryQueryDetailComponent {
         expectedHeaders.push(`settings_${setting.key}`);
       }
     });
-    modalRef.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false, true);
-    modalRef.result.subscribe(response => {
-      if (!response) return;
-      this.checkImportItems(response.file, response.delimiter, response.eraseExisting);
-    });
-  }
 
-  checkImportItems(file: File, delimiter: string, deleteItemsNotPresent = false) {
-    this.historyQueryService
-      .checkImportItems(this.southManifest!.id, this.historyQuery!.items, file, delimiter, deleteItemsNotPresent)
-      .subscribe(result => {
-        const modalRef = this.modalService.open(ImportHistoryQueryItemsModalComponent, { size: 'xl', backdrop: 'static' });
-        const component: ImportHistoryQueryItemsModalComponent = modalRef.componentInstance;
-        component.prepare(this.southManifest!, this.historyQuery!.items, result.items, result.errors);
-        modalRef.result
-          .pipe(
-            switchMap((newItems: Array<HistoryQueryItemCommandDTO>) => {
-              return this.historyQueryService.importItems(this.historyQuery!.id, newItems, deleteItemsNotPresent);
-            })
-          )
-          .subscribe(() => {
-            this.notificationService.success('history-query.items.imported');
-            this.refreshHistoryQuery();
-          });
+    const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
+      this.historyQueryService.checkImportItems(this.southManifest!.id, this.historyQuery!.items, file, delimiter, deleteItemsNotPresent);
+
+    modalRef.componentInstance.prepare(this.southManifest!, expectedHeaders, optionalHeaders, true, checkFn);
+    modalRef.result.subscribe((response: { items: Array<HistoryQueryItemCommandDTO>; eraseExisting: boolean } | undefined) => {
+      if (!response) return;
+      this.historyQueryService.importItems(this.historyQuery!.id, response.items, response.eraseExisting).subscribe(() => {
+        this.notificationService.success('history-query.items.imported');
+        this.refreshHistoryQuery();
       });
+    });
   }
 
   getFieldValue(element: any, field: string): string {

@@ -515,15 +515,24 @@ export default class SouthService {
     const validItems: Array<SouthConnectorItemDTO> = [];
     const errors: Array<{ item: Record<string, string>; error: string }> = [];
     for (const data of csvContent.data) {
-      const foundScanMode = scanModes.find(scanMode => scanMode.name === data.scanMode);
-      if (!foundScanMode) {
+      let scanMode = null;
+      if (data.scanMode) {
+        const foundScanMode = scanModes.find(scanMode => scanMode.name === data.scanMode);
+        if (!foundScanMode) {
+          errors.push({
+            item: data,
+            error: `Scan mode "${data.scanMode}" not found for item "${data.name}"`
+          });
+          continue;
+        }
+        scanMode = toScanModeDTO(foundScanMode, id => ({ id: id, friendlyName: '' }));
+      } else if (!data.group) {
         errors.push({
           item: data,
-          error: `Scan mode "${data.scanMode}" not found for item "${data.name}"`
+          error: `Scan mode not specified for item "${data.name}"`
         });
         continue;
       }
-      const scanMode = toScanModeDTO(foundScanMode, id => ({ id: id, friendlyName: '' }));
 
       const item: SouthConnectorItemDTO = {
         id: '',

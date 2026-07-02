@@ -2,6 +2,111 @@
   <h4 class="modal-title" translate="south.items.import.title"></h4>
 </div>
 <div class="modal-body">
+  @if (validationError) {
+    <div class="alert alert-danger" role="alert">
+      <h6>
+        <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+        <span translate="south.items.import.format-error-title"></span>
+      </h6>
+      <p translate="south.items.import.format-error-description"></p>
+
+      @if (validationError.missingHeaders.length > 0) {
+        <div class="mt-2">
+          <strong translate="south.items.import.missing-columns"></strong>
+          <code class="ms-2">{{ validationError.missingHeaders.join(', ') }}</code>
+        </div>
+      }
+
+      @if (validationError.extraHeaders.length > 0) {
+        <div class="mt-2">
+          <strong translate="south.items.import.extra-columns"></strong>
+          <code class="ms-2">{{ validationError.extraHeaders.join(', ') }}</code>
+        </div>
+      }
+
+      <div class="mt-2">
+        <strong translate="south.items.import.expected-format"></strong>
+        <code class="ms-2">{{ validationError.expectedHeaders.join(', ') }}</code>
+      </div>
+
+      <div class="mt-2">
+        <strong translate="south.items.import.actual-format"></strong>
+        <code class="ms-2">{{ validationError.actualHeaders.join(', ') }}</code>
+      </div>
+    </div>
+  }
+  @if (mqttValidationError) {
+    <div class="alert alert-danger" role="alert">
+      <h6>
+        <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+        <span translate="south.items.import.mqtt-topic-overlap-title"></span>
+      </h6>
+      <p translate="south.items.import.mqtt-topic-overlap-description"></p>
+      <div class="mt-2">
+        <span
+          translate="common.validation-errors.mqtt-topic-overlap"
+          [translateParams]="{ conflictingTopics: mqttValidationError.topicErrors[0].conflictingTopics.join(', ') }"
+        >
+        </span>
+      </div>
+    </div>
+  }
+  @if (checkError) {
+    <div class="alert alert-danger" role="alert">
+      <i class="fa fa-solid fa-exclamation-triangle me-2"></i>
+      <span translate="south.items.import.check-error" [translateParams]="{ error: checkError }"></span>
+    </div>
+  }
+  <div class="row justify-content-center mb-3">
+    <div class="text-center">
+      <label class="form-label" for="file" translate="south.items.import.csv-file"></label>
+    </div>
+    <button
+      type="button"
+      class="m-1 w-50 btn btn-secondary"
+      [class.btn-danger]="validationError || mqttValidationError"
+      (click)="fileInput.click()"
+      (drop)="onImportDrop($event)"
+      (dragover)="onImportDragOver($event)"
+      id="import-button"
+    >
+      @if (selectedFile.name) {
+        <span>{{ selectedFile.name }}</span>
+      } @else {
+        <span translate="configuration.oibus.oibus-details.dynamic-forms.array.import.select-file"></span>
+      }
+    </button>
+  </div>
+  <div [formGroup]="form" class="form-group row justify-content-center">
+    <div class="text-center">
+      <label class="form-label" for="delimiter" translate="common.delimiter"></label>
+    </div>
+    <select formControlName="delimiter" (change)="onDelimiterChange()" class="form-select w-50 m-1" id="delimiter">
+      @for (delimiter of csvDelimiters; track delimiter) {
+        <option [ngValue]="delimiter" [translate]="'enums.csv-character.' + delimiter"></option>
+      }
+    </select>
+    @if (showEraseOption) {
+      <div class="form-check form-switch w-50 m-1">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          formControlName="eraseExisting"
+          (change)="onEraseExistingChange()"
+          id="erase-existing"
+        />
+        <label class="form-check-label" for="erase-existing" translate="south.items.import.erase-existing"></label>
+      </div>
+    }
+  </div>
+  <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
+
+  @if (checking) {
+    <div class="text-center my-3">
+      <span translate="south.items.import.checking"></span>
+    </div>
+  }
+
   @if (displayedItemsError.totalElements > 0) {
     <div>
       <h6>
@@ -46,9 +151,7 @@
           <thead class="light">
             <tr>
               <th style="width: 200px" translate="south.items.name"></th>
-              @if (scanModes.length > 0) {
-                <th translate="south.items.scan-mode" style="width: 120px"></th>
-              }
+              <th translate="south.items.scan-mode" style="width: 120px"></th>
               <th translate="south.items.group" style="width: 150px"></th>
               @for (setting of displaySettings; track setting) {
                 <th style="min-width: 150px; max-width: 250px">
@@ -102,11 +205,11 @@
 <div class="modal-footer">
   <div class="btn-group">
     <button
-      [disabled]="newItemList.length === 0"
       type="button"
       class="btn btn-primary"
+      [disabled]="!canImport"
       (click)="submit()"
-      translate="common.ok"
+      translate="south.items.import.button"
       id="save-button"
     ></button>
     <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
