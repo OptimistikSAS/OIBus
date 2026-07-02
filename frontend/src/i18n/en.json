@@ -2359,7 +2359,9 @@
         "actual-format": "Actual format:",
         "mqtt-topic-overlap-title": "MQTT Topic Overlap Error",
         "mqtt-topic-overlap-description": "The CSV file contains MQTT topics that would create overlapping subscriptions. These conflicts must be resolved before importing.",
-        "erase-existing": "Erase existing elements"
+        "erase-existing": "Erase existing elements",
+        "checking": "Checking file...",
+        "check-error": "Error checking file: {{ error }}"
       },
       "search-placeholder": "Enter text to filter items",
       "save-before-adding-items": "Save connector before you can add new items",

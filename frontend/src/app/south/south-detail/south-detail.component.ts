@@ -12,7 +12,7 @@ import {
 } from '../../../../../backend/shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, firstValueFrom, merge, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, map, merge, Observable, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -38,7 +38,6 @@ import { PaginationComponent } from '../../shared/pagination/pagination.componen
 import { createPageFromArray, Page } from '../../../../../backend/shared/model/types';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { emptyPage } from '../../shared/test-utils';
@@ -422,7 +421,7 @@ export class SouthDetailComponent {
   }
 
   importItems() {
-    const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
+    const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
     const optionalHeaders: Array<string> = ['group', 'maxReadInterval', 'readDelay', 'overlap', 'syncWithGroup'];
     const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
@@ -436,65 +435,63 @@ export class SouthDetailComponent {
       }
     });
 
+    const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
+      this.southConnectorService
+        .checkImportItems(this.manifest!.id, this.southConnector!.items, file, delimiter, deleteItemsNotPresent)
+        .pipe(
+          map(result => ({
+            items: result.items.map(
+              item =>
+                ({
+                  id: item.id,
+                  name: item.name,
+                  enabled: item.enabled,
+                  settings: item.settings,
+                  scanModeId: item.scanMode?.id || null,
+                  scanModeName: item.scanMode?.name || null,
+                  groupId: item.group?.id || null,
+                  groupName: item.group?.standardSettings.name ?? null,
+                  syncWithGroup: item.syncWithGroup,
+                  maxReadInterval: item.maxReadInterval,
+                  readDelay: item.readDelay,
+                  overlap: item.overlap
+                }) as SouthConnectorItemCommandDTO
+            ),
+            errors: result.errors
+          }))
+        );
+
     if (this.manifest!.id === 'mqtt') {
       modal.componentInstance.prepare(
+        this.manifest!,
         expectedHeaders,
         optionalHeaders,
         this.southConnector!.items.map(item => (item.settings as any)?.topic).filter(
           topic => topic && typeof topic === 'string' && topic.trim()
         ),
         true,
-        true
+        true,
+        checkFn
       );
     } else {
-      modal.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false, true);
+      modal.componentInstance.prepare(this.manifest!, expectedHeaders, optionalHeaders, [], false, true, checkFn);
     }
 
-    modal.result.subscribe(response => {
+    modal.result.subscribe((response: { items: Array<SouthConnectorItemCommandDTO>; eraseExisting: boolean } | undefined) => {
       if (!response) return;
-      this.checkImportItems(response.file, response.delimiter, response.eraseExisting);
+      this.southConnectorService
+        .importItems(this.southConnector!.id, response.items, response.eraseExisting)
+        .pipe(
+          switchMap(() => {
+            return this.southConnectorService.findById(this.southConnector!.id);
+          })
+        )
+        .subscribe(southConnector => {
+          this.southConnector = southConnector;
+          this.resetPage();
+          this.notificationService.success(`south.items.import.imported`);
+        });
     });
-  }
-
-  checkImportItems(file: File, delimiter: string, deleteItemsNotPresent = false) {
-    this.southConnectorService
-      .checkImportItems(this.manifest!.id, this.southConnector!.items, file, delimiter, deleteItemsNotPresent)
-      .subscribe(result => {
-        const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
-        const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
-        const commandItems: Array<SouthConnectorItemCommandDTO> = result.items.map(
-          item =>
-            ({
-              id: item.id,
-              name: item.name,
-              enabled: item.enabled,
-              settings: item.settings,
-              scanModeId: item.scanMode?.id || null,
-              scanModeName: item.scanMode?.name || null,
-              groupId: item.group?.id || null,
-              groupName: item.group?.standardSettings.name ?? null,
-              syncWithGroup: item.syncWithGroup,
-              maxReadInterval: item.maxReadInterval,
-              readDelay: item.readDelay,
-              overlap: item.overlap
-            }) as SouthConnectorItemCommandDTO
-        );
-        component.prepare(this.manifest!, this.southConnector!.items, commandItems, result.errors, this.scanModes);
-        modalRef.result
-          .pipe(
-            switchMap((newItems: Array<SouthConnectorItemCommandDTO>) => {
-              return this.southConnectorService.importItems(this.southConnector!.id, newItems, deleteItemsNotPresent);
-            }),
-            switchMap(() => {
-              return this.southConnectorService.findById(this.southConnector!.id);
-            })
-          )
-          .subscribe(southConnector => {
-            this.southConnector = southConnector;
-            this.resetPage();
-            this.notificationService.success(`south.items.import.imported`);
-          });
-      });
   }
 
   addOrEditGroup(command: {
