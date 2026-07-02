@@ -114,75 +114,60 @@ describe('Service utils', () => {
   describe('generateIntervals', () => {
     it('should return only one interval', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 3600);
+      const intervals = utils.generateIntervals(startTime, endTime, 3600);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
 
     it('should return only one interval when max number of seconds is 0', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 0);
+      const intervals = utils.generateIntervals(startTime, endTime, 0);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
 
-    it('should return two intervals', () => {
-      const startTime1 = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T01:30:00.000Z';
-      const endTime1 = '2020-01-01T01:00:00.000Z';
-      const endTime2 = '2020-01-01T02:00:00.000Z';
-      const startTime3 = '2020-01-01T02:00:00.000Z';
-      const endTime3 = '2020-01-01T02:50:00.000Z';
+    it('should return three intervals', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const chunk1End = '2020-01-01T01:00:00.000Z';
+      const chunk2End = '2020-01-01T02:00:00.000Z';
+      const endTime = '2020-01-01T02:50:00.000Z';
       const expectedIntervals = [
-        { start: startTime1, end: endTime1 },
-        { start: startTimeFromCache, end: endTime2 },
-        { start: startTime3, end: endTime3 }
+        { start: startTime, end: chunk1End },
+        { start: chunk1End, end: chunk2End },
+        { start: chunk2End, end: endTime }
       ];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime1, startTimeFromCache, endTime3, 3600);
+      const intervals = utils.generateIntervals(startTime, endTime, 3600);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 1);
     });
 
     it('should return single interval when maxNumberOfSecondsInInterval is 0', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-02T00:00:00.000Z';
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 0);
-      assert.deepStrictEqual(intervals, [{ start: startTimeFromCache, end: endTime }]);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
+      const intervals = utils.generateIntervals(startTime, endTime, 0);
+      assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
     });
 
-    it('should reverse intervals and preserve numberOfIntervalsDone for newest strategy', () => {
-      const startTime1 = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T01:30:00.000Z';
-      const endTime1 = '2020-01-01T01:00:00.000Z';
-      const endTime2 = '2020-01-01T02:00:00.000Z';
-      const startTime3 = '2020-01-01T02:00:00.000Z';
-      const endTime3 = '2020-01-01T02:50:00.000Z';
-      // oldest order: [chunk0 (done), chunk1, chunk2] — after reverse: [chunk2, chunk1, chunk0 (done at tail)]
+    it('should reverse intervals for newest strategy', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const chunk1End = '2020-01-01T01:00:00.000Z';
+      const chunk2End = '2020-01-01T02:00:00.000Z';
+      const endTime = '2020-01-01T02:50:00.000Z';
       const expectedIntervals = [
-        { start: startTime3, end: endTime3 },
-        { start: startTimeFromCache, end: endTime2 },
-        { start: startTime1, end: endTime1 }
+        { start: chunk2End, end: endTime },
+        { start: chunk1End, end: chunk2End },
+        { start: startTime, end: chunk1End }
       ];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime1, startTimeFromCache, endTime3, 3600, 'newest');
+      const intervals = utils.generateIntervals(startTime, endTime, 3600, 'newest');
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 1);
     });
 
     it('should return the single interval unchanged for newest strategy', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 3600, 'newest');
+      const intervals = utils.generateIntervals(startTime, endTime, 3600, 'newest');
       assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
   });
 
