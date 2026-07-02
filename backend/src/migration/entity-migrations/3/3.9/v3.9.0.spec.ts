@@ -6,6 +6,15 @@ import path from 'node:path';
 import { readdirSync } from 'node:fs';
 import knex, { Knex } from 'knex';
 import { up, down } from './v3.9.0';
+import { buildNorthEntity, buildSouthEntity, createHistoryQuery, createNorth, createSouth } from '../../../../tests/utils/test-utils';
+import testData from '../../../../tests/utils/test-data';
+import {
+  SouthFolderScannerSettings,
+  SouthMSSQLSettings,
+  SouthItemSettings,
+  SouthSettings
+} from '../../../../../shared/model/south-settings.model';
+import { NorthFileWriterSettings, NorthSettings } from '../../../../../shared/model/north-settings.model';
 
 /**
  * Collect every entity migration file (excluding specs) under the entity-migrations root,
@@ -42,9 +51,9 @@ async function columnNames(db: Knex, table: string): Promise<Array<string>> {
   return cols.map(c => c.name);
 }
 
-async function insertScanMode(db: Knex) {
+async function insertScanMode(db: Knex, id = 'scan-mode-1') {
   await db('scan_modes').insert({
-    id: 'scan-mode-1',
+    id,
     name: 'Every 10s',
     description: '',
     cron: '*/10 * * * * *',
@@ -475,6 +484,184 @@ describe('Entity migration v3.9.0', () => {
 
       const item = await db('south_items').where('id', 'item-1').first();
       assert.strictEqual(item.overlap, 1000, 'item overlap restored to original value');
+    });
+  });
+
+  describe('SMB auth defaults for folder-scanner south / file-writer north', () => {
+    it('backfills username/password/domain as null for a folder-scanner south connector missing them', async () => {
+      const south = buildSouthEntity<SouthFolderScannerSettings, SouthItemSettings>(
+        'folder-scanner',
+        { inputFolder: 'input', compression: false, username: null, password: null, domain: null },
+        []
+      );
+      south.id = 'folder-scanner-1';
+      await createSouth(db, south);
+      // Simulate a pre-3.9.0 row: the settings JSON predates the SMB auth fields entirely.
+      await db('south_connectors')
+        .where('id', south.id)
+        .update({ settings: JSON.stringify({ inputFolder: 'input', compression: false }) });
+
+      await up(db);
+
+      const row = await db('south_connectors').where('id', 'folder-scanner-1').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.inputFolder, 'input', 'existing settings are preserved');
+      assert.strictEqual(settings.username, null);
+      assert.strictEqual(settings.password, null);
+      assert.strictEqual(settings.domain, null);
+    });
+
+    it('preserves existing username/password/domain for a folder-scanner south connector that already has them', async () => {
+      const south = buildSouthEntity<SouthFolderScannerSettings, SouthItemSettings>(
+        'folder-scanner',
+        { inputFolder: 'input', compression: false, username: 'admin', password: 'secret', domain: 'WORKGROUP' },
+        []
+      );
+      south.id = 'folder-scanner-2';
+      await createSouth(db, south);
+
+      await up(db);
+
+      const row = await db('south_connectors').where('id', 'folder-scanner-2').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.username, 'admin');
+      assert.strictEqual(settings.password, 'secret');
+      assert.strictEqual(settings.domain, 'WORKGROUP');
+    });
+
+    it('does not touch settings of south connectors of other types', async () => {
+      const south = buildSouthEntity<SouthMSSQLSettings, SouthItemSettings>(
+        'mssql',
+        {
+          host: 'host',
+          port: 1433,
+          connectionTimeout: 1000,
+          database: 'database',
+          username: 'oibus',
+          password: 'pass',
+          domain: 'domain',
+          encryption: true,
+          trustServerCertificate: true,
+          requestTimeout: 5000
+        },
+        []
+      );
+      south.id = 'mssql-1';
+      await createSouth(db, south);
+      await db('south_connectors')
+        .where('id', south.id)
+        .update({ settings: JSON.stringify({ host: 'host', port: 1433 }) });
+
+      await up(db);
+
+      const row = await db('south_connectors').where('id', 'mssql-1').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.username, undefined, 'non folder-scanner settings are left untouched');
+    });
+
+    it('backfills username/password/domain as null for a file-writer north connector missing them', async () => {
+      await insertScanMode(db, testData.scanMode.list[0].id);
+      const north = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
+        outputFolder: 'output',
+        prefix: null,
+        suffix: null,
+        username: null,
+        password: null,
+        domain: null
+      });
+      north.id = 'file-writer-1';
+      await createNorth(db, north);
+      await db('north_connectors')
+        .where('id', north.id)
+        .update({ settings: JSON.stringify({ outputFolder: 'output', prefix: null, suffix: null }) });
+
+      await up(db);
+
+      const row = await db('north_connectors').where('id', 'file-writer-1').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.outputFolder, 'output', 'existing settings are preserved');
+      assert.strictEqual(settings.username, null);
+      assert.strictEqual(settings.password, null);
+      assert.strictEqual(settings.domain, null);
+    });
+
+    it('preserves existing username/password/domain for a file-writer north connector that already has them', async () => {
+      await insertScanMode(db, testData.scanMode.list[0].id);
+      const north = buildNorthEntity<NorthFileWriterSettings>('file-writer', {
+        outputFolder: 'output',
+        prefix: null,
+        suffix: null,
+        username: 'admin',
+        password: 'secret',
+        domain: 'WORKGROUP'
+      });
+      north.id = 'file-writer-2';
+      await createNorth(db, north);
+
+      await up(db);
+
+      const row = await db('north_connectors').where('id', 'file-writer-2').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.username, 'admin');
+      assert.strictEqual(settings.password, 'secret');
+      assert.strictEqual(settings.domain, 'WORKGROUP');
+    });
+
+    it('backfills south_settings for a history query with a folder-scanner south', async () => {
+      await insertScanMode(db, testData.historyQueries.list[0].caching.trigger.scanMode.id);
+      const historyQuery = {
+        ...testData.historyQueries.list[0],
+        id: 'history-folder-scanner',
+        southType: 'folder-scanner',
+        southSettings: { inputFolder: 'input', compression: false, username: null, password: null, domain: null } as SouthSettings,
+        items: [],
+        northTransformers: []
+      };
+      await createHistoryQuery(db, historyQuery);
+      await db('history_queries')
+        .where('id', historyQuery.id)
+        .update({ south_settings: JSON.stringify({ inputFolder: 'input', compression: false }) });
+
+      await up(db);
+
+      const row = await db('history_queries').where('id', 'history-folder-scanner').first();
+      const settings = JSON.parse(row.south_settings);
+      assert.strictEqual(settings.inputFolder, 'input', 'existing settings are preserved');
+      assert.strictEqual(settings.username, null);
+      assert.strictEqual(settings.password, null);
+      assert.strictEqual(settings.domain, null);
+    });
+
+    it('backfills north_settings for a history query with a file-writer north', async () => {
+      await insertScanMode(db, testData.historyQueries.list[0].caching.trigger.scanMode.id);
+      const historyQuery = {
+        ...testData.historyQueries.list[0],
+        id: 'history-file-writer',
+        northType: 'file-writer',
+        northSettings: {
+          outputFolder: 'output',
+          prefix: null,
+          suffix: null,
+          username: null,
+          password: null,
+          domain: null
+        } as NorthSettings,
+        items: [],
+        northTransformers: []
+      };
+      await createHistoryQuery(db, historyQuery);
+      await db('history_queries')
+        .where('id', historyQuery.id)
+        .update({ north_settings: JSON.stringify({ outputFolder: 'output', prefix: null, suffix: null }) });
+
+      await up(db);
+
+      const row = await db('history_queries').where('id', 'history-file-writer').first();
+      const settings = JSON.parse(row.north_settings);
+      assert.strictEqual(settings.outputFolder, 'output', 'existing settings are preserved');
+      assert.strictEqual(settings.username, null);
+      assert.strictEqual(settings.password, null);
+      assert.strictEqual(settings.domain, null);
     });
   });
 });

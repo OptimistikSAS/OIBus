@@ -2,6 +2,8 @@ import { Knex } from 'knex';
 
 const ENGINES_TABLE = 'engines';
 const SOUTH_CONNECTORS_TABLE = 'south_connectors';
+const NORTH_CONNECTORS_TABLE = 'north_connectors';
+const HISTORY_QUERIES_TABLE = 'history_queries';
 const SOUTH_ITEM_GROUPS_TABLE = 'south_item_groups';
 const SOUTH_ITEMS_TABLE = 'south_items';
 
@@ -71,6 +73,55 @@ export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable(SOUTH_ITEMS_TABLE, t => {
     t.dropColumn('overlap');
   });
+
+  await addSmbAuthDefaults(knex);
+}
+
+// folder-scanner (south) and file-writer (north) settings gained optional SMB share
+// authentication (username / password / domain) for network shares. Existing rows
+// predate this and have none of these keys in their settings JSON; backfill them to
+// null so the settings shape is consistent for every row of these types.
+async function addSmbAuthDefaults(knex: Knex): Promise<void> {
+  const withSmbDefaults = (settings: string): string => {
+    const parsed = JSON.parse(settings) as Record<string, unknown>;
+    return JSON.stringify({ username: null, password: null, domain: null, ...parsed });
+  };
+
+  const folderScannerConnectors: Array<{ id: string; settings: string }> = await knex(SOUTH_CONNECTORS_TABLE)
+    .select('id', 'settings')
+    .where('type', 'folder-scanner');
+  for (const connector of folderScannerConnectors) {
+    await knex(SOUTH_CONNECTORS_TABLE)
+      .update({ settings: withSmbDefaults(connector.settings) })
+      .where('id', connector.id);
+  }
+
+  const fileWriterConnectors: Array<{ id: string; settings: string }> = await knex(NORTH_CONNECTORS_TABLE)
+    .select('id', 'settings')
+    .where('type', 'file-writer');
+  for (const connector of fileWriterConnectors) {
+    await knex(NORTH_CONNECTORS_TABLE)
+      .update({ settings: withSmbDefaults(connector.settings) })
+      .where('id', connector.id);
+  }
+
+  const historyQueriesWithFolderScannerSouth: Array<{ id: string; south_settings: string }> = await knex(HISTORY_QUERIES_TABLE)
+    .select('id', 'south_settings')
+    .where('south_type', 'folder-scanner');
+  for (const history of historyQueriesWithFolderScannerSouth) {
+    await knex(HISTORY_QUERIES_TABLE)
+      .update({ south_settings: withSmbDefaults(history.south_settings) })
+      .where('id', history.id);
+  }
+
+  const historyQueriesWithFileWriterNorth: Array<{ id: string; north_settings: string }> = await knex(HISTORY_QUERIES_TABLE)
+    .select('id', 'north_settings')
+    .where('north_type', 'file-writer');
+  for (const history of historyQueriesWithFileWriterNorth) {
+    await knex(HISTORY_QUERIES_TABLE)
+      .update({ north_settings: withSmbDefaults(history.north_settings) })
+      .where('id', history.id);
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {
