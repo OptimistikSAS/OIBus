@@ -300,6 +300,7 @@ describe('SouthConnector', () => {
         endTimeOffset: null,
         maxReadInterval: null,
         readDelay: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -862,6 +863,7 @@ describe('SouthConnector', () => {
         readDelay: 100,
         startTimeOffset: 50,
         endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -927,6 +929,7 @@ describe('SouthConnector', () => {
           readDelay: null,
           startTimeOffset: null,
           endTimeOffset: null,
+          recoveryStrategy: null,
           scanMode: {
             id: 'subscription',
             name: 'subscription',
@@ -955,6 +958,7 @@ describe('SouthConnector', () => {
           readDelay: null,
           startTimeOffset: null,
           endTimeOffset: null,
+          recoveryStrategy: null,
           scanMode: {
             id: 'subscription',
             name: 'subscription',

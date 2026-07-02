@@ -55,11 +55,11 @@ async function insertScanMode(db: Knex) {
   });
 }
 
-async function insertSouthConnector(db: Knex) {
+async function insertSouthConnector(db: Knex, id = 'south-1', type = 'mssql') {
   await db('south_connectors').insert({
-    id: 'south-1',
-    name: 'Test SQL',
-    type: 'mssql',
+    id,
+    name: `Test ${type}`,
+    type,
     description: '',
     enabled: 1,
     settings: '{}',
@@ -170,9 +170,9 @@ describe('Entity migration v3.9.0', () => {
       assert.ok(cols.includes('recovery_strategy'), 'south_items.recovery_strategy added');
     });
 
-    it('leaves recovery_strategy null for existing rows', async () => {
+    it("sets recovery_strategy to 'oldest' for existing rows of a history-capable connector", async () => {
       await insertScanMode(db);
-      await insertSouthConnector(db);
+      await insertSouthConnector(db, 'south-1', 'mssql');
       await db('south_item_groups').insert({
         id: 'group-1',
         name: 'Group A',
@@ -206,10 +206,52 @@ describe('Entity migration v3.9.0', () => {
       await up(db);
 
       const group = await db('south_item_groups').where('id', 'group-1').first();
-      assert.strictEqual(group.recovery_strategy, null, 'existing group row has null recovery_strategy');
+      assert.strictEqual(group.recovery_strategy, 'oldest', "history-capable connector's group row defaults to 'oldest'");
 
       const item = await db('south_items').where('id', 'item-1').first();
-      assert.strictEqual(item.recovery_strategy, null, 'existing item row has null recovery_strategy');
+      assert.strictEqual(item.recovery_strategy, 'oldest', "history-capable connector's item row defaults to 'oldest'");
+    });
+
+    it('leaves recovery_strategy null for existing rows of a non-history-capable connector', async () => {
+      await insertScanMode(db);
+      await insertSouthConnector(db, 'south-1', 'mqtt');
+      await db('south_item_groups').insert({
+        id: 'group-1',
+        name: 'Group A',
+        south_id: 'south-1',
+        scan_mode_id: 'scan-mode-1',
+        overlap: 0,
+        max_read_interval: 3600,
+        read_delay: 200,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+      await db('south_items').insert({
+        id: 'item-1',
+        name: 'Item A',
+        enabled: 1,
+        connector_id: 'south-1',
+        scan_mode_id: null,
+        settings: '{}',
+        sync_with_group: 1,
+        max_read_interval: null,
+        read_delay: null,
+        overlap: null,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+
+      await up(db);
+
+      const group = await db('south_item_groups').where('id', 'group-1').first();
+      assert.strictEqual(group.recovery_strategy, null, "non-history-capable connector's group row stays null");
+
+      const item = await db('south_items').where('id', 'item-1').first();
+      assert.strictEqual(item.recovery_strategy, null, "non-history-capable connector's item row stays null");
     });
   });
 
@@ -287,9 +329,9 @@ describe('Entity migration v3.9.0', () => {
       assert.strictEqual(item.end_time_offset, 0, 'end_time_offset defaults to null');
     });
 
-    it('up keeps start_time_offset null when overlap was null', async () => {
+    it('up defaults start_time_offset/end_time_offset to 0 for a history-capable connector when overlap was null', async () => {
       await insertScanMode(db);
-      await insertSouthConnector(db);
+      await insertSouthConnector(db, 'south-1', 'mssql');
       await db('south_item_groups').insert({
         id: 'group-1',
         name: 'Group A',
@@ -323,13 +365,59 @@ describe('Entity migration v3.9.0', () => {
       await up(db);
 
       const group = await db('south_item_groups').where('id', 'group-1').first();
-      assert.strictEqual(group.start_time_offset, 0, 'null overlap → null start_time_offset for group');
+      assert.strictEqual(group.start_time_offset, 0, 'null overlap → 0 start_time_offset for a history-capable group');
+      assert.strictEqual(group.end_time_offset, 0, 'null overlap → 0 end_time_offset for a history-capable group');
 
       const item = await db('south_items').where('id', 'item-1').first();
-      assert.strictEqual(item.start_time_offset, 0, 'null overlap → null start_time_offset for item');
+      assert.strictEqual(item.start_time_offset, 0, 'null overlap → 0 start_time_offset for a history-capable item');
+      assert.strictEqual(item.end_time_offset, 0, 'null overlap → 0 end_time_offset for a history-capable item');
     });
 
-    it('down restores overlap column and drops start_time_offset and end_time_offset', async () => {
+    it('up leaves start_time_offset/end_time_offset null for a non-history-capable connector', async () => {
+      await insertScanMode(db);
+      await insertSouthConnector(db, 'south-1', 'mqtt');
+      await db('south_item_groups').insert({
+        id: 'group-1',
+        name: 'Group A',
+        south_id: 'south-1',
+        scan_mode_id: 'scan-mode-1',
+        overlap: null,
+        max_read_interval: 3600,
+        read_delay: 200,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+      await db('south_items').insert({
+        id: 'item-1',
+        name: 'Item A',
+        enabled: 1,
+        connector_id: 'south-1',
+        scan_mode_id: 'scan-mode-1',
+        settings: '{}',
+        sync_with_group: 0,
+        max_read_interval: null,
+        read_delay: null,
+        overlap: null,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+
+      await up(db);
+
+      const group = await db('south_item_groups').where('id', 'group-1').first();
+      assert.strictEqual(group.start_time_offset, null, 'non-history-capable group start_time_offset stays null');
+      assert.strictEqual(group.end_time_offset, null, 'non-history-capable group end_time_offset stays null');
+
+      const item = await db('south_items').where('id', 'item-1').first();
+      assert.strictEqual(item.start_time_offset, null, 'non-history-capable item start_time_offset stays null');
+      assert.strictEqual(item.end_time_offset, null, 'non-history-capable item end_time_offset stays null');
+    });
+
+    it('down restores overlap column and drops start_time_offset, end_time_offset and recovery_strategy', async () => {
       await up(db);
       await down(db);
 
@@ -337,11 +425,13 @@ describe('Entity migration v3.9.0', () => {
       assert.ok(groupCols.includes('overlap'), 'south_item_groups.overlap restored');
       assert.ok(!groupCols.includes('start_time_offset'), 'south_item_groups.start_time_offset removed');
       assert.ok(!groupCols.includes('end_time_offset'), 'south_item_groups.end_time_offset removed');
+      assert.ok(!groupCols.includes('recovery_strategy'), 'south_item_groups.recovery_strategy removed');
 
       const itemCols = await columnNames(db, 'south_items');
       assert.ok(itemCols.includes('overlap'), 'south_items.overlap restored');
       assert.ok(!itemCols.includes('start_time_offset'), 'south_items.start_time_offset removed');
       assert.ok(!itemCols.includes('end_time_offset'), 'south_items.end_time_offset removed');
+      assert.ok(!itemCols.includes('recovery_strategy'), 'south_items.recovery_strategy removed');
     });
 
     it('down maps start_time_offset back to -overlap', async () => {
