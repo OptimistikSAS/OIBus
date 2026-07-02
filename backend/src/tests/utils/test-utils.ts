@@ -621,7 +621,7 @@ const createOIAnalyticsMessage = async (database: knex.Knex, command: OIAnalytic
     .into('oianalytics_messages');
 };
 
-const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<NorthSettings>) => {
+export const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<NorthSettings>) => {
   await database
     .insert({
       id: north.id,
@@ -656,7 +656,7 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
   }
 };
 
-const createSouth = async (database: knex.Knex, south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) => {
+export const createSouth = async (database: knex.Knex, south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) => {
   await database
     .insert({
       id: south.id,
@@ -762,7 +762,7 @@ const createUser = async (database: knex.Knex, user: User) => {
     .into('users');
 };
 
-const createHistoryQuery = async (
+export const createHistoryQuery = async (
   database: knex.Knex,
   historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>
 ) => {
@@ -976,7 +976,8 @@ export const buildSouthEntity = <T extends SouthSettings, I extends SouthItemSet
       maxReadInterval: 3600,
       readDelay: 200,
       startTimeOffset: 0,
-      endTimeOffset: null
+      endTimeOffset: null,
+      recoveryStrategy: null
     });
   }
   return {
