@@ -81,7 +81,6 @@ export default class DataStreamEngineMock {
   deleteHistoryQuery = mock.fn(
     async (_historyEntity: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>): Promise<void> => undefined
   );
-  setLogger = mock.fn((_logger: ILogger): void => undefined);
   addContent = mock.fn(async (): Promise<void> => undefined);
   addExternalContent = mock.fn(async (): Promise<void> => undefined);
   searchCacheContent = mock.fn(async (): Promise<CacheSearchResult> => ({}) as CacheSearchResult);

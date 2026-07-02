@@ -36,8 +36,8 @@ import { getStandardManifest } from '../transformer.service';
 import { OIBusObjectAttribute } from '../../../shared/model/form.model';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import { Language } from '../../../shared/model/types';
-import type { ILogger } from '../../model/logger.model';
 import { getErrorMessage } from '../utils';
+import { loggerService } from '../logger/logger.service';
 
 const STOP_TIMEOUT = 30_000;
 
@@ -49,6 +49,8 @@ export default class OIAnalyticsMessageService {
   protected retryMessageInterval: NodeJS.Timeout | null = null;
   private stopped = false;
   private registrationEventHandler: (() => void) | null = null;
+
+  private readonly logger = loggerService.createChildLogger('internal');
 
   constructor(
     private oIAnalyticsMessageRepository: OIAnalyticsMessageRepository,
@@ -62,8 +64,7 @@ export default class OIAnalyticsMessageService {
     private northRepository: NorthConnectorRepository,
     private historyQueryRepository: HistoryQueryRepository,
     private transformerRepository: TransformerRepository,
-    private oIAnalyticsClient: OIAnalyticsClient,
-    private logger: ILogger
+    private oIAnalyticsClient: OIAnalyticsClient
   ) {}
 
   start(): void {
@@ -169,10 +170,6 @@ export default class OIAnalyticsMessageService {
       this.runProgress$.resolve();
       this.runProgress$ = null;
     }
-  }
-
-  setLogger(logger: ILogger) {
-    this.logger = logger;
   }
 
   /**
@@ -366,6 +363,11 @@ export default class OIAnalyticsMessageService {
         port: engine.port,
         proxyEnabled: engine.proxyEnabled,
         proxyPort: engine.proxyPort,
+        forwardProxyUrl: engine.forwardProxyUrl,
+        forwardProxyUsername: engine.forwardProxyUsername,
+        forwardProxyPassword: null,
+        proxyUsername: engine.proxyUsername,
+        proxyPassword: null,
         logParameters: {
           console: {
             level: engine.logParameters.console.level
@@ -389,6 +391,12 @@ export default class OIAnalyticsMessageService {
           oia: {
             level: engine.logParameters.oia.level,
             interval: engine.logParameters.oia.interval
+          },
+          syslog: {
+            level: engine.logParameters.syslog.level,
+            host: engine.logParameters.syslog.host,
+            port: engine.logParameters.syslog.port,
+            protocol: engine.logParameters.syslog.protocol
           }
         }
       }
@@ -517,7 +525,9 @@ export default class OIAnalyticsMessageService {
             syncWithGroup: item.syncWithGroup,
             maxReadInterval: item.maxReadInterval,
             readDelay: item.readDelay,
-            overlap: item.overlap
+            startTimeOffset: item.startTimeOffset,
+            endTimeOffset: item.endTimeOffset,
+            recoveryStrategy: item.recoveryStrategy
           })),
           groups: south.groups.map(group => ({
             id: group.id,
@@ -526,9 +536,11 @@ export default class OIAnalyticsMessageService {
               scanModeId: group.scanMode.id
             },
             historySettings: {
-              overlap: group.overlap,
+              startTimeOffset: group.startTimeOffset,
+              endTimeOffset: group.endTimeOffset,
               maxReadInterval: group.maxReadInterval,
-              readDelay: group.readDelay
+              readDelay: group.readDelay,
+              recoveryStrategy: group.recoveryStrategy
             }
           }))
         }

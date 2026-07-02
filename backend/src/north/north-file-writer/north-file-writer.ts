@@ -1,7 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFile as execFileCb } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import NorthConnector from '../north-connector';
+import { encryptionService } from '../../service/encryption.service';
+
+const execFile = promisify(execFileCb);
 import { DateTime } from 'luxon';
 import { NorthFileWriterSettings } from '../../../shared/model/north-settings.model';
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
@@ -9,33 +14,75 @@ import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ICacheService } from '../../model/cache.service.model';
 import { createWriteStream, ReadStream } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthFileWriter - Write files in an output folder
  */
 export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> {
-  constructor(configuration: NorthConnectorEntity<NorthFileWriterSettings>, logger: ILogger, cacheService: ICacheService) {
-    super(configuration, logger, cacheService);
+  constructor(configuration: NorthConnectorEntity<NorthFileWriterSettings>, cacheService: ICacheService) {
+    super(configuration, cacheService);
   }
 
   supportedTypes(): Array<string> {
     return ['any', 'setpoint', 'time-values'];
   }
 
+  override async connect(): Promise<void> {
+    await this.mountNetworkShare(this.connector.settings.outputFolder);
+    return super.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    await this.unmountNetworkShare(this.connector.settings.outputFolder);
+    return super.disconnect();
+  }
+
+  private async mountNetworkShare(folderPath: string): Promise<void> {
+    if (process.platform !== 'win32') {
+      if (this.connector.settings.username) this.logger.trace('Skipping SMB credential store: not running on Windows');
+      return;
+    }
+    if (!this.connector.settings.username) return;
+    const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
+    if (!serverRoot) return;
+    const user = this.connector.settings.domain
+      ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
+      : this.connector.settings.username;
+    try {
+      const password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
+      await execFile('cmdkey', [`/add:${serverRoot}`, `/user:${user}`, `/pass:${password}`]);
+      this.logger.debug(`Stored SMB credentials for ${serverRoot} as ${user}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to store SMB credentials for ${serverRoot}: ${(error as Error).message}`);
+      throw error;
+    }
+  }
+
+  private async unmountNetworkShare(folderPath: string): Promise<void> {
+    if (process.platform !== 'win32') {
+      if (this.connector.settings.username) this.logger.trace('Skipping SMB credential removal: not running on Windows');
+      return;
+    }
+    if (!this.connector.settings.username) return;
+    const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
+    if (!serverRoot) return;
+    try {
+      await execFile('cmdkey', [`/delete:${serverRoot}`]);
+    } catch {
+      // Ignore — credentials may have already been removed
+    }
+  }
+
   async testConnection(): Promise<OIBusConnectionTestResult> {
+    await this.mountNetworkShare(this.connector.settings.outputFolder);
     const outputFolder = path.resolve(this.connector.settings.outputFolder);
 
+    const testFile = path.join(outputFolder, `.oibus-write-test`);
     try {
-      await fs.access(outputFolder, fs.constants.F_OK);
+      await fs.writeFile(testFile, '');
+      await fs.unlink(testFile);
     } catch (error: unknown) {
-      throw new Error(`Access error on "${outputFolder}": ${(error as Error).message}`);
-    }
-
-    try {
-      await fs.access(outputFolder, fs.constants.W_OK);
-    } catch (error: unknown) {
-      throw new Error(`Access error on "${outputFolder}": ${(error as Error).message}`);
+      throw new Error(`Write access error on "${outputFolder}": ${(error as Error).message}`);
     }
 
     const items: Array<{ key: string; value: string }> = [{ key: 'Output Folder', value: outputFolder }];

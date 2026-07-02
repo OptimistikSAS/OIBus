@@ -56,6 +56,36 @@ export interface EngineSettingsDTO extends BaseEntity {
   proxyPort: number | null;
 
   /**
+   * The URL of the upstream proxy to forward requests through.
+   * @example null
+   */
+  forwardProxyUrl: string | null;
+
+  /**
+   * The username for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyUsername: string | null;
+
+  /**
+   * The password for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyPassword: string | null;
+
+  /**
+   * The username clients must use to authenticate with this proxy server. Null means no authentication required.
+   * @example null
+   */
+  proxyUsername: string | null;
+
+  /**
+   * The password clients must use to authenticate with this proxy server.
+   * @example null
+   */
+  proxyPassword: string | null;
+
+  /**
    * Logging parameters for different outputs.
    */
   logParameters: {
@@ -155,6 +185,34 @@ export interface EngineSettingsDTO extends BaseEntity {
        * @example 60
        */
       interval: number;
+    };
+
+    /**
+     * Syslog logging configuration.
+     */
+    syslog: {
+      /**
+       * The log level for syslog output.
+       */
+      level: LogLevel;
+
+      /**
+       * The hostname or IP of the syslog server. Empty string disables the transport.
+       * @example "syslog.example.com"
+       */
+      host: string;
+
+      /**
+       * The port of the syslog server.
+       * @example 514
+       */
+      port: number;
+
+      /**
+       * The transport protocol.
+       * @example "udp4"
+       */
+      protocol: 'udp4' | 'tcp';
     };
   };
 }
@@ -862,6 +920,36 @@ export interface EngineSettingsCommandDTO {
   proxyPort: number | null;
 
   /**
+   * The URL of the upstream proxy to forward requests through.
+   * @example null
+   */
+  forwardProxyUrl: string | null;
+
+  /**
+   * The username for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyUsername: string | null;
+
+  /**
+   * The password for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyPassword: string | null;
+
+  /**
+   * The username clients must use to authenticate with this proxy server. Null means no authentication required.
+   * @example null
+   */
+  proxyUsername: string | null;
+
+  /**
+   * The password clients must use to authenticate with this proxy server.
+   * @example null
+   */
+  proxyPassword: string | null;
+
+  /**
    * Logging parameters for different outputs.
    */
   logParameters: {
@@ -967,8 +1055,116 @@ export interface EngineSettingsCommandDTO {
        */
       interval: number;
     };
+
+    /**
+     * Syslog logging configuration.
+     */
+    syslog: {
+      /**
+       * The log level for syslog output.
+       * @example "info"
+       */
+      level: LogLevel;
+
+      /**
+       * The hostname or IP of the syslog server. Empty string disables the transport.
+       * @example "syslog.example.com"
+       */
+      host: string;
+
+      /**
+       * The port of the syslog server.
+       * @example 514
+       */
+      port: number;
+
+      /**
+       * The transport protocol.
+       * @example "udp4"
+       */
+      protocol: 'udp4' | 'tcp';
+    };
   };
 }
+
+/**
+ * Engine name command Data Transfer Object.
+ * Used as the request body for updating only the engine name.
+ */
+export interface EngineNameCommandDTO {
+  /**
+   * The name of the engine.
+   * @example "OIBus OT"
+   */
+  name: string;
+}
+
+/**
+ * Engine web server command Data Transfer Object.
+ * Used as the request body for updating only the web server port.
+ */
+export interface EngineWebServerCommandDTO {
+  /**
+   * The port on which the engine listens.
+   * @example 8080
+   */
+  port: number;
+}
+
+/**
+ * Engine proxy command Data Transfer Object.
+ * Used as the request body for updating only the proxy settings.
+ */
+export interface EngineProxyCommandDTO {
+  /**
+   * Whether the proxy is enabled.
+   * @example false
+   */
+  proxyEnabled: boolean;
+
+  /**
+   * The port for the proxy, if enabled.
+   * @example null
+   */
+  proxyPort: number | null;
+
+  /**
+   * The URL of the upstream proxy to forward requests through.
+   * @example null
+   */
+  forwardProxyUrl: string | null;
+
+  /**
+   * The username for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyUsername: string | null;
+
+  /**
+   * The password for upstream proxy authentication.
+   * @example null
+   */
+  forwardProxyPassword: string | null;
+
+  /**
+   * The username for proxy server authentication.
+   * @example null
+   */
+  proxyUsername: string | null;
+
+  /**
+   * The password for proxy server authentication.
+   * @example null
+   */
+  proxyPassword: string | null;
+}
+
+/**
+ * Engine logger command Data Transfer Object.
+ * Used as the request body for updating only the logging parameters.
+ * The log category objects are top-level (no wrapper key).
+ */
+export type EngineLoggerCommandDTO = EngineSettingsCommandDTO['logParameters'];
 
 /**
  * Engine settings update result Data Transfer Object.

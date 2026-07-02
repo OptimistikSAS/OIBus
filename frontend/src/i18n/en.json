@@ -156,8 +156,12 @@
       "south": "South",
       "north": "North",
       "history-query": "History query",
-      "internal": "Internal",
-      "web-server": "Web server"
+      "internal": "Internal"
+    },
+    "internal-scope-ids": {
+      "engine": "Engine",
+      "web-server": "Web Server",
+      "node-opcua": "Node OPC-UA"
     },
     "categories": {
       "api": "API",
@@ -299,6 +303,7 @@
       "ads": "ADS - TwinCAT®",
       "folder-scanner": "Folder scanner",
       "ftp": "FTP",
+      "influxdb": "InfluxDB",
       "modbus": "Modbus",
       "mqtt": "MQTT",
       "mssql": "Microsoft SQL Server™",
@@ -319,6 +324,7 @@
       "ads": "The ADS protocol used in TwinCAT® systems",
       "folder-scanner": "Read files from a local or remote folder",
       "ftp": "Read files from a remote FTP server",
+      "influxdb": "Query InfluxDB time series databases (v1, v2, v3)",
       "modbus": "Access Modbus registers on a PLC",
       "mqtt": "Subscribe to MQTT broker topics",
       "mssql": "Query Microsoft SQL Server™ databases",
@@ -536,12 +542,19 @@
       "loki": "Loki: {{ level }}",
       "oia": "OIAnalytics: {{ level }}"
     },
+    "web-server-settings": {
+      "title": "Web server"
+    },
     "proxy-settings": {
       "title": "Proxy server",
       "proxy-enabled": "Enabled",
       "enabled-details": "Enabled on port {{ port }}",
       "disabled-details": "Disabled",
-      "proxy-port": "Port"
+      "proxy-port": "Port",
+      "proxy-username": "Username",
+      "proxy-password": "Password",
+      "forward-proxy-enabled": "Forward to upstream proxy",
+      "forward-proxy-url": "Forward proxy URL"
     },
     "logger": {
       "title": "Logger",
@@ -568,6 +581,12 @@
       "oia": {
         "level": "OIAnalytics level",
         "interval": "OIAnalytics interval"
+      },
+      "syslog": {
+        "level": "Syslog level",
+        "host": "Syslog host",
+        "port": "Syslog port",
+        "protocol": "Syslog protocol"
       }
     },
     "monitoring": {
@@ -736,7 +755,10 @@
           "file-writer": {
             "output-folder": "Output folder",
             "prefix": "Prefix",
-            "suffix": "Suffix"
+            "suffix": "Suffix",
+            "smb-username": "SMB username",
+            "smb-password": "SMB password",
+            "smb-domain": "SMB domain"
           },
           "modbus": {
             "host": "Host",
@@ -1477,7 +1499,10 @@
           },
           "folder-scanner": {
             "input-folder": "Input folder",
-            "compression": "Enable compression"
+            "compression": "Enable compression",
+            "smb-username": "SMB username",
+            "smb-password": "SMB password",
+            "smb-domain": "SMB domain"
           },
           "modbus": {
             "host": "Host",
@@ -1546,6 +1571,28 @@
             "database": "Database",
             "username": "Username",
             "password": "Password"
+          },
+          "influxdb": {
+            "version": {
+              "title": "Version",
+              "1": "v1 (InfluxDB 1.x – InfluxQL)",
+              "2": "v2 (InfluxDB 2.x – Flux)",
+              "3": "v3 (InfluxDB 3.x – SQL)"
+            },
+            "host": "Host",
+            "port": "Port",
+            "protocol": {
+              "title": "Protocol",
+              "http": "HTTP",
+              "https": "HTTPS"
+            },
+            "database": "Database",
+            "username": "Username",
+            "password": "Password",
+            "url": "URL",
+            "token": "API token",
+            "organisation": "Organisation",
+            "bucket": "Bucket"
           },
           "odbc": {
             "remote-agent": "Use remote agent",
@@ -1874,6 +1921,26 @@
                 "output-timestamp-format": "Output date time format",
                 "output-timezone": "Output timezone"
               }
+            },
+            "influxdb": {
+              "query": "Query",
+              "request-timeout": "Request timeout",
+              "track-max-instant": "Track max instant",
+              "date-time": {
+                "track-instant": "Track instant",
+                "json-path": "JSON path",
+                "type": {
+                  "title": "Type",
+                  "iso-string": "ISO String",
+                  "unix-epoch": "UNIX epoch (s)",
+                  "unix-epoch-ms": "UNIX epoch (ms)",
+                  "string": "String"
+                },
+                "timezone": "Timezone",
+                "format": "Format",
+                "locale": "Locale"
+              },
+              "date-time-input": "Date time input"
             },
             "odbc": {
               "query": "Query",
@@ -2434,7 +2501,11 @@
       },
       "max-read-interval": "Max read interval",
       "read-delay": "Read delay",
-      "overlap": "Overlap",
+      "start-time-offset": "Start time offset",
+      "end-time-offset": "End time offset",
+      "recovery-strategy": "Recovery strategy",
+      "recovery-strategy-oldest": "From oldest to newest",
+      "recovery-strategy-newest": "From newest to oldest",
       "scan-mode-change-warning": "Changing scan mode when max instant per item is disabled might lead to data duplication or loss.",
       "sync-with-group": "Sync with group",
       "not-synced-notice": "Item uses its own historian settings (not synchronized with group)"
@@ -2443,9 +2514,13 @@
       "create-title": "Create a new group",
       "edit-title": "Edit group",
       "name": "Group name",
-      "overlap": "Default overlap",
+      "start-time-offset": "Default start time offset",
+      "end-time-offset": "Default end time offset",
       "max-read-interval": "Max read interval",
       "read-delay": "Read delay",
+      "recovery-strategy": "Recovery strategy",
+      "recovery-strategy-oldest": "From oldest to newest",
+      "recovery-strategy-newest": "From newest to oldest",
       "confirm-deletion": "Are you sure you want to delete the group \"{{name}}\"? Items in this group will be moved back to \"None\".",
       "created": "Group created",
       "updated": "Group updated",
@@ -2600,12 +2675,16 @@
       "message-content": "Log contains",
       "scope-type": "Types",
       "scope": "Scopes",
+      "item": "Items",
+      "group": "Groups",
       "levels": "Levels"
     },
     "date": "Date",
     "level": "Level",
     "scope-type": "Type",
     "scope": "Scope",
+    "item": "Item",
+    "group": "Group",
     "message": "Message",
     "none": "No log found",
     "tooltips": {

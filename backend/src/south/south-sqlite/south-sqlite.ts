@@ -19,7 +19,6 @@ import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/e
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
@@ -34,10 +33,9 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
@@ -153,7 +151,10 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     const requestDuration = DateTime.now().toMillis() - startRequest.toMillis();
 
     if (result.length > 0) {
-      this.logger.info(`Found ${result.length} results for item ${items[0].name} in ${requestDuration} ms`);
+      this.logger.info(
+        { itemId: items[0].id, itemName: items[0].name },
+        `Found ${result.length} results for item ${items[0].name} in ${requestDuration} ms`
+      );
 
       const formattedResult = result.map(entry => {
         const formattedEntry: Record<string, string | number> = {};
@@ -189,7 +190,10 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
         this.logger
       );
     } else {
-      this.logger.debug(`No result found for item ${items[0].name}. Request done in ${requestDuration} ms`);
+      this.logger.debug(
+        { itemId: items[0].id, itemName: items[0].name },
+        `No result found for item ${items[0].name}. Request done in ${requestDuration} ms`
+      );
     }
     return { trackedInstant: updatedStartTime, value: result.length > 0 ? result[result.length - 1] : null };
   }

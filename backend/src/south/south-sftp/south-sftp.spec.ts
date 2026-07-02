@@ -18,6 +18,9 @@ import { DateTime } from 'luxon';
 
 const nodeRequire = createRequire(import.meta.url);
 
+// Shared across both describe blocks so the same mock closure always returns the active logger
+let activeSftpLogger: PinoLogger | null = null;
+
 const encryptionServiceMock = new EncryptionServiceMock('', '');
 
 const mockSftpClient = {
@@ -89,7 +92,8 @@ describe('SouthSFTP', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -114,7 +118,8 @@ describe('SouthSFTP', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -139,7 +144,8 @@ describe('SouthSFTP', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -166,10 +172,16 @@ describe('SouthSFTP', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => activeSftpLogger) },
+      default: class {}
+    });
+
     SouthSftp = reloadModule<{ default: typeof SouthSftpClass }>(nodeRequire, './south-sftp').default;
   });
 
   beforeEach(() => {
+    activeSftpLogger = logger;
     southCacheService = new SouthCacheServiceMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
     mockSftpClient.connect.mock.resetCalls();
@@ -183,7 +195,7 @@ describe('SouthSFTP', () => {
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
 
-    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -236,7 +248,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
     await southWithLimit.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -271,7 +283,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
     await southWithLimit.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -310,7 +322,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
     await southWithLimit.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -344,7 +356,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    const southWithLimit = new SouthSftp(configWithLimit, addContentCallback, southCacheRepository, 'cacheFolder');
     await southWithLimit.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -444,7 +456,7 @@ describe('SouthSFTP', () => {
       createdAt: '',
       updatedAt: ''
     };
-    const southRecursive = new SouthSftp(configRecursive, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    const southRecursive = new SouthSftp(configRecursive, addContentCallback, southCacheRepository, 'cacheFolder');
     await southRecursive.start();
 
     const mtimeMs = DateTime.fromISO(testData.constants.dates.FAKE_NOW).minus({ minutes: 2 }).toMillis();
@@ -513,7 +525,8 @@ describe('SouthFTP with preserve file and compression', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -538,7 +551,8 @@ describe('SouthFTP with preserve file and compression', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -563,7 +577,8 @@ describe('SouthFTP with preserve file and compression', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -593,6 +608,7 @@ describe('SouthFTP with preserve file and compression', () => {
   });
 
   beforeEach(async () => {
+    activeSftpLogger = logger;
     southCacheService = new SouthCacheServiceMock();
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW).getTime() });
     mockSftpClient.connect.mock.resetCalls();
@@ -607,7 +623,7 @@ describe('SouthFTP with preserve file and compression', () => {
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
 
-    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     await south.start();
   });
 
@@ -749,7 +765,8 @@ describe('SouthSFTP test connection with private key', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -774,7 +791,8 @@ describe('SouthSFTP test connection with private key', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -799,7 +817,8 @@ describe('SouthSFTP test connection with private key', () => {
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -841,7 +860,7 @@ describe('SouthSFTP test connection with private key', () => {
     addContentCallback.mock.resetCalls();
     encryptionServiceMock.decryptText.mock.resetCalls();
 
-    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthSftp(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {

@@ -120,7 +120,15 @@ export function mockModule(req: NodeJS.Require, modulePath: string, exports: unk
   } catch {
     // ensure the module has a cache entry before we replace its exports
   }
-  const resolved = req.resolve(modulePath);
+  let resolved: string;
+  try {
+    resolved = req.resolve(modulePath);
+  } catch {
+    // Module is not resolvable (e.g. optional native addon not installed in this environment).
+    // Skip cache injection — when the SUT calls require(modulePath) it will also fail to
+    // resolve and run its own error-handling path (e.g. return null).
+    return exports as Record<string, unknown>;
+  }
   if (req.cache[resolved]) {
     req.cache[resolved]!.exports = exports;
   } else {
@@ -459,8 +467,17 @@ const createEngineSettings = async (database: knex.Knex, engineSettings: EngineS
       log_loki_password: engineSettings.logParameters.loki.password,
       log_oia_level: engineSettings.logParameters.oia.level,
       log_oia_interval: engineSettings.logParameters.oia.interval,
+      log_syslog_level: engineSettings.logParameters.syslog.level,
+      log_syslog_host: engineSettings.logParameters.syslog.host,
+      log_syslog_port: engineSettings.logParameters.syslog.port,
+      log_syslog_protocol: engineSettings.logParameters.syslog.protocol,
       proxy_enabled: engineSettings.proxyEnabled,
       proxy_port: engineSettings.proxyPort,
+      forward_proxy_url: engineSettings.forwardProxyUrl,
+      forward_proxy_username: engineSettings.forwardProxyUsername,
+      forward_proxy_password: engineSettings.forwardProxyPassword,
+      proxy_username: engineSettings.proxyUsername,
+      proxy_password: engineSettings.proxyPassword,
       oibus_version: engineSettings.version,
       oibus_launcher_version: engineSettings.launcherVersion,
       created_by: engineSettings.createdBy,
@@ -604,7 +621,7 @@ const createOIAnalyticsMessage = async (database: knex.Knex, command: OIAnalytic
     .into('oianalytics_messages');
 };
 
-const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<NorthSettings>) => {
+export const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<NorthSettings>) => {
   await database
     .insert({
       id: north.id,
@@ -639,7 +656,7 @@ const createNorth = async (database: knex.Knex, north: NorthConnectorEntity<Nort
   }
 };
 
-const createSouth = async (database: knex.Knex, south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) => {
+export const createSouth = async (database: knex.Knex, south: SouthConnectorEntity<SouthSettings, SouthItemSettings>) => {
   await database
     .insert({
       id: south.id,
@@ -668,7 +685,13 @@ const createSouthConnectorItem = async (
       scan_mode_id: item.scanMode?.id || null,
       name: item.name,
       enabled: item.enabled,
-      settings: JSON.stringify(item.settings)
+      settings: JSON.stringify(item.settings),
+      sync_with_group: item.syncWithGroup,
+      max_read_interval: item.maxReadInterval,
+      read_delay: item.readDelay,
+      start_time_offset: item.startTimeOffset,
+      end_time_offset: item.endTimeOffset,
+      recovery_strategy: item.recoveryStrategy
     })
     .into('south_items');
 };
@@ -739,7 +762,7 @@ const createUser = async (database: knex.Knex, user: User) => {
     .into('users');
 };
 
-const createHistoryQuery = async (
+export const createHistoryQuery = async (
   database: knex.Knex,
   historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings>
 ) => {
@@ -952,7 +975,9 @@ export const buildSouthEntity = <T extends SouthSettings, I extends SouthItemSet
       syncWithGroup: false,
       maxReadInterval: 3600,
       readDelay: 200,
-      overlap: 0
+      startTimeOffset: 0,
+      endTimeOffset: null,
+      recoveryStrategy: null
     });
   }
   return {

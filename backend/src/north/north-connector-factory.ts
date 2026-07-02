@@ -32,42 +32,40 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { OIBusNorthType } from '../../shared/model/north-connector.model';
 import { CONTENT_FOLDER, METADATA_FOLDER } from '../model/engine.model';
-import type { ILogger } from '../model/logger.model';
+import { loggerService } from '../service/logger/logger.service';
 
 export const buildNorth = (
   settings: NorthConnectorEntity<NorthSettings>,
-  logger: ILogger,
   certificateRepository: CertificateRepository,
   oIAnalyticsRegistrationRepository: OIAnalyticsRegistrationRepository,
   orchestrator: ICacheService
 ): NorthConnector<NorthSettings> => {
   switch (settings.type) {
     case 'aws-s3':
-      return new NorthAmazonS3(settings as NorthConnectorEntity<NorthAmazonS3Settings>, logger, orchestrator);
+      return new NorthAmazonS3(settings as NorthConnectorEntity<NorthAmazonS3Settings>, orchestrator);
     case 'azure-blob':
-      return new NorthAzureBlob(settings as NorthConnectorEntity<NorthAzureBlobSettings>, logger, orchestrator);
+      return new NorthAzureBlob(settings as NorthConnectorEntity<NorthAzureBlobSettings>, orchestrator);
     case 'console':
-      return new NorthConsole(settings as NorthConnectorEntity<NorthConsoleSettings>, logger, orchestrator);
+      return new NorthConsole(settings as NorthConnectorEntity<NorthConsoleSettings>, orchestrator);
     case 'file-writer':
-      return new NorthFileWriter(settings as NorthConnectorEntity<NorthFileWriterSettings>, logger, orchestrator);
+      return new NorthFileWriter(settings as NorthConnectorEntity<NorthFileWriterSettings>, orchestrator);
     case 'modbus':
-      return new NorthModbus(settings as NorthConnectorEntity<NorthModbusSettings>, logger, orchestrator);
+      return new NorthModbus(settings as NorthConnectorEntity<NorthModbusSettings>, orchestrator);
     case 'mqtt':
-      return new NorthMQTT(settings as NorthConnectorEntity<NorthMQTTSettings>, logger, orchestrator);
+      return new NorthMQTT(settings as NorthConnectorEntity<NorthMQTTSettings>, orchestrator);
     case 'oianalytics':
       return new NorthOIAnalytics(
         settings as NorthConnectorEntity<NorthOIAnalyticsSettings>,
-        logger,
         orchestrator,
         certificateRepository,
         oIAnalyticsRegistrationRepository
       );
     case 'opcua':
-      return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, logger, orchestrator);
+      return new NorthOPCUA(settings as NorthConnectorEntity<NorthOPCUASettings>, orchestrator);
     case 'rest':
-      return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, logger, orchestrator);
+      return new NorthREST(settings as NorthConnectorEntity<NorthRESTSettings>, orchestrator);
     case 'sftp':
-      return new NorthSFTP(settings as NorthConnectorEntity<NorthSFTPSettings>, logger, orchestrator);
+      return new NorthSFTP(settings as NorthConnectorEntity<NorthSFTPSettings>, orchestrator);
     default:
       throw Error(`North connector of type "${settings.type}" not installed`);
   }
@@ -97,7 +95,8 @@ export const deleteNorthCache = async (id: string, baseFolder: string) => {
   await fs.rm(path.join(baseFolder, 'archive', `north-${id}`), { recursive: true, force: true });
 };
 
-export const createNorthOrchestrator = (baseFolder: string, id: string, logger: ILogger): ICacheService => {
+export const createNorthOrchestrator = (baseFolder: string, id: string, name: string): ICacheService => {
+  const logger = loggerService.createChildLogger('north', id, name);
   return new CacheService(
     logger,
     path.join(baseFolder, 'cache', `north-${id}`),

@@ -7,6 +7,10 @@ export interface OIBusLog {
   scopeType: ScopeType;
   scopeId: string | null;
   scopeName: string | null;
+  itemId: string | null;
+  itemName: string | null;
+  groupId: string | null;
+  groupName: string | null;
   message: string;
 }
 
@@ -15,6 +19,10 @@ export interface PinoLog {
   scopeType: ScopeType;
   scopeId: string | null;
   scopeName: string | null;
+  itemId?: string | null;
+  itemName?: string | null;
+  groupId?: string | null;
+  groupName?: string | null;
   time: Instant;
   level: string;
 }

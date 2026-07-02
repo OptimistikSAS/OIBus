@@ -111,9 +111,8 @@ export default class HistoryQueryMetricsService {
     this.updateMetrics();
   };
 
-  private onSouthHistoryQueryStart = (data: { running: boolean; intervalProgress: number }) => {
+  private onSouthHistoryQueryStart = (data: { running: boolean }) => {
     this._metrics.historyMetrics.running = data.running;
-    this._metrics.historyMetrics.intervalProgress = data.intervalProgress;
     this.updateMetrics();
   };
 

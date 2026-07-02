@@ -253,7 +253,9 @@ export class SouthDetailComponent {
             syncWithGroup: command.syncWithGroup,
             maxReadInterval: command.maxReadInterval,
             readDelay: command.readDelay,
-            overlap: command.overlap
+            startTimeOffset: command.startTimeOffset,
+            endTimeOffset: command.endTimeOffset,
+            recoveryStrategy: command.recoveryStrategy
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -298,7 +300,9 @@ export class SouthDetailComponent {
             syncWithGroup: command.syncWithGroup,
             maxReadInterval: command.maxReadInterval,
             readDelay: command.readDelay,
-            overlap: command.overlap
+            startTimeOffset: command.startTimeOffset,
+            endTimeOffset: command.endTimeOffset,
+            recoveryStrategy: command.recoveryStrategy
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -353,7 +357,9 @@ export class SouthDetailComponent {
             syncWithGroup: command.syncWithGroup,
             maxReadInterval: command.maxReadInterval,
             readDelay: command.readDelay,
-            overlap: command.overlap
+            startTimeOffset: command.startTimeOffset,
+            endTimeOffset: command.endTimeOffset,
+            recoveryStrategy: command.recoveryStrategy
           } as SouthConnectorItemCommandDTO);
         }),
         switchMap(() => {
@@ -423,7 +429,7 @@ export class SouthDetailComponent {
   importItems() {
     const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
-    const optionalHeaders: Array<string> = ['group', 'maxReadInterval', 'readDelay', 'overlap', 'syncWithGroup'];
+    const optionalHeaders: Array<string> = ['group', 'maxReadInterval', 'readDelay', 'startTimeOffset', 'endTimeOffset', 'syncWithGroup'];
     const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
@@ -454,7 +460,9 @@ export class SouthDetailComponent {
                   syncWithGroup: item.syncWithGroup,
                   maxReadInterval: item.maxReadInterval,
                   readDelay: item.readDelay,
-                  overlap: item.overlap
+                  startTimeOffset: item.startTimeOffset,
+                  endTimeOffset: item.endTimeOffset,
+                  recoveryStrategy: item.recoveryStrategy
                 }) as SouthConnectorItemCommandDTO
             ),
             errors: result.errors
@@ -851,7 +859,9 @@ export class SouthDetailComponent {
         syncWithGroup: item.syncWithGroup,
         maxReadInterval: item.maxReadInterval,
         readDelay: item.readDelay,
-        overlap: item.overlap
+        startTimeOffset: item.startTimeOffset,
+        endTimeOffset: item.endTimeOffset,
+        recoveryStrategy: item.recoveryStrategy
       })),
       groups: this.southConnector!.groups.map(group => ({
         id: group.id,
@@ -862,7 +872,9 @@ export class SouthDetailComponent {
         historySettings: {
           maxReadInterval: group.historySettings.maxReadInterval,
           readDelay: group.historySettings.readDelay,
-          overlap: group.historySettings.overlap
+          startTimeOffset: group.historySettings.startTimeOffset,
+          endTimeOffset: group.historySettings.endTimeOffset,
+          recoveryStrategy: group.historySettings.recoveryStrategy
         }
       }))
     } as SouthConnectorCommandDTO;

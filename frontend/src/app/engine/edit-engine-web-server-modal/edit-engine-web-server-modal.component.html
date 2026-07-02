@@ -1,0 +1,24 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="engine.web-server-settings.title"></h4>
+</div>
+<div class="modal-body">
+  <form id="engine-web-server-form" [formGroup]="form" (ngSubmit)="save()">
+    <div class="form-group">
+      <label class="form-label" for="port" translate="engine.general-settings.port"></label>
+      <input formControlName="port" type="number" id="port" class="form-control" />
+      <val-errors controlName="port" />
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button
+      type="submit"
+      form="engine-web-server-form"
+      class="btn btn-primary"
+      translate="common.save"
+      id="save-web-server-button"
+    ></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-web-server-button"></button>
+  </div>
+</div>

@@ -6,6 +6,5 @@ import { mock } from 'node:test';
 export default class ProxyServerMock {
   start = mock.fn();
   stop = mock.fn();
-  setLogger = mock.fn();
   refreshIpFilters = mock.fn();
 }

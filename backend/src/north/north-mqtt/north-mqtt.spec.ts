@@ -75,6 +75,11 @@ describe('NorthMQTT', () => {
         return cacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     NorthMQTT = reloadModule<{ default: typeof NorthMQTTClass }>(nodeRequire, './north-mqtt').default;
   });
 
@@ -115,7 +120,7 @@ describe('NorthMQTT', () => {
       rejectUnauthorized: false
     });
 
-    north = new NorthMQTT(configuration, logger, cacheService);
+    north = new NorthMQTT(configuration, cacheService);
   });
 
   afterEach(() => {

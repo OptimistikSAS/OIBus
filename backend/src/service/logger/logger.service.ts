@@ -54,22 +54,111 @@ const computeParentLevel = (targets: ReadonlyArray<{ level: string }>): pino.Lev
 };
 
 /**
- * Manage pino loggers
- * Four loggers are supported:
+ * Wraps a root pino logger and a fixed set of child bindings. The underlying pino
+ * child is re-created on demand whenever the LoggerService restarts (i.e. rootLogger
+ * reference changes). This means every ILogger handed out by LoggerService stays
+ * valid across logger restarts without any manual setLogger() wiring.
+ *
+ * Log calls made while LoggerService is stopped (rootLogger === null) are silently
+ * dropped — acceptable for the sub-second restart window.
+ */
+class LoggerProxy implements ILogger {
+  private _rootRef: ILogger | null = null;
+  private _pinoChild: ILogger | null = null;
+
+  constructor(
+    private readonly service: LoggerService,
+    private readonly bindings: Record<string, unknown>
+  ) {}
+
+  private get current(): ILogger | null {
+    const root = this.service.rootLogger;
+    if (this._rootRef !== root) {
+      this._rootRef = root;
+      this._pinoChild = root ? root.child(this.bindings) : null;
+    }
+    return this._pinoChild;
+  }
+
+  trace(obj: unknown, msg?: string, ...args: Array<unknown>): void {
+    this.current?.trace(obj, msg, ...args);
+  }
+  debug(obj: unknown, msg?: string, ...args: Array<unknown>): void {
+    this.current?.debug(obj, msg, ...args);
+  }
+  info(obj: unknown, msg?: string, ...args: Array<unknown>): void {
+    this.current?.info(obj, msg, ...args);
+  }
+  warn(obj: unknown, msg?: string, ...args: Array<unknown>): void {
+    this.current?.warn(obj, msg, ...args);
+  }
+  error(obj: unknown, msg?: string, ...args: Array<unknown>): void {
+    this.current?.error(obj, msg, ...args);
+  }
+  fatal(obj: unknown, msg?: string, ...args: Array<unknown>): void {
+    this.current?.fatal(obj, msg, ...args);
+  }
+  isLevelEnabled(level: string): boolean {
+    return this.current?.isLevelEnabled(level) ?? false;
+  }
+
+  child(bindings: Record<string, unknown>, _options?: Record<string, unknown>): ILogger {
+    // options (custom serializers etc.) are intentionally not forwarded — no callers use them in this codebase.
+    return new LoggerProxy(this.service, { ...this.bindings, ...bindings });
+  }
+}
+
+/**
+ * Singleton service that manages the pino logger lifecycle.
+ *
+ * Five transports are supported:
  *  - Console
  *  - File
  *  - SQLite
  *  - Loki
- * @class LoggerService
+ *  - Syslog (RFC 5424 over UDP/TCP via pino-syslog + pino-socket)
+ *
+ * All ILogger instances returned by createChildLogger() are LoggerProxy objects
+ * that automatically reconnect to the new pino root after a restart.
  */
 class LoggerService {
-  logger: ILogger | null = null;
+  private static instance: LoggerService | null = null;
+
+  private _folder = '';
+  private _rawLogger: pino.Logger | null = null;
+  private _transport: ReturnType<typeof pino.transport> | null = null;
+  private _stopInFlight: Promise<void> | null = null;
   fileCleanUpService: FileCleanupService | null = null;
 
-  constructor(private readonly folder: string) {}
+  // Stable proxy for the default 'internal' scope. Non-null from construction;
+  // drops logs silently until start() is called.
+  readonly logger: ILogger;
+
+  constructor() {
+    this.logger = new LoggerProxy(this, { scopeType: 'internal' });
+  }
+
+  static getInstance(): LoggerService {
+    if (!this.instance) {
+      this.instance = new LoggerService();
+    }
+    return this.instance;
+  }
+
+  /** Called once at application startup to set the log folder before start(). */
+  init(folder: string): void {
+    this._folder = folder;
+  }
+
+  /** The bare pino root instance. Read by LoggerProxy to (re-)create child loggers. */
+  get rootLogger(): ILogger | null {
+    return this._rawLogger;
+  }
 
   /**
-   * Run the appropriate pino log transports according to the configuration
+   * Run the appropriate pino log transports according to the configuration.
+   * May be called multiple times (e.g. on settings change); callers must
+   * await stop() before calling start() again to avoid duplicate transport workers.
    */
   async start(engineSettings: EngineSettings, registration: OIAnalyticsRegistration | null): Promise<void> {
     const targets = [];
@@ -82,7 +171,7 @@ class LoggerService {
     targets.push({
       target: 'pino-roll',
       options: {
-        file: path.resolve(this.folder, LOG_FILE_NAME),
+        file: path.resolve(this._folder, LOG_FILE_NAME),
         size: engineSettings.logParameters.file.maxFileSize
       },
       level: engineSettings.logParameters.file.level
@@ -92,38 +181,11 @@ class LoggerService {
       targets.push({
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
-          filename: path.resolve(this.folder, LOG_DB_NAME),
+          filename: path.resolve(this._folder, LOG_DB_NAME),
           maxNumberOfLogs: engineSettings.logParameters.database.maxNumberOfLogs
         },
         level: engineSettings.logParameters.database.level
       });
-    }
-
-    if (engineSettings.logParameters.loki.address && engineSettings.logParameters.loki.level !== 'silent') {
-      try {
-        targets.push({
-          target: 'pino-loki',
-          options: {
-            batching: {
-              interval: engineSettings.logParameters.loki.interval,
-              maxBufferSize: 50000
-            },
-            host: engineSettings.logParameters.loki.address,
-            basicAuth: {
-              username: engineSettings.logParameters.loki.username,
-              password: engineSettings.logParameters.loki.password
-                ? await encryptionService.decryptText(engineSettings.logParameters.loki.password)
-                : ''
-            },
-            labels: { name: engineSettings.name }
-          },
-          level: engineSettings.logParameters.loki.level
-        });
-      } catch (error) {
-        // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
-        // logged in the console and loki won't be activated
-        console.error(error);
-      }
     }
 
     if (registration && registration.status === 'REGISTERED' && engineSettings.logParameters.oia.level !== 'silent') {
@@ -139,19 +201,59 @@ class LoggerService {
       });
     }
 
-    this.logger = pino({
-      base: undefined,
-      // Most-verbose level across enabled transports. Cheap calls above this
-      // level are short-circuited inside pino. See computeParentLevel jsdoc.
-      level: computeParentLevel(targets),
-      timestamp: pino.stdTimeFunctions.isoTime,
-      transport: { targets }
-    }).child({ scopeType: 'internal' });
+    if (engineSettings.logParameters.syslog.host && engineSettings.logParameters.syslog.level !== 'silent') {
+      targets.push({
+        target: path.join(__dirname, 'syslog-transport.js'),
+        options: {
+          host: engineSettings.logParameters.syslog.host,
+          port: engineSettings.logParameters.syslog.port,
+          protocol: engineSettings.logParameters.syslog.protocol,
+          appName: engineSettings.name
+        },
+        level: engineSettings.logParameters.syslog.level
+      });
+    }
+
+    if (engineSettings.logParameters.loki.address && engineSettings.logParameters.loki.level !== 'silent') {
+      try {
+        const lokiPassword = engineSettings.logParameters.loki.password
+          ? await encryptionService.decryptText(engineSettings.logParameters.loki.password)
+          : '';
+        targets.push({
+          target: 'pino-loki',
+          options: {
+            batching: { interval: engineSettings.logParameters.loki.interval, maxBufferSize: 50000 },
+            host: engineSettings.logParameters.loki.address,
+            basicAuth: { username: engineSettings.logParameters.loki.username, password: lokiPassword },
+            labels: { name: engineSettings.name }
+          },
+          level: engineSettings.logParameters.loki.level
+        });
+      } catch (error) {
+        // In case of bad decryption, an error is triggered, so instead of leaving the process, the error will just be
+        // logged in the console and loki won't be activated
+        console.error(error);
+      }
+    }
+
+    // Separate transport reference so stop() can flush and end the workers cleanly.
+    const transport = pino.transport({ targets });
+    this._transport = transport;
+    this._rawLogger = pino(
+      {
+        base: undefined,
+        // Most-verbose level across enabled transports. Cheap calls above this
+        // level are short-circuited inside pino. See computeParentLevel jsdoc.
+        level: computeParentLevel(targets),
+        timestamp: pino.stdTimeFunctions.isoTime
+      },
+      transport
+    );
 
     this.redirectNodeOpcuaLogs();
 
     this.fileCleanUpService = new FileCleanupService(
-      this.folder,
+      this._folder,
       this.logger,
       LOG_FILE_NAME,
       engineSettings.logParameters.file.numberOfFiles
@@ -161,9 +263,11 @@ class LoggerService {
 
   /**
    * Create a child logger from the main logger already set up, with the appropriate scope (South, North, Engine...)
+   *
+   * Returns a LoggerProxy that auto-updates when the logger is restarted.
    */
   createChildLogger(scopeType: ScopeType, scopeId?: string, scopeName?: string): ILogger {
-    return this.logger!.child({ scopeType, scopeId, scopeName });
+    return new LoggerProxy(this, { scopeType, scopeId, scopeName });
   }
 
   /**
@@ -175,7 +279,7 @@ class LoggerService {
   private redirectNodeOpcuaLogs(): void {
     // scopeType stays 'internal' (matches the existing ScopeType union) and the
     // 'node-opcua' marker lives in scopeName so downstream filters can pick it out.
-    const opcuaLogger = this.logger!.child({ scopeName: 'node-opcua' });
+    const opcuaLogger = this.logger.child({ scopeName: 'node-opcua' });
     // node-opcua passes printf-style arguments — util.format mirrors what console.* does.
     setDebugLogger((...args: Array<unknown>) => opcuaLogger.trace(util.format(...args)));
     setTraceLogger((...args: Array<unknown>) => opcuaLogger.trace(util.format(...args)));
@@ -187,13 +291,33 @@ class LoggerService {
   }
 
   /**
-   * Stop the logger and associated services
+   * Flush pending log entries and end the transport worker threads, then release
+   * all references so the old pino instance can be garbage-collected.
+   *
+   * Safe to call concurrently — a second call while a stop is in flight returns
+   * the same promise rather than ending the transport twice.
    */
-  stop(): void {
-    if (this.fileCleanUpService) {
-      this.fileCleanUpService.stop();
+  stop(): Promise<void> {
+    if (this._stopInFlight) return this._stopInFlight;
+    this._stopInFlight = this._doStop().finally(() => {
+      this._stopInFlight = null;
+    });
+    return this._stopInFlight;
+  }
+
+  private async _doStop(): Promise<void> {
+    this.fileCleanUpService?.stop();
+    this.fileCleanUpService = null;
+    if (this._transport) {
+      await new Promise<void>(resolve => {
+        this._transport!.flush(_err => resolve());
+      });
+      this._transport.end();
     }
+    this._rawLogger = null;
+    this._transport = null;
   }
 }
 
+export const loggerService = LoggerService.getInstance();
 export default LoggerService;

@@ -20,7 +20,6 @@ import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-c
 import { loadOdbc } from './odbc-loader';
 import { HTTPRequest, ReqOptions } from '../../service/http-request.utils';
 import { encryptionService } from '../../service/encryption.service';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
@@ -38,10 +37,9 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
   }
 
   override async connect(): Promise<void> {

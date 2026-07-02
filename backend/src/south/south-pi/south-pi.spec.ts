@@ -47,6 +47,11 @@ describe('South PI', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthPi = reloadModule<{ default: typeof SouthPiClass }>(nodeRequire, './south-pi').default;
   });
 
@@ -72,7 +77,8 @@ describe('South PI', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -88,7 +94,8 @@ describe('South PI', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 0,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -106,7 +113,7 @@ describe('South PI', () => {
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL | string, _options?: unknown) => createMockResponse(200));
     addContentCallback.mock.resetCalls();
     mock.timers.enable({ apis: ['Date', 'setTimeout'], now: new Date(testData.constants.dates.FAKE_NOW) });
-    south = new SouthPi(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthPi(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {

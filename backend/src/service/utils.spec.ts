@@ -114,48 +114,60 @@ describe('Service utils', () => {
   describe('generateIntervals', () => {
     it('should return only one interval', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 3600);
+      const intervals = utils.generateIntervals(startTime, endTime, 3600);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
 
     it('should return only one interval when max number of seconds is 0', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 0);
+      const intervals = utils.generateIntervals(startTime, endTime, 0);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
     });
 
-    it('should return two intervals', () => {
-      const startTime1 = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T01:30:00.000Z';
-      const endTime1 = '2020-01-01T01:00:00.000Z';
-      const endTime2 = '2020-01-01T02:00:00.000Z';
-      const startTime3 = '2020-01-01T02:00:00.000Z';
-      const endTime3 = '2020-01-01T02:50:00.000Z';
+    it('should return three intervals', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const chunk1End = '2020-01-01T01:00:00.000Z';
+      const chunk2End = '2020-01-01T02:00:00.000Z';
+      const endTime = '2020-01-01T02:50:00.000Z';
       const expectedIntervals = [
-        { start: startTime1, end: endTime1 },
-        { start: startTimeFromCache, end: endTime2 },
-        { start: startTime3, end: endTime3 }
+        { start: startTime, end: chunk1End },
+        { start: chunk1End, end: chunk2End },
+        { start: chunk2End, end: endTime }
       ];
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime1, startTimeFromCache, endTime3, 3600);
+      const intervals = utils.generateIntervals(startTime, endTime, 3600);
       assert.deepStrictEqual(intervals, expectedIntervals);
-      assert.deepStrictEqual(numberOfIntervalsDone, 1);
     });
 
     it('should return single interval when maxNumberOfSecondsInInterval is 0', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
-      const startTimeFromCache = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-02T00:00:00.000Z';
-      const { intervals, numberOfIntervalsDone } = utils.generateIntervals(startTime, startTimeFromCache, endTime, 0);
-      assert.deepStrictEqual(intervals, [{ start: startTimeFromCache, end: endTime }]);
-      assert.deepStrictEqual(numberOfIntervalsDone, 0);
+      const intervals = utils.generateIntervals(startTime, endTime, 0);
+      assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
+    });
+
+    it('should reverse intervals for newest strategy', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const chunk1End = '2020-01-01T01:00:00.000Z';
+      const chunk2End = '2020-01-01T02:00:00.000Z';
+      const endTime = '2020-01-01T02:50:00.000Z';
+      const expectedIntervals = [
+        { start: chunk2End, end: endTime },
+        { start: chunk1End, end: chunk2End },
+        { start: startTime, end: chunk1End }
+      ];
+      const intervals = utils.generateIntervals(startTime, endTime, 3600, 'newest');
+      assert.deepStrictEqual(intervals, expectedIntervals);
+    });
+
+    it('should return the single interval unchanged for newest strategy', () => {
+      const startTime = '2020-01-01T00:00:00.000Z';
+      const endTime = '2020-01-01T01:00:00.000Z';
+      const intervals = utils.generateIntervals(startTime, endTime, 3600, 'newest');
+      assert.deepStrictEqual(intervals, [{ start: startTime, end: endTime }]);
     });
   });
 
@@ -1480,7 +1492,8 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
       const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1500,7 +1513,8 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
       const result = utils.itemToFlattenedCSV([baseItem], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1533,18 +1547,20 @@ describe('Service utils', () => {
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0,
+        startTimeOffset: 0,
+        endTimeOffset: null,
         settings: { address: '40001' }
       } as unknown as SouthConnectorItemDTO;
       const itemWithNulls = {
         ...baseItem,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         group: {
           id: 'g1',
           standardSettings: { name: 'Group A', scanMode: { id: 'sm1', name: 'Every 10s', cron: '' } },
-          historySettings: { maxReadInterval: 9999, readDelay: 500, overlap: 10 }
+          historySettings: { maxReadInterval: 9999, readDelay: 500, startTimeOffset: 10, endTimeOffset: null }
         }
       } as unknown as SouthConnectorItemDTO;
       utils.itemToFlattenedCSV([itemWithNulls], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1917,7 +1933,8 @@ describe('Service utils', () => {
       name: 'Group 1',
       southId: 'south1',
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',
@@ -1969,6 +1986,80 @@ describe('Service utils', () => {
       const result = utils.groupItemsByGroup('opcua', [grouped1, ungrouped, grouped2]);
       // grouped1 and grouped2 share group g1; ungrouped is always a singleton
       assert.deepStrictEqual(result, [[grouped1, grouped2], [ungrouped]]);
+    });
+  });
+
+  describe('readInitConfig', () => {
+    const envVarsToClean = [
+      'ENGINE_NAME',
+      'ADMIN_USERNAME',
+      'ADMIN_PASSWORD',
+      'DEFAULT_PORT',
+      'ADMIN_USERNAME_FILE',
+      'ADMIN_PASSWORD_FILE'
+    ];
+
+    afterEach(() => {
+      mock.restoreAll();
+      for (const key of envVarsToClean) {
+        delete process.env[key];
+      }
+    });
+
+    it('should read credentials and port from a valid init file', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{"engineName":"MyOIBus","adminUsername":"alice","adminPassword":"s3cr3t","port":3000}');
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'alice', adminPassword: 's3cr3t', port: 3000 });
+    });
+
+    it('should fall back to env vars when init file does not exist', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      process.env.ENGINE_NAME = 'MyOIBus';
+      process.env.ADMIN_USERNAME = 'bob';
+      process.env.ADMIN_PASSWORD = 'secret';
+      process.env.DEFAULT_PORT = '4000';
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { engineName: 'MyOIBus', adminUsername: 'bob', adminPassword: 'secret', port: 4000 });
+    });
+
+    it('should fall back to env vars when init file is malformed JSON', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{invalid json}');
+      process.env.ADMIN_USERNAME = 'charlie';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.adminUsername, 'charlie');
+    });
+
+    it('should return undefined port when DEFAULT_PORT is not a valid number', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      process.env.DEFAULT_PORT = 'abc';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.port, undefined);
+    });
+
+    it('should read credentials from Docker secret files when _FILE env vars are set', () => {
+      mock.method(fsSync, 'existsSync', () => false);
+      mock.method(fsSync, 'readFileSync', (filePath: string) => {
+        if (filePath === '/run/secrets/admin_pass') return 'dockersecret\n';
+        throw new Error(`unexpected path: ${filePath}`);
+      });
+      process.env.ADMIN_PASSWORD_FILE = '/run/secrets/admin_pass';
+
+      const result = utils.readInitConfig();
+      assert.strictEqual(result.adminPassword, 'dockersecret');
+    });
+
+    it('should ignore fields with wrong types in the init file', () => {
+      mock.method(fsSync, 'existsSync', () => true);
+      mock.method(fsSync, 'readFileSync', () => '{"engineName":99,"adminUsername":123,"adminPassword":null,"port":"not-a-number"}');
+
+      const result = utils.readInitConfig();
+      assert.deepStrictEqual(result, { engineName: undefined, adminUsername: undefined, adminPassword: undefined, port: undefined });
     });
   });
 });

@@ -10,6 +10,8 @@ import {
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
   SouthFTPSettings,
+  SouthInfluxDBItemSettings,
+  SouthInfluxDBSettings,
   SouthItemSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
@@ -60,6 +62,7 @@ import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
 import SouthRest from '../south/south-rest/south-rest';
 import SouthSFTP from '../south/south-sftp/south-sftp';
 import SouthFTP from '../south/south-ftp/south-ftp';
+import SouthInfluxDB from '../south/south-influxdb/south-influxdb';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthConnector from './south-connector';
 import { Instant } from '../model/types';
@@ -67,8 +70,6 @@ import { createFolder } from '../service/utils';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { OIBusSouthType } from '../../shared/model/south-connector.model';
-import type { ILogger } from '../model/logger.model';
-
 export const buildSouth = (
   settings: SouthConnectorEntity<SouthSettings, SouthItemSettings>,
   addContent: (
@@ -77,7 +78,6 @@ export const buildSouth = (
     queryTime: Instant,
     items: Array<SouthConnectorItemEntity<SouthItemSettings>>
   ) => Promise<void>,
-  logger: ILogger,
   southCacheFolder: string,
   southCacheRepository: SouthCacheRepository,
   certificateRepository: CertificateRepository,
@@ -89,7 +89,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthADSSettings, SouthADSItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'folder-scanner':
@@ -97,7 +96,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'modbus':
@@ -105,7 +103,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthModbusSettings, SouthModbusItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'mqtt':
@@ -113,7 +110,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthMQTTSettings, SouthMQTTItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'mssql':
@@ -121,7 +117,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'mysql':
@@ -129,7 +124,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthMySQLSettings, SouthMySQLItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'odbc':
@@ -137,7 +131,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthODBCSettings, SouthODBCItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'oianalytics':
@@ -145,7 +138,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder,
         certificateRepository,
         oIAnalyticsRegistrationRepository
@@ -155,7 +147,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthOLEDBSettings, SouthOLEDBItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'opc':
@@ -163,7 +154,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthOPCSettings, SouthOPCItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'opcua':
@@ -171,7 +161,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'oracle':
@@ -179,7 +168,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'osisoft-pi':
@@ -187,7 +175,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthPISettings, SouthPIItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'postgresql':
@@ -195,7 +182,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'rest':
@@ -203,7 +189,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthRestSettings, SouthRestItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'sftp':
@@ -211,7 +196,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthSFTPSettings, SouthSFTPItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     case 'ftp':
@@ -219,7 +203,13 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthFTPSettings, SouthFTPItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
+        southCacheFolder
+      );
+    case 'influxdb':
+      return new SouthInfluxDB(
+        settings as SouthConnectorEntity<SouthInfluxDBSettings, SouthInfluxDBItemSettings>,
+        addContent,
+        southCacheRepository,
         southCacheFolder
       );
     case 'sqlite':
@@ -227,7 +217,6 @@ export const buildSouth = (
         settings as SouthConnectorEntity<SouthSQLiteSettings, SouthSQLiteItemSettings>,
         addContent,
         southCacheRepository,
-        logger,
         southCacheFolder
       );
     default:

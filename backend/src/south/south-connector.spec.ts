@@ -35,7 +35,6 @@ describe('SouthConnector', () => {
   let southCacheService: SouthCacheServiceMock;
 
   const logger = new PinoLogger();
-  const anotherLogger = new PinoLogger();
   const addContentCallback = mock.fn(
     async (_southId: string, _data: OIBusContent, _queryTime: Instant, _items: Array<SouthConnectorItemEntity<SouthItemSettings>>) =>
       undefined
@@ -51,10 +50,10 @@ describe('SouthConnector', () => {
 
   const utilsExports = {
     delay: mock.fn(async () => undefined),
-    generateIntervals: mock.fn((_startTime: unknown, _startTimeFromCache: unknown, _endTime: unknown, _maxReadInterval?: unknown) => ({
-      intervals: [] as Array<{ start: string; end: string }>,
-      numberOfIntervalsDone: 0
-    })),
+    generateIntervals: mock.fn(
+      (_startTime: unknown, _endTime: unknown, _maxReadInterval?: unknown, _strategy?: unknown) =>
+        [] as Array<{ start: string; end: string }>
+    ),
     groupItemsByGroup: mock.fn((_type: unknown, items: Array<unknown>) => [items]),
     validateCronExpression: mock.fn(() => ({ expression: '' })),
     checkAge: mock.fn(() => true),
@@ -104,6 +103,11 @@ describe('SouthConnector', () => {
       ...nodeOpcuaMock
     });
     mockModule(nodeRequire, '../service/utils-opcua', utilsOpcuaExports);
+    mockModule(nodeRequire, '../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthFolderScanner = reloadModule<{ default: typeof SouthFolderScannerClass }>(
       nodeRequire,
       './south-folder-scanner/south-folder-scanner'
@@ -127,7 +131,7 @@ describe('SouthConnector', () => {
       });
       utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
       utilsExports.validateCronExpression = mock.fn(() => ({ expression: '' }));
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => []);
 
       southCacheService.getSouthCache = mock.fn(() => ({
         southId: testData.south.list[0].id,
@@ -141,7 +145,7 @@ describe('SouthConnector', () => {
         SouthFolderScannerSettings,
         SouthFolderScannerItemSettings
       >;
-      south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthFolderScanner(config, addContentCallback, southCacheRepository, 'cacheFolder');
       await south.start();
     });
 
@@ -292,9 +296,11 @@ describe('SouthConnector', () => {
         id: 'groupId1',
         name: 'group1',
         scanMode: groupScanMode,
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -319,13 +325,11 @@ describe('SouthConnector', () => {
       assert.ok(!south['cronByScanModeIds'].has(itemScanMode.id!));
     });
 
-    it('should use another logger', async () => {
+    it('should refresh logger on refreshLogger()', async () => {
       (logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.resetCalls();
-      south.setLogger(anotherLogger);
+      south.refreshLogger();
       await south.stop();
-      assert.strictEqual((anotherLogger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
-      assert.strictEqual((logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
-      south.hasSubscription();
+      assert.strictEqual((logger.info as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
     });
 
     it('should reset cache', async () => {
@@ -426,7 +430,7 @@ describe('SouthConnector', () => {
 
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error when querying items with direct access: file query error`
+          (c: { arguments: Array<unknown> }) => c.arguments[1] === `Error when querying items with direct access: file query error`
         )
       );
     });
@@ -457,7 +461,7 @@ describe('SouthConnector', () => {
         testData.south.list[1] as SouthConnectorEntity<SouthMSSQLSettings, SouthMSSQLItemSettings>,
         addContentCallback,
         southCacheRepository,
-        logger,
+
         'cacheFolder'
       );
       await south.start();
@@ -487,7 +491,7 @@ describe('SouthConnector', () => {
 
     it('should call historyQuery once per item for single-item connectors', async () => {
       const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => [interval]);
 
       const historyQueryMock = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
       south.historyQuery = historyQueryMock;
@@ -505,7 +509,7 @@ describe('SouthConnector', () => {
 
     it('should use independent cache entries per item for single-item connectors', async () => {
       const interval = { start: '2020-02-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [interval], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => [interval]);
       south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
 
       const items = testData.south.list[1].items as Array<SouthConnectorItemEntity<SouthMSSQLItemSettings>>;
@@ -523,6 +527,45 @@ describe('SouthConnector', () => {
       assert.strictEqual(saveCalls[0].arguments[1].itemId, items[0].id);
       assert.strictEqual(saveCalls[1].arguments[1].itemId, items[1].id);
     });
+
+    it('should defer cache update to end of run with newest recovery strategy', async () => {
+      const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
+      const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      const endTime = '2021-02-02T02:02:02.222Z';
+      utilsExports.generateIntervals = mock.fn(() => [interval1, interval2]);
+      south.historyQuery = mock.fn(async () => ({ trackedInstant: '2021-02-02T02:02:02.222Z', value: null }));
+
+      const items = [{ ...testData.south.list[1].items[0], recoveryStrategy: 'newest' }] as Array<
+        SouthConnectorItemEntity<SouthMSSQLItemSettings>
+      >;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', endTime);
+
+      const saveCalls = (southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      // Must be called exactly once (at end, not per interval)
+      assert.strictEqual(saveCalls.length, 1);
+      assert.strictEqual(saveCalls[0].arguments[1].trackedInstant, endTime);
+    });
+
+    it('should not save trackedInstant when stopped mid newest run', async () => {
+      const interval1 = { start: '2020-02-02T02:02:02.222Z', end: '2020-06-02T02:02:02.222Z' };
+      const interval2 = { start: '2020-06-02T02:02:02.222Z', end: '2021-02-02T02:02:02.222Z' };
+      utilsExports.generateIntervals = mock.fn(() => [interval1, interval2]);
+      south.historyQuery = mock.fn(async () => {
+        // Simulate a stop being requested mid-run
+        (south as unknown as { stopping: boolean }).stopping = true;
+        return { trackedInstant: '2021-02-02T02:02:02.222Z', value: null };
+      });
+
+      const items = [{ ...testData.south.list[1].items[0], recoveryStrategy: 'newest' }] as Array<
+        SouthConnectorItemEntity<SouthMSSQLItemSettings>
+      >;
+      await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2021-02-02T02:02:02.222Z');
+
+      const saveCalls = (southCacheService.saveItemLastValue as Mock<(...args: Array<unknown>) => unknown>).mock.calls;
+      assert.strictEqual(saveCalls.length, 0);
+      // Reset stopping flag for subsequent tests
+      (south as unknown as { stopping: boolean }).stopping = false;
+    });
   });
 
   describe('SouthConnector with history and subscription', () => {
@@ -538,7 +581,7 @@ describe('SouthConnector', () => {
         return cronMockInstance;
       });
       utilsExports.groupItemsByGroup = mock.fn((_type: unknown, items: Array<unknown>) => [items]);
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => []);
       southCacheService.getSouthCache = mock.fn(() => ({
         scanModeId: testData.scanMode.list[0].id,
         maxInstant: testData.constants.dates.FAKE_NOW,
@@ -551,7 +594,7 @@ describe('SouthConnector', () => {
         testData.south.list[2] as SouthConnectorEntity<SouthOPCUASettings, SouthOPCUAItemSettings>,
         addContentCallback,
         southCacheRepository,
-        logger,
+
         'cacheFolder'
       );
 
@@ -598,12 +641,12 @@ describe('SouthConnector', () => {
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
           (c: { arguments: Array<unknown> }) =>
-            c.arguments[0] === `Error when querying items with history capabilities: history query error`
+            c.arguments[1] === `Error when querying items with history capabilities: history query error`
         )
       );
       assert.ok(
         (logger.error as Mock<(...args: Array<unknown>) => unknown>).mock.calls.some(
-          (c: { arguments: Array<unknown> }) => c.arguments[0] === `Error when querying items with direct access: last point query error`
+          (c: { arguments: Array<unknown> }) => c.arguments[1] === `Error when querying items with direct access: last point query error`
         )
       );
 
@@ -766,14 +809,7 @@ describe('SouthConnector', () => {
         { start: '2021-02-02T02:02:02.222Z', end: '2022-02-02T02:02:02.222Z' },
         { start: '2022-02-02T02:02:02.222Z', end: '2023-02-02T02:02:02.222Z' }
       ];
-      let generateIntervalsCallCount = 0;
-      utilsExports.generateIntervals = mock.fn(
-        (_startTime: unknown, _startTimeFromCache: unknown, _endTime: unknown, _maxReadInterval?: unknown) => {
-          generateIntervalsCallCount++;
-          if (generateIntervalsCallCount === 1) return { intervals, numberOfIntervalsDone: 0 };
-          return { intervals: [], numberOfIntervalsDone: 0 };
-        }
-      );
+      utilsExports.generateIntervals = mock.fn(() => intervals);
 
       const historyQueryMock = mock.fn(
         () =>
@@ -818,7 +854,9 @@ describe('SouthConnector', () => {
         scanMode: testData.scanMode.list[0],
         maxReadInterval: 1800,
         readDelay: 100,
-        overlap: 50,
+        startTimeOffset: 50,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -832,14 +870,16 @@ describe('SouthConnector', () => {
         }
       ];
 
-      utilsExports.generateIntervals = mock.fn(() => ({ intervals: [], numberOfIntervalsDone: 0 }));
+      utilsExports.generateIntervals = mock.fn(() => []);
 
       await south.historyQueryHandler(itemsWithGroup, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z');
 
       assert.strictEqual(utilsExports.generateIntervals.mock.calls.length, 1);
-      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[0], '2020-02-02T02:02:02.222Z');
-      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[2], '2023-02-02T02:02:02.222Z');
-      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[3], 1800);
+      // startTime (2020-02-02T02:02:02.222Z) + group.startTimeOffset (50ms)
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[0], '2020-02-02T02:02:02.272Z');
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[1], '2023-02-02T02:02:02.222Z');
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[2], 1800);
+      assert.strictEqual(utilsExports.generateIntervals.mock.calls[0].arguments[3], 'oldest');
     });
 
     it('should update subscriptions', async () => {
@@ -882,7 +922,9 @@ describe('SouthConnector', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
+          recoveryStrategy: null,
           scanMode: {
             id: 'subscription',
             name: 'subscription',
@@ -909,7 +951,9 @@ describe('SouthConnector', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
+          recoveryStrategy: null,
           scanMode: {
             id: 'subscription',
             name: 'subscription',

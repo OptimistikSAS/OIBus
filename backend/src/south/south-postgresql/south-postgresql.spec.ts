@@ -93,6 +93,11 @@ describe('SouthPostgreSQL', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthPostgreSQL = reloadModule<{ default: typeof SouthPostgreSQLClass }>(nodeRequire, './south-postgresql').default;
   });
 
@@ -178,7 +183,8 @@ describe('SouthPostgreSQL', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -205,7 +211,8 @@ describe('SouthPostgreSQL', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -249,7 +256,8 @@ describe('SouthPostgreSQL', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -263,7 +271,7 @@ describe('SouthPostgreSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -504,7 +512,8 @@ describe('SouthPostgreSQL', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -531,7 +540,8 @@ describe('SouthPostgreSQL', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -575,7 +585,8 @@ describe('SouthPostgreSQL', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -589,7 +600,7 @@ describe('SouthPostgreSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should manage connection error', async () => {
@@ -632,7 +643,7 @@ describe('SouthPostgreSQL', () => {
     };
 
     beforeEach(() => {
-      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthPostgreSQL(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {

@@ -80,6 +80,42 @@
                           }
                         </div>
                       </div>
+                      <label for="item-ids" class="col-auto col-form-label" translate="logs.search.item"></label>
+                      <div class="col-2">
+                        <input
+                          id="item-ids"
+                          class="form-control"
+                          formControlName="itemIds"
+                          [ngbTypeahead]="itemTypeahead"
+                          [resultFormatter]="itemFormatter"
+                          [inputFormatter]="itemFormatter"
+                          [editable]="false"
+                          (selectItem)="selectItem($event)"
+                        />
+                        <div [style.margin-top.rem]="selectedItems().length ? -0.75 : 0">
+                          @for (item of selectedItems(); track item.itemId) {
+                            <oib-pill type="secondary" [removable]="true" (removed)="removeItem(item)"> {{ item.itemName }} </oib-pill>
+                          }
+                        </div>
+                      </div>
+                      <label for="group-ids" class="col-auto col-form-label" translate="logs.search.group"></label>
+                      <div class="col-2">
+                        <input
+                          id="group-ids"
+                          class="form-control"
+                          formControlName="groupIds"
+                          [ngbTypeahead]="groupTypeahead"
+                          [resultFormatter]="groupFormatter"
+                          [inputFormatter]="groupFormatter"
+                          [editable]="false"
+                          (selectItem)="selectGroup($event)"
+                        />
+                        <div [style.margin-top.rem]="selectedGroups().length ? -0.75 : 0">
+                          @for (group of selectedGroups(); track group.groupId) {
+                            <oib-pill type="secondary" [removable]="true" (removed)="removeGroup(group)"> {{ group.groupName }} </oib-pill>
+                          }
+                        </div>
+                      </div>
                     } @else {
                       <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
                       <div class="col-2">
@@ -151,6 +187,8 @@
                   <th translate="logs.scope-type" style="width: 8%"></th>
                   <th translate="logs.scope" style="width: 4%"></th>
                 }
+                <th translate="logs.item" style="width: 8%"></th>
+                <th translate="logs.group" style="width: 8%"></th>
                 <th [class.w-50]="scopeId() && scopeType()" translate="logs.message"></th>
               </tr>
             </thead>
@@ -163,8 +201,16 @@
                   <td class="text-nowrap">{{ log.timestamp | datetime: 'mediumWithSeconds' }}</td>
                   @if (!scopeId() && !scopeType()) {
                     <td>{{ log.scopeType | scopeTypesEnum }}</td>
-                    <td>{{ log.scopeName }}</td>
+                    <td>
+                      @if (log.scopeType === 'internal' && log.scopeId) {
+                        {{ 'enums.internal-scope-ids.' + log.scopeId | translate }}
+                      } @else {
+                        {{ log.scopeName }}
+                      }
+                    </td>
                   }
+                  <td>{{ log.itemName }}</td>
+                  <td>{{ log.groupName }}</td>
                   <td class="text-break">{{ log.message }}</td>
                 </tr>
               }

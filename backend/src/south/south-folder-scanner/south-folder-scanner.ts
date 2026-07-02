@@ -1,7 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { execFile as execFileCb } from 'node:child_process';
+import { promisify } from 'node:util';
 
 import SouthConnector from '../south-connector';
+import { encryptionService } from '../../service/encryption.service';
+
+const execFile = promisify(execFileCb);
 import { checkAge, compress } from '../../service/utils';
 import { SouthDirectQuery } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
@@ -12,7 +17,6 @@ import SouthCacheRepository from '../../repository/cache/south-cache.repository'
 import { Instant, OIBusTestingError } from '../../model/types';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Stats } from 'node:fs';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class SouthFolderScanner - Retrieve files from a local or remote folder
@@ -30,13 +34,59 @@ export default class SouthFolderScanner
       items: Array<SouthConnectorItemEntity<SouthItemSettings>>
     ) => Promise<void>,
     southCacheRepository: SouthCacheRepository,
-    logger: ILogger,
     cacheFolderPath: string
   ) {
-    super(connector, engineAddContentCallback, southCacheRepository, logger, cacheFolderPath);
+    super(connector, engineAddContentCallback, southCacheRepository, cacheFolderPath);
+  }
+
+  override async connect(): Promise<void> {
+    await this.mountNetworkShare(this.connector.settings.inputFolder);
+    return super.connect();
+  }
+
+  override async disconnect(): Promise<void> {
+    await this.unmountNetworkShare(this.connector.settings.inputFolder);
+    return super.disconnect();
+  }
+
+  private async mountNetworkShare(folderPath: string): Promise<void> {
+    if (process.platform !== 'win32') {
+      if (this.connector.settings.username) this.logger.trace('Skipping SMB credential store: not running on Windows');
+      return;
+    }
+    if (!this.connector.settings.username) return;
+    const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
+    if (!serverRoot) return;
+    const user = this.connector.settings.domain
+      ? `${this.connector.settings.domain}\\${this.connector.settings.username}`
+      : this.connector.settings.username;
+    try {
+      const password = this.connector.settings.password ? await encryptionService.decryptText(this.connector.settings.password) : '';
+      await execFile('cmdkey', [`/add:${serverRoot}`, `/user:${user}`, `/pass:${password}`]);
+      this.logger.debug(`Stored SMB credentials for ${serverRoot} as ${user}`);
+    } catch (error: unknown) {
+      this.logger.error(`Failed to store SMB credentials for ${serverRoot}: ${(error as Error).message}`);
+      throw error;
+    }
+  }
+
+  private async unmountNetworkShare(folderPath: string): Promise<void> {
+    if (process.platform !== 'win32') {
+      if (this.connector.settings.username) this.logger.trace('Skipping SMB credential removal: not running on Windows');
+      return;
+    }
+    if (!this.connector.settings.username) return;
+    const serverRoot = folderPath.match(/^(\\\\[^\\]+)/)?.[1];
+    if (!serverRoot) return;
+    try {
+      await execFile('cmdkey', [`/delete:${serverRoot}`]);
+    } catch {
+      // Ignore — credentials may have already been removed
+    }
   }
 
   override async testConnection(): Promise<OIBusConnectionTestResult> {
+    await this.mountNetworkShare(this.connector.settings.inputFolder);
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     try {

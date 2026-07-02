@@ -78,6 +78,11 @@ describe('NorthREST', () => {
         return cacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     NorthREST = reloadModule<{ default: typeof NorthRESTClass }>(nodeRequire, './north-rest').default;
   });
 
@@ -121,7 +126,7 @@ describe('NorthREST', () => {
       }
     });
 
-    north = new NorthREST(configuration, logger, cacheService);
+    north = new NorthREST(configuration, cacheService);
   });
 
   afterEach(() => {
@@ -178,7 +183,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, logger, cacheService);
+    north = new NorthREST(configuration, cacheService);
 
     await north.testConnection();
 
@@ -201,7 +206,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, logger, cacheService);
+    north = new NorthREST(configuration, cacheService);
 
     await north.testConnection();
 
@@ -224,7 +229,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, logger, cacheService);
+    north = new NorthREST(configuration, cacheService);
 
     await north.testConnection();
 
@@ -247,7 +252,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, logger, cacheService);
+    north = new NorthREST(configuration, cacheService);
 
     await north.testConnection();
 
@@ -270,7 +275,7 @@ describe('NorthREST', () => {
       sendAs: 'file',
       test: { testEndpoint: '/health', testMethod: 'GET', testSuccessCode: 200 }
     });
-    north = new NorthREST(configuration, logger, cacheService);
+    north = new NorthREST(configuration, cacheService);
 
     httpRequestMock.mock.mockImplementationOnce(async (_url: URL, _options: ReqOptions) => createMockResponse(201, 'Created'));
 

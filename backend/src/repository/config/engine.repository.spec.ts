@@ -44,6 +44,35 @@ describe('EngineRepository with populated database', () => {
       });
     });
 
+    it('should update name only', () => {
+      repository.updateName('my new name', testData.users.list[0].id);
+      assert.strictEqual(repository.get()!.name, 'my new name');
+    });
+
+    it('should update web server port only', () => {
+      repository.updateWebServer(testData.engine.webServerCommand, testData.users.list[0].id);
+      assert.strictEqual(repository.get()!.port, testData.engine.webServerCommand.port);
+    });
+
+    it('should update proxy settings with proxy disabled', () => {
+      repository.updateProxy({ proxyEnabled: false, proxyPort: null }, testData.users.list[0].id);
+      const result = repository.get()!;
+      assert.strictEqual(result.proxyEnabled, false);
+      assert.strictEqual(result.proxyPort, null);
+    });
+
+    it('should update proxy settings with proxy enabled', () => {
+      repository.updateProxy({ proxyEnabled: true, proxyPort: 8080 }, testData.users.list[0].id);
+      const result = repository.get()!;
+      assert.strictEqual(result.proxyEnabled, true);
+      assert.strictEqual(result.proxyPort, 8080);
+    });
+
+    it('should update logger settings only', () => {
+      repository.updateLogger(testData.engine.loggerCommand, testData.users.list[0].id);
+      assert.deepStrictEqual(repository.get()!.logParameters, testData.engine.loggerCommand);
+    });
+
     it('should update version', () => {
       repository.updateVersion('9.9.99', '9.9.99');
       assert.strictEqual(repository.get()!.version, '9.9.99');
@@ -62,7 +91,7 @@ describe('EngineRepository with empty database', () => {
   });
 
   describe('Engine', () => {
-    it('should properly init engine settings table', () => {
+    it('should properly init engine settings table with default port', () => {
       const repository = new EngineRepository(database, '3.5.0');
       const result = stripAuditFields(repository.get());
 
@@ -74,13 +103,25 @@ describe('EngineRepository with empty database', () => {
       assert.strictEqual(result.port, 2223);
       assert.strictEqual(result.proxyEnabled, false);
       assert.strictEqual(result.proxyPort, 9000);
+      assert.strictEqual(result.proxyUsername, null);
+      assert.strictEqual(result.proxyPassword, null);
+      assert.strictEqual(result.forwardProxyUrl, null);
+      assert.strictEqual(result.forwardProxyUsername, null);
+      assert.strictEqual(result.forwardProxyPassword, null);
       assert.deepStrictEqual(result.logParameters, {
         console: { level: 'silent' },
         file: { level: 'info', maxFileSize: 50, numberOfFiles: 5 },
         database: { level: 'info', maxNumberOfLogs: 100_000 },
         loki: { level: 'silent', interval: 60, address: '', username: '', password: '' },
-        oia: { level: 'silent', interval: 10 }
+        oia: { level: 'silent', interval: 10 },
+        syslog: { level: 'silent', host: '', port: 514, protocol: 'udp4' }
       });
+    });
+
+    it('should use a custom port when provided', () => {
+      const repository = new EngineRepository(database, '3.5.0', 3000);
+      // createDefault is a no-op because the record already exists from the previous test
+      assert.strictEqual(repository.get()!.port, 2223);
     });
   });
 
@@ -117,5 +158,24 @@ describe('EngineRepository with empty database', () => {
 
       mock.restoreAll();
     });
+  });
+});
+
+describe('EngineRepository with custom default port', () => {
+  const CUSTOM_PORT_DB_PATH = 'src/tests/test-config-engine-custom.db';
+  let db: Database;
+
+  before(async () => {
+    db = await initDatabase('config', false, CUSTOM_PORT_DB_PATH);
+  });
+
+  after(async () => {
+    db.close();
+    await emptyDatabase('config', CUSTOM_PORT_DB_PATH);
+  });
+
+  it('should seed engine settings with a custom port', () => {
+    const repository = new EngineRepository(db, '3.5.0', 3000);
+    assert.strictEqual(repository.get()!.port, 3000);
   });
 });

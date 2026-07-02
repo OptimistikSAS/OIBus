@@ -1022,7 +1022,8 @@ export default class OIAnalyticsCommandService {
         syncWithGroup: item.syncWithGroup,
         maxReadInterval: item.maxReadInterval,
         readDelay: item.readDelay,
-        overlap: item.overlap
+        startTimeOffset: item.startTimeOffset,
+        endTimeOffset: item.endTimeOffset
       }))
     )) as typeof command.commandContent.items;
   }

@@ -119,15 +119,56 @@
               <val-errors controlName="readDelay" />
             </div>
           </div>
-          <!-- Overlap -->
+          <!-- Start Time Offset -->
           <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
             <div class="form-group">
-              <label class="form-label" for="overlap" translate="south.items.overlap"></label>
+              <label class="form-label" for="start-time-offset" translate="south.items.start-time-offset"></label>
               <div class="input-group">
-                <input formControlName="overlap" id="overlap" type="number" class="form-control" min="0" />
+                <input
+                  formControlName="startTimeOffset"
+                  id="start-time-offset"
+                  type="number"
+                  class="form-control"
+                  min="-2147483648"
+                  max="2147483647"
+                />
                 <span class="input-group-text" translate="common.unit.ms"></span>
               </div>
-              <val-errors controlName="overlap" />
+              <val-errors controlName="startTimeOffset" />
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <!-- End Time Offset -->
+          <div [class]="form.controls.groupId.value !== null ? 'col-3' : 'col-4'">
+            <div class="form-group">
+              <label class="form-label" for="end-time-offset" translate="south.items.end-time-offset"></label>
+              <div class="input-group">
+                <input
+                  formControlName="endTimeOffset"
+                  id="end-time-offset"
+                  type="number"
+                  class="form-control"
+                  min="-2147483648"
+                  max="2147483647"
+                />
+                <span class="input-group-text" translate="common.unit.ms"></span>
+              </div>
+              <val-errors controlName="endTimeOffset" />
+            </div>
+          </div>
+        </div>
+        <!-- Recovery Strategy -->
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group">
+              <label class="form-label" for="recovery-strategy" translate="south.items.recovery-strategy"></label>
+              <select class="form-select" id="recovery-strategy" formControlName="recoveryStrategy">
+                <option [ngValue]="null" translate="south.items.recovery-strategy-oldest"></option>
+                @for (strategy of recoveryStrategies; track strategy.value) {
+                  <option [value]="strategy.value" [translate]="strategy.labelKey"></option>
+                }
+              </select>
             </div>
           </div>
         </div>

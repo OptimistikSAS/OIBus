@@ -8,15 +8,20 @@ import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { NotificationService } from '../shared/notification.service';
 import { ConfirmationService } from '../shared/confirmation.service';
-import { switchMap } from 'rxjs';
+import { BehaviorSubject, switchMap } from 'rxjs';
 import { ObservableState } from '../shared/save-button/save-button.component';
-import { BoxComponent } from '../shared/box/box.component';
+import { BoxComponent, BoxTitleDirective } from '../shared/box/box.component';
 import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
 import { WindowService } from '../shared/window.service';
 import { RouterLink } from '@angular/router';
 import { CertificateListComponent } from './certificate-list/certificate-list.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TransformerListComponent } from './transformer-list/transformer-list.component';
+import { ModalService } from '../shared/modal.service';
+import { EditEngineNameModalComponent } from './edit-engine-name-modal/edit-engine-name-modal.component';
+import { EditEngineWebServerModalComponent } from './edit-engine-web-server-modal/edit-engine-web-server-modal.component';
+import { EditEngineProxyModalComponent } from './edit-engine-proxy-modal/edit-engine-proxy-modal.component';
+import { EditEngineLoggerModalComponent } from './edit-engine-logger-modal/edit-engine-logger-modal.component';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -27,6 +32,7 @@ import { TransformerListComponent } from './transformer-list/transformer-list.co
     IpFilterListComponent,
     AsyncPipe,
     BoxComponent,
+    BoxTitleDirective,
     EngineMetricsComponent,
     RouterLink,
     NgbTooltip,
@@ -42,9 +48,12 @@ export class EngineDetailComponent {
   private windowService = inject(WindowService);
   private notificationService = inject(NotificationService);
   private confirmationService = inject(ConfirmationService);
+  private modalService = inject(ModalService);
   private destroyRef = inject(DestroyRef);
 
-  readonly engineSettings = toSignal(this.engineService.getEngineSettings());
+  private readonly refresh$ = new BehaviorSubject<void>(undefined);
+
+  readonly engineSettings = toSignal(this.refresh$.pipe(switchMap(() => this.engineService.getEngineSettings())));
   metrics = signal<EngineMetrics | null>(null);
   restarting = new ObservableState();
 
@@ -57,6 +66,30 @@ export class EngineDetailComponent {
       }
     };
     this.destroyRef.onDestroy(() => stream.close());
+  }
+
+  openNameModal() {
+    const modal = this.modalService.open(EditEngineNameModalComponent);
+    modal.componentInstance.initialize(this.engineSettings()!);
+    modal.result.subscribe(() => this.refresh$.next());
+  }
+
+  openWebServerModal() {
+    const modal = this.modalService.open(EditEngineWebServerModalComponent);
+    modal.componentInstance.initialize(this.engineSettings()!);
+    modal.result.subscribe(() => this.refresh$.next());
+  }
+
+  openProxyModal() {
+    const modal = this.modalService.open(EditEngineProxyModalComponent);
+    modal.componentInstance.initialize(this.engineSettings()!);
+    modal.result.subscribe(() => this.refresh$.next());
+  }
+
+  openLoggerModal() {
+    const modal = this.modalService.open(EditEngineLoggerModalComponent);
+    modal.componentInstance.initialize(this.engineSettings()!);
+    modal.result.subscribe(() => this.refresh$.next());
   }
 
   restart() {

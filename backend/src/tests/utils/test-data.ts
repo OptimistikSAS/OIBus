@@ -11,8 +11,12 @@ import { IPFilterCommandDTO } from '../../../shared/model/ip-filter.model';
 import { IPFilter } from '../../model/ip-filter.model';
 import { EngineSettings } from '../../model/engine.model';
 import {
+  EngineLoggerCommandDTO,
   EngineMetrics,
+  EngineNameCommandDTO,
+  EngineProxyCommandDTO,
   EngineSettingsCommandDTO,
+  EngineWebServerCommandDTO,
   HistoryQueryMetrics,
   NorthConnectorMetrics,
   OIBusContent,
@@ -538,7 +542,10 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
     updatedAt: '',
     settings: {
       inputFolder: 'input',
-      compression: true
+      compression: true,
+      username: null,
+      password: null,
+      domain: null
     },
     items: [
       {
@@ -551,7 +558,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: 0,
+        endTimeOffset: 0,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -567,7 +576,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: null,
         readDelay: null,
-        overlap: null,
+        startTimeOffset: 0,
+        endTimeOffset: 0,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -613,7 +624,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0
+        startTimeOffset: 0,
+        endTimeOffset: null,
+        recoveryStrategy: null
       },
       {
         id: 'southItemId4',
@@ -629,7 +642,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 0
+        startTimeOffset: 0,
+        endTimeOffset: null,
+        recoveryStrategy: null
       }
     ],
     groups: []
@@ -670,7 +685,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -697,7 +714,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -715,7 +734,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -733,7 +754,9 @@ const southConnectors: Array<SouthConnectorEntity<SouthSettings, SouthItemSettin
         syncWithGroup: false,
         maxReadInterval: 3600,
         readDelay: 200,
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
+        recoveryStrategy: null,
         createdBy: '',
         updatedBy: '',
         createdAt: '',
@@ -750,7 +773,10 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
   enabled: true,
   settings: {
     inputFolder: 'input',
-    compression: true
+    compression: true,
+    username: null,
+    password: null,
+    domain: null
   },
   items: [
     {
@@ -773,7 +799,9 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
       syncWithGroup: false,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      startTimeOffset: 0,
+      endTimeOffset: 0,
+      recoveryStrategy: null
     }
   ],
   groups: []
@@ -798,7 +826,9 @@ const southConnectorItemCommand: SouthConnectorItemCommandDTO = {
   syncWithGroup: false,
   maxReadInterval: null,
   readDelay: null,
-  overlap: null
+  startTimeOffset: 0,
+  endTimeOffset: 0,
+  recoveryStrategy: null
 };
 const itemTestingSettings: SouthConnectorItemTestingSettings = {
   history: {
@@ -838,7 +868,10 @@ const northConnectors: Array<NorthConnectorEntity<NorthSettings>> = [
     settings: {
       outputFolder: 'output-folder',
       prefix: 'prefix-',
-      suffix: '-suffix'
+      suffix: '-suffix',
+      username: null,
+      password: null,
+      domain: null
     },
     caching: {
       trigger: {
@@ -972,7 +1005,10 @@ const northConnectorCommand: NorthConnectorCommandDTO = {
   settings: {
     outputFolder: 'output-folder',
     prefix: 'prefix-',
-    suffix: '-suffix'
+    suffix: '-suffix',
+    username: null,
+    password: null,
+    domain: null
   },
   caching: {
     trigger: {
@@ -1177,7 +1213,10 @@ const historyQueries: Array<HistoryQueryEntity<SouthSettings, NorthSettings, Sou
     northSettings: {
       outputFolder: 'output-folder',
       prefix: 'prefix-',
-      suffix: '-suffix'
+      suffix: '-suffix',
+      username: null,
+      password: null,
+      domain: null
     },
     caching: {
       trigger: {
@@ -1266,7 +1305,10 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   northSettings: {
     outputFolder: 'output-folder',
     prefix: 'prefix-',
-    suffix: '-suffix'
+    suffix: '-suffix',
+    username: null,
+    password: null,
+    domain: null
   },
   caching: {
     trigger: {
@@ -1356,6 +1398,11 @@ const engineSettings: EngineSettings = {
   launcherVersion: '3.4.9',
   proxyEnabled: true,
   proxyPort: 9000,
+  forwardProxyUrl: 'http://forward-proxy:3128',
+  forwardProxyUsername: 'proxy-user',
+  forwardProxyPassword: 'encrypted-proxy-password',
+  proxyUsername: 'proxy-server-user',
+  proxyPassword: 'encrypted-proxy-server-password',
   logParameters: {
     console: {
       level: 'info'
@@ -1379,6 +1426,12 @@ const engineSettings: EngineSettings = {
     oia: {
       level: 'info',
       interval: 10
+    },
+    syslog: {
+      level: 'info',
+      host: 'syslog.example.com',
+      port: 514,
+      protocol: 'udp4'
     }
   },
   createdBy: '',
@@ -1391,6 +1444,11 @@ const engineSettingsCommand: EngineSettingsCommandDTO = {
   port: 2223,
   proxyEnabled: true,
   proxyPort: 9000,
+  forwardProxyUrl: null,
+  forwardProxyUsername: null,
+  forwardProxyPassword: null,
+  proxyUsername: null,
+  proxyPassword: null,
   logParameters: {
     console: {
       level: 'silent'
@@ -1414,9 +1472,31 @@ const engineSettingsCommand: EngineSettingsCommandDTO = {
     oia: {
       level: 'silent',
       interval: 10
+    },
+    syslog: {
+      level: 'silent',
+      host: '',
+      port: 514,
+      protocol: 'udp4'
     }
   }
 };
+const engineNameCommand: EngineNameCommandDTO = {
+  name: 'updated OIBus'
+};
+const engineWebServerCommand: EngineWebServerCommandDTO = {
+  port: 3333
+};
+const engineProxyCommand: EngineProxyCommandDTO = {
+  proxyEnabled: true,
+  proxyPort: 9000,
+  forwardProxyUrl: null,
+  forwardProxyUsername: null,
+  forwardProxyPassword: null,
+  proxyUsername: null,
+  proxyPassword: null
+};
+const engineLoggerCommand: EngineLoggerCommandDTO = engineSettingsCommand.logParameters;
 const engineMetrics: EngineMetrics = {
   metricsStart: '2020-01-01T00:00:00.000',
   processCpuUsageInstant: 0,
@@ -1519,6 +1599,10 @@ const logs: Array<OIBusLog> = [
     scopeType: 'south',
     scopeId: southConnectors[0].id,
     scopeName: southConnectors[0].name,
+    itemId: null,
+    itemName: null,
+    groupId: null,
+    groupName: null,
     message: 'debug message log'
   },
   {
@@ -1527,6 +1611,10 @@ const logs: Array<OIBusLog> = [
     scopeType: 'south',
     scopeId: southConnectors[0].id,
     scopeName: southConnectors[0].name,
+    itemId: null,
+    itemName: null,
+    groupId: null,
+    groupName: null,
     message: 'error message log'
   },
   {
@@ -1535,6 +1623,10 @@ const logs: Array<OIBusLog> = [
     scopeType: 'north',
     scopeId: northConnectors[1].id,
     scopeName: northConnectors[1].name,
+    itemId: null,
+    itemName: null,
+    groupId: null,
+    groupName: null,
     message: 'info message log'
   },
   {
@@ -1543,6 +1635,10 @@ const logs: Array<OIBusLog> = [
     scopeType: 'internal',
     scopeId: null,
     scopeName: null,
+    itemId: null,
+    itemName: null,
+    groupId: null,
+    groupName: null,
     message: 'warn message log'
   }
 ];
@@ -2230,6 +2326,10 @@ export default Object.freeze({
       securityKey: 'security-key'
     },
     command: engineSettingsCommand,
+    nameCommand: engineNameCommand,
+    webServerCommand: engineWebServerCommand,
+    proxyCommand: engineProxyCommand,
+    loggerCommand: engineLoggerCommand,
     metrics: engineMetrics,
     oIBusInfo
   },

@@ -718,7 +718,8 @@ describe('SouthConnectorController', () => {
         name: 'Group 1',
         southId,
         scanMode: testData.scanMode.list[0],
-        overlap: null,
+        startTimeOffset: null,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0,
         items: []
@@ -745,7 +746,8 @@ describe('SouthConnectorController', () => {
       name: 'Group 1',
       southId,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       items: []
@@ -768,7 +770,8 @@ describe('SouthConnectorController', () => {
         scanModeId: testData.scanMode.list[0].id
       },
       historySettings: {
-        overlap: 5,
+        startTimeOffset: 5,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       }
@@ -782,7 +785,8 @@ describe('SouthConnectorController', () => {
       name: 'New Group',
       southId,
       scanMode: testData.scanMode.list[0],
-      overlap: 5,
+      startTimeOffset: 5,
+      endTimeOffset: null,
       maxReadInterval: null,
       readDelay: 0,
       items: []
@@ -806,7 +810,8 @@ describe('SouthConnectorController', () => {
         scanModeId: testData.scanMode.list[1].id
       },
       historySettings: {
-        overlap: 10,
+        startTimeOffset: 10,
+        endTimeOffset: null,
         maxReadInterval: null,
         readDelay: 0
       }

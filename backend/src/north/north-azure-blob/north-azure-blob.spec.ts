@@ -100,6 +100,11 @@ describe('NorthAzureBlob', () => {
     mockModule(nodeRequire, '@azure/storage-file-datalake', azureStorageFileDatalakeExports);
     mockModule(nodeRequire, '@azure/identity', azureIdentityExports);
     mockModule(nodeRequire, 'node:fs/promises', { __esModule: true });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     NorthAzureBlob = reloadModule<{ default: typeof NorthAzureBlobClass }>(nodeRequire, './north-azure-blob').default;
   });
 
@@ -134,7 +139,6 @@ describe('NorthAzureBlob', () => {
         clientSecret: '',
         useProxy: false
       }),
-      logger,
       cacheService
     );
   });

@@ -17,6 +17,7 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorManifest,
+  SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '../../../../../../backend/shared/model/south-connector.model';
@@ -87,6 +88,11 @@ class EditSouthItemModalComponent {
    */
   tableIndex: number | null = null;
 
+  readonly recoveryStrategies: Array<{ value: SouthHistoryRecoveryStrategy; labelKey: string }> = [
+    { value: 'newest', labelKey: 'south.items.recovery-strategy-newest' },
+    { value: 'oldest', labelKey: 'south.items.recovery-strategy-oldest' }
+  ];
+
   form: FormGroup<{
     name: FormControl<string>;
     groupId: FormControl<string | null>;
@@ -95,7 +101,9 @@ class EditSouthItemModalComponent {
     syncWithGroup: FormControl<boolean>;
     maxReadInterval: FormControl<number | null>;
     readDelay: FormControl<number | null>;
-    overlap: FormControl<number | null>;
+    startTimeOffset: FormControl<number | null>;
+    endTimeOffset: FormControl<number | null>;
+    recoveryStrategy: FormControl<SouthHistoryRecoveryStrategy | null>;
     settings: FormGroup;
   }> | null = null;
 
@@ -247,7 +255,9 @@ class EditSouthItemModalComponent {
     const rawHistorianValues = {
       maxReadInterval: this.form!.controls.maxReadInterval.value,
       readDelay: this.form!.controls.readDelay.value,
-      overlap: this.form!.controls.overlap.value,
+      startTimeOffset: this.form!.controls.startTimeOffset.value,
+      endTimeOffset: this.form!.controls.endTimeOffset.value,
+      recoveryStrategy: this.form!.controls.recoveryStrategy.value,
       syncWithGroup: this.form!.controls.syncWithGroup.value
     };
 
@@ -271,7 +281,9 @@ class EditSouthItemModalComponent {
       syncWithGroup,
       maxReadInterval: syncWithGroup ? null : (rawHistorianValues.maxReadInterval ?? null),
       readDelay: syncWithGroup ? null : (rawHistorianValues.readDelay ?? null),
-      overlap: syncWithGroup ? null : (rawHistorianValues.overlap ?? null)
+      startTimeOffset: syncWithGroup ? null : (rawHistorianValues.startTimeOffset ?? null),
+      endTimeOffset: syncWithGroup ? null : (rawHistorianValues.endTimeOffset ?? null),
+      recoveryStrategy: syncWithGroup ? null : (rawHistorianValues.recoveryStrategy ?? null)
     };
   }
 
@@ -307,7 +319,9 @@ class EditSouthItemModalComponent {
       syncWithGroup: [false], // Default to false; will be set to true when group is selected
       maxReadInterval: [null as number | null, [Validators.min(0)]],
       readDelay: [null as number | null, [Validators.min(0)]],
-      overlap: [null as number | null, [Validators.min(0)]],
+      startTimeOffset: [null as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
+      endTimeOffset: [null as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
+      recoveryStrategy: [null as SouthHistoryRecoveryStrategy | null],
       settings: this.fb.group({})
     });
     this.previousGroupId = null;
@@ -340,7 +354,9 @@ class EditSouthItemModalComponent {
         syncWithGroup: this.item.syncWithGroup ?? false,
         maxReadInterval: this.item.maxReadInterval ?? null,
         readDelay: this.item.readDelay ?? null,
-        overlap: this.item.overlap ?? null,
+        startTimeOffset: this.item.startTimeOffset ?? null,
+        endTimeOffset: this.item.endTimeOffset ?? null,
+        recoveryStrategy: this.item.recoveryStrategy ?? null,
         settings: this.item.settings
       });
 
@@ -370,7 +386,9 @@ class EditSouthItemModalComponent {
       this.form!.controls.syncWithGroup.setValue(false);
       this.form!.controls.maxReadInterval.enable();
       this.form!.controls.readDelay.enable();
-      this.form!.controls.overlap.enable();
+      this.form!.controls.startTimeOffset.enable();
+      this.form!.controls.endTimeOffset.enable();
+      this.form!.controls.recoveryStrategy.enable();
     } else {
       const selectedGroup = this.groups.find(g => g.id === groupId)!;
       this.applySyncLogicWhenSelectingGroup(selectedGroup);
@@ -452,20 +470,26 @@ class EditSouthItemModalComponent {
 
     const currentMaxReadInterval = this.form!.controls.maxReadInterval.value;
     const currentReadDelay = this.form!.controls.readDelay.value;
-    const currentOverlap = this.form!.controls.overlap.value;
+    const currentStartTimeOffset = this.form!.controls.startTimeOffset.value;
+    const currentEndTimeOffset = this.form!.controls.endTimeOffset.value;
+    const currentRecoveryStrategy = this.form!.controls.recoveryStrategy.value;
 
     // Check if user has entered any non-null, non-default values
     const hasCustomValues =
       (currentMaxReadInterval !== null && currentMaxReadInterval !== group.historySettings.maxReadInterval) ||
       (currentReadDelay !== null && currentReadDelay !== group.historySettings.readDelay) ||
-      (currentOverlap !== null && currentOverlap !== group.historySettings.overlap);
+      (currentStartTimeOffset !== null && currentStartTimeOffset !== group.historySettings.startTimeOffset) ||
+      (currentEndTimeOffset !== null && currentEndTimeOffset !== group.historySettings.endTimeOffset) ||
+      (currentRecoveryStrategy !== null && currentRecoveryStrategy !== (group.historySettings.recoveryStrategy ?? 'oldest'));
 
     if (hasCustomValues) {
       // User has custom values - preserve them and don't sync with group
       this.form!.controls.syncWithGroup.setValue(false);
       this.form!.controls.maxReadInterval.enable();
       this.form!.controls.readDelay.enable();
-      this.form!.controls.overlap.enable();
+      this.form!.controls.startTimeOffset.enable();
+      this.form!.controls.endTimeOffset.enable();
+      this.form!.controls.recoveryStrategy.enable();
     } else {
       // No custom values or they match group - sync with group
       this.form!.controls.syncWithGroup.setValue(true);
@@ -481,7 +505,9 @@ class EditSouthItemModalComponent {
       // No group selected, enable all fields
       this.form!.controls.maxReadInterval.enable();
       this.form!.controls.readDelay.enable();
-      this.form!.controls.overlap.enable();
+      this.form!.controls.startTimeOffset.enable();
+      this.form!.controls.endTimeOffset.enable();
+      this.form!.controls.recoveryStrategy.enable();
       return;
     }
 
@@ -490,12 +516,16 @@ class EditSouthItemModalComponent {
       const groupValues = this.getSelectedGroupValues();
       this.form!.controls.maxReadInterval.disable();
       this.form!.controls.readDelay.disable();
-      this.form!.controls.overlap.disable();
+      this.form!.controls.startTimeOffset.disable();
+      this.form!.controls.endTimeOffset.disable();
+      this.form!.controls.recoveryStrategy.disable();
       this.form!.patchValue(
         {
           maxReadInterval: groupValues.maxReadInterval,
           readDelay: groupValues.readDelay,
-          overlap: groupValues.overlap
+          startTimeOffset: groupValues.startTimeOffset,
+          endTimeOffset: groupValues.endTimeOffset,
+          recoveryStrategy: groupValues.recoveryStrategy
         },
         { emitEvent: false }
       );
@@ -503,18 +533,28 @@ class EditSouthItemModalComponent {
       // Sync disabled: enable fields for manual override
       this.form!.controls.maxReadInterval.enable();
       this.form!.controls.readDelay.enable();
-      this.form!.controls.overlap.enable();
+      this.form!.controls.startTimeOffset.enable();
+      this.form!.controls.endTimeOffset.enable();
+      this.form!.controls.recoveryStrategy.enable();
       // Don't patch values here - keep user's values
     }
   }
 
-  private getSelectedGroupValues(): { maxReadInterval: number | null; readDelay: number | null; overlap: number | null } {
+  private getSelectedGroupValues(): {
+    maxReadInterval: number | null;
+    readDelay: number | null;
+    startTimeOffset: number | null;
+    endTimeOffset: number | null;
+    recoveryStrategy: SouthHistoryRecoveryStrategy | null;
+  } {
     const groupId = this.form?.controls.groupId.value;
     const group = groupId ? this.groups.find(g => g.id === groupId) : null;
     return {
       maxReadInterval: group?.historySettings.maxReadInterval ?? null,
       readDelay: group?.historySettings.readDelay ?? null,
-      overlap: group?.historySettings.overlap ?? null
+      startTimeOffset: group?.historySettings.startTimeOffset ?? null,
+      endTimeOffset: group?.historySettings.endTimeOffset ?? null,
+      recoveryStrategy: group?.historySettings.recoveryStrategy ?? null
     };
   }
 

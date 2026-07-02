@@ -8,7 +8,6 @@ import { NorthAmazonS3Settings } from '../../../shared/model/north-settings.mode
 import { CacheMetadata, OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { NorthConnectorEntity } from '../../model/north-connector.model';
 import type { ICacheService } from '../../model/cache.service.model';
-import type { ILogger } from '../../model/logger.model';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -16,8 +15,8 @@ import type { ILogger } from '../../model/logger.model';
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> {
   private s3: S3Client | undefined;
 
-  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, logger: ILogger, cacheService: ICacheService) {
-    super(connector, logger, cacheService);
+  constructor(connector: NorthConnectorEntity<NorthAmazonS3Settings>, cacheService: ICacheService) {
+    super(connector, cacheService);
   }
 
   supportedTypes(): Array<string> {

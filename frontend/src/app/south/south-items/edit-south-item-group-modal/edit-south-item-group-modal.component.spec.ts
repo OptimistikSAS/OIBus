@@ -24,7 +24,7 @@ const existingGroup: SouthItemGroupDTO = {
     name: 'GroupA',
     scanMode: scanModes[0]
   },
-  historySettings: { overlap: null, maxReadInterval: null, readDelay: null }
+  historySettings: { startTimeOffset: null, endTimeOffset: null, maxReadInterval: null, readDelay: null, recoveryStrategy: null }
 };
 
 describe('EditSouthItemGroupModalComponent', () => {

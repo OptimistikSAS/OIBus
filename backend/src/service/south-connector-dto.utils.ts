@@ -19,9 +19,11 @@ export const toSouthItemGroupDTO = (entity: SouthItemGroupEntityLight, getUserIn
       scanMode: toScanModeDTO(entity.scanMode, getUserInfo)
     },
     historySettings: {
-      overlap: entity.overlap,
+      startTimeOffset: entity.startTimeOffset,
+      endTimeOffset: entity.endTimeOffset,
       maxReadInterval: entity.maxReadInterval,
-      readDelay: entity.readDelay
+      readDelay: entity.readDelay,
+      recoveryStrategy: entity.recoveryStrategy
     }
   };
 };
@@ -49,7 +51,9 @@ export const toSouthConnectorItemDTO = (
     syncWithGroup: entity.syncWithGroup,
     maxReadInterval: entity.maxReadInterval,
     readDelay: entity.readDelay,
-    overlap: entity.overlap
+    startTimeOffset: entity.startTimeOffset,
+    endTimeOffset: entity.endTimeOffset,
+    recoveryStrategy: entity.recoveryStrategy
   };
 };
 

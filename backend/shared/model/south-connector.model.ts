@@ -7,6 +7,8 @@ import {
   SouthFolderScannerSettings,
   SouthFTPItemSettings,
   SouthFTPSettings,
+  SouthInfluxDBItemSettings,
+  SouthInfluxDBSettings,
   SouthModbusItemSettings,
   SouthModbusSettings,
   SouthMQTTItemSettings,
@@ -67,6 +69,7 @@ export const OIBUS_SOUTH_TYPES = [
   'ads', // Beckhoff ADS protocol
   'folder-scanner', // File system folder scanning
   'ftp', // FTP file transfer protocol
+  'influxdb', // InfluxDB time series database
   'modbus', // Modbus industrial protocol
   'mqtt', // MQTT messaging protocol
   'mssql', // Microsoft SQL Server database
@@ -90,6 +93,13 @@ export const OIBUS_SOUTH_TYPES = [
  * @example 'folder-scanner'
  */
 export type OIBusSouthType = (typeof OIBUS_SOUTH_TYPES)[number];
+
+/**
+ * Recovery strategy used when a south connector reconnects after a long disconnection.
+ * - 'oldest': fill the gap from oldest to newest (default behaviour).
+ * - 'newest': fill the gap from newest to oldest so that recent data arrives first.
+ */
+export type SouthHistoryRecoveryStrategy = 'oldest' | 'newest';
 
 /**
  * Represents the type metadata for a South connector.
@@ -255,7 +265,7 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
 
   /**
    * Whether this item syncs its historian settings with its group.
-   * When true, historian fields (maxReadInterval, readDelay, overlap) are inherited from the group.
+   * When true, historian fields (maxReadInterval, readDelay, startTimeOffset, endTimeOffset) are inherited from the group.
    *
    * @example true
    */
@@ -280,13 +290,33 @@ export interface SouthConnectorItemTypedDTO<IS> extends BaseEntity {
   readDelay: number | null;
 
   /**
-   * Default overlap in milliseconds for historical queries.
+   * Offset in milliseconds applied to the start of the history query interval.
    * Only applicable for connectors with historian capabilities.
    * When null and item is in a group, inherits from group settings.
+   * Negative values extend the window backwards (equivalent to the old overlap behaviour).
    *
-   * @example 1000
+   * @example -1000
    */
-  overlap: number | null;
+  startTimeOffset: number | null;
+
+  /**
+   * Offset in milliseconds applied to the end of the history query interval.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   * If the resulting end time is not after the effective start time, the query is skipped.
+   *
+   * @example 0
+   */
+  endTimeOffset: number | null;
+
+  /**
+   * Recovery strategy when the connector reconnects after a long disconnection.
+   * Only applicable for connectors with historian capabilities.
+   * When null, defaults to 'oldest'.
+   *
+   * @example "oldest"
+   */
+  recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 }
 
 export interface ItemLightDTO extends BaseEntity {
@@ -337,12 +367,22 @@ export interface SouthItemGroupDTO extends BaseEntity {
 
   historySettings: {
     /**
-     * Default overlap in milliseconds for historical queries.
+     * Offset in milliseconds applied to the start of the history query interval.
      * Only applicable for connectors with historian capabilities.
+     * Negative values extend the window backwards (equivalent to the old overlap behaviour).
      *
-     * @example 1000
+     * @example -1000
      */
-    overlap: number | null;
+    startTimeOffset: number | null;
+
+    /**
+     * Offset in milliseconds applied to the end of the history query interval.
+     * Only applicable for connectors with historian capabilities.
+     * If the resulting end time is not after the effective start time, the query is skipped.
+     *
+     * @example 0
+     */
+    endTimeOffset: number | null;
 
     /**
      * Maximum read interval in seconds for historical queries.
@@ -359,6 +399,15 @@ export interface SouthItemGroupDTO extends BaseEntity {
      * @example 200
      */
     readDelay: number | null;
+
+    /**
+     * Recovery strategy when the connector reconnects after a long disconnection.
+     * Only applicable for connectors with historian capabilities.
+     * When null, defaults to 'oldest'.
+     *
+     * @example "oldest"
+     */
+    recoveryStrategy: SouthHistoryRecoveryStrategy | null;
   };
 }
 
@@ -391,11 +440,20 @@ export interface SouthItemGroupCommandDTO {
 
   historySettings: {
     /**
-     * Default overlap in milliseconds for historical queries.
+     * Offset in milliseconds applied to the start of the history query interval.
+     * Negative values extend the window backwards (equivalent to the old overlap behaviour).
      *
-     * @example 1000
+     * @example -1000
      */
-    overlap: number | null;
+    startTimeOffset: number | null;
+
+    /**
+     * Offset in milliseconds applied to the end of the history query interval.
+     * If the resulting end time is not after the effective start time, the query is skipped.
+     *
+     * @example 0
+     */
+    endTimeOffset: number | null;
 
     /**
      * Maximum read interval in seconds for historical queries.
@@ -410,6 +468,14 @@ export interface SouthItemGroupCommandDTO {
      * @example 200
      */
     readDelay: number | null;
+
+    /**
+     * Recovery strategy when the connector reconnects after a long disconnection.
+     * When null, defaults to 'oldest'.
+     *
+     * @example "oldest"
+     */
+    recoveryStrategy: SouthHistoryRecoveryStrategy | null;
   };
 }
 
@@ -429,6 +495,10 @@ export interface SouthConnectorFolderScannerDTO extends SouthConnectorTypedDTO<
 /** South connector configuration for FTP file transfer. */
 export interface SouthConnectorFTPDTO extends SouthConnectorTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings> {
   items: Array<SouthConnectorFTPItemDTO>;
+}
+/** South connector configuration for InfluxDB time series database. */
+export interface SouthConnectorInfluxDBDTO extends SouthConnectorTypedDTO<'influxdb', SouthInfluxDBSettings, SouthInfluxDBItemSettings> {
+  items: Array<SouthConnectorInfluxDBItemDTO>;
 }
 /** South connector configuration for Modbus. */
 export interface SouthConnectorModbusDTO extends SouthConnectorTypedDTO<'modbus', SouthModbusSettings, SouthModbusItemSettings> {
@@ -507,6 +577,7 @@ export type SouthConnectorDTO =
   | SouthConnectorADSDTO
   | SouthConnectorFolderScannerDTO
   | SouthConnectorFTPDTO
+  | SouthConnectorInfluxDBDTO
   | SouthConnectorModbusDTO
   | SouthConnectorMQTTDTO
   | SouthConnectorMSSQLDTO
@@ -655,13 +726,33 @@ export interface SouthConnectorItemCommandTypedDTO<IS> {
   readDelay: number | null;
 
   /**
-   * Default overlap in milliseconds for historical queries.
+   * Offset in milliseconds applied to the start of the history query interval.
    * Only applicable for connectors with historian capabilities.
    * When null and item is in a group, inherits from group settings.
+   * Negative values extend the window backwards (equivalent to the old overlap behaviour).
    *
-   * @example 1000
+   * @example -1000
    */
-  overlap: number | null;
+  startTimeOffset: number | null;
+
+  /**
+   * Offset in milliseconds applied to the end of the history query interval.
+   * Only applicable for connectors with historian capabilities.
+   * When null and item is in a group, inherits from group settings.
+   * If the resulting end time is not after the effective start time, the query is skipped.
+   *
+   * @example 0
+   */
+  endTimeOffset: number | null;
+
+  /**
+   * Recovery strategy when the connector reconnects after a long disconnection.
+   * Only applicable for connectors with historian capabilities.
+   * When null, defaults to 'oldest'.
+   *
+   * @example "oldest"
+   */
+  recoveryStrategy: SouthHistoryRecoveryStrategy | null;
 }
 
 // ── Named command variants (tsoa uses these as schema names) ──────────────
@@ -680,6 +771,14 @@ export interface SouthConnectorFolderScannerCommandDTO extends SouthConnectorCom
 /** South connector command for FTP file transfer. */
 export interface SouthConnectorFTPCommandDTO extends SouthConnectorCommandTypedDTO<'ftp', SouthFTPSettings, SouthFTPItemSettings> {
   items: Array<SouthConnectorFTPItemCommandDTO>;
+}
+/** South connector command for InfluxDB time series database. */
+export interface SouthConnectorInfluxDBCommandDTO extends SouthConnectorCommandTypedDTO<
+  'influxdb',
+  SouthInfluxDBSettings,
+  SouthInfluxDBItemSettings
+> {
+  items: Array<SouthConnectorInfluxDBItemCommandDTO>;
 }
 /** South connector command for Modbus. */
 export interface SouthConnectorModbusCommandDTO extends SouthConnectorCommandTypedDTO<
@@ -774,6 +873,7 @@ export type SouthConnectorCommandDTO =
   | SouthConnectorADSCommandDTO
   | SouthConnectorFolderScannerCommandDTO
   | SouthConnectorFTPCommandDTO
+  | SouthConnectorInfluxDBCommandDTO
   | SouthConnectorModbusCommandDTO
   | SouthConnectorMQTTCommandDTO
   | SouthConnectorMSSQLCommandDTO
@@ -797,6 +897,8 @@ export interface SouthConnectorADSItemDTO extends SouthConnectorItemTypedDTO<Sou
 export interface SouthConnectorFolderScannerItemDTO extends SouthConnectorItemTypedDTO<SouthFolderScannerItemSettings> {}
 /** South connector item DTO for FTP file transfer. */
 export interface SouthConnectorFTPItemDTO extends SouthConnectorItemTypedDTO<SouthFTPItemSettings> {}
+/** South connector item DTO for InfluxDB time series database. */
+export interface SouthConnectorInfluxDBItemDTO extends SouthConnectorItemTypedDTO<SouthInfluxDBItemSettings> {}
 /** South connector item DTO for Modbus. */
 export interface SouthConnectorModbusItemDTO extends SouthConnectorItemTypedDTO<SouthModbusItemSettings> {}
 /** South connector item DTO for MQTT. */
@@ -836,6 +938,7 @@ export type SouthConnectorItemDTO =
   | SouthConnectorADSItemDTO
   | SouthConnectorFolderScannerItemDTO
   | SouthConnectorFTPItemDTO
+  | SouthConnectorInfluxDBItemDTO
   | SouthConnectorModbusItemDTO
   | SouthConnectorMQTTItemDTO
   | SouthConnectorMSSQLItemDTO
@@ -859,6 +962,8 @@ export interface SouthConnectorADSItemCommandDTO extends SouthConnectorItemComma
 export interface SouthConnectorFolderScannerItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthFolderScannerItemSettings> {}
 /** South connector item command for FTP file transfer. */
 export interface SouthConnectorFTPItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthFTPItemSettings> {}
+/** South connector item command for InfluxDB time series database. */
+export interface SouthConnectorInfluxDBItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthInfluxDBItemSettings> {}
 /** South connector item command for Modbus. */
 export interface SouthConnectorModbusItemCommandDTO extends SouthConnectorItemCommandTypedDTO<SouthModbusItemSettings> {}
 /** South connector item command for MQTT. */
@@ -898,6 +1003,7 @@ export type SouthConnectorItemCommandDTO =
   | SouthConnectorADSItemCommandDTO
   | SouthConnectorFolderScannerItemCommandDTO
   | SouthConnectorFTPItemCommandDTO
+  | SouthConnectorInfluxDBItemCommandDTO
   | SouthConnectorModbusItemCommandDTO
   | SouthConnectorMQTTItemCommandDTO
   | SouthConnectorMSSQLItemCommandDTO
@@ -1104,6 +1210,7 @@ export interface SouthConnectorItemSearchParam {
 export const SOUTH_SINGLE_ITEMS: Array<OIBusSouthType> = [
   'folder-scanner',
   'ftp',
+  'influxdb',
   'mssql',
   'mysql',
   'odbc',

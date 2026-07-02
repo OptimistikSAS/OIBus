@@ -43,6 +43,11 @@ describe('SouthFolderScanner', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthFolderScanner = reloadModule<{ default: typeof SouthFolderScannerClass }>(nodeRequire, './south-folder-scanner').default;
   });
 
@@ -84,7 +89,8 @@ describe('SouthFolderScanner', () => {
           syncWithGroup: false,
           maxReadInterval: null,
           readDelay: null,
-          overlap: null,
+          startTimeOffset: null,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -97,7 +103,7 @@ describe('SouthFolderScanner', () => {
       updatedAt: ''
     };
 
-    south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -431,6 +437,45 @@ describe('SouthFolderScanner', () => {
       await south.sendFile(configuration.items[0], 'file1.csv', mockQueryTime);
 
       assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error while removing compressed file')));
+    });
+  });
+
+  describe('connect and disconnect', () => {
+    afterEach(() => {
+      logger.trace.mock.resetCalls();
+    });
+
+    it('should log trace and skip SMB credential store on non-Windows platforms', async () => {
+      configuration.settings.username = 'user';
+      configuration.settings.inputFolder = '\\\\server\\share\\data';
+      south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      logger.trace.mock.resetCalls();
+      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+      await (south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data');
+      assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential store')));
+    });
+
+    it('should log trace and skip SMB credential removal on non-Windows platforms', async () => {
+      configuration.settings.username = 'user';
+      configuration.settings.inputFolder = '\\\\server\\share\\data';
+      south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      logger.trace.mock.resetCalls();
+      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+      await (south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data');
+      assert.ok(logger.trace.mock.calls.some(c => (c.arguments[0] as string).includes('Skipping SMB credential removal')));
+    });
+
+    it('should skip SMB mount when username is empty', async () => {
+      configuration.settings.username = null;
+      configuration.settings.inputFolder = '\\\\server\\share\\data';
+      await assert.doesNotReject(south.connect());
+    });
+
+    it('should skip SMB mount when inputFolder is not a UNC path', async () => {
+      configuration.settings.username = 'user';
+      configuration.settings.password = 'pass';
+      configuration.settings.inputFolder = 'C:\\local\\folder';
+      await assert.doesNotReject(south.connect());
     });
   });
 });

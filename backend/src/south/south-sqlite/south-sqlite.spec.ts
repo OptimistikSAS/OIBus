@@ -149,6 +149,11 @@ describe('SouthSQLite', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthSQLite = reloadModule<{ default: typeof SouthSQLiteClass }>(nodeRequire, './south-sqlite').default;
   });
 
@@ -170,7 +175,7 @@ describe('SouthSQLite', () => {
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {
@@ -201,7 +206,7 @@ describe('SouthSQLite', () => {
     });
     assert.strictEqual(
       (logger.info as ReturnType<typeof mock.fn>).mock.calls.some(
-        (c: { arguments: Array<unknown> }) => c.arguments[0] === `Found 2 results for item ${configuration.items[0].name} in 0 ms`
+        (c: { arguments: Array<unknown> }) => c.arguments[1] === `Found 2 results for item ${configuration.items[0].name} in 0 ms`
       ),
       true
     );
@@ -223,7 +228,7 @@ describe('SouthSQLite', () => {
     assert.strictEqual(
       (logger.debug as ReturnType<typeof mock.fn>).mock.calls.some(
         (c: { arguments: Array<unknown> }) =>
-          c.arguments[0] === `No result found for item ${configuration.items[0].name}. Request done in 0 ms`
+          c.arguments[1] === `No result found for item ${configuration.items[0].name}. Request done in 0 ms`
       ),
       true
     );
@@ -345,7 +350,7 @@ describe('SouthSQLite test connection', () => {
 
     mock.timers.enable({ apis: ['Date'], now: new Date(testData.constants.dates.FAKE_NOW) });
 
-    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+    south = new SouthSQLite(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
   });
 
   afterEach(() => {

@@ -94,6 +94,11 @@ describe('SouthOracle', () => {
         return southCacheService;
       }
     });
+    mockModule(nodeRequire, '../../service/logger/logger.service', {
+      loggerService: { createChildLogger: mock.fn(() => logger) },
+      default: class {}
+    });
+
     SouthOracle = reloadModule<{ default: typeof SouthOracleClass }>(nodeRequire, './south-oracle').default;
   });
 
@@ -180,7 +185,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -208,7 +214,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -253,7 +260,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -267,7 +275,7 @@ describe('SouthOracle', () => {
     };
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should properly run historyQuery', async () => {
@@ -546,7 +554,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -574,7 +583,8 @@ describe('SouthOracle', () => {
           syncWithGroup: false,
           maxReadInterval: 3600,
           readDelay: 0,
-          overlap: 0,
+          startTimeOffset: 0,
+          endTimeOffset: null,
           createdBy: '',
           updatedBy: '',
           createdAt: '',
@@ -588,7 +598,7 @@ describe('SouthOracle', () => {
     };
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('should call initOracleClient when thick mode is enabled and oracleClientVersion is not set', () => {
@@ -649,7 +659,7 @@ describe('SouthOracle', () => {
     };
 
     beforeEach(() => {
-      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, logger, 'cacheFolder');
+      south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
     });
 
     it('Database is reachable and has tables', async () => {

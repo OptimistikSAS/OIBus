@@ -1,13 +1,16 @@
 #!/bin/bash
 
-while getopts b:c:k: flag
-do
-    case "${flag}" in
-        b) install_dir=${OPTARG};;
-        c) my_data_directory=${OPTARG};;
-        k) keep_conf=${OPTARG};;
-        *)
-    esac
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -b) install_dir="$2"; shift 2;;
+    -c) my_data_directory="$2"; shift 2;;
+    -k) keep_conf="$2"; shift 2;;
+    -n) engine_name="$2"; shift 2;;
+    -u) admin_username="$2"; shift 2;;
+    -p) admin_password="$2"; shift 2;;
+    -port) oibus_port="$2"; shift 2;;
+    *) shift;;
+  esac
 done
 
 
@@ -69,6 +72,32 @@ if [[ -f "$my_data_directory/oibus.db" ]]; then
       rm -rf "$conf_path/keys"
     fi
   fi
+fi
+
+# Escape a string for safe embedding in a JSON value (backslash then double-quote).
+json_escape() {
+  local s="$1"
+  s="${s//\\/\\\\}"
+  s="${s//\"/\\\"}"
+  printf '%s' "$s"
+}
+
+# If no existing database, write provided initial settings to oibus.init.json.
+# Only fields explicitly passed as flags are included; omitted flags are left out
+# so OIBus applies its own built-in defaults for those values.
+if [[ ! -f "$conf_path/oibus.db" ]]; then
+  json_fields="\"engineName\":\"$(json_escape "${engine_name:-OIBus}")\""
+  if [[ -n "$admin_username" ]]; then
+    json_fields="$json_fields,\"adminUsername\":\"$(json_escape "$admin_username")\""
+  fi
+  if [[ -n "$admin_password" ]]; then
+    json_fields="$json_fields,\"adminPassword\":\"$(json_escape "$admin_password")\""
+  fi
+  if [[ -n "$oibus_port" ]]; then
+    json_fields="$json_fields,\"port\":$oibus_port"
+  fi
+  printf '{%s}' "$json_fields" > "$conf_path/oibus.init.json"
+  chmod 600 "$conf_path/oibus.init.json"
 fi
 
 # Stop OIBus if already installed and running

@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { createReadStream, createWriteStream } from 'node:fs';
+import { createReadStream, createWriteStream, readFileSync, existsSync } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import zlib from 'node:zlib';
 import path from 'node:path';
@@ -9,6 +9,8 @@ import { DateTime } from 'luxon';
 import unzipper from 'unzipper';
 
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../shared/model/types';
+import { SouthHistoryRecoveryStrategy } from '../../shared/model/south-connector.model';
+import { OIBusInitConfig } from '../model/oibus-init-config.model';
 import csv from 'papaparse';
 import { EngineSettingsDTO, OIBusContent, OIBusInfo } from '../../shared/model/engine.model';
 import os from 'node:os';
@@ -53,6 +55,50 @@ export const getCommandLineArguments = () => {
   };
 };
 
+export const INIT_CONFIG_FILENAME = 'oibus.init.json';
+
+const readSecretOrEnv = (fileEnvVar: string, directEnvVar: string): string | undefined => {
+  const filePath = process.env[fileEnvVar];
+  if (filePath) {
+    try {
+      return readFileSync(filePath, 'utf8').trim();
+    } catch (err) {
+      console.warn(`Failed to read secret from ${filePath}: ${(err as Error).message}`);
+    }
+  }
+  return process.env[directEnvVar] || undefined;
+};
+
+/**
+ * Read the one-time init config from file (installer path) or env vars (Docker path).
+ * Priority: oibus.init.json > ADMIN_USERNAME_FILE/ADMIN_PASSWORD_FILE > ADMIN_USERNAME/ADMIN_PASSWORD/DEFAULT_PORT > undefined.
+ */
+export const readInitConfig = (): OIBusInitConfig => {
+  if (existsSync(INIT_CONFIG_FILENAME)) {
+    try {
+      const raw = readFileSync(INIT_CONFIG_FILENAME, 'utf8');
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      return {
+        engineName: typeof parsed.engineName === 'string' ? parsed.engineName : undefined,
+        adminUsername: typeof parsed.adminUsername === 'string' ? parsed.adminUsername : undefined,
+        adminPassword: typeof parsed.adminPassword === 'string' ? parsed.adminPassword : undefined,
+        port: typeof parsed.port === 'number' ? parsed.port : undefined
+      };
+    } catch (err) {
+      console.warn(`Failed to parse ${INIT_CONFIG_FILENAME}: ${(err as Error).message}; falling back to env vars / defaults`);
+    }
+  }
+
+  const portEnv = process.env.DEFAULT_PORT;
+  const parsedPort = portEnv ? parseInt(portEnv, 10) : NaN;
+  return {
+    engineName: process.env.ENGINE_NAME || undefined,
+    adminUsername: readSecretOrEnv('ADMIN_USERNAME_FILE', 'ADMIN_USERNAME'),
+    adminPassword: readSecretOrEnv('ADMIN_PASSWORD_FILE', 'ADMIN_PASSWORD'),
+    port: Number.isNaN(parsedPort) ? undefined : parsedPort
+  };
+};
+
 /**
  * Method to return a delayed promise.
  */
@@ -63,34 +109,31 @@ export const delay = (timeout: number): Promise<void> =>
 
 /**
  * Compute a list of intervals from a start, end, and maxInterval.
+ * When strategy is 'newest', the returned array is reversed so the most recent interval is queried first.
+ * numberOfIntervalsDone reflects how many intervals (counting from the oldest side) are already covered by the cache.
  */
 export const generateIntervals = (
-  startInstant: Instant,
-  startInstantFromCache: Instant,
+  trackedInstant: Instant,
   endInstant: Instant,
-  maxNumberOfSecondsInInterval: number
-): { intervals: Array<Interval>; numberOfIntervalsDone: number } => {
-  const startTime = DateTime.fromISO(startInstant);
-  const startTimeFromCache = DateTime.fromISO(startInstantFromCache);
+  maxNumberOfSecondsInInterval: number,
+  strategy: SouthHistoryRecoveryStrategy = 'oldest'
+): Array<Interval> => {
+  const startTime = DateTime.fromISO(trackedInstant);
   const endTime = DateTime.fromISO(endInstant);
   const originalInterval = endTime.toMillis() - startTime.toMillis();
-  let numberOfIntervalsDone = 0;
 
-  if (maxNumberOfSecondsInInterval <= 0) {
-    return {
-      intervals: [{ start: startInstantFromCache, end: endInstant }],
-      numberOfIntervalsDone: 0
-    };
+  if (maxNumberOfSecondsInInterval <= 0 || originalInterval <= 0) {
+    return [{ start: trackedInstant, end: endInstant }];
   }
 
   const intervalLists: Array<Interval> = [];
   const intervalDuration = maxNumberOfSecondsInInterval * 1000;
   const numberOfIntervals = Math.ceil(originalInterval / intervalDuration);
 
-  let currentStart = startTime.toMillis();
+  const currentStart = startTime.toMillis();
   for (let i = 0; i < numberOfIntervals; i += 1) {
-    const newStartTime = DateTime.fromMillis(currentStart);
-    const newEndTime = DateTime.fromMillis(currentStart + intervalDuration);
+    const newStartTime = DateTime.fromMillis(currentStart + intervalDuration * i);
+    const newEndTime = DateTime.fromMillis(currentStart + intervalDuration * (i + 1));
 
     if (newEndTime > endTime) {
       // Last interval: adjust end to endTime
@@ -99,22 +142,18 @@ export const generateIntervals = (
         end: endTime.toUTC().toISO() as Instant
       });
     } else {
-      // Handle the first unqueried interval It is needed to not query again the part of the interval that has already been queried
-      let adjustedStart = newStartTime;
-      if (newStartTime < startTimeFromCache && startTimeFromCache < newEndTime) {
-        adjustedStart = startTimeFromCache;
-      }
       intervalLists.push({
-        start: adjustedStart.toUTC().toISO() as Instant,
+        start: newStartTime.toUTC().toISO() as Instant,
         end: newEndTime.toUTC().toISO() as Instant
       });
-      if (newEndTime <= startTimeFromCache) {
-        numberOfIntervalsDone += 1;
-      }
     }
-    currentStart += intervalDuration;
   }
-  return { intervals: intervalLists, numberOfIntervalsDone };
+
+  if (strategy === 'newest') {
+    intervalLists.reverse();
+  }
+
+  return intervalLists;
 };
 
 /**
@@ -764,7 +803,8 @@ export const itemToFlattenedCSV = (
     columns.add('group');
     columns.add('maxReadInterval');
     columns.add('readDelay');
-    columns.add('overlap');
+    columns.add('startTimeOffset');
+    columns.add('endTimeOffset');
     columns.add('syncWithGroup');
   }
 
