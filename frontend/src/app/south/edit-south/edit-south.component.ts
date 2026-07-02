@@ -16,7 +16,7 @@ import { ObservableState, SaveButtonComponent } from '../../shared/save-button/s
 import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest, firstValueFrom, merge, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, firstValueFrom, map, merge, Observable, of, switchMap, tap } from 'rxjs';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
@@ -40,7 +40,6 @@ import { emptyPage } from '../../shared/test-utils';
 import EditSouthItemModalComponent from '../south-items/edit-south-item-modal/edit-south-item-modal.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { ExportItemModalComponent } from '../../shared/export-item-modal/export-item-modal.component';
-import { ImportItemModalComponent } from '../../shared/import-item-modal/import-item-modal.component';
 import { OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
@@ -412,7 +411,7 @@ export class EditSouthComponent implements CanComponentDeactivate {
   }
 
   importItems() {
-    const modal = this.modalService.open(ImportItemModalComponent, { backdrop: 'static' });
+    const modal = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
     const expectedHeaders = ['name', 'enabled', 'scanMode'];
     const optionalHeaders: Array<string> = ['group', 'maxReadInterval', 'readDelay', 'overlap', 'syncWithGroup'];
     const settingsAttribute = this.manifest!.items.rootAttribute.attributes.find(
@@ -426,51 +425,53 @@ export class EditSouthComponent implements CanComponentDeactivate {
       }
     });
 
+    const checkFn = (file: File, delimiter: string, deleteItemsNotPresent: boolean) =>
+      this.southConnectorService.checkImportItems(this.manifest!.id, this.inMemoryItems, file, delimiter, deleteItemsNotPresent).pipe(
+        map(result => ({
+          items: result.items.map(
+            item =>
+              ({
+                id: item.id,
+                name: item.name,
+                enabled: item.enabled,
+                settings: item.settings,
+                scanModeId: item.scanMode?.id || null,
+                scanModeName: item.scanMode?.name || null,
+                groupId: item.group?.id || null,
+                groupName: item.group?.standardSettings.name ?? null,
+                syncWithGroup: item.syncWithGroup,
+                maxReadInterval: item.maxReadInterval,
+                readDelay: item.readDelay,
+                overlap: item.overlap
+              }) as SouthConnectorItemCommandDTO
+          ),
+          errors: result.errors
+        }))
+      );
+
     if (this.manifest!.id === 'mqtt') {
       modal.componentInstance.prepare(
+        this.manifest!,
         expectedHeaders,
         optionalHeaders,
         this.inMemoryItems.map(item => (item.settings as any)?.topic).filter(topic => topic && typeof topic === 'string' && topic.trim()),
-        true
+        true,
+        true,
+        checkFn
       );
     } else {
-      modal.componentInstance.prepare(expectedHeaders, optionalHeaders, [], false);
+      modal.componentInstance.prepare(this.manifest!, expectedHeaders, optionalHeaders, [], false, true, checkFn);
     }
 
-    modal.result.subscribe(response => {
+    modal.result.subscribe((response: { items: Array<SouthConnectorItemCommandDTO>; eraseExisting: boolean } | undefined) => {
       if (!response) return;
-      this.checkImportItems(response.file, response.delimiter);
-    });
-  }
-
-  checkImportItems(file: File, delimiter: string) {
-    this.southConnectorService.checkImportItems(this.manifest!.id, this.inMemoryItems, file, delimiter).subscribe(result => {
-      const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl', backdrop: 'static' });
-      const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
-      const commandItems: Array<SouthConnectorItemCommandDTO> = result.items.map(
-        item =>
-          ({
-            id: item.id,
-            name: item.name,
-            enabled: item.enabled,
-            settings: item.settings,
-            scanModeId: item.scanMode?.id || null,
-            scanModeName: item.scanMode?.name || null,
-            groupId: item.group?.id || null,
-            groupName: item.group?.standardSettings.name ?? null,
-            syncWithGroup: item.syncWithGroup,
-            maxReadInterval: item.maxReadInterval,
-            readDelay: item.readDelay,
-            overlap: item.overlap
-          }) as SouthConnectorItemCommandDTO
-      );
-      component.prepare(this.manifest!, this.inMemoryItems, commandItems, result.errors, this.scanModes);
-      modalRef.result.subscribe((newItems: Array<SouthConnectorItemCommandDTO>) => {
-        for (const item of newItems) {
-          this.inMemoryItems.push(item);
-        }
-        this.resetPage();
-      });
+      if (response.eraseExisting) {
+        this.inMemoryItems.length = 0;
+      }
+      for (const item of response.items) {
+        this.inMemoryItems.push(item);
+      }
+      this.resetPage();
     });
   }
 

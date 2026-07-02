@@ -1075,6 +1075,95 @@ describe('South Service', () => {
     });
   });
 
+  it('should properly check items with group name and no scan mode from CSV', async () => {
+    const csvData = [
+      {
+        name: 'itemWithGroupNoScanMode',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: '',
+        group: 'Test Group'
+      }
+    ];
+
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(
+      testData.south.list[0].type,
+      'file content',
+      ',',
+      testData.south.list[0].items.map(item => ({ ...item, group: null }))
+    );
+    assert.deepStrictEqual(result, {
+      items: [
+        {
+          id: '',
+          name: csvData[0].name,
+          enabled: true,
+          scanMode: null,
+          settings: {
+            ignoreModifiedDate: true,
+            minAge: 100,
+            preserveFiles: true,
+            regex: '*'
+          },
+          group: { id: '', standardSettings: { name: 'Test Group' } },
+          maxReadInterval: 0,
+          overlap: 0,
+          readDelay: 0,
+          syncWithGroup: true
+        }
+      ],
+      errors: []
+    });
+  });
+
+  it('should reject items with no scan mode and no group from CSV', async () => {
+    const csvData = [
+      {
+        name: 'itemWithoutGroupOrScanMode',
+        enabled: 'true',
+        settings_regex: '*',
+        settings_preserveFiles: 'true',
+        settings_ignoreModifiedDate: 'false',
+        settings_minAge: 100,
+        scanMode: '',
+        group: ''
+      }
+    ];
+
+    const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
+    if (papaparseMod) {
+      (papaparseMod.exports as { parse: ReturnType<typeof mock.fn> }).parse.mock.mockImplementation(
+        seq(() => ({ meta: { delimiter: ',' }, data: csvData }))
+      );
+    }
+
+    const result = await service.checkImportItems(
+      testData.south.list[0].type,
+      'file content',
+      ',',
+      testData.south.list[0].items.map(item => ({ ...item, group: null }))
+    );
+    assert.deepStrictEqual(result, {
+      items: [],
+      errors: [
+        {
+          error: `Scan mode not specified for item "${csvData[0].name}"`,
+          item: csvData[0]
+        }
+      ]
+    });
+  });
+
   it('should throw error if delimiter does not match', async () => {
     const papaparseMod = nodeRequire.cache[nodeRequire.resolve('papaparse')];
     if (papaparseMod) {
