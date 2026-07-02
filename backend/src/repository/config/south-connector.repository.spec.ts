@@ -75,7 +75,8 @@ describe('SouthConnectorRepository', () => {
       maxReadInterval: null,
       readDelay: null,
       startTimeOffset: null,
-      endTimeOffset: null
+      endTimeOffset: null,
+      recoveryStrategy: null
     };
     newSouthConnector.items = [...testData.south.list[1].items, newItem];
     repository.saveSouth(newSouthConnector);
@@ -87,7 +88,9 @@ describe('SouthConnectorRepository', () => {
   it('should update a south connector item with non-null historian fields', () => {
     const connector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
     connector.items = connector.items.map((item, index) =>
-      index === 0 ? { ...item, maxReadInterval: 3600, readDelay: 200, startTimeOffset: 100, endTimeOffset: null } : item
+      index === 0
+        ? { ...item, maxReadInterval: 3600, readDelay: 200, startTimeOffset: 100, endTimeOffset: null, recoveryStrategy: null }
+        : item
     );
     repository.saveSouth(connector);
 
@@ -200,7 +203,8 @@ describe('SouthConnectorRepository', () => {
       maxReadInterval: null,
       readDelay: null,
       startTimeOffset: null,
-      endTimeOffset: null
+      endTimeOffset: null,
+      recoveryStrategy: null
     };
     const itemsToSave: Array<SouthConnectorItemEntity<SouthItemSettings>> = JSON.parse(JSON.stringify(testData.south.list[0].items));
     itemsToSave.push(newItem);
@@ -236,7 +240,8 @@ describe('SouthConnectorRepository', () => {
       maxReadInterval: null,
       readDelay: null,
       startTimeOffset: null,
-      endTimeOffset: null
+      endTimeOffset: null,
+      recoveryStrategy: null
     };
     itemsToSave.push(newItem);
 
@@ -261,6 +266,7 @@ describe('SouthConnectorRepository', () => {
         scanMode: testData.scanMode.list[0],
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -280,6 +286,7 @@ describe('SouthConnectorRepository', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -307,6 +314,7 @@ describe('SouthConnectorRepository', () => {
         scanMode: testData.scanMode.list[0],
         startTimeOffset: 10,
         endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -325,6 +333,7 @@ describe('SouthConnectorRepository', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -353,6 +362,7 @@ describe('SouthConnectorRepository', () => {
       readDelay: 200,
       startTimeOffset: 100,
       endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -382,6 +392,7 @@ describe('SouthConnectorRepository', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -406,6 +417,7 @@ describe('SouthConnectorRepository', () => {
         scanMode: testData.scanMode.list[0],
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -435,6 +447,7 @@ describe('SouthConnectorRepository', () => {
         scanMode: testData.scanMode.list[0],
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -472,6 +485,7 @@ describe('SouthConnectorRepository', () => {
       scanMode: testData.scanMode.list[0],
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
       maxReadInterval: null,
       readDelay: 0,
       createdBy: '',
@@ -492,6 +506,7 @@ describe('SouthConnectorRepository', () => {
       readDelay: null,
       startTimeOffset: null,
       endTimeOffset: null,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -530,6 +545,7 @@ describe('SouthConnectorRepository', () => {
         scanMode: testData.scanMode.list[0],
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -555,6 +571,7 @@ describe('SouthConnectorRepository', () => {
         scanMode: testData.scanMode.list[0],
         startTimeOffset: null,
         endTimeOffset: null,
+        recoveryStrategy: null,
         maxReadInterval: null,
         readDelay: 0
       },
@@ -571,6 +588,7 @@ describe('SouthConnectorRepository', () => {
       scanMode: testData.scanMode.list[1],
       startTimeOffset: 500,
       endTimeOffset: null,
+      recoveryStrategy: null,
       maxReadInterval: 3600,
       readDelay: 200
     };
