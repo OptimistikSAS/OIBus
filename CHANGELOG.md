@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.8.6](https://github.com/OptimistikSAS/OIBus/compare/v3.8.5...v3.8.6) (2026-07-03)
+
+
+### Bug Fixes
+
+* display group (schedule) in item list ([0696c28](https://github.com/OptimistikSAS/OIBus/commit/0696c28766112df76cd67a4da0a06b6da4c6ff63))
+* **frontend:** fix form builder when undefined values because of disabled field ([24a58a9](https://github.com/OptimistikSAS/OIBus/commit/24a58a90330eab53489dc415575be960e5b5d5d3))
+* **oianalytics:** allow separate same-key fields with aggregated values in HTTP ([d9cae49](https://github.com/OptimistikSAS/OIBus/commit/d9cae49c9df4f7ec35c97c047e761b8be89c9407))
+* **opcua:** properly reconnect subscription in case of network or server failure ([1850f9e](https://github.com/OptimistikSAS/OIBus/commit/1850f9e10d9dfeb25e407db5f0a30e9ee181a36f))
+* **south-rest:** do not override query params ([e822374](https://github.com/OptimistikSAS/OIBus/commit/e8223743599a9ae1cf478f2e87c9d6fec97ed72e))
+* **south:** fix and improve importation of items ([c8c7339](https://github.com/OptimistikSAS/OIBus/commit/c8c7339ba5dc53b80b8783d04933e63cb51768f2))
+* **south:** remove file from south-rest cache when sent ([f8a1856](https://github.com/OptimistikSAS/OIBus/commit/f8a1856259532a2f13a0ca31e054c1b1ad13bd1b))
+
 ## [3.8.5](https://github.com/OptimistikSAS/OIBus/compare/v3.8.4...v3.8.5) (2026-06-24)
 
 
