@@ -52,6 +52,7 @@ describe('SouthRestAPI connector', () => {
   let fsMock: {
     writeFile: ReturnType<typeof mock.fn>;
     stat: ReturnType<typeof mock.fn>;
+    unlink: ReturnType<typeof mock.fn>;
   };
 
   before(() => {
@@ -132,7 +133,8 @@ describe('SouthRestAPI connector', () => {
     httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200));
     fsMock = {
       writeFile: mock.method(fs, 'writeFile', async () => undefined) as unknown as ReturnType<typeof mock.fn>,
-      stat: mock.method(fs, 'stat', async () => ({ size: 100 })) as unknown as ReturnType<typeof mock.fn>
+      stat: mock.method(fs, 'stat', async () => ({ size: 100 })) as unknown as ReturnType<typeof mock.fn>,
+      unlink: mock.method(fs, 'unlink', async () => undefined) as unknown as ReturnType<typeof mock.fn>
     };
     utilsExports.formatInstant = mock.fn((instant: string) => instant);
     utilsExports.convertDateTimeToInstant = mock.fn((val: unknown) => {
@@ -520,6 +522,26 @@ describe('SouthRestAPI connector', () => {
     assert.strictEqual(cbArgs[0], 'south-rest');
     assertContains(cbArgs[1] as object, { type: 'any' });
     assert.ok((cbArgs[1] as { filePath: string }).filePath.includes('REST-Test Item-random-id.json'));
+
+    assert.strictEqual(fsMock.unlink.mock.calls.length, 1, 'the temp file should be deleted from the south cache once sent');
+    assert.strictEqual(fsMock.unlink.mock.calls[0].arguments[0], (cbArgs[1] as { filePath: string }).filePath);
+  });
+
+  it('should log an error but not throw if deleting the temp file fails after caching', async () => {
+    const item1 = createItem({ endpoint: '/item1' });
+    mock.method(
+      south,
+      'queryData',
+      mock.fn(async () => ({ filename: 'REST-Test Item-random-id.json', content: 'content', maxInstant: null }))
+    );
+    fsMock.unlink.mock.mockImplementation(async () => {
+      throw new Error('EBUSY');
+    });
+
+    await south.historyQuery([item1], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    assert.strictEqual(addContentCallback.mock.calls.length, 1);
+    assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Error when deleting file')));
   });
 
   it('should update maxInstant across multiple items in historyQuery', async () => {
@@ -547,6 +569,7 @@ describe('SouthRestAPI connector', () => {
 
     assert.strictEqual(fsMock.writeFile.mock.calls.length, 1);
     assert.strictEqual(addContentCallback.mock.calls.length, 0);
+    assert.strictEqual(fsMock.unlink.mock.calls.length, 1, 'the empty temp file should still be cleaned up');
   });
 
   // --------------------------------------------------------------------------

@@ -96,8 +96,19 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     if (stats.size > 0) {
       this.logger.info(`Downloaded file for item ${items[0].name} (${stats.size} bytes) in ${requestDuration} ms`);
       await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [items[0]]);
+      try {
+        await fs.unlink(filePath);
+        this.logger.trace(`File "${filePath}" deleted`);
+      } catch (unlinkError) {
+        this.logger.error(`Error when deleting file "${filePath}" after caching it. ${unlinkError}`);
+      }
     } else {
       this.logger.debug(`Empty file downloaded for item ${items[0].name}. Request done in ${requestDuration} ms`);
+      try {
+        await fs.unlink(filePath);
+      } catch (unlinkError) {
+        this.logger.error(`Error when deleting empty file "${filePath}". ${unlinkError}`);
+      }
     }
 
     return { trackedInstant: maxInstant, value: content };
