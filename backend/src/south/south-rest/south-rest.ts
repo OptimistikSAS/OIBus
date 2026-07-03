@@ -122,7 +122,7 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
     const host = this.connector.settings.host;
     const requestUrl = new URL(item.settings.endpoint, host);
 
-    const query: Record<string, string | number> = {};
+    const query: Record<string, string | number | Array<string | number>> = {};
 
     for (const queryParam of item.settings.queryParams) {
       let value = queryParam.value;
@@ -144,7 +144,15 @@ export default class SouthRest extends SouthConnector<SouthRestSettings, SouthRe
         });
         value = value.replace(/@EndTime/g, String(formattedEndTime));
       }
-      query[queryParam.key] = value;
+
+      const existingValue = query[queryParam.key];
+      if (existingValue === undefined) {
+        query[queryParam.key] = value;
+      } else if (Array.isArray(existingValue)) {
+        existingValue.push(value);
+      } else {
+        query[queryParam.key] = [existingValue, value];
+      }
     }
 
     let body: string | undefined;

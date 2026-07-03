@@ -225,6 +225,47 @@ describe('SouthRestAPI connector', () => {
     });
   });
 
+  it('should turn a repeated query param key into an array instead of overwriting it', async () => {
+    const item = createItem({
+      queryParams: [
+        { key: 'tag', value: 'a' },
+        { key: 'tag', value: 'b' },
+        { key: 'other', value: 'x' }
+      ]
+    });
+
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, { data: [] }));
+
+    await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const options = getRequestOptions();
+    assert.deepStrictEqual(options.query, {
+      tag: ['a', 'b'],
+      other: 'x'
+    });
+  });
+
+  it('should turn a repeated key into an array of substituted @StartTime/@EndTime values', async () => {
+    const item = createItem({
+      queryParams: [
+        { key: 'tag', value: '@StartTime', dateTimeInput: { type: 'iso-string' } },
+        { key: 'tag', value: '@EndTime', dateTimeInput: { type: 'iso-string' } }
+      ]
+    });
+
+    const fmtQueue = [testData.constants.dates.DATE_1, testData.constants.dates.DATE_2];
+    let fmtIdx = 0;
+    utilsExports.formatInstant = mock.fn(() => fmtQueue[fmtIdx++] ?? '');
+    httpRequestExports.HTTPRequest = mock.fn(async (_url: URL, _options?: unknown) => createMockResponse(200, { data: [] }));
+
+    await south.queryData(item, testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
+
+    const options = getRequestOptions();
+    assert.deepStrictEqual(options.query, {
+      tag: [testData.constants.dates.DATE_1, testData.constants.dates.DATE_2]
+    });
+  });
+
   it('should replace @StartTime and @EndTime in Headers', async () => {
     const item = createItem({
       headers: [
