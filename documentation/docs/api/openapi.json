@@ -383,7 +383,8 @@
 					"PATTERN",
 					"UNIQUE",
 					"SINGLE_TRUE",
-					"MQTT_TOPIC_OVERLAP"
+					"MQTT_TOPIC_OVERLAP",
+					"PLATFORM"
 				],
 				"description": "Type representing the possible validator types for OIBus form attributes."
 			},
@@ -2506,10 +2507,7 @@
 				},
 				"required": [
 					"inputFolder",
-					"compression",
-					"username",
-					"password",
-					"domain"
+					"compression"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -20579,10 +20577,7 @@
 				"required": [
 					"outputFolder",
 					"prefix",
-					"suffix",
-					"username",
-					"password",
-					"domain"
+					"suffix"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -38443,7 +38438,7 @@
 				}
 			}
 		},
-		"/api/engine/name": {
+		"/api/name": {
 			"put": {
 				"operationId": "UpdateEngineName",
 				"responses": {
@@ -38470,7 +38465,7 @@
 				}
 			}
 		},
-		"/api/engine/web-server": {
+		"/api/web-server": {
 			"put": {
 				"operationId": "UpdateEngineWebServer",
 				"responses": {
@@ -38504,7 +38499,7 @@
 				}
 			}
 		},
-		"/api/engine/proxy": {
+		"/api/proxy": {
 			"put": {
 				"operationId": "UpdateEngineProxy",
 				"responses": {
@@ -38531,7 +38526,7 @@
 				}
 			}
 		},
-		"/api/engine/logger": {
+		"/api/logger": {
 			"put": {
 				"operationId": "UpdateEngineLogger",
 				"responses": {

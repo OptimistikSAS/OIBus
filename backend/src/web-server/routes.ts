@@ -164,7 +164,7 @@ const models: TsoaRoute.Models = {
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusAttributeValidatorType": {
         "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["REQUIRED"]},{"dataType":"enum","enums":["MINIMUM"]},{"dataType":"enum","enums":["MAXIMUM"]},{"dataType":"enum","enums":["POSITIVE_INTEGER"]},{"dataType":"enum","enums":["VALID_CRON"]},{"dataType":"enum","enums":["PATTERN"]},{"dataType":"enum","enums":["UNIQUE"]},{"dataType":"enum","enums":["SINGLE_TRUE"]},{"dataType":"enum","enums":["MQTT_TOPIC_OVERLAP"]}],"validators":{}},
+        "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["REQUIRED"]},{"dataType":"enum","enums":["MINIMUM"]},{"dataType":"enum","enums":["MAXIMUM"]},{"dataType":"enum","enums":["POSITIVE_INTEGER"]},{"dataType":"enum","enums":["VALID_CRON"]},{"dataType":"enum","enums":["PATTERN"]},{"dataType":"enum","enums":["UNIQUE"]},{"dataType":"enum","enums":["SINGLE_TRUE"]},{"dataType":"enum","enums":["MQTT_TOPIC_OVERLAP"]},{"dataType":"enum","enums":["PLATFORM"]}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "OIBusAttributeValidator": {
@@ -695,9 +695,9 @@ const models: TsoaRoute.Models = {
         "properties": {
             "inputFolder": {"dataType":"string","required":true},
             "compression": {"dataType":"boolean","required":true},
-            "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "domain": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "domain": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -4766,9 +4766,9 @@ const models: TsoaRoute.Models = {
             "outputFolder": {"dataType":"string","required":true},
             "prefix": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "suffix": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
-            "domain": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "username": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "password": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "domain": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -11841,7 +11841,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"EngineNameCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/engine/name',
+        app.put('/api/name',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
             ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineName)),
 
@@ -11872,7 +11872,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"EngineWebServerCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/engine/web-server',
+        app.put('/api/web-server',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
             ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineWebServer)),
 
@@ -11903,7 +11903,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"EngineProxyCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/engine/proxy',
+        app.put('/api/proxy',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
             ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineProxy)),
 
@@ -11934,7 +11934,7 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
                 command: {"in":"body","name":"command","required":true,"ref":"EngineLoggerCommandDTO"},
                 request: {"in":"request","name":"request","required":true,"dataType":"object"},
         };
-        app.put('/api/engine/logger',
+        app.put('/api/logger',
             ...(fetchMiddlewares<RequestHandler>(EngineController)),
             ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.updateEngineLogger)),
 

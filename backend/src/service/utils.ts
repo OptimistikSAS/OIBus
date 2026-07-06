@@ -653,7 +653,7 @@ export const getOIBusInfo = (oibusSettings: Omit<EngineSettingsDTO, 'createdBy' 
     launcherVersion: oibusSettings.launcherVersion,
     oibusId: oibusSettings.id,
     oibusName: oibusSettings.name,
-    platform: getPlatformFromOsType(os.type())
+    platform: getCurrentPlatform()
   };
 };
 
@@ -669,6 +669,12 @@ export const getPlatformFromOsType = (osType: string): string => {
       return 'unknown';
   }
 };
+
+/**
+ * Returns the normalized platform of the running process.
+ * Uses os.type() so the value matches OIBusInfo.platform consumed by the frontend.
+ */
+export const getCurrentPlatform = (): string => getPlatformFromOsType(os.type());
 
 /**
  * Validates a cron expression and returns the next 3 executions and a human-readable form.
