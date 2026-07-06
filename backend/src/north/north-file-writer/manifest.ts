@@ -61,7 +61,7 @@ const manifest: NorthConnectorManifest = {
         key: 'username',
         translationKey: 'configuration.oibus.manifest.north.file-writer.smb-username',
         defaultValue: '',
-        validators: [],
+        validators: [{ type: 'PLATFORM', arguments: ['windows'] }],
         displayProperties: {
           row: 1,
           columns: 4,
@@ -72,7 +72,7 @@ const manifest: NorthConnectorManifest = {
         type: 'secret',
         key: 'password',
         translationKey: 'configuration.oibus.manifest.north.file-writer.smb-password',
-        validators: [],
+        validators: [{ type: 'PLATFORM', arguments: ['windows'] }],
         displayProperties: {
           row: 1,
           columns: 4,
@@ -84,7 +84,7 @@ const manifest: NorthConnectorManifest = {
         key: 'domain',
         translationKey: 'configuration.oibus.manifest.north.file-writer.smb-domain',
         defaultValue: '',
-        validators: [],
+        validators: [{ type: 'PLATFORM', arguments: ['windows'] }],
         displayProperties: {
           row: 1,
           columns: 4,

@@ -1283,6 +1283,13 @@ describe('Service utils', () => {
     assert.deepStrictEqual(utils.getPlatformFromOsType('unknown'), 'unknown');
   });
 
+  it('should return the current platform from os type', () => {
+    mock.method(os, 'type', () => 'Windows_NT');
+    assert.strictEqual(utils.getCurrentPlatform(), 'windows');
+    mock.method(os, 'type', () => 'Linux');
+    assert.strictEqual(utils.getCurrentPlatform(), 'linux');
+  });
+
   describe('validateCronExpression', () => {
     it('should properly validate a cron expression (every second)', () => {
       mock.method(Date, 'now', () => new Date(testData.constants.dates.FAKE_NOW).getTime());
