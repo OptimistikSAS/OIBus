@@ -21,7 +21,9 @@ describe('VersionCheckService', () => {
     hostname: 'localhost',
     operatingSystem: 'linux',
     architecture: 'x64',
-    platform: 'ubuntu'
+    platform: 'ubuntu',
+    ignoreIpFilters: false,
+    ignoreRemoteUpdate: false
   };
 
   beforeEach(() => {

@@ -17,6 +17,7 @@ import { RegistrationSettingsDTO } from '../../../../../backend/shared/model/eng
 import { RegisterOibusModalComponent } from './register-oibus-modal/register-oibus-modal.component';
 import { emptyPage } from '../../shared/test-utils';
 import { OIBusCommandDTO } from '../../../../../backend/shared/model/command.model';
+import testData from '../../../../../backend/src/tests/utils/test-data';
 
 const registrationNotRegistered: RegistrationSettingsDTO = {
   id: 'id',
@@ -73,6 +74,7 @@ describe('OIARegistrationComponent', () => {
     notificationService = createMock(NotificationService);
 
     engineService.getRegistrationSettings.mockReturnValue(of(registrationNotRegistered));
+    engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
     commandService.search.mockReturnValue(of(emptyPage<OIBusCommandDTO>()));
 
     TestBed.configureTestingModule({

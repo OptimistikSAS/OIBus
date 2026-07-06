@@ -166,6 +166,7 @@ describe('OIBus Service', () => {
       historyQueryService,
       userService,
       engine,
+      false,
       false
     );
   });
