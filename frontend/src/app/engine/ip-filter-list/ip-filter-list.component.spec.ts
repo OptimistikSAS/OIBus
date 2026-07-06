@@ -7,6 +7,7 @@ import { IpFilterListComponent } from './ip-filter-list.component';
 import { EditIpFilterModalComponent } from './edit-ip-filter-modal/edit-ip-filter-modal.component';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { IpFilterService } from '../../services/ip-filter.service';
+import { EngineService } from '../../services/engine.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.testing';
@@ -22,6 +23,7 @@ class IpFilterListComponentTester {
   readonly editButtons = this.root.getByCss('.edit-ip-filter');
   readonly addIpFilter = this.root.getByCss('#add-ip-filter');
   readonly noIpFilter = this.root.getByCss('#no-ip-filter');
+  readonly disabledMessage = this.root.getByCss('#ip-filter-disabled');
 
   constructor() {
     this.fixture.detectChanges();
@@ -31,20 +33,25 @@ class IpFilterListComponentTester {
 describe('IpFilterListComponent', () => {
   let tester: IpFilterListComponentTester;
   let ipFilterService: MockObject<IpFilterService>;
+  let engineService: MockObject<EngineService>;
   let confirmationService: MockObject<ConfirmationService>;
   let notificationService: MockObject<NotificationService>;
   let modalService: MockModalService<EditIpFilterModalComponent>;
 
   beforeEach(() => {
     ipFilterService = createMock(IpFilterService);
+    engineService = createMock(EngineService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
+
+    engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideModalTesting(),
         { provide: IpFilterService, useValue: ipFilterService },
+        { provide: EngineService, useValue: engineService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -109,6 +116,20 @@ describe('IpFilterListComponent', () => {
       tester = new IpFilterListComponentTester();
 
       await expect.element(tester.noIpFilter).toBeInTheDocument();
+    });
+  });
+
+  describe('when ip filters are ignored', () => {
+    beforeEach(() => {
+      engineService.getInfo.mockReturnValue(of({ ...testData.engine.oIBusInfo, ignoreIpFilters: true }));
+      ipFilterService.list.mockReturnValue(of(testData.ipFilters.list as unknown as Array<IPFilterDTO>));
+      tester = new IpFilterListComponentTester();
+    });
+
+    test('should display a disabled message and hide the list and add button', async () => {
+      await expect.element(tester.disabledMessage).toBeInTheDocument();
+      await expect.element(tester.ipFilters).toHaveLength(0);
+      await expect.element(tester.addIpFilter).not.toBeInTheDocument();
     });
   });
 });

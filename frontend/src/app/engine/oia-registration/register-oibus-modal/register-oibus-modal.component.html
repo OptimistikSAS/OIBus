@@ -166,6 +166,12 @@
       </ng-template>
 
       <div formGroupName="commandPermissions">
+        @if (ignoreRemoteUpdate()) {
+          <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert" id="remote-update-disabled">
+            <span class="icon-info-circle fs-5" aria-hidden="true"></span>
+            <span translate="oia-module.registration.remote-update-disabled"></span>
+          </div>
+        }
         <div class="row mb-2">
           <label class="form-label" translate="oia-module.commands.engine"></label>
           <div class="col-3">

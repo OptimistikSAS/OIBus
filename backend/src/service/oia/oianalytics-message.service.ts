@@ -64,7 +64,9 @@ export default class OIAnalyticsMessageService {
     private northRepository: NorthConnectorRepository,
     private historyQueryRepository: HistoryQueryRepository,
     private transformerRepository: TransformerRepository,
-    private oIAnalyticsClient: OIAnalyticsClient
+    private oIAnalyticsClient: OIAnalyticsClient,
+    private readonly ignoreIpFilters: boolean,
+    private readonly ignoreRemoteUpdate: boolean
   ) {}
 
   start(): void {
@@ -345,6 +347,7 @@ export default class OIAnalyticsMessageService {
   }
 
   private createEngineCommand(): OIAnalyticsEngineCommandDTO {
+    // TODO: split engine command and add data folders, ignoreIpFilters and ignoreRemoteUpdate flags
     const engine = this.engineRepository.get()!;
     const info = getOIBusInfo(engine);
     return {

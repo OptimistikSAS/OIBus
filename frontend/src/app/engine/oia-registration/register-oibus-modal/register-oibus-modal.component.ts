@@ -35,6 +35,7 @@ export class RegisterOibusModalComponent {
   testLoading = signal(false);
   testSuccess = signal(false);
   testError = signal<string | null>(null);
+  ignoreRemoteUpdate = signal(false);
 
   form = this.fb.group({
     host: ['', Validators.required],
@@ -101,7 +102,7 @@ export class RegisterOibusModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepare(registration: RegistrationSettingsDTO, mode: 'edit' | 'register') {
+  prepare(registration: RegistrationSettingsDTO, mode: 'edit' | 'register', ignoreRemoteUpdate: boolean) {
     this.mode = mode;
     this.form.patchValue({
       host: registration.host,
@@ -123,6 +124,11 @@ export class RegisterOibusModalComponent {
       this.host = registration.host;
       this.form.controls.host.disable();
     }
+    if (ignoreRemoteUpdate) {
+      this.ignoreRemoteUpdate.set(true);
+      this.form.controls.commandPermissions.controls.updateVersion.setValue(false);
+      this.form.controls.commandPermissions.controls.updateVersion.disable();
+    }
   }
 
   cancel() {
@@ -134,7 +140,7 @@ export class RegisterOibusModalComponent {
       return;
     }
 
-    const formValue = this.form.value;
+    const formValue = this.form.getRawValue();
     const commandHost = this.mode === 'edit' ? this.host : formValue.host!;
 
     const command: RegistrationSettingsCommandDTO = {
@@ -223,7 +229,7 @@ export class RegisterOibusModalComponent {
       return;
     }
 
-    const formValue = this.form.value;
+    const formValue = this.form.getRawValue();
     const commandHost = this.mode === 'edit' ? this.host : formValue.host!;
 
     const command: RegistrationSettingsCommandDTO = {
@@ -319,7 +325,7 @@ export class RegisterOibusModalComponent {
   enableAllPermissions() {
     Object.keys(this.commandPermissionsFormGroup.controls).forEach(key => {
       const control = this.commandPermissionsFormGroup.get(key);
-      if (control instanceof FormControl) {
+      if (control instanceof FormControl && control.enabled) {
         control.setValue(true);
       }
     });
@@ -328,7 +334,7 @@ export class RegisterOibusModalComponent {
   disableAllPermissions() {
     Object.keys(this.commandPermissionsFormGroup.controls).forEach(key => {
       const control = this.commandPermissionsFormGroup.get(key);
-      if (control instanceof FormControl) {
+      if (control instanceof FormControl && control.enabled) {
         control.setValue(false);
       }
     });
