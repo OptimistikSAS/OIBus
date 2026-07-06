@@ -1,11 +1,12 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 
-import { firstValueFrom, switchMap } from 'rxjs';
+import { combineLatest, firstValueFrom, switchMap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { IpFilterService } from '../../services/ip-filter.service';
+import { EngineService } from '../../services/engine.service';
 import { IPFilterDTO } from '../../../../../backend/shared/model/ip-filter.model';
 import { EditIpFilterModalComponent } from './edit-ip-filter-modal/edit-ip-filter-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -42,15 +43,18 @@ export class IpFilterListComponent {
   private modalService = inject(ModalService);
   private notificationService = inject(NotificationService);
   private ipFilterService = inject(IpFilterService);
+  private engineService = inject(EngineService);
 
   allIpFilters: Array<IPFilterDTO> = [];
   private filteredIpFilters: Array<IPFilterDTO> = [];
   displayedIpFilters: Page<IPFilterDTO> = emptyPage();
   sortField: IpFilterSortField = null;
   sortDirection: SortDirection = 'asc';
+  ignoreIpFilters = false;
 
   constructor() {
-    this.ipFilterService.list().subscribe(ipFilterList => {
+    combineLatest([this.engineService.getInfo(), this.ipFilterService.list()]).subscribe(([info, ipFilterList]) => {
+      this.ignoreIpFilters = info.ignoreIpFilters;
       this.allIpFilters = ipFilterList;
       this.updateList(0);
     });

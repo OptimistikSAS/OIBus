@@ -641,7 +641,11 @@ export const formatQueryParams = (
   return params;
 };
 
-export const getOIBusInfo = (oibusSettings: Omit<EngineSettingsDTO, 'createdBy' | 'updatedBy'>): OIBusInfo => {
+export const getOIBusInfo = (
+  oibusSettings: Omit<EngineSettingsDTO, 'createdBy' | 'updatedBy'>,
+  ignoreIpFilters = false,
+  ignoreRemoteUpdate = false
+): OIBusInfo => {
   return {
     dataDirectory: process.cwd(),
     binaryDirectory: process.execPath,
@@ -653,7 +657,9 @@ export const getOIBusInfo = (oibusSettings: Omit<EngineSettingsDTO, 'createdBy' 
     launcherVersion: oibusSettings.launcherVersion,
     oibusId: oibusSettings.id,
     oibusName: oibusSettings.name,
-    platform: getCurrentPlatform()
+    platform: getCurrentPlatform(),
+    ignoreIpFilters,
+    ignoreRemoteUpdate
   };
 };
 

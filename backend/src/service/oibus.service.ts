@@ -81,7 +81,8 @@ export default class OIBusService {
     private historyQueryService: HistoryQueryService,
     private userService: UserService,
     private engine: DataStreamEngine,
-    private readonly ignoreIpFilters: boolean
+    private readonly ignoreIpFilters: boolean,
+    private readonly ignoreRemoteUpdate: boolean
   ) {
     this.metrics = this.engineMetricsRepository.getMetrics(this.getEngineSettings().id)!;
     this.logger = this.loggerService.createChildLogger('internal');
@@ -148,7 +149,11 @@ export default class OIBusService {
   }
 
   getInfo(): OIBusInfo {
-    return getOIBusInfo(toEngineSettingsDTO(this.getEngineSettings(), id => this.userService.getUserInfo(id)));
+    return getOIBusInfo(
+      toEngineSettingsDTO(this.getEngineSettings(), id => this.userService.getUserInfo(id)),
+      this.ignoreIpFilters,
+      this.ignoreRemoteUpdate
+    );
   }
 
   getProxyServer(): ProxyServer {

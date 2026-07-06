@@ -40,7 +40,7 @@ describe('RegisterOibusModalComponent', () => {
   test('should render in register mode', async () => {
     const registration = testData.oIAnalytics.registration.completed as unknown as RegistrationSettingsDTO;
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
-    fixture.componentInstance.prepare(registration, 'register');
+    fixture.componentInstance.prepare(registration, 'register', false);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -50,7 +50,7 @@ describe('RegisterOibusModalComponent', () => {
   test('should populate form in edit mode with host disabled', async () => {
     const registration = testData.oIAnalytics.registration.completed as unknown as RegistrationSettingsDTO;
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
-    fixture.componentInstance.prepare(registration, 'edit');
+    fixture.componentInstance.prepare(registration, 'edit', false);
     fixture.detectChanges();
 
     const root = page.elementLocator(fixture.nativeElement);
@@ -64,7 +64,7 @@ describe('RegisterOibusModalComponent', () => {
     engineService.testOIAnalyticsConnection.mockReturnValue(of(undefined));
 
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
-    fixture.componentInstance.prepare(registration, 'register');
+    fixture.componentInstance.prepare(registration, 'register', false);
     fixture.componentInstance.form.controls.host.setValue('http://localhost:4200');
     fixture.detectChanges();
 
@@ -81,7 +81,7 @@ describe('RegisterOibusModalComponent', () => {
     engineService.register.mockReturnValue(of(undefined));
 
     const fixture = TestBed.createComponent(RegisterOibusModalComponent);
-    fixture.componentInstance.prepare(registration, 'register');
+    fixture.componentInstance.prepare(registration, 'register', false);
     fixture.componentInstance.form.controls.host.setValue('http://localhost:4200');
     fixture.detectChanges();
 
@@ -89,5 +89,22 @@ describe('RegisterOibusModalComponent', () => {
 
     expect(engineService.register).toHaveBeenCalled();
     expect(activeModal.close).toHaveBeenCalled();
+  });
+
+  test('should disable the update-version toggle when remote update is ignored', async () => {
+    const registration = testData.oIAnalytics.registration.completed as unknown as RegistrationSettingsDTO;
+
+    const fixture = TestBed.createComponent(RegisterOibusModalComponent);
+    fixture.componentInstance.prepare(registration, 'register', true);
+    fixture.detectChanges();
+
+    const updateVersionControl = fixture.componentInstance.form.controls.commandPermissions.controls.updateVersion;
+    expect(updateVersionControl.disabled).toBe(true);
+    expect(updateVersionControl.value).toBe(false);
+    expect(fixture.componentInstance.ignoreRemoteUpdate()).toBe(true);
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#remote-update-disabled')).toBeInTheDocument();
+    await expect.element(root.getByCss('#update-version')).toBeDisabled();
   });
 });

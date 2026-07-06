@@ -133,7 +133,9 @@ describe('OIAnalytics Message Service', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
-      oIAnalyticsClient
+      oIAnalyticsClient,
+      false,
+      false
     );
   });
 
@@ -398,7 +400,9 @@ describe('OIAnalytics message service without message', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
-      oIAnalyticsClient
+      oIAnalyticsClient,
+      false,
+      false
     );
   });
 
@@ -463,7 +467,9 @@ describe('OIAnalytics message service without completed registration', () => {
       northRepository,
       historyQueryRepository,
       transformerRepository,
-      oIAnalyticsClient
+      oIAnalyticsClient,
+      false,
+      false
     );
   });
 

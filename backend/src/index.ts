@@ -127,7 +127,9 @@ export async function bootstrap(): Promise<void> {
     repositoryService.northConnectorRepository,
     repositoryService.historyQueryRepository,
     repositoryService.transformerRepository,
-    oIAnalyticsClient
+    oIAnalyticsClient,
+    ignoreIpFilters,
+    ignoreRemoteUpdate
   );
 
   const dataStreamEngine = new DataStreamEngine(
@@ -208,7 +210,8 @@ export async function bootstrap(): Promise<void> {
     historyQueryService,
     userService,
     dataStreamEngine,
-    ignoreIpFilters
+    ignoreIpFilters,
+    ignoreRemoteUpdate
   );
   await oIBusService.start();
 
@@ -304,8 +307,10 @@ export async function bootstrap(): Promise<void> {
   rmSync(INIT_CONFIG_FILENAME, { force: true });
 
   const updatedOIBusSettings = repositoryService.engineRepository.get()!;
-  loggerService.logger.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
-  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
+  loggerService.logger.info(
+    `OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings, ignoreIpFilters, ignoreRemoteUpdate))}`
+  );
+  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings, ignoreIpFilters, ignoreRemoteUpdate))}`);
 }
 
 // Only auto-run when invoked as the application entry point, not when imported in tests.

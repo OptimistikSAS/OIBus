@@ -1531,7 +1531,9 @@ const oIBusInfo: OIBusInfo = {
   hostname: 'host name',
   operatingSystem: 'win',
   architecture: 'x64',
-  platform: 'Windows Server'
+  platform: 'Windows Server',
+  ignoreIpFilters: false,
+  ignoreRemoteUpdate: false
 };
 
 const southMetrics: SouthConnectorMetrics = {

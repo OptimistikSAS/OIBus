@@ -1261,10 +1261,22 @@ describe('Service utils', () => {
       launcherVersion: '3.5.0',
       oibusId: 'id',
       oibusName: 'name',
-      platform: utils.getPlatformFromOsType(os.type())
+      platform: utils.getPlatformFromOsType(os.type()),
+      ignoreIpFilters: false,
+      ignoreRemoteUpdate: false
     };
     const result = utils.getOIBusInfo({ id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO);
     assert.deepStrictEqual(result, expectedResult);
+  });
+
+  it('should get OIBus info with ignore flags set', () => {
+    const info = utils.getOIBusInfo(
+      { id: 'id', name: 'name', version: '3.3.3', launcherVersion: '3.5.0' } as EngineSettingsDTO,
+      true,
+      true
+    );
+    assert.strictEqual(info.ignoreIpFilters, true);
+    assert.strictEqual(info.ignoreRemoteUpdate, true);
   });
 
   it('should return OIBus info including architecture and os', () => {
