@@ -17,6 +17,7 @@ import { TransformerService } from '../services/transformer.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../test/vitest-create-mock';
 import { EngineSettingsDTO } from '../../../../backend/shared/model/engine.model';
+import testData from '../../../../backend/src/tests/utils/test-data';
 
 class EngineDetailComponentTester {
   readonly fixture = TestBed.createComponent(EngineDetailComponent);
@@ -61,6 +62,7 @@ describe('EngineDetailComponent', () => {
     transformerService = createMock(TransformerService);
 
     engineService.getEngineSettings.mockReturnValue(of(engineSettings));
+    engineService.getInfo.mockReturnValue(of(testData.engine.oIBusInfo));
     scanModeService.list.mockReturnValue(of([]));
     ipFilterService.list.mockReturnValue(of([]));
     certificateService.list.mockReturnValue(of([]));

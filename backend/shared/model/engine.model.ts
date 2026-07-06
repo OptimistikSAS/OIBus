@@ -1253,6 +1253,16 @@ export interface OIBusInfo {
    * @example "ubuntu"
    */
   platform: string;
+
+  /**
+   * Whether IP filters are ignored (disabled) via the --ignoreIpFilters launch flag.
+   */
+  ignoreIpFilters: boolean;
+
+  /**
+   * Whether remote update is ignored (disabled) via the --ignoreRemoteUpdate launch flag.
+   */
+  ignoreRemoteUpdate: boolean;
 }
 
 /**

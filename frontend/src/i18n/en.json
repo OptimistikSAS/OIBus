@@ -430,6 +430,7 @@
       "registered": "OIBus registered on {{ activationDate }}",
       "enable-all": "Enable All",
       "disable-all": "Disable All",
+      "remote-update-disabled": "Remote update is disabled on this OIBus (started with --ignoreRemoteUpdate), so the upgrade-version command cannot be enabled.",
       "test-connection": "Test connection",
       "test-connection-success": "Connection successful",
       "test-connection-error": "Error when testing connection"
@@ -673,6 +674,7 @@
       "created": "IP filter {{ address }} successfully created",
       "deleted": "IP filter {{ address }} deleted",
       "none": "No IP filter",
+      "disabled": "IP filtering is disabled on this OIBus (started with --ignoreIpFilters). Existing IP filters are not applied and cannot be configured here.",
       "name": "Name",
       "description": "Description",
       "address": "Address",

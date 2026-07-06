@@ -8,15 +8,17 @@
         }
       </div>
       <div>
-        <button
-          type="button"
-          id="add-ip-filter"
-          class="btn btn-primary btn-sm oib-box-btn"
-          [ngbTooltip]="'engine.ip-filter.tooltips.add' | translate"
-          (click)="addIpFilter()"
-        >
-          <span class="fa fa-plus"></span>
-        </button>
+        @if (!ignoreIpFilters) {
+          <button
+            type="button"
+            id="add-ip-filter"
+            class="btn btn-primary btn-sm oib-box-btn"
+            [ngbTooltip]="'engine.ip-filter.tooltips.add' | translate"
+            (click)="addIpFilter()"
+          >
+            <span class="fa fa-plus"></span>
+          </button>
+        }
 
         <oib-help url="https://oibus.optimistik.com/docs/guide/engine/ip-filters" />
       </div>
@@ -25,7 +27,12 @@
 </oib-box>
 
 <!-- the IP filter list -->
-@if (displayedIpFilters.content.length !== 0) {
+@if (ignoreIpFilters) {
+  <div class="alert alert-info d-flex align-items-center gap-2 mb-3" role="alert" id="ip-filter-disabled">
+    <span class="icon-info-circle fs-5" aria-hidden="true"></span>
+    <span translate="engine.ip-filter.disabled"></span>
+  </div>
+} @else if (displayedIpFilters.content.length !== 0) {
   <div>
     <table class="mb-2 table table-sm table-hover oib-table">
       <thead class="light">

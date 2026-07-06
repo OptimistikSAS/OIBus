@@ -62,6 +62,7 @@ export class OIARegistrationComponent {
   private destroyRef = inject(DestroyRef);
 
   registration = signal<RegistrationSettingsDTO | null>(null);
+  private ignoreRemoteUpdate = false;
   commands: Page<OIBusCommandDTO> = emptyPage();
   readonly statusList = OIBUS_COMMAND_STATUS;
   readonly typeList = OIBUS_COMMAND_TYPES;
@@ -73,6 +74,7 @@ export class OIARegistrationComponent {
   });
 
   constructor() {
+    this.oibusService.getInfo().subscribe(info => (this.ignoreRemoteUpdate = info.ignoreRemoteUpdate));
     this.createRegistrationSubscription();
     this.pageLoader.pageLoads$
       .pipe(
@@ -101,7 +103,7 @@ export class OIARegistrationComponent {
 
   register(): void {
     const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
-    modalRef.componentInstance.prepare(this.registration()!, 'register');
+    modalRef.componentInstance.prepare(this.registration()!, 'register', this.ignoreRemoteUpdate);
 
     modalRef.result.pipe(tap(() => this.notificationService.success('oia-module.registration.saved'))).subscribe(() => {
       this.createRegistrationSubscription();
@@ -110,7 +112,7 @@ export class OIARegistrationComponent {
 
   editRegister(): void {
     const modalRef = this.modalService.open(RegisterOibusModalComponent, { size: 'xl' });
-    modalRef.componentInstance.prepare(this.registration()!, 'edit');
+    modalRef.componentInstance.prepare(this.registration()!, 'edit', this.ignoreRemoteUpdate);
     this.refreshAfterModalClosed(modalRef);
   }
 
