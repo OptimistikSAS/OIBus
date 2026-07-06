@@ -410,9 +410,9 @@ export interface SouthADSSettings {
 export interface SouthFolderScannerSettings {
   inputFolder: string;
   compression: boolean;
-  username: string | null;
-  password: string | null;
-  domain: string | null;
+  username?: string | null;
+  password?: string | null;
+  domain?: string | null;
 }
 
 export interface SouthFTPSettings {

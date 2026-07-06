@@ -209,6 +209,16 @@ describe('settings-interface.generator', () => {
     it('undefinable=false when key does not match', () => {
       assert.equal(checkIfNullableOrUndefined(makeSimpleAttr('string', 'host'), conditions).undefinable, false);
     });
+
+    it('undefinable=true when a PLATFORM validator restricts to a subset of platforms', () => {
+      const attr = makeSimpleAttr('string', 'host', [{ type: 'PLATFORM', arguments: ['windows', 'linux'] } as never]);
+      assert.equal(checkIfNullableOrUndefined(attr, []).undefinable, true);
+    });
+
+    it('undefinable=false when a PLATFORM validator lists every platform', () => {
+      const attr = makeSimpleAttr('string', 'host', [{ type: 'PLATFORM', arguments: ['windows', 'linux', 'macos'] } as never]);
+      assert.equal(checkIfNullableOrUndefined(attr, []).undefinable, false);
+    });
   });
 
   // ── collectSubManifests ─────────────────────────────────────────────────

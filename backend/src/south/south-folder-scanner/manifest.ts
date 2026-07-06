@@ -59,7 +59,7 @@ const manifest: SouthConnectorManifest = {
         key: 'username',
         translationKey: 'configuration.oibus.manifest.south.folder-scanner.smb-username',
         defaultValue: '',
-        validators: [],
+        validators: [{ type: 'PLATFORM', arguments: ['windows'] }],
         displayProperties: {
           row: 2,
           columns: 4,
@@ -70,7 +70,7 @@ const manifest: SouthConnectorManifest = {
         type: 'secret',
         key: 'password',
         translationKey: 'configuration.oibus.manifest.south.folder-scanner.smb-password',
-        validators: [],
+        validators: [{ type: 'PLATFORM', arguments: ['windows'] }],
         displayProperties: {
           row: 2,
           columns: 4,
@@ -82,7 +82,7 @@ const manifest: SouthConnectorManifest = {
         key: 'domain',
         translationKey: 'configuration.oibus.manifest.south.folder-scanner.smb-domain',
         defaultValue: '',
-        validators: [],
+        validators: [{ type: 'PLATFORM', arguments: ['windows'] }],
         displayProperties: {
           row: 2,
           columns: 4,

@@ -3,7 +3,7 @@ import { ConnectorManifest } from '../shared/model/types';
 import { SouthConnectorManifest } from '../shared/model/south-connector.model';
 import { TransformerManifest } from '../shared/model/transformer.model';
 import path from 'node:path';
-import { OIBusAttribute, OIBusEnablingCondition, OIBusObjectAttribute } from '../shared/model/form.model';
+import { OIBUS_PLATFORMS, OIBusAttribute, OIBusEnablingCondition, OIBusObjectAttribute } from '../shared/model/form.model';
 
 const SOUTH_SETTINGS_DESTINATION_PATH = 'shared/model/south-settings.model.ts';
 const NORTH_SETTINGS_DESTINATION_PATH = 'shared/model/north-settings.model.ts';
@@ -295,7 +295,13 @@ export function checkIfNullableOrUndefined(
 ): { nullable: boolean; undefinable: boolean } {
   // if the setting has no validators, it is nullable
   const nullable = !setting.validators ? true : setting.validators.filter(validator => validator.type === 'REQUIRED').length === 0;
-  const undefinable = !!enablingConditions.find(enablingCondition => enablingCondition.targetPathFromRoot === setting.key);
+  // a field gated by an enabling condition, or restricted to a subset of platforms via a PLATFORM
+  // validator, may be absent from the settings object depending on the current context (another
+  // field's value, or the OS OIBus is running on), so it must be typed as possibly undefined.
+  const platformValidator = setting.validators?.find(validator => validator.type === 'PLATFORM');
+  const undefinable =
+    !!enablingConditions.find(enablingCondition => enablingCondition.targetPathFromRoot === setting.key) ||
+    (!!platformValidator && platformValidator.arguments.length < OIBUS_PLATFORMS.length);
 
   return { nullable, undefinable };
 }
