@@ -26,6 +26,19 @@ export const OIBUS_ATTRIBUTE_TYPES = [
 export type OIBusAttributeType = (typeof OIBUS_ATTRIBUTE_TYPES)[number];
 
 /**
+ * List of platforms on which an attribute can be enabled.
+ * Values match the normalized platform exposed on OIBusInfo.platform.
+ */
+export const OIBUS_PLATFORMS = ['windows', 'linux', 'macos'] as const;
+
+/**
+ * Type representing the possible platforms for OS-specific attributes.
+ *
+ * @example 'windows'
+ */
+export type OIBusPlatform = (typeof OIBUS_PLATFORMS)[number];
+
+/**
  * List of available validator types for OIBus form attributes.
  * These validators are used to enforce data constraints.
  */
@@ -38,7 +51,8 @@ export const OIBUS_ATTRIBUTE_VALIDATOR_TYPES = [
   'PATTERN', // Value must match a specific regex pattern
   'UNIQUE', // Value must be unique within a collection
   'SINGLE_TRUE', // Only one field in a group can be true
-  'MQTT_TOPIC_OVERLAP' // MQTT topics must not overlap
+  'MQTT_TOPIC_OVERLAP', // MQTT topics must not overlap
+  'PLATFORM' // Field is only enabled/validated on the listed platforms (arguments), see OIBUS_PLATFORMS
 ] as const;
 
 /**
@@ -476,3 +490,13 @@ export type OIBusDisplayableAttribute =
   | OIBusScanModeAttribute
   | OIBusCertificateAttribute
   | OIBusTimezoneAttribute;
+
+/**
+ * Whether an attribute is enabled on the given platform.
+ * An attribute with no `PLATFORM` validator is enabled on all platforms.
+ * Shared by the backend validator and the frontend dynamic form so both agree on the rule.
+ */
+export function isEnabledOnPlatform(attribute: OIBusAttribute, platform: string): boolean {
+  const platformValidator = attribute.validators?.find(validator => validator.type === 'PLATFORM');
+  return !platformValidator || platformValidator.arguments.includes(platform);
+}

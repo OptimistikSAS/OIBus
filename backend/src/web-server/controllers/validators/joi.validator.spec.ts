@@ -41,6 +41,9 @@ class JoiValidatorExtend extends JoiValidator {
   override mqttTopicMatches(topic: string, pattern: string): boolean {
     return super.mqttTopicMatches(topic, pattern);
   }
+  override getCurrentPlatform(): string {
+    return super.getCurrentPlatform();
+  }
 }
 
 const extendedValidator = new JoiValidatorExtend();
@@ -1271,6 +1274,43 @@ describe('Joi validator', () => {
 
         await assert.doesNotReject(extendedValidator.validateSettings(settings, validData));
       });
+    });
+  });
+
+  describe('OS-specific fields', () => {
+    const settings: OIBusObjectAttribute = {
+      key: 'settings',
+      type: 'object',
+      translationKey: 'Settings',
+      validators: [],
+      enablingConditions: [],
+      displayProperties: { visible: true, wrapInBox: false },
+      attributes: [
+        {
+          key: 'winField',
+          type: 'string',
+          translationKey: 'Windows field',
+          defaultValue: '',
+          validators: [
+            { type: 'REQUIRED', arguments: [] },
+            { type: 'PLATFORM', arguments: ['windows'] }
+          ],
+          displayProperties: { row: 0, columns: 4, displayInViewMode: true }
+        } as OIBusStringAttribute
+      ]
+    };
+
+    it('should enforce the field validators on the matching platform', async () => {
+      mock.method(extendedValidator, 'getCurrentPlatform', () => 'windows');
+      await assert.rejects(extendedValidator.validateSettings(settings, {}));
+      await assert.doesNotReject(extendedValidator.validateSettings(settings, { winField: 'value' }));
+    });
+
+    it('should relax the field on a non-matching platform', async () => {
+      mock.method(extendedValidator, 'getCurrentPlatform', () => 'linux');
+      await assert.doesNotReject(extendedValidator.validateSettings(settings, {}));
+      await assert.doesNotReject(extendedValidator.validateSettings(settings, { winField: null }));
+      await assert.doesNotReject(extendedValidator.validateSettings(settings, { winField: '' }));
     });
   });
 });

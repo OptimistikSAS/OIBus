@@ -13,10 +13,21 @@ import {
   OIBusSecretAttribute,
   OIBusStringAttribute,
   OIBusStringSelectAttribute,
-  OIBusTimezoneAttribute
+  OIBusTimezoneAttribute,
+  isEnabledOnPlatform
 } from '../../../../shared/model/form.model';
+import { getCurrentPlatform } from '../../../service/utils';
 
 export default class JoiValidator {
+  protected getCurrentPlatform(): string {
+    return getCurrentPlatform();
+  }
+
+  // Fields restricted to other platforms are irrelevant here: accept anything (including absent/null/empty).
+  private relaxIfDisabledOnPlatform(schema: AnySchema, attribute: OIBusAttribute, platform: string): AnySchema {
+    return isEnabledOnPlatform(attribute, platform) ? schema : Joi.any().optional();
+  }
+
   async validate(schema: Joi.ObjectSchema, dto: object): Promise<void> {
     await schema.validateAsync(dto, {
       abortEarly: false
@@ -143,6 +154,7 @@ export default class JoiValidator {
 
   generateFormGroupJoiSchema(objectAttribute: OIBusObjectAttribute): Record<string, Joi.ObjectSchema> {
     const subSchema: Record<string, AnySchema> = {};
+    const platform = this.getCurrentPlatform();
     objectAttribute.attributes.forEach(formControl => {
       subSchema[formControl.key] = this.generateJoiSchemaFromOibFormControl(formControl)[formControl.key];
       const enablingCondition = objectAttribute.enablingConditions.find(element => element.targetPathFromRoot === formControl.key);
@@ -153,6 +165,7 @@ export default class JoiValidator {
           otherwise: subSchema[formControl.key].allow('').optional()
         });
       }
+      subSchema[formControl.key] = this.relaxIfDisabledOnPlatform(subSchema[formControl.key], formControl, platform);
     });
     let schema = Joi.object(subSchema);
     objectAttribute.validators.forEach(validator => {
@@ -190,6 +203,7 @@ export default class JoiValidator {
       SINGLE_TRUE: [] as Array<string>
     };
 
+    const platform = this.getCurrentPlatform();
     objectAttribute.attributes.forEach(subControl => {
       subSchema[subControl.key] = this.generateJoiSchemaFromOibFormControl(subControl)[subControl.key];
       const enablingCondition = objectAttribute.enablingConditions.find(element => element.targetPathFromRoot === subControl.key);
@@ -200,6 +214,7 @@ export default class JoiValidator {
           otherwise: subSchema[subControl.key].allow('').optional()
         });
       }
+      subSchema[subControl.key] = this.relaxIfDisabledOnPlatform(subSchema[subControl.key], subControl, platform);
 
       subControl.validators?.forEach(validator => {
         if (validator.type === 'UNIQUE') {

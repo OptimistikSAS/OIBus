@@ -1,4 +1,6 @@
-import { Component, computed, effect, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, effect, inject, input, untracked, ChangeDetectionStrategy } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { AbstractControl, ControlContainer, FormControl, FormGroup, FormGroupName, ReactiveFormsModule } from '@angular/forms';
 
 import { TranslateDirective } from '@ngx-translate/core';
@@ -17,7 +19,9 @@ import { OIBusCodeFormControlComponent } from '../oibus-code-form-control/oibus-
 import { ScanModeDTO } from '../../../../../../backend/shared/model/scan-mode.model';
 import { CertificateDTO } from '../../../../../../backend/shared/model/certificate.model';
 import { OIBusArrayFormControlComponent } from '../oibus-array-form-control/oibus-array-form-control.component';
-import { addEnablingConditions } from '../dynamic-form.builder';
+import { addEnablingConditions, applyPlatformConditions } from '../dynamic-form.builder';
+import { isEnabledOnPlatform } from '../../../../../../backend/shared/model/form.model';
+import { EngineService } from '../../../services/engine.service';
 
 interface FormRow {
   columns: Array<FormColumn>;
@@ -66,6 +70,12 @@ export class OIBusObjectFormControlComponent {
   objectAttribute = input.required<OIBusObjectAttribute>();
   southId = input<string>();
 
+  private readonly platform = toSignal(
+    inject(EngineService)
+      .getInfo()
+      .pipe(map(info => info.platform))
+  );
+
   formRows = computed(() => {
     const rows: Array<FormRow> = [];
     this.objectAttribute().attributes.forEach(attribute => {
@@ -102,7 +112,21 @@ export class OIBusObjectFormControlComponent {
 
   constructor() {
     effect(() => {
-      addEnablingConditions(this.group(), this.objectAttribute().enablingConditions);
+      // Platform is read lazily (untracked) so this effect does not re-subscribe when the platform loads;
+      // it lets a platform restriction keep an off-platform target disabled even if its enabling condition is met.
+      addEnablingConditions(this.group(), this.objectAttribute().enablingConditions, targetPathFromRoot =>
+        untracked(() => {
+          const attribute = this.objectAttribute().attributes.find(candidate => candidate.key === targetPathFromRoot);
+          const platform = this.platform();
+          return !attribute || !platform || isEnabledOnPlatform(attribute, platform);
+        })
+      );
+    });
+    effect(() => {
+      const platform = this.platform();
+      if (platform) {
+        applyPlatformConditions(this.group(), this.objectAttribute(), platform);
+      }
     });
   }
 
