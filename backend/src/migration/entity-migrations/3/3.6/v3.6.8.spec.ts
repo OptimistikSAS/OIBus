@@ -180,6 +180,31 @@ describe('Entity migration v3.6.8', () => {
       );
     });
 
+    it("passes through 'timestamp', 'timestamptz' and bare 'string' old types unchanged", async () => {
+      await insertSouthConnector(db, { id: 'south-mssql', type: 'mssql' });
+      await insertSouthItem(db, {
+        id: 'item-mssql-passthrough',
+        connector_id: 'south-mssql',
+        settings: JSON.stringify({
+          query: 'select *',
+          dateTimeFields: [
+            { fieldName: 'a', type: 'timestamp' },
+            { fieldName: 'b', type: 'timestamptz' },
+            { fieldName: 'c', type: 'string' }
+          ]
+        })
+      });
+
+      await up(db);
+
+      const row = await db('south_items').where('id', 'item-mssql-passthrough').first();
+      const settings = JSON.parse(row.settings);
+      assert.deepStrictEqual(
+        settings.dateTimeFields.map((f: { type: string }) => f.type),
+        ['timestamp', 'timestamptz', 'string']
+      );
+    });
+
     it('does not touch items belonging to a non-mssql connector', async () => {
       await insertSouthConnector(db, { id: 'south-mqtt', type: 'mqtt' });
       await insertSouthItem(db, {

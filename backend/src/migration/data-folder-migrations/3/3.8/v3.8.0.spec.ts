@@ -193,5 +193,217 @@ describe('Data folder migration v3.8.0', () => {
       assert.strictEqual(fsSync.existsSync(path.join(tmpRoot, 'cache', NORTH_ID)), true);
       assert.strictEqual(fsSync.existsSync(path.join(tmpRoot, 'cache', 'history-test')), true);
     });
+
+    it('logs and continues when removing a legacy south folder fails', async () => {
+      const southCache = path.join(tmpRoot, 'cache', SOUTH_ID);
+      await fs.mkdir(southCache, { recursive: true });
+      await fs.writeFile(path.join(southCache, 'stuck.csv'), 'csv data');
+
+      // Deny write+execute on the "cache" parent so removing the south-* entry inside it fails (EACCES).
+      const cacheRoot = path.join(tmpRoot, 'cache');
+      await fs.chmod(cacheRoot, 0o555);
+      try {
+        // Must not throw: the error is caught and logged internally.
+        await assert.doesNotReject(migration.up({} as Knex));
+      } finally {
+        await fs.chmod(cacheRoot, 0o755);
+      }
+
+      // Folder removal failed, so the south folder is still present.
+      assert.strictEqual(fsSync.existsSync(southCache), true);
+    });
+  });
+
+  describe('north/history error and archive folders', () => {
+    it('refactors a north-* folder living under the error base folder', async () => {
+      const northErrorRoot = path.join(tmpRoot, 'error', NORTH_ID);
+      const contentDir = path.join(northErrorRoot, 'content');
+      const metadataDir = path.join(northErrorRoot, 'metadata');
+      await fs.mkdir(contentDir, { recursive: true });
+      await fs.mkdir(metadataDir, { recursive: true });
+      await fs.writeFile(path.join(metadataDir, 'err1.json'), metadataBody('original-err.csv'));
+      await fs.writeFile(path.join(contentDir, 'original-err.csv'), 'err data');
+
+      await migration.up({} as Knex);
+
+      assert.deepStrictEqual(await fs.readdir(metadataDir), ['err1']);
+      assert.deepStrictEqual(await fs.readdir(contentDir), ['err1']);
+    });
+
+    it('refactors a north-* folder living under the archive base folder', async () => {
+      const northArchiveRoot = path.join(tmpRoot, 'archive', NORTH_ID);
+      const contentDir = path.join(northArchiveRoot, 'content');
+      const metadataDir = path.join(northArchiveRoot, 'metadata');
+      await fs.mkdir(contentDir, { recursive: true });
+      await fs.mkdir(metadataDir, { recursive: true });
+      await fs.writeFile(path.join(metadataDir, 'arc1.json'), metadataBody('original-arc.csv'));
+      await fs.writeFile(path.join(contentDir, 'original-arc.csv'), 'arc data');
+
+      await migration.up({} as Knex);
+
+      assert.deepStrictEqual(await fs.readdir(metadataDir), ['arc1']);
+      assert.deepStrictEqual(await fs.readdir(contentDir), ['arc1']);
+    });
+
+    it('refactors the "north" subfolder of a history-* cache folder', async () => {
+      const historyNorthRoot = path.join(tmpRoot, 'cache', 'history-test', 'north');
+      const contentDir = path.join(historyNorthRoot, 'content');
+      const metadataDir = path.join(historyNorthRoot, 'metadata');
+      await fs.mkdir(contentDir, { recursive: true });
+      await fs.mkdir(metadataDir, { recursive: true });
+      await fs.writeFile(path.join(metadataDir, 'hist1.json'), metadataBody('original-hist.csv'));
+      await fs.writeFile(path.join(contentDir, 'original-hist.csv'), 'hist data');
+
+      await migration.up({} as Knex);
+
+      assert.deepStrictEqual(await fs.readdir(metadataDir), ['hist1']);
+      assert.deepStrictEqual(await fs.readdir(contentDir), ['hist1']);
+    });
+
+    it('refactors the "north" subfolder of a history-* error folder', async () => {
+      const historyNorthRoot = path.join(tmpRoot, 'error', 'history-test', 'north');
+      const contentDir = path.join(historyNorthRoot, 'content');
+      const metadataDir = path.join(historyNorthRoot, 'metadata');
+      await fs.mkdir(contentDir, { recursive: true });
+      await fs.mkdir(metadataDir, { recursive: true });
+      await fs.writeFile(path.join(metadataDir, 'histerr1.json'), metadataBody('original-histerr.csv'));
+      await fs.writeFile(path.join(contentDir, 'original-histerr.csv'), 'histerr data');
+
+      await migration.up({} as Knex);
+
+      assert.deepStrictEqual(await fs.readdir(metadataDir), ['histerr1']);
+      assert.deepStrictEqual(await fs.readdir(contentDir), ['histerr1']);
+    });
+
+    it('refactors the "north" subfolder of a history-* archive folder', async () => {
+      const historyNorthRoot = path.join(tmpRoot, 'archive', 'history-test', 'north');
+      const contentDir = path.join(historyNorthRoot, 'content');
+      const metadataDir = path.join(historyNorthRoot, 'metadata');
+      await fs.mkdir(contentDir, { recursive: true });
+      await fs.mkdir(metadataDir, { recursive: true });
+      await fs.writeFile(path.join(metadataDir, 'histarc1.json'), metadataBody('original-histarc.csv'));
+      await fs.writeFile(path.join(contentDir, 'original-histarc.csv'), 'histarc data');
+
+      await migration.up({} as Knex);
+
+      assert.deepStrictEqual(await fs.readdir(metadataDir), ['histarc1']);
+      assert.deepStrictEqual(await fs.readdir(contentDir), ['histarc1']);
+    });
+  });
+
+  describe('refactorNorthContent edge cases', () => {
+    it('logs and continues when the north folder has no metadata subfolder at all', async () => {
+      // Only the base north-* folder exists, without content/ or metadata/ subfolders.
+      const northRoot = path.join(tmpRoot, 'cache', 'north-bare');
+      await fs.mkdir(northRoot, { recursive: true });
+
+      await assert.doesNotReject(migration.up({} as Knex));
+
+      // Nothing to migrate; the folder itself is left untouched (no content/metadata folders created).
+      assert.deepStrictEqual(await fs.readdir(northRoot), []);
+    });
+
+    it('logs a rename failure when the metadata JSON references a non-existent content file', async () => {
+      const { contentDir, metadataDir } = await setupNorth();
+      // Valid JSON, but the referenced content file was never written.
+      await fs.writeFile(path.join(metadataDir, 'missing.json'), metadataBody('never-existed.csv'));
+
+      await assert.doesNotReject(migration.up({} as Knex));
+
+      // The rename failed, so the broken metadata entry (both json and bare forms) is cleaned up.
+      assert.deepStrictEqual(await fs.readdir(metadataDir), []);
+      assert.deepStrictEqual(await fs.readdir(contentDir), []);
+    });
+
+    it('logs a JSON parse failure for metadata files containing malformed (non-empty) JSON', async () => {
+      const { contentDir, metadataDir } = await setupNorth();
+      await fs.writeFile(path.join(metadataDir, 'malformed.json'), '{not valid json');
+      await fs.writeFile(path.join(contentDir, 'orphan.csv'), 'data');
+
+      await assert.doesNotReject(migration.up({} as Knex));
+
+      assert.deepStrictEqual(await fs.readdir(metadataDir), []);
+      assert.deepStrictEqual(await fs.readdir(contentDir), []);
+    });
+  });
+
+  describe('removeOPCUATestFolders', () => {
+    it('removes opcua-* folders from the data folder root', async () => {
+      const opcuaFolder = path.join(tmpRoot, 'opcua-test-server');
+      await fs.mkdir(opcuaFolder, { recursive: true });
+      await fs.writeFile(path.join(opcuaFolder, 'leftover.txt'), 'leftover');
+
+      await migration.up({} as Knex);
+
+      assert.strictEqual(fsSync.existsSync(opcuaFolder), false);
+    });
+
+    it('logs and continues when removing an opcua-* folder fails', async () => {
+      const opcuaFolder = path.join(tmpRoot, 'opcua-broken');
+      await fs.mkdir(opcuaFolder, { recursive: true });
+      await fs.writeFile(path.join(opcuaFolder, 'leftover.txt'), 'leftover');
+
+      // Deny write+execute on the data folder root so removing the opcua-* entry inside it fails (EACCES).
+      await fs.chmod(tmpRoot, 0o555);
+      try {
+        await assert.doesNotReject(migration.up({} as Knex));
+      } finally {
+        await fs.chmod(tmpRoot, 0o755);
+      }
+
+      assert.strictEqual(fsSync.existsSync(opcuaFolder), true);
+      await fs.rm(opcuaFolder, { recursive: true, force: true });
+    });
+  });
+
+  describe('top-level folder read failures', () => {
+    let brokenTmpRootParent: string;
+    let brokenTmpRoot: string;
+    let brokenMigration: MigrationModule;
+
+    before(async () => {
+      // Point the migration's path constants at a directory that does not exist,
+      // so every top-level fs.readdir() in up() fails and hits its catch branch.
+      brokenTmpRootParent = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-mig-v380-missing-'));
+      brokenTmpRoot = path.join(brokenTmpRootParent, 'does-not-exist');
+
+      const utilsPath = '../../../../service/utils';
+      const utilsActual = nodeRequire(utilsPath) as Record<string, unknown>;
+      mockModule(nodeRequire, utilsPath, {
+        ...utilsActual,
+        getCommandLineArguments: () => ({
+          configFile: brokenTmpRoot,
+          version: false,
+          ignoreIpFilters: false,
+          ignoreRemoteUpdate: false,
+          ignoreRemoteConfig: false,
+          launcherVersion: 'test'
+        })
+      });
+      brokenMigration = reloadModule<MigrationModule>(nodeRequire, './v3.8.0');
+    });
+
+    after(async () => {
+      // Restore the module binding used by the rest of the suite.
+      const utilsPath = '../../../../service/utils';
+      const utilsActual = nodeRequire(utilsPath) as Record<string, unknown>;
+      mockModule(nodeRequire, utilsPath, {
+        ...utilsActual,
+        getCommandLineArguments: () => ({
+          configFile: tmpRoot,
+          version: false,
+          ignoreIpFilters: false,
+          ignoreRemoteUpdate: false,
+          ignoreRemoteConfig: false,
+          launcherVersion: 'test'
+        })
+      });
+      migration = reloadModule<MigrationModule>(nodeRequire, './v3.8.0');
+      await fs.rm(brokenTmpRootParent, { recursive: true, force: true });
+    });
+
+    it('does not throw when the root/cache/error/archive folders cannot be read', async () => {
+      await assert.doesNotReject(brokenMigration.up({} as Knex));
+    });
   });
 });

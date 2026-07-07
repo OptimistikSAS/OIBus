@@ -1,7 +1,7 @@
 import { describe, it, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import knex, { Knex } from 'knex';
-import { up } from './v3.8.4';
+import { down, up } from './v3.8.4';
 
 const PREFIX = 'south_item_cache_';
 
@@ -110,5 +110,10 @@ describe('South cache migration v3.8.4 (consolidate per-connector tables)', () =
     const row = await db('south_item_cache').where({ south_id: 'conn-AAA', item_id: 'item1' }).first();
     assert.strictEqual(row.group_id, null);
     assert.strictEqual(row.tracked_instant, null);
+  });
+
+  it('down() is a no-op (migration is not reversible)', async () => {
+    const result = await down(db);
+    assert.strictEqual(result, undefined);
   });
 });
