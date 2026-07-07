@@ -218,5 +218,38 @@ describe('Repository with populated database', () => {
       assert.strictEqual(result.content[0].itemId, 'item-xyz');
       assert.strictEqual(result.content[0].itemName, 'Flow Meter');
     });
+
+    it('should search groups and find by id', () => {
+      repository.saveAll([
+        {
+          msg: 'group log',
+          scopeType: 'south',
+          scopeId: 'south-g',
+          scopeName: 'South G',
+          groupId: 'group-abc',
+          groupName: 'Sensors Group',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        },
+        {
+          msg: 'another group log',
+          scopeType: 'south',
+          scopeId: 'south-g',
+          scopeName: 'South G',
+          groupId: 'group-def',
+          groupName: 'Other Group',
+          time: testData.constants.dates.DATE_1,
+          level: '30'
+        }
+      ]);
+
+      const suggestions = repository.suggestGroups('Sensors');
+      assert.deepStrictEqual(suggestions, [{ groupId: 'group-abc', groupName: 'Sensors Group' }]);
+
+      const found = repository.getGroupById('group-abc');
+      assert.deepStrictEqual(found, { groupId: 'group-abc', groupName: 'Sensors Group' });
+
+      assert.strictEqual(repository.getGroupById('bad-id'), null);
+    });
   });
 });
