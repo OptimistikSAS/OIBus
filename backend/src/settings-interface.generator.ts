@@ -14,10 +14,7 @@ const TIMEZONE_IMPORT = "import { Timezone } from './types';\n";
 
 type ConnectorType = 'South' | 'North';
 
-(async () => {
-  await generateSettingsInterfaces();
-})();
-async function generateSettingsInterfaces() {
+export async function generateSettingsInterfaces() {
   // create the destination file
   openSync(path.resolve(SOUTH_SETTINGS_DESTINATION_PATH), 'w');
   await generateSettingsInterfacesForConnectorType('South');
@@ -33,7 +30,7 @@ async function generateSettingsInterfaces() {
  * This function runs an all manifests and will generate the corresponding TypeScript interface declaration
  * in shared folder located in the root path of the project
  */
-async function generateSettingsInterfacesForConnectorType(connectorType: ConnectorType) {
+export async function generateSettingsInterfacesForConnectorType(connectorType: ConnectorType) {
   const manifests = listFiles(`./src/${connectorType.toLowerCase()}`)
     .filter(file => file.endsWith('manifest.ts'))
     .map(file => file.replace('./src', '.').replace('.ts', '.js'));
@@ -60,7 +57,7 @@ async function generateSettingsInterfacesForConnectorType(connectorType: Connect
  * This function runs on all transformer manifests and will generate the corresponding TypeScript interface declaration
  * in shared folder located in the root path of the project
  */
-async function generateSettingsInterfacesForTransformers() {
+export async function generateSettingsInterfacesForTransformers() {
   const manifests = listFiles(`./src/transformers`)
     .filter(file => file.endsWith('manifest.ts'))
     .map(file => file.replace('./src', '.').replace('.ts', '.js'));
@@ -84,7 +81,7 @@ async function generateSettingsInterfacesForTransformers() {
 /**
  * Create the appropriate TypeScript file from the types in the given path
  */
-function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connectorType: ConnectorType | 'Transformer') {
+export function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connectorType: ConnectorType | 'Transformer') {
   const path =
     connectorType === 'South'
       ? SOUTH_SETTINGS_DESTINATION_PATH
@@ -155,7 +152,7 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
   }
 }
 
-function writeAttribute(filePath: string, attribute: Attribute) {
+export function writeAttribute(filePath: string, attribute: Attribute) {
   const nullable = attribute.nullable ? ' | null' : '';
   const undefinable = attribute.undefinable ? '?' : '';
   appendFileSync(filePath, `  ${attribute.key}${undefinable}: ${attribute.type}${nullable};\n`);
@@ -167,7 +164,7 @@ function writeAttribute(filePath: string, attribute: Attribute) {
  * @param typesToGenerate the objet on which the various types are added
  * @param connectorType the type of connector between north and south
  */
-function generateTypesForManifest(
+export function generateTypesForManifest(
   manifestObject: ConnectorManifest,
   typesToGenerate: TypeGenerationDescription,
   connectorType: ConnectorType
@@ -214,7 +211,7 @@ function generateTypesForManifest(
  * @param manifestObject the transformer manifest
  * @param typesToGenerate the object on which the various types are added
  */
-function generateTypesForTransformerManifest(manifestObject: TransformerManifest, typesToGenerate: TypeGenerationDescription): void {
+export function generateTypesForTransformerManifest(manifestObject: TransformerManifest, typesToGenerate: TypeGenerationDescription): void {
   const interfaceName = buildTransformerInterfaceName(manifestObject.id);
 
   const subManifests: Array<SubManifest> = collectSubManifests(manifestObject.settings);
@@ -231,7 +228,11 @@ function generateTypesForTransformerManifest(manifestObject: TransformerManifest
   typesToGenerate.settingsInterfaces.push(mainSettingsInterface);
 }
 
-function generateInterface(interfaceName: string, settings: OIBusObjectAttribute, typesToGenerate: TypeGenerationDescription): Interface {
+export function generateInterface(
+  interfaceName: string,
+  settings: OIBusObjectAttribute,
+  typesToGenerate: TypeGenerationDescription
+): Interface {
   const attributes: Array<Attribute> = [];
   settings.attributes.forEach(setting => {
     switch (setting.type) {
@@ -288,7 +289,7 @@ function generateInterface(interfaceName: string, settings: OIBusObjectAttribute
 /**
  * Check if the given OibFormControl is nullable or not
  */
-function checkIfNullableOrUndefined(
+export function checkIfNullableOrUndefined(
   setting: OIBusAttribute,
   enablingConditions: Array<OIBusEnablingCondition>
 ): { nullable: boolean; undefinable: boolean } {
@@ -302,7 +303,7 @@ function checkIfNullableOrUndefined(
 /**
  * Get all sub manifests
  */
-function collectSubManifests(manifestControls: OIBusObjectAttribute, prefixKey = ''): Array<SubManifest> {
+export function collectSubManifests(manifestControls: OIBusObjectAttribute, prefixKey = ''): Array<SubManifest> {
   const subManifests: Array<SubManifest> = [];
   manifestControls.attributes.forEach(formControl => {
     if (formControl.type === 'object') {
@@ -320,7 +321,7 @@ function collectSubManifests(manifestControls: OIBusObjectAttribute, prefixKey =
  * List all the files in the given root directory recursively traversing it
  * @param directory the root directory to start looking for files
  */
-function listFiles(directory: string) {
+export function listFiles(directory: string) {
   let files: Array<string> = [];
   const items = readdirSync(directory, { withFileTypes: true });
 
@@ -335,7 +336,7 @@ function listFiles(directory: string) {
   return files;
 }
 
-function buildNorthInterfaceName(connectorId: string): string {
+export function buildNorthInterfaceName(connectorId: string): string {
   switch (connectorId) {
     case 'aws-s3':
       return 'NorthAmazonS3Settings';
@@ -361,7 +362,7 @@ function buildNorthInterfaceName(connectorId: string): string {
   return '';
 }
 
-function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): string {
+export function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): string {
   const prefix = itemInterface ? 'Item' : '';
   switch (connectorId) {
     case 'ads':
@@ -406,28 +407,28 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
   return '';
 }
 
-function buildTransformerInterfaceName(transformerId: string): string {
+export function buildTransformerInterfaceName(transformerId: string): string {
   const parts = transformerId.split('-').map(part => capitalizeFirstLetter(part));
   return `Transformer${parts.join('')}Settings`;
 }
 
-function capitalizeFirstLetter(s: string) {
+export function capitalizeFirstLetter(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function toSnakeCase(s: string) {
+export function toSnakeCase(s: string) {
   return s
     .split(/(?=[A-Z])/)
     .join('_')
     .toLowerCase();
 }
 
-interface SubManifest {
+export interface SubManifest {
   name: string;
   settings: OIBusObjectAttribute;
 }
 
-interface TypeGenerationDescription {
+export interface TypeGenerationDescription {
   imports: Set<string>;
   enums: Array<Enums>;
   settingsInterfaces: Array<Interface>;
@@ -436,19 +437,31 @@ interface TypeGenerationDescription {
   itemSettingsSubInterfaces: Array<Interface>;
 }
 
-interface Interface {
+export interface Interface {
   name: string;
   attributes: Array<Attribute>;
 }
 
-interface Attribute {
+export interface Attribute {
   key: string;
   type: string;
   nullable: boolean;
   undefinable: boolean;
 }
 
-interface Enums {
+export interface Enums {
   name: string;
   values: Array<string>;
 }
+
+// Only auto-run when invoked directly as a script, not when imported as a module in tests.
+export function runAsMain(): boolean {
+  const isMain =
+    process.argv[1] != null &&
+    (process.argv[1].endsWith('settings-interface.generator.ts') || process.argv[1].endsWith('settings-interface.generator.js'));
+  if (isMain) {
+    generateSettingsInterfaces().catch(console.error);
+  }
+  return isMain;
+}
+runAsMain();

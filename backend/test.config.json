@@ -8,15 +8,7 @@
     "test-reporter": "spec",
     "test-coverage-exclude": [
       "src/**/*.spec.ts",
-      "src/tests/**",
-      "src/index.ts",
-      "src/web-server/routes.ts",
-      "src/web-server/web-server.ts",
-      "src/settings-interface.generator.ts",
-      "src/migration/**",
-      "src/**/manifest.ts",
-      "src/model/**",
-      "shared/**"
+      "src/tests/**"
     ]
   }
 }
