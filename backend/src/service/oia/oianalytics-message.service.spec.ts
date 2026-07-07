@@ -215,6 +215,17 @@ describe('OIAnalytics Message Service', () => {
     oIAnalyticsClient.sendConfiguration = mock.fn(() => Promise.resolve());
     service.start(); // trigger a runProgress
     assert.strictEqual(oIAnalyticsClient.sendConfiguration.mock.calls.length, 1);
+
+    const sentConfiguration = JSON.parse(oIAnalyticsClient.sendConfiguration.mock.calls[0].arguments[1] as string);
+    assert.deepStrictEqual(sentConfiguration.engine.settings.logParameters.file, {
+      level: testData.engine.settings.logParameters.file.level,
+      maxFileSize: testData.engine.settings.logParameters.file.maxFileSize,
+      numberOfFiles: testData.engine.settings.logParameters.file.numberOfFiles
+    });
+    assert.deepStrictEqual(sentConfiguration.engine.settings.logParameters.database, {
+      level: testData.engine.settings.logParameters.database.level,
+      maxNumberOfLogs: testData.engine.settings.logParameters.database.maxNumberOfLogs
+    });
   });
 
   it('should properly send message and trigger timeout', async () => {

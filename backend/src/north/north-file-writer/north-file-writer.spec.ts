@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach, afterEach, mock } from 'node:test';
+import { describe, it, before, after, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
@@ -274,6 +274,83 @@ describe('NorthFileWriter', () => {
       configuration.settings.password = 'pass';
       configuration.settings.outputFolder = 'C:\\local\\output';
       await assert.doesNotReject(north.connect());
+    });
+
+    describe('on windows', () => {
+      const originalPlatform = process.platform;
+      type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+
+      before(() => {
+        Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      });
+
+      after(() => {
+        Object.defineProperty(process, 'platform', { value: originalPlatform, configurable: true });
+      });
+
+      // cmdkey does not exist on the (non-Windows) test runner, so execFile rejects with
+      // ENOENT — which drives the catch branch (logger.error + rethrow) of mountNetworkShare.
+      it('should throw and log an error when mountNetworkShare execFile fails', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.domain = 'DOMAIN';
+        configuration.settings.outputFolder = '\\\\server\\share\\out';
+        north = new NorthFileWriter(configuration, cacheService);
+
+        await assert.rejects(async () => (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out'));
+        assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
+      });
+
+      it('should skip mountNetworkShare when username is empty on windows', async () => {
+        configuration.settings.username = null;
+        configuration.settings.outputFolder = '\\\\server\\share\\out';
+        north = new NorthFileWriter(configuration, cacheService);
+
+        await (north as unknown as Private)['mountNetworkShare']('\\\\server\\share\\out');
+      });
+
+      it('should skip mountNetworkShare when outputFolder is not a UNC path on windows', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.outputFolder = 'C:\\local\\output';
+        north = new NorthFileWriter(configuration, cacheService);
+
+        await (north as unknown as Private)['mountNetworkShare']('C:\\local\\output');
+      });
+
+      it('should skip unmountNetworkShare when username is empty on windows', async () => {
+        configuration.settings.username = null;
+        configuration.settings.outputFolder = '\\\\server\\share\\out';
+        north = new NorthFileWriter(configuration, cacheService);
+
+        await (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out');
+      });
+
+      it('should skip unmountNetworkShare when outputFolder is not a UNC path on windows', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.outputFolder = 'C:\\local\\output';
+        north = new NorthFileWriter(configuration, cacheService);
+
+        await (north as unknown as Private)['unmountNetworkShare']('C:\\local\\output');
+      });
+
+      // unmountNetworkShare swallows execFile failures (ENOENT here), so it resolves —
+      // covering its try + catch branch.
+      it('should silently ignore unmountNetworkShare execFile failures', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.outputFolder = '\\\\server\\share\\out';
+        north = new NorthFileWriter(configuration, cacheService);
+
+        await assert.doesNotReject(async () => (north as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\out'));
+      });
+
+      // testConnection mounts the share first; on the test runner cmdkey is missing so the
+      // mount rejects and testConnection propagates the failure.
+      it('should propagate SMB mount failure from testConnection', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.outputFolder = '\\\\server\\share\\out';
+        north = new NorthFileWriter(configuration, cacheService);
+
+        await assert.rejects(async () => north.testConnection());
+      });
     });
   });
 });

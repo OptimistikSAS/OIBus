@@ -477,5 +477,66 @@ describe('SouthFolderScanner', () => {
       configuration.settings.inputFolder = 'C:\\local\\folder';
       await assert.doesNotReject(south.connect());
     });
+
+    describe('windows SMB credential handling', () => {
+      let originalPlatform: PropertyDescriptor | undefined;
+
+      beforeEach(() => {
+        originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
+        Object.defineProperty(process, 'platform', { value: 'win32' });
+      });
+
+      afterEach(() => {
+        if (originalPlatform) {
+          Object.defineProperty(process, 'platform', originalPlatform);
+        }
+      });
+
+      it('should log error and rethrow when storing SMB credentials fails on Windows', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.password = '';
+        configuration.settings.inputFolder = '\\\\server\\share\\data';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        // cmdkey does not exist on the test runner platform, so execFile rejects and the
+        // catch branch (log + rethrow) is exercised.
+        await assert.rejects((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+        assert.ok(logger.error.mock.calls.some(c => (c.arguments[0] as string).includes('Failed to store SMB credentials')));
+      });
+
+      it('should skip SMB mount on Windows when username is empty', async () => {
+        configuration.settings.username = null;
+        configuration.settings.inputFolder = '\\\\server\\share\\data';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await assert.doesNotReject((south as unknown as Private)['mountNetworkShare']('\\\\server\\share\\data'));
+      });
+
+      it('should skip SMB unmount on Windows when username is empty', async () => {
+        configuration.settings.username = null;
+        configuration.settings.inputFolder = '\\\\server\\share\\data';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data'));
+      });
+
+      it('should skip SMB unmount on Windows when inputFolder is not a UNC path', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.inputFolder = 'C:\\local\\folder';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('C:\\local\\folder'));
+      });
+
+      it('should silently ignore SMB credential removal failures on Windows', async () => {
+        configuration.settings.username = 'user';
+        configuration.settings.inputFolder = '\\\\server\\share\\data';
+        south = new SouthFolderScanner(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+        type Private = Record<string, (...args: Array<unknown>) => Promise<void>>;
+        // cmdkey does not exist on the test runner platform, so execFile rejects, but the
+        // catch block swallows the error (credentials may already be removed).
+        await assert.doesNotReject((south as unknown as Private)['unmountNetworkShare']('\\\\server\\share\\data'));
+      });
+    });
   });
 });

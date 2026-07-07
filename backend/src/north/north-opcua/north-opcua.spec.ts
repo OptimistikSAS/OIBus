@@ -430,6 +430,51 @@ describe('NorthOPCUA', () => {
     assert.strictEqual(mockEndpointClient.disconnect.mock.calls.length, 1);
   });
 
+  it('should populate server build info items when dataValues report Good status', async () => {
+    const mockSessionClose = mock.fn(async () => undefined);
+    const buildInfoDate = new Date('2024-01-01T00:00:00.000Z');
+    const goodDataValues = [
+      { statusCode: { value: StatusCodes.Good.value }, value: { value: 0 } }, // State -> Running
+      { statusCode: { value: StatusCodes.Good.value }, value: { value: 'Acme Corp' } }, // ManufacturerName
+      { statusCode: { value: StatusCodes.Good.value }, value: { value: 'OIBus Simulation Server' } }, // ProductName
+      { statusCode: { value: StatusCodes.Good.value }, value: { value: buildInfoDate } }, // SoftwareVersion (Date branch)
+      { statusCode: { value: StatusCodes.Good.value }, value: { value: '42' } } // BuildNumber
+    ];
+    const buildInfoReadMock = mock.fn(async () => goodDataValues);
+    nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => ({ close: mockSessionClose, read: buildInfoReadMock }));
+
+    const result = await north.testConnection();
+
+    assert.deepStrictEqual(
+      result.items.find(item => item.key === 'State'),
+      { key: 'State', value: 'Running' }
+    );
+    assert.deepStrictEqual(
+      result.items.find(item => item.key === 'ManufacturerName'),
+      { key: 'ManufacturerName', value: 'Acme Corp' }
+    );
+    assert.deepStrictEqual(
+      result.items.find(item => item.key === 'ProductName'),
+      {
+        key: 'ProductName',
+        value: 'OIBus Simulation Server'
+      }
+    );
+    assert.deepStrictEqual(
+      result.items.find(item => item.key === 'SoftwareVersion'),
+      {
+        key: 'SoftwareVersion',
+        value: buildInfoDate.toISOString()
+      }
+    );
+    assert.deepStrictEqual(
+      result.items.find(item => item.key === 'BuildNumber'),
+      { key: 'BuildNumber', value: '42' }
+    );
+    assert.strictEqual(buildInfoReadMock.mock.calls.length, 1);
+    assert.strictEqual(mockSessionClose.mock.calls.length, 1);
+  });
+
   it('should throw error if test fails', async () => {
     nodeOPCUAMock.OPCUAClient.createSession.mock.mockImplementation(async () => {
       throw new Error('Auth failed');

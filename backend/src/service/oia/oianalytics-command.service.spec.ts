@@ -357,6 +357,15 @@ describe('OIAnalytics Command Service', () => {
     mock.timers.reset();
   });
 
+  it('should not refresh commands when service is stopped', async () => {
+    service.stop();
+    oIAnalyticsRegistrationService.getRegistrationSettings.mock.resetCalls();
+
+    await service.refreshCommands();
+
+    assert.strictEqual(oIAnalyticsRegistrationService.getRegistrationSettings.mock.calls.length, 0);
+  });
+
   it('should fail to check commands and retry', async () => {
     service.fetchNewCommands = mock.fn(async () => {
       throw new Error('retrieve command error');

@@ -633,6 +633,47 @@ describe('SouthOracle', () => {
     });
   });
 
+  describe('SouthOracle thick mode initialization failure', () => {
+    const configuration: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
+      id: 'southId',
+      name: 'south',
+      type: 'oracle',
+      description: 'my test connector',
+      enabled: true,
+      settings: {
+        host: 'localhost',
+        port: 1521,
+        database: 'db',
+        username: null,
+        password: null,
+        connectionTimeout: 0,
+        thickMode: true,
+        oracleClient: 'path'
+      },
+      groups: [],
+      items: [],
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    it('should log an error and fall back to thin mode when initOracleClient throws', () => {
+      oracledbExports.initOracleClient = mock.fn(() => {
+        throw new Error('thick mode init error');
+      });
+      const south = new SouthOracle(configuration, addContentCallback, southCacheRepository, 'cacheFolder');
+      assert.ok(south);
+      assert.ok(
+        logger.error.mock.calls.some(
+          c =>
+            (c.arguments[0] as string).includes('FATAL: Failed to initialize Oracle Thick mode') &&
+            (c.arguments[0] as string).includes('thick mode init error')
+        )
+      );
+    });
+  });
+
   describe('SouthOracle test connection', () => {
     let south: SouthOracleClass;
     const configuration: SouthConnectorEntity<SouthOracleSettings, SouthOracleItemSettings> = {
