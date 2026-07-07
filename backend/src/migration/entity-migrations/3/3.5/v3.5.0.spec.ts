@@ -966,6 +966,18 @@ describe('Entity migration v3.5.0', () => {
         backupFolders: '*'
       });
     });
+
+    it('recreates the table without error when there are no commands at all', async () => {
+      await up(db); // must not throw when the commands table is empty
+
+      const cols = await columnNames(db, 'commands');
+      assert.ok(cols.includes('south_connector_id'));
+      assert.ok(cols.includes('north_connector_id'));
+      assert.ok(cols.includes('scan_mode_id'));
+
+      const rows = await db('commands').select();
+      assert.strictEqual(rows.length, 0);
+    });
   });
 
   describe('updateRegistrationSettings', () => {

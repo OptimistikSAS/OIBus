@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { readdirSync } from 'node:fs';
 import knex, { Knex } from 'knex';
-import { up } from './v3.8.3_1';
+import { up, down } from './v3.8.3_1';
 
 async function buildPreV3831Schema(db: Knex): Promise<void> {
   const entityRoot = path.resolve(__dirname, '..', '..');
@@ -262,5 +262,9 @@ describe('Entity migration v3.8.3_1', () => {
   it('is a no-op when no null-options transformer instances exist', async () => {
     // Should not throw when nothing needs fixing
     await assert.doesNotReject(() => up(db));
+  });
+
+  it('down is a no-op', async () => {
+    await assert.doesNotReject(() => down(db));
   });
 });
