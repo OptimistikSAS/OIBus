@@ -42,7 +42,7 @@ const LOG_DB_NAME = 'logs.db';
 const METRICS_DB_NAME = 'metrics.db';
 const CERT_FOLDER = 'certs';
 
-(async () => {
+export async function bootstrap(): Promise<void> {
   const { configFile, version, ignoreIpFilters, ignoreRemoteUpdate, launcherVersion } = getCommandLineArguments();
 
   const binaryFolder = process.cwd();
@@ -306,4 +306,15 @@ const CERT_FOLDER = 'certs';
   const updatedOIBusSettings = repositoryService.engineRepository.get()!;
   loggerService.logger.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
   console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo(updatedOIBusSettings))}`);
-})();
+}
+
+// Only auto-run when invoked as the application entry point, not when imported in tests.
+export function runAsMain(): boolean {
+  const isMain = process.argv[1] != null && (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('index.js'));
+  if (isMain) {
+    bootstrap().catch(console.error);
+  }
+  return isMain;
+}
+
+runAsMain();
