@@ -101,6 +101,21 @@ describe('OIBusTimeValuesToOIAnalyticsTransformer', () => {
     assert.strictEqual(result.metadata.contentType, 'oianalytics');
   });
 
+  it('should tolerate a serialised JSON string passed directly to transformInMemory', async () => {
+    const options = { precision: 'ms' };
+    const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
+
+    const dataChunks: Array<OIBusTimeValue> = [{ pointId: 'p1', timestamp: testData.constants.dates.DATE_1, data: { value: '1' } }];
+
+    const result = await transformer.transformInMemory(JSON.stringify(dataChunks), { source: 'test' }, null);
+
+    assert.deepStrictEqual(
+      result.output,
+      Buffer.from(JSON.stringify([{ pointId: 'p1', timestamp: dataChunks[0].timestamp, data: { value: '1' } }]))
+    );
+    assert.strictEqual(result.metadata.numberOfElement, 1);
+  });
+
   it('should properly format instant with precision', () => {
     const options = { precision: 'ms' };
     const transformer = new OIBusTimeValuesToOIAnalyticsTransformer(logger, testData.transformers.list[0], options);
