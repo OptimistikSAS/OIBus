@@ -4,7 +4,15 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import Database from 'better-sqlite3';
-import { migrateEntities, migrateLogs, migrateMetrics, migrateCrypto, migrateSouthCache, migrateDataFolder } from './migration-service';
+import {
+  migrateEntities,
+  migrateLogs,
+  migrateMetrics,
+  migrateCrypto,
+  migrateSouthCache,
+  migrateDataFolder,
+  specFilteredMigrationSource
+} from './migration-service';
 
 /**
  * Opens the sqlite db read-only and returns the names of migrations recorded in
@@ -130,6 +138,57 @@ describe('migration-service', () => {
       assert.deepStrictEqual(afterSecondRun, beforeSecondRun);
     });
   });
+
+  describe('specFilteredMigrationSource', () => {
+    it('falls back to the hardcoded MIGRATION_EXTENSIONS when loadExtensions is omitted', async () => {
+      const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
+
+      const migrations = await source.getMigrations();
+
+      assert.ok(migrations.length > 0, 'expected at least one real entity migration file');
+      // Only files matching MIGRATION_EXTENSIONS (.js/.cjs/.mjs/.ts) and never *.spec.* files.
+      for (const migration of migrations) {
+        assert.ok(['.js', '.cjs', '.mjs', '.ts'].includes(path.extname(migration.file)));
+        assert.ok(!migration.file.includes('.spec.'));
+      }
+    });
+
+    it('falls back to the hardcoded MIGRATION_EXTENSIONS when loadExtensions is empty', async () => {
+      const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
+
+      const migrationsWithEmptyExtensions = await source.getMigrations([]);
+      const migrationsWithNoArg = await source.getMigrations();
+
+      assert.deepStrictEqual(migrationsWithEmptyExtensions, migrationsWithNoArg);
+    });
+
+    it('honors an explicit, non-empty loadExtensions list', async () => {
+      const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
+
+      const migrations = await source.getMigrations(['.ts']);
+
+      assert.ok(migrations.length > 0);
+      for (const migration of migrations) {
+        assert.strictEqual(path.extname(migration.file), '.ts');
+      }
+    });
+
+    it('exposes getMigrationName returning the bare filename', async () => {
+      const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
+      const [migration] = await source.getMigrations();
+
+      assert.strictEqual(source.getMigrationName(migration), migration.file);
+    });
+
+    it('exposes getMigration returning the required migration module', async () => {
+      const source = specFilteredMigrationSource(path.resolve(__dirname, 'entity-migrations'));
+      const [migration] = await source.getMigrations();
+
+      const loaded = await source.getMigration(migration);
+
+      assert.strictEqual(typeof loaded.up, 'function');
+    });
+  });
 });
 
 // Note on branch coverage:
@@ -140,9 +199,6 @@ describe('migration-service', () => {
 //   walk hits both the recursive branch and the `[base]` base case without any extra test.
 // - `specFilteredMigrationSource(...).getMigrations`'s "provided loadExtensions" branch is
 //   exercised because knex's migrator calls `getMigrations(loadExtensions)` with its
-//   configured (non-empty) extensions list while running `migrate.latest()` above. The
-//   fallback branch (`loadExtensions` empty/undefined, falling back to the hardcoded
-//   `MIGRATION_EXTENSIONS`) is not reachable through the public API: `specFilteredMigrationSource`
-//   is not exported, and knex always supplies a non-empty extensions array in the versions
-//   used here, so this defensive fallback branch is left uncovered by design rather than
-//   worked around with a private-API hack.
+//   configured (non-empty) extensions list while running `migrate.latest()` above, and the
+//   fallback branch (no/empty loadExtensions) is now exercised directly via the exported
+//   `specFilteredMigrationSource` in the describe block above.

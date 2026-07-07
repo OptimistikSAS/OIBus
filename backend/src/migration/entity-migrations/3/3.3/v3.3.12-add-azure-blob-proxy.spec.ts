@@ -130,6 +130,11 @@ describe('Entity migration v3.3.12-add-azure-blob-proxy', () => {
     assert.deepStrictEqual(settings, oldSettings, 'non azure-blob settings are left untouched');
   });
 
+  it('down resolves without touching the database, even when called without a prior up()', async () => {
+    const result = await down(db);
+    assert.strictEqual(result, undefined, 'down() resolves with no return value');
+  });
+
   it('down is a no-op', async () => {
     const oldSettings = { account: 'myaccount', container: 'mycontainer', path: null, authentication: 'sas-token', sasToken: 'token' };
     await insertNorthConnector(db, 'azure-2', 'azure-blob', oldSettings, 'scan-mode-1');

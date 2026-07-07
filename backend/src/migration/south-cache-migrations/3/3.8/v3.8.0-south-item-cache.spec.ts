@@ -238,6 +238,34 @@ describe('South cache migration v3.8.0 (south-item-cache)', () => {
     assert.strictEqual(value[0].modifiedTime, 1700000000000);
   });
 
+  it('returns early without error when oibus.db exists but has no hints table', async () => {
+    // oibus.db is present (so `new Database(..., { fileMustExist: true })` succeeds and the
+    // `try` block is entered) but the hints table itself is absent, exercising the
+    // `if (!hintsExist) return;` branch rather than the catch-block path.
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-sch-nohints-'));
+    const entityDbPath = path.join(tmpDir, 'oibus.db');
+    const originalCwd = process.cwd();
+
+    try {
+      const entityDb = new Database(entityDbPath);
+      entityDb.prepare(`CREATE TABLE some_other_table (id INTEGER)`).run();
+      entityDb.close();
+
+      await createLegacyFileTable(db, 'folder_scanner_fileConn', [{ filename: 'report.csv', mtime_ms: 1700000000000 }]);
+
+      process.chdir(tmpDir);
+      await up(db); // must not throw and must return early after finding no hints table
+    } finally {
+      process.chdir(originalCwd);
+      await fs.rm(tmpDir, { recursive: true, force: true });
+    }
+
+    // The south_item_cache table for the file connector should exist (from step 3),
+    // but no value should have been populated from hints since there were none.
+    const rows = await db('south_item_cache_fileConn').select('*');
+    assert.strictEqual(rows.length, 0, 'no rows should be inserted since there was no hints table to read');
+  });
+
   it('drops the hints table from oibus.db once consumed', async () => {
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-sch-drop-'));
     const entityDbPath = path.join(tmpDir, 'oibus.db');

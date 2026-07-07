@@ -22,6 +22,8 @@ import {
   buildTypescriptFile,
   listFiles,
   generateSettingsInterfaces,
+  generateSettingsInterfacesForConnectorType,
+  generateSettingsInterfacesForTransformers,
   generateTypesForManifest,
   generateTypesForTransformerManifest,
   runAsMain,
@@ -451,6 +453,158 @@ describe('settings-interface.generator', () => {
       const desc = emptyDesc();
       generateTypesForTransformerManifest(manifest as never, desc);
       assert.ok(desc.settingsInterfaces.some((i: Interface) => i.name === 'TransformerCsvToMqttSettings'));
+    });
+  });
+
+  // ── generateSettingsInterfacesForConnectorType / ForTransformers ────────
+  // (covers the `for (const manifestPath of manifests) { await import(...) }`
+  // loop body, which is never exercised when the src dirs are empty)
+  //
+  // `await import('./<x>/manifest.js')` inside settings-interface.generator.ts resolves
+  // relative to *that module's own location* (backend/src/), not to process.cwd() — so a
+  // fake manifest file placed only under a temp cwd would never actually be found. To make
+  // the import genuinely succeed we drop a small, uniquely-named fixture folder directly
+  // under the real backend/src/<type>/ tree (removed again in `finally`), while a temp cwd
+  // supplies the `.ts` stub (only its filename matters to `listFiles`) and the output dir.
+
+  describe('generateSettingsInterfacesForConnectorType / generateSettingsInterfacesForTransformers (real import resolution)', () => {
+    const FIXTURE_NAME = '__oibus_test_fixture__';
+    const createdTmpCwds: Array<string> = [];
+
+    after(async () => {
+      for (const dir of createdTmpCwds) {
+        await fs.rm(dir, { recursive: true, force: true });
+      }
+    });
+
+    async function withRealFixture(typeDir: string, manifestSource: string, run: () => Promise<void>) {
+      const realFixtureDir = path.join(origCwd, 'src', typeDir, FIXTURE_NAME);
+      const tmpCwd = await fs.mkdtemp(path.join(os.tmpdir(), 'oibus-gen-fixture-'));
+      createdTmpCwds.push(tmpCwd);
+      await fs.mkdir(realFixtureDir, { recursive: true });
+      await fs.writeFile(path.join(realFixtureDir, 'manifest.js'), manifestSource);
+      await fs.mkdir(path.join(tmpCwd, 'shared', 'model'), { recursive: true });
+      await fs.mkdir(path.join(tmpCwd, 'src', typeDir, FIXTURE_NAME), { recursive: true });
+      // Only the filename matters for `listFiles`'s `.endsWith('manifest.ts')` filter.
+      await fs.writeFile(path.join(tmpCwd, 'src', typeDir, FIXTURE_NAME, 'manifest.ts'), '// stub, discovered by name only');
+
+      process.chdir(tmpCwd);
+      try {
+        await run();
+        return tmpCwd;
+      } finally {
+        // NB: tmpCwd is cleaned in `after` (not here) so the caller can still read the
+        // generated output files after this returns.
+        process.chdir(origCwd);
+        await fs.rm(realFixtureDir, { recursive: true, force: true });
+      }
+    }
+
+    it('imports a real south manifest.js and generates its settings + item settings interfaces', async () => {
+      const manifestSource = `module.exports = {
+        id: 'sqlite',
+        category: 'database',
+        name: 'Fixture',
+        description: 'fixture manifest for tests',
+        settings: {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'settings',
+          validators: [],
+          enablingConditions: [],
+          attributes: [
+            { type: 'string', key: 'databasePath', translationKey: 'databasePath', validators: [{ type: 'REQUIRED' }], displayProperties: {} }
+          ]
+        },
+        items: {
+          rootAttribute: {
+            type: 'object',
+            key: 'item',
+            translationKey: 'item',
+            validators: [],
+            enablingConditions: [],
+            attributes: [
+              {
+                type: 'object',
+                key: 'settings',
+                translationKey: 'settings',
+                validators: [],
+                enablingConditions: [],
+                attributes: [
+                  { type: 'string', key: 'query', translationKey: 'query', validators: [{ type: 'REQUIRED' }], displayProperties: {} }
+                ]
+              }
+            ]
+          }
+        }
+      };
+      `;
+      let outputDir = '';
+      await withRealFixture('south', manifestSource, async () => {
+        outputDir = process.cwd();
+        await generateSettingsInterfacesForConnectorType('South');
+      });
+      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/south-settings.model.ts'), 'utf8');
+      assert.ok(content.includes('SouthSQLiteSettings'));
+      assert.ok(content.includes('SouthSQLiteItemSettings'));
+      assert.ok(content.includes('databasePath'));
+      assert.ok(content.includes('query'));
+    });
+
+    it('imports a real north manifest.js and generates its settings interface', async () => {
+      const manifestSource = `module.exports = {
+        id: 'console',
+        category: 'debug',
+        name: 'Fixture',
+        description: 'fixture manifest for tests',
+        settings: {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'settings',
+          validators: [],
+          enablingConditions: [],
+          attributes: [
+            { type: 'boolean', key: 'verbose', translationKey: 'verbose', validators: [], displayProperties: {} }
+          ]
+        }
+      };
+      `;
+      let outputDir = '';
+      await withRealFixture('north', manifestSource, async () => {
+        outputDir = process.cwd();
+        await generateSettingsInterfacesForConnectorType('North');
+      });
+      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/north-settings.model.ts'), 'utf8');
+      assert.ok(content.includes('NorthConsoleSettings'));
+      assert.ok(content.includes('verbose'));
+    });
+
+    it('imports a real transformer manifest.js and generates its settings interface', async () => {
+      const manifestSource = `module.exports = {
+        id: 'csv-to-mqtt',
+        category: 'transformer',
+        name: 'Fixture',
+        description: 'fixture manifest for tests',
+        settings: {
+          type: 'object',
+          key: 'settings',
+          translationKey: 'settings',
+          validators: [],
+          enablingConditions: [],
+          attributes: [
+            { type: 'string', key: 'topic', translationKey: 'topic', validators: [{ type: 'REQUIRED' }], displayProperties: {} }
+          ]
+        }
+      };
+      `;
+      let outputDir = '';
+      await withRealFixture('transformers', manifestSource, async () => {
+        outputDir = process.cwd();
+        await generateSettingsInterfacesForTransformers();
+      });
+      const content = fsSync.readFileSync(path.join(outputDir, 'shared/model/transformer-settings.model.ts'), 'utf8');
+      assert.ok(content.includes('TransformerCsvToMqttSettings'));
+      assert.ok(content.includes('topic'));
     });
   });
 

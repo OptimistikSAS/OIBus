@@ -136,6 +136,22 @@ describe('Entity migration v3.6.3', () => {
       assert.strictEqual(settings.timestampOrigin, undefined, "'ha' mode items are not modified");
     });
 
+    it("preserves extra existing fields (haMode) when converting a 'da' mode item", async () => {
+      await insertSouthConnector(db, { id: 'south-opcua', type: 'opcua' });
+      await insertSouthItem(db, {
+        id: 'item-da-hamode',
+        connector_id: 'south-opcua',
+        settings: JSON.stringify({ nodeId: 'ns=1;s=node', mode: 'da', haMode: { aggregate: 'raw', resampling: '1min' } })
+      });
+
+      await up(db);
+
+      const row = await db('south_items').where('id', 'item-da-hamode').first();
+      const settings = JSON.parse(row.settings);
+      assert.strictEqual(settings.timestampOrigin, 'oibus');
+      assert.deepStrictEqual(settings.haMode, { aggregate: 'raw', resampling: '1min' }, 'unrelated fields preserved through the spread');
+    });
+
     it('does not touch items belonging to a non-opcua connector', async () => {
       await insertSouthConnector(db, { id: 'south-mssql', type: 'mssql' });
       await insertSouthItem(db, {

@@ -153,6 +153,28 @@ describe('Entity migration v3.7.8', () => {
     assert.strictEqual(registration.api_gateway_header_value, '');
   });
 
+  it('adds api_gateway columns and resets them to defaults on every existing registration row', async () => {
+    await insertRow(db, 'registrations', { id: 'reg-3', host: 'host-a' });
+    await insertRow(db, 'registrations', { id: 'reg-4', host: 'host-b' });
+
+    await up(db);
+
+    const cols = await columnNames(db, 'registrations');
+    assert.ok(cols.includes('use_api_gateway'), 'use_api_gateway column added');
+    assert.ok(cols.includes('api_gateway_header_key'), 'api_gateway_header_key column added');
+    assert.ok(cols.includes('api_gateway_header_value'), 'api_gateway_header_value column added');
+
+    const registrationA = await db('registrations').where('id', 'reg-3').first();
+    assert.strictEqual(registrationA.use_api_gateway, 0);
+    assert.strictEqual(registrationA.api_gateway_header_key, '');
+    assert.strictEqual(registrationA.api_gateway_header_value, '');
+
+    const registrationB = await db('registrations').where('id', 'reg-4').first();
+    assert.strictEqual(registrationB.use_api_gateway, 0);
+    assert.strictEqual(registrationB.api_gateway_header_key, '');
+    assert.strictEqual(registrationB.api_gateway_header_value, '');
+  });
+
   describe('junction/dependent table data preservation', () => {
     beforeEach(async () => {
       await insertRow(db, 'scan_modes', { id: 'scan-mode-1', name: 'Scan mode 1', cron: '*/10 * * * * *' });
