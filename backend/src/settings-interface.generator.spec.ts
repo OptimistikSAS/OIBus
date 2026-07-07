@@ -136,24 +136,43 @@ describe('settings-interface.generator', () => {
       ['ads', false, 'SouthADSSettings'],
       ['ads', true, 'SouthADSItemSettings'],
       ['folder-scanner', false, 'SouthFolderScannerSettings'],
+      ['folder-scanner', true, 'SouthFolderScannerItemSettings'],
       ['ftp', false, 'SouthFTPSettings'],
+      ['ftp', true, 'SouthFTPItemSettings'],
       ['influxdb', false, 'SouthInfluxDBSettings'],
+      ['influxdb', true, 'SouthInfluxDBItemSettings'],
       ['modbus', false, 'SouthModbusSettings'],
+      ['modbus', true, 'SouthModbusItemSettings'],
       ['mqtt', false, 'SouthMQTTSettings'],
+      ['mqtt', true, 'SouthMQTTItemSettings'],
       ['mssql', false, 'SouthMSSQLSettings'],
+      ['mssql', true, 'SouthMSSQLItemSettings'],
       ['mysql', false, 'SouthMySQLSettings'],
+      ['mysql', true, 'SouthMySQLItemSettings'],
       ['odbc', false, 'SouthODBCSettings'],
+      ['odbc', true, 'SouthODBCItemSettings'],
       ['oledb', false, 'SouthOLEDBSettings'],
+      ['oledb', true, 'SouthOLEDBItemSettings'],
       ['oianalytics', false, 'SouthOIAnalyticsSettings'],
+      ['oianalytics', true, 'SouthOIAnalyticsItemSettings'],
       ['opc', false, 'SouthOPCSettings'],
+      ['opc', true, 'SouthOPCItemSettings'],
       ['osisoft-pi', false, 'SouthPISettings'],
+      ['osisoft-pi', true, 'SouthPIItemSettings'],
       ['opcua', false, 'SouthOPCUASettings'],
+      ['opcua', true, 'SouthOPCUAItemSettings'],
       ['oracle', false, 'SouthOracleSettings'],
+      ['oracle', true, 'SouthOracleItemSettings'],
       ['postgresql', false, 'SouthPostgreSQLSettings'],
+      ['postgresql', true, 'SouthPostgreSQLItemSettings'],
       ['rest', false, 'SouthRestSettings'],
+      ['rest', true, 'SouthRestItemSettings'],
       ['sqlite', false, 'SouthSQLiteSettings'],
+      ['sqlite', true, 'SouthSQLiteItemSettings'],
       ['sftp', false, 'SouthSFTPSettings'],
-      ['unknown', false, '']
+      ['sftp', true, 'SouthSFTPItemSettings'],
+      ['unknown', false, ''],
+      ['nope', true, '']
     ];
     for (const [id, itemInterface, expected] of cases) {
       it(`maps '${id}' (item=${itemInterface}) → '${expected}'`, () => {
@@ -440,6 +459,30 @@ describe('settings-interface.generator', () => {
       generateTypesForManifest(manifest as never, desc, 'North');
       assert.ok(desc.settingsInterfaces.some((i: Interface) => i.name === 'NorthConsoleSettings'));
     });
+
+    it('generates item sub-interfaces when the item settings contain nested object/array attributes', () => {
+      const nestedAuth = makeObjectAttr('auth', [makeSimpleAttr('string', 'token', [{ type: 'REQUIRED' }])]);
+      const arrayAttr = {
+        type: 'array',
+        key: 'filters',
+        translationKey: 'filters',
+        validators: [],
+        displayProperties: {},
+        rootAttribute: makeObjectAttr('filters', [makeSimpleAttr('string', 'expression')])
+      } as never;
+      const manifest = {
+        id: 'mqtt',
+        settings: makeObjectAttr('settings', [makeSimpleAttr('string', 'url', [{ type: 'REQUIRED' }])]),
+        items: {
+          rootAttribute: makeObjectAttr('item', [makeObjectAttr('settings', [nestedAuth, arrayAttr])])
+        }
+      };
+      const desc = emptyDesc();
+      generateTypesForManifest(manifest as never, desc, 'South');
+      assert.ok(desc.itemSettingsInterfaces.some((i: Interface) => i.name === 'SouthMQTTItemSettings'));
+      assert.ok(desc.itemSettingsSubInterfaces.some((i: Interface) => i.name === 'SouthMQTTItemSettingsAuth'));
+      assert.ok(desc.itemSettingsSubInterfaces.some((i: Interface) => i.name === 'SouthMQTTItemSettingsFilters'));
+    });
   });
 
   // ── generateTypesForTransformerManifest ─────────────────────────────────
@@ -453,6 +496,18 @@ describe('settings-interface.generator', () => {
       const desc = emptyDesc();
       generateTypesForTransformerManifest(manifest as never, desc);
       assert.ok(desc.settingsInterfaces.some((i: Interface) => i.name === 'TransformerCsvToMqttSettings'));
+    });
+
+    it('generates sub-interfaces when the settings contain a nested object attribute', () => {
+      const nestedMapping = makeObjectAttr('mapping', [makeSimpleAttr('string', 'field', [{ type: 'REQUIRED' }])]);
+      const manifest = {
+        id: 'json-to-csv',
+        settings: makeObjectAttr('settings', [makeSimpleAttr('string', 'topic', [{ type: 'REQUIRED' }]), nestedMapping])
+      };
+      const desc = emptyDesc();
+      generateTypesForTransformerManifest(manifest as never, desc);
+      assert.ok(desc.settingsInterfaces.some((i: Interface) => i.name === 'TransformerJsonToCsvSettings'));
+      assert.ok(desc.settingsSubInterfaces.some((i: Interface) => i.name === 'TransformerJsonToCsvSettingsMapping'));
     });
   });
 
