@@ -277,6 +277,47 @@ describe('Entity migration v3.7.0', () => {
       assert.strictEqual(settings.password, null);
     });
 
+    it('updates every matching oledb south connector when several exist', async () => {
+      await insertSouthConnector(db, {
+        id: 'south-oledb-1',
+        name: 'South OLEDB 1',
+        type: 'oledb',
+        settings: JSON.stringify({
+          throttling: { maxReadInterval: 1000, readDelay: 200, overlap: 0 },
+          agentUrl: 'http://localhost-1',
+          connectionTimeout: 1000,
+          retryInterval: 1000,
+          requestTimeout: 1000,
+          connectionString: 'connection-string-1'
+        })
+      });
+      await insertSouthConnector(db, {
+        id: 'south-oledb-2',
+        name: 'South OLEDB 2',
+        type: 'oledb',
+        settings: JSON.stringify({
+          throttling: { maxReadInterval: 2000, readDelay: 400, overlap: 0 },
+          agentUrl: 'http://localhost-2',
+          connectionTimeout: 2000,
+          retryInterval: 2000,
+          requestTimeout: 2000,
+          connectionString: 'connection-string-2'
+        })
+      });
+
+      await up(db);
+
+      const row1 = await db('south_connectors').where('id', 'south-oledb-1').first();
+      const settings1 = JSON.parse(row1.settings);
+      assert.strictEqual(settings1.connectionString, 'connection-string-1', 'first connector settings preserved');
+      assert.strictEqual(settings1.password, null);
+
+      const row2 = await db('south_connectors').where('id', 'south-oledb-2').first();
+      const settings2 = JSON.parse(row2.settings);
+      assert.strictEqual(settings2.connectionString, 'connection-string-2', 'second connector settings preserved');
+      assert.strictEqual(settings2.password, null);
+    });
+
     it('does not touch settings of south connectors of other types', async () => {
       await insertSouthConnector(db, {
         id: 'south-mssql',

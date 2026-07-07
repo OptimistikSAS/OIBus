@@ -175,6 +175,55 @@ describe('Entity migration v3.7.4', () => {
       assert.strictEqual(settings.timestampOrigin, 'point', 'timestampOrigin retained for da mode');
     });
 
+    it('updates every matching south_item when a connector has several opcua items', async () => {
+      await insertScanMode(db);
+      await insertRow(db, 'south_connectors', {
+        id: 'south-opcua-3',
+        name: 'South OPCUA 3',
+        type: 'opcua',
+        enabled: 1,
+        settings: '{}'
+      });
+      await insertRow(db, 'south_items', {
+        id: 'item-ha-2',
+        connector_id: 'south-opcua-3',
+        scan_mode_id: 'scan-mode-1',
+        name: 'Item HA 2',
+        enabled: 1,
+        settings: JSON.stringify({
+          nodeId: 'ns=1;s=ha-2',
+          mode: 'ha',
+          haMode: { aggregate: 'count' },
+          timestampOrigin: 'server'
+        })
+      });
+      await insertRow(db, 'south_items', {
+        id: 'item-da-2',
+        connector_id: 'south-opcua-3',
+        scan_mode_id: 'scan-mode-1',
+        name: 'Item DA 2',
+        enabled: 1,
+        settings: JSON.stringify({
+          nodeId: 'ns=1;s=da-2',
+          mode: 'da',
+          haMode: { aggregate: 'raw' },
+          timestampOrigin: 'oibus'
+        })
+      });
+
+      await up(db);
+
+      const haItem = await db('south_items').where('id', 'item-ha-2').first();
+      const haSettings = JSON.parse(haItem.settings);
+      assert.deepStrictEqual(haSettings.haMode, { aggregate: 'count' }, 'haMode retained for ha mode item');
+      assert.strictEqual(haSettings.timestampOrigin, undefined, 'timestampOrigin dropped for ha mode item');
+
+      const daItem = await db('south_items').where('id', 'item-da-2').first();
+      const daSettings = JSON.parse(daItem.settings);
+      assert.strictEqual(daSettings.haMode, undefined, 'haMode dropped for da mode item');
+      assert.strictEqual(daSettings.timestampOrigin, 'oibus', 'timestampOrigin retained for da mode item');
+    });
+
     it('does not touch south_items of a south connector of another type', async () => {
       await insertScanMode(db);
       await insertRow(db, 'south_connectors', {
