@@ -19,6 +19,7 @@ import type { OIBusError as OIBusErrorType } from '../model/engine.model';
 import cronstrue from 'cronstrue';
 import testData from '../tests/utils/test-data';
 import { OIBusObjectAttribute } from '../../shared/model/form.model';
+import type { SouthItemGroupEntity } from '../model/south-connector.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
@@ -1414,6 +1415,37 @@ describe('Service utils', () => {
     });
   });
 
+  describe('checkGroups', () => {
+    const groups = [
+      { id: 'group1', name: 'Group 1' },
+      { id: 'group2', name: 'Group 2' }
+    ] as unknown as Array<SouthItemGroupEntity>;
+
+    it('should throw an error when neither groupId nor groupName are specified', () => {
+      assert.throws(() => utils.checkGroups(groups, null, null), /Group not specified/);
+    });
+
+    it('should return a light entity with only the id when groupId starts with "temp_"', () => {
+      assert.deepStrictEqual(utils.checkGroups(groups, 'temp_new-group', null), { id: 'temp_new-group' });
+    });
+
+    it('should find and return the group by id', () => {
+      assert.deepStrictEqual(utils.checkGroups(groups, 'group1', null), groups[0]);
+    });
+
+    it('should find and return the group by name', () => {
+      assert.deepStrictEqual(utils.checkGroups(groups, null, 'Group 2'), groups[1]);
+    });
+
+    it('should throw a not found error when the group id cannot be found', () => {
+      assert.throws(() => utils.checkGroups(groups, 'unknown-id', null), /Group "null" not found/);
+    });
+
+    it('should throw a not found error when the group name cannot be found', () => {
+      assert.throws(() => utils.checkGroups(groups, null, 'unknown-name'), /Group "unknown-name" not found/);
+    });
+  });
+
   describe('itemToFlattenedCSV', () => {
     beforeEach(() => {
       csvExports.unparse.mock.resetCalls();
@@ -1565,6 +1597,41 @@ describe('Service utils', () => {
       } as unknown as SouthConnectorItemDTO;
       utils.itemToFlattenedCSV([itemWithNulls], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+    });
+
+    it('should flatten settings declared in the schema, stringifying object values', () => {
+      const baseItem = {
+        id: 'item1',
+        connectorId: 'conn1',
+        name: 'Item 1',
+        enabled: true,
+        settings: {
+          address: '40001',
+          objectSetting: { nested: 'value' }
+        }
+      } as unknown as HistoryQueryItemDTO;
+      const schema = {
+        attributes: [
+          {
+            key: 'settings',
+            type: 'object',
+            attributes: [
+              { key: 'address', type: 'string' },
+              { key: 'objectSetting', type: 'object' }
+            ]
+          }
+        ]
+      } as unknown as OIBusObjectAttribute;
+
+      utils.itemToFlattenedCSV([baseItem], ',', schema, true);
+
+      assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
+      assert.strictEqual(capturedData[0].settings_address, '40001');
+      assert.strictEqual(capturedData[0].settings_objectSetting, JSON.stringify({ nested: 'value' }));
+      const capturedColumns = (csvExports.unparse.mock.calls[0].arguments[1] as { columns: Array<string> }).columns;
+      assert.ok(capturedColumns.includes('settings_address'));
+      assert.ok(capturedColumns.includes('settings_objectSetting'));
     });
   });
 
