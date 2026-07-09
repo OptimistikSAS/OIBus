@@ -1701,10 +1701,7 @@ export interface CacheMetadataSourceOriginTest {
 }
 
 export type CacheMetadataSource =
-  | CacheMetadataSourceOriginSouth
-  | CacheMetadataSourceOriginOIAnalytics
-  | CacheMetadataSourceOriginAPI
-  | CacheMetadataSourceOriginTest;
+  CacheMetadataSourceOriginSouth | CacheMetadataSourceOriginOIAnalytics | CacheMetadataSourceOriginAPI | CacheMetadataSourceOriginTest;
 
 /**
  * Parameters for searching the cache.

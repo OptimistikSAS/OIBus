@@ -16,15 +16,13 @@ export default class TransformerRepositoryMock extends TransformerRepository {
     return;
   }
   override list = mock.fn((): Array<Transformer> => []);
-  override search = mock.fn(
-    (_searchParams: TransformerSearchParam): Page<Transformer> => ({
-      content: [],
-      size: 10,
-      number: 0,
-      totalElements: 0,
-      totalPages: 0
-    })
-  );
+  override search = mock.fn((_searchParams: TransformerSearchParam): Page<Transformer> => ({
+    content: [],
+    size: 10,
+    number: 0,
+    totalElements: 0,
+    totalPages: 0
+  }));
   override save = mock.fn((_transformer: CustomTransformer): void => undefined);
   override findById = mock.fn((_id: string): Transformer | null => null);
   override delete = mock.fn((_id: string): void => undefined);

@@ -55,11 +55,9 @@ describe('SouthPostgreSQL', () => {
   let southCacheService: SouthCacheServiceMock;
 
   const clientConnect = mock.fn(async () => undefined);
-  const clientQuery = mock.fn(
-    async (_query?: unknown): Promise<unknown> => ({
-      rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
-    })
-  );
+  const clientQuery = mock.fn(async (_query?: unknown): Promise<unknown> => ({
+    rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+  }));
   const clientEnd = mock.fn(async () => undefined);
 
   const pgExports: Record<string, unknown> = {

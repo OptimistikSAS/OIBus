@@ -13,15 +13,13 @@ export default class UserServiceMock {
   findByLogin = mock.fn((_login: string): User => ({}) as User);
   getHashedPasswordByLogin = mock.fn((_login: string): string | null => null);
   getUserInfo = mock.fn((_userId: string): unknown => ({}));
-  search = mock.fn(
-    (_searchParams: UserSearchParam): Page<User> => ({
-      content: [],
-      size: 50,
-      number: 0,
-      totalElements: 0,
-      totalPages: 0
-    })
-  );
+  search = mock.fn((_searchParams: UserSearchParam): Page<User> => ({
+    content: [],
+    size: 50,
+    number: 0,
+    totalElements: 0,
+    totalPages: 0
+  }));
   create = mock.fn(async (_command: UserCommandDTO, _password: string | undefined, _createdBy: string): Promise<User> => ({}) as User);
   update = mock.fn(async (_userId: string, _command: UserCommandDTO): Promise<void> => undefined);
   updatePassword = mock.fn(async (_userId: string, _newPassword: string | undefined): Promise<void> => undefined);

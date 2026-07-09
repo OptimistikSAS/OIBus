@@ -15,15 +15,13 @@ export default class OianalyticsCommandRepositoryMock extends OIAnalyticsCommand
   }
   override findAll = mock.fn((): Array<OIBusCommand> => []);
   override findFirstToExecute = mock.fn((): OIBusCommand | null => null);
-  override search = mock.fn(
-    (_searchParams: CommandSearchParam): Page<OIBusCommand> => ({
-      content: [],
-      size: 50,
-      number: 0,
-      totalElements: 0,
-      totalPages: 0
-    })
-  );
+  override search = mock.fn((_searchParams: CommandSearchParam): Page<OIBusCommand> => ({
+    content: [],
+    size: 50,
+    number: 0,
+    totalElements: 0,
+    totalPages: 0
+  }));
   override list = mock.fn((_searchParams: Omit<CommandSearchParam, 'page'>): Array<OIBusCommand> => []);
   override findById = mock.fn((_id: string): OIBusCommand | null => null);
   override create = mock.fn((_command: OIAnalyticsFetchCommandDTO): void => undefined);

@@ -16,15 +16,13 @@ import { InputType } from '../../../../shared/model/transformer.model';
 export default class TransformerServiceMock {
   listManifest = mock.fn((): Array<TransformerManifest> => []);
   getManifest = mock.fn((_type: string): TransformerManifest => ({}) as TransformerManifest);
-  search = mock.fn(
-    (_searchParams: TransformerSearchParam): Page<Transformer> => ({
-      content: [],
-      size: 10,
-      number: 0,
-      totalElements: 0,
-      totalPages: 0
-    })
-  );
+  search = mock.fn((_searchParams: TransformerSearchParam): Page<Transformer> => ({
+    content: [],
+    size: 10,
+    number: 0,
+    totalElements: 0,
+    totalPages: 0
+  }));
   findAll = mock.fn((): Array<Transformer> => []);
   findById = mock.fn((_transformerId: string): Transformer => ({}) as Transformer);
   create = mock.fn(
