@@ -12,15 +12,13 @@ export default class OianalyticsMessageRepositoryMock extends OIAnalyticsMessage
   constructor() {
     super({} as Database);
   }
-  override search = mock.fn(
-    (_searchParams: OIAnalyticsMessageSearchParam, _page: number): Page<OIAnalyticsMessage> => ({
-      content: [],
-      size: 50,
-      number: 0,
-      totalElements: 0,
-      totalPages: 0
-    })
-  );
+  override search = mock.fn((_searchParams: OIAnalyticsMessageSearchParam, _page: number): Page<OIAnalyticsMessage> => ({
+    content: [],
+    size: 50,
+    number: 0,
+    totalElements: 0,
+    totalPages: 0
+  }));
   override list = mock.fn((_searchParams: OIAnalyticsMessageSearchParam): Array<OIAnalyticsMessage> => []);
   override findById = mock.fn((_id: string): OIAnalyticsMessage | null => null);
   override create = mock.fn((_message: Pick<OIAnalyticsMessage, 'type'>): OIAnalyticsMessage => ({}) as OIAnalyticsMessage);

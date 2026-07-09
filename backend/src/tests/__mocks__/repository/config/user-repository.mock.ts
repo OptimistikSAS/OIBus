@@ -16,9 +16,13 @@ export default class UserRepositoryMock extends UserRepository {
     return;
   }
   override list = mock.fn((): Array<User> => []);
-  override search = mock.fn(
-    (_searchParams: UserSearchParam): Page<User> => ({ content: [], size: 50, number: 0, totalElements: 0, totalPages: 0 })
-  );
+  override search = mock.fn((_searchParams: UserSearchParam): Page<User> => ({
+    content: [],
+    size: 50,
+    number: 0,
+    totalElements: 0,
+    totalPages: 0
+  }));
   override findById = mock.fn((_id: string): User | null => null);
   override findByLogin = mock.fn((_login: string): User | null => null);
   override getHashedPasswordByLogin = mock.fn((_login: string): string | null => null);
