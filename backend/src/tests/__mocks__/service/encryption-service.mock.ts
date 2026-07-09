@@ -13,13 +13,11 @@ export default class EncryptionServiceMock {
     this.certsFolder = certsFolder;
   }
 
-  generateSelfSignedCertificate = mock.fn(
-    async (): Promise<{ private: string; public: string; cert: string }> => ({
-      private: '',
-      public: '',
-      cert: ''
-    })
-  );
+  generateSelfSignedCertificate = mock.fn(async (): Promise<{ private: string; public: string; cert: string }> => ({
+    private: '',
+    public: '',
+    cert: ''
+  }));
   encryptConnectorSecrets = mock.fn(async <T>(secrets: T): Promise<T> => secrets);
   decryptConnectorSecrets = mock.fn(async <T>(secrets: T): Promise<T> => secrets);
   filterSecrets = mock.fn(<T>(secrets: T, _formSettings: unknown): T => secrets);

@@ -10,15 +10,13 @@ import type { ILogger } from '../../../../model/logger.model';
  */
 export default class OIAnalyticsCommandServiceMock {
   start = mock.fn(async (): Promise<void> => undefined);
-  search = mock.fn(
-    (_searchParams: CommandSearchParam): Page<OIBusCommand> => ({
-      content: [],
-      size: 50,
-      number: 0,
-      totalElements: 0,
-      totalPages: 0
-    })
-  );
+  search = mock.fn((_searchParams: CommandSearchParam): Page<OIBusCommand> => ({
+    content: [],
+    size: 50,
+    number: 0,
+    totalElements: 0,
+    totalPages: 0
+  }));
   delete = mock.fn((_commandId: string): void => undefined);
   checkCommands = mock.fn(async (): Promise<void> => undefined);
   sendAckCommands = mock.fn(async (_registration: OIAnalyticsRegistration): Promise<void> => undefined);

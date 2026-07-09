@@ -11,15 +11,13 @@ export default class LogRepositoryMock extends LogRepository {
   constructor() {
     super(null!);
   }
-  override search = mock.fn(
-    (_searchParams: LogSearchParam): Page<OIBusLog> => ({
-      content: [],
-      size: 50,
-      number: 0,
-      totalElements: 0,
-      totalPages: 0
-    })
-  );
+  override search = mock.fn((_searchParams: LogSearchParam): Page<OIBusLog> => ({
+    content: [],
+    size: 50,
+    number: 0,
+    totalElements: 0,
+    totalPages: 0
+  }));
   override suggestScopes = mock.fn((_name: string): Array<Scope> => []);
   override getScopeById = mock.fn((_id: string): Scope | null => null);
   override saveAll = mock.fn((_logsToStore: Array<PinoLog>): void => undefined);
