@@ -27,14 +27,12 @@ export default class CacheServiceMock implements ICacheService {
   cacheIsFull = mock.fn((_maxSize: number): boolean => false);
   getCacheSize = mock.fn((): number => 0);
   getCacheContentSizes = mock.fn((): CacheSize => ({ cache: 0, error: 0, archive: 0 }));
-  searchCacheContent = mock.fn(
-    async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({
-      searchDate: '',
-      error: [],
-      archive: [],
-      cache: []
-    })
-  );
+  searchCacheContent = mock.fn(async (_searchParams: CacheSearchParam): Promise<Omit<CacheSearchResult, 'metrics'>> => ({
+    searchDate: '',
+    error: [],
+    archive: [],
+    cache: []
+  }));
   getFileFromCache = mock.fn(async (_folder: DataFolderType, _filename: string): Promise<FileCacheContent> => ({}) as FileCacheContent);
   updateCacheContent = mock.fn(async (_updateCommand: CacheContentUpdateCommand): Promise<void> => undefined);
   addCacheContent = mock.fn(
