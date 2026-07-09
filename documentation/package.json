@@ -24,12 +24,12 @@
     "@docusaurus/preset-classic": "3.10.1",
     "@mdx-js/react": "3.1.1",
     "clsx": "2.1.1",
-    "cronstrue": "3.21.0",
+    "cronstrue": "3.24.0",
     "prism-react-renderer": "2.4.1",
     "prop-types": "15.8.1",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "redocusaurus": "2.5.0"
+    "redocusaurus": "2.5.2"
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "3.10.1",
@@ -40,7 +40,7 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "gh-pages": "6.3.0",
-    "prettier": "3.8.4"
+    "prettier": "3.9.4"
   },
   "browserslist": {
     "production": [
