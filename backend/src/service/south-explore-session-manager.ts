@@ -11,7 +11,6 @@ const DEFAULT_MAX_SESSIONS = 20; // upper bound on concurrent live sessions
 interface ExploreSession {
   id: string;
   south: SouthConnector<SouthSettings, SouthItemSettings>;
-  state: 'ready' | 'closing';
   timer: NodeJS.Timeout;
 }
 
@@ -35,27 +34,33 @@ export default class SouthExploreSessionManager {
    */
   async start(south: SouthConnector<SouthSettings, SouthItemSettings>): Promise<string> {
     if (this.sessions.size >= this.maxSessions) {
-      const oldestId = this.sessions.keys().next().value;
-      if (oldestId) {
-        await this.close(oldestId);
+      // Evict the least-recently-used session. The map preserves insertion order and `browse`
+      // re-inserts on access, so the first key is the one untouched the longest.
+      const lruId = this.sessions.keys().next().value;
+      if (lruId) {
+        await this.close(lruId);
       }
     }
     const id = generateRandomId();
-    this.sessions.set(id, { id, south, state: 'ready', timer: this.armTimer(id) });
+    this.sessions.set(id, { id, south, timer: this.armTimer(id) });
     return id;
   }
 
   /**
-   * Browse (expand) an entry within a session. Resets the session's idle timer.
+   * Browse (expand) an entry within a session. Resets the session's idle timer and marks it as
+   * most-recently-used for LRU eviction.
    */
   async browse(sessionId: string, parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
     const session = this.sessions.get(sessionId);
-    if (!session || session.state !== 'ready') {
+    if (!session) {
       throw new Error(`Explore session "${sessionId}" not found`);
     }
     if (!session.south.hasExplore()) {
       throw new Error('South connector does not support exploration');
     }
+    // Move to the end of the map so it becomes the most-recently-used session.
+    this.sessions.delete(sessionId);
+    this.sessions.set(sessionId, session);
     this.resetTimer(session);
     return await session.south.explore(parentId);
   }
@@ -68,7 +73,6 @@ export default class SouthExploreSessionManager {
     if (!session) {
       return;
     }
-    session.state = 'closing';
     clearTimeout(session.timer);
     this.sessions.delete(sessionId);
     await session.south.stop();

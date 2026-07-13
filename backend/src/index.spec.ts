@@ -212,7 +212,9 @@ describe('index.ts bootstrap()', () => {
 
     mockModule(nodeRequire, './service/south.service', {
       __esModule: true,
-      default: class FakeSouthService {}
+      default: class FakeSouthService {
+        closeAllExploreSessions = mock.fn(async () => undefined);
+      }
     });
 
     mockModule(nodeRequire, './service/history-query.service', {

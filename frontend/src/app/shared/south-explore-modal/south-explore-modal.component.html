@@ -1,0 +1,59 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="south.explore.title"></h4>
+</div>
+<div class="modal-body">
+  @if (loading) {
+    <div class="text-center">
+      <div class="spinner-border" id="spinner" role="status"></div>
+    </div>
+  } @else if (error) {
+    <div class="alert alert-danger" id="explore-error">
+      <div translate="south.explore.error"></div>
+      <hr />
+      <div style="overflow-wrap: break-word">{{ error }}</div>
+    </div>
+  } @else if (nodes.length === 0) {
+    <div class="alert alert-info" id="explore-empty" translate="south.explore.empty"></div>
+  } @else {
+    <div class="explore-tree" id="explore-tree">
+      @for (node of nodes; track node.entry.id) {
+        <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: node }" />
+      }
+    </div>
+  }
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.close" id="cancel-button"></button>
+  </div>
+</div>
+
+<ng-template #treeNode let-node>
+  <div class="explore-node" [class.explore-node-expandable]="node.entry.hasChildren" [style.padding-left.px]="node.depth * 16">
+    @if (node.entry.hasChildren) {
+      <button type="button" class="btn btn-link p-0 w-100 text-start d-flex align-items-center explore-toggle" (click)="toggle(node)">
+        @if (node.loading) {
+          <span class="spinner-border spinner-border-sm me-1"></span>
+        } @else {
+          <i class="fa {{ node.expanded ? 'fa-caret-down' : 'fa-caret-right' }} explore-caret-icon me-1"></i>
+        }
+        <span class="explore-type badge bg-secondary me-1">{{ node.entry.type }}</span>
+        <span class="explore-name">{{ node.entry.name }}</span>
+      </button>
+    } @else {
+      <div class="d-flex align-items-center">
+        <span class="explore-leaf-spacer me-1"></span>
+        <span class="explore-type badge bg-secondary me-1">{{ node.entry.type }}</span>
+        <span class="explore-name">{{ node.entry.name }}</span>
+      </div>
+    }
+  </div>
+  @if (node.error) {
+    <div class="text-danger small explore-node-error" [style.padding-left.px]="(node.depth + 1) * 16">{{ node.error }}</div>
+  }
+  @if (node.expanded) {
+    @for (child of node.children; track child.entry.id) {
+      <ng-container *ngTemplateOutlet="treeNode; context: { $implicit: child }" />
+    }
+  }
+</ng-template>
