@@ -392,6 +392,12 @@ describe('HistoryQuery enabled', () => {
     await progressHistoryQuery.stop();
   });
 
+  it('should get north cache sizes', async () => {
+    const cacheSizes = historyQuery.getNorthCacheSizes();
+    assert.strictEqual(mockedNorth1Mock.getCacheSizes.mock.calls.length, 1);
+    assert.deepStrictEqual(cacheSizes, { cache: 10, error: 20, archive: 30 });
+  });
+
   it('should search cache', async () => {
     const searchParams = {
       start: testData.constants.dates.DATE_1,
