@@ -333,4 +333,37 @@ describe('SouthConnectorService', () => {
     testRequest.flush(null);
     expect(done).toBe(true);
   });
+
+  test('should start an explore session', () => {
+    const command = testData.south.command;
+    let result: { sessionId: string; entries: Array<unknown> } | null = null;
+
+    service.startExplore('id1', command.settings, command.type).subscribe(r => (result = r));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/explore?southType=folder-scanner' });
+    expect(testRequest.request.body).toEqual(command.settings);
+    testRequest.flush({ sessionId: 'sessionId', entries: [] });
+
+    expect(result).toEqual({ sessionId: 'sessionId', entries: [] });
+  });
+
+  test('should browse an explore session', () => {
+    let result: { entries: Array<unknown> } | null = null;
+
+    service.browseExplore('id1', 'sessionId', 'parent').subscribe(r => (result = r));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/explore/sessionId' });
+    expect(testRequest.request.body).toEqual({ parentId: 'parent' });
+    testRequest.flush({ entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] });
+
+    expect(result).toEqual({ entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] });
+  });
+
+  test('should close an explore session', () => {
+    let done = false;
+
+    service.closeExplore('id1', 'sessionId').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/south/id1/explore/sessionId' });
+    testRequest.flush(null);
+
+    expect(done).toBe(true);
+  });
 });

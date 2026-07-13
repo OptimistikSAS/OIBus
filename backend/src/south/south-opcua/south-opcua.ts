@@ -1,12 +1,12 @@
 import { Aggregate, Instant, Resampling } from '../../../shared/model/types';
 import SouthConnector from '../south-connector';
 import { DateTime } from 'luxon';
-import { SouthDirectQuery, SouthHistoryQuery, SouthSubscription } from '../south-interface';
+import { SouthDirectQuery, SouthExplore, SouthHistoryQuery, SouthSubscription } from '../south-interface';
 import { SouthItemSettings, SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorExploreEntry, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import {
   AttributeIds,
   ClientMonitoredItem,
@@ -14,8 +14,10 @@ import {
   ClientSubscription,
   DataValue,
   MessageSecurityMode,
+  NodeClass,
   NodeId,
   OPCUAClient,
+  ReferenceDescription,
   resolveNodeId,
   StatusCode,
   StatusCodes,
@@ -46,12 +48,27 @@ function isDeviceError(error: unknown): boolean {
   return DEVICE_ERROR_CODES.some(code => error.message.includes(code));
 }
 
+// OPC-UA status codes / errors meaning the session itself is no longer usable. When these
+// happen during an interactive explore, the caller must restart the exploration.
+const SESSION_ERROR_CODES = [
+  'BadSessionIdInvalid',
+  'BadSessionClosed',
+  'BadSessionNotActivated',
+  'BadSecureChannelClosed',
+  'BadServerNotConnected'
+];
+
+function isSessionError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  return SESSION_ERROR_CODES.some(code => error.message.includes(code));
+}
+
 /**
  * Class SouthOPCUA - Connect to an OPCUA server
  */
 export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
-  implements SouthHistoryQuery, SouthDirectQuery, SouthSubscription
+  implements SouthHistoryQuery, SouthDirectQuery, SouthSubscription, SouthExplore
 {
   private disconnecting = false;
   private connecting = false;
@@ -315,6 +332,39 @@ export default class SouthOPCUA
     const session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
     this.logger.info(`OPCUA connector "${this.connector.name}" connected`);
     return session;
+  }
+
+  /**
+   * Browse the OPC-UA address space one level at a time for the interactive explore feature.
+   * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
+   */
+  async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    if (this.client === null) {
+      throw new Error('OPC-UA session not connected');
+    }
+    const nodeToBrowse = parentId ?? 'ns=0;i=85';
+    try {
+      const references: Array<ReferenceDescription> = [];
+      const browseResult = await this.client.browse(nodeToBrowse);
+      references.push(...(browseResult.references ?? []));
+      let continuationPoint = browseResult.continuationPoint;
+      while (continuationPoint && continuationPoint.length > 0) {
+        const nextResult = await this.client.browseNext(continuationPoint, false);
+        references.push(...(nextResult.references ?? []));
+        continuationPoint = nextResult.continuationPoint;
+      }
+      return references.map(reference => ({
+        id: reference.nodeId.toString(),
+        name: reference.displayName?.text ?? reference.browseName?.toString() ?? reference.nodeId.toString(),
+        type: NodeClass[reference.nodeClass] ?? String(reference.nodeClass),
+        hasChildren: reference.nodeClass === NodeClass.Object || reference.nodeClass === NodeClass.Variable
+      }));
+    } catch (error) {
+      if (isSessionError(error)) {
+        throw new Error(`OPCUA explore session expired, please restart the exploration: ${(error as Error).message}`);
+      }
+      throw error;
+    }
   }
 
   /**

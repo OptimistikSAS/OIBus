@@ -1871,6 +1871,11 @@
 						"type": "object",
 						"description": "The operating modes supported by this connector type."
 					},
+					"explore": {
+						"type": "boolean",
+						"description": "Whether this connector type supports the interactive \"explore/discovery\" feature\n(browsing the data source, e.g. expanding OPC-UA nodes or walking a folder tree).\nUI capability flag — mirrors the connector's structural `hasExplore()`.",
+						"example": true
+					},
 					"settings": {
 						"$ref": "#/components/schemas/OIBusObjectAttribute",
 						"description": "The configuration schema for the connector settings."
@@ -16787,6 +16792,89 @@
 					"southSettings",
 					"itemSettings",
 					"testingSettings"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthConnectorExploreEntry": {
+				"description": "A single entry returned while exploring/discovering a South connector's data source.\nRepresents an OPC-UA node or a file-system entry. Kept intentionally generic and\nextensible so item creation and item synchronisation can build on it later.",
+				"properties": {
+					"id": {
+						"type": "string",
+						"description": "Stable identifier of the entry, passed back to expand it.\nOPC-UA node id (e.g. \"ns=1;s=Temperature\") or a folder-relative path."
+					},
+					"name": {
+						"type": "string",
+						"description": "Human-readable label (OPC-UA display name or file/folder name)."
+					},
+					"type": {
+						"type": "string",
+						"description": "Nature of the entry. For OPC-UA the node class ('Object', 'Variable', ...);\nfor the folder scanner 'folder' or 'file'."
+					},
+					"hasChildren": {
+						"type": "boolean",
+						"description": "Whether the entry can be expanded to reveal children in the explore tree."
+					}
+				},
+				"required": [
+					"id",
+					"name",
+					"type",
+					"hasChildren"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthExploreStartResult": {
+				"description": "Result of starting an explore session.",
+				"properties": {
+					"sessionId": {
+						"type": "string",
+						"description": "Identifier of the stateful explore session, used for subsequent browse/close calls."
+					},
+					"entries": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorExploreEntry"
+						},
+						"type": "array",
+						"description": "The root-level entries of the data source."
+					}
+				},
+				"required": [
+					"sessionId",
+					"entries"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthExploreBrowseResult": {
+				"description": "Result of browsing (expanding) an entry within an explore session.",
+				"properties": {
+					"entries": {
+						"items": {
+							"$ref": "#/components/schemas/SouthConnectorExploreEntry"
+						},
+						"type": "array",
+						"description": "The children of the browsed entry."
+					}
+				},
+				"required": [
+					"entries"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"SouthExploreBrowseCommand": {
+				"description": "Command body to browse (expand) an entry within an explore session.",
+				"properties": {
+					"parentId": {
+						"type": "string",
+						"nullable": true,
+						"description": "The id of the entry to expand, or null to (re)load the root level."
+					}
+				},
+				"required": [
+					"parentId"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -34691,6 +34779,140 @@
 						}
 					}
 				}
+			}
+		},
+		"/api/south/{southId}/explore": {
+			"post": {
+				"operationId": "StartExplore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthExploreStartResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Start an interactive explore session for a south connector",
+				"summary": "Start south explore session",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "southType",
+						"required": true,
+						"schema": {
+							"$ref": "#/components/schemas/OIBusSouthType"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthSettings"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/south/{southId}/explore/{sessionId}": {
+			"put": {
+				"operationId": "BrowseExplore",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthExploreBrowseResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Browse (expand) an entry within an explore session",
+				"summary": "Browse south explore session",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SouthExploreBrowseCommand"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "CloseExplore",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Close an explore session",
+				"summary": "Close south explore session",
+				"tags": [
+					"South Connectors"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "southId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		},
 		"/api/south/{southId}/items/list": {

@@ -57,7 +57,8 @@ before(() => {
   mockUtils = {
     checkScanMode: mock.fn(),
     checkGroups: mock.fn(),
-    stringToBoolean: mock.fn(() => true)
+    stringToBoolean: mock.fn(() => true),
+    generateRandomId: mock.fn(() => 'exploreSessionId')
   };
 
   mockBuildSouth = mock.fn();
@@ -502,6 +503,72 @@ describe('South Service', () => {
 
     assert.deepStrictEqual(result, { raw: rawContent, transformed: null });
     assert.strictEqual(transformerService.runTransformer.mock.calls.length, 0);
+  });
+
+  it('should start an explore session', async () => {
+    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    mockedSouth1.explore.mock.mockImplementation(async () => [{ id: 'n1', name: 'N1', type: 'Object', hasChildren: true }]);
+
+    const result = await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
+
+    assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
+    assert.strictEqual(mockedSouth1.connect.mock.calls.length, 1);
+    assert.deepStrictEqual(result, {
+      sessionId: 'exploreSessionId',
+      entries: [{ id: 'n1', name: 'N1', type: 'Object', hasChildren: true }]
+    });
+  });
+
+  it('should throw when starting explore on an unsupported connector', async () => {
+    mockedSouth1.hasExplore.mock.mockImplementation(() => false);
+
+    await assert.rejects(
+      () => service.startExplore('create', testData.south.command.type, testData.south.command.settings),
+      /does not support exploration/
+    );
+    assert.strictEqual(mockedSouth1.connect.mock.calls.length, 0);
+  });
+
+  it('should close the session if the initial browse fails', async () => {
+    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    mockedSouth1.explore.mock.mockImplementation(async () => {
+      throw new Error('browse failed');
+    });
+
+    await assert.rejects(
+      () => service.startExplore('create', testData.south.command.type, testData.south.command.settings),
+      /browse failed/
+    );
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+  });
+
+  it('should browse an explore session', async () => {
+    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    mockedSouth1.explore.mock.mockImplementation(async () => [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }]);
+    const { sessionId } = await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
+
+    const result = await service.browseExplore(sessionId, 'parent');
+
+    assert.deepStrictEqual(result, { entries: [{ id: 'child', name: 'Child', type: 'file', hasChildren: false }] });
+    assert.strictEqual(mockedSouth1.explore.mock.calls[1].arguments[0], 'parent');
+  });
+
+  it('should close an explore session', async () => {
+    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    const { sessionId } = await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
+
+    await service.closeExplore(sessionId);
+
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+  });
+
+  it('should close all explore sessions', async () => {
+    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    await service.startExplore('create', testData.south.command.type, testData.south.command.settings);
+
+    await service.closeAllExploreSessions();
+
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
   });
 
   it('should list items', () => {

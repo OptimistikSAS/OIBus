@@ -8,14 +8,14 @@ import { encryptionService } from '../../service/encryption.service';
 
 const execFile = promisify(execFileCb);
 import { checkAge, compress } from '../../service/utils';
-import { SouthDirectQuery } from '../south-interface';
+import { SouthDirectQuery, SouthExplore } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings, SouthItemSettings } from '../../../shared/model/south-settings.model';
 import { OIBusConnectionTestResult, OIBusContent, OIBusTimeValue } from '../../../shared/model/engine.model';
 import { DateTime } from 'luxon';
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { Instant, OIBusTestingError } from '../../model/types';
-import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
+import { SouthConnectorExploreEntry, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Stats } from 'node:fs';
 
 /**
@@ -23,7 +23,7 @@ import { Stats } from 'node:fs';
  */
 export default class SouthFolderScanner
   extends SouthConnector<SouthFolderScannerSettings, SouthFolderScannerItemSettings>
-  implements SouthDirectQuery
+  implements SouthDirectQuery, SouthExplore
 {
   constructor(
     connector: SouthConnectorEntity<SouthFolderScannerSettings, SouthFolderScannerItemSettings>,
@@ -151,6 +151,33 @@ export default class SouthFolderScanner
    * and nested files just get their relative subdir path prepended.
    *
    */
+  /**
+   * Browse the input folder one level at a time for the interactive explore feature.
+   * @param parentId - a folder path relative to the input folder, or null to browse the input folder root
+   */
+  async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    const root = path.resolve(this.connector.settings.inputFolder);
+    const target = path.resolve(root, parentId ?? '');
+    // Prevent path traversal outside the configured input folder
+    const relative = path.relative(root, target);
+    if (relative.startsWith('..') || path.isAbsolute(relative)) {
+      throw new Error(`Cannot explore "${parentId}": path is outside of the input folder`);
+    }
+
+    const entries = await fs.readdir(target, { withFileTypes: true });
+    return entries
+      .filter(entry => entry.isDirectory() || entry.isFile())
+      .map(entry => {
+        const isDirectory = entry.isDirectory();
+        return {
+          id: path.join(relative, entry.name),
+          name: entry.name,
+          type: isDirectory ? 'folder' : 'file',
+          hasChildren: isDirectory
+        };
+      });
+  }
+
   private async listFilesRecursively(
     dirPath: string,
     relativePrefix: string,
