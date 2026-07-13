@@ -22,6 +22,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { ModalService } from '../../shared/modal.service';
 import { OibHelpComponent } from '../../shared/oib-help/oib-help.component';
 import { OIBusSouthTypeEnumPipe } from '../../shared/oibus-south-type-enum.pipe';
@@ -288,6 +289,17 @@ export class EditSouthComponent implements CanComponentDeactivate {
     const modalRef = this.modalService.open(TestConnectionResultModalComponent);
     const component: TestConnectionResultModalComponent = modalRef.componentInstance;
     component.runTest('south', this.southConnector?.id || null, this.formSouthConnectorCommand.settings, this.southType as OIBusSouthType);
+  }
+
+  explore() {
+    // Explore: only validate the settings section, like the test connection button
+    this.form!.controls.settings.markAllAsTouched();
+    if (!this.form!.controls.settings.valid) {
+      return;
+    }
+    const modalRef = this.modalService.open(SouthExploreModalComponent, { size: 'lg' });
+    const component: SouthExploreModalComponent = modalRef.componentInstance;
+    component.prepare(this.southConnector?.id || null, this.formSouthConnectorCommand.settings, this.southType as OIBusSouthType);
   }
 
   addItem() {

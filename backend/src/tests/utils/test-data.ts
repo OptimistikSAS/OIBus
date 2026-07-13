@@ -395,6 +395,7 @@ const southTestManifest: SouthConnectorManifest = {
     lastFile: true,
     history: true
   },
+  explore: true,
   settings: {
     type: 'object',
     key: 'settings',
