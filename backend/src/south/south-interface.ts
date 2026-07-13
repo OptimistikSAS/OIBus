@@ -1,6 +1,7 @@
 import { Instant } from '../../shared/model/types';
 import { SouthItemSettings } from '../../shared/model/south-settings.model';
 import { SouthConnectorItemEntity } from '../model/south-connector.model';
+import { SouthConnectorExploreEntry } from '../../shared/model/south-connector.model';
 
 export interface SouthDirectQuery {
   directQuery(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<unknown | null>;
@@ -25,4 +26,12 @@ export interface SouthHistoryQuery {
 export interface SouthSubscription {
   subscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
   unsubscribe(items: Array<SouthConnectorItemEntity<SouthItemSettings>>): Promise<void>;
+}
+
+export interface SouthExplore {
+  /**
+   * Interactively browse the data source one level at a time.
+   * @param parentId - the entry to expand, or null to load the root level
+   */
+  explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>>;
 }
