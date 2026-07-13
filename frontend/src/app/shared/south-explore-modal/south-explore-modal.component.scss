@@ -1,0 +1,49 @@
+@import '../../../common';
+
+.explore-tree {
+  max-height: 50vh;
+  overflow: auto;
+}
+
+.explore-node {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-radius: 0.25rem;
+}
+
+// Full row is the click target for expandable entries (not just the caret icon),
+// matching how most tree/file browsers (VS Code, GitHub, ...) let you click anywhere
+// on the row to expand it. $mediumGrey is this app's own established row-hover color
+// (see logs.component.scss's table row hover), reused here for consistency.
+.explore-node-expandable:hover {
+  background-color: $mediumGrey;
+}
+
+.explore-toggle {
+  line-height: 1;
+  text-decoration: none;
+  // No transition: avoid the Bootstrap `.btn` default color/background fade on hover/focus.
+  transition: none;
+  // The global `.btn-link` rule (styles.scss) sets color to $white for the box-title header
+  // buttons — reclaim this app's normal dark text color ($darkGrey, used app-wide e.g. in
+  // logs.component.scss) since this button sits on the white modal body. Kept constant on
+  // hover/focus too: $orange ($link-hover-color) is a pale gold tuned for the dark navbar and
+  // has poor contrast here — the row's background tint (above) is the hover affordance instead.
+  color: $darkGrey;
+
+  &:hover,
+  &:focus {
+    color: $darkGrey;
+  }
+}
+
+.explore-caret-icon {
+  display: inline-block;
+  width: 0.85rem;
+  font-size: 1rem;
+}
+
+.explore-leaf-spacer {
+  display: inline-block;
+  width: 0.85rem;
+}

@@ -147,4 +147,21 @@ describe('SouthExploreSessionManager', () => {
     assert.strictEqual((south1 as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
     assert.strictEqual((south2 as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
   });
+
+  it('should evict the least-recently-used session, not the oldest', async () => {
+    const manager = new SouthExploreSessionManager(600_000, 2);
+    const south1 = buildSouth();
+    const south2 = buildSouth();
+    const south3 = buildSouth();
+    const session1 = await manager.start(south1);
+    await manager.start(south2);
+    // Touch session1 so session2 becomes the least-recently-used
+    await manager.browse(session1, null);
+    await manager.start(south3);
+
+    // south2 (LRU) evicted; south1 (recently used) kept
+    assert.strictEqual((south1 as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
+    assert.strictEqual((south2 as unknown as SouthConnectorMock).stop.mock.calls.length, 1);
+    assert.strictEqual((south3 as unknown as SouthConnectorMock).stop.mock.calls.length, 0);
+  });
 });
