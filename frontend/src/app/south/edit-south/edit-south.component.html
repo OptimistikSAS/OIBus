@@ -53,9 +53,19 @@
                     ></span>
                   </div>
                   <div>
+                    @if (manifest.explore) {
+                      <button
+                        type="button"
+                        class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                        id="explore"
+                        (click)="explore()"
+                        translate="south.explore.button"
+                      ></button>
+                    }
                     <button
                       type="button"
-                      class="btn btn-secondary btn-sm oib-box-btn ms-3"
+                      class="btn btn-secondary btn-sm oib-box-btn"
+                      [class.ms-3]="!manifest.explore"
                       id="test-connection"
                       (click)="form!.controls.settings.markAllAsTouched(); submit('test')"
                       translate="south.test-connection.button"
