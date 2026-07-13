@@ -14,6 +14,8 @@ import {
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthConnectorTypedDTO,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult,
   SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
@@ -54,6 +56,7 @@ import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { buildSouth } from '../south/south-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
+import SouthExploreSessionManager from './south-explore-session-manager';
 import { Transformer } from '../model/transformer.model';
 
 interface ITransformerService {
@@ -62,6 +65,8 @@ interface ITransformerService {
 }
 
 export default class SouthService {
+  private readonly exploreSessionManager = new SouthExploreSessionManager();
+
   constructor(
     private readonly validator: JoiValidator,
     private readonly southConnectorRepository: SouthConnectorRepository,
@@ -222,7 +227,17 @@ export default class SouthService {
     return this.engine.getSouthSSE(southId);
   }
 
-  async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> {
+  /**
+   * Build an ephemeral, non-persisted South connector from raw settings, mirroring how a
+   * running connector is instantiated but with a no-op content callback and no cache folder.
+   * In edition mode (an existing `southId`) empty secret fields fall back to the stored values.
+   * Shared by `testSouth` and the explore feature.
+   */
+  private async buildEphemeralSouth(
+    southId: string,
+    southType: OIBusSouthType,
+    settingsToTest: SouthSettings
+  ): Promise<ReturnType<typeof buildSouth>> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (southId !== 'create' && southId !== 'history') {
       southConnector = this.findById(southId);
@@ -241,10 +256,10 @@ export default class SouthService {
     // already has open, rather than opening a second one that could exceed a server-side limit
     // on concurrent connections per client (e.g. OPC-UA session caps).
     if (southConnector && this.engine.hasSouth(southConnector.id) && isDeepStrictEqual(testSettings, southConnector.settings)) {
-      return await this.engine.getSouth(southConnector.id).south.testConnection();
+      return this.engine.getSouth(southConnector.id).south;
     }
 
-    const testToRun: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
+    const entity: SouthConnectorEntity<SouthSettings, SouthItemSettings> = {
       id: 'test',
       type: southType,
       description: '',
@@ -261,15 +276,61 @@ export default class SouthService {
 
     /* istanbul ignore next */
     const mockedAddContent = (_southId: string, _content: OIBusContent): Promise<void> => Promise.resolve();
-    const south = buildSouth(
-      testToRun,
+    return buildSouth(
+      entity,
       mockedAddContent,
       '',
       this.southCacheRepository,
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository
     );
+  }
+
+  async testSouth(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<OIBusConnectionTestResult> {
+    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
     return await south.testConnection();
+  }
+
+  /**
+   * Start an interactive explore session: build a connector, connect it, and return the
+   * root-level entries plus a session id used for subsequent browse/close calls.
+   */
+  async startExplore(southId: string, southType: OIBusSouthType, settingsToTest: SouthSettings): Promise<SouthExploreStartResult> {
+    const south = await this.buildEphemeralSouth(southId, southType, settingsToTest);
+    if (!south.hasExplore()) {
+      throw new Error(`South connector of type "${southType}" does not support exploration`);
+    }
+    await south.connect();
+    const sessionId = await this.exploreSessionManager.start(south);
+    try {
+      const entries = await this.exploreSessionManager.browse(sessionId, null);
+      return { sessionId, entries };
+    } catch (error) {
+      await this.exploreSessionManager.close(sessionId);
+      throw error;
+    }
+  }
+
+  /**
+   * Browse (expand) an entry within an existing explore session.
+   */
+  async browseExplore(sessionId: string, parentId: string | null): Promise<SouthExploreBrowseResult> {
+    const entries = await this.exploreSessionManager.browse(sessionId, parentId);
+    return { entries };
+  }
+
+  /**
+   * Close an explore session and release its connector.
+   */
+  async closeExplore(sessionId: string): Promise<void> {
+    await this.exploreSessionManager.close(sessionId);
+  }
+
+  /**
+   * Close all open explore sessions. Called on OIBus shutdown.
+   */
+  async closeAllExploreSessions(): Promise<void> {
+    await this.exploreSessionManager.closeAll();
   }
 
   async testItem(
