@@ -2173,8 +2173,26 @@ describe('SouthOPCUA', () => {
     );
   });
 
-  it('explore should throw if session not connected', async () => {
-    await assert.rejects(() => south.explore(null), { message: 'OPC-UA session not connected' });
+  it('explore should lazily create a session when not connected', async () => {
+    const mockedClient = {
+      close: mock.fn(async () => undefined),
+      browse: mock.fn(async () => ({ references: [], continuationPoint: null }))
+    };
+    const createSessionMock = mock.fn(async () => mockedClient as unknown as ClientSession);
+    south.createSession = createSessionMock;
+
+    const entries = await south.explore(null);
+
+    assert.strictEqual(createSessionMock.mock.calls.length, 1);
+    assert.deepStrictEqual(entries, []);
+  });
+
+  it('explore should surface the connection error when the session cannot be created', async () => {
+    south.createSession = mock.fn(async () => {
+      throw new Error('connection refused');
+    });
+
+    await assert.rejects(() => south.explore(null), { message: 'connection refused' });
   });
 
   it('explore should browse the root and map references', async () => {

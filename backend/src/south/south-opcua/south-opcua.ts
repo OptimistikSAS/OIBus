@@ -339,8 +339,11 @@ export default class SouthOPCUA
    * @param parentId - the node id to expand, or null to browse the Objects folder root (ns=0;i=85)
    */
   async explore(parentId: string | null): Promise<Array<SouthConnectorExploreEntry>> {
+    // connect() swallows connection errors to drive the streaming reconnect loop. For the
+    // interactive explore we (re)establish the session lazily so the real connection failure
+    // is surfaced to the user instead of a generic "not connected" message.
     if (this.client === null) {
-      throw new Error('OPC-UA session not connected');
+      this.client = await this.createSession();
     }
     const nodeToBrowse = parentId ?? 'ns=0;i=85';
     try {
@@ -361,6 +364,9 @@ export default class SouthOPCUA
       }));
     } catch (error) {
       if (isSessionError(error)) {
+        // The session is dead: release it so a later browse reconnects instead of
+        // repeatedly hitting a broken client (and free the socket immediately).
+        await this.disconnect();
         throw new Error(`OPCUA explore session expired, please restart the exploration: ${(error as Error).message}`);
       }
       throw error;

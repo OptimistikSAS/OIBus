@@ -529,6 +529,19 @@ describe('South Service', () => {
     assert.strictEqual(mockedSouth1.connect.mock.calls.length, 0);
   });
 
+  it('should stop the connector if connect fails during explore', async () => {
+    mockedSouth1.hasExplore.mock.mockImplementation(() => true);
+    mockedSouth1.connect.mock.mockImplementation(async () => {
+      throw new Error('connect failed');
+    });
+
+    await assert.rejects(
+      () => service.startExplore('create', testData.south.command.type, testData.south.command.settings),
+      /connect failed/
+    );
+    assert.strictEqual(mockedSouth1.stop.mock.calls.length, 1);
+  });
+
   it('should close the session if the initial browse fails', async () => {
     mockedSouth1.hasExplore.mock.mockImplementation(() => true);
     mockedSouth1.explore.mock.mockImplementation(async () => {

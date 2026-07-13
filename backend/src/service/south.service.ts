@@ -283,7 +283,13 @@ export default class SouthService {
     if (!south.hasExplore()) {
       throw new Error(`South connector of type "${southType}" does not support exploration`);
     }
-    await south.connect();
+    try {
+      await south.connect();
+    } catch (error) {
+      // connect() failed before the session was registered — release the connector so it doesn't leak.
+      await south.stop();
+      throw error;
+    }
     const sessionId = await this.exploreSessionManager.start(south);
     try {
       const entries = await this.exploreSessionManager.browse(sessionId, null);

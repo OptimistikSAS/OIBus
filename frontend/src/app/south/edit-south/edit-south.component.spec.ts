@@ -17,6 +17,7 @@ import { UnsavedChangesConfirmationService } from '../../shared/unsaved-changes-
 import { TransformerService } from '../../services/transformer.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../test/vitest-create-mock';
+import { SouthExploreModalComponent } from '../../shared/south-explore-modal/south-explore-modal.component';
 import { SouthConnectorDTO, SouthItemGroupDTO } from '../../../../../backend/shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../backend/shared/model/scan-mode.model';
 import testData from '../../../../../backend/src/tests/utils/test-data';
@@ -222,5 +223,29 @@ describe('EditSouthComponent', () => {
     );
     const getItemCount = prepare.mock.calls[0][4];
     expect(getItemCount('group1')).toBe(1);
+  });
+
+  test('should display the explore button when the connector supports it', async () => {
+    southConnectorService.findById.mockReturnValue(of(southConnector as any));
+    TestBed.overrideProvider(ActivatedRoute, { useValue: editRouteStub });
+    const fixture = TestBed.createComponent(EditSouthComponent);
+    fixture.detectChanges();
+
+    const root = page.elementLocator(fixture.nativeElement);
+    await expect.element(root.getByCss('#explore')).toBeInTheDocument();
+  });
+
+  test('should open the explore modal', () => {
+    southConnectorService.findById.mockReturnValue(of(southConnector as any));
+    const fakeModal = { componentInstance: { prepare: vi.fn() } };
+    modalService.open.mockReturnValue(fakeModal as any);
+    TestBed.overrideProvider(ActivatedRoute, { useValue: editRouteStub });
+    const fixture = TestBed.createComponent(EditSouthComponent);
+    fixture.detectChanges();
+
+    fixture.componentInstance.explore();
+
+    expect(modalService.open).toHaveBeenCalledWith(SouthExploreModalComponent, expect.anything());
+    expect(fakeModal.componentInstance.prepare).toHaveBeenCalled();
   });
 });
