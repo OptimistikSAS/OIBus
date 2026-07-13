@@ -12,6 +12,8 @@ import {
   SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
+  SouthExploreBrowseResult,
+  SouthExploreStartResult,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO,
   SouthType
@@ -125,6 +127,29 @@ export class SouthConnectorService {
         params: { southType, itemName }
       }
     );
+  }
+
+  /**
+   * Start an interactive explore session and return the root-level entries
+   */
+  startExplore(southId: string, settings: SouthSettings, southType: OIBusSouthType): Observable<SouthExploreStartResult> {
+    return this.http.post<SouthExploreStartResult>(`/api/south/${southId}/explore`, settings, {
+      params: { southType }
+    });
+  }
+
+  /**
+   * Browse (expand) an entry within an explore session
+   */
+  browseExplore(southId: string, sessionId: string, parentId: string | null): Observable<SouthExploreBrowseResult> {
+    return this.http.put<SouthExploreBrowseResult>(`/api/south/${southId}/explore/${sessionId}`, { parentId });
+  }
+
+  /**
+   * Close an explore session
+   */
+  closeExplore(southId: string, sessionId: string): Observable<void> {
+    return this.http.delete<void>(`/api/south/${southId}/explore/${sessionId}`);
   }
 
   /**
