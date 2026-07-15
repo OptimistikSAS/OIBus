@@ -35509,8 +35509,25 @@
 						"description": "No content"
 					}
 				},
-				"description": "Checks the current status of the OIBus engine",
+				"description": "Checks the current status of the OIBus engine. Used by Helm Charts.\nThis endpoint is public and does not require any authentication",
 				"summary": "Check OIBus status",
+				"tags": [
+					"Engine"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/api/status": {
+			"get": {
+				"operationId": "GetOIBusStatusLegacyAlias",
+				"responses": {
+					"204": {
+						"description": "No content"
+					}
+				},
+				"description": "Legacy alias for `/api/engine/status`, kept unauthenticated for backward compatibility\nwith tools that still poll the pre-3.7 endpoint.",
+				"summary": "Check OIBus status (legacy alias)",
 				"tags": [
 					"Engine"
 				],
