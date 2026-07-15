@@ -258,11 +258,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
    * Diff the configured subscription items against what we're currently
    * subscribed to and call `subscribe()` / `unsubscribe()` to reconcile.
    *
-   * "Subscription items" are items whose scan mode is the reserved
-   * `'subscription'` id — push-driven rather than pull-driven, so they don't
-   * run through the cron loop. Subclasses must implement `SouthSubscription`
-   * for this to do anything; non-subscription connectors get a trace log and
-   * return.
+   * "Subscription items" are items whose *effective* scan mode is the
+   * reserved `'subscription'` id — push-driven rather than pull-driven, so
+   * they don't run through the cron loop. The effective scan mode is the
+   * item's own `scanMode`, unless the item is synced with a group
+   * (`syncWithGroup` and a non-null `group`), in which case the group's
+   * `scanMode` takes over (same precedence as `updateCronJobs()`). Subclasses
+   * must implement `SouthSubscription` for this to do anything;
+   * non-subscription connectors get a trace log and return.
    *
    * Errors from `subscribe()` / `unsubscribe()` are logged per-batch but never
    * rethrown — a partial failure on either side leaves the connector running
@@ -273,8 +276,14 @@ export default abstract class SouthConnector<T extends SouthSettings, I extends 
       this.logger.trace('This connector does not support subscriptions');
       return;
     }
-    // Get all subscription items
-    const subscriptionItems = this.connector.items.filter(item => item.scanMode && item.scanMode.id === 'subscription' && item.enabled);
+    // Get all subscription items, resolving the effective scan mode through the group when synced
+    const subscriptionItems = this.connector.items.filter(item => {
+      if (!item.enabled) return false;
+      if (item.group) {
+        return item.group.scanMode.id === 'subscription';
+      }
+      return item.scanMode?.id === 'subscription';
+    });
     const subscribedIds = new Set(this.subscribedItems.map(item => item.id));
     const subscriptionIds = new Set(subscriptionItems.map(item => item.id));
 
