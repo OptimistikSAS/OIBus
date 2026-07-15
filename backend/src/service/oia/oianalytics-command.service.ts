@@ -366,6 +366,8 @@ export default class OIAnalyticsCommandService {
       await this.checkForCancelledCommands(registration);
       // Second, retrieve commands from OIAnalytics
       await this.fetchNewCommands(registration);
+      // Third, acknowledge commands whose execution has completed
+      await this.acknowledgeCommands(registration);
     } catch (error: unknown) {
       this.isRetrievingCommands = false;
       this.logger.error(getErrorMessage(error));
@@ -373,7 +375,6 @@ export default class OIAnalyticsCommandService {
       return;
     }
 
-    await this.acknowledgeCommands(registration);
     this.isRetrievingCommands = false;
     this.refreshCommandsTimeout = setTimeout(this.refreshCommands.bind(this), registration.commandRefreshInterval * 1000);
     this.commandEvent.emit('next');
