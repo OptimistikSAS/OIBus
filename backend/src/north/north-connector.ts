@@ -414,6 +414,8 @@ export default abstract class NorthConnector<T extends NorthSettings> {
           action: 'sent'
         });
       }
+      this.contentBeingSent = null;
+      this.errorCount = 0;
     } catch (error: unknown) {
       fileStream.close();
       const oibusError = createOIBusError(error);
@@ -427,10 +429,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       if (!oibusError.forceRetry && this.errorCount > this.connector.caching.error.retryCount) {
         this.logger.warn(`Moving content into error after ${this.errorCount} errors`);
         await this.manageErrorContent(this.contentBeingSent!);
+        this.contentBeingSent = null;
+        this.errorCount = 0;
       }
-    } finally {
-      this.contentBeingSent = null;
-      this.errorCount = 0;
+      // Otherwise keep `contentBeingSent` and `errorCount` so the next run retries the same content
     }
   }
 
