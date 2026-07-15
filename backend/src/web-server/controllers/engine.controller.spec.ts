@@ -88,4 +88,13 @@ describe('EngineController', () => {
   it('should check OIBus status', async () => {
     await controller.getOIBusStatus(mockRequest as CustomExpressRequest);
   });
+
+  it('should check OIBus status via the legacy alias', async () => {
+    const spy = mock.method(controller, 'getOIBusStatus');
+
+    await controller.getOIBusStatusLegacyAlias(mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(spy.mock.calls.length, 1);
+    assert.strictEqual(spy.mock.calls[0].arguments[0], mockRequest);
+  });
 });

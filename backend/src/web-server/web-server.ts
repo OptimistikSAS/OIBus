@@ -31,6 +31,10 @@ import { NotFoundError, OIBusTestingError, OIBusValidationError } from '../model
 import os from 'node:os';
 import type { ILogger } from '../model/logger.model';
 
+// Endpoints that never require authentication: liveness/status checks used by monitoring
+// tools and load balancers before any credentials could be presented.
+const PUBLIC_PATHS = ['/api/engine/status', '/api/status'];
+
 /**
  * OIBus web server - using express
  */
@@ -77,7 +81,7 @@ export default class WebServer {
     return this._whiteList;
   }
 
-  async init(): Promise<void> {
+  init(): void {
     this.app = express();
 
     // Helmet for Express with Content Security Policy
@@ -176,9 +180,9 @@ export default class WebServer {
 
     this.app.use(apiRateLimiter);
 
-    // Authentication middleware for API routes only
+    // Authentication middleware for API routes. Ignore public path routes
     this.app.use((req, res, next) => {
-      if (isApiRoute(req.path)) {
+      if (isApiRoute(req.path) && !PUBLIC_PATHS.includes(req.path)) {
         return authMiddleware(this.userService, this.encryptionService)(req, res, next);
       }
       return next();
@@ -188,7 +192,6 @@ export default class WebServer {
     this.app.use(sseMiddleware(this.southService, this.northService, this.oIBusService, this.homeMetricsService, this.historyQueryService));
 
     // Routes
-    this.app.get('/health', this.healthCheck.bind(this));
     this.setupRoutes(this.app);
     this.app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
       if (err instanceof NotFoundError) {
@@ -233,7 +236,7 @@ export default class WebServer {
     this.app.use(this.handleBodyParserErrors.bind(this));
     this.app.use(this.setupErrorHandling());
 
-    await this.start();
+    this.start();
   }
 
   private setupRequestLogging(): express.RequestHandler {
@@ -276,13 +279,6 @@ export default class WebServer {
           // any other multer config
         }
       })
-    });
-  }
-
-  private healthCheck(_req: express.Request, res: express.Response): void {
-    res.status(200).json({
-      status: 'OK',
-      timestamp: new Date().toISOString()
     });
   }
 
