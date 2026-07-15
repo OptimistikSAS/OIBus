@@ -1,8 +1,8 @@
-import { describe, it, before, beforeEach, afterEach, mock, type Mock } from 'node:test';
+import { afterEach, before, beforeEach, describe, it, mock, type Mock } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import testData from '../tests/utils/test-data';
-import { mockModule, reloadModule, flushPromises } from '../tests/utils/test-utils';
+import { flushPromises, mockModule, reloadModule } from '../tests/utils/test-utils';
 import SouthCacheRepositoryMock from '../tests/__mocks__/repository/cache/south-cache-repository.mock';
 import SouthCacheServiceMock from '../tests/__mocks__/service/south-cache-service.mock';
 import EncryptionServiceMock from '../tests/__mocks__/service/encryption-service.mock';
@@ -173,8 +173,7 @@ describe('SouthConnector', () => {
     });
 
     it('should warn once per hour and log trace in between when the previous cron is still running', () => {
-      const runMock = mock.fn(async () => undefined);
-      south.run = runMock;
+      south.run = mock.fn(async () => undefined);
       const scanMode = testData.scanMode.list[0];
 
       // First tick enqueues the job and starts running it
@@ -951,6 +950,168 @@ describe('SouthConnector', () => {
           (c: { arguments: Array<unknown> }) => c.arguments[0] === 'Error when unsubscribing from items: unsubscribe error'
         )
       );
+    });
+
+    it('should subscribe an item whose group scan mode is subscription', async () => {
+      south['subscribedItems'] = [];
+      south['connector'].items = [
+        {
+          id: 'southItemGroupSub',
+          name: 'grouped item with subscription group',
+          enabled: true,
+          settings: { mode: 'da' } as SouthOPCUAItemSettings,
+          // The item's own scan mode is NOT subscription: the group must be what decides.
+          scanMode: testData.scanMode.list[0],
+          group: {
+            id: 'group1',
+            name: 'Group 1',
+            scanMode: testData.scanMode.list[2], // 'subscription'
+            overlap: null,
+            maxReadInterval: null,
+            readDelay: null,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          syncWithGroup: true,
+          maxReadInterval: null,
+          readDelay: null,
+          overlap: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ];
+      south.subscribe = mock.fn(async (): Promise<void> => undefined);
+      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+
+      await south.updateSubscriptions();
+
+      assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.deepStrictEqual(
+        (south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls[0].arguments[0].map((item: { id: string }) => item.id),
+        ['southItemGroupSub']
+      );
+    });
+
+    it('should not subscribe an item whose group scan mode is not subscription, even if its own scan mode is', async () => {
+      south['subscribedItems'] = [];
+      south['connector'].items = [
+        {
+          id: 'southItemGroupNotSub',
+          name: 'grouped item with non-subscription group',
+          enabled: true,
+          settings: { mode: 'da' } as SouthOPCUAItemSettings,
+          // The item's own scan mode IS subscription, but the group must win.
+          scanMode: testData.scanMode.list[2],
+          group: {
+            id: 'group1',
+            name: 'Group 1',
+            scanMode: testData.scanMode.list[0], // not 'subscription'
+            overlap: null,
+            maxReadInterval: null,
+            readDelay: null,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          syncWithGroup: true,
+          maxReadInterval: null,
+          readDelay: null,
+          overlap: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ];
+      south.subscribe = mock.fn(async (): Promise<void> => undefined);
+      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+
+      await south.updateSubscriptions();
+
+      assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+    });
+
+    it('should not subscribe a disabled item even if its group scan mode is subscription', async () => {
+      south['subscribedItems'] = [];
+      south['connector'].items = [
+        {
+          id: 'southItemGroupDisabled',
+          name: 'disabled grouped item with subscription group',
+          enabled: false,
+          settings: { mode: 'da' } as SouthOPCUAItemSettings,
+          scanMode: testData.scanMode.list[0],
+          group: {
+            id: 'group1',
+            name: 'Group 1',
+            scanMode: testData.scanMode.list[2], // 'subscription'
+            overlap: null,
+            maxReadInterval: null,
+            readDelay: null,
+            createdBy: '',
+            updatedBy: '',
+            createdAt: '',
+            updatedAt: ''
+          },
+          syncWithGroup: true,
+          maxReadInterval: null,
+          readDelay: null,
+          overlap: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        }
+      ];
+      south.subscribe = mock.fn(async (): Promise<void> => undefined);
+      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+
+      await south.updateSubscriptions();
+
+      assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
+    });
+
+    it('should unsubscribe an item whose group scan mode moved away from subscription', async () => {
+      const alreadySubscribedItem = {
+        id: 'southItemGroupSub',
+        name: 'grouped item no longer subscription',
+        enabled: true,
+        settings: { mode: 'da' } as SouthOPCUAItemSettings,
+        scanMode: testData.scanMode.list[0],
+        group: {
+          id: 'group1',
+          name: 'Group 1',
+          scanMode: testData.scanMode.list[0], // group scan mode changed away from subscription
+          overlap: null,
+          maxReadInterval: null,
+          readDelay: null,
+          createdBy: '',
+          updatedBy: '',
+          createdAt: '',
+          updatedAt: ''
+        },
+        syncWithGroup: true,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      };
+      south['subscribedItems'] = [alreadySubscribedItem];
+      south['connector'].items = [alreadySubscribedItem];
+      south.subscribe = mock.fn(async (): Promise<void> => undefined);
+      south.unsubscribe = mock.fn(async (): Promise<void> => undefined);
+
+      await south.updateSubscriptions();
+
+      assert.strictEqual((south.unsubscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 1);
+      assert.strictEqual((south.subscribe as Mock<(...args: Array<unknown>) => unknown>).mock.calls.length, 0);
     });
   });
 });
