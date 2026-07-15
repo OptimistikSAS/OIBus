@@ -11379,6 +11379,36 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsEngineController_getOIBusStatusLegacyAlias: Record<string, TsoaRoute.ParameterSchema> = {
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.get('/api/status',
+            ...(fetchMiddlewares<RequestHandler>(EngineController)),
+            ...(fetchMiddlewares<RequestHandler>(EngineController.prototype.getOIBusStatusLegacyAlias)),
+
+            async function EngineController_getOIBusStatusLegacyAlias(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsEngineController_getOIBusStatusLegacyAlias, request, response });
+
+                const controller = new EngineController();
+
+              await templateService.apiHandler({
+                methodName: 'getOIBusStatusLegacyAlias',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsContentController_addFile: Record<string, TsoaRoute.ParameterSchema> = {
                 northId: {"in":"query","name":"northId","required":true,"dataType":"string"},
                 dataSourceId: {"in":"query","name":"dataSourceId","required":true,"dataType":"string"},

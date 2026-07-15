@@ -3,7 +3,7 @@ import { EngineSettingsCommandDTO, EngineSettingsDTO, EngineSettingsUpdateResult
 import { CustomExpressRequest } from '../express';
 import { toEngineSettingsDTO } from '../../service/oibus.service';
 
-@Route('/api/engine')
+@Route('/api')
 @Tags('Engine')
 /**
  * OIBus Engine Management API
@@ -15,7 +15,7 @@ export class EngineController extends Controller {
    * @summary Retrieve engine configuration
    * @returns {EngineSettingsDTO} The engine settings
    */
-  @Get('')
+  @Get('/engine')
   getEngineSettings(@Request() request: CustomExpressRequest): EngineSettingsDTO {
     const oIBusService = request.services.oIBusService;
     return toEngineSettingsDTO(
@@ -30,7 +30,7 @@ export class EngineController extends Controller {
    * @param {EngineSettingsCommandDTO} command.body.required - Engine settings to update
    * @returns {EngineSettingsUpdateResultDTO} Information about whether a redirect is needed
    */
-  @Put('')
+  @Put('/engine')
   @SuccessResponse(200, 'Engine settings updated successfully')
   async updateEngineSettings(
     @Body() command: EngineSettingsCommandDTO,
@@ -44,7 +44,7 @@ export class EngineController extends Controller {
    * Resets all metrics collected by the OIBus engine
    * @summary Reset metrics
    */
-  @Post('/metrics/reset')
+  @Post('/engine/metrics/reset')
   @SuccessResponse(204, 'Engine metrics reset successfully')
   async resetEngineMetrics(@Request() request: CustomExpressRequest): Promise<void> {
     const oIBusService = request.services.oIBusService;
@@ -55,7 +55,7 @@ export class EngineController extends Controller {
    * Restarts the OIBus process
    * @summary Restart OIBus process
    */
-  @Post('/restart')
+  @Post('/engine/restart')
   @SuccessResponse(204, 'Engine restart initiated successfully')
   async restart(@Request() request: CustomExpressRequest): Promise<void> {
     const oIBusService = request.services.oIBusService;
@@ -67,18 +67,29 @@ export class EngineController extends Controller {
    * @summary Retrieve OIBus information
    * @returns {OIBusInfo} OIBus information including version, build, and system details
    */
-  @Get('/info')
+  @Get('/engine/info')
   getInfo(@Request() request: CustomExpressRequest): OIBusInfo {
     const oIBusService = request.services.oIBusService;
     return oIBusService.getInfo();
   }
 
   /**
-   * Checks the current status of the OIBus engine
+   * Checks the current status of the OIBus engine. Used by Helm Charts.
+   * This endpoint is public and does not require any authentication
    * @summary Check OIBus status
    */
-  @Get('/status')
+  @Get('/engine/status')
   getOIBusStatus(@Request() _request: CustomExpressRequest): void {
     return;
+  }
+
+  /**
+   * Legacy alias for `/api/engine/status`, kept unauthenticated for backward compatibility
+   * with tools that still poll the pre-3.7 endpoint.
+   * @summary Check OIBus status (legacy alias)
+   */
+  @Get('/status')
+  getOIBusStatusLegacyAlias(@Request() request: CustomExpressRequest): void {
+    return this.getOIBusStatus(request);
   }
 }
