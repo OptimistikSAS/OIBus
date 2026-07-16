@@ -182,6 +182,47 @@ describe('JSONToCSVTransformer', () => {
     assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [{ Nested: 'value' }]);
   });
 
+  it('should split multiple metrics embedded in a single JSON-stringified MQTT message into separate CSV rows', async () => {
+    const options = {
+      regex: '.*\\.json',
+      filename: 'mqtt-test.csv',
+      delimiter: 'SEMI_COLON',
+      rowIteratorPath: '$[*].message.metrics[*]',
+      fields: [
+        { jsonPath: '$[*].message.metrics[*].name', columnName: 'Name', dataType: 'string' },
+        { jsonPath: '$[*].message.metrics[*].value', columnName: 'Value', dataType: 'number' }
+      ]
+    };
+    // A single MQTT message can carry several metrics in its (JSON-stringified) payload.
+    const inputData = [
+      {
+        message: JSON.stringify({
+          metrics: [
+            { name: 'TAG.A', value: 1.1 },
+            { name: 'TAG.B', value: 2.2 }
+          ]
+        })
+      },
+      { message: JSON.stringify({ metrics: [{ name: 'TAG.C', value: 3.3 }] }) }
+    ];
+    const transformer = new JSONToCSVTransformer(logger, testData.transformers.list[0], options);
+    const mockStream = new Readable();
+
+    const promise = transformer.transform(mockStream, { source: 'test' }, 'input.json');
+    mockStream.push(JSON.stringify(inputData));
+    mockStream.push(null);
+
+    await flushPromises();
+    await promise;
+
+    assert.ok(mockPapaparse.unparse.mock.calls.length > 0);
+    assert.deepStrictEqual(mockPapaparse.unparse.mock.calls[0].arguments[0], [
+      { Name: 'TAG.A', Value: 1.1 },
+      { Name: 'TAG.B', Value: 2.2 },
+      { Name: 'TAG.C', Value: 3.3 }
+    ]);
+  });
+
   describe('fieldProcess', () => {
     it('should apply fieldProcess expression to the typed value before writing to CSV', async () => {
       mockPapaparse.unparse = mock.fn(() => 'csv result');

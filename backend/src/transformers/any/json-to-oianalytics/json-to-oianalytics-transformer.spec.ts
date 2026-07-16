@@ -113,6 +113,37 @@ describe('JSONToOIAnalyticsTransformer', () => {
     ]);
   });
 
+  it('should split multiple metrics embedded in a single JSON-stringified MQTT message into separate rows', async () => {
+    const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], {
+      ...options,
+      rowIteratorPath: '$[*].message.metrics[*]',
+      pointId: '$[*].message.metrics[*].name',
+      value: '$[*].message.metrics[*].value',
+      timestamp: '$[*].message.metrics[*].timestamp'
+    });
+    // A single MQTT message can carry several metrics in its (JSON-stringified) payload.
+    const inputData = [
+      {
+        message: JSON.stringify({
+          metrics: [
+            { name: 'TAG.A', value: 1.1, timestamp: '2020-01-01T00:00:00.000Z' },
+            { name: 'TAG.B', value: 2.2, timestamp: '2020-01-01T00:00:01.000Z' }
+          ]
+        })
+      },
+      { message: JSON.stringify({ metrics: [{ name: 'TAG.C', value: 3.3, timestamp: '2020-01-01T00:00:02.000Z' }] }) }
+    ];
+
+    const result = await transformer.transformInMemory(inputData, { source: 'test' }, null);
+
+    assert.deepStrictEqual(JSON.parse(result.output.toString()), [
+      { pointId: 'TAG.A', timestamp: '2020-01-01T00:00:00.000Z', data: { value: 1.1 } },
+      { pointId: 'TAG.B', timestamp: '2020-01-01T00:00:01.000Z', data: { value: 2.2 } },
+      { pointId: 'TAG.C', timestamp: '2020-01-01T00:00:02.000Z', data: { value: 3.3 } }
+    ]);
+    assert.strictEqual(result.metadata.numberOfElement, 3);
+  });
+
   it('should fall back to the current date when no timestamp can be resolved', async () => {
     const transformer = new JSONToOIAnalyticsTransformer(logger, testData.transformers.list[0], { ...options, timestamp: '$[*].missing' });
     const inputData = [{ id: 'point-1', ts: '2020-01-01T00:00:00.000Z', val: 1 }];
