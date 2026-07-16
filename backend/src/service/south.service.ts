@@ -618,7 +618,7 @@ export default class SouthService {
     for (const groupName of uniqueGroupNames) {
       let group = this.southItemGroupRepository.findByNameAndSouthId(groupName, southId);
       if (!group) {
-        // Find the scan mode to use - use the first item's scan mode that has this group
+        // Use the first item where this group is noticed to seed the scan mode and historian settings
         const itemWithGroup = items.find(item => item.groupName === groupName);
         if (!itemWithGroup) continue;
 
@@ -627,9 +627,9 @@ export default class SouthService {
           name: groupName,
           southId: southConnector.id,
           scanMode,
-          overlap: null,
-          maxReadInterval: null,
-          readDelay: 0
+          overlap: itemWithGroup.overlap,
+          maxReadInterval: itemWithGroup.maxReadInterval,
+          readDelay: itemWithGroup.readDelay
         };
         group = this.southItemGroupRepository.create(groupEntity, user);
       }

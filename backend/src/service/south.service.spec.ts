@@ -1225,6 +1225,58 @@ describe('South Service', () => {
     assert.deepStrictEqual(savedItems[0].group, newGroup);
   });
 
+  it('should create a new group using the overlap, maxReadInterval and readDelay of the first item where the group is noticed', async () => {
+    const newGroup: SouthItemGroupEntity = {
+      id: 'newGroupId',
+      name: 'New Import Group',
+      southId: testData.south.list[0].id,
+      scanMode: testData.scanMode.list[0],
+      overlap: 10,
+      maxReadInterval: 3600,
+      items: [],
+      readDelay: 200,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    southItemGroupRepository.findByNameAndSouthId.mock.mockImplementation(() => null);
+    mockUtils.checkScanMode.mock.mockImplementation(() => testData.scanMode.list[0]);
+    southItemGroupRepository.create.mock.mockImplementation(() => newGroup);
+
+    // Two items reference the same new group: only the first one's historian settings must be used
+    const firstItemWithGroupName: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      groupName: 'New Import Group',
+      groupId: null,
+      overlap: 10,
+      maxReadInterval: 3600,
+      readDelay: 200
+    };
+    const secondItemWithGroupName: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      id: 'anotherNewSouthItemId',
+      groupName: 'New Import Group',
+      groupId: null,
+      overlap: 999,
+      maxReadInterval: 999,
+      readDelay: 999
+    };
+
+    await service.importItems(testData.south.list[0].id, [firstItemWithGroupName, secondItemWithGroupName], 'userTest');
+
+    assert.strictEqual(southItemGroupRepository.create.mock.calls.length, 1);
+    assert.deepStrictEqual(southItemGroupRepository.create.mock.calls[0].arguments[0], {
+      name: 'New Import Group',
+      southId: testData.south.list[0].id,
+      scanMode: testData.scanMode.list[0],
+      overlap: 10,
+      maxReadInterval: 3600,
+      readDelay: 200
+    });
+  });
+
   it('should import items with groupName and use existing group when it exists', async () => {
     const existingGroup: SouthItemGroupEntity = {
       id: 'existingGroupId',
