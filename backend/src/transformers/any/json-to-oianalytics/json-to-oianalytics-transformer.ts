@@ -1,5 +1,4 @@
 import OIBusTransformer from '../../oibus-transformer';
-import { JSONPath } from 'jsonpath-plus';
 import { ReadStream } from 'node:fs';
 import { Readable } from 'node:stream';
 import { CacheMetadata, CacheMetadataSource } from '../../../../shared/model/engine.model';
@@ -8,62 +7,7 @@ import { DateTime } from 'luxon';
 import { Instant } from '../../../model/types';
 import { DateTimeType } from '../../../../shared/model/types';
 import { TransformerJsonToOianalyticsSettings } from '../../../../shared/model/transformer-settings.model';
-
-/**
- * Splits a JSONPath expression into its individual navigation segments.
- * e.g. "$[0].data.diameters[1].value" → ["$", "[0]", ".data", ".diameters", "[1]", ".value"]
- *
- * Mirrors the helper in `json-to-csv-transformer.ts`: both transformers extract values from an
- * arbitrary JSON payload via per-row JSONPaths, the only difference being the output format.
- */
-function splitPathSegments(path: string): Array<string> {
-  const segments: Array<string> = [];
-  const regex = /\$|\.[^.[\]]+|\[[^\]]+\]/g;
-  let match: RegExpExecArray | null;
-  while ((match = regex.exec(path)) !== null) {
-    segments.push(match[0]);
-  }
-  return segments;
-}
-
-/**
- * Resolves a JSONPath expression against a value, automatically parsing any
- * JSON-stringified intermediate node when normal traversal would otherwise fail
- * (e.g. an MQTT message whose payload is a JSON string). Leaf strings are left untouched.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function resolveJsonPath(path: string, json: unknown): any {
-  if (typeof json === 'string') {
-    try {
-      json = JSON.parse(json);
-    } catch {
-      return undefined;
-    }
-  }
-  if (json === null || json === undefined) return undefined;
-
-  const result = JSONPath({ path, json: json as object, wrap: false });
-  if (result !== undefined && result !== null) return result;
-
-  // Direct traversal returned nothing. Scan right-to-left through path segments
-  // to find the deepest JSON-stringified intermediate node, parse it, then run
-  // the remaining suffix path on the parsed value.
-  const segments = splitPathSegments(path);
-  for (let i = segments.length - 1; i >= 2; i--) {
-    const prefix = segments.slice(0, i).join('');
-    const suffix = '$' + segments.slice(i).join('');
-    const intermediate = JSONPath({ path: prefix, json: json as object, wrap: false });
-    if (typeof intermediate !== 'string') continue;
-    try {
-      const parsed = JSON.parse(intermediate);
-      return resolveJsonPath(suffix, parsed);
-    } catch {
-      continue;
-    }
-  }
-
-  return result;
-}
+import { resolveJsonPath, resolveJsonPathRows } from '../../json-path';
 
 export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
   public static transformerName = 'json-to-oianalytics';
@@ -93,25 +37,12 @@ export default class JSONToOIAnalyticsTransformer extends OIBusTransformer {
   ): Promise<{ metadata: CacheMetadata; output: Buffer }> {
     const content: object = typeof data === 'string' ? (JSON.parse(data) as object) : (data as object);
 
-    const rowNodes = JSONPath({
-      path: this.options.rowIteratorPath,
-      json: content,
-      resultType: 'all'
-    }) as Array<{ value: unknown; path: string }>;
+    const rows = resolveJsonPathRows(this.options.rowIteratorPath, content);
 
-    const values = rowNodes.map(rowNode => {
-      // Extract indices from the current row path (e.g. "$['items'][5]" -> [5]) so the per-field
-      // paths configured with [*] wildcards resolve to this specific row.
-      const pathIndices: Array<number> = [];
-      const indexRegex = /\[(\d+)\]/g;
-      let match;
-      while ((match = indexRegex.exec(rowNode.path)) !== null) {
-        pathIndices.push(Number(match[1]));
-      }
-
-      const pointId = resolveJsonPath(injectIndices(this.options.pointId, pathIndices), content);
-      const value = resolveJsonPath(injectIndices(this.options.value, pathIndices), content);
-      const rawTimestamp = resolveJsonPath(injectIndices(this.options.timestamp, pathIndices), content);
+    const values = rows.map(row => {
+      const pointId = resolveJsonPath(injectIndices(this.options.pointId, row.indices), content);
+      const value = resolveJsonPath(injectIndices(this.options.value, row.indices), content);
+      const rawTimestamp = resolveJsonPath(injectIndices(this.options.timestamp, row.indices), content);
 
       return {
         pointId: String(pointId),

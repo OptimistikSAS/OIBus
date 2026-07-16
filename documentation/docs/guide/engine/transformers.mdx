@@ -46,14 +46,15 @@ temperature sensors and another for flow meters.
 Once a source is selected, the list is automatically filtered to show only compatible transformers. The available
 choices depend on the type of South connector chosen:
 
-| South connector type                                                    | Compatible standard transformers                                                           |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI** (PLC / historian)      | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values |
-| **REST, SFTP, FTP, Folder Scanner, SQL databases** (file / query-based) | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON)                          |
-| **OIBus API**                                                           | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON)                          |
-| **OIAnalytics Setpoint**                                                | MQTT payloads, Modbus values, OPCUA values                                                 |
+| South connector type                                                          | Compatible standard transformers                                                            |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| **OPC UA, OPC Classic, Modbus, ADS, OSIsoft PI, OIAnalytics** (PLC / historian) | CSV, JSON, MQTT payloads, Modbus values, OIAnalytics (select time precision), OPCUA values     |
+| **MQTT, REST, SFTP, FTP, Folder Scanner, SQL databases** (file / query-based)   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON)     |
+| **OIBus API**                                                                   | Time Values (from CSV), MQTT payloads (from CSV), CSV (from JSON), OIAnalytics (from JSON)     |
+| **OIAnalytics Setpoint**                                                       | MQTT payloads, Modbus values, OPCUA values                                                     |
 
-Custom transformers are also shown in this list and are always named by the user.
+Custom transformers are also shown in this list and are always named by the user. In addition, **Ignore** and
+**No transform** (see below) are available for every source type.
 
 After choosing a transformer, its settings form appears directly in the modal.
 
@@ -62,6 +63,17 @@ After choosing a transformer, its settings form appears directly in the modal.
 ## Standard Transformers
 
 Standard transformers are built-in and require only configuration — no coding.
+
+---
+
+### Ignore and No transform
+
+These two are available for **every** source type, regardless of content type, and require no configuration.
+
+| Transformer      | Behavior                                                                                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ignore**        | Drops the data. Nothing is cached and nothing is sent to the North connector. Useful to silence part of a South connector's output for a given North (via item/group scoping) without disabling the item itself. |
+| **No transform** | Caches the data exactly as received, with no conversion at all. Use this when the North connector already accepts the South's native content type.                    |
 
 ---
 
@@ -116,14 +128,19 @@ transform individual values before they are written.
 ]
 ```
 
-With `pointIdProcess: value.split('/').pop()` and `valueProcess: String(value).replace('.', ',')`:
+With Delimiter: `SEMI_COLON`, `pointIdProcess: value.split('/').pop()`, and `valueProcess: String(value).replace('.', ',')`:
+
+:::tip Why semicolon here
+`valueProcess` turns the decimal point into a comma (`23.5` → `23,5`), as is common in some locales. With a
+comma **delimiter** that would create an extra, unintended column. Using `;` as the delimiter avoids the clash.
+:::
 
 **Output CSV**
 
 ```csv
-Reference,Timestamp,Value
-temp1,2024-01-15T10:00:00.000Z,23,5
-pressure1,2024-01-15T10:00:00.000Z,102,1
+Reference;Timestamp;Value
+temp1;2024-01-15T10:00:00.000Z;23,5
+pressure1;2024-01-15T10:00:00.000Z;102,1
 ```
 
 ---
@@ -457,9 +474,80 @@ Timestamp,Tag,Value,OK
 ```
 
 :::info Nested JSON strings
-The `json-to-csv` transformer can automatically parse JSON-stringified intermediate nodes. If a field value is a
-JSON string that itself contains an object, the remaining path is resolved against the parsed object.
+Both **CSV (from JSON)** and **OIAnalytics (from JSON)** (below) can automatically parse JSON-stringified
+intermediate nodes — for example an MQTT South connector whose messages carry a JSON payload as a raw string. If a
+path segment resolves to a string that itself contains JSON, the rest of the path is resolved against the parsed
+value. This also applies to the **row iterator path** itself: it can cross that string boundary and still produce
+one row per nested match, so a single message holding several readings splits into several rows. See the
+[OIAnalytics (from JSON)](#oianalytics-from-json) example below for a worked-through case.
 :::
+
+---
+
+#### OIAnalytics (from JSON) {#oianalytics-from-json}
+
+Extracts point ID, value, and timestamp from an arbitrary JSON structure via JSONPath expressions and produces a
+standard OIBus time-values array — the same shape produced by PLC/historian South connectors. A **row iterator
+path** identifies which part of the payload becomes one row (one time-value) per match; the point ID, value, and
+timestamp paths are then resolved relative to that row.
+
+This is the transformer to reach for when a South connector (typically MQTT, REST, or Folder Scanner) delivers raw
+JSON that doesn't already match OIBus's internal time-values shape, and you want to feed it straight to an
+OIAnalytics North connector without writing a custom transformer.
+
+##### Settings
+
+| Setting                   | Description                                                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Row Iterator JSONPath**  | JSONPath to the array of rows that become time-values (e.g. `$[*]`). Automatically parses a JSON-stringified intermediate node when direct traversal fails, so the path may cross into a field holding raw JSON text (e.g. an MQTT payload) and still yield one row per nested match |
+| **Point ID JSONPath**      | JSONPath to the point identifier within the current row (e.g. `$[*].id`); wildcards (`[*]`) are resolved to the current row's indices |
+| **Value JSONPath**         | JSONPath to the value within the current row                                                                                          |
+| **Timestamp JSONPath**     | JSONPath to the raw timestamp within the current row. Falls back to the current time if it cannot be resolved                       |
+| **Timestamp input type**   | Format of the raw timestamp: `String`, `ISO string`, `Unix epoch (s)`, or `Unix epoch (ms)`                                          |
+| **Timezone**               | Timezone used when parsing (only used when input type is `String`)                                                                   |
+| **Format**                 | Custom datetime pattern (only used when input type is `String`, e.g. `yyyy-MM-dd HH:mm:ss`)                                          |
+| **Locale**                 | Locale used for parsing month/day names (only used when input type is `String`)                                                      |
+| **Timestamp precision**    | Output precision the resulting ISO timestamp is truncated to: `Millisecond`, `Second`, `Minute`, or `Hour`                            |
+
+##### Example — MQTT messages with a JSON-stringified payload
+
+An MQTT South connector delivers each message as `{ message, timestamp, item }`, where `message` is the **raw
+MQTT payload string**. A single message can carry more than one metric, so the row iterator uses **two**
+wildcards — one for the outer array of messages, one for the metrics inside each message's (JSON-stringified)
+payload — and fans out one row per metric, whether a given message holds one reading or several.
+
+**Input** — the first message carries two metrics, the second carries one
+
+```json
+[
+  {
+    "message": "{\"metrics\":[{\"name\":\"PLANT.UNIT1.TANK3.LEVEL\",\"value\":52.2936,\"timestamp\":\"2026-07-16T08:50:18.808Z\"},{\"name\":\"PLANT.UNIT1.TANK3.TEMP\",\"value\":18.4,\"timestamp\":\"2026-07-16T08:50:19.001Z\"}]}"
+  },
+  { "message": "{\"metrics\":[{\"name\":\"PLANT.UNIT2.PUMP1.SPEED\",\"value\":1450,\"timestamp\":\"2026-07-16T08:50:20.500Z\"}]}" }
+]
+```
+
+Configuration:
+
+- Row Iterator JSONPath: `$[*].message.metrics[*]`
+- Point ID JSONPath: `$[*].message.metrics[*].name`
+- Value JSONPath: `$[*].message.metrics[*].value`
+- Timestamp JSONPath: `$[*].message.metrics[*].timestamp`
+- Timestamp input type: `ISO string`, Timestamp precision: `Millisecond`
+
+The first `[*]` walks the outer array of messages; the second crosses the `message` string boundary (parsed
+automatically) to walk the metrics inside it. Both are resolved together for each row, so the same configuration
+handles a single-metric message and a multi-metric message alike.
+
+**Output** — three rows: two from the first message, one from the second
+
+```json
+[
+  { "pointId": "PLANT.UNIT1.TANK3.LEVEL", "timestamp": "2026-07-16T08:50:18.808Z", "data": { "value": 52.2936 } },
+  { "pointId": "PLANT.UNIT1.TANK3.TEMP", "timestamp": "2026-07-16T08:50:19.001Z", "data": { "value": 18.4 } },
+  { "pointId": "PLANT.UNIT2.PUMP1.SPEED", "timestamp": "2026-07-16T08:50:20.500Z", "data": { "value": 1450 } }
+]
+```
 
 ---
 
