@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.8.7](https://github.com/OptimistikSAS/OIBus/compare/v3.8.6...v3.8.7) (2026-07-16)
+
+
+### Bug Fixes
+
+* **engine:** fix status endpoint auth ([dee00c1](https://github.com/OptimistikSAS/OIBus/commit/dee00c1785f30ed5ff8f286d61e986ace2945c20))
+* **north:** properly reset error count ([f90e364](https://github.com/OptimistikSAS/OIBus/commit/f90e36483b2fd2e92210893a3bf05f284a70e27f))
+* **oianalytics:** fix oianalytics commands retrieval lock ([54ca11c](https://github.com/OptimistikSAS/OIBus/commit/54ca11cca2d97bfe5d3b2e6302611b7486a94e92))
+* **south:** display group(schedule) in south items ([c9036b4](https://github.com/OptimistikSAS/OIBus/commit/c9036b4998f70c2b460043dc11397b8d928d2612))
+* **south:** filter subscription items including groups ([085843c](https://github.com/OptimistikSAS/OIBus/commit/085843c4265e490ae1f3f8bdba324b6cd5d1cc8b))
+* **south:** fix group fields when importing and exporting ([802c78d](https://github.com/OptimistikSAS/OIBus/commit/802c78d858cc8065ee0326fd55c744e02713700d))
+* **south:** trim group name when importing items ([35615c4](https://github.com/OptimistikSAS/OIBus/commit/35615c4c054c0e19dd68288c149fadf550d3f4a6))
+* **transformer:** propagate row iterators into stringified payload ([5603707](https://github.com/OptimistikSAS/OIBus/commit/56037071458c17e59ed6cdb1cd51470d5f3bfb07))
+
 ## [3.8.6](https://github.com/OptimistikSAS/OIBus/compare/v3.8.5...v3.8.6) (2026-07-03)
 
 
