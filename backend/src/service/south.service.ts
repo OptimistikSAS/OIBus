@@ -603,13 +603,18 @@ export default class SouthService {
       attribute => attribute.key === 'settings'
     )! as OIBusObjectAttribute;
 
+    // Normalize group names once so every subsequent comparison/lookup below uses the same trimmed value
+    const normalizedItems = items.map(itemCommand =>
+      itemCommand.groupName ? { ...itemCommand, groupName: itemCommand.groupName.trim() } : itemCommand
+    );
+
     // Collect unique group names and create/find groups
     const groupNameToIdMap = new Map<string, string>();
     const uniqueGroupNames = new Set<string>();
 
-    for (const itemCommand of items) {
-      if (itemCommand.groupName && itemCommand.groupName.trim()) {
-        uniqueGroupNames.add(itemCommand.groupName.trim());
+    for (const itemCommand of normalizedItems) {
+      if (itemCommand.groupName) {
+        uniqueGroupNames.add(itemCommand.groupName);
       }
     }
 
@@ -619,7 +624,7 @@ export default class SouthService {
       let group = this.southItemGroupRepository.findByNameAndSouthId(groupName, southId);
       if (!group) {
         // Use the first item where this group is noticed to seed the scan mode and historian settings
-        const itemWithGroup = items.find(item => item.groupName === groupName);
+        const itemWithGroup = normalizedItems.find(item => item.groupName === groupName);
         if (!itemWithGroup) continue;
 
         const scanMode = checkScanMode(scanModes, itemWithGroup.scanModeId, itemWithGroup.scanModeName);
@@ -637,7 +642,7 @@ export default class SouthService {
     }
 
     // Update item commands to use groupId instead of groupName
-    const updatedItems = items.map(itemCommand => {
+    const updatedItems = normalizedItems.map(itemCommand => {
       if (itemCommand.groupName && groupNameToIdMap.has(itemCommand.groupName)) {
         return {
           ...itemCommand,

@@ -1277,6 +1277,47 @@ describe('South Service', () => {
     });
   });
 
+  it('should trim a group name with surrounding whitespace before creating and resolving the group', async () => {
+    const newGroup: SouthItemGroupEntity = {
+      id: 'newGroupId',
+      name: 'Group1',
+      southId: testData.south.list[0].id,
+      scanMode: testData.scanMode.list[0],
+      overlap: null,
+      maxReadInterval: null,
+      items: [],
+      readDelay: 0,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+
+    southItemGroupRepository.findByNameAndSouthId.mock.mockImplementation(() => null);
+    mockUtils.checkScanMode.mock.mockImplementation(() => testData.scanMode.list[0]);
+    mockUtils.checkGroups.mock.mockImplementation(() => newGroup);
+    southItemGroupRepository.create.mock.mockImplementation(() => newGroup);
+
+    // Simulates a CSV cell with a trailing tab/whitespace character
+    const itemCommandWithUntrimmedGroupName: SouthConnectorItemCommandDTO = {
+      ...testData.south.itemCommand,
+      groupName: 'Group1\t',
+      groupId: null
+    };
+
+    await service.importItems(testData.south.list[0].id, [itemCommandWithUntrimmedGroupName], 'userTest');
+
+    // The group must be looked up / created with the trimmed name
+    assert.strictEqual(southItemGroupRepository.findByNameAndSouthId.mock.calls[0].arguments[0], 'Group1');
+    assert.strictEqual(southItemGroupRepository.create.mock.calls.length, 1);
+    assert.strictEqual(southItemGroupRepository.create.mock.calls[0].arguments[0].name, 'Group1');
+
+    // The item must resolve to the newly created group's id rather than falling through with the
+    // untrimmed group name (which would previously throw `Group "Group1\t" not found`)
+    assert.strictEqual(mockUtils.checkGroups.mock.calls.length, 1);
+    assert.deepStrictEqual(mockUtils.checkGroups.mock.calls[0].arguments, [[], 'newGroupId', null]);
+  });
+
   it('should import items with groupName and use existing group when it exists', async () => {
     const existingGroup: SouthItemGroupEntity = {
       id: 'existingGroupId',
