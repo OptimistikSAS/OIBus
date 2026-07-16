@@ -783,10 +783,20 @@ export const itemToFlattenedCSV = (
       if (isHistoryQuery) {
         flattenedItem = { ...(item as HistoryQueryItemDTO) };
       } else {
-        const { group, ...itemWithoutGroup } = item as SouthConnectorItemDTO;
+        const southItem = item as SouthConnectorItemDTO;
+        const { group, ...itemWithoutGroup } = southItem;
         flattenedItem = { ...itemWithoutGroup };
-        flattenedItem.scanMode = (item as SouthConnectorItemDTO).scanMode?.name || '';
+        flattenedItem.scanMode = group ? group.standardSettings.scanMode.name : southItem.scanMode?.name || '';
         flattenedItem.group = group?.standardSettings.name || '';
+        if (group && southItem.syncWithGroup) {
+          flattenedItem.maxReadInterval = group.historySettings.maxReadInterval;
+          flattenedItem.readDelay = group.historySettings.readDelay;
+          flattenedItem.overlap = group.historySettings.overlap;
+        } else {
+          flattenedItem.maxReadInterval = southItem.maxReadInterval;
+          flattenedItem.readDelay = southItem.readDelay;
+          flattenedItem.overlap = southItem.overlap;
+        }
       }
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         if (columns.has(`settings_${itemSettingsKey}`)) {
