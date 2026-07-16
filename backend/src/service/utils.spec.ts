@@ -1424,7 +1424,7 @@ describe('Service utils', () => {
       );
     });
 
-    it('should fall back to group historian values when item values are null', () => {
+    it('should use the group scan mode and historian settings when the item is synced with its group', () => {
       const scanModeEntry = testData.scanMode.list[0];
       const mockScanModeDTO = {
         ...scanModeEntry,
@@ -1451,21 +1451,63 @@ describe('Service utils', () => {
         ...testData.south.list[2].items[0],
         group: mockGroup,
         syncWithGroup: true,
-        maxReadInterval: null,
-        readDelay: null,
-        overlap: null
+        // The item's own scan mode and historian settings differ from the group's on purpose:
+        // the group's values must win since the item is synced with it.
+        scanMode: testData.scanMode.list[1],
+        maxReadInterval: 1,
+        readDelay: 1,
+        overlap: 1
       } as unknown as SouthConnectorItemDTO;
 
-      utils.itemToFlattenedCSV(
-        [item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>,
-        ',',
-        { attributes: [] } as unknown as OIBusObjectAttribute,
-        true
-      );
+      utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', {
+        attributes: []
+      } as unknown as OIBusObjectAttribute);
 
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
       const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
-      assert.notStrictEqual(capturedData, null);
+      assert.strictEqual(capturedData[0].scanMode, mockGroup.standardSettings.scanMode.name);
+      assert.strictEqual(capturedData[0].group, mockGroup.standardSettings.name);
+      assert.strictEqual(capturedData[0].maxReadInterval, mockGroup.historySettings.maxReadInterval);
+      assert.strictEqual(capturedData[0].readDelay, mockGroup.historySettings.readDelay);
+      assert.strictEqual(capturedData[0].overlap, mockGroup.historySettings.overlap);
+    });
+
+    it('should use the group scan mode but keep the item historian settings when the item is not synced with its group', () => {
+      const mockGroup = {
+        id: 'group1',
+        standardSettings: {
+          name: 'My Group',
+          scanMode: { id: 'groupScanModeId', name: 'Group Scan Mode', cron: '', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' }
+        },
+        historySettings: {
+          maxReadInterval: 3600,
+          readDelay: 200,
+          overlap: 5
+        },
+        createdBy: { id: '', friendlyName: '' },
+        updatedBy: { id: '', friendlyName: '' },
+        createdAt: '',
+        updatedAt: ''
+      };
+      const item = {
+        ...testData.south.list[2].items[0],
+        group: mockGroup,
+        syncWithGroup: false,
+        scanMode: testData.scanMode.list[1],
+        maxReadInterval: 42,
+        readDelay: 43,
+        overlap: 44
+      } as unknown as SouthConnectorItemDTO;
+
+      utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', {
+        attributes: []
+      } as unknown as OIBusObjectAttribute);
+
+      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
+      assert.strictEqual(capturedData[0].scanMode, mockGroup.standardSettings.scanMode.name);
+      assert.strictEqual(capturedData[0].maxReadInterval, 42);
+      assert.strictEqual(capturedData[0].readDelay, 43);
+      assert.strictEqual(capturedData[0].overlap, 44);
     });
 
     it('should flatten items with scanModes', () => {
@@ -1521,34 +1563,33 @@ describe('Service utils', () => {
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
     });
 
-    it('should fall back to group historian settings when item fields are null', () => {
-      const baseItem = {
+    it('should not use group historian settings when the item is not synced with its group, even if its own fields are null', () => {
+      const itemWithNulls = {
         id: 'item1',
         connectorId: 'conn1',
         name: 'Item 1',
         enabled: true,
         scanModeId: 'sm1',
         scanMode: { id: 'sm1', name: 'Every 10s', cron: '*/10 * * * * *', createdBy: '', updatedBy: '', createdAt: '', updatedAt: '' },
-        group: null,
         syncWithGroup: false,
-        maxReadInterval: 3600,
-        readDelay: 200,
-        overlap: 0,
-        settings: { address: '40001' }
-      } as unknown as SouthConnectorItemDTO;
-      const itemWithNulls = {
-        ...baseItem,
         maxReadInterval: null,
         readDelay: null,
         overlap: null,
+        settings: { address: '40001' },
         group: {
           id: 'g1',
-          standardSettings: { name: 'Group A', scanMode: { id: 'sm1', name: 'Every 10s', cron: '' } },
+          standardSettings: { name: 'Group A', scanMode: { id: 'sm2', name: 'Group Scan Mode', cron: '' } },
           historySettings: { maxReadInterval: 9999, readDelay: 500, overlap: 10 }
         }
       } as unknown as SouthConnectorItemDTO;
       utils.itemToFlattenedCSV([itemWithNulls], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
+
       assert.strictEqual(csvExports.unparse.mock.calls.length, 1);
+      const capturedData = csvExports.unparse.mock.calls[0].arguments[0] as Array<Record<string, unknown>>;
+      assert.strictEqual(capturedData[0].scanMode, 'Group Scan Mode');
+      assert.strictEqual(capturedData[0].maxReadInterval, null);
+      assert.strictEqual(capturedData[0].readDelay, null);
+      assert.strictEqual(capturedData[0].overlap, null);
     });
   });
 
