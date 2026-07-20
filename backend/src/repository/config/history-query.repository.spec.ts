@@ -312,4 +312,71 @@ describe('HistoryQueryRepository', () => {
     assert.ok(newItem.id);
     assert.ok(repository.findItemById(testData.historyQueries.list[1].id, newItem.id));
   });
+
+  it('should not bump updated_at when saving a history query item that has not changed', () => {
+    const historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    historyQuery.id = '';
+    historyQuery.name = 'unchanged item history query';
+    historyQuery.northTransformers = [];
+    historyQuery.items = [
+      {
+        id: '',
+        name: 'stable item',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveHistory(historyQuery);
+    const itemId = historyQuery.items[0].id;
+
+    database.prepare(`UPDATE history_items SET updated_at = '2000-01-01T00:00:00Z' WHERE id = ?;`).run(itemId);
+
+    const resavedHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(historyQuery)
+    );
+    repository.saveHistory(resavedHistoryQuery);
+
+    const row = database.prepare(`SELECT updated_at FROM history_items WHERE id = ?;`).get(itemId) as { updated_at: string };
+    assert.strictEqual(row.updated_at, '2000-01-01T00:00:00Z');
+  });
+
+  it('should bump updated_at when saving a history query item that has changed', () => {
+    const historyQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(testData.historyQueries.list[0])
+    );
+    historyQuery.id = '';
+    historyQuery.name = 'changed item history query';
+    historyQuery.northTransformers = [];
+    historyQuery.items = [
+      {
+        id: '',
+        name: 'item to rename',
+        enabled: true,
+        settings: {} as SouthItemSettings,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveHistory(historyQuery);
+    const itemId = historyQuery.items[0].id;
+
+    database.prepare(`UPDATE history_items SET updated_at = '2000-01-01T00:00:00Z' WHERE id = ?;`).run(itemId);
+
+    const changedHistoryQuery: HistoryQueryEntity<SouthSettings, NorthSettings, SouthItemSettings> = JSON.parse(
+      JSON.stringify(historyQuery)
+    );
+    changedHistoryQuery.items[0].name = 'renamed item';
+    repository.saveHistory(changedHistoryQuery);
+
+    const row = database.prepare(`SELECT updated_at FROM history_items WHERE id = ?;`).get(itemId) as { updated_at: string };
+    assert.notStrictEqual(row.updated_at, '2000-01-01T00:00:00Z');
+  });
 });
