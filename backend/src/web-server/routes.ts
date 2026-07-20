@@ -4088,10 +4088,16 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSItemSettings"},{"ref":"SouthFolderScannerItemSettings"},{"ref":"SouthFTPItemSettings"},{"ref":"SouthInfluxDBItemSettings"},{"ref":"SouthModbusItemSettings"},{"ref":"SouthMQTTItemSettings"},{"ref":"SouthMSSQLItemSettings"},{"ref":"SouthMySQLItemSettings"},{"ref":"SouthODBCItemSettings"},{"ref":"SouthOIAnalyticsItemSettings"},{"ref":"SouthOLEDBItemSettings"},{"ref":"SouthOPCItemSettings"},{"ref":"SouthOPCUAItemSettings"},{"ref":"SouthOracleItemSettings"},{"ref":"SouthPIItemSettings"},{"ref":"SouthPostgreSQLItemSettings"},{"ref":"SouthRestItemSettings"},{"ref":"SouthSFTPItemSettings"},{"ref":"SouthSQLiteItemSettings"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "Record_string.unknown_": {
+        "dataType": "refAlias",
+        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"any"},"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthConnectorItemTestingSettings": {
         "dataType": "refObject",
         "properties": {
             "history": {"dataType":"union","subSchemas":[{"dataType":"nestedObjectLiteral","nestedProperties":{"endTime":{"dataType":"string","required":true},"startTime":{"dataType":"string","required":true}}},{"dataType":"undefined"}],"required":true},
+            "transformer": {"dataType":"nestedObjectLiteral","nestedProperties":{"options":{"ref":"Record_string.unknown_","required":true},"transformerId":{"dataType":"string","required":true}}},
         },
         "additionalProperties": false,
     },
@@ -4664,11 +4670,6 @@ const models: TsoaRoute.Models = {
     "TransformerSourceCommandDTO": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"SourceOriginSouthCommandDTO"},{"ref":"SourceOriginOIAnalyticsCommandDTO"},{"ref":"SourceOriginAPICommandDTO"}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Record_string.unknown_": {
-        "dataType": "refAlias",
-        "type": {"dataType":"nestedObjectLiteral","nestedProperties":{},"additionalProperties":{"dataType":"any"},"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "TransformerCommandDTOWithOptions": {
@@ -7652,7 +7653,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "southSettings": {"ref":"SouthSettings","required":true},
             "itemSettings": {"ref":"SouthItemSettings","required":true},
-            "testingSettings": {"dataType":"nestedObjectLiteral","nestedProperties":{"history":{"dataType":"nestedObjectLiteral","nestedProperties":{"endTime":{"dataType":"string","required":true},"startTime":{"dataType":"string","required":true}},"required":true}},"required":true},
+            "testingSettings": {"ref":"SouthConnectorItemTestingSettings","required":true},
         },
         "additionalProperties": false,
     },

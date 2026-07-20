@@ -30,8 +30,11 @@ import OIBusTimeValuesToOIAnalyticsTransformer from '../transformers/time-values
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import OIBusCustomTransformer from '../transformers/oibus-custom-transformer';
 import { Readable } from 'node:stream';
+import { createReadStream } from 'node:fs';
+import path from 'node:path';
 import { DateTime } from 'luxon';
-import { OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import { CacheMetadata, CacheMetadataSource, OIBusContent, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import { generateRandomId } from './utils';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
 import CSVToMQTTTransformer from '../transformers/any/csv-to-mqtt/csv-to-mqtt-transformer';
@@ -349,7 +352,7 @@ export const toTransformerDTO = (transformer: Transformer, getUserInfo: GetUserI
 
 export const createTransformer = (
   transformerWithOptions: NorthTransformerWithOptions,
-  northConnector: NorthConnectorEntity<NorthSettings>,
+  _northConnector: NorthConnectorEntity<NorthSettings> | null,
   logger: ILogger
 ): OibusTransformer => {
   if (transformerWithOptions.transformer.type === 'standard') {
@@ -402,6 +405,52 @@ export const createTransformer = (
   } else {
     return new OIBusCustomTransformer(logger, transformerWithOptions.transformer, transformerWithOptions.options);
   }
+};
+
+/**
+ * Run a transformer instance over an OIBusContent payload and return the produced output(s).
+ * In-memory payloads (time-values / setpoint / any-content) go through `transformInMemory`;
+ * true file-on-disk payloads (`any`) stay on the stream API to avoid slurping the file.
+ * When `maxElements > 0`, time-value batches larger than that are split into several outputs.
+ */
+export const runTransformerOnContent = async (
+  transformer: OibusTransformer,
+  data: OIBusContent,
+  source: CacheMetadataSource,
+  maxElements = 0
+): Promise<Array<{ output: Buffer; metadata: CacheMetadata }>> => {
+  const results: Array<{ output: Buffer; metadata: CacheMetadata }> = [];
+  switch (data.type) {
+    case 'time-values': {
+      const content = data.content;
+      if (maxElements > 0 && content.length > maxElements) {
+        for (let i = 0; i < content.length; i += maxElements) {
+          results.push(await transformer.transformInMemory(content.slice(i, i + maxElements), source, null));
+        }
+      } else {
+        results.push(await transformer.transformInMemory(content, source, null));
+      }
+      break;
+    }
+    case 'setpoint':
+      results.push(await transformer.transformInMemory(data.content, source, null));
+      break;
+    case 'any-content':
+      // any-content is already a serialised string; pass it through as-is.
+      results.push(await transformer.transformInMemory(data.content, source, null));
+      break;
+    case 'any': {
+      // True file-on-disk path stays on the stream API.
+      const randomId = generateRandomId(10);
+      // Use the logical filename when provided, otherwise fall back to the basename of the disk path.
+      const logicalName = data.filename ?? path.basename(data.filePath);
+      const { name, ext } = path.parse(logicalName);
+      const cacheFilename = `${name}-${randomId}${ext}`;
+      results.push(await transformer.transform(createReadStream(data.filePath), source, cacheFilename));
+      break;
+    }
+  }
+  return results;
 };
 
 export const getStandardManifest = (functionName: string): OIBusObjectAttribute => {

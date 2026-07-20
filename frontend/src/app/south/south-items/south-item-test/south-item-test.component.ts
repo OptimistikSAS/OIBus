@@ -8,17 +8,28 @@ import {
 import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
 import { SouthConnectorService } from '../../../services/south-connector.service';
-import { catchError, of, Subscription } from 'rxjs';
+import { NorthConnectorService } from '../../../services/north-connector.service';
+import { catchError, forkJoin, of, Subscription, switchMap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getMessageFromHttpErrorResponse } from '../../../shared/error-interceptor.service';
 import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DateTime } from 'luxon';
 import { HistoryQueryService } from '../../../services/history-query.service';
 import { HistoryQueryItemCommandDTO } from '../../../../../../backend/shared/model/history-query.model';
+import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { ContentDisplayMode, ItemTestResultComponent } from './item-test-result/item-test-result.component';
 import { OI_FORM_VALIDATION_DIRECTIVES } from '../../../shared/form/form-validation-directives';
 import { DateRange, DateRangeSelectorComponent } from '../../../shared/date-range-selector/date-range-selector.component';
+
+/** A transformer the user can pick to transform the raw test result. */
+interface TransformerTestOption {
+  transformerId: string;
+  options: Record<string, unknown>;
+  transformer: TransformerDTO;
+  /** North name prefix (south tests) or null (history-query tests). */
+  prefix: string | null;
+}
 
 @Component({
   selector: 'oib-south-item-test',
@@ -56,15 +67,19 @@ class SouthItemTestComponent implements AfterContentInit {
   readonly manifest = input.required<SouthConnectorManifest>();
 
   private southConnectorService = inject(SouthConnectorService);
+  private northConnectorService = inject(NorthConnectorService);
   private historyQueryService = inject(HistoryQueryService);
   private fb = inject(NonNullableFormBuilder);
   private testSubscription: Subscription | null = null;
 
   isTestRunning = false;
+  /** Transformers already configured that can be applied to the raw test result. */
+  availableTransformers: Array<TransformerTestOption> = [];
   testingSettingsForm: FormGroup<{
     history?: FormGroup<{
       dateRange: FormControl<DateRange>;
     }>;
+    transformer: FormControl<TransformerTestOption | null>;
   }> | null = null;
 
   currentDisplayMode: ContentDisplayMode | null = null;
@@ -72,6 +87,7 @@ class SouthItemTestComponent implements AfterContentInit {
 
   constructor() {
     effect(() => this.manifest() && this.initForm());
+    effect(() => this.loadAvailableTransformers());
   }
 
   ngAfterContentInit(): void {
@@ -89,6 +105,10 @@ class SouthItemTestComponent implements AfterContentInit {
     }
 
     const formValue = this.testingSettingsForm.value;
+    const selectedTransformer = formValue.transformer ?? null;
+    const transformer = selectedTransformer
+      ? { transformerId: selectedTransformer.transformerId, options: selectedTransformer.options }
+      : undefined;
 
     if (formValue.history?.dateRange !== undefined) {
       // Re-calculate the date range at the moment the test is triggered so that
@@ -99,11 +119,12 @@ class SouthItemTestComponent implements AfterContentInit {
         history: {
           startTime: liveRange.startTime,
           endTime: liveRange.endTime
-        }
+        },
+        transformer
       };
     }
 
-    return formValue as SouthConnectorItemTestingSettings;
+    return { history: undefined, transformer };
   }
 
   testItem() {
@@ -182,7 +203,9 @@ class SouthItemTestComponent implements AfterContentInit {
   }
 
   private initForm() {
-    this.testingSettingsForm = this.fb.group({});
+    this.testingSettingsForm = this.fb.group({
+      transformer: this.fb.control<TransformerTestOption | null>(null)
+    });
 
     if (this.supportsHistorySettings) {
       const defaultDateRange: DateRange = {
@@ -196,6 +219,49 @@ class SouthItemTestComponent implements AfterContentInit {
           dateRange: [defaultDateRange, Validators.required]
         })
       );
+    }
+  }
+
+  /**
+   * Collect the transformers already configured that can be applied to this item's raw result.
+   * For a south item: transformers configured on any north whose source targets this south.
+   * For a history-query item: only the transformers associated with that history query.
+   */
+  private loadAvailableTransformers() {
+    const entityId = this.entityId();
+    const type = this.type();
+    if (entityId === 'create') {
+      this.availableTransformers = [];
+      return;
+    }
+
+    if (type === 'south') {
+      this.northConnectorService
+        .list()
+        .pipe(
+          catchError(() => of([])),
+          switchMap(norths => (norths.length ? forkJoin(norths.map(north => this.northConnectorService.findById(north.id))) : of([]))),
+          catchError(() => of([]))
+        )
+        .subscribe(norths => {
+          this.availableTransformers = norths.flatMap(north =>
+            north.transformers
+              .filter(t => t.source.type === 'south' && t.source.south.id === entityId)
+              .map(t => ({ transformerId: t.transformer.id, options: t.options, transformer: t.transformer, prefix: north.name }))
+          );
+        });
+    } else if (type === 'history-south') {
+      this.historyQueryService
+        .findById(entityId)
+        .pipe(catchError(() => of(null)))
+        .subscribe(historyQuery => {
+          this.availableTransformers = (historyQuery?.northTransformers ?? []).map(t => ({
+            transformerId: t.transformer.id,
+            options: t.options,
+            transformer: t.transformer,
+            prefix: null
+          }));
+        });
     }
   }
 

@@ -177,7 +177,8 @@ export async function bootstrap(): Promise<void> {
     repositoryService.certificateRepository,
     oIAnalyticsMessageService,
     dataStreamEngine,
-    repositoryService.southItemGroupRepository
+    repositoryService.southItemGroupRepository,
+    transformerService
   );
   const historyQueryService = new HistoryQueryService(
     new JoiValidator(),

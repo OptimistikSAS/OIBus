@@ -23,7 +23,7 @@ import {
   HistoryQueryLightDTO
 } from '../../../shared/model/history-query.model';
 import { CustomExpressRequest } from '../express';
-import { OIBusSouthType } from '../../../shared/model/south-connector.model';
+import { OIBusSouthType, SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { OIBusNorthType } from '../../../shared/model/north-connector.model';
 import HistoryQueryService, { toHistoryQueryDTO, toHistoryQueryItemDTO, toHistoryQueryLightDTO } from '../../service/history-query.service';
@@ -54,15 +54,8 @@ interface HistorySouthItemTestRequest {
   southSettings: SouthSettings;
   /** Item-specific settings */
   itemSettings: SouthItemSettings;
-  /** Testing settings including time range */
-  testingSettings: {
-    history: {
-      /** Start time for the test */
-      startTime: string;
-      /** End time for the test */
-      endTime: string;
-    };
-  };
+  /** Testing settings including time range and optional transformer */
+  testingSettings: SouthConnectorItemTestingSettings;
 }
 
 /**

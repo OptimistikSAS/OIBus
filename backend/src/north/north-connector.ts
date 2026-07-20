@@ -19,12 +19,12 @@ import { DateTime } from 'luxon';
 import { createReadStream, ReadStream } from 'node:fs';
 import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createOIBusError, delay, generateRandomId, validateCronExpression } from '../service/utils';
+import { createOIBusError, delay, validateCronExpression } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { ScanMode } from '../model/scan-mode.model';
 import type { ICacheService } from '../model/cache.service.model';
 import { Readable } from 'node:stream';
-import { createTransformer } from '../service/transformer.service';
+import { createTransformer, runTransformerOnContent } from '../service/transformer.service';
 import IgnoreTransformer from '../transformers/ignore-transformer';
 import IsoTransformer from '../transformers/iso-transformer';
 import { NorthTransformerWithOptions } from '../model/transformer.model';
@@ -662,79 +662,15 @@ export default abstract class NorthConnector<T extends NorthSettings> {
     // `transformInMemory`, which lets specialised transformers (e.g. the
     // OIAnalytics one) bypass the JSON.stringify → stream → collect-chunks →
     // JSON.parse round-trip. The base-class default still streamifies for
-    // transformers that haven't been specialised
-    switch (data.type) {
-      case 'time-values':
-        {
-          const maxElements = this.connector.caching.throttling.maxNumberOfElements;
-          const content = data.content;
-
-          if (maxElements > 0 && content.length > maxElements) {
-            // Chunk processing
-            for (let i = 0; i < content.length; i += maxElements) {
-              const chunk = content.slice(i, i + maxElements);
-              const { metadata, output } = await transformer.transformInMemory(chunk, source, null);
-              await this.cacheService.addCacheContent(output, {
-                contentType: metadata.contentType,
-                contentFilename: metadata.contentFile,
-                numberOfElement: metadata.numberOfElement
-              });
-            }
-          } else {
-            // Single batch
-            const { metadata, output } = await transformer.transformInMemory(content, source, null);
-            await this.cacheService.addCacheContent(output, {
-              contentType: metadata.contentType,
-              contentFilename: metadata.contentFile,
-              numberOfElement: metadata.numberOfElement
-            });
-          }
-        }
-        break;
-
-      case 'setpoint':
-        {
-          const { metadata, output } = await transformer.transformInMemory(data.content, source, null);
-          await this.cacheService.addCacheContent(output, {
-            contentType: metadata.contentType,
-            contentFilename: metadata.contentFile,
-            numberOfElement: metadata.numberOfElement
-          });
-        }
-        break;
-      case 'any-content':
-        {
-          // any-content is already a serialised string; pass it through as-is
-          // so the default base-class fallback can wrap it without an extra
-          // JSON.stringify round-trip (string is short-circuited).
-          const { metadata, output } = await transformer.transformInMemory(data.content, source, null);
-          await this.cacheService.addCacheContent(output, {
-            contentType: metadata.contentType,
-            contentFilename: metadata.contentFile,
-            numberOfElement: metadata.numberOfElement
-          });
-        }
-        break;
-
-      case 'any':
-        {
-          // True file-on-disk path stays on the stream API — we don't want to
-          // slurp the whole file into memory.
-          const randomId = generateRandomId(10);
-          // Use the logical filename when provided (e.g. "subdir/file.json" from folder-scanner),
-          // otherwise fall back to the basename of the disk path.
-          const logicalName = data.filename ?? path.basename(data.filePath);
-          const { name, ext } = path.parse(logicalName);
-          const cacheFilename = `${name}-${randomId}${ext}`;
-
-          const { metadata, output } = await transformer.transform(createReadStream(data.filePath), source, cacheFilename);
-          await this.cacheService.addCacheContent(output, {
-            contentType: metadata.contentType,
-            contentFilename: metadata.contentFile,
-            numberOfElement: metadata.numberOfElement
-          });
-        }
-        break;
+    // transformers that haven't been specialised. File-on-disk `any` payloads
+    // stay on the stream API. Large time-value batches are chunked.
+    const results = await runTransformerOnContent(transformer, data, source, this.connector.caching.throttling.maxNumberOfElements);
+    for (const { metadata, output } of results) {
+      await this.cacheService.addCacheContent(output, {
+        contentType: metadata.contentType,
+        contentFilename: metadata.contentFile,
+        numberOfElement: metadata.numberOfElement
+      });
     }
   }
 
