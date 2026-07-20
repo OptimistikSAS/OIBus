@@ -67,12 +67,13 @@ export async function up(knex: Knex): Promise<void> {
   await knex.raw(`UPDATE ${SOUTH_ITEM_GROUPS_TABLE} SET start_time_offset = -overlap WHERE overlap IS NOT NULL`);
   await knex.raw(`UPDATE ${SOUTH_ITEMS_TABLE} SET start_time_offset = -overlap WHERE overlap IS NOT NULL`);
 
-  await knex.schema.alterTable(SOUTH_ITEM_GROUPS_TABLE, t => {
-    t.dropColumn('overlap');
-  });
-  await knex.schema.alterTable(SOUTH_ITEMS_TABLE, t => {
-    t.dropColumn('overlap');
-  });
+  // Use native SQLite `DROP COLUMN` (single in-place metadata change, available since SQLite 3.35) instead of
+  // knex's `dropColumn()`, which rebuilds the table via CREATE + COPY + DROP TABLE + RENAME. The rebuild's
+  // `DROP TABLE` step fails with a FOREIGN KEY constraint error here because `group_items` and
+  // `north_transformers_items` hold live rows referencing `south_item_groups`/`south_items`, and SQLite
+  // refuses to drop a table that still has other tables pointing into it while `foreign_keys` is enabled.
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEM_GROUPS_TABLE} DROP COLUMN overlap`);
+  await knex.raw(`ALTER TABLE ${SOUTH_ITEMS_TABLE} DROP COLUMN overlap`);
 
   await addSmbAuthDefaults(knex);
 }
