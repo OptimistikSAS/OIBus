@@ -1999,7 +1999,11 @@ describe('South Service', () => {
       engine.reloadSouthItems.mock.mockImplementation(async () => undefined);
 
       await service.deleteGroup(testData.south.list[0].id, 'groupToDelete');
-      assert.deepStrictEqual(southItemGroupRepository.delete.mock.calls[0].arguments, ['groupToDelete']);
+      assert.deepStrictEqual(southConnectorRepository.deleteGroupAndUpdateItems.mock.calls[0].arguments, [
+        testData.south.list[0].id,
+        groupToDelete,
+        false
+      ]);
       assert.deepStrictEqual(engine.reloadSouthItems.mock.calls[0].arguments, [testData.south.list[0]]);
     });
 

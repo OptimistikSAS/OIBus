@@ -1,0 +1,138 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'south.groups.manage-title'" [translateParams]="{ count: groups.length }"></h4>
+</div>
+<div class="modal-body">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div></div>
+    <div class="ms-3">
+      <button type="button" class="btn btn-primary btn-sm oib-box-btn me-2" id="add-group" (click)="onAddGroup()">
+        <span class="fa fa-plus"></span>
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary btn-sm oib-box-btn me-2"
+        id="export-groups"
+        (click)="exportGroups()"
+        [disabled]="groups.length === 0"
+      >
+        <span translate="south.groups.export.button"></span>
+      </button>
+      <label class="btn btn-secondary btn-sm oib-box-btn mb-0 me-2" id="import-groups">
+        <span translate="south.groups.import.button"></span>
+        <input type="file" accept=".csv" hidden (change)="onImportFileSelected($event)" />
+      </label>
+    </div>
+  </div>
+
+  @if (importing) {
+    <div class="text-muted mb-2" translate="south.groups.import.in-progress"></div>
+  }
+  @if (importSuccessCount !== null) {
+    <div
+      class="alert alert-success py-1 px-2"
+      translate="south.groups.import.success"
+      [translateParams]="{ count: importSuccessCount }"
+    ></div>
+  }
+  @if (importErrors.length > 0) {
+    <div class="alert alert-danger py-1 px-2">
+      <div translate="south.groups.import.errors-title" [translateParams]="{ count: importErrors.length }"></div>
+      <ul class="mb-0">
+        @for (error of importErrors; track $index) {
+          <li>{{ 'south.groups.import.row' | translate: { row: error.row } }}: {{ error.message }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  @if (groups.length === 0) {
+    <div class="oib-grey-container" translate="south.groups.none"></div>
+  } @else {
+    <div class="d-flex align-items-center gap-2 my-2">
+      <input
+        class="form-control form-control-sm flex-grow-1"
+        [formControl]="searchControl"
+        [placeholder]="'south.groups.search-placeholder' | translate"
+        type="text"
+      />
+      <select class="form-select form-select-sm w-auto" [formControl]="scheduleFilterControl">
+        <option [ngValue]="null" translate="south.items.all-scan-modes"></option>
+        @for (scanMode of scanModes; track scanMode.id) {
+          <option [value]="scanMode.id">{{ scanMode.name }}</option>
+        }
+      </select>
+    </div>
+
+    @if (displayedGroups.length === 0) {
+      <div class="oib-grey-container" translate="south.groups.none-match"></div>
+    } @else {
+      <table class="table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th>
+              <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('name')">
+                <span translate="south.groups.name" class="me-2"></span>
+                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.name] }}"></span>
+              </button>
+            </th>
+            <th>
+              <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('schedule')">
+                <span translate="south.items.scan-mode" class="me-2"></span>
+                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.schedule] }}"></span>
+              </button>
+            </th>
+            @if (hasHistorianCapabilities) {
+              <th translate="south.groups.overlap"></th>
+              <th translate="south.groups.max-read-interval"></th>
+              <th translate="south.groups.read-delay"></th>
+            }
+            <th>
+              <button type="button" style="background: none; border: none; font-weight: bold" (click)="toggleColumnSort('itemCount')">
+                <span translate="south.groups.item-count" class="me-2"></span>
+                <span class="fa {{ ['fa-sort', 'fa-sort-asc', 'fa-sort-desc'][columnSortStates.itemCount] }}"></span>
+              </button>
+            </th>
+            <th style="width: 6rem"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (group of displayedGroups; track group.id) {
+            <tr>
+              <td>{{ group.standardSettings.name }}</td>
+              <td>{{ getScanModeName(group) }}</td>
+              @if (hasHistorianCapabilities) {
+                <td>{{ group.historySettings.overlap }}ms</td>
+                <td>{{ group.historySettings.maxReadInterval }}s</td>
+                <td>{{ group.historySettings.readDelay }}ms</td>
+              }
+              <td>{{ getItemCount(group.id!) }}</td>
+              <td class="text-nowrap action-buttons">
+                <div class="pull-right">
+                  <button
+                    type="button"
+                    class="btn btn-link edit-group px-1 py-0"
+                    [ngbTooltip]="'south.groups.edit-title' | translate"
+                    (click)="onEditGroup(group)"
+                  >
+                    <span class="fa fa-pencil"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link delete-group px-1 py-0"
+                    [ngbTooltip]="'south.groups.confirm-deletion' | translate: { name: group.standardSettings.name }"
+                    (click)="onDeleteGroup(group)"
+                  >
+                    <span class="fa fa-trash"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-primary" (click)="close()" translate="common.close" id="close-button"></button>
+</div>

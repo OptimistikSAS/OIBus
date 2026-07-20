@@ -80,6 +80,17 @@
                 @if (filteredItems.length) {
                   <span class="mx-1">({{ filteredItems.length }})</span>
                 }
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm oib-box-btn ms-2"
+                  id="manage-groups-button"
+                  [ngbTooltip]="'south.groups.manage-button' | translate"
+                  (click)="manageGroups()"
+                >
+                  <span class="fa fa-folder me-1"></span>
+                  <span translate="south.groups.manage-button"></span>
+                  <span class="badge bg-secondary ms-1">{{ southConnector.groups.length }}</span>
+                </button>
               </div>
               <div class="ms-3">
                 <button

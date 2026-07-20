@@ -4,6 +4,7 @@ import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
+  SouthItemGroupEntity,
   SouthItemGroupEntityLight
 } from '../../../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../../../shared/model/south-settings.model';
@@ -49,6 +50,9 @@ export default class SouthConnectorRepositoryMock extends SouthConnectorReposito
   override enableItem = mock.fn((_id: string): void => undefined);
   override disableItem = mock.fn((_id: string): void => undefined);
   override moveItemsToGroup = mock.fn((_itemIds: Array<string>, _groupId: string | null): void => undefined);
+  override deleteGroupAndUpdateItems = mock.fn(
+    (_southId: string, _group: SouthItemGroupEntity, _applyHistorySettings: boolean): void => undefined
+  );
   override findScanModeForSouth = mock.fn((_scanModeId: string): ScanMode => ({}) as ScanMode);
   override findGroupBySouthId = mock.fn((_southId: string): Array<SouthItemGroupEntityLight> => []);
 }

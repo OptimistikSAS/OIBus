@@ -43,6 +43,7 @@ import { ExportItemModalComponent } from '../../shared/export-item-modal/export-
 import { OIBusObjectAttribute } from '../../../../../backend/shared/model/form.model';
 import { ImportSouthItemsModalComponent } from '../south-items/import-south-items-modal/import-south-items-modal.component';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
+import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -494,8 +495,56 @@ export class EditSouthComponent implements CanComponentDeactivate {
     }
   }
 
-  deleteGroup(_group: SouthItemGroupDTO | SouthItemGroupCommandDTO): Observable<void> {
-    return of(undefined);
+  deleteGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO): Observable<void> {
+    return this.confirmationService
+      .confirm({
+        messageKey: 'south.groups.confirm-deletion',
+        interpolateParams: { name: group.standardSettings.name }
+      })
+      .pipe(
+        tap(() => {
+          const groupScanModeId =
+            (group as SouthItemGroupCommandDTO).standardSettings.scanModeId || (group as SouthItemGroupDTO).standardSettings.scanMode?.id;
+          const applyHistorySettings = this.manifest?.modes.history ?? false;
+
+          this.inMemoryItems = this.inMemoryItems.map(item => {
+            if (item.groupId !== group.id) {
+              return item;
+            }
+            return {
+              ...item,
+              groupId: null,
+              groupName: null,
+              syncWithGroup: false,
+              scanModeId: item.scanModeId ?? groupScanModeId ?? null,
+              overlap: applyHistorySettings ? (item.overlap ?? group.historySettings.overlap) : item.overlap,
+              maxReadInterval: applyHistorySettings
+                ? (item.maxReadInterval ?? group.historySettings.maxReadInterval)
+                : item.maxReadInterval,
+              readDelay: applyHistorySettings ? (item.readDelay ?? group.historySettings.readDelay) : item.readDelay
+            };
+          });
+          this.resetPage();
+        }),
+        map(() => undefined)
+      );
+  }
+
+  manageGroups() {
+    const modalRef = this.modalService.open(ManageGroupsModalComponent, { size: 'lg', backdrop: 'static' });
+    const component: ManageGroupsModalComponent = modalRef.componentInstance;
+    component.prepare(
+      this.inMemoryGroups,
+      this.scanModes,
+      this.manifest!,
+      false,
+      groupId => this.inMemoryItems.filter(item => item.groupId === groupId).length,
+      this.addOrEditGroup.bind(this),
+      this.deleteGroup.bind(this)
+    );
+    modalRef.result.subscribe(() => {
+      this.resetPage();
+    });
   }
 
   private checkUniqueness(): ValidatorFn {

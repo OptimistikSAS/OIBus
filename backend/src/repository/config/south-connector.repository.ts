@@ -4,6 +4,7 @@ import {
   SouthConnectorEntity,
   SouthConnectorEntityLight,
   SouthConnectorItemEntity,
+  SouthItemGroupEntity,
   SouthItemGroupEntityLight
 } from '../../model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
@@ -253,6 +254,38 @@ export default class SouthConnectorRepository {
       this.database.prepare(`DELETE FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${NORTH_TRANSFORMERS_TABLE} WHERE source_south_south_id = ?;`).run(id);
       this.database.prepare(`DELETE FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`).run(id);
+    });
+    transaction();
+  }
+
+  /**
+   * Deletes a south item group. Items that belonged to it keep working afterwards: any of their own
+   * scan mode / history settings (overlap, max read interval, read delay) left empty is filled in with
+   * the value the item was inheriting from the group.
+   */
+  deleteGroupAndUpdateItems(southId: string, group: SouthItemGroupEntity, applyHistorySettings: boolean): void {
+    const items = this.findAllItemsForSouth(southId).filter(item => item.group?.id === group.id);
+    const transaction = this.database.transaction(() => {
+      for (const item of items) {
+        if (!item.scanMode) {
+          item.scanMode = group.scanMode;
+        }
+        if (applyHistorySettings) {
+          if (item.overlap == null) {
+            item.overlap = group.overlap;
+          }
+          if (item.maxReadInterval == null) {
+            item.maxReadInterval = group.maxReadInterval;
+          }
+          if (item.readDelay == null) {
+            item.readDelay = group.readDelay;
+          }
+        }
+        item.syncWithGroup = false;
+        item.group = null;
+        this.saveItem(southId, item);
+      }
+      this.groupRepository.delete(group.id);
     });
     transaction();
   }
