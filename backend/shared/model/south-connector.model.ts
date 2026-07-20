@@ -42,6 +42,7 @@ import {
 } from './south-settings.model';
 import { ScanModeDTO } from './scan-mode.model';
 import { OIBusArrayAttribute, OIBusObjectAttribute } from './form.model';
+import { OIBusContent } from './engine.model';
 
 /**
  * List of available categories for OIBus South connectors.
@@ -1060,6 +1061,16 @@ export interface SouthConnectorItemTestingSettings {
     transformerId: string;
     options: Record<string, unknown>;
   };
+}
+
+/**
+ * Result of testing a South/History item. `raw` is always the value collected by the connector;
+ * `transformed` is the output of running `raw` through the selected transformer with its options,
+ * or null when no transformer was requested. This lets the UI show the Raw → transformer → Output pipeline.
+ */
+export interface SouthConnectorItemTestResult {
+  raw: OIBusContent;
+  transformed: OIBusContent | null;
 }
 
 /**

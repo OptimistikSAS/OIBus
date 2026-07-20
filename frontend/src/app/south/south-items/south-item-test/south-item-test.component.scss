@@ -1,6 +1,50 @@
 @import '../../../../common';
 
+// Wraps the whole "Testing item" section in its own tinted, rounded card so it reads as a
+// distinct zone of the modal instead of just more form fields under the item's own settings.
+.testing-item-panel {
+  background-color: $veryLightGrey;
+  border-radius: 1rem;
+  margin-top: 1.5rem;
+  overflow: hidden;
+}
+
+.testing-item-body {
+  padding: 0.75rem 0.75rem 1rem;
+}
+
 .fa-spinner:before {
   display: block;
   transform: translateY(1px);
+}
+
+.settings-summary-chip {
+  color: $darkGrey;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--bs-body-color);
+  }
+}
+
+.pipeline-transformer {
+  background-color: var(--bs-white);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+
+  // .btn-link is globally styled white for the (dark) oib-box-title bars; this box sits on a
+  // plain white background, so the edit icon needs its own color or it's invisible.
+  #edit-transformer-options {
+    color: $darkGrey;
+
+    &:hover {
+      color: var(--bs-body-color);
+    }
+  }
+}
+
+.pipeline-options {
+  margin-top: 0.25rem;
 }

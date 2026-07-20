@@ -22,6 +22,7 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
@@ -39,7 +40,7 @@ import SouthService, {
 } from '../../service/south.service';
 import { itemToFlattenedCSV } from '../../service/utils';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/engine.model';
+import { OIBusConnectionTestResult } from '../../../shared/model/engine.model';
 import { OIBusTestingError, OIBusValidationError } from '../../model/types';
 import fs from 'node:fs/promises';
 
@@ -231,7 +232,7 @@ export class SouthConnectorController extends Controller {
   /**
    * Test a south connector item
    * @summary Test south connector item
-   * @returns {Promise<OIBusContent>} Test results
+   * @returns {Promise<SouthConnectorItemTestResult>} Raw and (optionally) transformed test results
    */
   @Post('/{southId}/items/test')
   async testItem(
@@ -240,7 +241,7 @@ export class SouthConnectorController extends Controller {
     @Query() itemName: string,
     @Body() command: SouthItemTestRequest,
     @Request() request: CustomExpressRequest
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemTestResult> {
     const southService = request.services.southService as SouthService;
     try {
       return await southService.testItem(

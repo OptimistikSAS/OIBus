@@ -10,7 +10,11 @@ import {
   HistoryQueryLightDTO
 } from '../../../../backend/shared/model/history-query.model';
 import { Page } from '../../../../backend/shared/model/types';
-import { OIBusSouthType, SouthConnectorItemTestingSettings } from '../../../../backend/shared/model/south-connector.model';
+import {
+  OIBusSouthType,
+  SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult
+} from '../../../../backend/shared/model/south-connector.model';
 import { DownloadService } from './download.service';
 import {
   CacheContentUpdateCommand,
@@ -18,8 +22,7 @@ import {
   CacheSearchResult,
   DataFolderType,
   FileCacheContent,
-  OIBusConnectionTestResult,
-  OIBusContent
+  OIBusConnectionTestResult
 } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 import { NorthSettings } from '../../../../backend/shared/model/north-settings.model';
@@ -135,8 +138,8 @@ export class HistoryQueryService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Observable<OIBusContent> {
-    return this.http.post<OIBusContent>(
+  ): Observable<SouthConnectorItemTestResult> {
+    return this.http.post<SouthConnectorItemTestResult>(
       `/api/history/${historyId}/test/items`,
       {
         southSettings,
