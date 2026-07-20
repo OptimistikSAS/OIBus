@@ -72,8 +72,52 @@ describe('NorthConnector', () => {
     validateCronExpression: mock.fn(() => ({ expression: '' }))
   };
 
+  // Faithful re-implementation of the real `runTransformerOnContent` helper (kept in-sync with
+  // transformer.service.ts) so that mocking the transformer.service module here does not drop it.
   const transformerServiceExports = {
-    createTransformer: mock.fn(() => oiBusTransformer)
+    createTransformer: mock.fn(() => oiBusTransformer),
+    runTransformerOnContent: mock.fn(
+      async (
+        transformer: {
+          transformInMemory: (data: unknown, source: CacheMetadataSource, filename: string | null) => Promise<unknown>;
+          transform: (stream: unknown, source: CacheMetadataSource, filename: string | null) => Promise<unknown>;
+        },
+        data: OIBusContent,
+        source: CacheMetadataSource,
+        maxElements = 0
+      ) => {
+        const results: Array<unknown> = [];
+        switch (data.type) {
+          case 'time-values': {
+            const content = data.content;
+            if (maxElements > 0 && content.length > maxElements) {
+              for (let i = 0; i < content.length; i += maxElements) {
+                results.push(await transformer.transformInMemory(content.slice(i, i + maxElements), source, null));
+              }
+            } else {
+              results.push(await transformer.transformInMemory(content, source, null));
+            }
+            break;
+          }
+          case 'setpoint':
+            results.push(await transformer.transformInMemory(data.content, source, null));
+            break;
+          case 'any-content':
+            results.push(await transformer.transformInMemory(data.content, source, null));
+            break;
+          case 'any': {
+            const randomId = (utilsExports.generateRandomId as () => string)();
+            const logicalName = data.filename ?? path.basename(data.filePath);
+            const { name, ext } = path.parse(logicalName);
+            const cacheFilename = `${name}-${randomId}${ext}`;
+            const stream = (realFs['createReadStream'] as (p: string) => unknown)(data.filePath);
+            results.push(await transformer.transform(stream, source, cacheFilename));
+            break;
+          }
+        }
+        return results;
+      }
+    )
   };
 
   before(() => {

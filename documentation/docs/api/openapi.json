@@ -16699,6 +16699,12 @@
 					}
 				]
 			},
+			"Record_string.unknown_": {
+				"properties": {},
+				"additionalProperties": {},
+				"type": "object",
+				"description": "Construct a type with a set of properties K of type T"
+			},
 			"SouthConnectorItemTestingSettings": {
 				"description": "Settings for testing a South connector item.\nUsed when manually testing data collection for an item.",
 				"properties": {
@@ -16719,6 +16725,22 @@
 						],
 						"type": "object",
 						"description": "Historical data range for testing.\nUndefined when testing real-time data collection (which for folder-scanner means last file)."
+					},
+					"transformer": {
+						"properties": {
+							"options": {
+								"$ref": "#/components/schemas/Record_string.unknown_"
+							},
+							"transformerId": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"options",
+							"transformerId"
+						],
+						"type": "object",
+						"description": "Optional transformer to run the raw test result through before returning it.\nWhen omitted, the raw collected value is returned (default behavior).\n`transformerId` references a transformer in the global catalog; `options` are the\nper-binding options to apply."
 					}
 				},
 				"type": "object",
@@ -19883,12 +19905,6 @@
 						"$ref": "#/components/schemas/SourceOriginAPICommandDTO"
 					}
 				]
-			},
-			"Record_string.unknown_": {
-				"properties": {},
-				"additionalProperties": {},
-				"type": "object",
-				"description": "Construct a type with a set of properties K of type T"
 			},
 			"TransformerCommandDTOWithOptions": {
 				"description": "Data Transfer Object for a transformer with its options.\nUsed when a transformer needs to be applied with specific configuration options.",
@@ -32731,30 +32747,8 @@
 						"description": "Item-specific settings"
 					},
 					"testingSettings": {
-						"properties": {
-							"history": {
-								"properties": {
-									"endTime": {
-										"type": "string",
-										"description": "End time for the test"
-									},
-									"startTime": {
-										"type": "string",
-										"description": "Start time for the test"
-									}
-								},
-								"required": [
-									"endTime",
-									"startTime"
-								],
-								"type": "object"
-							}
-						},
-						"required": [
-							"history"
-						],
-						"type": "object",
-						"description": "Testing settings including time range"
+						"$ref": "#/components/schemas/SouthConnectorItemTestingSettings",
+						"description": "Testing settings including time range and optional transformer"
 					}
 				},
 				"required": [
