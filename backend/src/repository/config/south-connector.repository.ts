@@ -188,10 +188,12 @@ export default class SouthConnectorRepository {
                 sync_with_group: number;
                 max_read_interval: number | null;
                 read_delay: number | null;
-                overlap: number | null;
+                start_time_offset: number | null;
+                end_time_offset: number | null;
+                recovery_strategy: string | null;
               }
             >(
-              `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
+              `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, start_time_offset, end_time_offset, recovery_strategy FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
             )
             .all(south.id)
             .map(row => [row.id, row])
@@ -227,7 +229,9 @@ export default class SouthConnectorRepository {
               existing.sync_with_group !== +item.syncWithGroup ||
               existing.max_read_interval !== (item.maxReadInterval ?? null) ||
               existing.read_delay !== (item.readDelay ?? null) ||
-              existing.overlap !== (item.overlap ?? null);
+              existing.start_time_offset !== (item.startTimeOffset ?? null) ||
+              existing.end_time_offset !== (item.endTimeOffset ?? null) ||
+              existing.recovery_strategy !== (item.recoveryStrategy ?? null);
             if (hasChanged) {
               update.run(
                 item.name,
@@ -238,11 +242,12 @@ export default class SouthConnectorRepository {
                 item.maxReadInterval ?? null,
                 item.readDelay ?? null,
                 item.startTimeOffset ?? null,
-              item.endTimeOffset ?? null,
+                item.endTimeOffset ?? null,
                 item.recoveryStrategy ?? null,
-              item.updatedBy,
-              item.id
-            );}
+                item.updatedBy,
+                item.id
+              );
+            }
           }
           // Update groups
           deleteGroups.run(item.id);
@@ -312,14 +317,20 @@ export default class SouthConnectorRepository {
           item.scanMode = group.scanMode;
         }
         if (applyHistorySettings) {
-          if (item.overlap == null) {
-            item.overlap = group.overlap;
+          if (item.startTimeOffset == null) {
+            item.startTimeOffset = group.startTimeOffset;
+          }
+          if (item.endTimeOffset == null) {
+            item.endTimeOffset = group.endTimeOffset;
           }
           if (item.maxReadInterval == null) {
             item.maxReadInterval = group.maxReadInterval;
           }
           if (item.readDelay == null) {
             item.readDelay = group.readDelay;
+          }
+          if (item.recoveryStrategy == null) {
+            item.recoveryStrategy = group.recoveryStrategy;
           }
         }
         item.syncWithGroup = false;

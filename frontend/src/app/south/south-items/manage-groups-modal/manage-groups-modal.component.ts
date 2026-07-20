@@ -4,6 +4,7 @@ import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-transl
 import { Observable, switchMap, concatMap, from, toArray } from 'rxjs';
 import {
   SouthConnectorManifest,
+  SouthHistoryRecoveryStrategy,
   SouthItemGroupCommandDTO,
   SouthItemGroupDTO
 } from '../../../../../../backend/shared/model/south-connector.model';
@@ -204,9 +205,11 @@ export default class ManageGroupsModalComponent {
     const rows = this.groups.map(group => ({
       name: group.standardSettings.name,
       scanMode: this.getScanModeName(group),
-      overlap: group.historySettings.overlap,
+      startTimeOffset: group.historySettings.startTimeOffset,
+      endTimeOffset: group.historySettings.endTimeOffset,
       maxReadInterval: group.historySettings.maxReadInterval,
-      readDelay: group.historySettings.readDelay
+      readDelay: group.historySettings.readDelay,
+      recoveryStrategy: group.historySettings.recoveryStrategy
     }));
     const content = csv.unparse(rows, { header: true, delimiter: ',' });
     const blob = new Blob([content], { type: 'text/csv' });
@@ -259,13 +262,16 @@ export default class ManageGroupsModalComponent {
       }
 
       seenNames.add(name.toLowerCase());
+      const recoveryStrategy: SouthHistoryRecoveryStrategy = (row['recoveryStrategy'] || '').trim() === 'newest' ? 'newest' : 'oldest';
       commands.push({
         id: null,
         standardSettings: { name, scanModeId: scanMode.id },
         historySettings: {
-          overlap: Number(row['overlap']) || 0,
+          startTimeOffset: row['startTimeOffset'] ? Number(row['startTimeOffset']) : null,
+          endTimeOffset: row['endTimeOffset'] ? Number(row['endTimeOffset']) : null,
           maxReadInterval: Number(row['maxReadInterval']) || 3600,
-          readDelay: Number(row['readDelay']) || 200
+          readDelay: Number(row['readDelay']) || 200,
+          recoveryStrategy
         }
       } as SouthItemGroupCommandDTO);
     });

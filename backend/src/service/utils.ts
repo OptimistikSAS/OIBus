@@ -805,6 +805,7 @@ export const itemToFlattenedCSV = (
     columns.add('readDelay');
     columns.add('startTimeOffset');
     columns.add('endTimeOffset');
+    columns.add('recoveryStrategy');
     columns.add('syncWithGroup');
   }
 
@@ -831,11 +832,15 @@ export const itemToFlattenedCSV = (
         if (group && southItem.syncWithGroup) {
           flattenedItem.maxReadInterval = group.historySettings.maxReadInterval;
           flattenedItem.readDelay = group.historySettings.readDelay;
-          flattenedItem.overlap = group.historySettings.overlap;
+          flattenedItem.startTimeOffset = group.historySettings.startTimeOffset;
+          flattenedItem.endTimeOffset = group.historySettings.endTimeOffset;
+          flattenedItem.recoveryStrategy = group.historySettings.recoveryStrategy;
         } else {
           flattenedItem.maxReadInterval = southItem.maxReadInterval;
           flattenedItem.readDelay = southItem.readDelay;
-          flattenedItem.overlap = southItem.overlap;
+          flattenedItem.startTimeOffset = southItem.startTimeOffset;
+          flattenedItem.endTimeOffset = southItem.endTimeOffset;
+          flattenedItem.recoveryStrategy = southItem.recoveryStrategy;
         }
       }
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
