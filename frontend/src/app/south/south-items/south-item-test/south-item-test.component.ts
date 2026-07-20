@@ -144,7 +144,7 @@ class SouthItemTestComponent implements AfterContentInit {
     const parts: Array<string> = [];
 
     if (this.supportsHistorySettings) {
-      parts.push(this.dateRangeSummary());
+      parts.push(this.dateRangeSelector()?.getSummaryLabel() ?? '');
     }
     if (!this.isHistory) {
       parts.push(this.selectedNorthName ?? this.translate.instant('south.test-item.transformer-raw'));
@@ -157,21 +157,6 @@ class SouthItemTestComponent implements AfterContentInit {
       );
     }
     return parts.join(' · ');
-  }
-
-  private dateRangeSummary(): string {
-    const selector = this.dateRangeSelector();
-    if (!selector) {
-      return '';
-    }
-    const rangeType = selector.internalForm.controls.rangeType.value;
-    if (rangeType !== 'custom') {
-      const predefined = selector.predefinedRanges.find(r => r.key === rangeType);
-      if (predefined) {
-        return this.translate.instant(predefined.translationKey);
-      }
-    }
-    return selector.getCurrentRangeDescription();
   }
 
   private transformerLabel(transformer: TransformerDTO): string {

@@ -10,6 +10,7 @@ import type {
   createTransformer as createTransformerType,
   getStandardManifest as getStandardManifestType,
   runTransformerOnContent as runTransformerOnContentType,
+  toTransformedContent as toTransformedContentType,
   toTransformerDTO as toTransformerDTOType
 } from './transformer.service';
 import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
@@ -61,6 +62,7 @@ let TransformerService: new (...args: Array<unknown>) => InstanceType<typeof Tra
 let createTransformer: typeof createTransformerType;
 let getStandardManifest: typeof getStandardManifestType;
 let runTransformerOnContent: typeof runTransformerOnContentType;
+let toTransformedContent: typeof toTransformedContentType;
 let toTransformerDTO: typeof toTransformerDTOType;
 
 before(() => {
@@ -96,12 +98,14 @@ before(() => {
     createTransformer: typeof createTransformerType;
     getStandardManifest: typeof getStandardManifestType;
     runTransformerOnContent: typeof runTransformerOnContentType;
+    toTransformedContent: typeof toTransformedContentType;
     toTransformerDTO: typeof toTransformerDTOType;
   }>(nodeRequire, './transformer.service');
   TransformerService = mod.default;
   createTransformer = mod.createTransformer;
   getStandardManifest = mod.getStandardManifest;
   runTransformerOnContent = mod.runTransformerOnContent;
+  toTransformedContent = mod.toTransformedContent;
   toTransformerDTO = mod.toTransformerDTO;
 });
 
@@ -605,6 +609,57 @@ describe('Transformer Service', () => {
       } finally {
         fsModule['createReadStream'] = orig;
       }
+    });
+  });
+
+  describe('toTransformedContent', () => {
+    it('parses time-values output into a time-values content', () => {
+      const tv = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }];
+      assert.deepStrictEqual(toTransformedContent(JSON.stringify(tv), 'time-values', 'out.json'), { type: 'time-values', content: tv });
+    });
+
+    it('falls back to any-content when time-values output is not valid JSON', () => {
+      assert.deepStrictEqual(toTransformedContent('not-json', 'time-values', 'out.json'), { type: 'any-content', content: 'not-json' });
+    });
+
+    it('wraps "any" output as a file so a table can be rendered', () => {
+      assert.deepStrictEqual(toTransformedContent('a;b\n1;2', 'any', 'result.csv'), {
+        type: 'any',
+        filePath: 'result.csv',
+        content: 'a;b\n1;2'
+      });
+      // defaults the file name when none provided
+      assert.deepStrictEqual(toTransformedContent('x', 'any', undefined), { type: 'any', filePath: 'output', content: 'x' });
+    });
+
+    it('returns any-content for every other output type', () => {
+      assert.deepStrictEqual(toTransformedContent('payload', 'mqtt', 'f'), { type: 'any-content', content: 'payload' });
+      assert.deepStrictEqual(toTransformedContent('payload', undefined, undefined), { type: 'any-content', content: 'payload' });
+    });
+  });
+
+  describe('testTransformer', () => {
+    it('wraps time-values input and delegates to runTransformer with the resolved transformer', async () => {
+      const tv = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }];
+      transformerRepository.findById.mock.mockImplementation(() => ({ id: 't1', type: 'standard', inputType: 'time-values' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'any-content', content: 'done' }) as never);
+
+      const result = await service.testTransformer('t1', { foo: 'bar' }, JSON.stringify(tv));
+
+      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t1', { foo: 'bar' }, { type: 'time-values', content: tv }]);
+      assert.deepStrictEqual(result, {
+        raw: { type: 'time-values', content: tv },
+        transformed: { type: 'any-content', content: 'done' }
+      });
+    });
+
+    it('wraps non-structured input as any-content', async () => {
+      transformerRepository.findById.mock.mockImplementation(() => ({ id: 't2', type: 'standard', inputType: 'any' }) as never);
+      const runSpy = mock.method(service, 'runTransformer', async () => ({ type: 'any-content', content: '' }) as never);
+
+      await service.testTransformer('t2', {}, 'raw text');
+
+      assert.deepStrictEqual(runSpy.mock.calls[0].arguments, ['t2', {}, { type: 'any-content', content: 'raw text' }]);
     });
   });
 

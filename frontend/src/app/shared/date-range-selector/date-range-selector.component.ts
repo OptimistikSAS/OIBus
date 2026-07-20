@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, forwardRef, inject, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
+import { TranslateDirective, TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { DatetimepickerComponent } from '../datetimepicker/datetimepicker.component';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
 import { DateTime } from 'luxon';
@@ -34,6 +34,7 @@ export interface PredefinedRange {
 })
 export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDestroy, ControlValueAccessor {
   private fb = inject(NonNullableFormBuilder);
+  private translate = inject(TranslateService);
   private destroy$ = new Subject<void>();
 
   @Input() startLabel = 'history-query.start';
@@ -162,6 +163,19 @@ export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDest
       return this.formatDateRange(calculated);
     }
     return '';
+  }
+
+  /** Compact one-line label for the current range, suited for a collapsed settings chip: the
+   *  predefined range's name (e.g. "Last 10 minutes"), or the formatted custom range. */
+  getSummaryLabel(): string {
+    const rangeType = this.internalForm.controls.rangeType.value;
+    if (rangeType !== 'custom') {
+      const predefined = this.predefinedRanges.find(r => r.key === rangeType);
+      if (predefined) {
+        return this.translate.instant(predefined.translationKey);
+      }
+    }
+    return this.getCurrentRangeDescription();
   }
 
   private calculateRange(duration: Record<string, number>): DateRange {

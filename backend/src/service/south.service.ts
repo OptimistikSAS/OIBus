@@ -51,11 +51,11 @@ import { toSouthConnectorItemDTO } from './south-connector-dto.utils';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { buildSouth } from '../south/south-connector-factory';
 import { NotFoundError, OIBusValidationError } from '../model/types';
-import { createTransformer, runTransformerOnContent } from './transformer.service';
-import { NorthTransformerWithOptions, Transformer } from '../model/transformer.model';
+import { Transformer } from '../model/transformer.model';
 
 interface ITransformerService {
   findById(transformerId: string): Transformer;
+  runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent>;
 }
 
 export default class SouthService {
@@ -328,46 +328,14 @@ export default class SouthService {
     );
     const raw = await south.testItem(testItemToRun, testingSettings);
 
+    // Delegate the transform to the shared runner so the south/history item test and the
+    // north/history transformer test (#4774) apply transformers identically.
     return {
       raw,
-      transformed: testingSettings.transformer ? await this.applyTransformer(raw, testingSettings.transformer) : null
+      transformed: testingSettings.transformer
+        ? await this.transformerService.runTransformer(testingSettings.transformer.transformerId, testingSettings.transformer.options, raw)
+        : null
     };
-  }
-
-  /**
-   * Run a raw test result through an existing transformer (identified by its catalog id) and
-   * return the transformed output wrapped as OIBusContent so the UI can display it.
-   */
-  private async applyTransformer(
-    content: OIBusContent,
-    transformerSettings: { transformerId: string; options: Record<string, unknown> }
-  ): Promise<OIBusContent> {
-    const transformerToRun: NorthTransformerWithOptions = {
-      id: 'test',
-      transformer: this.transformerService.findById(transformerSettings.transformerId),
-      options: transformerSettings.options,
-      // `source` drives north-side routing only; it is unused when the transformer is run
-      // directly here, so a minimal valid variant is enough.
-      source: { type: 'oianalytics-setpoint' }
-    };
-    const transformer = createTransformer(transformerToRun, null, this.engine.logger);
-    const results = await runTransformerOnContent(transformer, content, { source: 'test' });
-    const output = Buffer.concat(results.map(result => result.output)).toString('utf-8');
-    const metadata = results[0]?.metadata;
-
-    // Present the output using the content type the transformer actually produced, so the viewer
-    // renders time-values as a table, file/CSV output as a table, and everything else as raw text.
-    if (metadata?.contentType === 'time-values') {
-      try {
-        return { type: 'time-values', content: JSON.parse(output) };
-      } catch {
-        return { type: 'any-content', content: output };
-      }
-    }
-    if (metadata?.contentType === 'any') {
-      return { type: 'any', filePath: metadata.contentFile || 'output', content: output };
-    }
-    return { type: 'any-content', content: output };
   }
 
   listItems(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {

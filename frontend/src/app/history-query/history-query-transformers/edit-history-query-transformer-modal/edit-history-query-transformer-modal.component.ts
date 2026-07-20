@@ -16,6 +16,10 @@ import { ItemLightDTO, OIBusSouthType } from '../../../../../../backend/shared/m
 import { getAssociatedInputType } from '../../../shared/utils/utils';
 import { FormControlValidationDirective } from '../../../shared/form/form-control-validation.directive';
 import { PillComponent } from '../../../shared/pill/pill.component';
+import {
+  NorthTransformerTestComponent,
+  TransformerTestItemSource
+} from '../../../north/north-transformers/transformer-test/transformer-test.component';
 
 @Component({
   selector: 'oib-edit-history-query-transformer-modal',
@@ -33,7 +37,8 @@ import { PillComponent } from '../../../shared/pill/pill.component';
     NgbDropdownAnchor,
     NgbDropdownMenu,
     NgbDropdownItem,
-    PillComponent
+    PillComponent,
+    NorthTransformerTestComponent
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
@@ -68,6 +73,10 @@ export class EditHistoryQueryTransformerModalComponent {
   certificates: Array<CertificateDTO> = [];
   southType: OIBusSouthType | null = null;
   existingTransformerWithOptions: HistoryTransformerDTOWithOptions | null = null;
+  /** History query id (present only when saved); enables the "from item" test input. */
+  historyId: string | null = null;
+  /** Stable source descriptor for the embedded transformer-test panel. */
+  transformerTestSource: TransformerTestItemSource = { kind: 'none' };
 
   selectableItems: Array<ItemLightDTO> = [];
   selectedItems: Array<ItemLightDTO> = [];
@@ -100,9 +109,11 @@ export class EditHistoryQueryTransformerModalComponent {
     certificates: Array<CertificateDTO>,
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>,
-    selectableItems: Array<ItemLightDTO>
+    selectableItems: Array<ItemLightDTO>,
+    historyId: string | null = null
   ) {
     this.mode = 'create';
+    this.historyId = historyId;
     this.southType = southType;
     this.scanModes = scanModes;
     this.certificates = certificates;
@@ -122,9 +133,11 @@ export class EditHistoryQueryTransformerModalComponent {
     transformers: Array<TransformerDTO>,
     supportedOutputTypes: Array<string>,
     selectableItems: Array<ItemLightDTO>,
-    transformerWithOptionsToEdit: HistoryTransformerDTOWithOptions
+    transformerWithOptionsToEdit: HistoryTransformerDTOWithOptions,
+    historyId: string | null = null
   ) {
     this.mode = 'edit';
+    this.historyId = historyId;
     this.southType = southType;
     this.scanModes = scanModes;
     this.certificates = certificates;
@@ -153,6 +166,8 @@ export class EditHistoryQueryTransformerModalComponent {
   }
 
   buildForm() {
+    this.transformerTestSource =
+      this.historyId && this.southType ? { kind: 'history', id: this.historyId, southType: this.southType } : { kind: 'none' };
     this.form.controls.transformer.valueChanges.subscribe(newTransformer => {
       if (newTransformer) {
         this.createOptionsForm(newTransformer);

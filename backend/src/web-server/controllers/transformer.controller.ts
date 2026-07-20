@@ -13,6 +13,7 @@ import {
 import { toTransformerDTO } from '../../service/transformer.service';
 import { Page } from '../../../shared/model/types';
 import { OIBusDataType } from '../../../shared/model/engine.model';
+import { SouthConnectorItemTestResult } from '../../../shared/model/south-connector.model';
 import { CustomExpressRequest } from '../express';
 import TransformerService from '../../service/transformer.service';
 import { OIBusTestingError } from '../../model/types';
@@ -161,6 +162,31 @@ export class TransformerController extends Controller {
     const transformerService = request.services.transformerService;
     try {
       return await transformerService.test(command.transformer, command.testRequest);
+    } catch (error: unknown) {
+      throw new OIBusTestingError((error as Error).message);
+    }
+  }
+
+  /**
+   * Runs a configured transformer (standard or custom, by id) with the given options against the
+   * provided input data, returning both the wrapped input and the transformed output. Used to test a
+   * north/history transformer with its configured options.
+   * @summary Test a transformer with input data
+   * @returns {Promise<SouthConnectorItemTestResult>} The wrapped input and transformed output
+   */
+  @Post('/{transformerId}/test')
+  async testTransformer(
+    @Path() transformerId: string,
+    @Body() testRequest: TransformerTestRequest,
+    @Request() request: CustomExpressRequest
+  ): Promise<SouthConnectorItemTestResult> {
+    const transformerService = request.services.transformerService;
+    try {
+      return await transformerService.testTransformer(
+        transformerId,
+        (testRequest.options as Record<string, unknown>) || {},
+        testRequest.inputData
+      );
     } catch (error: unknown) {
       throw new OIBusTestingError((error as Error).message);
     }
