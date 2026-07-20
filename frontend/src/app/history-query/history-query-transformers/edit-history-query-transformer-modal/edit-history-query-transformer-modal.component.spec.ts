@@ -6,8 +6,12 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { EditHistoryQueryTransformerModalComponent } from './edit-history-query-transformer-modal.component';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
+import { TransformerService } from '../../../services/transformer.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
+import { HistoryQueryService } from '../../../services/history-query.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
+import { of } from 'rxjs';
 import testData from '../../../../../../backend/src/tests/utils/test-data';
 import { TransformerDTO } from '../../../../../../backend/shared/model/transformer.model';
 import { OIBusSouthType } from '../../../../../../backend/shared/model/south-connector.model';
@@ -18,10 +22,19 @@ describe('EditHistoryQueryTransformerModalComponent', () => {
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
 
+    // Services used by the embedded transformer-test panel (rendered once a transformer is selected).
+    const transformerService = createMock(TransformerService);
+    transformerService.getInputTemplate.mockReturnValue(of({ type: 'time-values', data: '[]', description: '' }));
+    const southConnectorService = createMock(SouthConnectorService);
+    southConnectorService.getSouthManifest.mockReturnValue(of({ modes: { history: false } }) as never);
+
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
+        { provide: TransformerService, useValue: transformerService },
+        { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: HistoryQueryService, useValue: createMock(HistoryQueryService) },
         { provide: UnsavedChangesConfirmationService, useValue: createMock(UnsavedChangesConfirmationService) }
       ]
     });

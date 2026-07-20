@@ -7,6 +7,8 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { EditNorthTransformerModalComponent } from './edit-north-transformer-modal.component';
 import { DefaultValidationErrorsComponent } from '../../../shared/default-validation-errors/default-validation-errors.component';
 import { SouthConnectorService } from '../../../services/south-connector.service';
+import { TransformerService } from '../../../services/transformer.service';
+import { HistoryQueryService } from '../../../services/history-query.service';
 import { UnsavedChangesConfirmationService } from '../../../shared/unsaved-changes-confirmation.service';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { createMock, MockObject } from '../../../../test/vitest-create-mock';
@@ -83,11 +85,17 @@ describe('EditNorthTransformerModalComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
     southConnectorService.getGroups.mockReturnValue(of([]));
 
+    // Services used by the embedded transformer-test panel (rendered once a transformer is selected).
+    const transformerService = createMock(TransformerService);
+    transformerService.getInputTemplate.mockReturnValue(of({ type: 'time-values', data: '[]', description: '' }));
+
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: TransformerService, useValue: transformerService },
+        { provide: HistoryQueryService, useValue: createMock(HistoryQueryService) },
         { provide: UnsavedChangesConfirmationService, useValue: createMock(UnsavedChangesConfirmationService) }
       ]
     });

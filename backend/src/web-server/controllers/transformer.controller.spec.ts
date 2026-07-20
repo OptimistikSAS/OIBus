@@ -220,6 +220,29 @@ describe('TransformerController', () => {
     assert.deepStrictEqual(transformerService.test.mock.calls[0].arguments, [transformerCommand, testRequest]);
   });
 
+  it('should test a transformer with input data by id', async () => {
+    const testRequest: TransformerTestRequest = { inputData: '[]', options: { foo: 'bar' } };
+    const testResult = { raw: { type: 'any-content', content: '[]' }, transformed: { type: 'any-content', content: 'out' } };
+    transformerService.testTransformer = mock.fn(async () => testResult as never);
+
+    const result = await controller.testTransformer('transformer-id', testRequest, mockRequest as CustomExpressRequest);
+
+    assert.strictEqual(transformerService.testTransformer.mock.calls.length, 1);
+    assert.deepStrictEqual(transformerService.testTransformer.mock.calls[0].arguments, ['transformer-id', { foo: 'bar' }, '[]']);
+    assert.deepStrictEqual(result, testResult);
+  });
+
+  it('should wrap testTransformer errors in an OIBusTestingError', async () => {
+    transformerService.testTransformer = mock.fn(async () => {
+      throw new Error('boom');
+    });
+
+    await assert.rejects(
+      () => controller.testTransformer('transformer-id', { inputData: 'x' } as TransformerTestRequest, mockRequest as CustomExpressRequest),
+      /boom/
+    );
+  });
+
   it('should get a template for transformer', async () => {
     const inputType = 'time-values';
     transformerService.generateTemplate = mock.fn((_inputType: InputType): InputTemplate => ({}) as InputTemplate);

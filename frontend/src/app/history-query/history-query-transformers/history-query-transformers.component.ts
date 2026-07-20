@@ -79,7 +79,8 @@ export class HistoryQueryTransformersComponent {
       this.northManifest().types,
       this.items().length > 0
         ? this.items().map(item => ({ id: item.id, name: item.name, enabled: item.enabled }) as ItemLightDTO)
-        : this.historyQuery()?.items || []
+        : this.historyQuery()?.items || [],
+      this.historyQuery()?.id ?? null
     );
     this.refreshAfterAddModalClosed(modalRef);
   }
@@ -126,7 +127,8 @@ export class HistoryQueryTransformersComponent {
       this.items().length > 0
         ? this.items().map(item => ({ id: item.id, name: item.name, enabled: item.enabled }) as ItemLightDTO)
         : this.historyQuery()?.items || [],
-      transformer
+      transformer,
+      this.historyQuery()?.id ?? null
     );
     this.refreshAfterEditModalClosed(modalRef, transformer);
   }

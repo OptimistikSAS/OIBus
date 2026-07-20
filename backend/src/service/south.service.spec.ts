@@ -44,8 +44,6 @@ const nodeRequire = createRequire(import.meta.url);
 let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let mockBuildSouth: ReturnType<typeof mock.fn>;
 let mockSouthConnectorFactory: Record<string, unknown>;
-let mockCreateTransformer: ReturnType<typeof mock.fn>;
-let mockRunTransformerOnContent: ReturnType<typeof mock.fn>;
 
 let SouthService: new (...args: Array<unknown>) => InstanceType<typeof SouthServiceType>;
 let southManifestList: typeof southManifestListType;
@@ -64,18 +62,12 @@ before(() => {
 
   mockBuildSouth = mock.fn();
   mockSouthConnectorFactory = { __esModule: true, buildSouth: mockBuildSouth };
-  mockCreateTransformer = mock.fn(() => ({}));
-  mockRunTransformerOnContent = mock.fn(async () => [{ output: Buffer.from('transformed-output'), metadata: {} }]);
 
   const encryptionServiceMock = new EncryptionServiceMock('', '');
 
   mockModule(nodeRequire, './utils', mockUtils);
   mockModule(nodeRequire, '../service/utils', mockUtils);
   mockModule(nodeRequire, '../south/south-connector-factory', mockSouthConnectorFactory);
-  mockModule(nodeRequire, './transformer.service', {
-    createTransformer: mockCreateTransformer,
-    runTransformerOnContent: mockRunTransformerOnContent
-  });
   mockModule(nodeRequire, './encryption.service', { encryptionService: encryptionServiceMock });
   mockModule(nodeRequire, '../web-server/controllers/validators/joi.validator', {
     default: class {
@@ -144,8 +136,6 @@ describe('South Service', () => {
     mockedSouth1 = new SouthConnectorMock(testData.south.list[0]);
     mockBuildSouth.mock.resetCalls();
     mockBuildSouth.mock.mockImplementation(() => mockedSouth1);
-    mockCreateTransformer.mock.resetCalls();
-    mockRunTransformerOnContent.mock.resetCalls();
     mockUtils.stringToBoolean.mock.resetCalls();
     mockUtils.stringToBoolean.mock.mockImplementation(() => true);
     mockUtils.checkScanMode.mock.resetCalls();
@@ -476,8 +466,11 @@ describe('South Service', () => {
     assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
   });
 
-  it('should test item and apply transformer when one is provided', async () => {
-    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ type: 'any-content', content: 'raw' }) as OIBusContent);
+  it('should delegate to the transformer service when a transformer is provided', async () => {
+    const rawContent = { type: 'any-content', content: 'raw' } as OIBusContent;
+    const transformedContent = { type: 'time-values', content: [] } as OIBusContent;
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => rawContent);
+    transformerService.runTransformer.mock.mockImplementationOnce(async () => transformedContent);
 
     const result = await service.testItem(
       testData.south.list[0].id,
@@ -489,53 +482,14 @@ describe('South Service', () => {
     );
 
     assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
-    assert.deepStrictEqual(transformerService.findById.mock.calls[0].arguments, ['transformer-id']);
-    assert.strictEqual(mockCreateTransformer.mock.calls.length, 1);
-    assert.strictEqual(mockRunTransformerOnContent.mock.calls.length, 1);
-    assert.deepStrictEqual(result.raw, { type: 'any-content', content: 'raw' });
-    assert.deepStrictEqual(result.transformed, { type: 'any-content', content: 'transformed-output' });
-  });
-
-  it('should expose an "any" (file) transformer output so the UI can render a table', async () => {
-    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ type: 'time-values', content: [] }) as OIBusContent);
-    mockRunTransformerOnContent.mock.mockImplementationOnce(async () => [
-      { output: Buffer.from('a;b\n1;2'), metadata: { contentType: 'any', contentFile: 'result.csv' } }
-    ]);
-
-    const result = await service.testItem(
-      testData.south.list[0].id,
-      testData.south.command.type,
-      testData.south.itemCommand.name,
-      testData.south.command.settings,
-      testData.south.itemCommand.settings,
-      { history: undefined, transformer: { transformerId: 'transformer-id', options: {} } }
-    );
-
-    assert.deepStrictEqual(result.raw, { type: 'time-values', content: [] });
-    assert.deepStrictEqual(result.transformed, { type: 'any', filePath: 'result.csv', content: 'a;b\n1;2' });
-  });
-
-  it('should present a time-values transformer output as time-values so the UI can render it', async () => {
-    const timeValues = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }];
-    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ type: 'any-content', content: 'a;b\n1;2' }) as OIBusContent);
-    mockRunTransformerOnContent.mock.mockImplementationOnce(async () => [
-      { output: Buffer.from(JSON.stringify(timeValues)), metadata: { contentType: 'time-values', contentFile: 'out.json' } }
-    ]);
-
-    const result = await service.testItem(
-      testData.south.list[0].id,
-      testData.south.command.type,
-      testData.south.itemCommand.name,
-      testData.south.command.settings,
-      testData.south.itemCommand.settings,
-      { history: undefined, transformer: { transformerId: 'transformer-id', options: {} } }
-    );
-
-    assert.deepStrictEqual(result.transformed, { type: 'time-values', content: timeValues });
+    assert.deepStrictEqual(transformerService.runTransformer.mock.calls[0].arguments, ['transformer-id', { foo: 'bar' }, rawContent]);
+    assert.deepStrictEqual(result.raw, rawContent);
+    assert.deepStrictEqual(result.transformed, transformedContent);
   });
 
   it('should return the raw result with transformed null when no transformer is provided', async () => {
-    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ type: 'any-content', content: 'raw' }) as OIBusContent);
+    const rawContent = { type: 'any-content', content: 'raw' } as OIBusContent;
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => rawContent);
 
     const result = await service.testItem(
       testData.south.list[0].id,
@@ -546,7 +500,8 @@ describe('South Service', () => {
       { history: undefined }
     );
 
-    assert.deepStrictEqual(result, { raw: { type: 'any-content', content: 'raw' }, transformed: null });
+    assert.deepStrictEqual(result, { raw: rawContent, transformed: null });
+    assert.strictEqual(transformerService.runTransformer.mock.calls.length, 0);
   });
 
   it('should list items', () => {

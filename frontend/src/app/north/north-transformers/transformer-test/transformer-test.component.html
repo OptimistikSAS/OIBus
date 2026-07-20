@@ -1,0 +1,108 @@
+@if (transformer()) {
+  <div class="testing-item-panel">
+    <div class="d-flex justify-content-between oib-box-title">
+      <span translate="north.transformers.test.title"></span>
+      <div>
+        <button
+          type="button"
+          id="run-transformer-test"
+          class="btn btn-secondary btn-sm oib-box-btn m-0"
+          [disabled]="isTestRunning"
+          (click)="runTest()"
+        >
+          @if (isTestRunning) {
+            <span class="fa fa-spinner fa-spin ms-2"></span>
+          } @else {
+            <span class="fa fa-check ms-2"></span>
+          }
+          <span translate="north.transformers.test.run"></span>
+        </button>
+        <button
+          type="button"
+          id="cancel-transformer-test"
+          class="btn btn-danger btn-sm oib-box-btn ms-2"
+          [disabled]="!isTestRunning"
+          (click)="cancelTest()"
+          translate="common.cancel"
+        ></button>
+      </div>
+    </div>
+
+    <div class="testing-item-body" [formGroup]="form">
+      @if (settingsCollapsed) {
+        <button
+          type="button"
+          id="expand-settings"
+          class="btn btn-link btn-sm p-0 settings-summary-chip"
+          (click)="settingsCollapsed = false"
+        >
+          <span class="fa fa-sliders me-1"></span>
+          <span>{{ settingsSummary }}</span>
+          <span class="fa fa-chevron-down ms-2"></span>
+        </button>
+      }
+
+      <div [class.d-none]="settingsCollapsed">
+        <!-- input source -->
+        <div class="d-flex gap-3 mb-2">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="sourcePaste" formControlName="inputSource" value="paste" />
+            <label class="form-check-label" for="sourcePaste" translate="north.transformers.test.source-paste"></label>
+          </div>
+          @if (canUseItemSource) {
+            <div class="form-check">
+              <input class="form-check-input" type="radio" id="sourceItem" formControlName="inputSource" value="item" />
+              <label class="form-check-label" for="sourceItem" translate="north.transformers.test.source-item"></label>
+            </div>
+          }
+        </div>
+
+        @if (form.controls.inputSource.value === 'paste') {
+          <label class="form-label" translate="configuration.oibus.manifest.transformers.test-transformer-modal.input-data"></label>
+          <oib-code-block formControlName="inputData" [language]="'json'" [readOnly]="false" height="15rem" />
+        } @else {
+          <div class="form-group">
+            <label class="form-label" for="test-item-select" translate="north.transformers.test.item"></label>
+            <select id="test-item-select" class="form-select" formControlName="itemId">
+              <option [ngValue]="null"></option>
+              @for (item of availableItems; track item.id) {
+                <option [ngValue]="item.id">{{ item.name }}</option>
+              }
+            </select>
+          </div>
+          @if (supportsHistory) {
+            <div class="form-group mt-2">
+              <oib-date-range-selector
+                #dateRangeSelector
+                formControlName="dateRange"
+                [startLabel]="'south.test-item.query-start'"
+                [endLabel]="'south.test-item.query-end'"
+                [defaultRange]="'last-10-minutes'"
+              />
+            </div>
+          }
+        }
+
+        @if (testResult) {
+          <div class="text-end mt-1">
+            <button type="button" id="hide-settings" class="btn btn-link btn-sm p-0" (click)="settingsCollapsed = true">
+              <span translate="south.test-item.hide-settings"></span>
+              <span class="fa fa-chevron-up ms-1"></span>
+            </button>
+          </div>
+        }
+      </div>
+
+      @if (errorMessage) {
+        <div class="alert alert-danger mt-2 mb-0">{{ errorMessage }}</div>
+      } @else if (testResult) {
+        <oib-transformer-test-result
+          class="d-block mt-2"
+          [raw]="testResult.raw"
+          [hasTransformer]="true"
+          [output]="testResult.transformed"
+        />
+      }
+    </div>
+  </div>
+}
