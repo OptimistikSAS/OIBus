@@ -1,4 +1,4 @@
-import { Component, forwardRef, inject, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { AfterViewInit, Component, forwardRef, inject, Input, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective, TranslatePipe } from '@ngx-translate/core';
 import { DatetimepickerComponent } from '../datetimepicker/datetimepicker.component';
@@ -32,7 +32,7 @@ export interface PredefinedRange {
     }
   ]
 })
-export class DateRangeSelectorComponent implements OnInit, OnDestroy, ControlValueAccessor {
+export class DateRangeSelectorComponent implements OnInit, AfterViewInit, OnDestroy, ControlValueAccessor {
   private fb = inject(NonNullableFormBuilder);
   private destroy$ = new Subject<void>();
 
@@ -73,9 +73,27 @@ export class DateRangeSelectorComponent implements OnInit, OnDestroy, ControlVal
   private onChange: (value: DateRange) => void = () => {};
   private onTouched: () => void = () => {};
 
+  // Set once a real value is written (e.g. re-opening a modal on a saved range). Guards the
+  // ngOnInit default below, which would otherwise clobber that value with `defaultRange`.
+  private hasExternalValue = false;
+
   ngOnInit() {
     this.setupFormValidation();
     this.watchFormChanges();
+  }
+
+  ngAfterViewInit() {
+    if (this.hasExternalValue) {
+      return;
+    }
+    // `defaultRange` is only reliably set by Angular once inputs are bound, which happens after
+    // this class's field initializers run — so `internalForm` cannot read it directly at
+    // construction time. Apply it here instead, and push the resulting computed range up to the
+    // parent control so it starts valid (e.g. "last 10 minutes") instead of unset. This has to wait
+    // until ngAfterViewInit: writeValue()/registerOnChange() (called by the host FormControlName)
+    // only run after this component's own ngOnInit, so `onChange` isn't wired up yet in ngOnInit.
+    this.internalForm.controls.rangeType.setValue(this.defaultRange, { emitEvent: false });
+    this.emitValue();
   }
 
   ngOnDestroy() {
@@ -85,6 +103,7 @@ export class DateRangeSelectorComponent implements OnInit, OnDestroy, ControlVal
 
   writeValue(value: DateRange | null): void {
     if (value) {
+      this.hasExternalValue = true;
       this.internalForm.patchValue(
         {
           rangeType: 'custom',

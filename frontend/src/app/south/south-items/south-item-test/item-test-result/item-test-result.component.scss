@@ -5,6 +5,19 @@ $containerMinHeight: 30vh;
 #test-result-container {
   min-height: $containerMinHeight;
   outline: solid 1px $mediumGrey;
+  background-color: var(--bs-white);
+
+  // Compact mode (raw/output side by side in the transformer-test pipeline): fixed height
+  // rather than shrink-to-content, so both boxes line up regardless of which has more content.
+  &.compact {
+    height: 40vh;
+    overflow: auto;
+
+    #loading-spinner-container,
+    #message-container {
+      min-height: 6rem;
+    }
+  }
 }
 
 #loading-spinner-container,
