@@ -1,4 +1,9 @@
-import { OIBusSouthType, SouthConnectorItemTestingSettings, SouthConnectorManifest } from '../../shared/model/south-connector.model';
+import {
+  OIBusSouthType,
+  SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult,
+  SouthConnectorManifest
+} from '../../shared/model/south-connector.model';
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { HistoryQueryEntity, HistoryQueryEntityLight, HistoryQueryItemEntity } from '../model/histor-query.model';
 import { NorthSettings } from '../../shared/model/north-settings.model';
@@ -26,7 +31,7 @@ import type { SouthConnectorEntity } from '../model/south-connector.model';
 import type { NorthConnectorEntity } from '../model/north-connector.model';
 import LogRepository from '../repository/logs/log.repository';
 import { BaseEntity, GetUserInfo, Page } from '../../shared/model/types';
-import { HistoryQueryMetrics, OIBusConnectionTestResult, OIBusContent } from '../../shared/model/engine.model';
+import { HistoryQueryMetrics, OIBusConnectionTestResult } from '../../shared/model/engine.model';
 import { ScanMode } from '../model/scan-mode.model';
 import type { IOIAnalyticsMessageService } from '../model/oianalytics-message.model';
 import csv from 'papaparse';
@@ -52,7 +57,7 @@ interface ISouthService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent>;
+  ): Promise<SouthConnectorItemTestResult>;
 }
 
 interface INorthService {
@@ -371,7 +376,7 @@ export default class HistoryQueryService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemTestResult> {
     let southSettingsFrom: SouthSettings | null = null;
     if (historyId !== 'create') {
       const historyQuery = this.findById(historyId);

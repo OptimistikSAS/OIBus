@@ -5,6 +5,7 @@ import {
   DestroyRef,
   ElementRef,
   inject,
+  input,
   output,
   signal,
   viewChild,
@@ -42,6 +43,9 @@ export class ItemTestResultComponent {
   get result() {
     return this._result();
   }
+
+  /** Compact mode shrinks the result box (used when several are stacked, e.g. the test pipeline). */
+  readonly compact = input<boolean>(false);
 
   message: { type: `${'item' | 'display-result'}-error` | 'info'; value: string } | null = null;
   isLoading = false;
@@ -119,14 +123,18 @@ export class ItemTestResultComponent {
     this.isLoading = false;
     if (result) {
       this._result.set(result);
+      // A fresh result may support different display modes than the previous one
+      // (e.g. raw time-values -> table, transformed output -> any). Recompute the
+      // available modes and fall back to the first one when the current mode no
+      // longer applies, otherwise a stale 'table' mode renders nothing.
+      this.updateAvailableDisplayModes(result);
+      const mode = this.displayMode();
+      if (!mode || !this._availableDisplayModes.includes(mode)) {
+        this.changeDisplayMode(this._availableDisplayModes[0] ?? null);
+      }
     }
 
     if (!this.result) return;
-
-    if (!this.displayMode()) {
-      this.updateAvailableDisplayModes(this.result);
-      this.changeDisplayMode(this._availableDisplayModes[0]);
-    }
 
     if (this.displayMode() === 'table') {
       this.resetPage();

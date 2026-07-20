@@ -492,7 +492,61 @@ describe('South Service', () => {
     assert.deepStrictEqual(transformerService.findById.mock.calls[0].arguments, ['transformer-id']);
     assert.strictEqual(mockCreateTransformer.mock.calls.length, 1);
     assert.strictEqual(mockRunTransformerOnContent.mock.calls.length, 1);
-    assert.deepStrictEqual(result, { type: 'any-content', content: 'transformed-output' });
+    assert.deepStrictEqual(result.raw, { type: 'any-content', content: 'raw' });
+    assert.deepStrictEqual(result.transformed, { type: 'any-content', content: 'transformed-output' });
+  });
+
+  it('should expose an "any" (file) transformer output so the UI can render a table', async () => {
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ type: 'time-values', content: [] }) as OIBusContent);
+    mockRunTransformerOnContent.mock.mockImplementationOnce(async () => [
+      { output: Buffer.from('a;b\n1;2'), metadata: { contentType: 'any', contentFile: 'result.csv' } }
+    ]);
+
+    const result = await service.testItem(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      testData.south.command.settings,
+      testData.south.itemCommand.settings,
+      { history: undefined, transformer: { transformerId: 'transformer-id', options: {} } }
+    );
+
+    assert.deepStrictEqual(result.raw, { type: 'time-values', content: [] });
+    assert.deepStrictEqual(result.transformed, { type: 'any', filePath: 'result.csv', content: 'a;b\n1;2' });
+  });
+
+  it('should present a time-values transformer output as time-values so the UI can render it', async () => {
+    const timeValues = [{ pointId: 'p', timestamp: '2024-01-01T00:00:00.000Z', data: { value: '1' } }];
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ type: 'any-content', content: 'a;b\n1;2' }) as OIBusContent);
+    mockRunTransformerOnContent.mock.mockImplementationOnce(async () => [
+      { output: Buffer.from(JSON.stringify(timeValues)), metadata: { contentType: 'time-values', contentFile: 'out.json' } }
+    ]);
+
+    const result = await service.testItem(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      testData.south.command.settings,
+      testData.south.itemCommand.settings,
+      { history: undefined, transformer: { transformerId: 'transformer-id', options: {} } }
+    );
+
+    assert.deepStrictEqual(result.transformed, { type: 'time-values', content: timeValues });
+  });
+
+  it('should return the raw result with transformed null when no transformer is provided', async () => {
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ type: 'any-content', content: 'raw' }) as OIBusContent);
+
+    const result = await service.testItem(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      testData.south.command.settings,
+      testData.south.itemCommand.settings,
+      { history: undefined }
+    );
+
+    assert.deepStrictEqual(result, { raw: { type: 'any-content', content: 'raw' }, transformed: null });
   });
 
   it('should list items', () => {

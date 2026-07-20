@@ -145,8 +145,8 @@ describe('DateRangeSelectorComponent', () => {
       component.internalForm.controls.rangeType.setValue('last-hour');
       fixture.detectChanges();
 
-      const alert = fixture.debugElement.query(By.css('.alert-info'));
-      expect(alert).toBeTruthy();
+      const summary = fixture.debugElement.query(By.css('.range-summary'));
+      expect(summary).toBeTruthy();
 
       const datetimePickers = fixture.debugElement.queryAll(By.css('oib-datetimepicker'));
       expect(datetimePickers).toHaveLength(0);
@@ -159,8 +159,8 @@ describe('DateRangeSelectorComponent', () => {
       const datetimePickers = fixture.debugElement.queryAll(By.css('oib-datetimepicker'));
       expect(datetimePickers).toHaveLength(2);
 
-      const alert = fixture.debugElement.query(By.css('.alert-info'));
-      expect(alert).toBeFalsy();
+      const summary = fixture.debugElement.query(By.css('.range-summary'));
+      expect(summary).toBeFalsy();
     });
   });
 
@@ -389,6 +389,15 @@ describe('DateRangeSelectorComponent', () => {
       dateRangeSelector.internalForm.controls.rangeType.setValue('last-hour');
 
       expect(hostComponent.testForm.controls.dateRange.value).toBeTruthy();
+    });
+
+    test('should default to the bound `defaultRange` preset (not "custom") and sync it to the parent form without any interaction', () => {
+      // Host starts with a null dateRange and defaultRange = 'last-hour' (see TestHostComponent above).
+      const dateRangeSelector = hostFixture.debugElement.query(By.directive(DateRangeSelectorComponent)).componentInstance;
+
+      expect(dateRangeSelector.internalForm.controls.rangeType.value).toBe('last-hour');
+      expect(hostComponent.testForm.controls.dateRange.value).toBeTruthy();
+      expect(hostComponent.testForm.valid).toBe(true);
     });
   });
 

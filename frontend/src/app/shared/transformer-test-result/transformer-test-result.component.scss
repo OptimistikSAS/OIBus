@@ -1,0 +1,16 @@
+// On md+ screens raw/output sit side by side; a divider separates them instead of the
+// stacked arrows used below md, where the columns wrap and a divider would float oddly.
+@media (min-width: 768px) {
+  .pipeline-stage {
+    // Bootstrap's .flex-md-fill utility sets `flex: 1 1 auto !important`, whose "auto" basis
+    // sizes from content first and can make raw/output unequal widths — so this is a plain
+    // flex rule here (not that utility class) for a true 50/50 split, like the grid columns
+    // this replaced.
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .pipeline-stage-output {
+    border-left: 1px solid var(--bs-border-color);
+  }
+}

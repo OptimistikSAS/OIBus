@@ -8,6 +8,7 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthConnectorTypedDTO,
@@ -261,7 +262,7 @@ export default class SouthService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Promise<OIBusContent> {
+  ): Promise<SouthConnectorItemTestResult> {
     let southConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> | null = null;
     if (southId !== 'create' && southId !== 'history') {
       southConnector = this.findById(southId);
@@ -325,12 +326,12 @@ export default class SouthService {
       this.certificateRepository,
       this.oIAnalyticsRegistrationRepository
     );
-    const content = await south.testItem(testItemToRun, testingSettings);
+    const raw = await south.testItem(testItemToRun, testingSettings);
 
-    if (!testingSettings.transformer) {
-      return content;
-    }
-    return this.applyTransformer(content, testingSettings.transformer);
+    return {
+      raw,
+      transformed: testingSettings.transformer ? await this.applyTransformer(raw, testingSettings.transformer) : null
+    };
   }
 
   /**
@@ -351,8 +352,22 @@ export default class SouthService {
     };
     const transformer = createTransformer(transformerToRun, null, this.engine.logger);
     const results = await runTransformerOnContent(transformer, content, { source: 'test' });
-    const output = Buffer.concat(results.map(result => result.output));
-    return { type: 'any-content', content: output.toString('utf-8') };
+    const output = Buffer.concat(results.map(result => result.output)).toString('utf-8');
+    const metadata = results[0]?.metadata;
+
+    // Present the output using the content type the transformer actually produced, so the viewer
+    // renders time-values as a table, file/CSV output as a table, and everything else as raw text.
+    if (metadata?.contentType === 'time-values') {
+      try {
+        return { type: 'time-values', content: JSON.parse(output) };
+      } catch {
+        return { type: 'any-content', content: output };
+      }
+    }
+    if (metadata?.contentType === 'any') {
+      return { type: 'any', filePath: metadata.contentFile || 'output', content: output };
+    }
+    return { type: 'any-content', content: output };
   }
 
   listItems(southId: string): Array<SouthConnectorItemEntity<SouthItemSettings>> {
