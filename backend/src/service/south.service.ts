@@ -620,8 +620,8 @@ export default class SouthService {
           name: groupName,
           southId: southConnector.id,
           scanMode,
-          startTimeOffset: null,
-          endTimeOffset: itemWithGroup.overlap,
+          startTimeOffset: itemWithGroup.startTimeOffset,
+          endTimeOffset: itemWithGroup.endTimeOffset,
           maxReadInterval: itemWithGroup.maxReadInterval,
           readDelay: itemWithGroup.readDelay,
           recoveryStrategy: itemWithGroup.recoveryStrategy

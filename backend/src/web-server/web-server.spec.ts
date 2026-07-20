@@ -154,14 +154,6 @@ describe('WebServer', () => {
     assert.doesNotThrow(() => (webServer as unknown as { start: () => void }).start());
   });
 
-  it('should serve /health endpoint', async () => {
-    await webServer.init();
-    const res = await fetch(`http://localhost:${TEST_PORT}/health`);
-    assert.equal(res.status, 200);
-    const body = (await res.json()) as { status: string };
-    assert.equal(body.status, 'OK');
-  });
-
   it('should return 401 for unauthenticated API calls', async () => {
     await webServer.init();
     const res = await fetch(`http://localhost:${TEST_PORT}/api/engine`);

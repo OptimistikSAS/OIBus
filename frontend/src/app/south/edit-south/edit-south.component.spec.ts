@@ -32,7 +32,7 @@ const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemG
   createdBy: { id: '', friendlyName: '' },
   updatedBy: { id: '', friendlyName: '' },
   standardSettings: { name, scanMode },
-  historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: 'oldest' }
+  historySettings: { startTimeOffset: 0, endTimeOffset: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: 'oldest' }
 });
 
 const createRouteStub = {
@@ -138,7 +138,9 @@ describe('EditSouthComponent', () => {
       scanMode: null,
       maxReadInterval: null,
       readDelay: null,
-      overlap: null
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null
     };
     const southConnectorWithGroup = { ...southConnector, groups: [groupA], items: [itemWithEmptyFields, southConnector.items[1]] };
     southConnectorService.findById.mockReturnValue(of(southConnectorWithGroup as any));
@@ -153,9 +155,11 @@ describe('EditSouthComponent', () => {
 
     const unassignedItem = fixture.componentInstance.inMemoryItems.find(item => item.id === itemWithEmptyFields.id)!;
     expect(unassignedItem.scanModeId).toBe(scanModes[0].id);
-    expect(unassignedItem.overlap).toBe(0);
+    expect(unassignedItem.startTimeOffset).toBe(0);
+    expect(unassignedItem.endTimeOffset).toBe(0);
     expect(unassignedItem.maxReadInterval).toBe(3600);
     expect(unassignedItem.readDelay).toBe(200);
+    expect(unassignedItem.recoveryStrategy).toBe('oldest');
   });
 
   test('deleteGroup should not overwrite an item own scan mode and history fields', () => {
@@ -167,7 +171,9 @@ describe('EditSouthComponent', () => {
       scanMode: scanModes[1],
       maxReadInterval: 60,
       readDelay: 50,
-      overlap: 10
+      startTimeOffset: 10,
+      endTimeOffset: 20,
+      recoveryStrategy: 'newest' as const
     };
     const southConnectorWithGroup = { ...southConnector, groups: [groupA], items: [itemWithOwnFields, southConnector.items[1]] };
     southConnectorService.findById.mockReturnValue(of(southConnectorWithGroup as any));
@@ -182,9 +188,11 @@ describe('EditSouthComponent', () => {
 
     const unassignedItem = fixture.componentInstance.inMemoryItems.find(item => item.id === itemWithOwnFields.id)!;
     expect(unassignedItem.scanModeId).toBe(scanModes[1].id);
-    expect(unassignedItem.overlap).toBe(10);
+    expect(unassignedItem.startTimeOffset).toBe(10);
+    expect(unassignedItem.endTimeOffset).toBe(20);
     expect(unassignedItem.maxReadInterval).toBe(60);
     expect(unassignedItem.readDelay).toBe(50);
+    expect(unassignedItem.recoveryStrategy).toBe('newest');
   });
 
   test('manageGroups should open the manage groups modal with in-memory groups and items', () => {

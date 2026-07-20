@@ -1484,7 +1484,9 @@ describe('Service utils', () => {
         historySettings: {
           maxReadInterval: 3600,
           readDelay: 200,
-          overlap: 5
+          startTimeOffset: 5,
+          endTimeOffset: 6,
+          recoveryStrategy: 'oldest'
         },
         createdBy: { id: '', friendlyName: '' },
         updatedBy: { id: '', friendlyName: '' },
@@ -1500,7 +1502,9 @@ describe('Service utils', () => {
         scanMode: testData.scanMode.list[1],
         maxReadInterval: 1,
         readDelay: 1,
-        overlap: 1
+        startTimeOffset: 1,
+        endTimeOffset: 1,
+        recoveryStrategy: 'newest'
       } as unknown as SouthConnectorItemDTO;
 
       utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', {
@@ -1513,7 +1517,9 @@ describe('Service utils', () => {
       assert.strictEqual(capturedData[0].group, mockGroup.standardSettings.name);
       assert.strictEqual(capturedData[0].maxReadInterval, mockGroup.historySettings.maxReadInterval);
       assert.strictEqual(capturedData[0].readDelay, mockGroup.historySettings.readDelay);
-      assert.strictEqual(capturedData[0].overlap, mockGroup.historySettings.overlap);
+      assert.strictEqual(capturedData[0].startTimeOffset, mockGroup.historySettings.startTimeOffset);
+      assert.strictEqual(capturedData[0].endTimeOffset, mockGroup.historySettings.endTimeOffset);
+      assert.strictEqual(capturedData[0].recoveryStrategy, mockGroup.historySettings.recoveryStrategy);
     });
 
     it('should use the group scan mode but keep the item historian settings when the item is not synced with its group', () => {
@@ -1526,7 +1532,9 @@ describe('Service utils', () => {
         historySettings: {
           maxReadInterval: 3600,
           readDelay: 200,
-          overlap: 5
+          startTimeOffset: 5,
+          endTimeOffset: 6,
+          recoveryStrategy: 'oldest'
         },
         createdBy: { id: '', friendlyName: '' },
         updatedBy: { id: '', friendlyName: '' },
@@ -1540,7 +1548,9 @@ describe('Service utils', () => {
         scanMode: testData.scanMode.list[1],
         maxReadInterval: 42,
         readDelay: 43,
-        overlap: 44
+        startTimeOffset: 44,
+        endTimeOffset: 45,
+        recoveryStrategy: 'newest'
       } as unknown as SouthConnectorItemDTO;
 
       utils.itemToFlattenedCSV([item] as unknown as Array<SouthConnectorItemDTO | HistoryQueryItemDTO>, ',', {
@@ -1551,7 +1561,9 @@ describe('Service utils', () => {
       assert.strictEqual(capturedData[0].scanMode, mockGroup.standardSettings.scanMode.name);
       assert.strictEqual(capturedData[0].maxReadInterval, 42);
       assert.strictEqual(capturedData[0].readDelay, 43);
-      assert.strictEqual(capturedData[0].overlap, 44);
+      assert.strictEqual(capturedData[0].startTimeOffset, 44);
+      assert.strictEqual(capturedData[0].endTimeOffset, 45);
+      assert.strictEqual(capturedData[0].recoveryStrategy, 'newest');
     });
 
     it('should flatten items with scanModes', () => {
@@ -1622,11 +1634,18 @@ describe('Service utils', () => {
         readDelay: null,
         startTimeOffset: 0,
         endTimeOffset: null,
+        recoveryStrategy: null,
         settings: { address: '40001' },
         group: {
           id: 'g1',
           standardSettings: { name: 'Group A', scanMode: { id: 'sm2', name: 'Group Scan Mode', cron: '' } },
-          historySettings: { maxReadInterval: 9999, readDelay: 500, overlap: 10, startTimeOffset: 10, endTimeOffset: null, recoveryStrategy: 'oldest' }
+          historySettings: {
+            maxReadInterval: 9999,
+            readDelay: 500,
+            startTimeOffset: 10,
+            endTimeOffset: null,
+            recoveryStrategy: 'oldest'
+          }
         }
       } as unknown as SouthConnectorItemDTO;
       utils.itemToFlattenedCSV([itemWithNulls], ',', { attributes: [] } as unknown as OIBusObjectAttribute);
@@ -1636,7 +1655,9 @@ describe('Service utils', () => {
       assert.strictEqual(capturedData[0].scanMode, 'Group Scan Mode');
       assert.strictEqual(capturedData[0].maxReadInterval, null);
       assert.strictEqual(capturedData[0].readDelay, null);
-      assert.strictEqual(capturedData[0].overlap, null);
+      assert.strictEqual(capturedData[0].startTimeOffset, 0);
+      assert.strictEqual(capturedData[0].endTimeOffset, null);
+      assert.strictEqual(capturedData[0].recoveryStrategy, null);
     });
 
     it('should flatten settings declared in the schema, stringifying object values', () => {
