@@ -451,6 +451,77 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusTimeValue": {
+        "dataType": "refObject",
+        "properties": {
+            "pointId": {"dataType":"string","required":true},
+            "timestamp": {"ref":"Instant","required":true},
+            "data": {"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}],"required":true}},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}]},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusTimeValueContent": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["time-values"],"required":true},
+            "content": {"dataType":"array","array":{"dataType":"refObject","ref":"OIBusTimeValue"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusFileContent": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["any"],"required":true},
+            "filePath": {"dataType":"string","required":true},
+            "filename": {"dataType":"string"},
+            "content": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusAnyContent": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["any-content"],"required":true},
+            "content": {"dataType":"string","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusSetpoint": {
+        "dataType": "refObject",
+        "properties": {
+            "reference": {"dataType":"string","required":true},
+            "value": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"},{"dataType":"boolean"}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusSetpointContent": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"enum","enums":["setpoint"],"required":true},
+            "content": {"dataType":"array","array":{"dataType":"refObject","ref":"OIBusSetpoint"},"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "OIBusContent": {
+        "dataType": "refAlias",
+        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusFileContent"},{"ref":"OIBusAnyContent"},{"ref":"OIBusSetpointContent"}],"validators":{}},
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorItemTestResult": {
+        "dataType": "refObject",
+        "properties": {
+            "raw": {"ref":"OIBusContent","required":true},
+            "transformed": {"dataType":"union","subSchemas":[{"ref":"OIBusContent"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "InputTemplate": {
         "dataType": "refObject",
         "properties": {
@@ -4019,77 +4090,6 @@ const models: TsoaRoute.Models = {
     "SouthSettings": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSSettings"},{"ref":"SouthFolderScannerSettings"},{"ref":"SouthFTPSettings"},{"ref":"SouthInfluxDBSettings"},{"ref":"SouthModbusSettings"},{"ref":"SouthMQTTSettings"},{"ref":"SouthMSSQLSettings"},{"ref":"SouthMySQLSettings"},{"ref":"SouthODBCSettings"},{"ref":"SouthOIAnalyticsSettings"},{"ref":"SouthOLEDBSettings"},{"ref":"SouthOPCSettings"},{"ref":"SouthOPCUASettings"},{"ref":"SouthOracleSettings"},{"ref":"SouthPISettings"},{"ref":"SouthPostgreSQLSettings"},{"ref":"SouthRestSettings"},{"ref":"SouthSFTPSettings"},{"ref":"SouthSQLiteSettings"}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusTimeValue": {
-        "dataType": "refObject",
-        "properties": {
-            "pointId": {"dataType":"string","required":true},
-            "timestamp": {"ref":"Instant","required":true},
-            "data": {"dataType":"nestedObjectLiteral","nestedProperties":{"value":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}],"required":true}},"additionalProperties":{"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"}]},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusTimeValueContent": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"dataType":"enum","enums":["time-values"],"required":true},
-            "content": {"dataType":"array","array":{"dataType":"refObject","ref":"OIBusTimeValue"},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusFileContent": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"dataType":"enum","enums":["any"],"required":true},
-            "filePath": {"dataType":"string","required":true},
-            "filename": {"dataType":"string"},
-            "content": {"dataType":"string"},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusAnyContent": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"dataType":"enum","enums":["any-content"],"required":true},
-            "content": {"dataType":"string","required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusSetpoint": {
-        "dataType": "refObject",
-        "properties": {
-            "reference": {"dataType":"string","required":true},
-            "value": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"double"},{"dataType":"boolean"}],"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusSetpointContent": {
-        "dataType": "refObject",
-        "properties": {
-            "type": {"dataType":"enum","enums":["setpoint"],"required":true},
-            "content": {"dataType":"array","array":{"dataType":"refObject","ref":"OIBusSetpoint"},"required":true},
-        },
-        "additionalProperties": false,
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "OIBusContent": {
-        "dataType": "refAlias",
-        "type": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusFileContent"},{"ref":"OIBusAnyContent"},{"ref":"OIBusSetpointContent"}],"validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "SouthConnectorItemTestResult": {
-        "dataType": "refObject",
-        "properties": {
-            "raw": {"ref":"OIBusContent","required":true},
-            "transformed": {"dataType":"union","subSchemas":[{"ref":"OIBusContent"},{"dataType":"enum","enums":[null]}],"required":true},
-        },
-        "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthItemSettings": {
@@ -8283,6 +8283,38 @@ export function RegisterRoutes(app: Router,opts?:{multer?:ReturnType<typeof mult
 
               await templateService.apiHandler({
                 methodName: 'test',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsTransformerController_testTransformer: Record<string, TsoaRoute.ParameterSchema> = {
+                transformerId: {"in":"path","name":"transformerId","required":true,"dataType":"string"},
+                testRequest: {"in":"body","name":"testRequest","required":true,"ref":"TransformerTestRequest"},
+                request: {"in":"request","name":"request","required":true,"dataType":"object"},
+        };
+        app.post('/api/transformers/:transformerId/test',
+            ...(fetchMiddlewares<RequestHandler>(TransformerController)),
+            ...(fetchMiddlewares<RequestHandler>(TransformerController.prototype.testTransformer)),
+
+            async function TransformerController_testTransformer(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsTransformerController_testTransformer, request, response });
+
+                const controller = new TransformerController();
+
+              await templateService.apiHandler({
+                methodName: 'testTransformer',
                 controller,
                 response,
                 next,

@@ -26,6 +26,7 @@ import { FormControlValidationDirective } from '../../../shared/form/form-contro
 import { PillComponent } from '../../../shared/pill/pill.component';
 import { ValErrorDelayDirective } from '../../../shared/form/val-error-delay.directive';
 import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { NorthTransformerTestComponent, TransformerTestItemSource } from '../transformer-test/transformer-test.component';
 
 @Component({
   selector: 'oib-edit-north-transformer-modal',
@@ -46,7 +47,8 @@ import { ValidationErrorsComponent } from 'ngx-valdemort';
     NgbDropdownItem,
     PillComponent,
     ValErrorDelayDirective,
-    ValidationErrorsComponent
+    ValidationErrorsComponent,
+    NorthTransformerTestComponent
   ],
   changeDetection: ChangeDetectionStrategy.Eager,
   viewProviders: [
@@ -65,6 +67,8 @@ export class EditNorthTransformerModalComponent {
 
   state = new ObservableState();
   mode: 'create' | 'edit' = 'create';
+  /** Stable source descriptor for the embedded transformer-test panel (updated on source change). */
+  transformerTestSource: TransformerTestItemSource = { kind: 'none' };
   /** True when opened from north-detail (saves directly to API); false when opened from edit-north (changes are applied in-memory). */
   directSave = true;
   form: FormGroup<{
@@ -332,6 +336,9 @@ export class EditNorthTransformerModalComponent {
   }
 
   private updateSelectableOutput(source: { dataSourceType: DataSourceType | null; south: SouthConnectorLightDTO | null }) {
+    // Keep the embedded test panel's source in sync (only south sources can run an item).
+    this.transformerTestSource = source.south ? { kind: 'south', id: source.south.id, southType: source.south.type } : { kind: 'none' };
+
     this.selectableOutputs = this.allTransformers.filter(element => {
       if (!this.supportedOutputTypes.includes(element.outputType)) {
         return false;
