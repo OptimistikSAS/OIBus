@@ -336,6 +336,26 @@ describe('NorthConnector', () => {
     assert.deepStrictEqual(triggerRunIfNecessaryMock.mock.calls[0].arguments[0], north['connector'].caching.error.retryInterval);
   });
 
+  it('should clean up queue and deferred promise when run() throws unexpectedly', async () => {
+    north['taskJobQueue'] = [{ id: 'scanModeId1', name: 'scan' }];
+    const runError = new Error('unexpected cache read failure');
+    north.handleContentWrapper = mock.fn(async () => {
+      throw runError;
+    });
+
+    await north.run({ id: 'scanModeId1', name: 'scan' });
+
+    assert.strictEqual(north['taskJobQueue'].length, 0);
+    assert.strictEqual(north['runProgress$'], null);
+    assert.ok(
+      logger.error.mock.calls.some(
+        (c: { arguments: Array<unknown> }) =>
+          (c.arguments[0] as string).includes('Unhandled error in North task runner') &&
+          (c.arguments[0] as string).includes(runError.message)
+      )
+    );
+  });
+
   it('should properly run two times if a task is already in queue', async () => {
     await north.start();
     north['taskJobQueue'] = [
