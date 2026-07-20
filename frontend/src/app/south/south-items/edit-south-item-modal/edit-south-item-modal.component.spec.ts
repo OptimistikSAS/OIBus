@@ -25,6 +25,16 @@ const existingItem = testData.south.list[0].items[0] as unknown as SouthConnecto
 const groups: Array<SouthItemGroupDTO> = [];
 const noop = () => of({} as any);
 
+const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemGroupDTO => ({
+  id,
+  createdAt: '',
+  updatedAt: '',
+  createdBy: { id: '', friendlyName: '' },
+  updatedBy: { id: '', friendlyName: '' },
+  standardSettings: { name, scanMode },
+  historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200 }
+});
+
 describe('EditSouthItemModalComponent', () => {
   let activeModal: MockObject<NgbActiveModal>;
   let southConnectorService: MockObject<SouthConnectorService>;
@@ -87,5 +97,99 @@ describe('EditSouthItemModalComponent', () => {
 
     const root = page.elementLocator(fixture.nativeElement);
     await expect.element(root.getByCss('#name')).toBeInTheDocument();
+  });
+
+  test('selecting a group from none should turn sync-with-group on', () => {
+    const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+    const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+    fixture.componentInstance.prepareForCreation(
+      [],
+      scanModes,
+      [] as Array<CertificateDTO>,
+      [groupA],
+      manifest,
+      southId,
+      southConnectorCommand as any,
+      noop,
+      noop
+    );
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+
+    expect(fixture.componentInstance.form!.controls.syncWithGroup.value).toBe(true);
+  });
+
+  test('switching from one group to another should keep sync-with-group enabled', () => {
+    const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+    const groupB = buildGroup('group2', 'GroupB', scanModes[1]);
+    const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+    fixture.componentInstance.prepareForCreation(
+      [],
+      scanModes,
+      [] as Array<CertificateDTO>,
+      [groupA, groupB],
+      manifest,
+      southId,
+      southConnectorCommand as any,
+      noop,
+      noop
+    );
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+    expect(fixture.componentInstance.form!.controls.syncWithGroup.value).toBe(true);
+
+    fixture.componentInstance.onSelectGroup('group2');
+    expect(fixture.componentInstance.form!.controls.syncWithGroup.value).toBe(true);
+  });
+
+  test('switching from one group to another should keep sync-with-group disabled', () => {
+    const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+    const groupB = buildGroup('group2', 'GroupB', scanModes[1]);
+    const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+    fixture.componentInstance.prepareForCreation(
+      [],
+      scanModes,
+      [] as Array<CertificateDTO>,
+      [groupA, groupB],
+      manifest,
+      southId,
+      southConnectorCommand as any,
+      noop,
+      noop
+    );
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+    fixture.componentInstance.form!.controls.syncWithGroup.setValue(false);
+    fixture.componentInstance.onSyncWithGroupChange();
+
+    fixture.componentInstance.onSelectGroup('group2');
+
+    expect(fixture.componentInstance.form!.controls.syncWithGroup.value).toBe(false);
+    expect(fixture.componentInstance.form!.controls.scanModeId.value).toBe(scanModes[1].id);
+  });
+
+  test('deselecting a group should turn sync-with-group off', () => {
+    const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+    const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+    fixture.componentInstance.prepareForCreation(
+      [],
+      scanModes,
+      [] as Array<CertificateDTO>,
+      [groupA],
+      manifest,
+      southId,
+      southConnectorCommand as any,
+      noop,
+      noop
+    );
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+    fixture.componentInstance.onSelectGroup(null);
+
+    expect(fixture.componentInstance.form!.controls.syncWithGroup.value).toBe(false);
   });
 });
