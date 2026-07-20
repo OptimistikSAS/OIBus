@@ -571,4 +571,131 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedGroup.maxReadInterval, 3600);
     assert.strictEqual(savedGroup.readDelay, 200);
   });
+
+  it('should delete a group and fill empty scan mode and history fields on its items', () => {
+    const groupRepository = new SouthItemGroupRepository(database);
+    const group = groupRepository.create(
+      {
+        name: 'Group To Delete With Fallback',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: 100,
+        maxReadInterval: 3600,
+        readDelay: 200
+      },
+      'userTest'
+    );
+
+    const itemWithEmptyFields: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'item-inheriting-from-group',
+      enabled: true,
+      scanMode: null,
+      settings: {} as SouthItemSettings,
+      group,
+      syncWithGroup: true,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    repository.saveItem(testData.south.list[0].id, itemWithEmptyFields);
+
+    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, true);
+
+    assert.strictEqual(groupRepository.findById(group.id), null);
+    const savedItem = repository.findItemById(testData.south.list[0].id, itemWithEmptyFields.id)!;
+    assert.strictEqual(savedItem.group, null);
+    assert.strictEqual(savedItem.syncWithGroup, false);
+    assert.strictEqual(savedItem.scanMode!.id, group.scanMode.id);
+    assert.strictEqual(savedItem.overlap, 100);
+    assert.strictEqual(savedItem.maxReadInterval, 3600);
+    assert.strictEqual(savedItem.readDelay, 200);
+  });
+
+  it('should not overwrite an item own scan mode and history fields when deleting its group', () => {
+    const groupRepository = new SouthItemGroupRepository(database);
+    const group = groupRepository.create(
+      {
+        name: 'Group To Delete Without Fallback',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: 100,
+        maxReadInterval: 3600,
+        readDelay: 200
+      },
+      'userTest'
+    );
+
+    const itemWithOwnFields: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'item-with-own-fields',
+      enabled: true,
+      scanMode: testData.scanMode.list[1],
+      settings: {} as SouthItemSettings,
+      group,
+      syncWithGroup: false,
+      maxReadInterval: 60,
+      readDelay: 50,
+      overlap: 10,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    repository.saveItem(testData.south.list[0].id, itemWithOwnFields);
+
+    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, true);
+
+    const savedItem = repository.findItemById(testData.south.list[0].id, itemWithOwnFields.id)!;
+    assert.strictEqual(savedItem.group, null);
+    assert.strictEqual(savedItem.scanMode!.id, testData.scanMode.list[1].id);
+    assert.strictEqual(savedItem.maxReadInterval, 60);
+    assert.strictEqual(savedItem.readDelay, 50);
+    assert.strictEqual(savedItem.overlap, 10);
+  });
+
+  it('should not fill history fields when the connector does not support history', () => {
+    const groupRepository = new SouthItemGroupRepository(database);
+    const group = groupRepository.create(
+      {
+        name: 'Group To Delete No History',
+        southId: testData.south.list[0].id,
+        scanMode: testData.scanMode.list[0],
+        overlap: 100,
+        maxReadInterval: 3600,
+        readDelay: 200
+      },
+      'userTest'
+    );
+
+    const itemWithEmptyFields: SouthConnectorItemEntity<SouthItemSettings> = {
+      id: '',
+      name: 'item-no-history-connector',
+      enabled: true,
+      scanMode: null,
+      settings: {} as SouthItemSettings,
+      group,
+      syncWithGroup: true,
+      maxReadInterval: null,
+      readDelay: null,
+      overlap: null,
+      createdBy: '',
+      updatedBy: '',
+      createdAt: '',
+      updatedAt: ''
+    };
+    repository.saveItem(testData.south.list[0].id, itemWithEmptyFields);
+
+    repository.deleteGroupAndUpdateItems(testData.south.list[0].id, group, false);
+
+    const savedItem = repository.findItemById(testData.south.list[0].id, itemWithEmptyFields.id)!;
+    assert.strictEqual(savedItem.scanMode!.id, group.scanMode.id);
+    assert.strictEqual(savedItem.maxReadInterval, null);
+    assert.strictEqual(savedItem.readDelay, null);
+    assert.strictEqual(savedItem.overlap, null);
+  });
 });

@@ -2450,7 +2450,28 @@
       "created": "Group created",
       "updated": "Group updated",
       "deleted": "Group deleted",
-      "delete-error": "Error deleting group: {{error}}"
+      "delete-error": "Error deleting group: {{error}}",
+      "manage-title": "Groups ({{count}})",
+      "manage-button": "Manage groups",
+      "item-count": "Items",
+      "none": "No groups configured",
+      "export": {
+        "button": "Export"
+      },
+      "import": {
+        "button": "Import",
+        "in-progress": "Importing groups...",
+        "success": "{{count}} group(s) imported",
+        "errors-title": "{{count}} row(s) could not be imported",
+        "row": "Row {{row}}",
+        "errors": {
+          "missing-name": "Group name is required",
+          "duplicate-name": "A group named \"{{name}}\" already exists",
+          "unknown-scan-mode": "Scan mode \"{{scanMode}}\" was not found"
+        }
+      },
+      "search-placeholder": "Search groups by name",
+      "none-match": "No groups match the current filters"
     },
     "monitoring": {
       "title": "{{ name }} metrics",

@@ -756,7 +756,8 @@ export default class SouthService {
     if (group.southId !== southId) {
       throw new NotFoundError(`South item group "${groupId}" does not belong to south connector "${southId}"`);
     }
-    this.southItemGroupRepository.delete(groupId);
+    const manifest = this.getManifest(southConnector.type);
+    this.southConnectorRepository.deleteGroupAndUpdateItems(southId, group, manifest.modes.history);
     this.oIAnalyticsMessageService.createFullConfigMessageIfNotPending();
     await this.engine.reloadSouthItems(southConnector);
   }
