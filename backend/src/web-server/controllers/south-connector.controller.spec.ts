@@ -263,12 +263,11 @@ describe('SouthConnectorController', () => {
       testingSettings: testData.south.itemTestingSettings
     };
 
-    const mockContent: OIBusContent = {
-      type: 'any',
-      filePath: '/path/to/file.json',
-      content: '{"key": "value"}'
+    const mockResult = {
+      raw: { type: 'any', filePath: '/path/to/file.json', content: '{"key": "value"}' } as OIBusContent,
+      transformed: null
     };
-    southService.testItem = mock.fn(async () => mockContent);
+    southService.testItem = mock.fn(async () => mockResult);
 
     const result = await controller.testItem(southId, southType, itemName, requestBody, mockRequest as CustomExpressRequest);
 
@@ -281,7 +280,7 @@ describe('SouthConnectorController', () => {
       requestBody.itemSettings,
       requestBody.testingSettings
     ]);
-    assert.deepStrictEqual(result, mockContent);
+    assert.deepStrictEqual(result, mockResult);
   });
 
   it('should wrap errors when testing a south connector item', async () => {

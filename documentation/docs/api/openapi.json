@@ -16638,6 +16638,28 @@
 				],
 				"description": "Type representing OIBus content."
 			},
+			"SouthConnectorItemTestResult": {
+				"description": "Result of testing a South/History item. `raw` is always the value collected by the connector;\n`transformed` is the output of running `raw` through the selected transformer with its options,\nor null when no transformer was requested. This lets the UI show the Raw → transformer → Output pipeline.",
+				"properties": {
+					"raw": {
+						"$ref": "#/components/schemas/OIBusContent"
+					},
+					"transformed": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/OIBusContent"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"raw",
+					"transformed"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"SouthItemSettings": {
 				"anyOf": [
 					{
@@ -33538,6 +33560,14 @@
 						"type": "string",
 						"description": "The platform of the machine.",
 						"example": "ubuntu"
+					},
+					"ignoreIpFilters": {
+						"type": "boolean",
+						"description": "Whether IP filters are ignored (disabled) via the --ignoreIpFilters launch flag."
+					},
+					"ignoreRemoteUpdate": {
+						"type": "boolean",
+						"description": "Whether remote update is ignored (disabled) via the --ignoreRemoteUpdate launch flag."
 					}
 				},
 				"required": [
@@ -33551,7 +33581,9 @@
 					"hostname",
 					"operatingSystem",
 					"architecture",
-					"platform"
+					"platform",
+					"ignoreIpFilters",
+					"ignoreRemoteUpdate"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -34564,11 +34596,11 @@
 				"operationId": "TestItem",
 				"responses": {
 					"200": {
-						"description": "Test results",
+						"description": "Raw and (optionally) transformed test results",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/OIBusContent"
+									"$ref": "#/components/schemas/SouthConnectorItemTestResult"
 								}
 							}
 						}
@@ -37412,7 +37444,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/OIBusContent"
+									"$ref": "#/components/schemas/SouthConnectorItemTestResult"
 								}
 							}
 						}

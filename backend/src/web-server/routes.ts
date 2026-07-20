@@ -4083,6 +4083,15 @@ const models: TsoaRoute.Models = {
         "type": {"dataType":"union","subSchemas":[{"ref":"OIBusTimeValueContent"},{"ref":"OIBusFileContent"},{"ref":"OIBusAnyContent"},{"ref":"OIBusSetpointContent"}],"validators":{}},
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "SouthConnectorItemTestResult": {
+        "dataType": "refObject",
+        "properties": {
+            "raw": {"ref":"OIBusContent","required":true},
+            "transformed": {"dataType":"union","subSchemas":[{"ref":"OIBusContent"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "SouthItemSettings": {
         "dataType": "refAlias",
         "type": {"dataType":"union","subSchemas":[{"ref":"SouthADSItemSettings"},{"ref":"SouthFolderScannerItemSettings"},{"ref":"SouthFTPItemSettings"},{"ref":"SouthInfluxDBItemSettings"},{"ref":"SouthModbusItemSettings"},{"ref":"SouthMQTTItemSettings"},{"ref":"SouthMSSQLItemSettings"},{"ref":"SouthMySQLItemSettings"},{"ref":"SouthODBCItemSettings"},{"ref":"SouthOIAnalyticsItemSettings"},{"ref":"SouthOLEDBItemSettings"},{"ref":"SouthOPCItemSettings"},{"ref":"SouthOPCUAItemSettings"},{"ref":"SouthOracleItemSettings"},{"ref":"SouthPIItemSettings"},{"ref":"SouthPostgreSQLItemSettings"},{"ref":"SouthRestItemSettings"},{"ref":"SouthSFTPItemSettings"},{"ref":"SouthSQLiteItemSettings"}],"validators":{}},
@@ -7774,6 +7783,8 @@ const models: TsoaRoute.Models = {
             "operatingSystem": {"dataType":"string","required":true},
             "architecture": {"dataType":"string","required":true},
             "platform": {"dataType":"string","required":true},
+            "ignoreIpFilters": {"dataType":"boolean","required":true},
+            "ignoreRemoteUpdate": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
     },

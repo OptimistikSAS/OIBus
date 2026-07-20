@@ -19,31 +19,31 @@ const item: SouthConnectorItemDTO = {
   name: 'item1',
   enabled: true,
   settings: { regex: '*', minAge: 100, preserveFiles: true } as SouthFolderScannerItemSettings,
-  scanMode: testData.scanMode.list[0],
-  group: null,
-  syncWithGroup: false,
-  maxReadInterval: null,
-  readDelay: null,
-  startTimeOffset: null,
-  endTimeOffset: null,
-  createdBy: { id: '', friendlyName: '' },
-  updatedBy: { id: '', friendlyName: '' },
-  createdAt: '',
-  updatedAt: ''
+  scanMode: testData.scanMode.list[0]
 } as unknown as SouthConnectorItemDTO;
 
+const standardTransformer = {
+  id: 't1',
+  type: 'standard',
+  functionName: 'time-values-to-json',
+  inputType: 'time-values',
+  outputType: 'any',
+  manifest: { attributes: [], enablingConditions: [] }
+};
+
 describe('SouthItemTestComponent', () => {
+  let southConnectorService: ReturnType<typeof createMock<SouthConnectorService>>;
   let northConnectorService: ReturnType<typeof createMock<NorthConnectorService>>;
   let historyQueryService: ReturnType<typeof createMock<HistoryQueryService>>;
 
   beforeEach(() => {
-    const southConnectorService = createMock(SouthConnectorService);
+    southConnectorService = createMock(SouthConnectorService);
     northConnectorService = createMock(NorthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
 
-    southConnectorService.testItem.mockReturnValue(of({} as any));
+    southConnectorService.testItem.mockReturnValue(of({ raw: { type: 'time-values', content: [] }, transformed: null }) as never);
     northConnectorService.list.mockReturnValue(of([]));
-    historyQueryService.findById.mockReturnValue(of(null as any));
+    historyQueryService.findById.mockReturnValue(of(null) as never);
 
     TestBed.configureTestingModule({
       providers: [
@@ -55,50 +55,57 @@ describe('SouthItemTestComponent', () => {
     });
   });
 
-  test('should render with all required inputs', () => {
+  function createComponent(type: 'south' | 'history-south' = 'south', entityId = 'southId1') {
     const fixture = TestBed.createComponent(SouthItemTestComponent);
-    fixture.componentRef.setInput('type', 'south');
-    fixture.componentRef.setInput('entityId', 'southId1');
+    fixture.componentRef.setInput('type', type);
+    fixture.componentRef.setInput('entityId', entityId);
     fixture.componentRef.setInput('item', item);
     fixture.componentRef.setInput('connectorCommand', connectorCommand);
     fixture.componentRef.setInput('manifest', manifest);
     fixture.detectChanges();
+    return fixture;
+  }
+
+  test('should render with all required inputs and load norths in a south context', () => {
+    northConnectorService.list.mockReturnValue(of([{ id: 'northId1', name: 'North 1' }]) as never);
+    const component = createComponent().componentInstance;
+    expect(component.norths.map(n => n.id)).toEqual(['northId1']);
   });
 
-  test('should list north transformers targeting the tested south', () => {
-    northConnectorService.list.mockReturnValue(of([{ id: 'northId1' }] as any));
+  test('selecting a north loads its transformers, selecting one builds the options form', () => {
+    northConnectorService.list.mockReturnValue(of([{ id: 'northId1', name: 'North 1' }]) as never);
     northConnectorService.findById.mockReturnValue(
       of({
         id: 'northId1',
         name: 'North 1',
-        transformers: [
-          {
-            id: 'binding1',
-            source: { type: 'south', south: { id: 'southId1' }, items: [] },
-            transformer: { id: 'transformerId1', type: 'standard', functionName: 'time-values-to-csv' },
-            options: { delimiter: ',' }
-          },
-          {
-            id: 'binding2',
-            source: { type: 'south', south: { id: 'otherSouth' }, items: [] },
-            transformer: { id: 'transformerId2', type: 'standard', functionName: 'json-to-csv' },
-            options: {}
-          }
-        ]
-      } as any)
+        transformers: [{ id: 'b1', transformer: standardTransformer, options: { foo: 'bar' } }]
+      }) as never
     );
 
-    const fixture = TestBed.createComponent(SouthItemTestComponent);
-    fixture.componentRef.setInput('type', 'south');
-    fixture.componentRef.setInput('entityId', 'southId1');
-    fixture.componentRef.setInput('item', item);
-    fixture.componentRef.setInput('connectorCommand', connectorCommand);
-    fixture.componentRef.setInput('manifest', manifest);
-    fixture.detectChanges();
+    const component = createComponent().componentInstance;
+    component.form!.controls.northId.setValue('northId1');
+    expect(component.transformerChoices.map(t => t.transformerId)).toEqual(['t1']);
 
-    const component = fixture.componentInstance;
-    expect(component.availableTransformers.length).toBe(1);
-    expect(component.availableTransformers[0].transformerId).toBe('transformerId1');
-    expect(component.availableTransformers[0].prefix).toBe('North 1');
+    component.form!.controls.transformerId.setValue('t1');
+    expect(component.selectedTransformer?.id).toBe('t1');
+  });
+
+  test('runs the item and stores the raw + transformed result', () => {
+    southConnectorService.testItem.mockReturnValue(
+      of({ raw: { type: 'time-values', content: [] }, transformed: { type: 'any-content', content: 'out' } }) as never
+    );
+
+    const component = createComponent().componentInstance;
+    component.testItem();
+
+    expect(component.testResult?.transformed).toEqual({ type: 'any-content', content: 'out' });
+    expect(southConnectorService.testItem).toHaveBeenCalled();
+  });
+
+  test('history context offers only the history query transformers', () => {
+    historyQueryService.findById.mockReturnValue(of({ northTransformers: [{ transformer: standardTransformer, options: {} }] }) as never);
+
+    const component = createComponent('history-south', 'hq1').componentInstance;
+    expect(component.transformerChoices.map(t => t.transformerId)).toEqual(['t1']);
   });
 });

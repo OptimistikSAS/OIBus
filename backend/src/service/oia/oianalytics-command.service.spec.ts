@@ -1475,7 +1475,8 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusTestSouthConnectorItemCommand;
 
-    const testItemResult: OIBusContent = { type: 'any-content', content: '' };
+    const rawContent: OIBusContent = { type: 'any-content', content: '' };
+    const testItemResult = { raw: rawContent, transformed: null };
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     southService.testItem.mock.mockImplementationOnce(async () => testItemResult);
     southService.listManifest.mock.mockImplementationOnce(() => [
@@ -1497,7 +1498,7 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     ]);
-    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, testItemResult]);
+    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, rawContent]);
   });
 
   describe('withTimeout for test commands', () => {
@@ -1898,7 +1899,8 @@ describe('OIAnalytics Command Service', () => {
       }
     } as OIBusTestHistoryQuerySouthItemCommand;
 
-    const testItemResult: OIBusContent = { type: 'any-content', content: '' };
+    const rawContent: OIBusContent = { type: 'any-content', content: '' };
+    const testItemResult = { raw: rawContent, transformed: null };
     oIAnalyticsCommandRepository.findFirstToExecute.mock.mockImplementationOnce(() => command);
     historyQueryService.testItem.mock.mockImplementationOnce(async () => testItemResult);
     southService.listManifest.mock.mockImplementationOnce(() => [
@@ -1921,7 +1923,7 @@ describe('OIAnalytics Command Service', () => {
       command.commandContent.itemCommand.settings,
       command.commandContent.testingSettings
     ]);
-    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, testItemResult]);
+    assert.deepStrictEqual(completeTestItemMock.mock.calls[0].arguments, [command, rawContent]);
   });
 
   it('should execute update-history-query-status command', async () => {

@@ -9,6 +9,7 @@ import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorItemTestingSettings,
+  SouthConnectorItemTestResult,
   SouthConnectorLightDTO,
   SouthConnectorManifest,
   SouthItemGroupCommandDTO,
@@ -17,7 +18,7 @@ import {
 } from '../../../../backend/shared/model/south-connector.model';
 import { Page } from '../../../../backend/shared/model/types';
 import { DownloadService } from './download.service';
-import { OIBusConnectionTestResult, OIBusContent } from '../../../../backend/shared/model/engine.model';
+import { OIBusConnectionTestResult } from '../../../../backend/shared/model/engine.model';
 import { SouthItemSettings, SouthSettings } from '../../../../backend/shared/model/south-settings.model';
 
 /**
@@ -116,8 +117,8 @@ export class SouthConnectorService {
     southSettings: SouthSettings,
     itemSettings: SouthItemSettings,
     testingSettings: SouthConnectorItemTestingSettings
-  ): Observable<OIBusContent> {
-    return this.http.post<OIBusContent>(
+  ): Observable<SouthConnectorItemTestResult> {
+    return this.http.post<SouthConnectorItemTestResult>(
       `/api/south/${southId}/items/test`,
       { southSettings, itemSettings, testingSettings },
       {

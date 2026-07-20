@@ -300,12 +300,11 @@ describe('HistoryQueryController', () => {
       }
     };
 
-    const mockContent: OIBusContent = {
-      type: 'any',
-      filePath: '/path/to/file.json',
-      content: '{"key": "value"}'
+    const mockResult = {
+      raw: { type: 'any', filePath: '/path/to/file.json', content: '{"key": "value"}' } as OIBusContent,
+      transformed: null
     };
-    historyQueryService.testItem = mock.fn(async () => mockContent);
+    historyQueryService.testItem = mock.fn(async () => mockResult);
 
     const result = await controller.testItem(
       historyId,
@@ -330,7 +329,7 @@ describe('HistoryQueryController', () => {
       requestBody.itemSettings,
       requestBody.testingSettings
     ]);
-    assert.deepStrictEqual(result, mockContent);
+    assert.deepStrictEqual(result, mockResult);
   });
 
   it('should wrap errors when testing a history query item', async () => {

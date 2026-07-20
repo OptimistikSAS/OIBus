@@ -112,8 +112,7 @@
     "last-10-minutes": "Last 10 minutes",
     "last-hour": "Last hour",
     "last-day": "Last day",
-    "custom": "Custom",
-    "calculated-info": "Range will be calculated when action is performed:"
+    "custom": "Custom"
   },
   "duration-pipe": {
     "long": {
@@ -2375,6 +2374,16 @@
       "query-end": "Query data until",
       "transformer": "Transformer",
       "transformer-raw": "Raw (no transformer)",
+      "transformer-options": "Transformer options",
+      "edit-options": "Edit options",
+      "north": "North",
+      "transformer-run-first": "Run the test once to load the transformers that match this item's output.",
+      "transformer-none-compatible": "No configured transformer matches this item's output type.",
+      "hide-settings": "Hide settings",
+      "pipeline": {
+        "raw": "Raw result",
+        "output": "Transformer output"
+      },
       "status-message": {
         "initial": "Test results will appear here",
         "item-error": "Error when testing item",
