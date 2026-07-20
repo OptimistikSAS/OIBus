@@ -33,7 +33,7 @@ const buildGroup = (id: string, name: string, scanMode: ScanModeDTO): SouthItemG
   createdBy: { id: '', friendlyName: '' },
   updatedBy: { id: '', friendlyName: '' },
   standardSettings: { name, scanMode },
-  historySettings: { overlap: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: 'oldest' }
+  historySettings: { startTimeOffset: 0, endTimeOffset: 0, maxReadInterval: 3600, readDelay: 200, recoveryStrategy: 'oldest' }
 });
 
 const activatedRouteStub = {

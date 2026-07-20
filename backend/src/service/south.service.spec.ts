@@ -1260,16 +1260,18 @@ describe('South Service', () => {
     assert.deepStrictEqual(savedItems[0].group, newGroup);
   });
 
-  it('should create a new group using the overlap, maxReadInterval and readDelay of the first item where the group is noticed', async () => {
+  it('should create a new group using the startTimeOffset, endTimeOffset, maxReadInterval, readDelay and recoveryStrategy of the first item where the group is noticed', async () => {
     const newGroup: SouthItemGroupEntity = {
       id: 'newGroupId',
       name: 'New Import Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: 10,
+      startTimeOffset: 10,
+      endTimeOffset: 20,
       maxReadInterval: 3600,
       items: [],
       readDelay: 200,
+      recoveryStrategy: 'oldest',
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1285,18 +1287,22 @@ describe('South Service', () => {
       ...testData.south.itemCommand,
       groupName: 'New Import Group',
       groupId: null,
-      overlap: 10,
+      startTimeOffset: 10,
+      endTimeOffset: 20,
       maxReadInterval: 3600,
-      readDelay: 200
+      readDelay: 200,
+      recoveryStrategy: 'oldest'
     };
     const secondItemWithGroupName: SouthConnectorItemCommandDTO = {
       ...testData.south.itemCommand,
       id: 'anotherNewSouthItemId',
       groupName: 'New Import Group',
       groupId: null,
-      overlap: 999,
+      startTimeOffset: 999,
+      endTimeOffset: 999,
       maxReadInterval: 999,
-      readDelay: 999
+      readDelay: 999,
+      recoveryStrategy: 'newest'
     };
 
     await service.importItems(testData.south.list[0].id, [firstItemWithGroupName, secondItemWithGroupName], 'userTest');
@@ -1306,9 +1312,11 @@ describe('South Service', () => {
       name: 'New Import Group',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: 10,
+      startTimeOffset: 10,
+      endTimeOffset: 20,
       maxReadInterval: 3600,
-      readDelay: 200
+      readDelay: 200,
+      recoveryStrategy: 'oldest'
     });
   });
 
@@ -1318,10 +1326,12 @@ describe('South Service', () => {
       name: 'Group1',
       southId: testData.south.list[0].id,
       scanMode: testData.scanMode.list[0],
-      overlap: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
       maxReadInterval: null,
       items: [],
       readDelay: 0,
+      recoveryStrategy: null,
       createdBy: '',
       updatedBy: '',
       createdAt: '',
@@ -1641,7 +1651,7 @@ describe('South Service', () => {
       assert.strictEqual(southItemGroupRepository.create.mock.calls.length, 1);
     });
 
-    it('should create a group with null overlap', () => {
+    it('should create a group with null start/end time offset', () => {
       const command: SouthItemGroupCommandDTO = {
         id: null,
         standardSettings: {
@@ -2250,7 +2260,7 @@ describe('South Service', () => {
         assert.strictEqual(dto.historySettings.startTimeOffset, 10);
       });
 
-      it('should convert SouthItemGroupEntity with null overlap to DTO', () => {
+      it('should convert SouthItemGroupEntity with null start/end time offset to DTO', () => {
         const entity: SouthItemGroupEntity = {
           id: 'group2',
           name: 'Test Group 2',

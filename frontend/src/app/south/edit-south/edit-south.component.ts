@@ -524,11 +524,17 @@ export class EditSouthComponent implements CanComponentDeactivate {
               groupName: null,
               syncWithGroup: false,
               scanModeId: item.scanModeId ?? groupScanModeId ?? null,
-              overlap: applyHistorySettings ? (item.overlap ?? group.historySettings.overlap) : item.overlap,
+              startTimeOffset: applyHistorySettings
+                ? (item.startTimeOffset ?? group.historySettings.startTimeOffset)
+                : item.startTimeOffset,
+              endTimeOffset: applyHistorySettings ? (item.endTimeOffset ?? group.historySettings.endTimeOffset) : item.endTimeOffset,
               maxReadInterval: applyHistorySettings
                 ? (item.maxReadInterval ?? group.historySettings.maxReadInterval)
                 : item.maxReadInterval,
-              readDelay: applyHistorySettings ? (item.readDelay ?? group.historySettings.readDelay) : item.readDelay
+              readDelay: applyHistorySettings ? (item.readDelay ?? group.historySettings.readDelay) : item.readDelay,
+              recoveryStrategy: applyHistorySettings
+                ? (item.recoveryStrategy ?? group.historySettings.recoveryStrategy)
+                : item.recoveryStrategy
             };
           });
           this.resetPage();
