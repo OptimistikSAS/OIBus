@@ -171,6 +171,27 @@ export default class SouthConnectorRepository {
         );
         const insertGroup = this.database.prepare(`INSERT INTO ${GROUP_ITEMS_TABLE} (group_id, item_id) VALUES (?, ?);`);
         const deleteGroups = this.database.prepare(`DELETE FROM ${GROUP_ITEMS_TABLE} WHERE item_id = ?;`);
+        const existingItemsById = new Map(
+          this.database
+            .prepare<
+              [string],
+              {
+                id: string;
+                name: string;
+                enabled: number;
+                scan_mode_id: string | null;
+                settings: string;
+                sync_with_group: number;
+                max_read_interval: number | null;
+                read_delay: number | null;
+                overlap: number | null;
+              }
+            >(
+              `SELECT id, name, enabled, scan_mode_id, settings, sync_with_group, max_read_interval, read_delay, overlap FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`
+            )
+            .all(south.id)
+            .map(row => [row.id, row])
+        );
 
         for (const item of south.items) {
           if (!item.id) {
@@ -190,18 +211,31 @@ export default class SouthConnectorRepository {
               item.updatedBy
             );
           } else {
-            update.run(
-              item.name,
-              +item.enabled,
-              item.scanMode?.id ?? null,
-              JSON.stringify(item.settings),
-              +item.syncWithGroup,
-              item.maxReadInterval ?? null,
-              item.readDelay ?? null,
-              item.overlap ?? null,
-              item.updatedBy,
-              item.id
-            );
+            const existing = existingItemsById.get(item.id);
+            const hasChanged =
+              !existing ||
+              existing.name !== item.name ||
+              existing.enabled !== +item.enabled ||
+              existing.scan_mode_id !== (item.scanMode?.id ?? null) ||
+              existing.settings !== JSON.stringify(item.settings) ||
+              existing.sync_with_group !== +item.syncWithGroup ||
+              existing.max_read_interval !== (item.maxReadInterval ?? null) ||
+              existing.read_delay !== (item.readDelay ?? null) ||
+              existing.overlap !== (item.overlap ?? null);
+            if (hasChanged) {
+              update.run(
+                item.name,
+                +item.enabled,
+                item.scanMode?.id ?? null,
+                JSON.stringify(item.settings),
+                +item.syncWithGroup,
+                item.maxReadInterval ?? null,
+                item.readDelay ?? null,
+                item.overlap ?? null,
+                item.updatedBy,
+                item.id
+              );
+            }
           }
           // Update groups
           deleteGroups.run(item.id);

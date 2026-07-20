@@ -177,6 +177,15 @@ export default class HistoryQueryRepository {
         const update = this.database.prepare(
           `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ?, updated_by = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?;`
         );
+        const existingItemsById = new Map(
+          this.database
+            .prepare<[string], { id: string; name: string; enabled: number; settings: string }>(
+              `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`
+            )
+            .all(history.id)
+            .map(row => [row.id, row])
+        );
+
         for (const item of history.items) {
           if (!item.id || item.id.startsWith('temp_')) {
             const randomId = generateRandomId(6);
@@ -191,7 +200,15 @@ export default class HistoryQueryRepository {
             item.id = randomId;
             insert.run(item.id, item.name, +item.enabled, history.id, JSON.stringify(item.settings), item.createdBy, item.updatedBy);
           } else {
-            update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
+            const existing = existingItemsById.get(item.id);
+            const hasChanged =
+              !existing ||
+              existing.name !== item.name ||
+              existing.enabled !== +item.enabled ||
+              existing.settings !== JSON.stringify(item.settings);
+            if (hasChanged) {
+              update.run(item.name, +item.enabled, JSON.stringify(item.settings), item.updatedBy, item.id);
+            }
           }
         }
       } else {

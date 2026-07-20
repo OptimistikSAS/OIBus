@@ -698,4 +698,73 @@ describe('SouthConnectorRepository', () => {
     assert.strictEqual(savedItem.readDelay, null);
     assert.strictEqual(savedItem.overlap, null);
   });
+
+  it('should not bump updated_at when saving a south connector with an item that has not changed', () => {
+    const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    newSouthConnector.id = '';
+    newSouthConnector.name = 'unchanged item connector';
+    newSouthConnector.items = [
+      {
+        id: '',
+        name: 'stable item',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveSouth(newSouthConnector);
+    const itemId = newSouthConnector.items[0].id;
+
+    database.prepare(`UPDATE south_items SET updated_at = '2000-01-01T00:00:00Z' WHERE id = ?;`).run(itemId);
+
+    const resavedSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(newSouthConnector));
+    repository.saveSouth(resavedSouthConnector);
+
+    const row = database.prepare(`SELECT updated_at FROM south_items WHERE id = ?;`).get(itemId) as { updated_at: string };
+    assert.strictEqual(row.updated_at, '2000-01-01T00:00:00Z');
+  });
+
+  it('should bump updated_at when saving a south connector with an item that has changed', () => {
+    const newSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(testData.south.list[0]));
+    newSouthConnector.id = '';
+    newSouthConnector.name = 'changed item connector';
+    newSouthConnector.items = [
+      {
+        id: '',
+        name: 'item to rename',
+        enabled: true,
+        scanMode: testData.scanMode.list[0],
+        settings: {} as SouthItemSettings,
+        group: null,
+        syncWithGroup: false,
+        maxReadInterval: null,
+        readDelay: null,
+        overlap: null,
+        createdBy: '',
+        updatedBy: '',
+        createdAt: '',
+        updatedAt: ''
+      }
+    ];
+    repository.saveSouth(newSouthConnector);
+    const itemId = newSouthConnector.items[0].id;
+
+    database.prepare(`UPDATE south_items SET updated_at = '2000-01-01T00:00:00Z' WHERE id = ?;`).run(itemId);
+
+    const changedSouthConnector: SouthConnectorEntity<SouthSettings, SouthItemSettings> = JSON.parse(JSON.stringify(newSouthConnector));
+    changedSouthConnector.items[0].name = 'renamed item';
+    repository.saveSouth(changedSouthConnector);
+
+    const row = database.prepare(`SELECT updated_at FROM south_items WHERE id = ?;`).get(itemId) as { updated_at: string };
+    assert.notStrictEqual(row.updated_at, '2000-01-01T00:00:00Z');
+  });
 });
