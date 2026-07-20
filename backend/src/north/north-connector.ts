@@ -307,7 +307,10 @@ export default abstract class NorthConnector<T extends NorthSettings> {
    *
    * Guards: skip entirely if a previous `run()` is still in flight
    * (`runProgress$`) or the connector is shutting down. The deferred is
-   * cleared at every exit path so `stop()` can be cleanly awaited.
+   * cleared at every exit path — including on an unexpected error outside
+   * `handleContentWrapper`'s own try/catch (e.g. a cache read failure) — so
+   * `stop()` can be cleanly awaited and this connector is never left
+   * permanently locked out of future runs.
    *
    * After the run, decides what to do next:
    *  - more tasks queued → emit `'run'` to keep draining.
@@ -322,17 +325,24 @@ export default abstract class NorthConnector<T extends NorthSettings> {
       return;
     }
     this.runProgress$ = new DeferredPromise();
-    await this.handleContentWrapper();
-    this.taskJobQueue.shift();
-    this.runProgress$!.resolve();
-    this.runProgress$ = null;
-    if (this.taskJobQueue.length > 0) {
-      this.taskRunnerEvent.emit('run', this.taskJobQueue[0]);
-    } else {
-      // If the task queue is empty, add one task if necessary, otherwise, it will be added by the cron
-      await this.triggerRunIfNecessary(
-        this.errorCount ? this.connector.caching.error.retryInterval : this.connector.caching.throttling.runMinDelay
-      );
+    try {
+      await this.handleContentWrapper();
+      this.taskJobQueue.shift();
+      this.runProgress$!.resolve();
+      this.runProgress$ = null;
+      if (this.taskJobQueue.length > 0) {
+        this.taskRunnerEvent.emit('run', this.taskJobQueue[0]);
+      } else {
+        // If the task queue is empty, add one task if necessary, otherwise, it will be added by the cron
+        await this.triggerRunIfNecessary(
+          this.errorCount ? this.connector.caching.error.retryInterval : this.connector.caching.throttling.runMinDelay
+        );
+      }
+    } catch (error: unknown) {
+      this.logger.error(`Unhandled error in North task runner: ${(error as Error).message}`);
+      this.taskJobQueue.shift();
+      this.runProgress$!.resolve();
+      this.runProgress$ = null;
     }
   }
 
