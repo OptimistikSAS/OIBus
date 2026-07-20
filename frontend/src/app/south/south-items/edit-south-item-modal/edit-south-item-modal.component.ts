@@ -362,6 +362,7 @@ class EditSouthItemModalComponent {
   }
 
   onSelectGroup(groupId: string | null) {
+    const wasUnassigned = this.previousGroupId === null;
     this.form!.controls.groupId.setValue(groupId);
     this.previousGroupId = groupId;
 
@@ -373,7 +374,7 @@ class EditSouthItemModalComponent {
       this.form!.controls.overlap.enable();
     } else {
       const selectedGroup = this.groups.find(g => g.id === groupId)!;
-      this.applySyncLogicWhenSelectingGroup(selectedGroup);
+      this.applySyncLogicWhenSelectingGroup(selectedGroup, wasUnassigned);
     }
   }
 
@@ -389,10 +390,11 @@ class EditSouthItemModalComponent {
         })
       )
       .subscribe((groupResult: SouthItemGroupDTO | SouthItemGroupCommandDTO) => {
+        const wasUnassigned = this.previousGroupId === null;
         this.groups.push(groupResult);
         this.form!.controls.groupId.setValue(groupResult.id);
         this.previousGroupId = groupResult.id;
-        this.applySyncLogicWhenSelectingGroup(groupResult);
+        this.applySyncLogicWhenSelectingGroup(groupResult, wasUnassigned);
       });
   }
 
@@ -417,9 +419,9 @@ class EditSouthItemModalComponent {
           this.groups.push(groupResult);
         }
         if (this.form!.controls.groupId.value === groupResult.id) {
-          // The currently-selected group was edited — re-apply sync logic so the item's
-          // inherited scan mode (and historian fields) reflect the group's new settings.
-          this.applySyncLogicWhenSelectingGroup(groupResult);
+          // The group itself was edited (not reselected) — reflect its new scan mode / historian
+          // values without touching the item's current sync-with-group setting.
+          this.applySyncLogicWhenSelectingGroup(groupResult, false);
         }
       });
   }
@@ -435,12 +437,12 @@ class EditSouthItemModalComponent {
   }
 
   /**
-   * When a group is selected, determine if we should sync with group or preserve user's values.
-   * If user has already entered values that differ from group values, preserve them and set sync to false.
-   * Otherwise, sync with group.
+   * Applies the group's scan mode to the form (the scan mode field is hidden and always mirrors
+   * the group's schedule while a group is assigned). Sync-with-group is only forced on when the
+   * item previously had no group at all; switching from one group to another keeps whatever
+   * sync-with-group setting the item already had.
    */
-  private applySyncLogicWhenSelectingGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO) {
-    // Set scan mode from the group (scan mode field is hidden when a group is selected)
+  private applySyncLogicWhenSelectingGroup(group: SouthItemGroupDTO | SouthItemGroupCommandDTO, wasUnassigned: boolean) {
     const groupScanMode = this.scanModes.find(
       s =>
         s.id ===
@@ -450,27 +452,10 @@ class EditSouthItemModalComponent {
       this.form!.controls.scanModeId.setValue(groupScanMode.id);
     }
 
-    const currentMaxReadInterval = this.form!.controls.maxReadInterval.value;
-    const currentReadDelay = this.form!.controls.readDelay.value;
-    const currentOverlap = this.form!.controls.overlap.value;
-
-    // Check if user has entered any non-null, non-default values
-    const hasCustomValues =
-      (currentMaxReadInterval !== null && currentMaxReadInterval !== group.historySettings.maxReadInterval) ||
-      (currentReadDelay !== null && currentReadDelay !== group.historySettings.readDelay) ||
-      (currentOverlap !== null && currentOverlap !== group.historySettings.overlap);
-
-    if (hasCustomValues) {
-      // User has custom values - preserve them and don't sync with group
-      this.form!.controls.syncWithGroup.setValue(false);
-      this.form!.controls.maxReadInterval.enable();
-      this.form!.controls.readDelay.enable();
-      this.form!.controls.overlap.enable();
-    } else {
-      // No custom values or they match group - sync with group
+    if (wasUnassigned) {
       this.form!.controls.syncWithGroup.setValue(true);
-      this.onSyncWithGroupChange();
     }
+    this.onSyncWithGroupChange();
   }
 
   onSyncWithGroupChange() {
