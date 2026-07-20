@@ -44,6 +44,7 @@ import { emptyPage } from '../../shared/test-utils';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { SelectGroupModalComponent } from '../south-items/select-group-modal/select-group-modal.component';
+import ManageGroupsModalComponent from '../south-items/manage-groups-modal/manage-groups-modal.component';
 import { ViewItemValueModalComponent } from '../south-items/view-item-value-modal/view-item-value-modal.component';
 
 const PAGE_SIZE = 20;
@@ -500,18 +501,29 @@ export class SouthDetailComponent {
   }): Observable<SouthItemGroupDTO | SouthItemGroupCommandDTO> {
     if (command.mode === 'create') {
       return this.southConnectorService.createGroup(this.southConnector!.id, command.group).pipe(
-        tap(() => {
+        switchMap(createdGroup =>
+          this.southConnectorService.findById(this.southConnector!.id).pipe(map(southConnector => ({ southConnector, createdGroup })))
+        ),
+        tap(({ southConnector }) => {
+          this.southConnector = southConnector;
+          this.filteredItems = this.filter();
+          this.changePage(this.displayedItems.number);
           this.notificationService.success('south.groups.created');
-        })
+        }),
+        map(({ createdGroup }) => createdGroup)
       );
     } else {
       return this.southConnectorService.updateGroup(this.southConnector!.id, command.group!.id!, command.group).pipe(
         switchMap(() => {
           return this.southConnectorService.findById(this.southConnector!.id);
         }),
-        switchMap(southConnector => {
+        tap(southConnector => {
           this.southConnector = southConnector;
-          return this.southConnectorService.getGroup(this.southConnector!.id, command.group!.id!);
+          this.filteredItems = this.filter();
+          this.changePage(this.displayedItems.number);
+        }),
+        switchMap(southConnector => {
+          return this.southConnectorService.getGroup(southConnector.id, command.group!.id!);
         }),
         tap(() => {
           this.notificationService.success('south.groups.updated');
@@ -528,20 +540,23 @@ export class SouthDetailComponent {
       })
       .pipe(
         switchMap(() => {
-          return this.southConnectorService.findById(this.southConnector!.id);
-        }),
-        switchMap(southConnector => {
-          this.southConnector = southConnector;
           return this.southConnectorService.deleteGroup(this.southConnector!.id, group.id!);
         }),
+        switchMap(() => {
+          return this.southConnectorService.findById(this.southConnector!.id);
+        }),
         tap({
-          next: () => {
+          next: southConnector => {
+            this.southConnector = southConnector;
+            this.filteredItems = this.filter();
+            this.changePage(this.displayedItems.number);
             this.notificationService.success('south.groups.deleted');
           },
           error: error => {
             this.notificationService.error('south.groups.delete-error', { error: error.message });
           }
-        })
+        }),
+        map(() => undefined)
       );
   }
 
@@ -769,6 +784,24 @@ export class SouthDetailComponent {
         this.changePage(this.displayedItems.number);
         this.notificationService.success('south.items.moved-to-group', { count: itemIds.length.toString() });
       });
+  }
+
+  manageGroups() {
+    const modalRef = this.modalService.open(ManageGroupsModalComponent, { size: 'lg', backdrop: 'static' });
+    const component: ManageGroupsModalComponent = modalRef.componentInstance;
+    component.prepare(
+      this.southConnector!.groups,
+      this.scanModes,
+      this.manifest!,
+      true,
+      groupId => this.southConnector!.items.filter(item => item.group?.id === groupId).length,
+      this.addOrEditGroup.bind(this),
+      this.deleteGroup.bind(this)
+    );
+    modalRef.result.subscribe(() => {
+      this.filteredItems = this.filter();
+      this.changePage(this.displayedItems.number);
+    });
   }
 
   getGroupName(item: SouthConnectorItemDTO): string {
