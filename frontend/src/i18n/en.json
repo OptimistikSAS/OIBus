@@ -2373,6 +2373,8 @@
       "cancel-button": "Cancel",
       "query-start": "Query data from",
       "query-end": "Query data until",
+      "transformer": "Transformer",
+      "transformer-raw": "Raw (no transformer)",
       "status-message": {
         "initial": "Test results will appear here",
         "item-error": "Error when testing item",

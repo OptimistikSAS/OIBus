@@ -1049,6 +1049,17 @@ export interface SouthConnectorItemTestingSettings {
         endTime: string;
       }
     | undefined;
+
+  /**
+   * Optional transformer to run the raw test result through before returning it.
+   * When omitted, the raw collected value is returned (default behavior).
+   * `transformerId` references a transformer in the global catalog; `options` are the
+   * per-binding options to apply.
+   */
+  transformer?: {
+    transformerId: string;
+    options: Record<string, unknown>;
+  };
 }
 
 /**
