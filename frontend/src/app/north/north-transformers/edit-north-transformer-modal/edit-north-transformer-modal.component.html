@@ -252,6 +252,14 @@
         </div>
       }
     </form>
+
+    @if (form.controls.transformer.value) {
+      <oib-north-transformer-test
+        [transformer]="form.controls.transformer.value"
+        [options]="form.controls.options.value"
+        [itemSource]="transformerTestSource"
+      />
+    }
   }
 </div>
 <div class="modal-footer">

@@ -1481,6 +1481,242 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"OIBusTimeValue": {
+				"description": "A time-value pair.",
+				"properties": {
+					"pointId": {
+						"type": "string",
+						"description": "The ID of the point.",
+						"example": "point1"
+					},
+					"timestamp": {
+						"$ref": "#/components/schemas/Instant",
+						"description": "The timestamp of the value.",
+						"example": "2023-01-01T00:00:00Z"
+					},
+					"data": {
+						"properties": {
+							"value": {
+								"anyOf": [
+									{
+										"type": "string"
+									},
+									{
+										"type": "number",
+										"format": "double"
+									}
+								],
+								"description": "The value of the point.",
+								"example": "100"
+							}
+						},
+						"additionalProperties": {
+							"anyOf": [
+								{
+									"type": "string"
+								},
+								{
+									"type": "number",
+									"format": "double"
+								}
+							]
+						},
+						"required": [
+							"value"
+						],
+						"type": "object",
+						"description": "The data associated with the point."
+					}
+				},
+				"required": [
+					"pointId",
+					"timestamp",
+					"data"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusTimeValueContent": {
+				"description": "Time-value content.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"time-values"
+						],
+						"nullable": false,
+						"description": "The type of content.",
+						"example": "time-values"
+					},
+					"content": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusTimeValue"
+						},
+						"type": "array",
+						"description": "The array of time-value pairs."
+					}
+				},
+				"required": [
+					"type",
+					"content"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusFileContent": {
+				"description": "Raw content.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"any"
+						],
+						"nullable": false,
+						"description": "The type of content.",
+						"example": "any"
+					},
+					"filePath": {
+						"type": "string",
+						"description": "The path to the file containing the content.",
+						"example": "/path/to/file.json"
+					},
+					"filename": {
+						"type": "string",
+						"description": "The logical filename to store in cache metadata (used as the output filename by north connectors).\nWhen omitted, north connectors fall back to path.basename(filePath).\n\nSouth connectors that preserve directory structure (e.g. folder-scanner with recursive=true)\nset this to the path relative to the source folder, e.g. \"subdir/file.json\"."
+					},
+					"content": {
+						"type": "string",
+						"description": "The content itself, if available."
+					}
+				},
+				"required": [
+					"type",
+					"filePath"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusAnyContent": {
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"any-content"
+						],
+						"nullable": false,
+						"description": "The type of content.",
+						"example": "any-content"
+					},
+					"content": {
+						"type": "string",
+						"description": "The content"
+					}
+				},
+				"required": [
+					"type",
+					"content"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusSetpoint": {
+				"description": "A setpoint.",
+				"properties": {
+					"reference": {
+						"type": "string",
+						"description": "The reference of the setpoint.",
+						"example": "setpoint1"
+					},
+					"value": {
+						"anyOf": [
+							{
+								"type": "string"
+							},
+							{
+								"type": "number",
+								"format": "double"
+							},
+							{
+								"type": "boolean"
+							}
+						],
+						"description": "The value of the setpoint.",
+						"example": 100
+					}
+				},
+				"required": [
+					"reference",
+					"value"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusSetpointContent": {
+				"description": "Setpoint content.",
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"setpoint"
+						],
+						"nullable": false,
+						"description": "The type of content.",
+						"example": "setpoint"
+					},
+					"content": {
+						"items": {
+							"$ref": "#/components/schemas/OIBusSetpoint"
+						},
+						"type": "array",
+						"description": "The array of setpoints."
+					}
+				},
+				"required": [
+					"type",
+					"content"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"OIBusContent": {
+				"anyOf": [
+					{
+						"$ref": "#/components/schemas/OIBusTimeValueContent"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusFileContent"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusAnyContent"
+					},
+					{
+						"$ref": "#/components/schemas/OIBusSetpointContent"
+					}
+				],
+				"description": "Type representing OIBus content."
+			},
+			"SouthConnectorItemTestResult": {
+				"description": "Result of testing a South/History item. `raw` is always the value collected by the connector;\n`transformed` is the output of running `raw` through the selected transformer with its options,\nor null when no transformer was requested. This lets the UI show the Raw → transformer → Output pipeline.",
+				"properties": {
+					"raw": {
+						"$ref": "#/components/schemas/OIBusContent"
+					},
+					"transformed": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/OIBusContent"
+							}
+						],
+						"nullable": true
+					}
+				},
+				"required": [
+					"raw",
+					"transformed"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"InputTemplate": {
 				"properties": {
 					"type": {
@@ -16423,242 +16659,6 @@
 						"$ref": "#/components/schemas/SouthSQLiteSettings"
 					}
 				]
-			},
-			"OIBusTimeValue": {
-				"description": "A time-value pair.",
-				"properties": {
-					"pointId": {
-						"type": "string",
-						"description": "The ID of the point.",
-						"example": "point1"
-					},
-					"timestamp": {
-						"$ref": "#/components/schemas/Instant",
-						"description": "The timestamp of the value.",
-						"example": "2023-01-01T00:00:00Z"
-					},
-					"data": {
-						"properties": {
-							"value": {
-								"anyOf": [
-									{
-										"type": "string"
-									},
-									{
-										"type": "number",
-										"format": "double"
-									}
-								],
-								"description": "The value of the point.",
-								"example": "100"
-							}
-						},
-						"additionalProperties": {
-							"anyOf": [
-								{
-									"type": "string"
-								},
-								{
-									"type": "number",
-									"format": "double"
-								}
-							]
-						},
-						"required": [
-							"value"
-						],
-						"type": "object",
-						"description": "The data associated with the point."
-					}
-				},
-				"required": [
-					"pointId",
-					"timestamp",
-					"data"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusTimeValueContent": {
-				"description": "Time-value content.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"time-values"
-						],
-						"nullable": false,
-						"description": "The type of content.",
-						"example": "time-values"
-					},
-					"content": {
-						"items": {
-							"$ref": "#/components/schemas/OIBusTimeValue"
-						},
-						"type": "array",
-						"description": "The array of time-value pairs."
-					}
-				},
-				"required": [
-					"type",
-					"content"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusFileContent": {
-				"description": "Raw content.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"any"
-						],
-						"nullable": false,
-						"description": "The type of content.",
-						"example": "any"
-					},
-					"filePath": {
-						"type": "string",
-						"description": "The path to the file containing the content.",
-						"example": "/path/to/file.json"
-					},
-					"filename": {
-						"type": "string",
-						"description": "The logical filename to store in cache metadata (used as the output filename by north connectors).\nWhen omitted, north connectors fall back to path.basename(filePath).\n\nSouth connectors that preserve directory structure (e.g. folder-scanner with recursive=true)\nset this to the path relative to the source folder, e.g. \"subdir/file.json\"."
-					},
-					"content": {
-						"type": "string",
-						"description": "The content itself, if available."
-					}
-				},
-				"required": [
-					"type",
-					"filePath"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusAnyContent": {
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"any-content"
-						],
-						"nullable": false,
-						"description": "The type of content.",
-						"example": "any-content"
-					},
-					"content": {
-						"type": "string",
-						"description": "The content"
-					}
-				},
-				"required": [
-					"type",
-					"content"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusSetpoint": {
-				"description": "A setpoint.",
-				"properties": {
-					"reference": {
-						"type": "string",
-						"description": "The reference of the setpoint.",
-						"example": "setpoint1"
-					},
-					"value": {
-						"anyOf": [
-							{
-								"type": "string"
-							},
-							{
-								"type": "number",
-								"format": "double"
-							},
-							{
-								"type": "boolean"
-							}
-						],
-						"description": "The value of the setpoint.",
-						"example": 100
-					}
-				},
-				"required": [
-					"reference",
-					"value"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusSetpointContent": {
-				"description": "Setpoint content.",
-				"properties": {
-					"type": {
-						"type": "string",
-						"enum": [
-							"setpoint"
-						],
-						"nullable": false,
-						"description": "The type of content.",
-						"example": "setpoint"
-					},
-					"content": {
-						"items": {
-							"$ref": "#/components/schemas/OIBusSetpoint"
-						},
-						"type": "array",
-						"description": "The array of setpoints."
-					}
-				},
-				"required": [
-					"type",
-					"content"
-				],
-				"type": "object",
-				"additionalProperties": false
-			},
-			"OIBusContent": {
-				"anyOf": [
-					{
-						"$ref": "#/components/schemas/OIBusTimeValueContent"
-					},
-					{
-						"$ref": "#/components/schemas/OIBusFileContent"
-					},
-					{
-						"$ref": "#/components/schemas/OIBusAnyContent"
-					},
-					{
-						"$ref": "#/components/schemas/OIBusSetpointContent"
-					}
-				],
-				"description": "Type representing OIBus content."
-			},
-			"SouthConnectorItemTestResult": {
-				"description": "Result of testing a South/History item. `raw` is always the value collected by the connector;\n`transformed` is the output of running `raw` through the selected transformer with its options,\nor null when no transformer was requested. This lets the UI show the Raw → transformer → Output pipeline.",
-				"properties": {
-					"raw": {
-						"$ref": "#/components/schemas/OIBusContent"
-					},
-					"transformed": {
-						"allOf": [
-							{
-								"$ref": "#/components/schemas/OIBusContent"
-							}
-						],
-						"nullable": true
-					}
-				},
-				"required": [
-					"raw",
-					"transformed"
-				],
-				"type": "object",
-				"additionalProperties": false
 			},
 			"SouthItemSettings": {
 				"anyOf": [
@@ -34204,6 +34204,49 @@
 									"transformer"
 								],
 								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/transformers/{transformerId}/test": {
+			"post": {
+				"operationId": "TestTransformer",
+				"responses": {
+					"200": {
+						"description": "The wrapped input and transformed output",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SouthConnectorItemTestResult"
+								}
+							}
+						}
+					}
+				},
+				"description": "Runs a configured transformer (standard or custom, by id) with the given options against the\nprovided input data, returning both the wrapped input and the transformed output. Used to test a\nnorth/history transformer with its configured options.",
+				"summary": "Test a transformer with input data",
+				"tags": [
+					"Transformers"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "transformerId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/TransformerTestRequest"
 							}
 						}
 					}

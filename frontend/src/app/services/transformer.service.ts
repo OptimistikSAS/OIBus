@@ -9,6 +9,7 @@ import {
   TransformerTestRequest,
   TransformerTestResponse
 } from '../../../../backend/shared/model/transformer.model';
+import { SouthConnectorItemTestResult } from '../../../../backend/shared/model/south-connector.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on Transformers
@@ -70,6 +71,15 @@ export class TransformerService {
    */
   test(command: CustomTransformerCommandDTO, testRequest: TransformerTestRequest): Observable<TransformerTestResponse> {
     return this.http.post<TransformerTestResponse>(`/api/transformers/test`, { transformer: command, testRequest });
+  }
+
+  /**
+   * Test a configured transformer (standard or custom, by id) with its options against pasted input.
+   * @param transformerId - the catalog id of the transformer to run
+   * @param testRequest - the input data and the transformer options
+   */
+  testTransformer(transformerId: string, testRequest: TransformerTestRequest): Observable<SouthConnectorItemTestResult> {
+    return this.http.post<SouthConnectorItemTestResult>(`/api/transformers/${transformerId}/test`, testRequest);
   }
 
   /**

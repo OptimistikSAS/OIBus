@@ -34,6 +34,7 @@ import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 import { CacheMetadata, CacheMetadataSource, OIBusContent, OIBusSetpoint, OIBusTimeValue } from '../../shared/model/engine.model';
+import { SouthConnectorItemTestResult } from '../../shared/model/south-connector.model';
 import { generateRandomId } from './utils';
 import JSONToCSVTransformer from '../transformers/any/json-to-csv/json-to-csv-transformer';
 import JSONToOIAnalyticsTransformer from '../transformers/any/json-to-oianalytics/json-to-oianalytics-transformer';
@@ -79,6 +80,39 @@ export const transformerManifestList: Array<TransformerManifest> = [
   setpointToMqttManifest,
   setpointToOpcuaManifest
 ];
+
+/**
+ * Wrap a copy-pasted input string into the OIBusContent shape matching a transformer input type.
+ * `time-values` / `setpoint` inputs are JSON arrays; everything else is treated as raw file content.
+ */
+const buildContentFromInput = (inputType: string, inputData: string): OIBusContent => {
+  switch (inputType) {
+    case 'time-values':
+      return { type: 'time-values', content: JSON.parse(inputData) };
+    case 'setpoint':
+      return { type: 'setpoint', content: JSON.parse(inputData) };
+    default:
+      return { type: 'any-content', content: inputData };
+  }
+};
+
+/**
+ * Wrap a transformer's raw output string into an OIBusContent using the content type it produced,
+ * so the UI renders time-values as a table, file/CSV output as a table, and anything else as text.
+ */
+export const toTransformedContent = (output: string, contentType: string | undefined, contentFile: string | undefined): OIBusContent => {
+  if (contentType === 'time-values') {
+    try {
+      return { type: 'time-values', content: JSON.parse(output) };
+    } catch {
+      return { type: 'any-content', content: output };
+    }
+  }
+  if (contentType === 'any') {
+    return { type: 'any', filePath: contentFile || 'output', content: output };
+  }
+  return { type: 'any-content', content: output };
+};
 
 export default class TransformerService {
   constructor(
@@ -194,6 +228,38 @@ export default class TransformerService {
       'test-input.json'
     );
     return { ...result, output: result.output.toString('utf-8') };
+  }
+
+  /**
+   * Run an existing transformer (custom or standard, resolved by catalog id) with the given options
+   * over an OIBusContent payload, returning the transformed output wrapped as OIBusContent so the UI
+   * can render it (time-values → table, file/CSV → table, otherwise raw text). Shared by the
+   * south/history item test (#4773) and the transformer test-with-input feature (#4774).
+   */
+  async runTransformer(transformerId: string, options: Record<string, unknown>, content: OIBusContent): Promise<OIBusContent> {
+    const transformerToRun: NorthTransformerWithOptions = {
+      id: 'test',
+      transformer: this.findById(transformerId),
+      options,
+      // `source` drives north-side routing only; it is unused when the transformer is run directly.
+      source: { type: 'oianalytics-setpoint' }
+    };
+    const transformer = createTransformer(transformerToRun, null, this.engine.logger);
+    const results = await runTransformerOnContent(transformer, content, { source: 'test' });
+    const output = Buffer.concat(results.map(result => result.output)).toString('utf-8');
+    const metadata = results[0]?.metadata;
+    return toTransformedContent(output, metadata?.contentType, metadata?.contentFile);
+  }
+
+  /**
+   * Test a configured transformer with copy-pasted input. The pasted string is wrapped into the
+   * OIBusContent shape matching the transformer's input type, then run through {@link runTransformer}.
+   * Returns both the wrapped input (`raw`) and the produced output (`transformed`) so the UI can show
+   * the same Raw → transformer → output pipeline as the south/history item test.
+   */
+  async testTransformer(transformerId: string, options: Record<string, unknown>, inputData: string): Promise<SouthConnectorItemTestResult> {
+    const raw = buildContentFromInput(this.findById(transformerId).inputType, inputData);
+    return { raw, transformed: await this.runTransformer(transformerId, options, raw) };
   }
 
   generateTemplate(inputType: InputType): InputTemplate {

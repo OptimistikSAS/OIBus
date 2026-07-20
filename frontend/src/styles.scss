@@ -28,6 +28,41 @@ html {
   padding: 1rem;
 }
 
+// Shared by south-item-test and north-transformer-test: wraps a "testing" section in its own
+// tinted, rounded card so it reads as a distinct zone within the surrounding modal instead of
+// more configuration fields, and gives collapsed-settings chips / recap boxes a consistent look.
+.testing-item-panel {
+  background-color: $veryLightGrey;
+  border-radius: 1rem;
+  margin-top: 1.5rem;
+  overflow: hidden;
+}
+
+.testing-item-body {
+  padding: 0.75rem 0.75rem 1rem;
+}
+
+.settings-summary-chip {
+  color: $darkGrey;
+  text-decoration: none;
+
+  &:hover {
+    color: var(--bs-body-color);
+  }
+}
+
+.pipeline-transformer {
+  background-color: var(--bs-white);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.pipeline-options {
+  margin-top: 0.25rem;
+}
+
 .oib-modal-container-list:hover {
   .oib-modal-content-list:hover {
     background-color: $orange;
