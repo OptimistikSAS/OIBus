@@ -9,6 +9,7 @@ import JoiValidator from '../web-server/controllers/validators/joi.validator';
 import type {
   createTransformer as createTransformerType,
   getStandardManifest as getStandardManifestType,
+  runTransformerOnContent as runTransformerOnContentType,
   toTransformerDTO as toTransformerDTOType
 } from './transformer.service';
 import TransformerRepositoryMock from '../tests/__mocks__/repository/config/transformer-repository.mock';
@@ -59,6 +60,7 @@ let mockCustomTransformer: Record<string, unknown>;
 let TransformerService: new (...args: Array<unknown>) => InstanceType<typeof TransformerServiceType>;
 let createTransformer: typeof createTransformerType;
 let getStandardManifest: typeof getStandardManifestType;
+let runTransformerOnContent: typeof runTransformerOnContentType;
 let toTransformerDTO: typeof toTransformerDTOType;
 
 before(() => {
@@ -93,11 +95,13 @@ before(() => {
     default: new (...args: Array<unknown>) => InstanceType<typeof TransformerServiceType>;
     createTransformer: typeof createTransformerType;
     getStandardManifest: typeof getStandardManifestType;
+    runTransformerOnContent: typeof runTransformerOnContentType;
     toTransformerDTO: typeof toTransformerDTOType;
   }>(nodeRequire, './transformer.service');
   TransformerService = mod.default;
   createTransformer = mod.createTransformer;
   getStandardManifest = mod.getStandardManifest;
+  runTransformerOnContent = mod.runTransformerOnContent;
   toTransformerDTO = mod.toTransformerDTO;
 });
 
@@ -535,6 +539,73 @@ describe('Transformer Service', () => {
     );
     // The mock class provides a transform method
     assert.ok(result !== null && result !== undefined && 'transform' in result);
+  });
+
+  describe('runTransformerOnContent', () => {
+    const metadata = { contentFile: 'f', contentType: 'any', numberOfElement: 1, contentSize: 0, createdAt: '' };
+    // Loosely-typed wrapper to avoid verbose OIBusContent casts in each call.
+    const run = () =>
+      runTransformerOnContent as unknown as (
+        transformer: unknown,
+        data: unknown,
+        source: unknown,
+        maxElements?: number
+      ) => Promise<Array<{ output: Buffer; metadata: unknown }>>;
+    const buildTransformer = () => ({
+      transformInMemory: mock.fn(async () => ({ output: Buffer.from('imem'), metadata })),
+      transform: mock.fn(async () => ({ output: Buffer.from('stream'), metadata }))
+    });
+
+    it('runs a single batch for time-values without chunking', async () => {
+      const t = buildTransformer();
+      const content = [{ pointId: 'p1' }, { pointId: 'p2' }];
+      const results = await run()(t, { type: 'time-values', content }, { source: 'test' });
+      assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
+      assert.deepStrictEqual(t.transformInMemory.mock.calls[0].arguments[0], content);
+      assert.strictEqual(results.length, 1);
+    });
+
+    it('chunks time-values when maxElements is exceeded', async () => {
+      const t = buildTransformer();
+      const content = [{ pointId: 'p1' }, { pointId: 'p2' }, { pointId: 'p3' }];
+      const results = await run()(t, { type: 'time-values', content }, { source: 'test' }, 2);
+      assert.strictEqual(t.transformInMemory.mock.calls.length, 2);
+      assert.deepStrictEqual(t.transformInMemory.mock.calls[0].arguments[0], content.slice(0, 2));
+      assert.deepStrictEqual(t.transformInMemory.mock.calls[1].arguments[0], content.slice(2));
+      assert.strictEqual(results.length, 2);
+    });
+
+    it('runs setpoint payloads in memory', async () => {
+      const t = buildTransformer();
+      await run()(t, { type: 'setpoint', content: [] }, { source: 'test' });
+      assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
+    });
+
+    it('runs any-content payloads in memory', async () => {
+      const t = buildTransformer();
+      await run()(t, { type: 'any-content', content: 'raw' }, { source: 'test' });
+      assert.strictEqual(t.transformInMemory.mock.calls.length, 1);
+      assert.strictEqual(t.transformInMemory.mock.calls[0].arguments[0], 'raw');
+    });
+
+    it('streams any file content through transform', async () => {
+      const fsModule = nodeRequire('node:fs') as Record<string, unknown>;
+      const orig = fsModule['createReadStream'];
+      const createReadStreamMock = mock.fn(() => 'stream');
+      fsModule['createReadStream'] = createReadStreamMock;
+      try {
+        const t = buildTransformer();
+        const results = await run()(t, { type: 'any', filePath: '/tmp/data.csv' }, { source: 'test' });
+        assert.strictEqual(createReadStreamMock.mock.calls.length, 1);
+        assert.strictEqual(createReadStreamMock.mock.calls[0].arguments[0], '/tmp/data.csv');
+        assert.strictEqual(t.transform.mock.calls.length, 1);
+        assert.strictEqual(t.transform.mock.calls[0].arguments[0], 'stream');
+        assert.ok((t.transform.mock.calls[0].arguments[2] as string).includes('random-id'));
+        assert.strictEqual(results.length, 1);
+      } finally {
+        fsModule['createReadStream'] = orig;
+      }
+    });
   });
 
   describe('test a custom transformer', () => {

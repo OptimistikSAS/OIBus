@@ -67,6 +67,28 @@
           <val-errors controlName="dateRange" />
         </div>
       }
+
+      <!-- optional transformer selection -->
+      @if (availableTransformers.length > 0) {
+        <div class="form-group mx-2" id="transformer">
+          <label class="form-label" for="transformer-select" translate="south.test-item.transformer"></label>
+          <select id="transformer-select" class="form-select" formControlName="transformer">
+            <option [ngValue]="null" translate="south.test-item.transformer-raw"></option>
+            @for (option of availableTransformers; track $index) {
+              <option [ngValue]="option">
+                @if (option.prefix) {
+                  {{ option.prefix }} &rarr;
+                }
+                @if (option.transformer.type === 'standard') {
+                  {{ 'configuration.oibus.manifest.transformers.standard.' + option.transformer.functionName | translate }}
+                } @else {
+                  {{ option.transformer.name }}
+                }
+              </option>
+            }
+          </select>
+        </div>
+      }
     </form>
   }
 </div>

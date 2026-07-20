@@ -16,6 +16,7 @@ import OIAnalyticsMessageServiceMock from '../tests/__mocks__/service/oia/oianal
 import DataStreamEngineMock from '../tests/__mocks__/data-stream-engine.mock';
 import SouthConnectorMock from '../tests/__mocks__/south-connector.mock';
 import SouthItemGroupRepositoryMock from '../tests/__mocks__/repository/config/south-item-group-repository.mock';
+import TransformerServiceMock from '../tests/__mocks__/service/transformer-service.mock';
 import PinoLogger from '../tests/__mocks__/service/logger/logger.mock';
 import type SouthServiceType from './south.service';
 import type {
@@ -36,12 +37,15 @@ import { SouthItemGroupCommandDTO, SouthConnectorItemCommandDTO } from '../../sh
 import { SouthItemSettings, SouthSettings } from '../../shared/model/south-settings.model';
 import { NotFoundError, OIBusValidationError } from '../model/types';
 import { toScanModeDTO } from './scan-mode.service';
+import { OIBusContent } from '../../shared/model/engine.model';
 
 const nodeRequire = createRequire(import.meta.url);
 
 let mockUtils: Record<string, ReturnType<typeof mock.fn>>;
 let mockBuildSouth: ReturnType<typeof mock.fn>;
 let mockSouthConnectorFactory: Record<string, unknown>;
+let mockCreateTransformer: ReturnType<typeof mock.fn>;
+let mockRunTransformerOnContent: ReturnType<typeof mock.fn>;
 
 let SouthService: new (...args: Array<unknown>) => InstanceType<typeof SouthServiceType>;
 let southManifestList: typeof southManifestListType;
@@ -60,12 +64,18 @@ before(() => {
 
   mockBuildSouth = mock.fn();
   mockSouthConnectorFactory = { __esModule: true, buildSouth: mockBuildSouth };
+  mockCreateTransformer = mock.fn(() => ({}));
+  mockRunTransformerOnContent = mock.fn(async () => [{ output: Buffer.from('transformed-output'), metadata: {} }]);
 
   const encryptionServiceMock = new EncryptionServiceMock('', '');
 
   mockModule(nodeRequire, './utils', mockUtils);
   mockModule(nodeRequire, '../service/utils', mockUtils);
   mockModule(nodeRequire, '../south/south-connector-factory', mockSouthConnectorFactory);
+  mockModule(nodeRequire, './transformer.service', {
+    createTransformer: mockCreateTransformer,
+    runTransformerOnContent: mockRunTransformerOnContent
+  });
   mockModule(nodeRequire, './encryption.service', { encryptionService: encryptionServiceMock });
   mockModule(nodeRequire, '../web-server/controllers/validators/joi.validator', {
     default: class {
@@ -107,6 +117,7 @@ describe('South Service', () => {
   let oIAnalyticsMessageService: OIAnalyticsMessageServiceMock;
   let engine: DataStreamEngineMock;
   let southItemGroupRepository: SouthItemGroupRepositoryMock;
+  let transformerService: TransformerServiceMock;
   let mockedSouth1: SouthConnectorMock;
   let logger: PinoLogger;
   let validator: { validateSettings: ReturnType<typeof mock.fn>; validate: ReturnType<typeof mock.fn> };
@@ -123,6 +134,7 @@ describe('South Service', () => {
     oIAnalyticsMessageService = new OIAnalyticsMessageServiceMock();
     engine = new DataStreamEngineMock(logger);
     southItemGroupRepository = new SouthItemGroupRepositoryMock();
+    transformerService = new TransformerServiceMock();
 
     validator = {
       validateSettings: mock.fn(async () => undefined),
@@ -132,6 +144,8 @@ describe('South Service', () => {
     mockedSouth1 = new SouthConnectorMock(testData.south.list[0]);
     mockBuildSouth.mock.resetCalls();
     mockBuildSouth.mock.mockImplementation(() => mockedSouth1);
+    mockCreateTransformer.mock.resetCalls();
+    mockRunTransformerOnContent.mock.resetCalls();
     mockUtils.stringToBoolean.mock.resetCalls();
     mockUtils.stringToBoolean.mock.mockImplementation(() => true);
     mockUtils.checkScanMode.mock.resetCalls();
@@ -153,7 +167,8 @@ describe('South Service', () => {
       certificateRepository,
       oIAnalyticsMessageService,
       engine,
-      southItemGroupRepository
+      southItemGroupRepository,
+      transformerService
     );
   });
 
@@ -459,6 +474,25 @@ describe('South Service', () => {
 
     assert.strictEqual(mockBuildSouth.mock.calls.length, 1);
     assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
+  });
+
+  it('should test item and apply transformer when one is provided', async () => {
+    mockedSouth1.testItem.mock.mockImplementationOnce(async () => ({ type: 'any-content', content: 'raw' }) as OIBusContent);
+
+    const result = await service.testItem(
+      testData.south.list[0].id,
+      testData.south.command.type,
+      testData.south.itemCommand.name,
+      testData.south.command.settings,
+      testData.south.itemCommand.settings,
+      { history: undefined, transformer: { transformerId: 'transformer-id', options: { foo: 'bar' } } }
+    );
+
+    assert.strictEqual(mockedSouth1.testItem.mock.calls.length, 1);
+    assert.deepStrictEqual(transformerService.findById.mock.calls[0].arguments, ['transformer-id']);
+    assert.strictEqual(mockCreateTransformer.mock.calls.length, 1);
+    assert.strictEqual(mockRunTransformerOnContent.mock.calls.length, 1);
+    assert.deepStrictEqual(result, { type: 'any-content', content: 'transformed-output' });
   });
 
   it('should list items', () => {
