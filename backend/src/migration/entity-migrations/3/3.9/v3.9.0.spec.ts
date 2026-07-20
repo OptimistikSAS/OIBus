@@ -664,4 +664,56 @@ describe('Entity migration v3.9.0', () => {
       assert.strictEqual(settings.domain, null);
     });
   });
+
+  describe('dropping the overlap column when it is still referenced by other tables', () => {
+    it('does not fail with a FOREIGN KEY constraint error when group_items rows still reference south_item_groups/south_items, inside a real transaction', async () => {
+      // Reproduces the production migration runner, which always wraps each migration file's up() in a
+      // knex.transaction(...). Inside that transaction, knex's schema builder cannot toggle
+      // `PRAGMA foreign_keys` around a dropColumn()-driven table rebuild, so DROP TABLE south_items/
+      // south_item_groups would fail while group_items still holds rows referencing them.
+      await insertScanMode(db);
+      await insertSouthConnector(db, 'south-1', 'mssql');
+      await db('south_item_groups').insert({
+        id: 'group-1',
+        name: 'Group 1',
+        south_id: 'south-1',
+        scan_mode_id: 'scan-mode-1',
+        overlap: 100,
+        max_read_interval: 3600,
+        read_delay: 200,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+      await db('south_items').insert({
+        id: 'item-1',
+        name: 'Item 1',
+        enabled: 1,
+        connector_id: 'south-1',
+        scan_mode_id: 'scan-mode-1',
+        settings: '{}',
+        sync_with_group: 1,
+        overlap: 50,
+        max_read_interval: 3600,
+        read_delay: 200,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+      await db('group_items').insert({ group_id: 'group-1', item_id: 'item-1' });
+
+      await db.transaction(async trx => {
+        await up(trx);
+      });
+
+      const groupItemsRows = await db('group_items').select('*');
+      assert.deepStrictEqual(groupItemsRows, [{ group_id: 'group-1', item_id: 'item-1' }], 'group_items row is preserved');
+      const item = await db('south_items').where('id', 'item-1').first();
+      assert.strictEqual(item.start_time_offset, -50, 'item start_time_offset derived from old overlap');
+      const group = await db('south_item_groups').where('id', 'group-1').first();
+      assert.strictEqual(group.start_time_offset, -100, 'group start_time_offset derived from old overlap');
+    });
+  });
 });
