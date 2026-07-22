@@ -19,10 +19,10 @@ Run them from the `backend/` directory:
 # IoT protocol servers only (OPC UA, Modbus, MQTT)
 npm run docker:iot
 
-# IoT servers + simulator (recommended for connector development)
+# IoT servers + database servers + simulator (recommended for connector development)
 npm run docker:simulator
 
-# PostgreSQL only
+# PostgreSQL + InfluxDB
 npm run docker:database
 
 # FTP / SFTP servers only
@@ -41,7 +41,7 @@ npm run docker:down
 You can also invoke Docker Compose directly if you need a custom combination of profiles:
 
 ```bash
-docker compose --profile iot --profile simulator up -d
+docker compose --profile iot --profile database --profile simulator up -d
 ```
 
 Services are grouped into **Docker Compose profiles**:
@@ -50,14 +50,14 @@ Services are grouped into **Docker Compose profiles**:
 | ----------- | ---------------------------------------------- |
 | `iot`       | `opcua-server`, `modbus-server`, `mqtt-broker` |
 | `simulator` | `simulator`                                    |
-| `database`  | `postgres`                                     |
+| `database`  | `postgres`, `influxdb`                         |
 | `ftp`       | `ftp-server`, `sftp-server`                    |
 | `oibus`     | `oibus`, `nginx`                               |
 
 :::note Profile independence
-The `simulator` profile requires the `iot` profile services to be running (Modbus server and MQTT
-broker). Always start both profiles together: `--profile iot --profile simulator` (or use
-`npm run docker:simulator` which does this automatically).
+The `simulator` profile requires the `iot` and `database` profile services to be running (Modbus
+server, MQTT broker, InfluxDB and PostgreSQL). Always start them together: `--profile iot --profile
+database --profile simulator` (or use `npm run docker:simulator`, which does this automatically).
 :::
 
 All services share the internal bridge network `oibus-network`. Ports are forwarded to `localhost` so
@@ -185,6 +185,90 @@ A vanilla PostgreSQL instance for testing the South-PostgreSQL connector. Creden
 
 Override passwords via the `.env` file or shell environment (e.g. `POSTGRES_PASSWORD=secret docker compose up`).
 
+The [Simulator](#unified-simulator--simulator) writes rows into a `sensor_readings` table every
+`POSTGRES_UPDATE_INTERVAL` seconds (default 10 s), created automatically on first connect:
+
+```sql
+CREATE TABLE IF NOT EXISTS sensor_readings (
+    id SERIAL PRIMARY KEY,
+    "timestamp" TIMESTAMPTZ NOT NULL,
+    workshop TEXT NOT NULL,
+    sensor_id TEXT NOT NULL,
+    measurement TEXT NOT NULL,
+    value DOUBLE PRECISION NOT NULL
+);
+```
+
+---
+
+### InfluxDB — `influxdb`
+
+| Property  | Value                                             |
+| --------- | ------------------------------------------------- |
+| **Image** | [`influxdb:2`](https://hub.docker.com/_/influxdb) |
+| **Port**  | `8088` (host) → `8086` (container)                |
+
+An InfluxDB 2.x instance for testing the South-InfluxDB connector, initialized on first start via the
+image's built-in setup mode. Credentials / connection details are:
+
+| Variable                        | Default             |
+| ------------------------------- | ------------------- |
+| `DOCKER_INFLUXDB_INIT_USERNAME` | `oibus`             |
+| `INFLUXDB_PASSWORD`             | `oibuspassword`     |
+| `DOCKER_INFLUXDB_INIT_ORG`      | `oibus`             |
+| `DOCKER_INFLUXDB_INIT_BUCKET`   | `oibus-bucket`      |
+| `INFLUXDB_TOKEN`                | `oibus-admin-token` |
+
+:::note Why not `pass`?
+Every other service in this stack defaults to the `oibus` / `pass` credentials, but InfluxDB 2
+rejects passwords shorter than 8 characters during setup, so `pass` cannot be used here. Override it
+with your own value (8+ characters) via `INFLUXDB_PASSWORD` if needed.
+:::
+
+The [Simulator](#unified-simulator--simulator) writes points to this bucket every
+`INFLUXDB_UPDATE_INTERVAL` seconds (default 10 s). Data is not persisted across container recreation
+(no volume is mounted), matching the `postgres` service's ephemeral setup.
+
+The container listens on `8086` internally, mapped to host port `8088` to avoid clashing with a
+locally-installed InfluxDB. Other containers on `oibus-network` (like the simulator) reach it at
+`http://influxdb:8086`; from the host (e.g. OIBus running via `npm start`, or the InfluxDB UI in a
+browser) use `http://localhost:8088`.
+
+Override the password/token via the `.env` file or shell environment (e.g.
+`INFLUXDB_PASSWORD=secret docker compose up`).
+
+**Example item query (`version: 2`, Flux):** OIBus substitutes `@StartTime` / `@EndTime` directly
+(unquoted) into the item's `query` setting, so they can be used as Flux time literals in `range()`.
+This queries the `temperature` measurement written by the simulator, filtered down to one sensor via
+its tags:
+
+```flux title="South-InfluxDB item query"
+from(bucket: "oibus-bucket")
+  |> range(start: @StartTime, stop: @EndTime)
+  |> filter(fn: (r) => r._measurement == "temperature")
+  |> filter(fn: (r) => r._field == "value")
+  |> filter(fn: (r) => r.workshop == "workshop1" and r.sensor_id == "sensor1")
+  |> keep(columns: ["_time", "_value", "workshop", "sensor_id"])
+```
+
+Drop the last two `filter()` calls (or adjust the tag values) to pull every workshop/sensor for a
+measurement, or swap `"temperature"` for any of the other measurements the simulator writes
+(`humidity`, `pressure`, `vibration`, `co2` — see the [sensor table below](#influxdb-thread)).
+
+:::tip Excluding the start of the range
+Flux's `range()` is inclusive of `start` (`start <= _time < stop`). Since OIBus's next poll starts
+exactly where the previous one's `@EndTime` left off, a point landing exactly on that boundary would
+be returned twice. Add an explicit filter on `_time` to make the start exclusive too:
+
+```flux
+from(bucket: "oibus-bucket")
+  |> range(start: @StartTime, stop: @EndTime)
+  |> filter(fn: (r) => r._time > @StartTime)
+  |> filter(fn: (r) => r._measurement == "temperature")
+  |> filter(fn: (r) => r._field == "value")
+```
+:::
+
 ---
 
 ### FTP Server — `ftp-server` _(profile: `ftp`)_
@@ -194,7 +278,8 @@ Override passwords via the `.env` file or shell environment (e.g. `POSTGRES_PASS
 | **Image** | [`fauria/vsftpd`](https://hub.docker.com/r/fauria/vsftpd) |
 | **Ports** | `20`, `21`, `21100–21110` (passive)                       |
 
-Passive-mode vsftpd. Credentials: `oibus` / `oibuspass`. Files land in `docker/ftp/data/`.
+Passive-mode vsftpd. Credentials: `oibus` / `pass` (override the password via `FTP_PASSWORD`). Files
+land in `docker/ftp/data/`.
 
 ---
 
@@ -205,7 +290,8 @@ Passive-mode vsftpd. Credentials: `oibus` / `oibuspass`. Files land in `docker/f
 | **Image** | [`atmoz/sftp`](https://hub.docker.com/r/atmoz/sftp) |
 | **Port**  | `2222` (SSH)                                        |
 
-Single-user SFTP server. Credentials: `oibus` / `pass`. Upload directory: `docker/sftp/data/`.
+Single-user SFTP server. Credentials: `oibus` / `pass` (override the password via `SFTP_PASSWORD`).
+Upload directory: `docker/sftp/data/`.
 
 ---
 
@@ -237,15 +323,15 @@ certificates in `docker/nginx/certs/`. Only needed when testing the full TLS / r
 
 ### Unified Simulator — `simulator`
 
-| Property      | Value                                                 |
-| ------------- | ----------------------------------------------------- |
-| **Image**     | [`python:3.14-slim`](https://hub.docker.com/_/python) |
-| **Script**    | `docker/simulator/simulator.py`                       |
-| **Libraries** | `pymodbus==3.6.9`, `paho-mqtt`                        |
+| Property      | Value                                                                |
+| ------------- | -------------------------------------------------------------------- |
+| **Image**     | [`python:3.14-slim`](https://hub.docker.com/_/python)                |
+| **Script**    | `docker/simulator/simulator.py`                                      |
+| **Libraries** | `pymodbus==3.6.9`, `paho-mqtt`, `influxdb-client`, `psycopg2-binary` |
 
-A single Python script that drives both the Modbus server and the MQTT broker. It runs two daemon
-threads — one per protocol — each with its own independent retry loop so a failure in one source does
-not affect the other.
+A single Python script that drives the Modbus server, the MQTT broker, InfluxDB and PostgreSQL. It runs
+one daemon thread per source, each with its own independent retry loop so a failure in one source does
+not affect the others.
 
 #### Modbus thread
 
@@ -387,31 +473,73 @@ field — returning a non-string value there must never reach the metrics databa
 make that edge case easy to reproduce.
 :::
 
+#### InfluxDB thread
+
+Writes to InfluxDB every `INFLUXDB_UPDATE_INTERVAL` seconds (default **10 s**). Each write cycle
+writes one point per sensor, each tagged with `workshop` and `sensor_id` and carrying a single `value`
+field, spread across several measurements so OIBus's InfluxDB south connector has multiple
+measurements/tags to query against:
+
+| Measurement | Workshop  | Sensor id |   Base | Amplitude | Period |
+| ----------- | --------- | --------- | -----: | --------: | -----: |
+| temperature | workshop1 | sensor1   |   22.0 |       5.0 |   60 s |
+| humidity    | workshop1 | sensor2   |   45.0 |      15.0 |   90 s |
+| pressure    | workshop1 | sensor3   | 1010.0 |      20.0 |  120 s |
+| temperature | workshop2 | sensor1   |   20.0 |       4.0 |   75 s |
+| vibration   | workshop2 | sensor2   |    3.0 |       2.0 |   40 s |
+| co2         | workshop2 | sensor3   |  500.0 |     150.0 |  200 s |
+
+#### PostgreSQL thread
+
+Writes to PostgreSQL every `POSTGRES_UPDATE_INTERVAL` seconds (default **10 s**), inserting one row per
+sensor into the `sensor_readings` table (see [PostgreSQL](#postgresql--postgres) above). It uses the
+exact same sensor list as the InfluxDB thread, with `workshop`/`sensor_id`/`measurement` columns
+standing in for InfluxDB's tags — so both databases end up with the same data, shaped for their
+respective query models (Flux/InfluxQL tags vs a SQL `WHERE` clause).
+
 #### Environment variables
 
-| Variable                 | Default         | Description                                   |
-| ------------------------ | --------------- | --------------------------------------------- |
-| `RETRY_INTERVAL`         | `10`            | Seconds between reconnection attempts         |
-| `MODBUS_HOST`            | `modbus-server` | Hostname of the Modbus server                 |
-| `MODBUS_PORT`            | `5020`          | Modbus TCP port                               |
-| `MODBUS_SLAVE_ID`        | `1`             | Modbus slave / unit ID                        |
-| `MODBUS_UPDATE_INTERVAL` | `2`             | Seconds between Modbus write cycles           |
-| `MQTT_BROKER`            | `mqtt-broker`   | Hostname of the MQTT broker                   |
-| `MQTT_PORT`              | `1883`          | MQTT port                                     |
-| `MQTT_USER`              | `oibus`         | MQTT username                                 |
-| `MQTT_PASSWORD`          | `pass`          | MQTT password (also set via `$MQTT_PASSWORD`) |
-| `MQTT_UPDATE_INTERVAL`   | `2`             | Seconds between MQTT publish cycles           |
+| Variable                   | Default                | Description                                             |
+| -------------------------- | ---------------------- | ------------------------------------------------------- |
+| `RETRY_INTERVAL`           | `10`                   | Seconds between reconnection attempts                   |
+| `MODBUS_HOST`              | `modbus-server`        | Hostname of the Modbus server                           |
+| `MODBUS_PORT`              | `5020`                 | Modbus TCP port                                         |
+| `MODBUS_SLAVE_ID`          | `1`                    | Modbus slave / unit ID                                  |
+| `MODBUS_UPDATE_INTERVAL`   | `2`                    | Seconds between Modbus write cycles                     |
+| `MQTT_BROKER`              | `mqtt-broker`          | Hostname of the MQTT broker                             |
+| `MQTT_PORT`                | `1883`                 | MQTT port                                               |
+| `MQTT_USER`                | `oibus`                | MQTT username                                           |
+| `MQTT_PASSWORD`            | `pass`                 | MQTT password (also set via `$MQTT_PASSWORD`)           |
+| `MQTT_UPDATE_INTERVAL`     | `2`                    | Seconds between MQTT publish cycles                     |
+| `INFLUXDB_URL`             | `http://influxdb:8086` | InfluxDB base URL                                       |
+| `INFLUXDB_TOKEN`           | `oibus-admin-token`    | InfluxDB API token (also set via `$INFLUXDB_TOKEN`)     |
+| `INFLUXDB_ORG`             | `oibus`                | InfluxDB organisation                                   |
+| `INFLUXDB_BUCKET`          | `oibus-bucket`         | InfluxDB bucket                                         |
+| `INFLUXDB_UPDATE_INTERVAL` | `10`                   | Seconds between InfluxDB write cycles                   |
+| `POSTGRES_HOST`            | `postgres`             | Hostname of the PostgreSQL server                       |
+| `POSTGRES_PORT`            | `5432`                 | PostgreSQL port                                         |
+| `POSTGRES_USER`            | `oibus`                | PostgreSQL username                                     |
+| `POSTGRES_PASSWORD`        | `pass`                 | PostgreSQL password (also set via `$POSTGRES_PASSWORD`) |
+| `POSTGRES_DB`              | `oibus-db`             | PostgreSQL database name                                |
+| `POSTGRES_UPDATE_INTERVAL` | `10`                   | Seconds between PostgreSQL write cycles                 |
 
 ---
 
 ## Passwords and Secrets
 
-Sensitive values are read from environment variables and default to `pass` if not set. Create a `.env`
-file at the repository root to override them locally without touching `docker-compose.yml`:
+Every service uses the same default credentials, `oibus` / `pass`, so there's a single pair to
+remember when connecting OIBus to any of them. The one exception is InfluxDB, whose password must be
+at least 8 characters (see [its note above](#influxdb--influxdb)). Sensitive values are read from
+environment variables — create a `.env` file at the repository root to override them locally without
+touching `docker-compose.yml`:
 
 ```dotenv title=".env"
 MQTT_PASSWORD=my_mqtt_secret
 POSTGRES_PASSWORD=my_pg_secret
+INFLUXDB_PASSWORD=my_influx_secret
+INFLUXDB_TOKEN=my_influx_token
+FTP_PASSWORD=my_ftp_secret
+SFTP_PASSWORD=my_sftp_secret
 OPCUA_DEFAULT_PASSWORD=my_opcua_secret
 OPCUA_ADMIN_PASSWORD=my_admin_secret
 DOMAIN=oibus.example.com
