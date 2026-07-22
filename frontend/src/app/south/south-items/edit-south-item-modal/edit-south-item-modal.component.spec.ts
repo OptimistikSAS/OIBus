@@ -157,6 +157,63 @@ describe('EditSouthItemModalComponent', () => {
     expect(controls.recoveryStrategy.value).toBe('oldest');
   });
 
+  test('selecting a group should copy its historian offsets', () => {
+    const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+    groupA.historySettings.startTimeOffset = 500;
+    groupA.historySettings.endTimeOffset = 600;
+    const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+    fixture.componentInstance.prepareForCreation(
+      [],
+      scanModes,
+      [] as Array<CertificateDTO>,
+      [groupA],
+      manifest,
+      southId,
+      southConnectorCommand as any,
+      noop,
+      noop
+    );
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+
+    expect(fixture.componentInstance.form!.controls.startTimeOffset.value).toBe(500);
+    expect(fixture.componentInstance.form!.controls.endTimeOffset.value).toBe(600);
+  });
+
+  test('selecting a legacy group with null historian fields should fall back to sensible defaults', () => {
+    const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
+    groupA.historySettings = {
+      startTimeOffset: null,
+      endTimeOffset: null,
+      maxReadInterval: null,
+      readDelay: null,
+      recoveryStrategy: null
+    };
+    const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+    fixture.componentInstance.prepareForCreation(
+      [],
+      scanModes,
+      [] as Array<CertificateDTO>,
+      [groupA],
+      manifest,
+      southId,
+      southConnectorCommand as any,
+      noop,
+      noop
+    );
+    fixture.detectChanges();
+
+    fixture.componentInstance.onSelectGroup('group1');
+
+    const controls = fixture.componentInstance.form!.controls;
+    expect(controls.maxReadInterval.value).toBe(3600);
+    expect(controls.readDelay.value).toBe(200);
+    expect(controls.startTimeOffset.value).toBe(0);
+    expect(controls.endTimeOffset.value).toBe(0);
+    expect(controls.recoveryStrategy.value).toBe('oldest');
+  });
+
   test('selecting a group from none should turn sync-with-group on', () => {
     const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
     const fixture = TestBed.createComponent(EditSouthItemModalComponent);

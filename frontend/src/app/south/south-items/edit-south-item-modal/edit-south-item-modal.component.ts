@@ -529,11 +529,11 @@ class EditSouthItemModalComponent {
     const groupId = this.form?.controls.groupId.value;
     const group = groupId ? this.groups.find(g => g.id === groupId) : null;
     return {
-      maxReadInterval: group?.historySettings.maxReadInterval ?? null,
-      readDelay: group?.historySettings.readDelay ?? null,
-      startTimeOffset: group?.historySettings.startTimeOffset ?? null,
-      endTimeOffset: group?.historySettings.endTimeOffset ?? null,
-      recoveryStrategy: group?.historySettings.recoveryStrategy ?? null
+      maxReadInterval: group?.historySettings.maxReadInterval ?? 3600,
+      readDelay: group?.historySettings.readDelay ?? 200,
+      startTimeOffset: group?.historySettings.startTimeOffset ?? 0,
+      endTimeOffset: group?.historySettings.endTimeOffset ?? 0,
+      recoveryStrategy: group?.historySettings.recoveryStrategy ?? 'oldest'
     };
   }
 
