@@ -221,6 +221,118 @@ describe('Entity migration v3.9.0', () => {
       assert.strictEqual(item.recovery_strategy, 'oldest', "history-capable connector's item row defaults to 'oldest'");
     });
 
+    it('backfills max_read_interval/read_delay for existing rows of a history-capable connector when they are null', async () => {
+      await insertScanMode(db);
+      await insertSouthConnector(db, 'south-1', 'mssql');
+      await db('south_item_groups').insert({
+        id: 'group-1',
+        name: 'Group A',
+        south_id: 'south-1',
+        scan_mode_id: 'scan-mode-1',
+        overlap: 0,
+        max_read_interval: null,
+        read_delay: null,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+      await db('south_items').insert({
+        id: 'item-1',
+        name: 'Item A',
+        enabled: 1,
+        connector_id: 'south-1',
+        scan_mode_id: null,
+        settings: '{}',
+        sync_with_group: 1,
+        max_read_interval: null,
+        read_delay: null,
+        overlap: null,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+
+      await up(db);
+
+      const group = await db('south_item_groups').where('id', 'group-1').first();
+      assert.strictEqual(group.max_read_interval, 3600, "history-capable connector's null group max_read_interval defaults to 3600");
+      assert.strictEqual(group.read_delay, 200, "history-capable connector's null group read_delay defaults to 200");
+
+      const item = await db('south_items').where('id', 'item-1').first();
+      assert.strictEqual(item.max_read_interval, 3600, "history-capable connector's null item max_read_interval defaults to 3600");
+      assert.strictEqual(item.read_delay, 200, "history-capable connector's null item read_delay defaults to 200");
+    });
+
+    it('leaves existing non-null max_read_interval/read_delay untouched for a history-capable connector', async () => {
+      await insertScanMode(db);
+      await insertSouthConnector(db, 'south-1', 'mssql');
+      await db('south_item_groups').insert({
+        id: 'group-1',
+        name: 'Group A',
+        south_id: 'south-1',
+        scan_mode_id: 'scan-mode-1',
+        overlap: 0,
+        max_read_interval: 7200,
+        read_delay: 500,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+
+      await up(db);
+
+      const group = await db('south_item_groups').where('id', 'group-1').first();
+      assert.strictEqual(group.max_read_interval, 7200, 'existing non-null max_read_interval is preserved');
+      assert.strictEqual(group.read_delay, 500, 'existing non-null read_delay is preserved');
+    });
+
+    it('leaves max_read_interval/read_delay null for existing rows of a non-history-capable connector', async () => {
+      await insertScanMode(db);
+      await insertSouthConnector(db, 'south-1', 'mqtt');
+      await db('south_item_groups').insert({
+        id: 'group-1',
+        name: 'Group A',
+        south_id: 'south-1',
+        scan_mode_id: 'scan-mode-1',
+        overlap: 0,
+        max_read_interval: null,
+        read_delay: null,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+      await db('south_items').insert({
+        id: 'item-1',
+        name: 'Item A',
+        enabled: 1,
+        connector_id: 'south-1',
+        scan_mode_id: null,
+        settings: '{}',
+        sync_with_group: 1,
+        max_read_interval: null,
+        read_delay: null,
+        overlap: null,
+        created_by: 'admin',
+        updated_by: 'admin',
+        created_at: '2026-01-01T00:00:00Z',
+        updated_at: '2026-01-01T00:00:00Z'
+      });
+
+      await up(db);
+
+      const group = await db('south_item_groups').where('id', 'group-1').first();
+      assert.strictEqual(group.max_read_interval, null, "non-history-capable connector's group max_read_interval stays null");
+      assert.strictEqual(group.read_delay, null, "non-history-capable connector's group read_delay stays null");
+
+      const item = await db('south_items').where('id', 'item-1').first();
+      assert.strictEqual(item.max_read_interval, null, "non-history-capable connector's item max_read_interval stays null");
+      assert.strictEqual(item.read_delay, null, "non-history-capable connector's item read_delay stays null");
+    });
+
     it('leaves recovery_strategy null for existing rows of a non-history-capable connector', async () => {
       await insertScanMode(db);
       await insertSouthConnector(db, 'south-1', 'mqtt');

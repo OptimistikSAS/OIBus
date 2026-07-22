@@ -64,6 +64,20 @@ export async function up(knex: Knex): Promise<void> {
     .whereIn('connector_id', historyCapableConnectorIds)
     .update({ start_time_offset: 0, end_time_offset: 0, recovery_strategy: 'oldest' });
 
+  // max_read_interval / read_delay were introduced in v3.8.0 without a default: items grouped from
+  // connectors that had no `throttling` settings at the time (or non-historian items later reclassified
+  // as historian) were left with NULL. Backfill them to the same sensible defaults the UI now uses.
+  await knex(SOUTH_ITEM_GROUPS_TABLE)
+    .whereIn('south_id', historyCapableConnectorIds)
+    .whereNull('max_read_interval')
+    .update({ max_read_interval: 3600 });
+  await knex(SOUTH_ITEM_GROUPS_TABLE).whereIn('south_id', historyCapableConnectorIds).whereNull('read_delay').update({ read_delay: 200 });
+  await knex(SOUTH_ITEMS_TABLE)
+    .whereIn('connector_id', historyCapableConnectorIds)
+    .whereNull('max_read_interval')
+    .update({ max_read_interval: 3600 });
+  await knex(SOUTH_ITEMS_TABLE).whereIn('connector_id', historyCapableConnectorIds).whereNull('read_delay').update({ read_delay: 200 });
+
   await knex.raw(`UPDATE ${SOUTH_ITEM_GROUPS_TABLE} SET start_time_offset = -overlap WHERE overlap IS NOT NULL`);
   await knex.raw(`UPDATE ${SOUTH_ITEMS_TABLE} SET start_time_offset = -overlap WHERE overlap IS NOT NULL`);
 
