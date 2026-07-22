@@ -170,6 +170,7 @@ describe('SouthInfluxDB', () => {
     readDelay: 0,
     startTimeOffset: 0,
     endTimeOffset: null,
+    recoveryStrategy: 'oldest',
     createdBy: '',
     updatedBy: '',
     createdAt: '',
@@ -252,11 +253,10 @@ describe('SouthInfluxDB', () => {
       );
       const result = await south.historyQuery([baseItem], testData.constants.dates.DATE_1, testData.constants.dates.DATE_2);
       assert.equal(queryDataMock.mock.calls.length, 1);
-      assert.equal(fsMock.writeFile.mock.calls.length, 1);
       assert.equal(addContentCallback.mock.calls.length, 1);
-      const content = addContentCallback.mock.calls[0].arguments[1] as { type: string; filePath: string };
-      assert.equal(content.type, 'any');
-      assert.ok(content.filePath.includes('random-id.json'));
+      const content = addContentCallback.mock.calls[0].arguments[1] as { type: string; content: string };
+      assert.equal(content.type, 'any-content');
+      assert.ok(content.content.includes(JSON.stringify([{ time: '2020-02-01T00:00:00Z', value: 1 }])));
       assert.notEqual(result.value, null);
     });
 
@@ -292,7 +292,7 @@ describe('SouthInfluxDB', () => {
       const result = await south.testItem(baseItem, {
         history: { startTime: testData.constants.dates.DATE_1, endTime: testData.constants.dates.DATE_2 }
       });
-      assert.equal(result.type, 'any');
+      assert.equal(result.type, 'any-content');
       assert.ok(result.content?.startsWith('['));
       assert.ok(JSON.parse(result.content!).length === 1);
     });
