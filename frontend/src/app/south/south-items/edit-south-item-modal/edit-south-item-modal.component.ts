@@ -317,11 +317,11 @@ class EditSouthItemModalComponent {
       enabled: [true, Validators.required],
       scanModeId: [null as string | null, Validators.required],
       syncWithGroup: [false], // Default to false; will be set to true when group is selected
-      maxReadInterval: [null as number | null, [Validators.min(0)]],
-      readDelay: [null as number | null, [Validators.min(0)]],
-      startTimeOffset: [null as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
-      endTimeOffset: [null as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
-      recoveryStrategy: [null as SouthHistoryRecoveryStrategy | null],
+      maxReadInterval: [3600 as number | null, [Validators.min(0)]],
+      readDelay: [200 as number | null, [Validators.min(0)]],
+      startTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
+      endTimeOffset: [0 as number | null, [Validators.min(-2147483648), Validators.max(2147483647)]],
+      recoveryStrategy: ['oldest' as SouthHistoryRecoveryStrategy | null],
       settings: this.fb.group({})
     });
     this.previousGroupId = null;
@@ -352,11 +352,11 @@ class EditSouthItemModalComponent {
         scanModeId: this.getScanModeId(this.item),
         enabled: this.item.enabled,
         syncWithGroup: this.item.syncWithGroup ?? false,
-        maxReadInterval: this.item.maxReadInterval ?? null,
-        readDelay: this.item.readDelay ?? null,
-        startTimeOffset: this.item.startTimeOffset ?? null,
-        endTimeOffset: this.item.endTimeOffset ?? null,
-        recoveryStrategy: this.item.recoveryStrategy ?? null,
+        maxReadInterval: this.item.maxReadInterval ?? 3600,
+        readDelay: this.item.readDelay ?? 200,
+        startTimeOffset: this.item.startTimeOffset ?? 0,
+        endTimeOffset: this.item.endTimeOffset ?? 0,
+        recoveryStrategy: this.item.recoveryStrategy ?? 'oldest',
         settings: this.item.settings
       });
 
