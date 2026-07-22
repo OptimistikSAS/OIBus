@@ -106,8 +106,8 @@ export class EditSouthItemGroupModalComponent {
     this.form = this.fb.group({
       name: ['', [Validators.required, this.checkUniqueness()]],
       scanModeId: this.fb.control<string | null>(null, [Validators.required]),
-      startTimeOffset: this.fb.control<number | null>(null, [Validators.min(-2147483648), Validators.max(2147483647)]),
-      endTimeOffset: this.fb.control<number | null>(null, [Validators.min(-2147483648), Validators.max(2147483647)]),
+      startTimeOffset: this.fb.control<number | null>(0, [Validators.min(-2147483648), Validators.max(2147483647)]),
+      endTimeOffset: this.fb.control<number | null>(0, [Validators.min(-2147483648), Validators.max(2147483647)]),
       maxReadInterval: [3600, [Validators.min(0)]],
       readDelay: [200, [Validators.required, Validators.min(0)]],
       recoveryStrategy: this.fb.control<SouthHistoryRecoveryStrategy>('oldest')
@@ -119,10 +119,10 @@ export class EditSouthItemGroupModalComponent {
         scanModeId:
           (this.group as SouthItemGroupCommandDTO).standardSettings.scanModeId ||
           (this.group as SouthItemGroupDTO).standardSettings.scanMode.id,
-        startTimeOffset: this.group.historySettings.startTimeOffset ?? null,
-        endTimeOffset: this.group.historySettings.endTimeOffset ?? null,
-        maxReadInterval: this.group.historySettings.maxReadInterval!,
-        readDelay: this.group.historySettings.readDelay!,
+        startTimeOffset: this.group.historySettings.startTimeOffset ?? 0,
+        endTimeOffset: this.group.historySettings.endTimeOffset ?? 0,
+        maxReadInterval: this.group.historySettings.maxReadInterval ?? 3600,
+        readDelay: this.group.historySettings.readDelay ?? 200,
         recoveryStrategy: this.group.historySettings.recoveryStrategy ?? 'oldest'
       });
     }
