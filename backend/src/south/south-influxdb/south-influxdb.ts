@@ -2,7 +2,7 @@ import { InfluxDB } from '@influxdata/influxdb-client';
 import { InfluxDBClient } from '@influxdata/influxdb3-client';
 import { InfluxDB as InfluxDBv1 } from 'influx';
 import SouthConnector from '../south-connector';
-import { generateRandomId, logQuery, sanitizeFilename } from '../../service/utils';
+import { logQuery } from '../../service/utils';
 import { encryptionService } from '../../service/encryption.service';
 import { Instant } from '../../../shared/model/types';
 import { SouthHistoryQuery } from '../south-interface';
@@ -12,8 +12,6 @@ import { OIBusConnectionTestResult, OIBusContent } from '../../../shared/model/e
 import { SouthConnectorEntity, SouthConnectorItemEntity } from '../../model/south-connector.model';
 import SouthCacheRepository from '../../repository/cache/south-cache.repository';
 import { SouthConnectorItemTestingSettings } from '../../../shared/model/south-connector.model';
-import path from 'node:path';
-import fs from 'node:fs/promises';
 
 export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings, SouthInfluxDBItemSettings> implements SouthHistoryQuery {
   constructor(
@@ -133,8 +131,7 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     const endTime = testingSettings.history!.endTime;
     const result = await this.queryData(item, startTime, endTime);
     const content = JSON.stringify(result);
-    const filename = `${sanitizeFilename(this.connector.name)}-${sanitizeFilename(item.name)}.json`;
-    return { type: 'any', filePath: filename, content };
+    return { type: 'any-content', content };
   }
 
   async historyQuery(
@@ -154,11 +151,8 @@ export default class SouthInfluxDB extends SouthConnector<SouthInfluxDBSettings,
     }
 
     this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-    const filename = `${sanitizeFilename(this.connector.name)}-${sanitizeFilename(item.name)}-${generateRandomId()}.json`;
-    const filePath = path.resolve(this.tmpFolder, filename);
-    await fs.writeFile(filePath, JSON.stringify(result));
     const maxInstant = this.extractMaxInstant(result);
-    await this.addContent({ type: 'any', filePath }, startRequest.toUTC().toISO(), [item]);
+    await this.addContent({ type: 'any-content', content: JSON.stringify(result) }, startRequest.toUTC().toISO(), [item]);
     return { trackedInstant: maxInstant, value: result[result.length - 1] };
   }
 
