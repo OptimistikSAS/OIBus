@@ -108,6 +108,23 @@ from(bucket: "sensors")
   |> aggregateWindow(every: 1m, fn: mean, createEmpty: false)
 ```
 
+:::tip Excluding the start of the range
+Flux's `range()` is inclusive of `start` and exclusive of `stop` (`start <= _time < stop`). Since
+[timestamp tracking](#timestamp-tracking) sets the next scan's `@StartTime` to the maximum `_time`
+returned by the previous one, a point landing exactly on that boundary would otherwise be returned
+twice. Add an explicit filter on `_time` to make the start exclusive too:
+
+```flux
+from(bucket: "sensors")
+  |> range(start: @StartTime, stop: @EndTime)
+  |> filter(fn: (r) => r._time > @StartTime)
+  |> filter(fn: (r) => r["_measurement"] == "temperature")
+```
+
+The InfluxQL (v1) and SQL (v3) examples above don't need this — they already use a strict `time >
+'@StartTime'` comparison.
+:::
+
 **v3 — SQL**
 
 ```sql
