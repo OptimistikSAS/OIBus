@@ -99,6 +99,64 @@ describe('EditSouthItemModalComponent', () => {
     await expect.element(root.getByCss('#name')).toBeInTheDocument();
   });
 
+  test('create mode should default historian fields to sensible values', () => {
+    const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+    fixture.componentInstance.prepareForCreation(
+      [],
+      scanModes,
+      [] as Array<CertificateDTO>,
+      groups,
+      manifest,
+      southId,
+      southConnectorCommand as any,
+      noop,
+      noop
+    );
+    fixture.detectChanges();
+
+    const controls = fixture.componentInstance.form!.controls;
+    expect(controls.maxReadInterval.value).toBe(3600);
+    expect(controls.readDelay.value).toBe(200);
+    expect(controls.startTimeOffset.value).toBe(0);
+    expect(controls.endTimeOffset.value).toBe(0);
+    expect(controls.recoveryStrategy.value).toBe('oldest');
+  });
+
+  test('edit mode should fall back to the same historian defaults when the item field is null', () => {
+    const itemWithNullHistorianFields = {
+      ...existingItem,
+      group: null,
+      syncWithGroup: false,
+      maxReadInterval: null,
+      readDelay: null,
+      startTimeOffset: null,
+      endTimeOffset: null,
+      recoveryStrategy: null
+    };
+    const fixture = TestBed.createComponent(EditSouthItemModalComponent);
+    fixture.componentInstance.prepareForEdition(
+      [itemWithNullHistorianFields],
+      scanModes,
+      [] as Array<CertificateDTO>,
+      groups,
+      manifest,
+      itemWithNullHistorianFields,
+      southId,
+      southConnectorCommand as any,
+      0,
+      noop,
+      noop
+    );
+    fixture.detectChanges();
+
+    const controls = fixture.componentInstance.form!.controls;
+    expect(controls.maxReadInterval.value).toBe(3600);
+    expect(controls.readDelay.value).toBe(200);
+    expect(controls.startTimeOffset.value).toBe(0);
+    expect(controls.endTimeOffset.value).toBe(0);
+    expect(controls.recoveryStrategy.value).toBe('oldest');
+  });
+
   test('selecting a group from none should turn sync-with-group on', () => {
     const groupA = buildGroup('group1', 'GroupA', scanModes[0]);
     const fixture = TestBed.createComponent(EditSouthItemModalComponent);
