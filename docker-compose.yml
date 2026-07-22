@@ -71,6 +71,23 @@ services:
     restart: unless-stopped
     profiles: [ "database" ]
 
+  influxdb:
+    image: influxdb:2
+    container_name: oibus_influxdb
+    ports:
+      - "8088:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: oibus
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD:-oibuspassword}
+      DOCKER_INFLUXDB_INIT_ORG: oibus
+      DOCKER_INFLUXDB_INIT_BUCKET: oibus-bucket
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-oibus-admin-token}
+    networks:
+      - oibus-network
+    restart: unless-stopped
+    profiles: [ "database" ]
+
   oibus:
     image: ghcr.io/optimistiksas/oibus:latest
     container_name: oibus_runtime
@@ -113,7 +130,7 @@ services:
       - "21100-21110:21100-21110"
     environment:
       FTP_USER: oibus
-      FTP_PASS: oibuspass
+      FTP_PASS: ${FTP_PASSWORD:-pass}
       PASV_ADDRESS: 127.0.0.1
       PASV_MIN_PORT: 21100
       PASV_MAX_PORT: 21110
@@ -129,7 +146,7 @@ services:
     container_name: oibus_sftp-server
     ports:
       - "2222:22"
-    command: oibus:pass:::upload
+    command: oibus:${SFTP_PASSWORD:-pass}:::upload
     volumes:
       - ./docker/sftp/data:/home/oibus/upload
     networks:
@@ -152,10 +169,21 @@ services:
       MQTT_USER: oibus
       MQTT_PASSWORD: ${MQTT_PASSWORD:-pass}
       MQTT_UPDATE_INTERVAL: 2
+      INFLUXDB_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:-oibus-admin-token}
+      INFLUXDB_ORG: oibus
+      INFLUXDB_BUCKET: oibus-bucket
+      INFLUXDB_UPDATE_INTERVAL: 10
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: oibus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pass}
+      POSTGRES_DB: oibus-db
+      POSTGRES_UPDATE_INTERVAL: 10
       RETRY_INTERVAL: 10
     working_dir: /app
     command: >
-      sh -c "pip install --quiet paho-mqtt 'pymodbus==3.6.9'
+      sh -c "pip install --quiet paho-mqtt 'pymodbus==3.6.9' influxdb-client psycopg2-binary
       && python -u simulator.py"
     networks:
       - oibus-network

@@ -30,6 +30,31 @@ MQTT:
   transformers — including payloads whose fields are themselves objects/arrays, which is
   what surfaces bugs where a non-string value (e.g. a JSON payload used as a filename)
   reaches the metrics database.
+
+InfluxDB:
+  INFLUXDB_URL              (default: http://influxdb:8086)
+  INFLUXDB_TOKEN            (default: oibus-admin-token)
+  INFLUXDB_ORG              (default: oibus)
+  INFLUXDB_BUCKET           (default: oibus-bucket)
+  INFLUXDB_UPDATE_INTERVAL  seconds between writes (default: 10)
+
+  The InfluxDB worker writes one point per sensor every cycle, each carrying several TAGS
+  (workshop, sensor_id) alongside a single "value" field, spread across a handful of
+  measurements (temperature, humidity, pressure, vibration, co2) so OIBus's InfluxDB south
+  connector can be exercised with Flux/InfluxQL queries that filter/group by tag.
+
+PostgreSQL:
+  POSTGRES_HOST             (default: postgres)
+  POSTGRES_PORT             (default: 5432)
+  POSTGRES_USER             (default: oibus)
+  POSTGRES_PASSWORD         (default: pass)
+  POSTGRES_DB               (default: oibus-db)
+  POSTGRES_UPDATE_INTERVAL  seconds between writes (default: 10)
+
+  The PostgreSQL worker writes the same SENSOR_READINGS used by the InfluxDB worker into a
+  single "sensor_readings" table (created on first connect if missing), one row per sensor
+  every cycle, with workshop/sensor_id/measurement columns standing in for InfluxDB's tags so
+  OIBus's SQL south connector has a realistic wide time-series table to query.
 """
 
 import json
@@ -120,6 +145,37 @@ MQTT_SENSORS = [
     ("workshop2", "sensor2", "humidity",      50.0,  20.0, 150),
     ("workshop2", "sensor3", "pressure",     990.0,  40.0, 210),
     ("workshop2", "sensor4", "vibration",      4.0,   4.0,  45),
+]
+
+# ─── InfluxDB configuration ──────────────────────────────────────────────────
+INFLUXDB_URL = os.getenv("INFLUXDB_URL", "http://influxdb:8086")
+INFLUXDB_TOKEN = os.getenv("INFLUXDB_TOKEN", "oibus-admin-token")
+INFLUXDB_ORG = os.getenv("INFLUXDB_ORG", "oibus")
+INFLUXDB_BUCKET = os.getenv("INFLUXDB_BUCKET", "oibus-bucket")
+INFLUXDB_UPDATE_INTERVAL = int(os.getenv("INFLUXDB_UPDATE_INTERVAL", 10))
+
+# ─── PostgreSQL configuration ─────────────────────────────────────────────────
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
+POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", 5432))
+POSTGRES_USER = os.getenv("POSTGRES_USER", "oibus")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "pass")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "oibus-db")
+POSTGRES_UPDATE_INTERVAL = int(os.getenv("POSTGRES_UPDATE_INTERVAL", 10))
+POSTGRES_TABLE = "sensor_readings"
+
+# Sensor readings shared by the InfluxDB and PostgreSQL workers: (workshop, sensor_id,
+# measurement, base, amplitude, period_s). Each row becomes one InfluxDB point (measurement=
+# <measurement>, tags={workshop, sensor_id}, field value=<simulated reading>) or one
+# PostgreSQL row (same columns) per write cycle. Several sensors share the same measurement
+# (e.g. "temperature") but are distinguished by workshop/sensor_id, so OIBus queries can
+# filter/group by either.
+SENSOR_READINGS = [
+    ("workshop1", "sensor1", "temperature", 22.0,   5.0,   60),
+    ("workshop1", "sensor2", "humidity",    45.0,  15.0,   90),
+    ("workshop1", "sensor3", "pressure",  1010.0,  20.0,  120),
+    ("workshop2", "sensor1", "temperature", 20.0,   4.0,   75),
+    ("workshop2", "sensor2", "vibration",    3.0,   2.0,   40),
+    ("workshop2", "sensor3", "co2",        500.0, 150.0,  200),
 ]
 
 
@@ -401,12 +457,114 @@ def mqtt_worker() -> None:
             time.sleep(RETRY_INTERVAL)
 
 
+# ─── InfluxDB worker ──────────────────────────────────────────────────────────
+
+def influxdb_worker() -> None:
+    from influxdb_client import InfluxDBClient, Point
+    from influxdb_client.client.write_api import SYNCHRONOUS
+
+    t = 0.0
+    while True:
+        print(f"[influxdb] Connecting to {INFLUXDB_URL} ...")
+        client = InfluxDBClient(url=INFLUXDB_URL, token=INFLUXDB_TOKEN, org=INFLUXDB_ORG)
+        try:
+            health = client.health()
+            if health.status != "pass":
+                raise RuntimeError(f"health check failed: {health.message}")
+            write_api = client.write_api(write_options=SYNCHRONOUS)
+            print("[influxdb] Connected.")
+
+            while True:
+                points = []
+                for workshop, sensor_id, measurement, base, amplitude, period in SENSOR_READINGS:
+                    value = round(simulate_value(t, base, amplitude, period), 2)
+                    point = (
+                        Point(measurement)
+                        .tag("workshop", workshop)
+                        .tag("sensor_id", sensor_id)
+                        .field("value", value)
+                        .time(datetime.now(timezone.utc))
+                    )
+                    points.append(point)
+                    print(f"[influxdb]   {measurement},workshop={workshop},sensor_id={sensor_id} value={value}")
+
+                write_api.write(bucket=INFLUXDB_BUCKET, org=INFLUXDB_ORG, record=points)
+
+                t += INFLUXDB_UPDATE_INTERVAL
+                time.sleep(INFLUXDB_UPDATE_INTERVAL)
+
+        except Exception as exc:
+            print(f"[influxdb] Error: {exc}. Retrying in {RETRY_INTERVAL}s ...")
+            client.close()
+            time.sleep(RETRY_INTERVAL)
+
+
+# ─── PostgreSQL worker ────────────────────────────────────────────────────────
+
+def postgres_worker() -> None:
+    import psycopg2
+
+    t = 0.0
+    while True:
+        print(f"[postgres] Connecting to {POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB} ...")
+        conn = None
+        try:
+            conn = psycopg2.connect(
+                host=POSTGRES_HOST,
+                port=POSTGRES_PORT,
+                user=POSTGRES_USER,
+                password=POSTGRES_PASSWORD,
+                dbname=POSTGRES_DB,
+            )
+            conn.autocommit = True
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {POSTGRES_TABLE} (
+                        id SERIAL PRIMARY KEY,
+                        "timestamp" TIMESTAMPTZ NOT NULL,
+                        workshop TEXT NOT NULL,
+                        sensor_id TEXT NOT NULL,
+                        measurement TEXT NOT NULL,
+                        value DOUBLE PRECISION NOT NULL
+                    );
+                    """
+                )
+            print("[postgres] Connected.")
+
+            while True:
+                now = datetime.now(timezone.utc)
+                rows = []
+                for workshop, sensor_id, measurement, base, amplitude, period in SENSOR_READINGS:
+                    value = round(simulate_value(t, base, amplitude, period), 2)
+                    rows.append((now, workshop, sensor_id, measurement, value))
+                    print(f"[postgres]   {measurement},workshop={workshop},sensor_id={sensor_id} value={value}")
+
+                with conn.cursor() as cur:
+                    cur.executemany(
+                        f'INSERT INTO {POSTGRES_TABLE} ("timestamp", workshop, sensor_id, measurement, value) '
+                        f"VALUES (%s, %s, %s, %s, %s);",
+                        rows,
+                    )
+
+                t += POSTGRES_UPDATE_INTERVAL
+                time.sleep(POSTGRES_UPDATE_INTERVAL)
+
+        except Exception as exc:
+            print(f"[postgres] Error: {exc}. Retrying in {RETRY_INTERVAL}s ...")
+            if conn is not None:
+                conn.close()
+            time.sleep(RETRY_INTERVAL)
+
+
 # ─── Entry point ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
     workers = [
-        threading.Thread(target=modbus_worker, name="modbus", daemon=True),
-        threading.Thread(target=mqtt_worker,   name="mqtt",   daemon=True),
+        threading.Thread(target=modbus_worker,   name="modbus",   daemon=True),
+        threading.Thread(target=mqtt_worker,     name="mqtt",     daemon=True),
+        threading.Thread(target=influxdb_worker, name="influxdb", daemon=True),
+        threading.Thread(target=postgres_worker, name="postgres", daemon=True),
     ]
     for w in workers:
         w.start()
